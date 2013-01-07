@@ -1,0 +1,12 @@
+Index: tools/gyp/v8.gyp
+===================================================================
+--- tools/gyp/v8.gyp	(revision 13293)
++++ tools/gyp/v8.gyp	(working copy)
+@@ -32,6 +32,7 @@
+       'targets': [
+         {
+           'target_name': 'v8',
++          'product_name': 'v8-' + '<(v8_target_arch)',
+           'dependencies_traverse': 1,
+           'conditions': [
+             ['want_separate_host_toolset==1', {

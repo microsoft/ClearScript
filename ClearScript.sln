@@ -1,0 +1,76 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClearScript", "ClearScript\ClearScript.csproj", "{D2382D2C-6576-4D96-B6CD-057C4F6BED96}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClearScriptTest", "ClearScriptTest\ClearScriptTest.csproj", "{EDC7144E-FDA9-4CC7-B2CD-B5EBFD610A7D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D2382D2C-6576-4D96-B6CD-057C4F6BED96} = {D2382D2C-6576-4D96-B6CD-057C4F6BED96}
+		{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6} = {2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6}
+		{CDCF4EEA-1CA4-412E-8C77-78893A67A577} = {CDCF4EEA-1CA4-412E-8C77-78893A67A577}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClearScriptConsole", "ClearScriptConsole\ClearScriptConsole.csproj", "{28980C99-77E7-4B62-8484-AF06C5745B8C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6} = {2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6}
+		{CDCF4EEA-1CA4-412E-8C77-78893A67A577} = {CDCF4EEA-1CA4-412E-8C77-78893A67A577}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClearScriptV8-32", "ClearScript\V8\ClearScriptV8\32\ClearScriptV8-32.vcxproj", "{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D2382D2C-6576-4D96-B6CD-057C4F6BED96} = {D2382D2C-6576-4D96-B6CD-057C4F6BED96}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClearScriptV8-64", "ClearScript\V8\ClearScriptV8\64\ClearScriptV8-64.vcxproj", "{CDCF4EEA-1CA4-412E-8C77-78893A67A577}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D2382D2C-6576-4D96-B6CD-057C4F6BED96} = {D2382D2C-6576-4D96-B6CD-057C4F6BED96}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "V8", "V8", "{14370560-F9FD-486D-A88E-D22C02576442}"
+	ProjectSection(SolutionItems) = preProject
+		ClearScript\V8\V8\V8Patch.txt = ClearScript\V8\V8\V8Patch.txt
+		V8Update.cmd = V8Update.cmd
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5488F9BE-286E-459B-8384-E9EDA331BD5B}"
+	ProjectSection(SolutionItems) = preProject
+		ClearScript\doc\Help\ClearScript.chm = ClearScript\doc\Help\ClearScript.chm
+		ClearScript\doc\FAQtorial.docx = ClearScript\doc\FAQtorial.docx
+		ReadMe.txt = ReadMe.txt
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D2382D2C-6576-4D96-B6CD-057C4F6BED96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2382D2C-6576-4D96-B6CD-057C4F6BED96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2382D2C-6576-4D96-B6CD-057C4F6BED96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2382D2C-6576-4D96-B6CD-057C4F6BED96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDC7144E-FDA9-4CC7-B2CD-B5EBFD610A7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDC7144E-FDA9-4CC7-B2CD-B5EBFD610A7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDC7144E-FDA9-4CC7-B2CD-B5EBFD610A7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDC7144E-FDA9-4CC7-B2CD-B5EBFD610A7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28980C99-77E7-4B62-8484-AF06C5745B8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28980C99-77E7-4B62-8484-AF06C5745B8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28980C99-77E7-4B62-8484-AF06C5745B8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28980C99-77E7-4B62-8484-AF06C5745B8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6}.Debug|Any CPU.Build.0 = Debug|Win32
+		{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6}.Release|Any CPU.ActiveCfg = Release|Win32
+		{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6}.Release|Any CPU.Build.0 = Release|Win32
+		{CDCF4EEA-1CA4-412E-8C77-78893A67A577}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{CDCF4EEA-1CA4-412E-8C77-78893A67A577}.Debug|Any CPU.Build.0 = Debug|x64
+		{CDCF4EEA-1CA4-412E-8C77-78893A67A577}.Release|Any CPU.ActiveCfg = Release|x64
+		{CDCF4EEA-1CA4-412E-8C77-78893A67A577}.Release|Any CPU.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CDCF4EEA-1CA4-412E-8C77-78893A67A577} = {14370560-F9FD-486D-A88E-D22C02576442}
+		{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6} = {14370560-F9FD-486D-A88E-D22C02576442}
+	EndGlobalSection
+EndGlobal

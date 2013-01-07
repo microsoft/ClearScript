@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{EDC7144E-FDA9-4CC7-B2CD-B5EBFD610A7D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
+    <AssemblyName>ClearScriptTest</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <CodeAnalysisDependentAssemblyPaths Condition=" '$(VS100COMNTOOLS)' != '' " Include="$(VS100COMNTOOLS)..\IDE\PrivateAssemblies">
+      <Visible>False</Visible>
+    </CodeAnalysisDependentAssemblyPaths>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BindSignatureTest.cs" />
+    <Compile Include="CrossEngineTest.cs" />
+    <Compile Include="DynamicHostItemTest.cs" />
+    <Compile Include="ExplicitBaseInterfaceMemberAccessTest.cs" />
+    <Compile Include="BaseInterfaceMemberAccessTest.cs" />
+    <Compile Include="BaseMemberAccessTest.cs" />
+    <Compile Include="ExplicitInterfaceMemberAccessTest.cs" />
+    <Compile Include="HostVariableTest.cs" />
+    <Compile Include="IExplicitBaseTestInterface.cs" />
+    <Compile Include="IBaseTestInterface.cs" />
+    <Compile Include="BaseTestObject.cs" />
+    <Compile Include="ExtendedHostFunctionsTest.cs" />
+    <Compile Include="HostFunctionsTest.cs" />
+    <Compile Include="HostTypeCollectionTest.cs" />
+    <Compile Include="IExplicitTestInterface.cs" />
+    <Compile Include="InterfaceMemberAccessTest.cs" />
+    <Compile Include="ITestInterface.cs" />
+    <Compile Include="JScriptEngineTest.cs" />
+    <Compile Include="Misc.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ClearScriptTest.cs" />
+    <Compile Include="PropertyBagTest.cs" />
+    <Compile Include="MemberAccessTest.cs" />
+    <Compile Include="StaticMemberAccessTest.cs" />
+    <Compile Include="StaticTestClass.cs" />
+    <Compile Include="TestObject.cs" />
+    <Compile Include="V8ScriptEngineTest.cs" />
+    <Compile Include="VBScriptEngineTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ClearScript\ClearScript.csproj">
+      <Project>{D2382D2C-6576-4D96-B6CD-057C4F6BED96}</Project>
+      <Name>ClearScript</Name>
+      <Private>False</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

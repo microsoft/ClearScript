@@ -1,0 +1,232 @@
+﻿// 
+// Copyright © Microsoft Corporation. All rights reserved.
+// 
+// Microsoft Public License (MS-PL)
+// 
+// This license governs use of the accompanying software. If you use the
+// software, you accept this license. If you do not accept the license, do not
+// use the software.
+// 
+// 1. Definitions
+// 
+//   The terms "reproduce," "reproduction," "derivative works," and
+//   "distribution" have the same meaning here as under U.S. copyright law. A
+//   "contribution" is the original software, or any additions or changes to
+//   the software. A "contributor" is any person that distributes its
+//   contribution under this license. "Licensed patents" are a contributor's
+//   patent claims that read directly on its contribution.
+// 
+// 2. Grant of Rights
+// 
+//   (A) Copyright Grant- Subject to the terms of this license, including the
+//       license conditions and limitations in section 3, each contributor
+//       grants you a non-exclusive, worldwide, royalty-free copyright license
+//       to reproduce its contribution, prepare derivative works of its
+//       contribution, and distribute its contribution or any derivative works
+//       that you create.
+// 
+//   (B) Patent Grant- Subject to the terms of this license, including the
+//       license conditions and limitations in section 3, each contributor
+//       grants you a non-exclusive, worldwide, royalty-free license under its
+//       licensed patents to make, have made, use, sell, offer for sale,
+//       import, and/or otherwise dispose of its contribution in the software
+//       or derivative works of the contribution in the software.
+// 
+// 3. Conditions and Limitations
+// 
+//   (A) No Trademark License- This license does not grant you rights to use
+//       any contributors' name, logo, or trademarks.
+// 
+//   (B) If you bring a patent claim against any contributor over patents that
+//       you claim are infringed by the software, your patent license from such
+//       contributor to the software ends automatically.
+// 
+//   (C) If you distribute any portion of the software, you must retain all
+//       copyright, patent, trademark, and attribution notices that are present
+//       in the software.
+// 
+//   (D) If you distribute any portion of the software in source code form, you
+//       may do so only under this license by including a complete copy of this
+//       license with your distribution. If you distribute any portion of the
+//       software in compiled or object code form, you may only do so under a
+//       license that complies with this license.
+// 
+//   (E) The software is licensed "as-is." You bear the risk of using it. The
+//       contributors give no express warranties, guarantees or conditions. You
+//       may have additional consumer rights under your local laws which this
+//       license cannot change. To the extent permitted under your local laws,
+//       the contributors exclude the implied warranties of merchantability,
+//       fitness for a particular purpose and non-infringement.
+//       
+
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".Generated.cs" #>
+
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+
+<# var timestamp = DateTime.Now; #>
+<# const int maxArgCount = 16; #>
+
+//
+// DelegateFactory.Generated.cs, based on DelegateFactory.tt
+// Generated on <#= timestamp.ToLongDateString() #> at <#= timestamp.ToLongTimeString() #>.
+// DO NOT EDIT!
+//
+
+using System;
+using System.Reflection;
+
+namespace Microsoft.ClearScript
+{
+    internal static partial class DelegateFactory
+    {
+        private const int maxArgCount = <#= maxArgCount #>;
+
+        <#
+        for (var count = 0; count <= maxArgCount; count++)
+        {
+            var typeParamList = (count == 0) ? "<TDelegate>" : "<" + string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index)) + ", TDelegate>";
+            var methodParamList = string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index + " a" + index));
+            var methodArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
+        #>
+
+        private class ProcShim<#= typeParamList #> : ProcShim
+        {
+            private static readonly MethodInfo method = typeof(ProcShim<#= typeParamList #>).GetMethod("InvokeTarget");
+            private readonly dynamic target;
+            private readonly Delegate del;
+
+            public ProcShim(ScriptEngine engine, object target)
+                : base(engine)
+            {
+                this.target = GetCompatibleTarget(typeof(TDelegate), target);
+                del = Delegate.CreateDelegate(typeof(TDelegate), this, method);
+            }
+
+            // ReSharper disable UnusedMember.Local
+
+            public void InvokeTarget(<#= methodParamList #>)
+            {
+                Invoke(() => target(<#= methodArgList #>));
+            }
+
+            // ReSharper restore UnusedMember.Local
+
+            #region DelegateShim overrides
+
+            public override Delegate Delegate
+            {
+                get { return del; }
+            }
+
+            #endregion
+        }
+        <#
+        }
+        #>
+
+        <#
+        for (var count = 0; count <= maxArgCount; count++)
+        {
+            var typeParamList = (count == 0) ? "<TResult, TDelegate>" : "<" + string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index)) + ", TResult, TDelegate>";
+            var methodParamList = string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index + " a" + index));
+            var methodArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
+        #>
+
+        private class FuncShim<#= typeParamList #> : FuncShim<TResult>
+        {
+            private static readonly MethodInfo method = typeof(FuncShim<#= typeParamList #>).GetMethod("InvokeTarget");
+            private readonly dynamic target;
+            private readonly Delegate del;
+
+            public FuncShim(ScriptEngine engine, object target)
+                : base(engine)
+            {
+                this.target = GetCompatibleTarget(typeof(TDelegate), target);
+                del = Delegate.CreateDelegate(typeof(TDelegate), this, method);
+            }
+
+            // ReSharper disable UnusedMember.Local
+
+            public TResult InvokeTarget(<#= methodParamList #>)
+            {
+                return Invoke(() => (TResult)target(<#= methodArgList #>));
+            }
+
+            // ReSharper restore UnusedMember.Local
+
+            #region DelegateShim overrides
+
+            public override Delegate Delegate
+            {
+                get { return del; }
+            }
+
+            #endregion
+        }
+        <#
+        }
+        #>
+
+        private static readonly Type[] procTemplates =
+        {
+            <#
+            for (var count = 0; count <= maxArgCount; count++)
+            {
+                var typeArgList = (count == 0) ? "" : "<" + string.Join(", ", Enumerable.Range(1, count).Select(index => "/*T" + index + "*/")) + ">";
+            #>
+
+            typeof(Action<#= typeArgList #>),
+            <#
+            }
+            #>
+
+        };
+
+        private static readonly Type[] funcTemplates =
+        {
+            <#
+            for (var count = 0; count <= maxArgCount; count++)
+            {
+                var typeArgList = (count == 0) ? "</*TResult*/>" : "<" + string.Join(", ", Enumerable.Range(1, count).Select(index => "/*T" + index + "*/")) + ", /*TResult*/>";
+            #>
+
+            typeof(Func<#= typeArgList #>),
+            <#
+            }
+            #>
+
+        };
+
+        private static readonly Type[] procShimTemplates =
+        {
+            <#
+            for (var count = 0; count <= maxArgCount; count++)
+            {
+                var typeArgList = (count == 0) ? "</*TDelegate*/>" : "<" + string.Join(", ", Enumerable.Range(1, count).Select(index => "/*T" + index + "*/")) + ", /*TDelegate*/>";
+            #>
+
+            typeof(ProcShim<#= typeArgList #>),
+            <#
+            }
+            #>
+
+        };
+
+        private static readonly Type[] funcShimTemplates =
+        {
+            <#
+            for (var count = 0; count <= maxArgCount; count++)
+            {
+                var typeArgList = (count == 0) ? "</*TResult*/, /*TDelegate*/>" : "<" + string.Join(", ", Enumerable.Range(1, count).Select(index => "/*T" + index + "*/")) + ", /*TResult*/, /*TDelegate*/>";
+            #>
+
+            typeof(FuncShim<#= typeArgList #>),
+            <#
+            }
+            #>
+
+        };
+    }
+}
