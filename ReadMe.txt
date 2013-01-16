@@ -50,6 +50,10 @@ build, and import V8:
    builds 32-bit and 64-bit V8 shared libraries, and imports the results into
    ClearScript. It requires approximately 2GB of additional disk space and does
    not perform any permanent software installation on your machine.
+   
+   If you'd like to use a specific version of V8 instead of the latest one, set
+   an environment variable named V8REV to the desired V8 trunk revision number
+   before running the script. See http://code.google.com/p/v8/source/list.
 
 You are now ready to build the full ClearScript solution using Visual Studio.
 

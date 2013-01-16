@@ -2,13 +2,13 @@
 setlocal
 
 if "%v8rev%"=="" goto LatestRev
-set v8revarg=-r %v8rev%
+echo V8 revision: %v8rev%
 goto SetMode
 :LatestRev
-set v8rev=Latest
+echo V8 revision: Latest
+set v8rev=HEAD
 
 :SetMode
-echo V8 revision: %v8rev%
 set mode=%1
 if "%mode%"=="" goto ReleaseMode
 if /i "%mode%"=="debug" goto DebugMode
@@ -37,25 +37,25 @@ if errorlevel 1 goto Error
 cd build
 
 echo Downloading V8 ...
-svn checkout %v8revarg% http://v8.googlecode.com/svn/trunk/ v8 >nul
+svn checkout http://v8.googlecode.com/svn/trunk/@%v8rev% v8 >getV8.log
 if errorlevel 1 goto Error1
 cd v8
 
 echo Patching V8 ...
-svn patch ..\..\V8Patch.txt >nul
+svn patch ..\..\V8Patch.txt >patchV8.log
 if errorlevel 1 goto Error2
 svn diff -x --ignore-eol-style >V8Patch.txt
 
 echo Downloading GYP ...
-svn checkout http://gyp.googlecode.com/svn/trunk build/gyp >nul
+svn checkout http://gyp.googlecode.com/svn/trunk build/gyp >getGYP.log
 if errorlevel 1 goto Error2
 
 echo Downloading Python ...
-svn checkout http://src.chromium.org/svn/trunk/tools/third_party/python_26@89111 third_party/python_26 >nul
+svn checkout http://src.chromium.org/svn/trunk/tools/third_party/python_26 third_party/python_26 >getPython.log
 if errorlevel 1 goto Error2
 
 echo Downloading Cygwin ...
-svn checkout http://src.chromium.org/svn/trunk/deps/third_party/cygwin@66844 third_party/cygwin >nul
+svn checkout http://src.chromium.org/svn/trunk/deps/third_party/cygwin third_party/cygwin >getCygwin.log
 if errorlevel 1 goto Error2
 cd ..
 
@@ -91,15 +91,7 @@ echo Creating lib directory ...
 md lib
 if errorlevel 1 goto Error
 
-if not exist include\ goto CreateIncludeDir
-echo Removing old include directory ...
-rd /s /q include
-:CreateIncludeDir
-echo Creating include directory ...
-md include
-if errorlevel 1 goto Error
-
-echo Updating ClearScript ...
+echo Importing V8 libraries ...
 copy build\v8-ia32\build\%mode%\v8-ia32.dll lib\ >nul
 if errorlevel 1 goto Error
 copy build\v8-ia32\build\%mode%\v8-ia32.pdb lib\ >nul
@@ -112,9 +104,23 @@ copy build\v8-x64\build\%mode%\v8-x64.pdb lib\ >nul
 if errorlevel 1 goto Error
 copy build\v8-x64\build\%mode%\lib\v8-x64.lib lib\ >nul
 if errorlevel 1 goto Error
+
+if not exist include\ goto CreateIncludeDir
+echo Removing old include directory ...
+rd /s /q include
+:CreateIncludeDir
+echo Creating include directory ...
+md include
+if errorlevel 1 goto Error
+
+echo Importing V8 header files ...
 copy build\v8\include\*.* include\ >nul
 if errorlevel 1 goto Error
+
+echo Updating patch file ...
 copy build\v8\V8Patch.txt .\ >nul
+if errorlevel 1 goto Error
+
 goto End
 
 :Error2
