@@ -61,6 +61,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -70,6 +71,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class JScriptEngineTest : ClearScriptTest
     {
         #region setup / teardown
@@ -486,7 +488,7 @@ namespace Microsoft.ClearScript.Test
         public void JScriptEngine_new_NoMatch()
         {
             engine.AddHostObject("clr", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));
-            engine.Evaluate("new System.Random('a')");
+            engine.Execute("new System.Random('a')");
         }
 
         // ReSharper restore InconsistentNaming

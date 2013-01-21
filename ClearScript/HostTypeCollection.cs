@@ -82,6 +82,8 @@ namespace Microsoft.ClearScript
     /// </remarks>
     public class HostTypeCollection : PropertyBag
     {
+        private static readonly Predicate<Type> defaultFilter = type => true; 
+
         /// <summary>
         /// Initializes a new host type collection.
         /// </summary>
@@ -102,8 +104,8 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new host type collection with types from one or more assemblies. The assemblies
-        /// are specified by name.
+        /// Initializes a new host type collection with types from one or more assemblies. The
+        /// assemblies are specified by name.
         /// </summary>
         /// <param name="assemblyNames">The names of the assemblies that contain the types with which to initialize the collection.</param>
         public HostTypeCollection(params string[] assemblyNames)
@@ -111,6 +113,29 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(assemblyNames, "assemblyNames");
             Array.ForEach(assemblyNames, AddAssembly);
+        }
+
+        /// <summary>
+        /// Initializes a new host type collection with selected types from one or more assemblies.
+        /// </summary>
+        /// <param name="filter">A filter for selecting the types to add.</param>
+        /// <param name="assemblies">The assemblies that contain the types with which to initialize the collection.</param>
+        public HostTypeCollection(Predicate<Type> filter, params Assembly[] assemblies)
+        {
+            MiscHelpers.VerifyNonNullArgument(assemblies, "assemblies");
+            Array.ForEach(assemblies, assembly => AddAssembly(assembly, filter));
+        }
+
+        /// <summary>
+        /// Initializes a new host type collection with selected types from one or more assemblies.
+        /// The assemblies are specified by name.
+        /// </summary>
+        /// <param name="filter">A filter for selecting the types to add.</param>
+        /// <param name="assemblyNames">The names of the assemblies that contain the types with which to initialize the collection.</param>
+        public HostTypeCollection(Predicate<Type> filter, params string[] assemblyNames)
+        {
+            MiscHelpers.VerifyNonNullArgument(assemblyNames, "assemblyNames");
+            Array.ForEach(assemblyNames, assemblyName => AddAssembly(assemblyName, filter));
         }
 
         /// <summary>
@@ -132,12 +157,36 @@ namespace Microsoft.ClearScript
         /// <param name="assemblyName">The name of the assembly that contains the types to add.</param>
         public void AddAssembly(string assemblyName)
         {
-            if (string.IsNullOrWhiteSpace(assemblyName))
-            {
-                throw new ArgumentException("Invalid assembly name", "assemblyName");
-            }
-
+            MiscHelpers.VerifyNonBlankArgument(assemblyName, "assemblyName", "Invalid assembly name");
             AddAssembly(Assembly.Load(AssemblyHelpers.GetFullAssemblyName(assemblyName)));
+        }
+
+        /// <summary>
+        /// Adds selected types from an assembly to a host type collection.
+        /// </summary>
+        /// <param name="assembly">The assembly that contains the types to add.</param>
+        /// <param name="filter">A filter for selecting the types to add.</param>
+        public void AddAssembly(Assembly assembly, Predicate<Type> filter)
+        {
+            MiscHelpers.VerifyNonNullArgument(assembly, "assembly");
+
+            var activeFilter = filter ?? defaultFilter;
+            foreach (var type in assembly.GetTypes().Where(type => type.IsImportable() && activeFilter(type)))
+            {
+                AddType(type);
+            }
+        }
+
+        /// <summary>
+        /// Adds selected types from an assembly to a host type collection. The assembly is
+        /// specified by name.
+        /// </summary>
+        /// <param name="assemblyName">The name of the assembly that contains the types to add.</param>
+        /// <param name="filter">A filter for selecting the types to add.</param>
+        public void AddAssembly(string assemblyName, Predicate<Type> filter)
+        {
+            MiscHelpers.VerifyNonBlankArgument(assemblyName, "assemblyName", "Invalid assembly name");
+            AddAssembly(Assembly.Load(AssemblyHelpers.GetFullAssemblyName(assemblyName)), filter);
         }
 
         /// <summary>

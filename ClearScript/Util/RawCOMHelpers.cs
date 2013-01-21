@@ -71,7 +71,7 @@ namespace Microsoft.ClearScript.Util
             IntPtr pInterface;
             var clsid = CLSIDFromProgID(progID);
             var iid = typeof(T).GUID;
-            HResult.Check(CoCreateInstance(ref clsid, IntPtr.Zero, 1, ref iid, out pInterface));
+            HResult.Check(NativeMethods.CoCreateInstance(ref clsid, IntPtr.Zero, 1, ref iid, out pInterface));
             return pInterface;
         }
 
@@ -101,26 +101,33 @@ namespace Microsoft.ClearScript.Util
             Guid clsid;
             if (!Guid.TryParseExact(progID, "B", out clsid))
             {
-                HResult.Check(CLSIDFromProgID(progID, out clsid));
+                HResult.Check(NativeMethods.CLSIDFromProgID(progID, out clsid));
             }
 
             return clsid;
         }
 
-        [DllImport("ole32.dll", ExactSpelling = true)]
-        private static extern uint CoCreateInstance(
-            [In] ref Guid clsid,
-            [In] IntPtr pOuter,
-            [In] uint clsContext,
-            [In] ref Guid iid,
-            [Out] out IntPtr pInterface
+        #region Nested type: NativeMethods
+
+        private static class NativeMethods
+        {
+            [DllImport("ole32.dll", ExactSpelling = true)]
+            public static extern uint CoCreateInstance(
+                [In] ref Guid clsid,
+                [In] IntPtr pOuter,
+                [In] uint clsContext,
+                [In] ref Guid iid,
+                [Out] out IntPtr pInterface
             );
 
-        [DllImport("ole32.dll", ExactSpelling = true)]
-        private static extern uint CLSIDFromProgID(
-            [In] [MarshalAs(UnmanagedType.LPWStr)] string progID,
-            [Out] out Guid clsid
+            [DllImport("ole32.dll", ExactSpelling = true)]
+            public static extern uint CLSIDFromProgID(
+                [In] [MarshalAs(UnmanagedType.LPWStr)] string progID,
+                [Out] out Guid clsid
             );
+        }
+
+        #endregion
 
         #region Nested type: HResult
 

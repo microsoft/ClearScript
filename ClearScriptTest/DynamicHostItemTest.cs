@@ -59,6 +59,7 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -70,6 +71,7 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("ClearScriptV8-32.dll")]
     [DeploymentItem("v8-x64.dll")]
     [DeploymentItem("v8-ia32.dll")]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class DynamicHostItemTest : ClearScriptTest
     {
         #region setup / teardown

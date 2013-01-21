@@ -81,6 +81,14 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
+        public static void VerifyNonBlankArgument(string value, string name, string message)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException(message, name);
+            }
+        }
+
         public static string EnsureNonBlank(string input, string alternate)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(alternate));

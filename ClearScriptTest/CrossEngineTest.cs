@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
@@ -73,6 +74,7 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("ClearScriptV8-32.dll")]
     [DeploymentItem("v8-x64.dll")]
     [DeploymentItem("v8-ia32.dll")]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class CrossEngineTest : ClearScriptTest
     {
         #region setup / teardown

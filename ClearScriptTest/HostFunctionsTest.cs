@@ -62,6 +62,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows;
 using Microsoft.CSharp.RuntimeBinder;
@@ -72,6 +73,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class HostFunctionsTest : ClearScriptTest
     {
         #region setup / teardown
@@ -550,6 +552,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("HostFunctions")]
         public void HostFunctions_typeOf_TypeArg()
         {
+            engine.AllowReflection = true;
             engine.AddHostType("Int32", typeof(int));
             Assert.AreEqual(typeof(int), engine.Evaluate("host.typeOf(Int32)"));
         }
@@ -557,6 +560,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("HostFunctions")]
         public void HostFunctions_typeOf_NonTypeArg()
         {
+            engine.AllowReflection = true;
             engine.AddHostType("List", typeof(List<>));
             engine.AddHostType("Console", typeof(Console));
             Assert.AreEqual(typeof(List<>), engine.Evaluate("host.typeOf(List)"));
@@ -564,10 +568,61 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("HostFunctions")]
-        [ExpectedException(typeof(ArgumentException))]
-        public void HostFunctions_typeOf_Fail()
+        [ExpectedException(typeof(UnauthorizedAccessException))]
+        public void HostFunctions_typeOf_TypeArg_Blocked()
         {
-            engine.Evaluate("host.typeOf(5)");
+            engine.AddHostType("Int32", typeof(int));
+            engine.Execute("host.typeOf(Int32)");
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        [ExpectedException(typeof(UnauthorizedAccessException))]
+        public void HostFunctions_typeOf_NonTypeArg_Blocked()
+        {
+            engine.AddHostType("Console", typeof(Console));
+            engine.Execute("host.typeOf(Console)");
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        [ExpectedException(typeof(ArgumentException))]
+        public void HostFunctions_typeOf_NonType()
+        {
+            engine.AllowReflection = true;
+            engine.Execute("host.typeOf(5)");
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_flags_Unsigned()
+        {
+            engine.AddHostType("UnsignedFlags", HostItemFlags.PrivateAccess, typeof(UnsignedFlags));
+            var result = engine.Evaluate("host.flags(UnsignedFlags.Second, UnsignedFlags.Fourth, UnsignedFlags.Sixth, UnsignedFlags.Eighth)");
+            Assert.AreEqual(UnsignedFlags.Second | UnsignedFlags.Fourth | UnsignedFlags.Sixth | UnsignedFlags.Eighth, result);
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_flags_Signed()
+        {
+            engine.AddHostType("SignedFlags", HostItemFlags.PrivateAccess, typeof(SignedFlags));
+            // include Eighth member to force overflow path in host.flags()
+            var result = engine.Evaluate("host.flags(SignedFlags.Second, SignedFlags.Fourth, SignedFlags.Sixth, SignedFlags.Eighth)");
+            Assert.AreEqual(SignedFlags.Second | SignedFlags.Fourth | SignedFlags.Sixth | SignedFlags.Eighth, result);
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        [ExpectedException(typeof(RuntimeBinderException))]
+        public void HostFunctions_flags_Mismatch()
+        {
+            engine.AddHostType("UnsignedFlags", HostItemFlags.PrivateAccess, typeof(UnsignedFlags));
+            engine.AddHostType("SignedFlags", HostItemFlags.PrivateAccess, typeof(SignedFlags));
+            engine.Execute("host.flags(SignedFlags.Second, SignedFlags.Fourth, UnsignedFlags.Sixth, UnsignedFlags.Eighth)");
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void HostFunctions_flags_NonFlags()
+        {
+            engine.AddHostType("NonFlags", HostItemFlags.PrivateAccess, typeof(NonFlags));
+            engine.Execute("host.flags(NonFlags.Second, NonFlags.Fourth, NonFlags.Sixth, NonFlags.Eighth)");
         }
 
         // ReSharper restore InconsistentNaming
@@ -679,6 +734,48 @@ namespace Microsoft.ClearScript.Test
             RefArg<DateTime> quxVar, DateTime quxVal,
             int retVal
         );
+
+        [Flags]
+        public enum UnsignedFlags : byte
+        {
+            None = 0,
+            First = 1 << 0,
+            Second = 1 << 1,
+            Third = 1 << 2,
+            Fourth = 1 << 3,
+            Fifth = 1 << 4,
+            Sixth = 1 << 5,
+            Seventh = 1 << 6,
+            Eighth = 1 << 7,
+        }
+
+        [Flags]
+        public enum SignedFlags : sbyte
+        {
+            None = 0,
+            First = 1 << 0,
+            Second = 1 << 1,
+            Third = 1 << 2,
+            Fourth = 1 << 3,
+            Fifth = 1 << 4,
+            Sixth = 1 << 5,
+            Seventh = 1 << 6,
+            Eighth = -128,
+                // negative member forces overflow path in host.flags()
+        }
+
+        public enum NonFlags
+        {
+            None = 0,
+            First = 1 << 0,
+            Second = 1 << 1,
+            Third = 1 << 2,
+            Fourth = 1 << 3,
+            Fifth = 1 << 4,
+            Sixth = 1 << 5,
+            Seventh = 1 << 6,
+            Eighth = 1 << 7,
+        }
 
         #endregion
     }

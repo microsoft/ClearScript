@@ -63,6 +63,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.ClearScript.Util;
 
@@ -169,11 +170,13 @@ namespace Microsoft.ClearScript
 
         #region IEnumerable<KeyValuePair<string, object>> implementation
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation to resolve ambiguity.")]
         IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator()
         {
             return dictionary.GetEnumerator();
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation to resolve ambiguity.")]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return dictionary.GetEnumerator();
@@ -183,6 +186,7 @@ namespace Microsoft.ClearScript
 
         #region ICollection<KeyValuePair<string, object>> implementation
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
         {
             CheckReadOnly();
@@ -190,6 +194,7 @@ namespace Microsoft.ClearScript
             InvokePropertyChanged(item.Key);
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         void ICollection<KeyValuePair<string, object>>.Clear()
         {
             CheckReadOnly();
@@ -197,16 +202,19 @@ namespace Microsoft.ClearScript
             InvokePropertyChanged(null);
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
         {
             return collection.Contains(item);
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
         {
             collection.CopyTo(array, arrayIndex);
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
         {
             CheckReadOnly();
@@ -219,11 +227,13 @@ namespace Microsoft.ClearScript
             return false;
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         int ICollection<KeyValuePair<string, object>>.Count
         {
             get { return collection.Count; }
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         bool ICollection<KeyValuePair<string, object>>.IsReadOnly
         {
             get { return isReadOnly; }
@@ -329,6 +339,7 @@ namespace Microsoft.ClearScript
 
         #region IScriptableObject implementation
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         void IScriptableObject.OnExposedToScriptCode(ScriptEngine engine)
         {
             if ((engine != null) && engineSet.TryAdd(engine))

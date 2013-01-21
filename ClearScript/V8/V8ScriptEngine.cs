@@ -78,7 +78,7 @@ namespace Microsoft.ClearScript.V8
     /// instance. Script delegates and event handlers are invoked on the calling thread without
     /// marshaling.
     /// </remarks>
-    public class V8ScriptEngine : ScriptEngine
+    public sealed class V8ScriptEngine : ScriptEngine
     {
         #region data
 

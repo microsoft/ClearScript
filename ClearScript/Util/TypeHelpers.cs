@@ -108,6 +108,11 @@ namespace Microsoft.ClearScript.Util
             return type.IsDefined(typeof(CompilerGeneratedAttribute), false);
         }
 
+        public static bool IsFlagsEnum(this Type type)
+        {
+            return type.IsEnum && type.IsDefined(typeof(FlagsAttribute), false);
+        }
+
         public static bool IsImportable(this Type type)
         {
             if (!type.IsNested && !type.IsSpecialName && !type.IsCompilerGenerated())
@@ -462,7 +467,7 @@ namespace Microsoft.ClearScript.Util
 
         private static string StripGenericSuffix(string name)
         {
-            Debug.Assert(!string.IsNullOrEmpty(name));
+            Debug.Assert(!string.IsNullOrWhiteSpace(name));
             var index = name.LastIndexOf('`');
             return (index >= 0) ? name.Substring(0, index) : name;
         }

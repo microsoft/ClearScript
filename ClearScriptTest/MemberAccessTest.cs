@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
@@ -72,6 +73,7 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("ClearScriptV8-32.dll")]
     [DeploymentItem("v8-x64.dll")]
     [DeploymentItem("v8-ia32.dll")]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class MemberAccessTest : ClearScriptTest
     {
         #region setup / teardown
@@ -306,7 +308,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_Method_NoMatchingOverload()
         {
-            engine.Evaluate("testObject.Method('foo', TestEnum.Second)");
+            engine.Execute("testObject.Method('foo', TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -319,7 +321,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_Method_Generic_TypeArgConstraintFailure()
         {
-            engine.Evaluate("testObject.Method('foo', 4, testObject)");
+            engine.Execute("testObject.Method('foo', 4, testObject)");
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -332,7 +334,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_Method_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Evaluate("testObject.Method(System.Int32, 'foo', 4, TestEnum.Second)");
+            engine.Execute("testObject.Method(System.Int32, 'foo', 4, TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -345,7 +347,21 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_Method_GenericExplicit_MissingTypeArg()
         {
-            engine.Evaluate("testObject.Method(4)");
+            engine.Execute("testObject.Method(4)");
+        }
+
+        [TestMethod, TestCategory("MemberAccess")]
+        public void MemberAccess_Method_GetType()
+        {
+            engine.AllowReflection = true;
+            Assert.AreEqual(testObject.GetType(), engine.Evaluate("testObject.GetType()"));
+        }
+
+        [TestMethod, TestCategory("MemberAccess")]
+        [ExpectedException(typeof(UnauthorizedAccessException))]
+        public void MemberAccess_Method_GetType_Blocked()
+        {
+            engine.Execute("testObject.GetType()");
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -358,7 +374,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_ExtensionMethod_NoMatchingOverload()
         {
-            engine.Evaluate("testObject.ExtensionMethod('foo', TestEnum.Second)");
+            engine.Execute("testObject.ExtensionMethod('foo', TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -371,7 +387,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_ExtensionMethod_Generic_TypeArgConstraintFailure()
         {
-            engine.Evaluate("testObject.ExtensionMethod('foo', 4, testObject)");
+            engine.Execute("testObject.ExtensionMethod('foo', 4, testObject)");
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -384,7 +400,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_ExtensionMethod_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Evaluate("testObject.ExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            engine.Execute("testObject.ExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -397,7 +413,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
-            engine.Evaluate("testObject.ExtensionMethod(4)");
+            engine.Execute("testObject.ExtensionMethod(4)");
         }
 
         // ReSharper restore InconsistentNaming

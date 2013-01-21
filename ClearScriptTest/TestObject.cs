@@ -64,7 +64,7 @@ using System.Runtime.CompilerServices;
 
 namespace Microsoft.ClearScript.Test
 {
-    public class TestObject : BaseTestObject, ITestInterface, IExplicitTestInterface
+    public sealed class TestObject : BaseTestObject, ITestInterface, IExplicitTestInterface
     {
         public int[] Field;
         public short ScalarField;

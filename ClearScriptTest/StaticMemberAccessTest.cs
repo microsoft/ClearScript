@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
@@ -72,6 +73,7 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("ClearScriptV8-32.dll")]
     [DeploymentItem("v8-x64.dll")]
     [DeploymentItem("v8-ia32.dll")]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class StaticStaticMemberAccessTest : ClearScriptTest
     {
         #region setup / teardown
@@ -303,7 +305,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void StaticMemberAccess_Method_NoMatchingOverload()
         {
-            engine.Evaluate("StaticTestClass.StaticMethod('foo', TestEnum.Second)");
+            engine.Execute("StaticTestClass.StaticMethod('foo', TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -316,7 +318,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void StaticMemberAccess_Method_Generic_TypeArgConstraintFailure()
         {
-            engine.Evaluate("StaticTestClass.StaticMethod('foo', 4, StaticTestClass)");
+            engine.Execute("StaticTestClass.StaticMethod('foo', 4, StaticTestClass)");
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -329,7 +331,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void StaticMemberAccess_Method_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Evaluate("StaticTestClass.StaticMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            engine.Execute("StaticTestClass.StaticMethod(System.Int32, 'foo', 4, TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -342,7 +344,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void StaticMemberAccess_Method_GenericExplicit_MissingTypeArg()
         {
-            engine.Evaluate("StaticTestClass.StaticMethod(4)");
+            engine.Execute("StaticTestClass.StaticMethod(4)");
         }
 
         // ReSharper restore InconsistentNaming

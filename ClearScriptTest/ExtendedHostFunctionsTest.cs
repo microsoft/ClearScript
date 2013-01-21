@@ -61,6 +61,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
@@ -69,6 +70,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class ExtendedHostFunctionsTest : ClearScriptTest
     {
         #region setup / teardown
@@ -134,14 +136,14 @@ namespace Microsoft.ClearScript.Test
         public void ExtendedHostFunctions_lib_SingleAssembly()
         {
             var assemblyNames = new[] { "mscorlib" };
-            HostTypeCollectionTest.Test(host.lib(assemblyNames), assemblyNames, (first, second) => first == second);
+            HostTypeCollectionTest.Test(host.lib(assemblyNames), assemblyNames, null, (first, second) => first == second);
         }
 
         [TestMethod, TestCategory("ExtendedHostFunctions")]
         public void ExtendedHostFunctions_lib_MultiAssembly()
         {
             var assemblyNames = new[] { "mscorlib", "System", "System.Core" };
-            HostTypeCollectionTest.Test(host.lib(assemblyNames), assemblyNames, (first, second) => first.FullName == second.FullName);
+            HostTypeCollectionTest.Test(host.lib(assemblyNames), assemblyNames, null, (first, second) => first.FullName == second.FullName);
         }
 
         [TestMethod, TestCategory("ExtendedHostFunctions")]
@@ -149,7 +151,7 @@ namespace Microsoft.ClearScript.Test
         {
             var assemblyNames = new[] { "mscorlib", "System", "System.Core" };
             var typeCollection = assemblyNames.Aggregate(new HostTypeCollection(), (tempTypeCollection, assemblyName) => host.lib(tempTypeCollection, assemblyName));
-            HostTypeCollectionTest.Test(typeCollection, assemblyNames, (first, second) => first.FullName == second.FullName);
+            HostTypeCollectionTest.Test(typeCollection, assemblyNames, null, (first, second) => first.FullName == second.FullName);
         }
 
         [TestMethod, TestCategory("ExtendedHostFunctions")]

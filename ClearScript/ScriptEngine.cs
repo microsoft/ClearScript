@@ -108,6 +108,18 @@ namespace Microsoft.ClearScript
         public Type AccessContext { get; set; }
 
         /// <summary>
+        /// Gets or sets a value that controls whether script code is permitted to use reflection.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, script code running in the current script
+        /// engine is permitted to use reflection. This affects
+        /// <see cref="System.Object.GetType"/>, <see cref="HostFunctions.typeOf(object)"/> and
+        /// <see cref="HostFunctions.typeOf{T}"/>. By default, any attempt to invoke these methods
+        /// from script code results in an exception.
+        /// </remarks>
+        public bool AllowReflection { get; set; }
+
+        /// <summary>
         /// Gets or sets a callback that can be used to halt script execution.
         /// </summary>
         /// <remarks>
@@ -586,6 +598,14 @@ namespace Microsoft.ClearScript
             if (tempScriptFrame != null)
             {
                 tempScriptFrame.InterruptRequested = true;
+            }
+        }
+
+        internal void CheckReflection()
+        {
+            if (!AllowReflection)
+            {
+                throw new UnauthorizedAccessException("Use of reflection is prohibited in this script engine");
             }
         }
 

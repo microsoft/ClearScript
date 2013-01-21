@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Windows;
@@ -68,6 +69,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class InterfaceMemberAccessTest : ClearScriptTest
     {
         #region setup / teardown
@@ -217,7 +219,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_Method_NoMatchingOverload()
         {
-            engine.Evaluate("testObject.InterfaceMethod('foo', TestEnum.Second)");
+            engine.Execute("testObject.InterfaceMethod('foo', TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -230,7 +232,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_Method_Generic_TypeArgConstraintFailure()
         {
-            engine.Evaluate("testObject.InterfaceMethod('foo', 4, testObject)");
+            engine.Execute("testObject.InterfaceMethod('foo', 4, testObject)");
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -243,7 +245,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_Method_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Evaluate("testObject.InterfaceMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            engine.Execute("testObject.InterfaceMethod(System.Int32, 'foo', 4, TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -256,7 +258,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_Method_GenericExplicit_MissingTypeArg()
         {
-            engine.Evaluate("testObject.InterfaceMethod(4)");
+            engine.Execute("testObject.InterfaceMethod(4)");
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -269,7 +271,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_ExtensionMethod_NoMatchingOverload()
         {
-            engine.Evaluate("testObject.InterfaceExtensionMethod('foo', TestEnum.Second)");
+            engine.Execute("testObject.InterfaceExtensionMethod('foo', TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -282,7 +284,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_ExtensionMethod_Generic_TypeArgConstraintFailure()
         {
-            engine.Evaluate("testObject.InterfaceExtensionMethod('foo', 4, testObject)");
+            engine.Execute("testObject.InterfaceExtensionMethod('foo', 4, testObject)");
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -295,7 +297,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_ExtensionMethod_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Evaluate("testObject.InterfaceExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            engine.Execute("testObject.InterfaceExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -308,7 +310,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
-            engine.Evaluate("testObject.InterfaceExtensionMethod(4)");
+            engine.Execute("testObject.InterfaceExtensionMethod(4)");
         }
 
         // ReSharper restore InconsistentNaming

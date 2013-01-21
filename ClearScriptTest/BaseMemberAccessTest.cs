@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
@@ -72,6 +73,7 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("ClearScriptV8-32.dll")]
     [DeploymentItem("v8-x64.dll")]
     [DeploymentItem("v8-ia32.dll")]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class BaseMemberAccessTest : ClearScriptTest
     {
         #region setup / teardown
@@ -306,7 +308,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void BaseMemberAccess_Method_NoMatchingOverload()
         {
-            engine.Evaluate("testObject.BaseMethod('foo', TestEnum.Second)");
+            engine.Execute("testObject.BaseMethod('foo', TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -319,7 +321,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void BaseMemberAccess_Method_Generic_TypeArgConstraintFailure()
         {
-            engine.Evaluate("testObject.BaseMethod('foo', 4, testObject)");
+            engine.Execute("testObject.BaseMethod('foo', 4, testObject)");
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -332,7 +334,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void BaseMemberAccess_Method_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Evaluate("testObject.BaseMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            engine.Execute("testObject.BaseMethod(System.Int32, 'foo', 4, TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -345,7 +347,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void BaseMemberAccess_Method_GenericExplicit_MissingTypeArg()
         {
-            engine.Evaluate("testObject.BaseMethod(4)");
+            engine.Execute("testObject.BaseMethod(4)");
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -358,7 +360,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void BaseMemberAccess_ExtensionMethod_NoMatchingOverload()
         {
-            engine.Evaluate("testObject.BaseExtensionMethod('foo', TestEnum.Second)");
+            engine.Execute("testObject.BaseExtensionMethod('foo', TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -371,7 +373,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void BaseMemberAccess_ExtensionMethod_Generic_TypeArgConstraintFailure()
         {
-            engine.Evaluate("testObject.BaseExtensionMethod('foo', 4, testObject)");
+            engine.Execute("testObject.BaseExtensionMethod('foo', 4, testObject)");
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -384,7 +386,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void BaseMemberAccess_ExtensionMethod_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Evaluate("testObject.BaseExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            engine.Execute("testObject.BaseExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)");
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -397,7 +399,7 @@ namespace Microsoft.ClearScript.Test
         [ExpectedException(typeof(RuntimeBinderException))]
         public void BaseMemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
-            engine.Evaluate("testObject.BaseExtensionMethod(4)");
+            engine.Execute("testObject.BaseExtensionMethod(4)");
         }
 
         // ReSharper restore InconsistentNaming

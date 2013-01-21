@@ -60,6 +60,9 @@
 //       
 
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Linq;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
@@ -224,7 +227,7 @@ namespace Microsoft.ClearScript
         /// var dict = host.newObj(StringDictT);
         /// dict.Add("foo", "bar");
         /// dict.Add("baz", "qux");
-        /// // look up a dictionary entry */
+        /// // look up a dictionary entry
         /// var result = host.newVar(StringT);
         /// var found = dict.TryGetValue("baz", result.out);
         /// </code>
@@ -360,6 +363,10 @@ namespace Microsoft.ClearScript
         /// <c><see href="http://msdn.microsoft.com/en-us/library/58918ffs(VS.71).aspx">typeof</see></c>
         /// operator. It is overloaded with <see cref="typeOf(object)"/> and selected at runtime if
         /// <typeparamref name="T"/> can be used as a type argument.
+        /// <para>
+        /// This function throws an exception if the script engine's
+        /// <see cref="ScriptEngine.AllowReflection"/> property is set to <c>false</c>.
+        /// </para>
         /// </remarks>
         /// <example>
         /// The following code retrieves the assembly-qualified name of a host type.
@@ -374,6 +381,7 @@ namespace Microsoft.ClearScript
         /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
         public Type typeOf<T>()
         {
+            GetEngine().CheckReflection();
             return typeof(T);
         }
 
@@ -389,6 +397,10 @@ namespace Microsoft.ClearScript
         /// operator. It is overloaded with <see cref="typeOf{T}"/> and selected at runtime if
         /// <paramref name="value"/> cannot be used as a type argument. Note that this applies to
         /// some host types; examples are static types and overloaded generic type groups.
+        /// <para>
+        /// This function throws an exception if the script engine's
+        /// <see cref="ScriptEngine.AllowReflection"/> property is set to <c>false</c>.
+        /// </para>
         /// </remarks>
         /// <example>
         /// The following code retrieves the assembly-qualified name of a host type.
@@ -403,6 +415,8 @@ namespace Microsoft.ClearScript
         /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
         public Type typeOf(object value)
         {
+            GetEngine().CheckReflection();
+
             var hostType = value as HostType;
             if (hostType == null)
             {
@@ -544,6 +558,51 @@ namespace Microsoft.ClearScript
 
         // ReSharper restore UnusedTypeParameter
 
+        /// <summary>
+        /// Creates a strongly typed flag set.
+        /// </summary>
+        /// <typeparam name="T">The type of flag set to create.</typeparam>
+        /// <param name="args">The flags to include in the flag set.</param>
+        /// <returns>A strongly typed flag set containing the specified flags.</returns>
+        /// <remarks>
+        /// This function throws an exception if <typeparamref name="T"/> is not a flag set type.
+        /// </remarks>
+        /// <example>
+        /// The following code demonstrates using a strongly typed flag set.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import URI types
+        /// var UriT = host.type("System.Uri", "System");
+        /// var UriFormatT = host.type("System.UriFormat", "System");
+        /// var UriComponentsT = host.type("System.UriComponents", "System");
+        /// // create a URI
+        /// var uri = host.newObj(UriT, "http://www.example.com:8080/path/to/file/sample.htm?x=1&amp;y=2");
+        /// // extract URI components
+        /// var components = host.flags(UriComponentsT.Scheme, UriComponentsT.Host, UriComponentsT.Path);
+        /// var result = uri.GetComponents(components, UriFormatT.Unescaped);
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, string, object[])"/>
+        public T flags<T>(params T[] args)
+        {
+            var type = typeof(T);
+            if (!type.IsFlagsEnum())
+            {
+                throw new InvalidOperationException(MiscHelpers.FormatInvariant("{0} is not a flag set type", type.GetFullFriendlyName()));
+            }
+
+            try
+            {
+                return args.Aggregate(0UL, (flags, arg) => flags | ((IConvertible)arg).ToUInt64(CultureInfo.InvariantCulture)).DynamicCast<T>();
+            }
+            catch (OverflowException)
+            {
+                return args.Aggregate(0L, (flags, arg) => flags | ((IConvertible)arg).ToInt64(CultureInfo.InvariantCulture)).DynamicCast<T>();
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -562,6 +621,7 @@ namespace Microsoft.ClearScript
 
         // ReSharper disable ParameterHidesMember
 
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         void IScriptableObject.OnExposedToScriptCode(ScriptEngine engine)
         {
             MiscHelpers.VerifyNonNullArgument(engine, "engine");

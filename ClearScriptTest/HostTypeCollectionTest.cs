@@ -61,6 +61,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Microsoft.ClearScript.Util;
@@ -69,6 +70,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class HostTypeCollectionTest : ClearScriptTest
     {
         #region test methods
@@ -78,13 +80,25 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("HostTypeCollection")]
         public void HostTypeCollection_SingleAssembly()
         {
-            Test(null, new[] { "mscorlib" }, (first, second) => first == second);
+            Test(null, new[] { "mscorlib" }, null, (first, second) => first == second);
         }
 
         [TestMethod, TestCategory("HostTypeCollection")]
         public void HostTypeCollection_MultiAssembly()
         {
-            Test(null, new[] { "mscorlib", "System", "System.Core" }, (first, second) => first.FullName == second.FullName);
+            Test(null, new[] { "mscorlib", "System", "System.Core" }, null, (first, second) => first.FullName == second.FullName);
+        }
+
+        [TestMethod, TestCategory("HostTypeCollection")]
+        public void HostTypeCollection_SingleAssembly_Filtered()
+        {
+            Test(null, new[] { "mscorlib" }, ReflectionFilter, (first, second) => first == second);
+        }
+
+        [TestMethod, TestCategory("HostTypeCollection")]
+        public void HostTypeCollection_MultiAssembly_Filtered()
+        {
+            Test(null, new[] { "mscorlib", "System", "System.Core" }, ReflectionFilter, (first, second) => first.FullName == second.FullName);
         }
 
         // ReSharper restore InconsistentNaming
@@ -93,13 +107,20 @@ namespace Microsoft.ClearScript.Test
 
         #region miscellaneous
 
-        internal static void Test(HostTypeCollection typeCollection, string[] assemblyNames, Func<Type, Type, bool> comparer)
+        private static readonly Predicate<Type> defaultFilter = type => true;
+
+        private static bool ReflectionFilter(Type type)
         {
-            typeCollection = typeCollection ?? new HostTypeCollection(assemblyNames);
+            return (type != typeof(Type)) && !type.FullName.StartsWith("System.Reflection.", StringComparison.Ordinal);
+        }
+
+        internal static void Test(HostTypeCollection typeCollection, string[] assemblyNames, Predicate<Type> filter, Func<Type, Type, bool> comparer)
+        {
+            typeCollection = typeCollection ?? new HostTypeCollection(filter, assemblyNames);
             var allNodes = GetLeafNodes(typeCollection).OrderBy(hostType => hostType.Type.GetLocator());
 
             var visitedNodes = new SortedDictionary<string, HostType>();
-            foreach (var type in GetImportableTypes(assemblyNames))
+            foreach (var type in GetImportableTypes(assemblyNames, filter))
             {
                 var currentType = type;
                 var locator = currentType.GetLocator();
@@ -113,12 +134,17 @@ namespace Microsoft.ClearScript.Test
             }
 
             Assert.IsTrue(allNodes.SequenceEqual(visitedNodes.Values));
+            if (filter != null)
+            {
+                Assert.IsTrue(allNodes.All(hostType => hostType.Types.All(type => filter(type))));
+            }
         }
 
-        private static IEnumerable<Type> GetImportableTypes(string[] assemblyNames)
+        private static IEnumerable<Type> GetImportableTypes(string[] assemblyNames, Predicate<Type> filter)
         {
             var assemblies = assemblyNames.Select(assemblyName => Assembly.Load(AssemblyHelpers.GetFullAssemblyName(assemblyName)));
-            return assemblies.SelectMany(assembly => assembly.GetTypes().Where(type => type.IsImportable()));
+            var activeFilter = filter ?? defaultFilter;
+            return assemblies.SelectMany(assembly => assembly.GetTypes().Where(type => type.IsImportable() && activeFilter(type)));
         }
 
         private static IEnumerable<HostType> GetLeafNodes(PropertyBag container)

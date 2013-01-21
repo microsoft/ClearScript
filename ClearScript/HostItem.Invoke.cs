@@ -100,12 +100,12 @@ namespace Microsoft.ClearScript
                     var extensionBindResult = extensionHostItem.BindMethod(name, typeArgs, extensionArgs);
                     if (extensionBindResult is MethodBindSuccess)
                     {
-                        return extensionBindResult.Invoke();
+                        return extensionBindResult.Invoke(engine);
                     }
                 }
             }
 
-            return bindResult.Invoke();
+            return bindResult.Invoke(engine);
         }
 
         private static IEnumerable<Type> GetTypeArgs(object[] args)
@@ -265,7 +265,7 @@ namespace Microsoft.ClearScript
                 return new MethodBindFailure((rawResult as Exception) ?? new NotSupportedException(MiscHelpers.FormatInvariant("Invocation of method '{0}' failed (unrecognized binding)", name)));
             }
 
-            public abstract object Invoke();
+            public abstract object Invoke(ScriptEngine engine);
         }
 
         #endregion
@@ -274,6 +274,8 @@ namespace Microsoft.ClearScript
 
         private class MethodBindSuccess : MethodBindResult
         {
+            private static readonly MethodInfo getTypeMethod = typeof(object).GetMethod("GetType");
+
             private readonly HostTarget hostTarget;
             private readonly MethodInfo method;
             private readonly object[] args;
@@ -287,8 +289,13 @@ namespace Microsoft.ClearScript
 
             #region MethodBindResult overrides
 
-            public override object Invoke()
+            public override object Invoke(ScriptEngine engine)
             {
+                if (method == getTypeMethod)
+                {
+                    engine.CheckReflection();
+                }
+
                 return InvokeHelpers.InvokeMethod(hostTarget.InvokeTarget, method, args);
             }
 
@@ -310,7 +317,7 @@ namespace Microsoft.ClearScript
 
             #region MethodBindResult overrides
 
-            public override object Invoke()
+            public override object Invoke(ScriptEngine engine)
             {
                 throw exception;
             }

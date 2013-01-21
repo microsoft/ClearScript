@@ -105,5 +105,6 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\V8\lib\v8-ia32.dll" />
+    <CustomBuild Include="..\..\V8\lib\v8-ia32.pdb" />
   </ItemGroup>
 </Project>
