@@ -48,7 +48,7 @@
       <NamespaceSummaryItem name="Microsoft.ClearScript.Windows" isDocumented="True">The Microsoft.ClearScript.Windows namespace contains types that provide access to Windows Script engines such as JScript and VBScript.</NamespaceSummaryItem>
       <NamespaceSummaryItem name="(global)" isDocumented="False" />
     </NamespaceSummaries>
-    <RootNamespaceTitle>ClearScript Library</RootNamespaceTitle>
+    <RootNamespaceTitle>ClearScript Library Reference</RootNamespaceTitle>
     <ProjectSummary>The ClearScript library makes it easy to add scripting to your .NET applications.</ProjectSummary>
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in
