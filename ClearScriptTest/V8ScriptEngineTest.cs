@@ -62,6 +62,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using Microsoft.ClearScript.Util;
@@ -531,11 +532,89 @@ namespace Microsoft.ClearScript.Test
             engine.Execute("new System.Random('a')");
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_General()
+        {
+            using (var console = new StringWriter())
+            {
+                var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                engine.AddHostObject("host", new ExtendedHostFunctions());
+                engine.AddHostObject("clr", clr);
+
+                engine.Execute(generalScript);
+                Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
 
         #region miscellaneous
+
+        private const string generalScript =
+        @"
+            System = clr.System;
+
+            TestObject = host.type('Microsoft.ClearScript.Test.GeneralTestObject', 'ClearScriptTest');
+            tlist = host.newObj(System.Collections.Generic.List(TestObject));
+            tlist.Add(host.newObj(TestObject, 'Eóin', 20));
+            tlist.Add(host.newObj(TestObject, 'Shane', 16));
+            tlist.Add(host.newObj(TestObject, 'Cillian', 8));
+            tlist.Add(host.newObj(TestObject, 'Sasha', 6));
+            tlist.Add(host.newObj(TestObject, 'Brian', 3));
+
+            olist = host.newObj(System.Collections.Generic.List(System.Object));
+            olist.Add({ name: 'Brian', age: 3 });
+            olist.Add({ name: 'Sasha', age: 6 });
+            olist.Add({ name: 'Cillian', age: 8 });
+            olist.Add({ name: 'Shane', age: 16 });
+            olist.Add({ name: 'Eóin', age: 20 });
+
+            dict = host.newObj(System.Collections.Generic.Dictionary(System.String, System.String));
+            dict.Add('foo', 'bar');
+            dict.Add('baz', 'qux');
+            value = host.newVar(System.String);
+            result = dict.TryGetValue('foo', value.out);
+
+            bag = host.newObj();
+            bag.method = function (x) { System.Console.WriteLine(x * x); };
+            bag.proc = host.del(System.Action(System.Object), bag.method);
+
+            expando = host.newObj(System.Dynamic.ExpandoObject);
+            expandoCollection = host.cast(System.Collections.Generic.ICollection(System.Collections.Generic.KeyValuePair(System.String, System.Object)), expando);
+
+            function onChange(s, e) {
+                System.Console.WriteLine('Property changed: {0}; new value: {1}', e.PropertyName, s[e.PropertyName]);
+            };
+            function onStaticChange(s, e) {
+                System.Console.WriteLine('Property changed: {0}; new value: {1} (static event)', e.PropertyName, e.PropertyValue);
+            };
+            eventCookie = tlist.Item(0).Change.connect(onChange);
+            staticEventCookie = TestObject.StaticChange.connect(onStaticChange);
+            tlist.Item(0).Name = 'Jerry';
+            tlist.Item(1).Name = 'Ellis';
+            tlist.Item(0).Name = 'Eóin';
+            tlist.Item(1).Name = 'Shane';
+            eventCookie.disconnect();
+            staticEventCookie.disconnect();
+            tlist.Item(0).Name = 'Jerry';
+            tlist.Item(1).Name = 'Ellis';
+            tlist.Item(0).Name = 'Eóin';
+            tlist.Item(1).Name = 'Shane';
+        ";
+
+        private const string generalScriptOutput =
+        @"
+            Property changed: Name; new value: Jerry
+            Property changed: Name; new value: Jerry (static event)
+            Property changed: Name; new value: Ellis (static event)
+            Property changed: Name; new value: Eóin
+            Property changed: Name; new value: Eóin (static event)
+            Property changed: Name; new value: Shane (static event)
+        ";
 
         // ReSharper disable UnusedMember.Local
 

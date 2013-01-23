@@ -55,7 +55,6 @@
   <ItemGroup>
     <Compile Include="ClearScriptConsole.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ConsoleTestObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ClearScript\ClearScript.csproj">
@@ -63,14 +62,6 @@
       <Name>ClearScript</Name>
       <Private>False</Private>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Startup.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Startup.vbs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />

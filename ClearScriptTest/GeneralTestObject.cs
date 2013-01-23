@@ -64,7 +64,7 @@ using System.ComponentModel;
 
 namespace Microsoft.ClearScript.Test
 {
-    public class ConsoleTestObject
+    public class GeneralTestObject
     {
         private string name;
         public string Name
@@ -94,7 +94,7 @@ namespace Microsoft.ClearScript.Test
 
         public static event EventHandler<StaticEventArgs> StaticChange;
 
-        public ConsoleTestObject(string name, int age)
+        public GeneralTestObject(string name, int age)
         {
             this.name = name;
             this.age = age;
