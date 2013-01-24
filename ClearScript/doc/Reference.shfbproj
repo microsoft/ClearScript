@@ -15,8 +15,8 @@
     <RootNamespace>Documentation</RootNamespace>
     <Name>Documentation</Name>
     <!-- SHFB properties -->
-    <OutputPath>.\Help\</OutputPath>
-    <HtmlHelpName>ClearScript</HtmlHelpName>
+    <OutputPath>.\</OutputPath>
+    <HtmlHelpName>Reference</HtmlHelpName>
     <Language>en-US</Language>
     <HelpTitle>ClearScript Library</HelpTitle>
     <DocumentationSources>

@@ -20,23 +20,23 @@ Please see ClearScript\doc for information about using ClearScript.
 II. Building ClearScript
 ------------------------
 
-NOTE: The provided project and solution files require Visual Studio 2012. They
+The provided project and solution files require Visual Studio 2012. They
 produce architecture-neutral managed libraries that target .NET Framework 4.5,
-although ClearScript supports .NET Framework 4.0 or later.
+although ClearScript has been tested with .NET Framework 4.0 as well. It does
+not support older environments. The output directory is bin\[Debug|Release].
 
 There are two ways to build ClearScript - with and without V8 support.
 
 If you don't need V8 support, simply build the ClearScript.NoV8 solution using
-Visual Studio. Note that this solution does not include any of the ClearScript
-test projects.
+Visual Studio. Note that this solution does not include test projects.
 
 In order to build full ClearScript with V8 support, you must first acquire,
 build, and import V8:
 
 1. NOTE: This procedure and the V8Update script are provided for your
    convenience. ClearScript does not include V8 source code, nor does it come
-   with any third-party software required to download or build V8. Rights to V8
-   and its prerequisites are provided by their rights holders.
+   with any third-party software required to download and build V8. Rights to
+   V8 and its prerequisites are provided by their rights holders.
 
 2. Install Subversion (http://subversion.apache.org/packages.html) and add it
    to your executable path.
@@ -51,11 +51,19 @@ build, and import V8:
    ClearScript. It requires approximately 2GB of additional disk space and does
    not perform any permanent software installation on your machine.
    
+   Specifying "Debug" or "Release" is optional; the default is Release. The
+   selected V8 variant will then be used for all ClearScript configurations.
+   
    If you'd like to use a specific version of V8 instead of the latest one, set
    an environment variable named V8REV to the desired V8 trunk revision number
    before running the script. See http://code.google.com/p/v8/source/list.
 
 You are now ready to build the full ClearScript solution using Visual Studio.
+
+The ClearScript distribution includes a copy of the ClearScript Library
+Reference in Compiled HTML (.CHM) format. If you'd like to rebuild this file,
+use Sandcastle Help File Builder (SHFB, http://shfb.codeplex.com) with the
+provided SHFB project file (ClearScript\doc\Reference.shfbproj).
 
 --------------------------------------
 III. Debugging with ClearScript and V8
