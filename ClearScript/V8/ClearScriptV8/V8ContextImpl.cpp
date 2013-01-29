@@ -205,7 +205,7 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, DebugMessageDi
 
         m_hContext = Context::New(nullptr, hGlobalTemplate);
 
-        m_hGlobal = Persistent<Object>::New(m_hContext->Global()->GetPrototype()->ToObject());
+        m_hGlobal = Persistent<Object>::New(m_pIsolate, m_hContext->Global()->GetPrototype()->ToObject());
         _ASSERTE(m_hGlobal->InternalFieldCount() > 0);
         m_hGlobal->SetAlignedPointerInInternalField(0, this);
 
@@ -214,9 +214,9 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, DebugMessageDi
             // Be careful when renaming the cookie or changing the way host objects are marked.
             // Such a change will require a corresponding change in the V8ScriptEngine constructor.
 
-            m_hHostObjectCookieName = Persistent<String>::New(String::New(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}"));
+            m_hHostObjectCookieName = Persistent<String>::New(m_pIsolate, String::New(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}"));
 
-            m_hHostObjectTemplate = Persistent<FunctionTemplate>::New(FunctionTemplate::New());
+            m_hHostObjectTemplate = Persistent<FunctionTemplate>::New(m_pIsolate, FunctionTemplate::New());
             m_hHostObjectTemplate->SetClassName(String::New("HostObject"));
 
             m_hHostObjectTemplate->InstanceTemplate()->SetInternalFieldCount(1);
@@ -256,7 +256,7 @@ void V8ContextImpl::SetGlobalProperty(LPCWSTR pName, const V8Value& value, bool 
         m_hContext->Global()->Set(String::New(pName), hValue);
         if (globalMembers && hValue->IsObject())
         {
-            m_GlobalMembersStack.push_back(Persistent<Object>::New(hValue->ToObject()));
+            m_GlobalMembersStack.push_back(Persistent<Object>::New(m_pIsolate, hValue->ToObject()));
         }
 
     END_CONTEXT_SCOPE
@@ -335,7 +335,7 @@ LPVOID V8ContextImpl::AddRefV8Object(LPVOID pvV8Object)
 {
     BEGIN_ISOLATE_SCOPE
 
-        return ::PtrFromObjectHandle(Persistent<Object>::New(::ObjectHandleFromPtr(pvV8Object)));
+        return ::PtrFromObjectHandle(Persistent<Object>::New(m_pIsolate, ::ObjectHandleFromPtr(pvV8Object)));
 
     END_ISOLATE_SCOPE
 }
@@ -346,7 +346,7 @@ void V8ContextImpl::ReleaseV8Object(LPVOID pvV8Object)
 {
     BEGIN_ISOLATE_SCOPE
 
-        ::ObjectHandleFromPtr(pvV8Object).Dispose();
+        ::ObjectHandleFromPtr(pvV8Object).Dispose(m_pIsolate);
 
     END_ISOLATE_SCOPE
 }
@@ -553,16 +553,16 @@ V8ContextImpl::~V8ContextImpl()
 
             for (auto it = m_GlobalMembersStack.rbegin(); it != m_GlobalMembersStack.rend(); it++)
             {
-                it->Dispose();
+                it->Dispose(m_pIsolate);
             }
 
             for (auto it = m_IntegerCache.begin(); it != m_IntegerCache.end(); it++)
             {
-                it->second.Dispose();
+                it->second.Dispose(m_pIsolate);
             }
 
-            m_hHostObjectTemplate.Dispose();
-            m_hHostObjectCookieName.Dispose();
+            m_hHostObjectTemplate.Dispose(m_pIsolate);
+            m_hHostObjectCookieName.Dispose(m_pIsolate);
 
         END_CONTEXT_SCOPE
 
@@ -570,9 +570,9 @@ V8ContextImpl::~V8ContextImpl()
         // may be invoked during GC after the V8ContextImpl instance is gone.
 
         m_hGlobal->SetAlignedPointerInInternalField(0, nullptr);
-        m_hGlobal.Dispose();
+        m_hGlobal.Dispose(m_pIsolate);
 
-        m_hContext.Dispose();
+        m_hContext.Dispose(m_pIsolate);
         V8::ContextDisposedNotification();
 
         // The context is gone, but it may have contained host object holders
@@ -863,10 +863,10 @@ Handle<Value> V8ContextImpl::InvokeHostObject(const Arguments& args)
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::DisposeWeakHandle(Persistent<Value> hValue, void* /* parameter */)
+void V8ContextImpl::DisposeWeakHandle(Isolate* pIsolate, Persistent<Value> hValue, void* /* parameter */)
 {
     delete ::GetHostObjectHolder(hValue->ToObject());
-    hValue.Dispose();
+    hValue.Dispose(pIsolate);
 }
 
 //-----------------------------------------------------------------------------
@@ -876,7 +876,7 @@ Persistent<Integer> V8ContextImpl::GetIntegerHandle(int value)
     auto it = m_IntegerCache.find(value);
     if (it == m_IntegerCache.end())
     {
-        return m_IntegerCache[value] = Persistent<Integer>::New(Integer::New(value));
+        return m_IntegerCache[value] = Persistent<Integer>::New(m_pIsolate, Integer::New(value));
     }
 
     return it->second;
@@ -947,7 +947,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         {
             auto hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
             ::SetHostObjectHolder(hObject, pHolder->Clone());
-            Persistent<Object>::New(hObject).MakeWeak(nullptr, DisposeWeakHandle);
+            Persistent<Object>::New(m_pIsolate, hObject).MakeWeak(m_pIsolate, nullptr, DisposeWeakHandle);
             return hObject;
         }
     }
@@ -1015,7 +1015,7 @@ V8Value V8ContextImpl::ExportValue(Handle<Value> hValue)
             return V8Value(::GetHostObjectHolder(hObject)->Clone());
         }
 
-        return V8Value(new V8ObjectHolderImpl(this, ::PtrFromObjectHandle(Persistent<Object>::New(hObject))));
+        return V8Value(new V8ObjectHolderImpl(this, ::PtrFromObjectHandle(Persistent<Object>::New(m_pIsolate, hObject))));
     }
 
     return V8Value(V8Value::Undefined);

@@ -132,7 +132,7 @@ private:
     static Handle<Array> GetHostObjectPropertyIndices(const AccessorInfo& info);
 
     static Handle<Value> InvokeHostObject(const Arguments& args);
-    static void DisposeWeakHandle(Persistent<Value> hValue, void* parameter);
+    static void DisposeWeakHandle(Isolate* pIsolate, Persistent<Value> hValue, void* parameter);
 
     Persistent<Integer> GetIntegerHandle(int value);
     Handle<Value> ImportValue(const V8Value& value);
