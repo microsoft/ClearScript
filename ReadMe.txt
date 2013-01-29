@@ -60,10 +60,10 @@ build, and import V8:
 
 You are now ready to build the full ClearScript solution using Visual Studio.
 
-The ClearScript distribution includes a copy of the ClearScript Library
-Reference in Compiled HTML (.CHM) format. If you'd like to rebuild this file,
-use Sandcastle Help File Builder (SHFB, http://shfb.codeplex.com) with the
-provided SHFB project file (ClearScript\doc\Reference.shfbproj).
+OPTIONAL: The ClearScript distribution includes a copy of the ClearScript
+Library Reference in Compiled HTML (.CHM) format. If you'd like to rebuild this
+file, use Sandcastle Help File Builder (SHFB, http://shfb.codeplex.com) with
+the provided SHFB project file (ClearScript\doc\Reference.shfbproj).
 
 --------------------------------------
 III. Debugging with ClearScript and V8
