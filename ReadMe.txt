@@ -1,4 +1,4 @@
----------------
+﻿---------------
 I. Introduction
 ---------------
 
@@ -43,20 +43,21 @@ build, and import V8:
 
 3. Open a Visual Studio developer command prompt and run the V8Update script
    from your ClearScript root directory:
-   
+
     C:\ClearScript> V8Update [Debug|Release]
-   
+
    This script downloads the latest versions of V8 and its prerequisites,
    builds 32-bit and 64-bit V8 shared libraries, and imports the results into
    ClearScript. It requires approximately 2GB of additional disk space and does
    not perform any permanent software installation on your machine.
-   
+
    Specifying "Debug" or "Release" is optional; the default is Release. The
    selected V8 variant will then be used for all ClearScript configurations.
-   
+
    If you'd like to use a specific version of V8 instead of the latest one, set
    an environment variable named V8REV to the desired V8 trunk revision number
-   before running the script. See http://code.google.com/p/v8/source/list.
+   before running the script. See http://code.google.com/p/v8/source/list. Due
+   to its use of newer V8 APIs, ClearScript requires V8 3.16.10 or later.
 
 You are now ready to build the full ClearScript solution using Visual Studio.
 
@@ -112,7 +113,7 @@ IV. V8 Known Issues
    of an assignment - something that makes no sense in JavaScript. JScript's
    behavior appears to be an extension, but it's a convenient one because
    indexers are common in the CLR.
-   
+
    WORKAROUND: ClearScript supports the alternate syntax "A.B.set(C,D,E)".
 
 2. V8 doesn't support default properties. This is only an issue in conjunction
