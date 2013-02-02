@@ -85,6 +85,7 @@ namespace Microsoft.ClearScript.V8
         private const int continuationInterval = 2000;
         private const int defaultDebugPort = 9222;
 
+        private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8Proxy proxy;
         private readonly dynamic script;
         private bool disposed;
@@ -142,7 +143,9 @@ namespace Microsoft.ClearScript.V8
         public V8ScriptEngine(string name, V8ScriptEngineFlags flags, int debugPort)
         {
             var uniqueName = embeddingHostNameManager.GetUniqueName(name, GetType().GetRootName());
-            proxy = V8Proxy.Create(uniqueName, flags.HasFlag(V8ScriptEngineFlags.EnableDebugging), debugPort);
+
+            engineFlags = flags;
+            proxy = V8Proxy.Create(uniqueName, flags.HasFlag(V8ScriptEngineFlags.EnableDebugging), flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers), debugPort);
             script = GetRootItem();
 
             var engineInternal = Evaluate(
@@ -297,6 +300,12 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
 
+            var globalMembers = flags.HasFlag(HostItemFlags.GlobalMembers);
+            if (globalMembers && engineFlags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers))
+            {
+                throw new InvalidOperationException("GlobalMembers support is disabled in this script engine");
+            }
+
             MiscHelpers.VerifyNonNullArgument(itemName, "itemName");
             Debug.Assert(item != null);
 
@@ -306,7 +315,7 @@ namespace Microsoft.ClearScript.V8
                 throw new InvalidOperationException("Invalid host item");
             }
 
-            ScriptInvoke(() => proxy.AddGlobalItem(itemName, marshaledItem, flags.HasFlag(HostItemFlags.GlobalMembers)));
+            ScriptInvoke(() => proxy.AddGlobalItem(itemName, marshaledItem, globalMembers));
         }
 
         internal override object MarshalToScript(object obj, HostItemFlags flags)

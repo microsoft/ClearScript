@@ -192,22 +192,29 @@ template<typename T> static T Verify(const TryCatch& tryCatch, T result)
 
 //-----------------------------------------------------------------------------
 
-V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort):
+V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGlobalMembers, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort):
     m_pIsolate(Isolate::New()),
     m_DebugAgentEnabled(false),
     m_DebugMessageDispatchCount(0)
 {
     BEGIN_ISOLATE_SCOPE
 
-        auto hGlobalTemplate = ObjectTemplate::New();
-        hGlobalTemplate->SetInternalFieldCount(1);
-        hGlobalTemplate->SetNamedPropertyHandler(GetGlobalProperty);
+        if (disableGlobalMembers)
+        {
+            m_hContext = Context::New();
+        }
+        else
+        {
+            auto hGlobalTemplate = ObjectTemplate::New();
+            hGlobalTemplate->SetInternalFieldCount(1);
+            hGlobalTemplate->SetNamedPropertyHandler(GetGlobalProperty);
 
-        m_hContext = Context::New(nullptr, hGlobalTemplate);
+            m_hContext = Context::New(nullptr, hGlobalTemplate);
 
-        m_hGlobal = Persistent<Object>::New(m_pIsolate, m_hContext->Global()->GetPrototype()->ToObject());
-        _ASSERTE(m_hGlobal->InternalFieldCount() > 0);
-        m_hGlobal->SetAlignedPointerInInternalField(0, this);
+            m_hGlobal = Persistent<Object>::New(m_pIsolate, m_hContext->Global()->GetPrototype()->ToObject());
+            _ASSERTE(m_hGlobal->InternalFieldCount() > 0);
+            m_hGlobal->SetAlignedPointerInInternalField(0, this);
+        }
 
         BEGIN_CONTEXT_SCOPE
 
@@ -569,8 +576,12 @@ V8ContextImpl::~V8ContextImpl()
         // As of V8 3.16.0, the global property getter for a disposed context
         // may be invoked during GC after the V8ContextImpl instance is gone.
 
-        m_hGlobal->SetAlignedPointerInInternalField(0, nullptr);
-        m_hGlobal.Dispose(m_pIsolate);
+        if (!m_hGlobal.IsEmpty())
+        {
+            _ASSERTE(m_hGlobal->InternalFieldCount() > 0);
+            m_hGlobal->SetAlignedPointerInInternalField(0, nullptr);
+            m_hGlobal.Dispose(m_pIsolate);
+        }
 
         m_hContext.Dispose(m_pIsolate);
         V8::ContextDisposedNotification();
@@ -605,27 +616,25 @@ Handle<Value> V8ContextImpl::GetGlobalProperty(Local<String> hName, const Access
     auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
-        if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
+        const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        if (stack.size() > 0)
         {
-            return Handle<Value>();
-        }
-
-        auto stack = pContextImpl->m_GlobalMembersStack;
-        for (auto it = stack.rbegin(); it != stack.rend(); it++)
-        {
-            if ((*it)->HasOwnProperty(hName))
+            if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
             {
-                return (*it)->Get(hName);
+                return Handle<Value>();
+            }
+
+            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            {
+                if ((*it)->HasOwnProperty(hName))
+                {
+                    return (*it)->Get(hName);
+                }
             }
         }
     }
 
-    if (hGlobal->HasRealNamedProperty(hName))
-    {
-        return hGlobal->GetRealNamedProperty(hName);
-    }
-
-    return Handle<Value>();
+    return hGlobal->GetRealNamedProperty(hName);
 }
 
 //-----------------------------------------------------------------------------

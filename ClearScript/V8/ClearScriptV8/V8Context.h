@@ -70,7 +70,7 @@ class V8Context: public SharedPtrTarget
 public:
 
     typedef void DebugMessageDispatcher();
-    static V8Context* Create(LPCWSTR pName, bool enableDebugging, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort);
+    static V8Context* Create(LPCWSTR pName, bool enableDebugging, bool disableGlobalMembers, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort);
 
     virtual V8Value GetRootObject() = 0;
     virtual void SetGlobalProperty(LPCWSTR pName, const V8Value& value, bool globalMembers) = 0;

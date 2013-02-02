@@ -349,10 +349,13 @@ namespace Microsoft.ClearScript.Test
         {
             engine.ContinuationCallback = () => false;
 
+            // V8 can't interrupt code that accesses only native data
+            engine.AddHostObject("test", new { foo = "bar" });
+
             var gotException = false;
             try
             {
-                engine.Execute("while (true) { var foo = 'hello'; }");
+                engine.Execute("while (true) { var foo = test.foo; }");
             }
             catch (OperationCanceledException)
             {

@@ -78,14 +78,14 @@ namespace V8 {
     // V8ProxyImpl implementation
     //-------------------------------------------------------------------------
 
-    V8ProxyImpl::V8ProxyImpl(String^ gcName, Boolean enableDebugging, Int32 debugPort):
+    V8ProxyImpl::V8ProxyImpl(String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Int32 debugPort):
         m_gcLock(gcnew Object)
     {
         m_gcDispatchDebugMessagesAction = gcnew Action(this, &V8ProxyImpl::DispatchDebugMessages);
         m_gcProcessDebugMessagesCallback = gcnew WaitCallback(this, &V8ProxyImpl::ProcessDebugMessages);
 
         auto pDispatcher = (V8Context::DebugMessageDispatcher*)Marshal::GetFunctionPointerForDelegate(m_gcDispatchDebugMessagesAction).ToPointer();
-        m_pContextPtr = new SharedPtr<V8Context>(V8Context::Create(StringToUniPtr(gcName), enableDebugging, pDispatcher, debugPort));
+        m_pContextPtr = new SharedPtr<V8Context>(V8Context::Create(StringToUniPtr(gcName), enableDebugging, disableGlobalMembers, pDispatcher, debugPort));
     }
 
     //-------------------------------------------------------------------------

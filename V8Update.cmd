@@ -121,6 +121,7 @@ echo Updating patch file ...
 copy build\v8\V8Patch.txt .\ >nul
 if errorlevel 1 goto Error
 
+echo Succeeded!
 goto End
 
 :Error2

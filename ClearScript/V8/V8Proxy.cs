@@ -65,7 +65,7 @@ namespace Microsoft.ClearScript.V8
 {
     internal abstract class V8Proxy : IDisposable
     {
-        public static V8Proxy Create(string name, bool enableDebugging, int debugPort)
+        public static V8Proxy Create(string name, bool enableDebugging, bool disableGlobalMembers, int debugPort)
         {
             var suffix = Environment.Is64BitProcess ? "64" : "32";
             var type = Type.GetType("Microsoft.ClearScript.V8.V8ProxyImpl, ClearScriptV8-" + suffix);
@@ -74,7 +74,7 @@ namespace Microsoft.ClearScript.V8
                 throw new TypeLoadException("Cannot load V8 proxy implementation type");
             }
 
-            return (V8Proxy)Activator.CreateInstance(type, name, enableDebugging, debugPort);
+            return (V8Proxy)Activator.CreateInstance(type, name, enableDebugging, disableGlobalMembers, debugPort);
         }
 
         public abstract object GetRootItem();

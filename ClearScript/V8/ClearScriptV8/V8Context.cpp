@@ -65,7 +65,7 @@
 // V8Context implementation
 //-----------------------------------------------------------------------------
 
-V8Context* V8Context::Create(LPCWSTR pName, bool enableDebugging, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort)
+V8Context* V8Context::Create(LPCWSTR pName, bool enableDebugging, bool disableGlobalMembers, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort)
 {
-    return new V8ContextImpl(pName, enableDebugging, pDebugMessageDispatcher, debugPort);
+    return new V8ContextImpl(pName, enableDebugging, disableGlobalMembers, pDebugMessageDispatcher, debugPort);
 }

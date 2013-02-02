@@ -83,7 +83,7 @@ class V8ContextImpl: public V8Context
 
 public:
 
-    V8ContextImpl(LPCWSTR pName, bool enableDebugging, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort);
+    V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGlobalMembers, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort);
 
     V8Value GetRootObject();
     void SetGlobalProperty(LPCWSTR pName, const V8Value& value, bool globalMembers);
