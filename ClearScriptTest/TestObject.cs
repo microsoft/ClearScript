@@ -102,6 +102,7 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(this, arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public double Method<T>(int arg) where T : struct
         {
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
@@ -140,6 +141,7 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(this, arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public double InterfaceMethod<T>(int arg) where T : struct
         {
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
@@ -174,16 +176,19 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         double IExplicitTestInterface.ExplicitInterfaceMethod(string arg1, int arg2)
         {
             return TestUtil.CalcTestValue(this, arg1.Length, arg2);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         double IExplicitTestInterface.ExplicitInterfaceMethod<T>(string arg1, int arg2, T arg3)
         {
             return TestUtil.CalcTestValue(this, arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         double IExplicitTestInterface.ExplicitInterfaceMethod<T>(int arg)
         {
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
@@ -206,6 +211,7 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(self, arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double ExtensionMethod<T>(this TestObject self, int arg) where T : struct
         {
             return TestUtil.CalcTestValue(self, typeof(T).Name.Length, arg);

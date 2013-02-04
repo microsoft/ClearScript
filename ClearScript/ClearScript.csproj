@@ -60,6 +60,11 @@
     <Compile Include="HostTargetFlags.cs" />
     <Compile Include="IScriptableObject.cs" />
     <Compile Include="BindSignature.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>AssemblyInfo.tt</DependentUpon>
+    </Compile>
     <Compile Include="ScriptMethod.cs" />
     <Compile Include="Util\IScriptMarshalWrapper.cs" />
     <Compile Include="Windows\WindowsScriptEngineFlags.cs" />
@@ -97,7 +102,10 @@
     <Compile Include="HostItem.cs" />
     <Compile Include="HostVariable.cs" />
     <Compile Include="Windows\JScriptEngine.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Properties\AssemblyInfo.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>AssemblyInfo.cs</LastGenOutput>
+    </None>
     <Compile Include="PropertyBag.cs" />
     <Compile Include="Windows\WindowsScriptEngine.cs" />
     <Compile Include="Windows\WindowsScriptEngine.Debug.cs" />
@@ -125,13 +133,23 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>DelegateFactory.Generated.cs</LastGenOutput>
     </None>
+    <None Include="VersionSymbols.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>VersionSymbols.h</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="VersionSymbols.h">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>VersionSymbols.tt</DependentUpon>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

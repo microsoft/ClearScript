@@ -103,6 +103,7 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(this, arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public double BaseMethod<T>(int arg) where T : struct
         {
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
@@ -141,6 +142,7 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(this, arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public double BaseInterfaceMethod<T>(int arg) where T : struct
         {
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
@@ -185,18 +187,21 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation for testing purposes.")]
         double IExplicitBaseTestInterface.ExplicitBaseInterfaceMethod(string arg1, int arg2)
         {
             return TestUtil.CalcTestValue(this, arg1.Length, arg2);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation for testing purposes.")]
         double IExplicitBaseTestInterface.ExplicitBaseInterfaceMethod<T>(string arg1, int arg2, T arg3)
         {
             return TestUtil.CalcTestValue(this, arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation for testing purposes.")]
         double IExplicitBaseTestInterface.ExplicitBaseInterfaceMethod<T>(int arg)
         {
@@ -220,6 +225,7 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(self, arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double BaseExtensionMethod<T>(this BaseTestObject self, int arg) where T : struct
         {
             return TestUtil.CalcTestValue(self, typeof(T).Name.Length, arg);

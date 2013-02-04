@@ -62,6 +62,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -81,6 +82,7 @@ namespace Microsoft.ClearScript.Test
 
     public static class TestUtil
     {
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double CalcTestValue(params object[] args)
         {
             // ReSharper disable PossibleNullReferenceException

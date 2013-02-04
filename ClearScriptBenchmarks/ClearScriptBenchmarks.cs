@@ -67,9 +67,16 @@ namespace Microsoft.ClearScript.Test
 {
     public static class ClearScriptBenchmarks
     {
+    #if DEBUG
+        private const string flavor = "Debug";
+    #else
+        private const string flavor = "Release";
+    #endif
+
         public static void Main()
         {
             Console.Clear();
+            Console.WriteLine("ClearScript Benchmarks ({0}, {1})\n", flavor, Environment.Is64BitProcess ? "64-bit" : "32-bit");
 
             while (true)
             {

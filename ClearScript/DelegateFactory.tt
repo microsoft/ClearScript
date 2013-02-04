@@ -65,14 +65,7 @@
 <#@ assembly name="System.Core" #>
 <#@ import namespace="System.Linq" #>
 
-<# var timestamp = DateTime.Now; #>
 <# const int maxArgCount = 16; #>
-
-//
-// DelegateFactory.Generated.cs, based on DelegateFactory.tt
-// Generated on <#= timestamp.ToLongDateString() #> at <#= timestamp.ToLongTimeString() #>.
-// DO NOT EDIT!
-//
 
 using System;
 using System.Reflection;

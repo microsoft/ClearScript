@@ -61,13 +61,5 @@
 
 
 
-using System.Reflection;
-using System.Runtime.InteropServices;
-
-[assembly: AssemblyTitle("ClearScript Test Console")]
-[assembly: AssemblyProduct("ClearScript")]
-[assembly: AssemblyCopyright("© Microsoft Corporation")]
-
-[assembly: ComVisible(false)]
-[assembly: AssemblyVersion("5.0.1.0")]
-[assembly: AssemblyFileVersion("5.0.1.0")]
+#define CLEARSCRIPT_VERSION_STRING "5.0.1.0"
+#define CLEARSCRIPT_VERSION_COMMA_SEPARATED 5,0,1,0

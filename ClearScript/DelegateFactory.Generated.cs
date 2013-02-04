@@ -62,12 +62,6 @@
 
 
 
-//
-// DelegateFactory.Generated.cs, based on DelegateFactory.tt
-// Generated on Thursday, January 3, 2013 at 10:04:46 AM.
-// DO NOT EDIT!
-//
-
 using System;
 using System.Reflection;
 

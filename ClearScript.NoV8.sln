@@ -3,6 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClearScript", "ClearScript\ClearScript.csproj", "{D2382D2C-6576-4D96-B6CD-057C4F6BED96}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5488F9BE-286E-459B-8384-E9EDA331BD5B}"
+	ProjectSection(SolutionItems) = preProject
+		ClearScript\doc\FAQtorial.docx = ClearScript\doc\FAQtorial.docx
+		ClearScript\doc\FAQtorial.pdf = ClearScript\doc\FAQtorial.pdf
+		MS-PL.txt = MS-PL.txt
+		ReadMe.txt = ReadMe.txt
+		ClearScript\doc\Reference.chm = ClearScript\doc\Reference.chm
+		Version.tt = Version.tt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

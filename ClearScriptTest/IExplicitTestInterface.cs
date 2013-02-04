@@ -94,6 +94,7 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(self, arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double ExplicitInterfaceExtensionMethod<T>(this IExplicitTestInterface self, int arg) where T : struct
         {
             return TestUtil.CalcTestValue(self, typeof(T).Name.Length, arg);

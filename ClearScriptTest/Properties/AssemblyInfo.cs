@@ -59,6 +59,8 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
+
+
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -67,5 +69,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("© Microsoft Corporation")]
 
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("5.0.0.0")]
-[assembly: AssemblyFileVersion("5.0.0.0")]
+[assembly: AssemblyVersion("5.0.1.0")]
+[assembly: AssemblyFileVersion("5.0.1.0")]

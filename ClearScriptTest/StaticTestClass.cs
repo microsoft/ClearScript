@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -89,16 +90,19 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double StaticMethod(string arg1, int arg2)
         {
             return TestUtil.CalcTestValue(typeof(StaticTestClass), arg1.Length, arg2);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double StaticMethod<T>(string arg1, int arg2, T arg3) where T : struct
         {
             return TestUtil.CalcTestValue(typeof(StaticTestClass), arg1.Length, arg2, arg3.ToString().Length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double StaticMethod<T>(int arg) where T : struct
         {
             return TestUtil.CalcTestValue(typeof(StaticTestClass), typeof(T).Name.Length, arg);
