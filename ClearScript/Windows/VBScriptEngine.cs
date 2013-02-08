@@ -121,6 +121,7 @@ namespace Microsoft.ClearScript.Windows
         };
 
         #endregion
+
         #region constructors
 
         /// <summary>

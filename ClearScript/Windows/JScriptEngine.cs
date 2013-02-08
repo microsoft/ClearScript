@@ -244,7 +244,8 @@ namespace Microsoft.ClearScript.Windows
         /// </remarks>
         public override string ExecuteCommand(string command)
         {
-            return base.ExecuteCommand(MiscHelpers.FormatInvariant("EngineInternal.getCommandResult({0})", command));
+            Script.EngineInternal.command = command;
+            return base.ExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.command))");
         }
 
         internal override IDictionary<int, string> RuntimeErrorMap

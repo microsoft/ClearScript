@@ -300,6 +300,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ExecuteCommand_var()
+        {
+            Assert.AreEqual("[undefined]", engine.ExecuteCommand("var x = 'foo'"));
+            Assert.AreEqual("foo", engine.Script.x);
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ExecuteCommand_HostVariable()
+        {
+            engine.Script.host = new HostFunctions();
+            Assert.AreEqual("[HostVariable:String]", engine.ExecuteCommand("host.newVar('foo')"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_Interrupt()
         {
             var checkpoint = new ManualResetEvent(false);

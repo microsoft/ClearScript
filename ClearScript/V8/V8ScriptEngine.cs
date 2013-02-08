@@ -277,7 +277,11 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public override string ExecuteCommand(string command)
         {
-            return base.ExecuteCommand(MiscHelpers.FormatInvariant("EngineInternal.getCommandResult({0})", command));
+            return ScriptInvoke(() =>
+            {
+                Script.EngineInternal.command = command;
+                return base.ExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.command))");
+            });
         }
 
         /// <summary>

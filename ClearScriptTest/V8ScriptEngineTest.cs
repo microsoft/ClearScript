@@ -303,6 +303,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ExecuteCommand_var()
+        {
+            Assert.AreEqual("[undefined]", engine.ExecuteCommand("var x = 'foo'"));
+            Assert.AreEqual("foo", engine.Script.x);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ExecuteCommand_HostVariable()
+        {
+            engine.Script.host = new HostFunctions();
+            Assert.AreEqual("[HostVariable:String]", engine.ExecuteCommand("host.newVar('foo')"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_Interrupt()
         {
             var checkpoint = new ManualResetEvent(false);
@@ -314,10 +328,13 @@ namespace Microsoft.ClearScript.Test
 
             engine.AddHostObject("checkpoint", checkpoint);
 
+            // V8 can't interrupt code that accesses only native data
+            engine.AddHostObject("test", new { foo = "bar" });
+
             var gotException = false;
             try
             {
-                engine.Execute("checkpoint.Set(); while (true) { var foo = 'hello'; }");
+                engine.Execute("checkpoint.Set(); while (true) { var foo = test.foo; }");
             }
             catch (OperationCanceledException)
             {

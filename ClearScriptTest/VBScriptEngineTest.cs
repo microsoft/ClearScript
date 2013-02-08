@@ -326,6 +326,13 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExecuteCommand_HostVariable()
+        {
+            engine.Script.host = new HostFunctions();
+            Assert.AreEqual("[HostVariable:String]", engine.ExecuteCommand("eval host.newVar(\"foo\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_Interrupt()
         {
             var checkpoint = new ManualResetEvent(false);
