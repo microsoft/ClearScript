@@ -263,6 +263,17 @@ namespace Microsoft.ClearScript.Windows
     }
 
     [ComImport]
+    [Guid("bb722ccb-6ad2-41c6-b780-af9c03ee69f5")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IActiveScriptSiteDebugEx
+    {
+        void OnCanNotJITScriptErrorDebug(
+            [In] [MarshalAs(UnmanagedType.Interface)] IActiveScriptErrorDebug errorDebug,
+            [Out] [MarshalAs(UnmanagedType.Bool)] out bool callOnScriptErrorWhenContinuing
+        );
+    }
+
+    [ComImport]
     [Guid("51973c2f-cb0c-11d0-b5c9-00a0244a0e7a")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IProcessDebugManager32

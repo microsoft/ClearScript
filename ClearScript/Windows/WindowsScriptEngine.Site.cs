@@ -72,7 +72,7 @@ namespace Microsoft.ClearScript.Windows
     {
         #region Nested type: ScriptSite
 
-        private class ScriptSite : IActiveScriptSite, IActiveScriptSiteInterruptPoll, IActiveScriptSiteDebug32, IActiveScriptSiteDebug64, ICustomQueryInterface
+        private class ScriptSite : IActiveScriptSite, IActiveScriptSiteInterruptPoll, IActiveScriptSiteDebug32, IActiveScriptSiteDebug64, IActiveScriptSiteDebugEx, ICustomQueryInterface
         {
             private readonly WindowsScriptEngine engine;
 
@@ -228,12 +228,22 @@ namespace Microsoft.ClearScript.Windows
 
             #endregion
 
+            #region IActiveScriptSiteDebugEx implementation
+
+            public void OnCanNotJITScriptErrorDebug(IActiveScriptErrorDebug errorDebug, out bool callOnScriptErrorWhenContinuing)
+            {
+                bool enterDebugger;
+                OnScriptErrorDebug(errorDebug, out enterDebugger, out callOnScriptErrorWhenContinuing);
+            }
+
+            #endregion
+
             #region ICustomQueryInterface implementation
 
             public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr pInterface)
             {
                 pInterface = IntPtr.Zero;
-                if ((iid == typeof(IActiveScriptSiteDebug32).GUID) || (iid == typeof(IActiveScriptSiteDebug64).GUID))
+                if ((iid == typeof(IActiveScriptSiteDebug32).GUID) || (iid == typeof(IActiveScriptSiteDebug64).GUID) || (iid == typeof(IActiveScriptSiteDebugEx).GUID))
                 {
                     var debuggingEnabled = engine.engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging);
                     return debuggingEnabled ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;

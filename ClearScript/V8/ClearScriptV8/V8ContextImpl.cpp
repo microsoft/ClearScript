@@ -236,7 +236,7 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGl
         if (enableDebugging)
         {
             Debug::SetDebugMessageDispatchHandler(pDebugMessageDispatcher);
-            m_DebugAgentEnabled = Debug::EnableAgent(CW2A(pName), debugPort);
+            m_DebugAgentEnabled = Debug::EnableAgent(*String::Utf8Value(String::New(pName)), debugPort);
         }
 
     END_ISOLATE_SCOPE

@@ -148,7 +148,6 @@
     <ClInclude Include="..\V8ObjectHolderImpl.h" />
     <ClInclude Include="..\V8ProxyImpl.h" />
     <ClInclude Include="..\V8Value.h" />
-    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
