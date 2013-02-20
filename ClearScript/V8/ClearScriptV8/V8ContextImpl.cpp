@@ -207,7 +207,7 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGl
         {
             auto hGlobalTemplate = ObjectTemplate::New();
             hGlobalTemplate->SetInternalFieldCount(1);
-            hGlobalTemplate->SetNamedPropertyHandler(GetGlobalProperty);
+            hGlobalTemplate->SetNamedPropertyHandler(GetGlobalProperty, SetGlobalProperty);
 
             m_hContext = Context::New(nullptr, hGlobalTemplate);
 
@@ -635,6 +635,37 @@ Handle<Value> V8ContextImpl::GetGlobalProperty(Local<String> hName, const Access
     }
 
     return hGlobal->GetRealNamedProperty(hName);
+}
+
+//-----------------------------------------------------------------------------
+
+Handle<Value> V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value> value, const AccessorInfo& info)
+{
+    auto hGlobal = info.Holder();
+    _ASSERTE(hGlobal->InternalFieldCount() > 0);
+
+    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    if (pContextImpl != nullptr)
+    {
+        const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        if (stack.size() > 0)
+        {
+            if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
+            {
+                return Handle<Value>();
+            }
+
+            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            {
+                if ((*it)->HasOwnProperty(hName) && (*it)->Set(hName, value))
+                {
+                    return value;
+                }
+            }
+        }
+    }
+
+    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------

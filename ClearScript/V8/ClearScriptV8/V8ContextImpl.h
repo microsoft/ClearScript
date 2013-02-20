@@ -118,6 +118,7 @@ private:
     Handle<Value> Wrap();
 
     static Handle<Value> GetGlobalProperty(Local<String> hName, const AccessorInfo& info);
+    static Handle<Value> SetGlobalProperty(Local<String> hName, Local<Value> value, const AccessorInfo& info);
 
     static Handle<Value> GetHostObjectProperty(Local<String> hName, const AccessorInfo& info);
     static Handle<Value> SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const AccessorInfo& info);

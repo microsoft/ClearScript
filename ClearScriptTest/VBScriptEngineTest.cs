@@ -137,6 +137,10 @@ namespace Microsoft.ClearScript.Test
             var host = new HostFunctions();
             engine.AddHostObject("host", HostItemFlags.GlobalMembers, host);
             Assert.IsInstanceOfType(engine.Evaluate("newObj()"), typeof(PropertyBag));
+
+            engine.AddHostObject("test", HostItemFlags.GlobalMembers, this);
+            engine.Execute("TestProperty = newObj()");
+            Assert.IsInstanceOfType(TestProperty, typeof(PropertyBag));
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
@@ -167,6 +171,10 @@ namespace Microsoft.ClearScript.Test
         {
             engine.AddHostType("Guid", HostItemFlags.GlobalMembers, typeof(Guid));
             Assert.IsInstanceOfType(engine.Evaluate("NewGuid()"), typeof(Guid));
+
+            engine.AddHostType("Test", HostItemFlags.GlobalMembers, GetType());
+            engine.Execute("StaticTestProperty = NewGuid()");
+            Assert.IsInstanceOfType(StaticTestProperty, typeof(Guid));
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
@@ -571,6 +579,10 @@ namespace Microsoft.ClearScript.Test
             Property changed: Name; new value: Eóin (static event)
             Property changed: Name; new value: Shane (static event)
         ";
+
+        public object TestProperty { get; set; }
+
+        public static object StaticTestProperty { get; set; }
 
         // ReSharper disable UnusedMember.Local
 
