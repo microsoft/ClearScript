@@ -76,28 +76,33 @@ namespace Microsoft.ClearScript
     {
         #region internal members
 
-        private object InvokeMethod(string name, object[] args)
+        private object InvokeMethod(string name, object[] args, object[] bindArgs)
         {
             var typeArgs = GetTypeArgs(args).ToArray();
             if (typeArgs.Length > 0)
             {
                 args = args.Skip(typeArgs.Length).ToArray();
+                bindArgs = bindArgs.Skip(typeArgs.Length).ToArray();
             }
 
-            return InvokeMethod(name, typeArgs, args);
+            return InvokeMethod(name, typeArgs, args, bindArgs);
         }
 
-        private object InvokeMethod(string name, Type[] typeArgs, object[] args)
+        private object InvokeMethod(string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
-            var bindResult = BindMethod(name, typeArgs, args);
+            var bindResult = BindMethod(name, typeArgs, args, bindArgs);
             if ((bindResult is MethodBindFailure) && target.Flags.HasFlag(HostTargetFlags.AllowExtensionMethods))
             {
-                var targetArg = new[] { target.DynamicInvokeTarget };
+                var targetArg = new[] { target.Target };
                 var extensionArgs = targetArg.Concat(args).ToArray();
+
+                var targetBindArg = new object[] { target };
+                var extensionBindArgs = targetBindArg.Concat(bindArgs).ToArray();
+
                 foreach (var type in cachedExtensionMethodSummary.Types)
                 {
                     var extensionHostItem = (HostItem)Wrap(engine, HostType.Wrap(type));
-                    var extensionBindResult = extensionHostItem.BindMethod(name, typeArgs, extensionArgs);
+                    var extensionBindResult = extensionHostItem.BindMethod(name, typeArgs, extensionArgs, extensionBindArgs);
                     if (extensionBindResult is MethodBindSuccess)
                     {
                         return extensionBindResult.Invoke(engine);
@@ -128,65 +133,71 @@ namespace Microsoft.ClearScript
             }
         }
 
-        private MethodBindResult BindMethod(string name, Type[] typeArgs, object[] args)
+        private MethodBindResult BindMethod(string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
-            MethodBindResult result = null;
-
             // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
             // will result in bugs that are difficult to diagnose. Create a copy if necessary.
 
+            var signature = new BindSignature(target, name, typeArgs, bindArgs);
+            MethodBindResult result;
+
             object rawResult;
-            var signature = new BindSignature(target, name, typeArgs, args);
             if (engine.TryGetCachedBindResult(signature, out rawResult))
             {
                 result = MethodBindResult.Create(name, rawResult, target, args);
             }
             else
             {
-                var entryList = new List<MethodBindEntry>();
-                if ((target is HostType) || (target.InvokeTarget == null) || !target.Type.IsInterface)
+                result = BindMethodInternal(name, typeArgs, args, bindArgs);
+                if (!result.IsPreferredMethod(name))
                 {
-                    entryList.Add(new MethodBindEntry(name, accessContext ?? engine.AccessContext));
-                }
-                else
-                {
-                    foreach (var mapping in target.InvokeTarget.GetType().ExtGetInterfaceMaps(target.Type))
-                    {
-                        for (var index = 0; index < mapping.InterfaceMethods.Length; index++)
-                        {
-                            if (mapping.InterfaceMethods[index].Name == name)
-                            {
-                                var targetMethod = mapping.TargetMethods[index];
-                                entryList.Add(new MethodBindEntry(targetMethod.Name, targetMethod.DeclaringType));
-                            }
-                        }
-                    }
-
-                    if (entryList.Count < 1)
-                    {
-                        entryList.Add(new MethodBindEntry(name, accessContext ?? engine.AccessContext));
-                    }
-                }
-
-                foreach (var entry in entryList)
-                {
-                    const CSharpBinderFlags binderFlags = CSharpBinderFlags.InvokeSimpleName | CSharpBinderFlags.ResultDiscarded;
-                    var binder = Binder.InvokeMember(binderFlags, entry.Name, typeArgs, entry.AccessContext, CreateArgInfoEnum(args));
-
-                    var binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, target.DynamicInvokeTarget, args);
-                    rawResult = (new MethodBindingVisitor(target.InvokeTarget, entry.Name, binding.Expression)).Result;
-                    result = MethodBindResult.Create(entry.Name, rawResult, target, args);
                     if (result is MethodBindSuccess)
                     {
-                        break;
+                        result = new MethodBindFailure(new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}' that matches the specified arguments", name)));
+                    }
+
+                    foreach (var altName in GetAltMethodNames(name))
+                    {
+                        var altResult = BindMethodInternal(altName, typeArgs, args, bindArgs);
+                        if (altResult.IsUnblockedMethod())
+                        {
+                            result = altResult;
+                            break;
+                        }
                     }
                 }
 
-                Debug.Assert(rawResult != null);
-                engine.CacheBindResult(signature, rawResult);
+                engine.CacheBindResult(signature, result.RawResult);
             }
 
             return result;
+        }
+
+        private MethodBindResult BindMethodInternal(string name, Type[] typeArgs, object[] args, object[] bindArgs)
+        {
+            const CSharpBinderFlags binderFlags = CSharpBinderFlags.InvokeSimpleName | CSharpBinderFlags.ResultDiscarded;
+            var binder = Binder.InvokeMember(binderFlags, name, typeArgs, accessContext ?? engine.AccessContext, CreateArgInfoEnum(bindArgs));
+
+            var binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, target, bindArgs);
+            var rawResult = (new MethodBindingVisitor(target.InvokeTarget, name, binding.Expression)).Result;
+            return MethodBindResult.Create(name, rawResult, target, args);
+        }
+
+        private IEnumerable<string> GetAltMethodNames(string name)
+        {
+            return GetAltMethodNamesInternal(name).Distinct();
+        }
+
+        private IEnumerable<string> GetAltMethodNamesInternal(string name)
+        {
+            foreach (var method in target.Type.GetScriptableMethods(name, GetMethodBindFlags()))
+            {
+                var methodName = method.GetShortName();
+                if (methodName != name)
+                {
+                    yield return methodName;
+                }
+            }
         }
 
         private IEnumerable<CSharpArgumentInfo> CreateArgInfoEnum(object[] args)
@@ -208,14 +219,14 @@ namespace Microsoft.ClearScript
 
         private static CSharpArgumentInfo CreateArgInfo(object arg)
         {
-            var flags = CSharpArgumentInfoFlags.None;
+            var flags = CSharpArgumentInfoFlags.UseCompileTimeType;
             if (arg is IOutArg)
             {
-                flags |= CSharpArgumentInfoFlags.IsOut | CSharpArgumentInfoFlags.UseCompileTimeType;
+                flags |= CSharpArgumentInfoFlags.IsOut;
             }
             else if (arg is IRefArg)
             {
-                flags |= CSharpArgumentInfoFlags.IsRef | CSharpArgumentInfoFlags.UseCompileTimeType;
+                flags |= CSharpArgumentInfoFlags.IsRef;
             }
 
             return CSharpArgumentInfo.Create(flags, null);
@@ -224,23 +235,6 @@ namespace Microsoft.ClearScript
         private static CSharpArgumentInfo CreateStaticTypeArgInfo()
         {
             return CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.IsStaticType, null);
-        }
-
-        #endregion
-
-        #region Nested type: MethodBindEntry
-
-        private struct MethodBindEntry
-        {
-            public readonly string Name;
-
-            public readonly Type AccessContext;
-
-            public MethodBindEntry(string name, Type accessContext)
-            {
-                Name = name;
-                AccessContext = accessContext;
-            }
         }
 
         #endregion
@@ -265,6 +259,12 @@ namespace Microsoft.ClearScript
                 return new MethodBindFailure((rawResult as Exception) ?? new NotSupportedException(MiscHelpers.FormatInvariant("Invocation of method '{0}' failed (unrecognized binding)", name)));
             }
 
+            public abstract object RawResult { get; }
+
+            public abstract bool IsPreferredMethod(string name);
+
+            public abstract bool IsUnblockedMethod();
+
             public abstract object Invoke(ScriptEngine engine);
         }
 
@@ -288,6 +288,21 @@ namespace Microsoft.ClearScript
             }
 
             #region MethodBindResult overrides
+
+            public override object RawResult
+            {
+                get { return method; }
+            }
+
+            public override bool IsPreferredMethod(string name)
+            {
+                return !method.IsBlockedFromScript() && (method.GetScriptName() == name);
+            }
+
+            public override bool IsUnblockedMethod()
+            {
+                return !method.IsBlockedFromScript();
+            }
 
             public override object Invoke(ScriptEngine engine)
             {
@@ -317,6 +332,20 @@ namespace Microsoft.ClearScript
 
             #region MethodBindResult overrides
 
+            public override object RawResult
+            {
+                get { return exception; }
+            }
+
+            public override bool IsPreferredMethod(string name)
+            {
+                return false;
+            }
+
+            public override bool IsUnblockedMethod()
+            {
+                return false;
+            }
             public override object Invoke(ScriptEngine engine)
             {
                 throw exception;

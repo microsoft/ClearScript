@@ -203,7 +203,7 @@ namespace Microsoft.ClearScript.V8
 
         public override object GetProperty(string name)
         {
-            var result = engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(name)));
+            var result = engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(name)), false);
 
             var resultScriptItem = result as V8ScriptItem;
             if ((resultScriptItem != null) && (resultScriptItem.engine == engine))
@@ -231,7 +231,7 @@ namespace Microsoft.ClearScript.V8
 
         public override object GetProperty(int index)
         {
-            return engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(index)));
+            return engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(index)), false);
         }
 
         public override void SetProperty(int index, object value)
@@ -261,7 +261,7 @@ namespace Microsoft.ClearScript.V8
 
         public override object InvokeMethod(string name, object[] args)
         {
-            return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMethod(name, engine.MarshalToScript(args))));
+            return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMethod(name, engine.MarshalToScript(args))), false);
         }
 
         #endregion

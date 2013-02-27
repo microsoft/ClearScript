@@ -117,8 +117,20 @@ private:
 
     Handle<Value> Wrap();
 
+    void GetV8ObjectPropertyNames(Handle<Object> hObject, vector<wstring>& names);
+    void GetV8ObjectPropertyIndices(Handle<Object> hObject, vector<int>& indices);
+
     static Handle<Value> GetGlobalProperty(Local<String> hName, const AccessorInfo& info);
     static Handle<Value> SetGlobalProperty(Local<String> hName, Local<Value> value, const AccessorInfo& info);
+    static Handle<Integer> QueryGlobalProperty(Local<String> hName, const AccessorInfo& info);
+    static Handle<Boolean> DeleteGlobalProperty(Local<String> hName, const AccessorInfo& info);
+    static Handle<Array> GetGlobalPropertyNames(const AccessorInfo& info);
+
+    static Handle<Value> GetGlobalProperty(unsigned __int32 index, const AccessorInfo& info);
+    static Handle<Value> SetGlobalProperty(unsigned __int32 index, Local<Value> hValue, const AccessorInfo& info);
+    static Handle<Integer> QueryGlobalProperty(unsigned __int32 index, const AccessorInfo& info);
+    static Handle<Boolean> DeleteGlobalProperty(unsigned __int32 index, const AccessorInfo& info);
+    static Handle<Array> GetGlobalPropertyIndices(const AccessorInfo& info);
 
     static Handle<Value> GetHostObjectProperty(Local<String> hName, const AccessorInfo& info);
     static Handle<Value> SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const AccessorInfo& info);

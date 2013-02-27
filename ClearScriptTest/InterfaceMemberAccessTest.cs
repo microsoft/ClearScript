@@ -262,6 +262,22 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
+        public void InterfaceMemberAccess_BindTestMethod_BaseClass()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.InterfaceBindTestMethod(arg), engine.Evaluate("testObject.InterfaceBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("InterfaceMemberAccess")]
+        public void InterfaceMemberAccess_BindTestMethod_Interface()
+        {
+            var arg = new TestArg() as ITestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.InterfaceBindTestMethod(arg), engine.Evaluate("testObject.InterfaceBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("InterfaceMemberAccess")]
         public void InterfaceMemberAccess_ExtensionMethod()
         {
             Assert.AreEqual(testObject.InterfaceExtensionMethod("foo", 4), engine.Evaluate("testObject.InterfaceExtensionMethod('foo', 4)"));
@@ -311,6 +327,22 @@ namespace Microsoft.ClearScript.Test
         public void InterfaceMemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
             engine.Execute("testObject.InterfaceExtensionMethod(4)");
+        }
+
+        [TestMethod, TestCategory("InterfaceMemberAccess")]
+        public void InterfaceMemberAccess_ExtensionBindTestMethod_BaseClass()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.InterfaceExtensionBindTestMethod(arg), engine.Evaluate("testObject.InterfaceExtensionBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("InterfaceMemberAccess")]
+        public void InterfaceMemberAccess_ExtensionBindTestMethod_Interface()
+        {
+            var arg = new TestArg() as ITestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.InterfaceExtensionBindTestMethod(arg), engine.Evaluate("testObject.InterfaceExtensionBindTestMethod(arg)"));
         }
 
         // ReSharper restore InconsistentNaming

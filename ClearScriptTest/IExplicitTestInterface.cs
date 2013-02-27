@@ -78,6 +78,7 @@ namespace Microsoft.ClearScript.Test
         double ExplicitInterfaceMethod(string arg1, int arg2);
         double ExplicitInterfaceMethod<T>(string arg1, int arg2, T arg3) where T : struct;
         double ExplicitInterfaceMethod<T>(int arg) where T : struct;
+        double ExplicitInterfaceBindTestMethod<T>(T arg);
     }
 
     public static class ExplicitTestInterfaceExtensions
@@ -98,6 +99,12 @@ namespace Microsoft.ClearScript.Test
         public static double ExplicitInterfaceExtensionMethod<T>(this IExplicitTestInterface self, int arg) where T : struct
         {
             return TestUtil.CalcTestValue(self, typeof(T).Name.Length, arg);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static double ExplicitInterfaceExtensionBindTestMethod<T>(this IExplicitTestInterface self, T arg)
+        {
+            return TestUtil.CalcTestValue(self, typeof(T), arg);
         }
     }
 }

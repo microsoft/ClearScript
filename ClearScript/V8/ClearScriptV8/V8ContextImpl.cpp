@@ -207,7 +207,8 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGl
         {
             auto hGlobalTemplate = ObjectTemplate::New();
             hGlobalTemplate->SetInternalFieldCount(1);
-            hGlobalTemplate->SetNamedPropertyHandler(GetGlobalProperty, SetGlobalProperty);
+            hGlobalTemplate->SetNamedPropertyHandler(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyNames);
+            hGlobalTemplate->SetIndexedPropertyHandler(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyIndices);
 
             m_hContext = Context::New(nullptr, hGlobalTemplate);
 
@@ -397,29 +398,7 @@ void V8ContextImpl::GetV8ObjectPropertyNames(LPVOID pvV8Object, vector<wstring>&
 {
     BEGIN_CONTEXT_SCOPE
 
-        names.clear();
-
-        auto hNames = ::ObjectHandleFromPtr(pvV8Object)->GetPropertyNames();
-        if (!hNames.IsEmpty())
-        {
-            auto nameCount = (int)hNames->Length();
-
-            names.reserve(nameCount);
-            for (auto index = 0; index < nameCount; index++)
-            {
-                auto hName = hNames->Get(index);
-                if (!hName.IsEmpty())
-                {
-                    wstring name(*String::Value(hName->ToString()));
-
-                    int propertyIndex;
-                    if (!HostObjectHelpers::TryParseInt32(name.c_str(), propertyIndex))
-                    {
-                        names.push_back(name);
-                    }
-                }
-            }
-        }
+        GetV8ObjectPropertyNames(::ObjectHandleFromPtr(pvV8Object), names);
 
     END_CONTEXT_SCOPE
 }
@@ -463,29 +442,7 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(LPVOID pvV8Object, vector<int>& i
 {
     BEGIN_CONTEXT_SCOPE
 
-        indices.clear();
-
-        auto hNames = ::ObjectHandleFromPtr(pvV8Object)->GetPropertyNames();
-        if (!hNames.IsEmpty())
-        {
-            auto nameCount = (int)hNames->Length();
-
-            indices.reserve(nameCount);
-            for (auto index = 0; index < nameCount; index++)
-            {
-                auto hName = hNames->Get(index);
-                if (!hName.IsEmpty())
-                {
-                    wstring name(*String::Value(hName->ToString()));
-
-                    int propertyIndex;
-                    if (HostObjectHelpers::TryParseInt32(name.c_str(), propertyIndex))
-                    {
-                        indices.push_back(propertyIndex);
-                    }
-                }
-            }
-        }
+        GetV8ObjectPropertyIndices(::ObjectHandleFromPtr(pvV8Object), indices);
 
     END_CONTEXT_SCOPE
 }
@@ -531,7 +488,7 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(LPVOID pvV8Object, LPCWSTR pName, co
         auto hValue = hObject->Get(hName);
         if (hValue->IsUndefined() || hValue->IsNull())
         {
-            throw V8Exception(V8Exception::Type_General, *String::Value(Exception::TypeError(String::New("Property value does not support invcation"))), nullptr);
+            throw V8Exception(V8Exception::Type_General, *String::Value(Exception::TypeError(String::New("Property value does not support invocation"))), nullptr);
         }
 
         vector<Handle<Value>> importedArgs;
@@ -608,6 +565,64 @@ Handle<Value> V8ContextImpl::Wrap()
 
 //-----------------------------------------------------------------------------
 
+void V8ContextImpl::GetV8ObjectPropertyNames(Handle<Object> hObject, vector<wstring>& names)
+{
+    names.clear();
+
+    auto hNames = hObject->GetPropertyNames();
+    if (!hNames.IsEmpty())
+    {
+        auto nameCount = (int)hNames->Length();
+
+        names.reserve(nameCount);
+        for (auto index = 0; index < nameCount; index++)
+        {
+            auto hName = hNames->Get(index);
+            if (!hName.IsEmpty())
+            {
+                wstring name(*String::Value(hName->ToString()));
+
+                int propertyIndex;
+                if (!HostObjectHelpers::TryParseInt32(name.c_str(), propertyIndex))
+                {
+                    names.push_back(name);
+                }
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::GetV8ObjectPropertyIndices(Handle<Object> hObject, vector<int>& indices)
+{
+    indices.clear();
+
+    auto hNames = hObject->GetPropertyNames();
+    if (!hNames.IsEmpty())
+    {
+        auto nameCount = (int)hNames->Length();
+
+        indices.reserve(nameCount);
+        for (auto index = 0; index < nameCount; index++)
+        {
+            auto hName = hNames->Get(index);
+            if (!hName.IsEmpty())
+            {
+                wstring name(*String::Value(hName->ToString()));
+
+                int propertyIndex;
+                if (HostObjectHelpers::TryParseInt32(name.c_str(), propertyIndex))
+                {
+                    indices.push_back(propertyIndex);
+                }
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 Handle<Value> V8ContextImpl::GetGlobalProperty(Local<String> hName, const AccessorInfo& info)
 {
     auto hGlobal = info.Holder();
@@ -617,16 +632,11 @@ Handle<Value> V8ContextImpl::GetGlobalProperty(Local<String> hName, const Access
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+        if ((stack.size() > 0) && !hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
-            if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
-            {
-                return Handle<Value>();
-            }
-
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName))
+                if ((*it)->Has(hName))
                 {
                     return (*it)->Get(hName);
                 }
@@ -634,7 +644,7 @@ Handle<Value> V8ContextImpl::GetGlobalProperty(Local<String> hName, const Access
         }
     }
 
-    return hGlobal->GetRealNamedProperty(hName);
+    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
@@ -648,13 +658,8 @@ Handle<Value> V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value>
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+        if ((stack.size() > 0) && !hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
-            if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
-            {
-                return Handle<Value>();
-            }
-
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
                 if ((*it)->HasOwnProperty(hName) && (*it)->Set(hName, value))
@@ -670,6 +675,288 @@ Handle<Value> V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value>
 
 //-----------------------------------------------------------------------------
 
+Handle<Integer> V8ContextImpl::QueryGlobalProperty(Local<String> hName, const AccessorInfo& info)
+{
+    auto hGlobal = info.Holder();
+    _ASSERTE(hGlobal->InternalFieldCount() > 0);
+
+    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    if (pContextImpl != nullptr)
+    {
+        const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        if (stack.size() > 0)
+        {
+            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            {
+                if ((*it)->Has(hName))
+                {
+                    return pContextImpl->GetIntegerHandle((*it)->GetPropertyAttributes(hName));
+                }
+            }
+        }
+    }
+
+    return Handle<Integer>();
+}
+
+//-----------------------------------------------------------------------------
+
+Handle<Boolean> V8ContextImpl::DeleteGlobalProperty(Local<String> hName, const AccessorInfo& info)
+{
+    auto hGlobal = info.Holder();
+    _ASSERTE(hGlobal->InternalFieldCount() > 0);
+
+    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    if (pContextImpl != nullptr)
+    {
+        const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        if (stack.size() > 0)
+        {
+            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            {
+                if ((*it)->HasOwnProperty(hName))
+                {
+                    // WORKAROUND: Object::Delete() crashes if a custom property deleter calls
+                    // ThrowException(). Interestingly, there is no crash if the same deleter is
+                    // invoked directly from script via the delete operator.
+
+                    if ((*it)->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
+                    {
+                        try
+                        {
+                            return HostObjectHelpers::DeleteProperty(::GetHostObject(*it), *String::Value(hName)) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
+                        }
+                        catch (const V8Exception&)
+                        {
+                            return False(pContextImpl->m_pIsolate) ;
+                        }
+                    }
+
+                    return (*it)->Delete(hName) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
+                }
+            }
+        }
+    }
+
+    return Handle<Boolean>();
+}
+
+//-----------------------------------------------------------------------------
+
+Handle<Array> V8ContextImpl::GetGlobalPropertyNames(const AccessorInfo& info)
+{
+    try
+    {
+        auto hGlobal = info.Holder();
+        _ASSERTE(hGlobal->InternalFieldCount() > 0);
+
+        auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+        if (pContextImpl != nullptr)
+        {
+            const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
+            {
+                vector<wstring> names;
+                for (auto it = stack.rbegin(); it != stack.rend(); it++)
+                {
+                    vector<wstring> tempNames;
+                    if ((*it)->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
+                    {
+                        HostObjectHelpers::GetPropertyNames(::GetHostObject(*it), tempNames);
+                    }
+                    else
+                    {
+                        pContextImpl->GetV8ObjectPropertyNames(*it, tempNames);
+                    }
+
+                    names.insert(names.end(), tempNames.begin(), tempNames.end());
+                }
+
+                sort(names.begin(), names.end());
+                auto newEnd = unique(names.begin(), names.end());
+                auto nameCount = (int)(newEnd - names.begin());
+
+                auto hImportedNames = Array::New(nameCount);
+                for (auto index = 0; index < nameCount; index++)
+                {
+                    hImportedNames->Set(index, String::New(names[index].c_str()));
+                }
+
+                return hImportedNames;
+            }
+        }
+
+        return Handle<Array>();
+    }
+    catch (const V8Exception& exception)
+    {
+        ThrowException(String::New(exception.GetMessage()));
+        return Handle<Array>();
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+Handle<Value> V8ContextImpl::GetGlobalProperty(unsigned __int32 index, const AccessorInfo& info)
+{
+    auto hGlobal = info.Holder();
+    _ASSERTE(hGlobal->InternalFieldCount() > 0);
+
+    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    if (pContextImpl != nullptr)
+    {
+        const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        if (stack.size() > 0)
+        {
+            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            {
+                if ((*it)->Has(index))
+                {
+                    return (*it)->Get(index);
+                }
+            }
+        }
+    }
+
+    return Handle<Value>();
+}
+
+//-----------------------------------------------------------------------------
+
+Handle<Value> V8ContextImpl::SetGlobalProperty(unsigned __int32 index, Local<Value> value, const AccessorInfo& info)
+{
+    auto hGlobal = info.Holder();
+    _ASSERTE(hGlobal->InternalFieldCount() > 0);
+
+    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    if (pContextImpl != nullptr)
+    {
+        const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        if (stack.size() > 0)
+        {
+            auto hName = Uint32::New(index, pContextImpl->m_pIsolate)->ToString();
+            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            {
+                if ((*it)->HasOwnProperty(hName) && (*it)->Set(index, value))
+                {
+                    return value;
+                }
+            }
+        }
+    }
+
+    return Handle<Value>();
+}
+
+//-----------------------------------------------------------------------------
+
+Handle<Integer> V8ContextImpl::QueryGlobalProperty(unsigned __int32 index, const AccessorInfo& info)
+{
+    auto hGlobal = info.Holder();
+    _ASSERTE(hGlobal->InternalFieldCount() > 0);
+
+    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    if (pContextImpl != nullptr)
+    {
+        const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        if (stack.size() > 0)
+        {
+            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            {
+                if ((*it)->Has(index))
+                {
+                    return pContextImpl->GetIntegerHandle((*it)->GetPropertyAttributes(Uint32::New(index, pContextImpl->m_pIsolate)));
+                }
+            }
+        }
+    }
+
+    return Handle<Integer>();
+}
+
+//-----------------------------------------------------------------------------
+
+Handle<Boolean> V8ContextImpl::DeleteGlobalProperty(unsigned __int32 index, const AccessorInfo& info)
+{
+    auto hGlobal = info.Holder();
+    _ASSERTE(hGlobal->InternalFieldCount() > 0);
+
+    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    if (pContextImpl != nullptr)
+    {
+        const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        if (stack.size() > 0)
+        {
+            auto hName = Uint32::New(index, pContextImpl->m_pIsolate)->ToString();
+            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            {
+                if ((*it)->HasOwnProperty(hName))
+                {
+                    return (*it)->Delete(index) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
+                }
+            }
+        }
+    }
+
+    return Handle<Boolean>();
+}
+
+//-----------------------------------------------------------------------------
+
+Handle<Array> V8ContextImpl::GetGlobalPropertyIndices(const AccessorInfo& info)
+{
+    try
+    {
+        auto hGlobal = info.Holder();
+        _ASSERTE(hGlobal->InternalFieldCount() > 0);
+
+        auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+        if (pContextImpl != nullptr)
+        {
+            const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
+            {
+                vector<int> indices;
+                for (auto it = stack.rbegin(); it != stack.rend(); it++)
+                {
+                    vector<int> tempIndices;
+                    if ((*it)->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
+                    {
+                        HostObjectHelpers::GetPropertyIndices(::GetHostObject(*it), tempIndices);
+                    }
+                    else
+                    {
+                        pContextImpl->GetV8ObjectPropertyIndices(*it, tempIndices);
+                    }
+
+                    indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
+                }
+
+                sort(indices.begin(), indices.end());
+                auto newEnd = unique(indices.begin(), indices.end());
+                auto indexCount = (int)(newEnd - indices.begin());
+
+                auto hImportedIndices = Array::New(indexCount);
+                for (auto index = 0; index < indexCount; index++)
+                {
+                    hImportedIndices->Set(index, Int32::New(indices[index], pContextImpl->m_pIsolate));
+                }
+
+                return hImportedIndices;
+            }
+        }
+
+        return Handle<Array>();
+    }
+    catch (const V8Exception& exception)
+    {
+        ThrowException(String::New(exception.GetMessage()));
+        return Handle<Array>();
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 Handle<Value> V8ContextImpl::GetHostObjectProperty(Local<String> hName, const AccessorInfo& info)
 {
     try
@@ -677,7 +964,7 @@ Handle<Value> V8ContextImpl::GetHostObjectProperty(Local<String> hName, const Ac
         auto pContextImpl = ::UnwrapContextImpl(info);
         if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
-            return True();
+            return True(pContextImpl->m_pIsolate);
         }
 
         return pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), *String::Value(hName)));
@@ -744,7 +1031,8 @@ Handle<Boolean> V8ContextImpl::DeleteHostObjectProperty(Local<String> hName, con
 {
     try
     {
-        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), *String::Value(hName)) ? True() : False();
+        auto pContextImpl = ::UnwrapContextImpl(info);
+        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), *String::Value(hName)) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
     }
     catch (const V8Exception& exception)
     {
@@ -763,13 +1051,13 @@ Handle<Array> V8ContextImpl::GetHostObjectPropertyNames(const AccessorInfo& info
         HostObjectHelpers::GetPropertyNames(::UnwrapHostObject(info), names);
         auto nameCount = (int)names.size();
 
-        auto importedNames = Array::New(nameCount);
+        auto hImportedNames = Array::New(nameCount);
         for (auto index = 0; index < nameCount; index++)
         {
-            importedNames->Set(index, String::New(names[index].c_str()));
+            hImportedNames->Set(index, String::New(names[index].c_str()));
         }
 
-        return importedNames;
+        return hImportedNames;
     }
     catch (const V8Exception& exception)
     {
@@ -841,7 +1129,8 @@ Handle<Boolean> V8ContextImpl::DeleteHostObjectProperty(unsigned __int32 index, 
 {
     try
     {
-        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), index) ? True() : False();
+        auto pContextImpl = ::UnwrapContextImpl(info);
+        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), index) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
     }
     catch (const V8Exception& exception)
     {
@@ -860,13 +1149,13 @@ Handle<Array> V8ContextImpl::GetHostObjectPropertyIndices(const AccessorInfo& in
         HostObjectHelpers::GetPropertyIndices(::UnwrapHostObject(info), indices);
         auto indexCount = (int)indices.size();
 
-        auto importedIndices = Array::New(indexCount);
+        auto hImportedIndices = Array::New(indexCount);
         for (auto index = 0; index < indexCount; index++)
         {
-            importedIndices->Set(index, Int32::New(indices[index]));
+            hImportedIndices->Set(index, Int32::New(indices[index], ::UnwrapContextImpl(info)->m_pIsolate));
         }
 
-        return importedIndices;
+        return hImportedIndices;
     }
     catch (const V8Exception& exception)
     {
@@ -916,7 +1205,7 @@ Persistent<Integer> V8ContextImpl::GetIntegerHandle(int value)
     auto it = m_IntegerCache.find(value);
     if (it == m_IntegerCache.end())
     {
-        return m_IntegerCache[value] = Persistent<Integer>::New(m_pIsolate, Integer::New(value));
+        return m_IntegerCache[value] = Persistent<Integer>::New(m_pIsolate, Integer::New(value, m_pIsolate));
     }
 
     return it->second;
@@ -933,19 +1222,19 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
 
     if (value.IsUndefined())
     {
-        return Undefined();
+        return Undefined(m_pIsolate);
     }
 
     if (value.IsNull())
     {
-        return Null();
+        return Null(m_pIsolate);
     }
 
     {
         bool result;
         if (value.AsBoolean(result))
         {
-            return Boolean::New(result);
+            return result ? True(m_pIsolate) : False(m_pIsolate);
         }
     }
 
@@ -961,7 +1250,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         __int32 result;
         if (value.AsInt32(result))
         {
-            return Int32::New(result);
+            return Int32::New(result, m_pIsolate);
         }
     }
 
@@ -969,7 +1258,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         unsigned __int32 result;
         if (value.AsUInt32(result))
         {
-            return Uint32::New(result);
+            return Uint32::New(result, m_pIsolate);
         }
     }
 
@@ -1000,7 +1289,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         }
     }
 
-    return Undefined();
+    return Undefined(m_pIsolate);
 }
 
 //-----------------------------------------------------------------------------

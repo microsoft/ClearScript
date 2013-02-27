@@ -61,27 +61,59 @@
 
 using System;
 
-namespace Microsoft.ClearScript.V8
+namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Defines options for initializing a new V8 JavaScript engine instance.
+    /// Specifies how the target event, field, method, or property is to be exposed to script code.
     /// </summary>
-    [Flags]
-    public enum V8ScriptEngineFlags
+    [AttributeUsage(AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Method | AttributeTargets.Property)]
+    public sealed class ScriptMemberAttribute : ScriptUsageAttribute
     {
         /// <summary>
-        /// Specifies that no options are selected.
+        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance.
         /// </summary>
-        None = 0,
+        public ScriptMemberAttribute()
+        {
+        }
 
         /// <summary>
-        /// Specifies that script debugging features are to be enabled.
+        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name.
         /// </summary>
-        EnableDebugging = 0x00000001,
+        /// <param name="name">The name that script code will use to access the type member.</param>
+        public ScriptMemberAttribute(string name)
+        {
+            Name = name;
+        }
 
         /// <summary>
-        /// Specifies that support for <see cref="HostItemFlags.GlobalMembers"/> behavior is to be disabled. This option yields a significant performance benefit for global item access.
+        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified script access setting.
         /// </summary>
-        DisableGlobalMembers = 0x00000002
+        /// <param name="access">The script access setting for the type member.</param>
+        public ScriptMemberAttribute(ScriptAccess access)
+            : base(access)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name and script access setting.
+        /// </summary>
+        /// <param name="name">The name that script code will use to access the type member.</param>
+        /// <param name="access">The script access setting for the type member.</param>
+        public ScriptMemberAttribute(string name, ScriptAccess access)
+            : base(access)
+        {
+            Name = name;
+        }
+
+        /// <summary>
+        /// Gets or sets the name that script code will use to access the type member.
+        /// </summary>
+        /// <remarks>
+        /// The default value is the name of the type member. Note that this property has no effect
+        /// on the method binding algorithm. If a script-based call is bound to a method that is
+        /// exposed under a different name, it will be rejected even if an overload exists that
+        /// could receive the call.
+        /// </remarks>
+        public string Name { get; set; }
     }
 }

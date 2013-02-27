@@ -70,22 +70,22 @@ namespace Microsoft.ClearScript.Windows
     public enum WindowsScriptEngineFlags
     {
         /// <summary>
-        /// Indicates that no options are selected.
+        /// Specifies that no options are selected.
         /// </summary>
         None = 0,
 
         /// <summary>
-        /// Indicates that script debugging features are to be enabled.
+        /// Specifies that script debugging features are to be enabled.
         /// </summary>
         EnableDebugging = 0x00000001,
 
         /// <summary>
-        /// Indicates that Just-In-Time script debugging is to be enabled. This option is ignored if <see cref="EnableDebugging"/> is not specified.
+        /// Specifies that Just-In-Time script debugging is to be enabled. This option is ignored if <see cref="EnableDebugging"/> is not specified.
         /// </summary>
         EnableJITDebugging = 0x00000002,
 
         /// <summary>
-        /// Indicates that smart source document management is to be disabled. This option is ignored if <see cref="EnableDebugging"/> is not specified.
+        /// Specifies that smart source document management is to be disabled. This option is ignored if <see cref="EnableDebugging"/> is not specified.
         /// </summary>
         DisableSourceManagement = 0x00000004
     }

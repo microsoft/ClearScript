@@ -73,7 +73,7 @@ namespace Microsoft.ClearScript.Util
     {
         public static DynamicMetaObject Bind(DynamicMetaObjectBinder binder, object target, object[] args)
         {
-            return binder.Bind(CreateDynamicObject(target), CreateDynamicObjectArray(args));
+            return binder.Bind(CreateDynamicTarget(target), CreateDynamicArgs(args));
         }
 
         public static object InvokeExpression(Expression expression)
@@ -197,20 +197,55 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        private static DynamicMetaObject CreateDynamicObject(object obj)
+        private static DynamicMetaObject CreateDynamicTarget(object target)
         {
-            var byRefArg = obj as IByRefArg;
+            var byRefArg = target as IByRefArg;
             if (byRefArg != null)
             {
                 return DynamicMetaObject.Create(byRefArg.Value, Expression.Parameter(byRefArg.Type.MakeByRefType()));
             }
 
-            return DynamicMetaObject.Create(obj, Expression.Constant(obj));
+            var hostTarget = target as HostTarget;
+            if (hostTarget == null)
+            {
+                return DynamicMetaObject.Create(target, Expression.Constant(target));
+            }
+
+            target = hostTarget.DynamicInvokeTarget;
+            if (hostTarget is HostType)
+            {
+                return DynamicMetaObject.Create(target, Expression.Constant(target));
+            }
+
+            return DynamicMetaObject.Create(target, Expression.Constant(target, hostTarget.Type));
         }
 
-        private static DynamicMetaObject[] CreateDynamicObjectArray(object[] objects)
+        private static DynamicMetaObject CreateDynamicArg(object arg)
         {
-            return objects.Select(CreateDynamicObject).ToArray();
+            var byRefArg = arg as IByRefArg;
+            if (byRefArg != null)
+            {
+                return DynamicMetaObject.Create(byRefArg.Value, Expression.Parameter(byRefArg.Type.MakeByRefType()));
+            }
+
+            if (arg is HostType)
+            {
+                return DynamicMetaObject.Create(arg, Expression.Constant(arg));
+            }
+
+            var hostTarget = arg as HostTarget;
+            if (hostTarget == null)
+            {
+                return DynamicMetaObject.Create(arg, Expression.Constant(arg));
+            }
+
+            arg = hostTarget.Target;
+            return DynamicMetaObject.Create(arg, Expression.Constant(arg, hostTarget.Type));
+        }
+
+        private static DynamicMetaObject[] CreateDynamicArgs(object[] args)
+        {
+            return args.Select(CreateDynamicArg).ToArray();
         }
     }
 }

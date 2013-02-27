@@ -365,6 +365,22 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
+        public void MemberAccess_BindTestMethod_BaseClass()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BindTestMethod(arg), engine.Evaluate("testObject.BindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("MemberAccess")]
+        public void MemberAccess_BindTestMethod_Interface()
+        {
+            var arg = new TestArg() as ITestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BindTestMethod(arg), engine.Evaluate("testObject.BindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("MemberAccess")]
         public void MemberAccess_ExtensionMethod()
         {
             Assert.AreEqual(testObject.ExtensionMethod("foo", 4), engine.Evaluate("testObject.ExtensionMethod('foo', 4)"));
@@ -414,6 +430,22 @@ namespace Microsoft.ClearScript.Test
         public void MemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
             engine.Execute("testObject.ExtensionMethod(4)");
+        }
+
+        [TestMethod, TestCategory("MemberAccess")]
+        public void MemberAccess_ExtensionBindTestMethod_BaseClass()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.ExtensionBindTestMethod(arg), engine.Evaluate("testObject.ExtensionBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("MemberAccess")]
+        public void MemberAccess_ExtensionBindTestMethod_Interface()
+        {
+            var arg = new TestArg() as ITestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.ExtensionBindTestMethod(arg), engine.Evaluate("testObject.ExtensionBindTestMethod(arg)"));
         }
 
         // ReSharper restore InconsistentNaming

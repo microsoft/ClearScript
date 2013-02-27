@@ -243,6 +243,45 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
+        /// Exposes a host object to script code with the specified type restriction.
+        /// </summary>
+        /// <typeparam name="T">The type whose members are to be made accessible from script code.</typeparam>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="target">The object to expose.</param>
+        /// <remarks>
+        /// This method can be used to restrict script access to the members of a particular
+        /// interface or base class.
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddRestrictedHostObject<T>(string itemName, T target)
+        {
+            AddRestrictedHostObject(itemName, HostItemFlags.None, target);
+        }
+
+        /// <summary>
+        /// Exposes a host object to script code with the specified type restriction and options.
+        /// </summary>
+        /// <typeparam name="T">The type whose members are to be made accessible from script code.</typeparam>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="target">The object to expose.</param>
+        /// <remarks>
+        /// This method can be used to restrict script access to the members of a particular
+        /// interface or base class.
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddRestrictedHostObject<T>(string itemName, HostItemFlags flags, T target)
+        {
+            AddHostItem(itemName, flags, HostItem.Wrap(this, target, typeof(T)));
+        }
+
+        /// <summary>
         /// Exposes a host type to script code.
         /// </summary>
         /// <param name="itemName">A name for the new global script item that will represent the type.</param>
@@ -536,11 +575,11 @@ namespace Microsoft.ClearScript
             return args.Select(MarshalToScript).ToArray();
         }
 
-        internal abstract object MarshalToHost(object obj);
+        internal abstract object MarshalToHost(object obj, bool preserveHostTarget);
 
-        internal object[] MarshalToHost(object[] args)
+        internal object[] MarshalToHost(object[] args, bool preserveHostTargets)
         {
-            return args.Select(MarshalToHost).ToArray();
+            return args.Select(arg => MarshalToHost(arg, preserveHostTargets)).ToArray();
         }
 
         internal abstract object Execute(string documentName, string code, bool evaluate, bool discard);
@@ -550,7 +589,7 @@ namespace Microsoft.ClearScript
             var result = Execute(documentName, code, true, discard);
             if (marshalResult)
             {
-                result = MarshalToHost(result);
+                result = MarshalToHost(result, false);
             }
 
             return result;
@@ -567,7 +606,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            var marshaledResult = MarshalToHost(result);
+            var marshaledResult = MarshalToHost(result, false);
 
             if (marshaledResult is VoidResult)
             {

@@ -61,27 +61,38 @@
 
 using System;
 
-namespace Microsoft.ClearScript.V8
+namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Defines options for initializing a new V8 JavaScript engine instance.
+    /// Specifies how the target type member is to be exposed to script code.
     /// </summary>
-    [Flags]
-    public enum V8ScriptEngineFlags
+    /// <remarks>
+    /// This attribute is applicable to events, fields, methods, and properties.
+    /// </remarks>
+    [AttributeUsage(AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Method | AttributeTargets.Property)]
+    public class ScriptUsageAttribute : Attribute
     {
-        /// <summary>
-        /// Specifies that no options are selected.
-        /// </summary>
-        None = 0,
+        private readonly ScriptAccess access;
 
         /// <summary>
-        /// Specifies that script debugging features are to be enabled.
+        /// Initializes a new <see cref="ScriptUsageAttribute"/> instance.
         /// </summary>
-        EnableDebugging = 0x00000001,
+        public ScriptUsageAttribute()
+        {
+        }
 
         /// <summary>
-        /// Specifies that support for <see cref="HostItemFlags.GlobalMembers"/> behavior is to be disabled. This option yields a significant performance benefit for global item access.
+        /// Initializes a new <see cref="ScriptUsageAttribute"/> instance with the specified script access setting.
         /// </summary>
-        DisableGlobalMembers = 0x00000002
+        /// <param name="access">The script access setting for the type member.</param>
+        public ScriptUsageAttribute(ScriptAccess access)
+        {
+            this.access = access;
+        }
+
+        /// <summary>
+        /// Gets the script access setting for the type member.
+        /// </summary>
+        public ScriptAccess Access { get { return access; } }
     }
 }

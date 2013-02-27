@@ -60,28 +60,69 @@
 //       
 
 using System;
+using System.Reflection;
 
-namespace Microsoft.ClearScript.V8
+namespace Microsoft.ClearScript.Util
 {
-    /// <summary>
-    /// Defines options for initializing a new V8 JavaScript engine instance.
-    /// </summary>
-    [Flags]
-    public enum V8ScriptEngineFlags
+    internal static class MemberHelpers
     {
-        /// <summary>
-        /// Specifies that no options are selected.
-        /// </summary>
-        None = 0,
+        public static bool IsScriptable(this EventInfo eventInfo)
+        {
+            return !eventInfo.IsSpecialName && !IsExplicitImplementation(eventInfo) && !eventInfo.IsBlockedFromScript();
+        }
 
-        /// <summary>
-        /// Specifies that script debugging features are to be enabled.
-        /// </summary>
-        EnableDebugging = 0x00000001,
+        public static bool IsScriptable(this FieldInfo field)
+        {
+            return !field.IsSpecialName && !field.IsBlockedFromScript();
+        }
 
-        /// <summary>
-        /// Specifies that support for <see cref="HostItemFlags.GlobalMembers"/> behavior is to be disabled. This option yields a significant performance benefit for global item access.
-        /// </summary>
-        DisableGlobalMembers = 0x00000002
+        public static bool IsScriptable(this MethodInfo method)
+        {
+            return !method.IsSpecialName && !IsExplicitImplementation(method) && !method.IsBlockedFromScript();
+        }
+
+        public static bool IsScriptable(this PropertyInfo property)
+        {
+            return !property.IsSpecialName && !IsExplicitImplementation(property) && !property.IsBlockedFromScript();
+        }
+
+        public static string GetScriptName(this MemberInfo member)
+        {
+            var attribute = member.GetAttribute<ScriptMemberAttribute>(true);
+            return ((attribute != null) && (attribute.Name != null)) ? attribute.Name : member.GetShortName();
+        }
+
+        public static bool IsBlockedFromScript(this MemberInfo member)
+        {
+            return member.GetScriptAccess() == ScriptAccess.None;
+        }
+
+        public static bool IsReadOnlyForScript(this MemberInfo member)
+        {
+            return member.GetScriptAccess() == ScriptAccess.ReadOnly;
+        }
+
+        public static string GetShortName(this MemberInfo member)
+        {
+            var name = member.Name;
+            var index = name.LastIndexOf('.');
+            return (index >= 0) ? name.Substring(index + 1) : name;
+        }
+
+        private static bool IsExplicitImplementation(this MemberInfo member)
+        {
+            return member.Name.IndexOf('.') >= 0;
+        }
+
+        private static ScriptAccess GetScriptAccess(this MemberInfo member)
+        {
+            var attribute = member.GetAttribute<ScriptUsageAttribute>(true);
+            return (attribute != null) ? attribute.Access : ScriptAccess.Full;
+        }
+
+        private static T GetAttribute<T>(this MemberInfo member, bool inherit) where T : Attribute
+        {
+            return Attribute.GetCustomAttribute(member, typeof(T), inherit) as T;
+        }
     }
 }

@@ -76,7 +76,9 @@ namespace Microsoft.ClearScript.Util
             "FXAssembly",
             "ThisAssembly",
             "AssemblyRef",
-            "SRETW"
+            "SRETW",
+            "MatchState",
+            "__DynamicallyInvokableAttribute"
         };
 
         private static readonly Dictionary<TypeCode, TypeCode[]> implicitNumericConversions = new Dictionary<TypeCode, TypeCode[]>
@@ -234,68 +236,62 @@ namespace Microsoft.ClearScript.Util
             return type.GetGenericArguments().Count(typeArg => typeArg.IsGenericParameter);
         }
 
-        public static IEnumerable<EventInfo> ExtGetEvents(this Type type, BindingFlags bindFlags)
+        public static IEnumerable<EventInfo> GetScriptableEvents(this Type type, BindingFlags bindFlags)
         {
             var events = type.GetEvents(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                events = events.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.ExtGetEvents(bindFlags)));
+                events = events.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableEvents(bindFlags)));
             }
 
-            return events;
+            return events.Where(eventInfo => eventInfo.IsScriptable());
         }
 
-        public static EventInfo ExtGetEvent(this Type type, string name, BindingFlags bindFlags)
+        public static EventInfo GetScriptableEvent(this Type type, string name, BindingFlags bindFlags)
         {
-            return type.ExtGetEvents(bindFlags).FirstOrDefault(eventInfo => eventInfo.Name == name);
+            return type.GetScriptableEvents(bindFlags).FirstOrDefault(eventInfo => eventInfo.GetScriptName() == name);
         }
 
-        public static IEnumerable<FieldInfo> ExtGetFields(this Type type, BindingFlags bindFlags)
+        public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, BindingFlags bindFlags)
         {
-            return type.GetFields(bindFlags);
+            return type.GetFields(bindFlags).Where(field => field.IsScriptable());
         }
 
-        public static FieldInfo ExtGetField(this Type type, string name, BindingFlags bindFlags)
+        public static FieldInfo GetScriptableField(this Type type, string name, BindingFlags bindFlags)
         {
-            return type.ExtGetFields(bindFlags).FirstOrDefault(field => field.Name == name);
+            return type.GetScriptableFields(bindFlags).FirstOrDefault(field => field.GetScriptName() == name);
         }
 
-        public static IEnumerable<MethodInfo> ExtGetMethods(this Type type, BindingFlags bindFlags)
+        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, BindingFlags bindFlags)
         {
             var methods = type.GetMethods(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                methods = methods.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.ExtGetMethods(bindFlags)));
+                methods = methods.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableMethods(bindFlags)));
             }
 
-            return methods;
+            return methods.Where(method => method.IsScriptable());
         }
 
-        public static MethodInfo ExtGetMethod(this Type type, string name, BindingFlags bindFlags)
+        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, string name, BindingFlags bindFlags)
         {
-            return type.ExtGetMethods(bindFlags).FirstOrDefault(method => method.Name == name);
+            return type.GetScriptableMethods(bindFlags).Where(method => method.GetScriptName() == name);
         }
 
-        public static IEnumerable<PropertyInfo> ExtGetProperties(this Type type, BindingFlags bindFlags)
+        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, BindingFlags bindFlags)
         {
             var properties = type.GetProperties(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.ExtGetProperties(bindFlags)));
+                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags)));
             }
 
-            return properties;
+            return properties.Where(property => property.IsScriptable());
         }
 
-        public static PropertyInfo ExtGetProperty(this Type type, string name, BindingFlags bindFlags)
+        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags)
         {
-            return type.ExtGetProperties(bindFlags).FirstOrDefault(property => property.Name == name);
-        }
-
-        public static IEnumerable<InterfaceMapping> ExtGetInterfaceMaps(this Type type, Type interfaceType)
-        {
-            var mappings = new[] { type.GetInterfaceMap(interfaceType) };
-            return mappings.Concat(interfaceType.GetInterfaces().SelectMany(type.ExtGetInterfaceMaps));
+            return type.GetScriptableProperties(bindFlags).FirstOrDefault(property => property.GetScriptName() == name);
         }
 
         public static object CreateInstance(this Type type, params object[] args)

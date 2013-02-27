@@ -61,27 +61,26 @@
 
 using System;
 
-namespace Microsoft.ClearScript.V8
+namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Defines options for initializing a new V8 JavaScript engine instance.
+    /// Specifies that script code is to have no access to the target type member.
     /// </summary>
-    [Flags]
-    public enum V8ScriptEngineFlags
+    /// <remarks>
+    /// This attribute is applicable to events, fields, methods, and properties. Note that it has
+    /// no effect on the method binding algorithm. If a script-based call is bound to a method that
+    /// is blocked by this attribute, it will be rejected even if an overload exists that could
+    /// receive the call.
+    /// </remarks>
+    [AttributeUsage(AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Method | AttributeTargets.Property)]
+    public sealed class NoScriptAccessAttribute : ScriptUsageAttribute
     {
         /// <summary>
-        /// Specifies that no options are selected.
+        /// Initializes a new <see cref="NoScriptAccessAttribute"/> instance.
         /// </summary>
-        None = 0,
-
-        /// <summary>
-        /// Specifies that script debugging features are to be enabled.
-        /// </summary>
-        EnableDebugging = 0x00000001,
-
-        /// <summary>
-        /// Specifies that support for <see cref="HostItemFlags.GlobalMembers"/> behavior is to be disabled. This option yields a significant performance benefit for global item access.
-        /// </summary>
-        DisableGlobalMembers = 0x00000002
+        public NoScriptAccessAttribute()
+            : base(ScriptAccess.None)
+        {
+        }
     }
 }

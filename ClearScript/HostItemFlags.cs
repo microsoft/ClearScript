@@ -70,17 +70,17 @@ namespace Microsoft.ClearScript
     public enum HostItemFlags
     {
         /// <summary>
-        /// Indicates that no options are selected.
+        /// Specifies that no options are selected.
         /// </summary>
         None = 0x00,
 
         /// <summary>
-        /// Indicates that the host resource's members are to be exposed as global items in the script engine's root namespace.
+        /// Specifies that the host resource's members are to be exposed as global items in the script engine's root namespace.
         /// </summary>
         GlobalMembers = 0x00000001,
 
         /// <summary>
-        /// Indicates that the host resource's non-public members are to be exposed.
+        /// Specifies that the host resource's non-public members are to be exposed.
         /// </summary>
         PrivateAccess = 0x00000002
     }

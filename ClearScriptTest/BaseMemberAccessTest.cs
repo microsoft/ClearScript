@@ -351,6 +351,22 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
+        public void BaseMemberAccess_BindTestMethod_BaseClass()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BaseBindTestMethod(arg), engine.Evaluate("testObject.BaseBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("BaseMemberAccess")]
+        public void BaseMemberAccess_BindTestMethod_Interface()
+        {
+            var arg = new TestArg() as ITestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BaseBindTestMethod(arg), engine.Evaluate("testObject.BaseBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_ExtensionMethod()
         {
             Assert.AreEqual(testObject.BaseExtensionMethod("foo", 4), engine.Evaluate("testObject.BaseExtensionMethod('foo', 4)"));
@@ -400,6 +416,22 @@ namespace Microsoft.ClearScript.Test
         public void BaseMemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
             engine.Execute("testObject.BaseExtensionMethod(4)");
+        }
+
+        [TestMethod, TestCategory("BaseMemberAccess")]
+        public void BaseMemberAccess_ExtensionBindTestMethod_BaseClass()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BaseExtensionBindTestMethod(arg), engine.Evaluate("testObject.BaseExtensionBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("BaseMemberAccess")]
+        public void BaseMemberAccess_ExtensionBindTestMethod_Interface()
+        {
+            var arg = new TestArg() as ITestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BaseExtensionBindTestMethod(arg), engine.Evaluate("testObject.BaseExtensionBindTestMethod(arg)"));
         }
 
         // ReSharper restore InconsistentNaming

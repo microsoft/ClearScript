@@ -85,7 +85,7 @@ namespace Microsoft.ClearScript
             if (!table.ContainsKey(type) && type.HasExtensionMethods())
             {
                 const BindingFlags bindFlags = BindingFlags.Public | BindingFlags.Static;
-                table[type] = type.GetMethods(bindFlags).Where(IsExtensionMethod).ToArray();
+                table[type] = type.GetMethods(bindFlags).Where(IsScriptableExtensionMethod).ToArray();
                 summary = new ExtensionMethodSummary(table);
                 return true;
             }
@@ -93,9 +93,9 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        private static bool IsExtensionMethod(MethodInfo method)
+        private static bool IsScriptableExtensionMethod(MethodInfo method)
         {
-            return !method.IsSpecialName && method.IsDefined(typeof(ExtensionAttribute), false);
+            return method.IsScriptable() && method.IsDefined(typeof(ExtensionAttribute), false);
         }
     }
 
@@ -112,7 +112,7 @@ namespace Microsoft.ClearScript
         {
             Types = table.Keys.ToArray();
             Methods = table.SelectMany(pair => pair.Value).ToArray();
-            MethodNames = Methods.Select(method => method.Name).ToArray();
+            MethodNames = Methods.Select(method => method.GetScriptName()).ToArray();
         }
 
         public Type[] Types { get; private set; }

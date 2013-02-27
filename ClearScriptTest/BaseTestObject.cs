@@ -109,6 +109,12 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public double BaseBindTestMethod<T>(T arg)
+        {
+            return TestUtil.CalcTestValue(this, typeof(T), arg);
+        }
+
         #region Implementation of IBaseTestInterface
 
         public int[] BaseInterfaceProperty { get; set; }
@@ -146,6 +152,12 @@ namespace Microsoft.ClearScript.Test
         public double BaseInterfaceMethod<T>(int arg) where T : struct
         {
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public double BaseInterfaceBindTestMethod<T>(T arg)
+        {
+            return TestUtil.CalcTestValue(this, typeof(T), arg);
         }
 
         #endregion
@@ -208,6 +220,13 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation for testing purposes.")]
+        double IExplicitBaseTestInterface.ExplicitBaseInterfaceBindTestMethod<T>(T arg)
+        {
+            return TestUtil.CalcTestValue(this, typeof(T), arg);
+        }
+
         #endregion
     }
 
@@ -229,6 +248,12 @@ namespace Microsoft.ClearScript.Test
         public static double BaseExtensionMethod<T>(this BaseTestObject self, int arg) where T : struct
         {
             return TestUtil.CalcTestValue(self, typeof(T).Name.Length, arg);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static double BaseExtensionBindTestMethod<T>(this BaseTestObject self, T arg)
+        {
+            return TestUtil.CalcTestValue(self, typeof(T), arg);
         }
     }
 }

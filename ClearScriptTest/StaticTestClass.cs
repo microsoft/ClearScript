@@ -107,5 +107,11 @@ namespace Microsoft.ClearScript.Test
         {
             return TestUtil.CalcTestValue(typeof(StaticTestClass), typeof(T).Name.Length, arg);
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static double StaticBindTestMethod<T>(T arg)
+        {
+            return TestUtil.CalcTestValue(typeof(StaticTestClass), typeof(T), arg);
+        }
     }
 }

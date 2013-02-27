@@ -112,9 +112,9 @@ namespace Microsoft.ClearScript
             get { return HostTargetFlags.None; }
         }
 
-        public override bool TryInvoke(BindingFlags invokeFlags, object[] args, out object result)
+        public override bool TryInvoke(BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            result = target.InvokeMember(name, invokeFlags, args, null);
+            result = target.InvokeMember(name, invokeFlags, args, bindArgs, null);
             return true;
         }
 

@@ -59,29 +59,31 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-using System;
-
-namespace Microsoft.ClearScript.V8
+namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Defines options for initializing a new V8 JavaScript engine instance.
+    /// Defines script access settings for type members.
     /// </summary>
-    [Flags]
-    public enum V8ScriptEngineFlags
+    public enum ScriptAccess
     {
         /// <summary>
-        /// Specifies that no options are selected.
+        /// Specifies that script code is to have full access to the type member. This is the
+        /// default setting.
         /// </summary>
-        None = 0,
+        Full,
 
         /// <summary>
-        /// Specifies that script debugging features are to be enabled.
+        /// Specifies that script code is to have read-only access to the type member. This setting
+        /// only affects fields and writable properties.
         /// </summary>
-        EnableDebugging = 0x00000001,
+        ReadOnly,
 
         /// <summary>
-        /// Specifies that support for <see cref="HostItemFlags.GlobalMembers"/> behavior is to be disabled. This option yields a significant performance benefit for global item access.
+        /// Specifies that script code is to have no access to the type member. Note that this
+        /// setting has no effect on the method binding algorithm. If a script-based call is bound
+        /// to a method that is blocked by this setting, it will be rejected even if an overload
+        /// exists that could receive the call.
         /// </summary>
-        DisableGlobalMembers = 0x00000002
+        None
     }
 }

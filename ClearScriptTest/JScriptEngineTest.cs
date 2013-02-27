@@ -62,6 +62,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -154,6 +155,24 @@ namespace Microsoft.ClearScript.Test
         {
             engine.AddHostObject("test", HostItemFlags.PrivateAccess, this);
             engine.Execute("test.PrivateMethod()");
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddRestrictedHostObject_BaseClass()
+        {
+            var host = new ExtendedHostFunctions() as HostFunctions;
+            engine.AddRestrictedHostObject("host", host);
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj()"), typeof(PropertyBag));
+            TestUtil.AssertException<ExternalException>(() => engine.Evaluate("host.type('System.Int32')"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddRestrictedHostObject_Interface()
+        {
+            const double value = 123.45;
+            engine.AddRestrictedHostObject("convertible", value as IConvertible);
+            engine.AddHostObject("culture", CultureInfo.InvariantCulture);
+            Assert.AreEqual(value, engine.Evaluate("convertible.ToDouble(culture)"));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]

@@ -347,6 +347,22 @@ namespace Microsoft.ClearScript.Test
             engine.Execute("StaticTestClass.StaticMethod(4)");
         }
 
+        [TestMethod, TestCategory("StaticMemberAccess")]
+        public void StaticMemberAccess_BindTestMethod_BaseClass()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(StaticTestClass.StaticBindTestMethod(arg), engine.Evaluate("StaticTestClass.StaticBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("StaticMemberAccess")]
+        public void StaticMemberAccess_BindTestMethod_Interface()
+        {
+            var arg = new TestArg() as ITestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(StaticTestClass.StaticBindTestMethod(arg), engine.Evaluate("StaticTestClass.StaticBindTestMethod(arg)"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

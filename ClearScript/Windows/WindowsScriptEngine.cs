@@ -351,7 +351,7 @@ namespace Microsoft.ClearScript.Windows
             return HostItem.Wrap(this, obj, flags);
         }
 
-        internal override object MarshalToHost(object obj)
+        internal override object MarshalToHost(object obj, bool preserveHostTarget)
         {
             if (obj == null)
             {
@@ -367,14 +367,14 @@ namespace Microsoft.ClearScript.Windows
             if (array != null)
             {
                 // COM interop converts VBScript arrays to managed arrays
-                array.Iterate(indices => array.SetValue(MarshalToHost(array.GetValue(indices)), indices));
+                array.Iterate(indices => array.SetValue(MarshalToHost(array.GetValue(indices), preserveHostTarget), indices));
                 return array;
             }
 
             var hostItem = obj as HostItem;
             if (hostItem != null)
             {
-                return hostItem.Unwrap();
+                return preserveHostTarget ? hostItem.Target : hostItem.Unwrap();
             }
 
             if (obj is ScriptItem)

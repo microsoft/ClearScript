@@ -71,9 +71,10 @@
 // standard library headers
 //-----------------------------------------------------------------------------
 
+#include <algorithm>
+#include <hash_map>
 #include <string>
 #include <vector>
-#include <hash_map>
 using namespace std;
 
 //-----------------------------------------------------------------------------

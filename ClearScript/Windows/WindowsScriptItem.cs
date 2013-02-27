@@ -148,7 +148,7 @@ namespace Microsoft.ClearScript.Windows
 
                     throw;
                 }
-            }));
+            }), false);
 
             var resultScriptItem = result as WindowsScriptItem;
             if ((resultScriptItem != null) && (resultScriptItem.engine == engine))
@@ -237,7 +237,7 @@ namespace Microsoft.ClearScript.Windows
         {
             try
             {
-                return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMember(name, BindingFlags.InvokeMethod, null, target, engine.MarshalToScript(args), null, CultureInfo.InvariantCulture, null)));
+                return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMember(name, BindingFlags.InvokeMethod, null, target, engine.MarshalToScript(args), null, CultureInfo.InvariantCulture, null)), false);
             }
             catch (Exception exception)
             {

@@ -206,12 +206,12 @@ namespace Microsoft.ClearScript
             get { return flags; }
         }
 
-        public object InvokeMember(string name, BindingFlags invokeFlags, object[] args, CultureInfo culture)
+        public object InvokeMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture)
         {
             AdjustInvokeFlags(ref invokeFlags);
 
             object result;
-            if (target.TryInvokeAuxMember(name, invokeFlags, args, out result))
+            if (target.TryInvokeAuxMember(name, invokeFlags, args, bindArgs, out result))
             {
                 if (target is IHostVariable)
                 {
@@ -229,7 +229,7 @@ namespace Microsoft.ClearScript
 
             if (targetPropertyBag != null)
             {
-                return InvokePropertyBagMember(name, invokeFlags, args);
+                return InvokePropertyBagMember(name, invokeFlags, args, bindArgs);
             }
 
             if (targetList != null)
@@ -237,11 +237,11 @@ namespace Microsoft.ClearScript
                 int index;
                 if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
                 {
-                    return InvokeListElement(index, invokeFlags, args);
+                    return InvokeListElement(index, invokeFlags, args, bindArgs);
                 }
             }
 
-            return InvokeHostMember(name, invokeFlags, args, culture);
+            return InvokeHostMember(name, invokeFlags, args, bindArgs, culture);
         }
 
         #endregion
@@ -380,8 +380,8 @@ namespace Microsoft.ClearScript
         {
             if (cachedLocalEventNames == null)
             {
-                var localEvents = target.Type.ExtGetEvents(GetCommonBindFlags()).Where(eventInfo => !eventInfo.IsSpecialName);
-                cachedLocalEventNames = localEvents.Select(eventInfo => eventInfo.Name).ToArray();
+                var localEvents = target.Type.GetScriptableEvents(GetCommonBindFlags());
+                cachedLocalEventNames = localEvents.Select(eventInfo => eventInfo.GetScriptName()).ToArray();
             }
 
             return cachedLocalEventNames;
@@ -391,8 +391,8 @@ namespace Microsoft.ClearScript
         {
             if (cachedLocalFieldNames == null)
             {
-                var localFields = target.Type.ExtGetFields(GetCommonBindFlags()).Where(field => !field.IsSpecialName);
-                cachedLocalFieldNames = localFields.Select(field => field.Name).ToArray();
+                var localFields = target.Type.GetScriptableFields(GetCommonBindFlags());
+                cachedLocalFieldNames = localFields.Select(field => field.GetScriptName()).ToArray();
             }
 
             return cachedLocalFieldNames;
@@ -402,8 +402,8 @@ namespace Microsoft.ClearScript
         {
             if (cachedLocalMethodNames == null)
             {
-                var localMethods = target.Type.ExtGetMethods(GetMethodBindFlags()).Where(method => !method.IsSpecialName);
-                cachedLocalMethodNames = localMethods.Select(method => method.Name).ToArray();
+                var localMethods = target.Type.GetScriptableMethods(GetMethodBindFlags());
+                cachedLocalMethodNames = localMethods.Select(method => method.GetScriptName()).ToArray();
             }
 
             return cachedLocalMethodNames;
@@ -413,8 +413,8 @@ namespace Microsoft.ClearScript
         {
             if (cachedLocalPropertyNames == null)
             {
-                var localProperties = target.Type.ExtGetProperties(GetCommonBindFlags()).Where(property => !property.IsSpecialName);
-                cachedLocalPropertyNames = localProperties.Select(property => property.Name).ToArray();
+                var localProperties = target.Type.GetScriptableProperties(GetCommonBindFlags());
+                cachedLocalPropertyNames = localProperties.Select(property => property.GetScriptName()).ToArray();
             }
 
             return cachedLocalPropertyNames;
@@ -546,7 +546,7 @@ namespace Microsoft.ClearScript
             throw new InvalidOperationException("Invalid member invocation mode");
         }
 
-        private object InvokePropertyBagMember(string name, BindingFlags invokeFlags, object[] args)
+        private object InvokePropertyBagMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs)
         {
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
@@ -567,7 +567,7 @@ namespace Microsoft.ClearScript
                 }
 
                 object result;
-                if (InvokeHelpers.TryInvokeObject(value, invokeFlags, args, out result))
+                if (InvokeHelpers.TryInvokeObject(value, invokeFlags, args, bindArgs, out result))
                 {
                     return result;
                 }
@@ -599,12 +599,12 @@ namespace Microsoft.ClearScript
             throw new InvalidOperationException("Invalid member invocation mode");
         }
 
-        private object InvokeListElement(int index, BindingFlags invokeFlags, object[] args)
+        private object InvokeListElement(int index, BindingFlags invokeFlags, object[] args, object[] bindArgs)
         {
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
                 object result;
-                if (InvokeHelpers.TryInvokeObject(targetList[index], invokeFlags, args, out result))
+                if (InvokeHelpers.TryInvokeObject(targetList[index], invokeFlags, args, bindArgs, out result))
                 {
                     return result;
                 }
@@ -630,7 +630,7 @@ namespace Microsoft.ClearScript
             throw new InvalidOperationException("Invalid member invocation mode");
         }
 
-        private object InvokeHostMember(string name, BindingFlags invokeFlags, object[] args, CultureInfo culture)
+        private object InvokeHostMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture)
         {
             if (invokeFlags.HasFlag(BindingFlags.CreateInstance))
             {
@@ -645,7 +645,7 @@ namespace Microsoft.ClearScript
                             // ReSharper disable CoVariantArrayConversion
 
                             object result;
-                            if (hostType.TryInvoke(BindingFlags.InvokeMethod, typeArgs, out result))
+                            if (hostType.TryInvoke(BindingFlags.InvokeMethod, typeArgs, bindArgs, out result))
                             {
                                 hostType = result as HostType;
                                 if (hostType != null)
@@ -672,7 +672,7 @@ namespace Microsoft.ClearScript
                 if (name == SpecialMemberNames.Default)
                 {
                     object result;
-                    if (InvokeHelpers.TryInvokeObject(target, invokeFlags, args, out result))
+                    if (InvokeHelpers.TryInvokeObject(target, invokeFlags, args, bindArgs, out result))
                     {
                         return result;
                     }
@@ -687,17 +687,17 @@ namespace Microsoft.ClearScript
 
                 if (thisExpando.GetMethods(GetMethodBindFlags()).Any(method => method.Name == name))
                 {
-                    return InvokeMethod(name, args);
+                    return InvokeMethod(name, args, bindArgs);
                 }
 
-                var property = target.Type.ExtGetProperty(name, GetCommonBindFlags());
+                var property = target.Type.GetScriptableProperty(name, GetCommonBindFlags());
                 if ((property != null) && (typeof(Delegate).IsAssignableFrom(property.PropertyType)))
                 {
                     var del = (Delegate)property.GetValue(target.InvokeTarget, invokeFlags | BindingFlags.GetProperty, Type.DefaultBinder, MiscHelpers.GetEmptyArray<object>(), culture);
                     return InvokeHelpers.InvokeDelegate(del, args);
                 }
 
-                var field = target.Type.ExtGetField(name, GetCommonBindFlags());
+                var field = target.Type.GetScriptableField(name, GetCommonBindFlags());
                 if ((field != null) && (typeof(Delegate).IsAssignableFrom(field.FieldType)))
                 {
                     var del = (Delegate)field.GetValue(target.InvokeTarget);
@@ -722,7 +722,7 @@ namespace Microsoft.ClearScript
                 if (name == SpecialMemberNames.Default)
                 {
                     object result;
-                    if (InvokeHelpers.TryInvokeObject(target, invokeFlags, args, out result))
+                    if (InvokeHelpers.TryInvokeObject(target, invokeFlags, args, bindArgs, out result))
                     {
                         return result;
                     }
@@ -730,11 +730,16 @@ namespace Microsoft.ClearScript
                     throw new InvalidOperationException("Invalid property assignment");
                 }
 
-                var property = target.Type.ExtGetProperty(name, invokeFlags);
+                var property = target.Type.GetScriptableProperty(name, invokeFlags);
                 if (property != null)
                 {
                     if (args.Length > 0)
                     {
+                        if (property.IsReadOnlyForScript())
+                        {
+                            throw new UnauthorizedAccessException("Property is read-only");
+                        }
+
                         var value = args[args.Length - 1];
                         if (property.PropertyType.IsAssignableFrom(ref value))
                         {
@@ -748,11 +753,16 @@ namespace Microsoft.ClearScript
                     throw new InvalidOperationException("Invalid argument count");
                 }
 
-                var field = target.Type.ExtGetField(name, invokeFlags);
+                var field = target.Type.GetScriptableField(name, invokeFlags);
                 if (field != null)
                 {
                     if (args.Length == 1)
                     {
+                        if (field.IsReadOnlyForScript())
+                        {
+                            throw new UnauthorizedAccessException("Field is read-only");
+                        }
+
                         var value = args[0];
                         if (field.FieldType.IsAssignableFrom(ref value))
                         {
@@ -774,7 +784,7 @@ namespace Microsoft.ClearScript
 
         private object GetHostProperty(string name, BindingFlags invokeFlags, object[] args, CultureInfo culture)
         {
-            var property = target.Type.ExtGetProperty(name, invokeFlags);
+            var property = target.Type.GetScriptableProperty(name, invokeFlags);
             if (property != null)
             {
                 if ((property.GetIndexParameters().Length > 0) && (args.Length < 1))
@@ -785,13 +795,13 @@ namespace Microsoft.ClearScript
                 return property.GetValue(target.InvokeTarget, invokeFlags, Type.DefaultBinder, args, culture);
             }
 
-            var field = target.Type.ExtGetField(name, invokeFlags);
+            var field = target.Type.GetScriptableField(name, invokeFlags);
             if (field != null)
             {
                 return field.GetValue(target.InvokeTarget);
             }
 
-            var eventInfo = target.Type.ExtGetEvent(name, invokeFlags);
+            var eventInfo = target.Type.GetScriptableEvent(name, invokeFlags);
             if (eventInfo != null)
             {
                 var type = typeof(EventSource<>).MakeSpecificType(eventInfo.EventHandlerType);
@@ -1044,13 +1054,26 @@ namespace Microsoft.ClearScript
         {
             return engine.MarshalToScript(engine.HostInvoke(() =>
             {
-                var args = engine.MarshalToHost(wrappedArgs);
+                var args = engine.MarshalToHost(wrappedArgs, false);
+
+                var skipFirst = false;
                 if ((namedParams != null) && (namedParams.Length > 0) && (namedParams[0] == SpecialParameterNames.This))
                 {
                     args = args.Skip(1).ToArray();
+                    skipFirst = true;
                 }
 
-                return InvokeMember(name, invokeFlags, args, culture);
+                object[] bindArgs = null;
+                if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+                {
+                    bindArgs = engine.MarshalToHost(wrappedArgs, true);
+                    if (skipFirst)
+                    {
+                        bindArgs = bindArgs.Skip(1).ToArray();
+                    }
+                }
+
+                return InvokeMember(name, invokeFlags, args, bindArgs, culture);
             }));
         }
 

@@ -119,19 +119,19 @@ namespace Microsoft.ClearScript
             return auxMethodNames;
         }
 
-        public override bool TryInvokeAuxMember(string memberName, BindingFlags invokeFlags, object[] args, out object result)
+        public override bool TryInvokeAuxMember(string memberName, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
                 if (memberName == "get")
                 {
-                    result = target.InvokeMember(name, BindingFlags.GetProperty, args, null);
+                    result = target.InvokeMember(name, BindingFlags.GetProperty, args, bindArgs, null);
                     return true;
                 }
 
                 if (memberName == "set")
                 {
-                    result = target.InvokeMember(name, BindingFlags.SetProperty, args, null);
+                    result = target.InvokeMember(name, BindingFlags.SetProperty, args, bindArgs, null);
                     return true;
                 }
             }
@@ -140,9 +140,9 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public override bool TryInvoke(BindingFlags invokeFlags, object[] args, out object result)
+        public override bool TryInvoke(BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            result = target.InvokeMember(name, invokeFlags.HasFlag(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty, args, null);
+            result = target.InvokeMember(name, invokeFlags.HasFlag(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty, args, bindArgs, null);
             return true;
         }
 

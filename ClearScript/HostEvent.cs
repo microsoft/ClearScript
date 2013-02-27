@@ -89,6 +89,16 @@ namespace Microsoft.ClearScript
             this.eventInfo = eventInfo;
         }
 
+        internal object Source
+        {
+            get { return source; }
+        }
+
+        internal EventInfo EventInfo
+        {
+            get { return eventInfo; }
+        }
+
         #region script-callable interface
 
         // ReSharper disable InconsistentNaming

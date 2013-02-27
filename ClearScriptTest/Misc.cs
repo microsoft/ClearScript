@@ -63,9 +63,22 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
 {
+    public class BaseTestArg
+    {
+    }
+
+    public interface ITestArg
+    {
+    }
+
+    public class TestArg : BaseTestArg, ITestArg
+    {
+    }
+
     public enum TestEnum : short
     {
         First,
@@ -91,6 +104,22 @@ namespace Microsoft.ClearScript.Test
 
             var hashCode = args.Aggregate(method.GetHashCode(), (currentHashCode, value) => unchecked((currentHashCode * 31) + ((value != null) ? value.GetHashCode() : 0)));
             return hashCode * Math.E / Math.PI;
+        }
+
+        public static void AssertException<T>(Action action) where T : Exception
+        {
+            var gotException = false;
+
+            try
+            {
+                action();
+            }
+            catch (T)
+            {
+                gotException = true;
+            }
+
+            Assert.IsTrue(gotException);
         }
     }
 }

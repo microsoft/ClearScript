@@ -60,13 +60,18 @@
     <Compile Include="HostTargetFlags.cs" />
     <Compile Include="IScriptableObject.cs" />
     <Compile Include="BindSignature.cs" />
+    <Compile Include="NoScriptAccessAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>AssemblyInfo.tt</DependentUpon>
     </Compile>
+    <Compile Include="ScriptAccess.cs" />
     <Compile Include="ScriptMethod.cs" />
+    <Compile Include="ScriptMemberAttribute.cs" />
+    <Compile Include="ScriptUsageAttribute.cs" />
     <Compile Include="Util\IScriptMarshalWrapper.cs" />
+    <Compile Include="Util\MemberHelpers.cs" />
     <Compile Include="Windows\WindowsScriptEngineFlags.cs" />
     <Compile Include="Util\IDynamic.cs" />
     <Compile Include="Util\SpecialMemberNames.cs" />

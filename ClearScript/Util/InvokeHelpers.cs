@@ -155,12 +155,12 @@ namespace Microsoft.ClearScript.Util
             return InvokeMethod(del, del.GetType().GetMethod("Invoke"), args);
         }
 
-        public static bool TryInvokeObject(object target, BindingFlags invokeFlags, object[] args, out object result)
+        public static bool TryInvokeObject(object target, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             var hostTarget = target as HostTarget;
             if (hostTarget != null)
             {
-                if (hostTarget.TryInvoke(invokeFlags, args, out result))
+                if (hostTarget.TryInvoke(invokeFlags, args, bindArgs, out result))
                 {
                     return true;
                 }

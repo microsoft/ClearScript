@@ -147,7 +147,7 @@ namespace Microsoft.ClearScript
             get { return HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods; }
         }
 
-        public override bool TryInvokeAuxMember(string name, BindingFlags invokeFlags, object[] args, out object result)
+        public override bool TryInvokeAuxMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             const BindingFlags getPropertyFlags =
                 BindingFlags.GetField |
@@ -178,7 +178,7 @@ namespace Microsoft.ClearScript
             {
                 if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
                 {
-                    if (InvokeHelpers.TryInvokeObject(value, invokeFlags, args, out result))
+                    if (InvokeHelpers.TryInvokeObject(value, invokeFlags, args, bindArgs, out result))
                     {
                         return true;
                     }

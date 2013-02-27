@@ -95,7 +95,7 @@ namespace Microsoft.ClearScript
 
             if (succeeded)
             {
-                result = Engine.MarshalToHost(tempResult).ToDynamicResult(Engine);
+                result = Engine.MarshalToHost(tempResult, false).ToDynamicResult(Engine);
                 return true;
             }
 

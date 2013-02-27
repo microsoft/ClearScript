@@ -86,6 +86,7 @@ namespace Microsoft.ClearScript
         /// </summary>
         public HostFunctions()
         {
+            // the help file builder (SHFB) insists on an empty constructor here
         }
 
         // ReSharper restore EmptyConstructor
@@ -656,6 +657,7 @@ namespace Microsoft.ClearScript
         /// </summary>
         public ExtendedHostFunctions()
         {
+            // the help file builder (SHFB) insists on an empty constructor here
         }
 
         // ReSharper restore EmptyConstructor

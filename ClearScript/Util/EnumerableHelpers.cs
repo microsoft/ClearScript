@@ -70,7 +70,7 @@ namespace Microsoft.ClearScript.Util
     {
         public static IList<T> ToIList<T>(this IEnumerable<T> source)
         {
-            return source as IList<T> ?? source.ToList();
+            return (source as IList<T>) ?? source.ToList();
         }
 
         public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)

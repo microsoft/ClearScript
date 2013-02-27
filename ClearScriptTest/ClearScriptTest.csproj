@@ -71,6 +71,7 @@
     <Compile Include="InterfaceMemberAccessTest.cs" />
     <Compile Include="ITestInterface.cs" />
     <Compile Include="JScriptEngineTest.cs" />
+    <Compile Include="ScriptAccessTest.cs" />
     <Compile Include="Misc.cs" />
     <None Include="Properties\AssemblyInfo.tt">
       <Generator>TextTemplatingFileGenerator</Generator>

@@ -77,18 +77,20 @@ namespace Microsoft.ClearScript.Test
         private const string scriptBegin = "<script>";
         private const string scriptEnd = "</script>";
 
+        private static bool gotCode;
         private static string testPrefix;
         private static string testContents;
 
         public static void RunSuite(ScriptEngine engine)
         {
             // download raw test code if necessary
-            if (string.IsNullOrEmpty(testPrefix) || string.IsNullOrEmpty(testContents))
+            if (!gotCode)
             {
                 Console.Write("Downloading code... ");
                 testPrefix = DownloadFileAsString("sunspider-test-prefix.js");
                 testContents = DownloadFileAsString("sunspider-test-contents.js");
                 Console.WriteLine("Done");
+                gotCode = true;
             }
 
             // set up dummy HTML DOM
@@ -114,7 +116,7 @@ namespace Microsoft.ClearScript.Test
 
             // run main test
             var results = repeatIndices.Select(index => new Dictionary<string, int>()).ToArray();
-            for (var repeatIndex = 0; repeatIndex < repeatCount; repeatIndex++)
+            repeatIndices.ForEach(repeatIndex =>
             {
                 Console.Write("Running iteration {0}... ", repeatIndex + 1);
                 testIndices.ForEach(testIndex =>
@@ -123,7 +125,7 @@ namespace Microsoft.ClearScript.Test
                     results[repeatIndex][name] = RunTest(engine, mockDOM, testIndex);
                 });
                 Console.WriteLine("Done");
-            }
+            });
 
             // show results
             var resultString = new StringBuilder("{\"v\":\"" + version + "\",");

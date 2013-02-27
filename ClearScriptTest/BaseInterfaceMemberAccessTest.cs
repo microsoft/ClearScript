@@ -262,6 +262,22 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BaseInterfaceMemberAccess")]
+        public void BaseInterfaceMemberAccess_BindTestMethod_BaseClass()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BaseInterfaceBindTestMethod(arg), engine.Evaluate("testObject.BaseInterfaceBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("BaseInterfaceMemberAccess")]
+        public void BaseInterfaceMemberAccess_BindTestMethod_Interface()
+        {
+            var arg = new TestArg() as ITestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BaseInterfaceBindTestMethod(arg), engine.Evaluate("testObject.BaseInterfaceBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("BaseInterfaceMemberAccess")]
         public void BaseInterfaceMemberAccess_ExtensionMethod()
         {
             Assert.AreEqual(testObject.BaseInterfaceExtensionMethod("foo", 4), engine.Evaluate("testObject.BaseInterfaceExtensionMethod('foo', 4)"));
@@ -311,6 +327,22 @@ namespace Microsoft.ClearScript.Test
         public void BaseInterfaceMemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
             engine.Execute("testObject.BaseInterfaceExtensionMethod(4)");
+        }
+
+        [TestMethod, TestCategory("BaseInterfaceMemberAccess")]
+        public void BaseInterfaceMemberAccess_ExtensionBindTestMethod_BaseClass()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BaseInterfaceExtensionBindTestMethod(arg), engine.Evaluate("testObject.BaseInterfaceExtensionBindTestMethod(arg)"));
+        }
+
+        [TestMethod, TestCategory("BaseInterfaceMemberAccess")]
+        public void BaseInterfaceMemberAccess_ExtensionBindTestMethod_Interface()
+        {
+            var arg = new TestArg() as ITestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.BaseInterfaceExtensionBindTestMethod(arg), engine.Evaluate("testObject.BaseInterfaceExtensionBindTestMethod(arg)"));
         }
 
         // ReSharper restore InconsistentNaming

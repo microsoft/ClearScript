@@ -206,7 +206,7 @@ namespace Microsoft.ClearScript.V8
 
         private object GetRootItem()
         {
-            return MarshalToHost(ScriptInvoke(() => proxy.GetRootItem()));
+            return MarshalToHost(ScriptInvoke(() => proxy.GetRootItem()), false);
         }
 
         private void BaseScriptInvoke(Action action)
@@ -362,7 +362,7 @@ namespace Microsoft.ClearScript.V8
             return HostItem.Wrap(this, obj, flags);
         }
 
-        internal override object MarshalToHost(object obj)
+        internal override object MarshalToHost(object obj, bool preserveHostTarget)
         {
             if (obj == null)
             {
@@ -377,7 +377,7 @@ namespace Microsoft.ClearScript.V8
             var hostItem = obj as HostItem;
             if (hostItem != null)
             {
-                return hostItem.Unwrap();
+                return preserveHostTarget ? hostItem.Target : hostItem.Unwrap();
             }
 
             if (obj is ScriptItem)

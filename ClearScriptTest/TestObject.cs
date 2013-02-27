@@ -108,6 +108,12 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public double BindTestMethod<T>(T arg)
+        {
+            return TestUtil.CalcTestValue(this, typeof(T), arg);
+        }
+
         #region Implementation of ITestInterface
 
         public int[] InterfaceProperty { get; set; }
@@ -145,6 +151,12 @@ namespace Microsoft.ClearScript.Test
         public double InterfaceMethod<T>(int arg) where T : struct
         {
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public double InterfaceBindTestMethod<T>(T arg)
+        {
+            return TestUtil.CalcTestValue(this, typeof(T), arg);
         }
 
         #endregion
@@ -194,6 +206,12 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(this, typeof(T).Name.Length, arg);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        double IExplicitTestInterface.ExplicitInterfaceBindTestMethod<T>(T arg)
+        {
+            return TestUtil.CalcTestValue(this, typeof(T), arg);
+        }
+
         #endregion
     }
 
@@ -215,6 +233,12 @@ namespace Microsoft.ClearScript.Test
         public static double ExtensionMethod<T>(this TestObject self, int arg) where T : struct
         {
             return TestUtil.CalcTestValue(self, typeof(T).Name.Length, arg);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static double ExtensionBindTestMethod<T>(this TestObject self, T arg)
+        {
+            return TestUtil.CalcTestValue(self, typeof(T), arg);
         }
     }
 }
