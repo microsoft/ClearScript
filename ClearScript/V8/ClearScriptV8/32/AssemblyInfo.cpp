@@ -59,6 +59,8 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
+#include "..\..\..\VersionSymbols.h"
+
 using namespace System::Reflection;
 using namespace System::Runtime::CompilerServices;
 using namespace System::Runtime::InteropServices;
@@ -69,5 +71,5 @@ using namespace System::Runtime::InteropServices;
 [assembly:InternalsVisibleTo("ClearScript")];
 
 [assembly:ComVisible(false)];
-[assembly:AssemblyVersion("5.0.0.0")];
-[assembly:AssemblyFileVersion("5.0.0.0")];
+[assembly:AssemblyVersion(CLEARSCRIPT_VERSION_STRING)];
+[assembly:AssemblyFileVersion(CLEARSCRIPT_VERSION_STRING)];

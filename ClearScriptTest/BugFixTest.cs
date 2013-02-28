@@ -59,15 +59,62 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
+using System;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.ClearScript.V8;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+namespace Microsoft.ClearScript.Test
+{
+    [TestClass]
+    [DeploymentItem("ClearScriptV8-64.dll")]
+    [DeploymentItem("ClearScriptV8-32.dll")]
+    [DeploymentItem("v8-x64.dll")]
+    [DeploymentItem("v8-ia32.dll")]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
+    public class BugFixTest : ClearScriptTest
+    {
+        #region setup / teardown
 
-using System.Reflection;
-using System.Runtime.InteropServices;
+        private ScriptEngine engine;
 
-[assembly: AssemblyTitle("ClearScript Test Library")]
-[assembly: AssemblyProduct("ClearScript")]
-[assembly: AssemblyCopyright("© Microsoft Corporation")]
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
+        }
 
-[assembly: ComVisible(false)]
-[assembly: AssemblyVersion("5.1.1.0")]
-[assembly: AssemblyFileVersion("5.1.1.0")]
+        [TestCleanup]
+        public void TestCleanup()
+        {
+            engine.Dispose();
+        }
+
+        #endregion
+
+        #region test methods
+
+        // ReSharper disable InconsistentNaming
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NullArgumentBinding()
+        {
+            var value = 123.456 as IConvertible;
+            engine.AddRestrictedHostObject("value", value);
+            Assert.AreEqual(value.ToString(null), engine.Evaluate("value.ToString(null)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        [ExpectedException(typeof(RuntimeBinderException))]
+        public void BugFix_NullArgumentBinding_Ambiguous()
+        {
+            engine.AddHostObject("lib", new HostTypeCollection("mscorlib"));
+            engine.Execute("lib.System.Console.WriteLine(null)");
+        }
+
+        // ReSharper restore InconsistentNaming
+
+        #endregion
+    }
+}

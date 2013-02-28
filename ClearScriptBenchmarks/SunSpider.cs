@@ -68,7 +68,7 @@ using System.Text;
 
 namespace Microsoft.ClearScript.Test
 {
-    internal class SunSpider
+    internal static class SunSpider
     {
         private const string version = "sunspider-0.9.1";
         private const string baseUrl = "http://www.webkit.org/perf/" + version + "/" + version + "/";

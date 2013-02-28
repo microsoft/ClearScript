@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BindSignatureTest.cs" />
+    <Compile Include="BugFixTest.cs" />
     <Compile Include="CrossEngineTest.cs" />
     <Compile Include="DynamicHostItemTest.cs" />
     <Compile Include="ExplicitBaseInterfaceMemberAccessTest.cs" />

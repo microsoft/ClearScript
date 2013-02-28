@@ -219,14 +219,18 @@ namespace Microsoft.ClearScript
 
         private static CSharpArgumentInfo CreateArgInfo(object arg)
         {
-            var flags = CSharpArgumentInfoFlags.UseCompileTimeType;
-            if (arg is IOutArg)
+            var flags = CSharpArgumentInfoFlags.None;
+            if (arg != null)
             {
-                flags |= CSharpArgumentInfoFlags.IsOut;
-            }
-            else if (arg is IRefArg)
-            {
-                flags |= CSharpArgumentInfoFlags.IsRef;
+                flags |= CSharpArgumentInfoFlags.UseCompileTimeType;
+                if (arg is IOutArg)
+                {
+                    flags |= CSharpArgumentInfoFlags.IsOut;
+                }
+                else if (arg is IRefArg)
+                {
+                    flags |= CSharpArgumentInfoFlags.IsRef;
+                }
             }
 
             return CSharpArgumentInfo.Create(flags, null);
