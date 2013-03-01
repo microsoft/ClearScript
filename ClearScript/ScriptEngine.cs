@@ -501,6 +501,10 @@ namespace Microsoft.ClearScript
         /// document with an automatically selected name. This document will be discarded after
         /// execution.
         /// </para>
+        /// <para>
+        /// For information about the types of result values that script code can return, see
+        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// </para>
         /// </remarks>
         public object Evaluate(string code)
         {
@@ -520,6 +524,10 @@ namespace Microsoft.ClearScript
         /// <para>
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with the specified name. This document will be discarded after execution.
+        /// </para>
+        /// <para>
+        /// For information about the types of result values that script code can return, see
+        /// <see cref="Evaluate(string, bool, string)"/>.
         /// </para>
         /// </remarks>
         public object Evaluate(string documentName, string code)
@@ -542,6 +550,85 @@ namespace Microsoft.ClearScript
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with the specified name. Discarding this document removes it from view but
         /// has no effect on the script engine.
+        /// </para>
+        /// <para>
+        /// The following table summarizes the types of result values that script code can return.
+        /// <list type="table">
+        ///     <listheader>
+        ///         <term>Type</term>
+        ///         <term>Returned&#xA0;As</term>
+        ///         <description>Remarks</description>
+        ///     </listheader>
+        ///     <item>
+        ///         <term><b>String</b></term>
+        ///         <term><see href="http://msdn.microsoft.com/en-us/library/system.string.aspx">System.String</see></term>
+        ///         <description>N/A</description>
+        ///     </item>
+        ///     <item>
+        ///         <term><b>Boolean</b></term>
+        ///         <term><see href="http://msdn.microsoft.com/en-us/library/system.boolean.aspx">System.Boolean</see></term>
+        ///         <description>N/A</description>
+        ///     </item>
+        ///     <item>
+        ///         <term><b>Number</b></term>
+        ///         <term><see href="http://msdn.microsoft.com/en-us/library/system.int32.aspx">System.Int32</see>&#xA0;or&#xA0;<see href="http://msdn.microsoft.com/en-us/library/system.double.aspx">System.Double</see></term>
+        ///         <description>
+        ///         Other numeric types are possible. The exact conversions between script and .NET
+        ///         numeric types are defined by the script engine.
+        ///         </description>
+        ///     </item>
+        ///     <item>
+        ///         <term><b>Null&#xA0;Reference</b></term>
+        ///         <term><c>null</c></term>
+        ///         <description>N/A</description>
+        ///     </item>
+        ///     <item>
+        ///         <term><b>Undefined</b></term>
+        ///         <term><see cref="Undefined"/></term>
+        ///         <description>
+        ///         This represents JavaScript’s
+        ///         <see href="http://msdn.microsoft.com/en-us/library/ie/dae3sbk5(v=vs.94).aspx">undefined</see>,
+        ///         VBScript’s
+        ///         <see href="http://msdn.microsoft.com/en-us/library/f8tbc79x(v=vs.85).aspx">Empty</see>,
+        ///         etc.
+        ///         </description>
+        ///     </item>
+        ///     <item>
+        ///         <term><b>Void</b></term>
+        ///         <term><see cref="VoidResult"/></term>
+        ///         <description>
+        ///         This is returned when script code forwards the result of a host method that returns no value.
+        ///         </description>
+        ///     </item>
+        ///     <item>
+        ///         <term><b>Host&#xA0;Object</b></term>
+        ///         <term>Native&#xA0;.NET&#xA0;type</term>
+        ///         <description>
+        ///         This includes all .NET types not mentioned above, including value types (enums,
+        ///         structs, etc.), and instances of all other classes. Script code can only create
+        ///         these objects by invoking a host method or constructor. They are returned to
+        ///         the host in their native .NET form.
+        ///         </description>
+        ///     </item>
+        ///     <item>
+        ///         <term><b>Script&#xA0;Object</b></term>
+        ///         <term><see href="http://msdn.microsoft.com/en-us/library/system.dynamic.dynamicobject.aspx">System.Dynamic.DynamicObject</see></term>
+        ///         <description>
+        ///         This includes all native script objects that have no .NET representation. C#'s
+        ///         <see href="http://msdn.microsoft.com/en-us/library/dd264741.aspx">dynamic</see>
+        ///         keyword provides a convenient way to access them.
+        ///         </description>
+        ///     </item>
+        ///     <item>
+        ///         <term>Other</term>
+        ///         <term>Unspecified</term>
+        ///         <description>
+        ///         This includes host types and other ClearScript-specific objects intended for
+        ///         script code use only. It may also include language-specific values that the
+        ///         ClearScript library does not support. 
+        ///         </description>
+        ///     </item>
+        /// </list>
         /// </para>
         /// </remarks>
         public object Evaluate(string documentName, bool discard, string code)

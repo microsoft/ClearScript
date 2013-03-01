@@ -98,7 +98,7 @@ namespace Microsoft.ClearScript.Test
         // ReSharper disable InconsistentNaming
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_NullArgumentBinding()
+        public void BugFix_NullArgBinding()
         {
             var value = 123.456 as IConvertible;
             engine.AddRestrictedHostObject("value", value);
@@ -107,10 +107,27 @@ namespace Microsoft.ClearScript.Test
 
         [TestMethod, TestCategory("BugFix")]
         [ExpectedException(typeof(RuntimeBinderException))]
-        public void BugFix_NullArgumentBinding_Ambiguous()
+        public void BugFix_NullArgBinding_Ambiguous()
         {
             engine.AddHostObject("lib", new HostTypeCollection("mscorlib"));
             engine.Execute("lib.System.Console.WriteLine(null)");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DelegateConstructionSyntax()
+        {
+            engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));
+            var func = (Func<int, int>)engine.Evaluate("new (System.Func(System.Int32, System.Int32))(function (x) {return x * x; })");
+            Assert.AreEqual(25, func(5));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DelegateConstructionSyntax_DoubleWrap()
+        {
+            engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));
+            engine.Execute("cb = new (System.Func(System.Int32, System.Int32))(function (x) {return x * x; })");
+            var func = (Func<int, int>)engine.Evaluate("new (System.Func(System.Int32, System.Int32))(cb)");
+            Assert.AreEqual(25, func(5));
         }
 
         // ReSharper restore InconsistentNaming

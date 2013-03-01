@@ -645,7 +645,7 @@ namespace Microsoft.ClearScript
                             // ReSharper disable CoVariantArrayConversion
 
                             object result;
-                            if (hostType.TryInvoke(BindingFlags.InvokeMethod, typeArgs, bindArgs, out result))
+                            if (hostType.TryInvoke(BindingFlags.InvokeMethod, typeArgs, typeArgs, out result))
                             {
                                 hostType = result as HostType;
                                 if (hostType != null)
@@ -660,7 +660,18 @@ namespace Microsoft.ClearScript
                             // ReSharper restore CoVariantArrayConversion
                         }
 
-                        return hostType.GetSpecificType().CreateInstance(invokeFlags, args);
+                        var type = hostType.GetSpecificType();
+                        if (typeof(Delegate).IsAssignableFrom(type))
+                        {
+                            if (args.Length != 1)
+                            {
+                                throw new InvalidOperationException("Invalid constructor invocation");
+                            }
+
+                            return DelegateFactory.CreateDelegate(engine, args[0], type);
+                        }
+
+                        return type.CreateInstance(invokeFlags, args);
                     }
                 }
 
@@ -1064,7 +1075,7 @@ namespace Microsoft.ClearScript
                 }
 
                 object[] bindArgs = null;
-                if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+                if (invokeFlags.HasFlag(BindingFlags.InvokeMethod) || invokeFlags.HasFlag(BindingFlags.CreateInstance))
                 {
                     bindArgs = engine.MarshalToHost(wrappedArgs, true);
                     if (skipFirst)
