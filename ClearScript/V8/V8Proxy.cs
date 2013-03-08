@@ -71,7 +71,7 @@ namespace Microsoft.ClearScript.V8
             var type = Type.GetType("Microsoft.ClearScript.V8.V8ProxyImpl, ClearScriptV8-" + suffix);
             if (type == null)
             {
-                throw new TypeLoadException("Cannot load V8 proxy implementation type");
+                throw new TypeLoadException("Cannot load V8 proxy implementation type; verify that the following files are installed with your application: ClearScriptV8-32.dll, ClearScriptV8-64.dll, v8-ia32.dll, v8-x64.dll");
             }
 
             return (V8Proxy)Activator.CreateInstance(type, name, enableDebugging, disableGlobalMembers, debugPort);

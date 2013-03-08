@@ -44,7 +44,7 @@ build, and import V8:
 3. Open a Visual Studio developer command prompt and run the V8Update script
    from your ClearScript root directory:
 
-    C:\ClearScript> V8Update [Debug|Release]
+    C:\ClearScript> V8Update [/N] [Debug|Release]
 
    This script downloads the latest versions of V8 and its prerequisites,
    builds 32-bit and 64-bit V8 shared libraries, and imports the results into
@@ -53,6 +53,10 @@ build, and import V8:
 
    Specifying "Debug" or "Release" is optional; the default is Release. The
    selected V8 variant will then be used for all ClearScript configurations.
+
+   The optional "/N" flag causes V8Update to reuse previously downloaded files
+   if possible. It's useful for switching between Debug and Release versions of
+   V8 and for testing local V8 modifications.
 
    If you'd like to use a specific version of V8 instead of the latest one, set
    an environment variable named V8REV to the desired V8 trunk revision number
@@ -66,9 +70,29 @@ Library Reference in Compiled HTML (.CHM) format. If you'd like to rebuild this
 file, use Sandcastle Help File Builder (SHFB, http://shfb.codeplex.com) with
 the provided SHFB project file (ClearScript\doc\Reference.shfbproj).
 
---------------------------------------
-III. Debugging with ClearScript and V8
---------------------------------------
+-------------------------------------------
+III. Adding ClearScript to your application
+-------------------------------------------
+
+Once you've built ClearScript, here's how to add it to your application:
+
+1. Right-click your project in Visual Studio and select "Add Reference...".
+
+2. In the Reference Manager window, click "Browse..." and locate your
+   ClearScript output directory (see above). Select ClearScript.dll, click
+   "Add", and then click "OK" to exit Reference Manager.
+
+3. IMPORTANT: If you're using V8, you must also copy the following files from
+   your ClearScript output directory to your application's directory:
+
+     ClearScriptV8-32.dll
+     ClearScriptV8-64.dll
+     v8-ia32.dll
+     v8-x64.dll
+
+-------------------------------------
+IV. Debugging with ClearScript and V8
+-------------------------------------
 
 V8 does not support standard Windows script debugging. Instead, it implements
 its own TCP/IP-based debugging protocol. A convenient way to debug JavaScript
@@ -101,9 +125,9 @@ code running in V8 is to use the open-source Eclipse IDE:
 Note that you can also attach Visual Studio to your application for
 simultaneous debugging of script, managed, and native code.
 
--------------------
-IV. V8 Known Issues
--------------------
+------------------
+V. V8 Known Issues
+------------------
 
 1. V8 doesn't support indexers - properties with one or more parameters. Given
    the general syntax "A.B(C,D) = E" where A is an external object, JScript

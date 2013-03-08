@@ -1285,7 +1285,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         V8ObjectHolder* pHolder;
         if (value.AsV8Object(pHolder))
         {
-            return ::ObjectHandleFromPtr(pHolder->GetObject());
+            return Local<Object>::New(m_pIsolate, ::ObjectHandleFromPtr(pHolder->GetObject()));
         }
     }
 
