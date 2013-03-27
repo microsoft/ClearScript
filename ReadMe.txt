@@ -61,7 +61,7 @@ build, and import V8:
    If you'd like to use a specific version of V8 instead of the latest one, set
    an environment variable named V8REV to the desired V8 trunk revision number
    before running the script. See http://code.google.com/p/v8/source/list. Due
-   to its use of newer V8 APIs, ClearScript requires V8 3.16.10 or later.
+   to its use of newer V8 APIs, ClearScript requires V8 3.17.11 or later.
 
 You are now ready to build the full ClearScript solution using Visual Studio.
 
