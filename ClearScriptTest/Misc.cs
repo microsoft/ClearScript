@@ -60,9 +60,8 @@
 //       
 
 using System;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using Microsoft.ClearScript.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -95,14 +94,9 @@ namespace Microsoft.ClearScript.Test
 
     public static class TestUtil
     {
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static double CalcTestValue(params object[] args)
+        public static double CalcTestValue(Guid callerGuid, params object[] args)
         {
-            // ReSharper disable PossibleNullReferenceException
-            var method = new StackTrace(false).GetFrames()[1].GetMethod();
-            // ReSharper restore PossibleNullReferenceException
-
-            var hashCode = args.Aggregate(method.GetHashCode(), (currentHashCode, value) => unchecked((currentHashCode * 31) + ((value != null) ? value.GetHashCode() : 0)));
+            var hashCode = args.Aggregate(callerGuid.GetHashCode(), (currentHashCode, value) => unchecked((currentHashCode * 31) + ((value != null) ? value.GetHashCode() : 0)));
             return hashCode * Math.E / Math.PI;
         }
 
@@ -114,12 +108,61 @@ namespace Microsoft.ClearScript.Test
             {
                 action();
             }
-            catch (T)
+            catch (T exception)
             {
                 gotException = true;
+                AssertValidExceptionChain(exception);
+            }
+            catch (Exception exception)
+            {
+                gotException = exception.GetBaseException() is T;
+                AssertValidExceptionChain(exception);
             }
 
-            Assert.IsTrue(gotException);
+            Assert.IsTrue(gotException, "Expected " + typeof(T).Name + " was not thrown.");
+        }
+
+        public static void AssertValidException(Exception exception)
+        {
+            Assert.IsFalse(string.IsNullOrWhiteSpace(exception.Message));
+            Assert.IsFalse(exception.Message.Contains("COM"));
+            Assert.IsFalse(exception.Message.Contains("HRESULT"));
+            Assert.IsFalse(exception.Message.Contains("0x"));
+            Assert.IsFalse(string.IsNullOrWhiteSpace(exception.StackTrace));
+        }
+
+        public static void AssertValidException(IScriptEngineException exception)
+        {
+            AssertValidException((Exception)exception);
+            if ((exception is ScriptEngineException) && (exception.HResult != RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION))
+            {
+                Assert.IsTrue(exception.ErrorDetails.StartsWith(exception.Message, StringComparison.Ordinal));
+                Assert.IsTrue(exception.ErrorDetails.Contains("\n    at "));
+            }
+        }
+
+        public static void AssertValidException(ScriptEngine engine, IScriptEngineException exception)
+        {
+            AssertValidException(exception);
+            Assert.AreEqual(engine.Name, exception.EngineName);
+        }
+
+        private static void AssertValidExceptionChain(Exception exception)
+        {
+            while (exception != null)
+            {
+                var scriptError = exception as IScriptEngineException;
+                if (scriptError != null)
+                {
+                    AssertValidException(scriptError);
+                }
+                else
+                {
+                    AssertValidException(exception);
+                }
+
+                exception = exception.InnerException;
+            }
         }
     }
 }

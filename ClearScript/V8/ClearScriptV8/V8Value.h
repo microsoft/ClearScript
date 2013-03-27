@@ -146,10 +146,22 @@ public:
         Copy(that);
     }
 
+    V8Value(V8Value&& that)
+    {
+        Move(that);
+    }
+
     const V8Value& operator=(const V8Value& that)
     {
         Dispose();
         Copy(that);
+        return *this;
+    }
+
+    const V8Value& operator=(V8Value&& that)
+    {
+        Dispose();
+        Move(that);
         return *this;
     }
 
@@ -309,6 +321,13 @@ private:
         {
             m_Data.pHostObjectHolder = that.m_Data.pHostObjectHolder->Clone();
         }
+    }
+
+    void Move(V8Value& that)
+    {
+        m_Type = that.m_Type;
+        m_Data = that.m_Data;
+        that.m_Type = Type_Undefined;
     }
 
     void Dispose()

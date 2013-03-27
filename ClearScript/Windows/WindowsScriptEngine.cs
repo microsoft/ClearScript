@@ -90,16 +90,13 @@ namespace Microsoft.ClearScript.Windows
         private readonly dynamic script;
 
         private ProcessDebugManagerWrapper processDebugManager;
-        private string debugApplicationName;
         private DebugApplicationWrapper debugApplication;
         private uint debugApplicationCookie;
+        private readonly IUniqueNameManager debugDocumentNameManager = new UniqueFileNameManager();
 
         private bool sourceManagement;
         private readonly DebugDocumentMap debugDocumentMap = new DebugDocumentMap();
         private uint nextSourceContext = 1;
-
-        private static readonly IUniqueNameManager debugApplicationNameManager = new UniqueNameManager();
-        private readonly IUniqueNameManager debugDocumentNameManager = new UniqueFileNameManager();
 
         private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
         private bool disposed;
@@ -119,6 +116,7 @@ namespace Microsoft.ClearScript.Windows
         /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
         /// </remarks>
         protected WindowsScriptEngine(string progID, string name, WindowsScriptEngineFlags flags)
+            : base(name)
         {
             AccessContext = typeof(ScriptEngine);
             script = base.ScriptInvoke(() =>
@@ -130,8 +128,7 @@ namespace Microsoft.ClearScript.Windows
                 {
                     processDebugManager = ProcessDebugManagerWrapper.Create();
                     processDebugManager.CreateApplication(out debugApplication);
-                    debugApplicationName = debugApplicationNameManager.GetUniqueName(name, GetType().GetRootName());
-                    debugApplication.SetName(debugApplicationName);
+                    debugApplication.SetName(Name);
                     processDebugManager.AddApplication(debugApplication, out debugApplicationCookie);
                     sourceManagement = !flags.HasFlag(WindowsScriptEngineFlags.DisableSourceManagement);
                 }
@@ -268,7 +265,7 @@ namespace Microsoft.ClearScript.Windows
         {
             VerifyNotDisposed();
 
-            var excepInfo = new EXCEPINFO { scode = MiscHelpers.UnsignedAsSigned(RawCOMHelpers.HResult.E_ABORT) };
+            var excepInfo = new EXCEPINFO { scode = RawCOMHelpers.HResult.E_ABORT };
             activeScript.InterruptScriptThread(ScriptThreadID.Base, ref excepInfo, ScriptInterruptFlags.None);
         }
 
@@ -336,7 +333,13 @@ namespace Microsoft.ClearScript.Windows
                     return obj;
                 }
 
-                obj = hostItem.Unwrap();
+                obj = hostItem.Target;
+            }
+
+            var hostTarget = obj as HostTarget;
+            if (hostTarget != null)
+            {
+                obj = hostTarget.Target;
             }
 
             var scriptItem = obj as ScriptItem;
@@ -348,7 +351,7 @@ namespace Microsoft.ClearScript.Windows
                 }
             }
 
-            return HostItem.Wrap(this, obj, flags);
+            return HostItem.Wrap(this, hostTarget ?? obj, flags);
         }
 
         internal override object MarshalToHost(object obj, bool preserveHostTarget)
@@ -369,6 +372,12 @@ namespace Microsoft.ClearScript.Windows
                 // COM interop converts VBScript arrays to managed arrays
                 array.Iterate(indices => array.SetValue(MarshalToHost(array.GetValue(indices), preserveHostTarget), indices));
                 return array;
+            }
+
+            var hostTarget = obj as HostTarget;
+            if (hostTarget != null)
+            {
+                return preserveHostTarget ? hostTarget : hostTarget.Target;
             }
 
             var hostItem = obj as HostItem;
@@ -420,18 +429,108 @@ namespace Microsoft.ClearScript.Windows
 
         #endregion
 
+        #region ScriptEngine overrides (host-side invocation)
+
+        internal override void HostInvoke(Action action)
+        {
+            try
+            {
+                base.HostInvoke(action);
+            }
+            catch (Exception exception)
+            {
+                ThrowHostException(exception);
+                throw;
+            }
+        }
+
+        internal override T HostInvoke<T>(Func<T> func)
+        {
+            try
+            {
+                return base.HostInvoke(func);
+            }
+            catch (Exception exception)
+            {
+                ThrowHostException(exception);
+                throw;
+            }
+        }
+
+        private void ThrowHostException(Exception exception)
+        {
+            if (CurrentScriptFrame != null)
+            {
+                // Record the host exception in the script frame and throw an easily recognizable
+                // surrogate across the COM boundary. Recording the host exception enables
+                // downstream chaining. The surrogate exception indicates to the site that the
+                // reported script error actually corresponds to the host exception in the frame.
+
+                CurrentScriptFrame.HostException = exception;
+                throw new COMException(exception.Message, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION);
+            }
+        }
+
+        #endregion
+
         #region ScriptEngine overrides (script-side invocation)
 
         internal override void ScriptInvoke(Action action)
         {
             VerifyAccess();
-            base.ScriptInvoke(action);
+            base.ScriptInvoke(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception exception)
+                {
+                    ThrowScriptError(exception);
+                    throw;
+                }
+            });
         }
 
         internal override T ScriptInvoke<T>(Func<T> func)
         {
             VerifyAccess();
-            return base.ScriptInvoke(func);
+            return base.ScriptInvoke(() =>
+            {
+                try
+                {
+                    return func();
+                }
+                catch (Exception exception)
+                {
+                    ThrowScriptError(exception);
+                    throw;
+                }
+            });
+        }
+
+        private void ThrowScriptError(Exception exception)
+        {
+            if (exception is COMException)
+            {
+                if (exception.HResult == RawCOMHelpers.HResult.SCRIPT_E_REPORTED)
+                {
+                    // a script error was reported; the corresponding exception should be in the script frame
+                    ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
+                }
+                else if (exception.HResult == RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
+                {
+                    // A host exception surrogate passed through the COM boundary; this happens
+                    // when some script engines are invoked via script item access rather than
+                    // script execution. Chain the host exception to a new script exception.
+
+                    var hostException = CurrentScriptFrame.HostException;
+                    if (hostException != null)
+                    {
+                        throw new ScriptEngineException(Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, hostException);
+                    }
+                }
+            }
         }
 
         #endregion

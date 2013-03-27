@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright © Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -63,7 +63,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -240,10 +239,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("ScriptAccess")]
-        [ExpectedException(typeof(UnauthorizedAccessException))]
         public void ScriptAccess_ReadOnlyField_Write()
         {
-            engine.Execute("testObject.ReadOnlyField = 7");
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.ReadOnlyField = 7"));
         }
 
         [TestMethod, TestCategory("ScriptAccess")]
@@ -253,10 +251,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("ScriptAccess")]
-        [ExpectedException(typeof(UnauthorizedAccessException))]
         public void ScriptAccess_ReadOnlyProperty_Write()
         {
-            engine.Execute("testObject.ReadOnlyProperty = Guid.NewGuid()");
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.ReadOnlyProperty = Guid.NewGuid()"));
         }
 
         [TestMethod, TestCategory("ScriptAccess")]
@@ -385,10 +382,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("ScriptAccess")]
-        [ExpectedException(typeof(UnauthorizedAccessException))]
         public void ScriptAccess_RenamedReadOnlyField_Write()
         {
-            engine.Execute("testObject.renamedReadOnlyField = 7");
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.renamedReadOnlyField = 7"));
         }
 
         [TestMethod, TestCategory("ScriptAccess")]
@@ -398,10 +394,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("ScriptAccess")]
-        [ExpectedException(typeof(UnauthorizedAccessException))]
         public void ScriptAccess_RenamedReadOnlyProperty_Write()
         {
-            engine.Execute("testObject.renamedReadOnlyProperty = Guid.NewGuid()");
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.renamedReadOnlyProperty = Guid.NewGuid()"));
         }
 
         // ReSharper restore InconsistentNaming
@@ -422,8 +417,8 @@ namespace Microsoft.ClearScript.Test
             [NoScriptAccess] public Guid BlockedBaseProperty { get { return guids[0]; } set { } }
             [NoScriptAccess] public virtual Guid BlockedOverriddenProperty { get { return guids[1]; } set { } }
 
-            [NoScriptAccess, MethodImpl(MethodImplOptions.NoInlining)] public double BlockedBaseMethod(object arg) { return TestUtil.CalcTestValue("BlockedBaseMethod", arg); }
-            [NoScriptAccess, MethodImpl(MethodImplOptions.NoInlining)] public virtual double BlockedOverriddenMethod(object arg) { return TestUtil.CalcTestValue("BlockedOverriddenMethod", arg); }
+            [NoScriptAccess] public double BlockedBaseMethod(object arg) { return TestUtil.CalcTestValue(new Guid("9bf4c32d-1394-4546-a150-eb162b3bbb5f"), "BlockedBaseMethod", arg); }
+            [NoScriptAccess] public virtual double BlockedOverriddenMethod(object arg) { return TestUtil.CalcTestValue(new Guid("83aa905a-e17d-47fe-bd0f-d2350cfb92d6"), "BlockedOverriddenMethod", arg); }
 
             [ScriptMember("renamedBaseEvent")] public event EventHandler RenamedBaseEvent { add { } remove { } }
             [ScriptMember("renamedOverriddenEvent")] public virtual event EventHandler RenamedOverriddenEvent { add { } remove { } }
@@ -433,8 +428,8 @@ namespace Microsoft.ClearScript.Test
             [ScriptMember("renamedBaseProperty")] public Guid RenamedBaseProperty { get { return guids[2]; } set { } }
             [ScriptMember("renamedOverriddenProperty")] public virtual Guid RenamedOverriddenProperty { get { return guids[3]; } set { } }
 
-            [ScriptMember("renamedBaseMethod"), MethodImpl(MethodImplOptions.NoInlining)] public double RenamedBaseMethod(object arg) { return TestUtil.CalcTestValue("RenamedBaseMethod", arg); }
-            [ScriptMember("renamedOverriddenMethod"), MethodImpl(MethodImplOptions.NoInlining)] public virtual double RenamedOverriddenMethod(object arg) { return TestUtil.CalcTestValue("RenamedOverriddenMethod", arg); }
+            [ScriptMember("renamedBaseMethod")] public double RenamedBaseMethod(object arg) { return TestUtil.CalcTestValue(new Guid("460c0b65-56e6-4174-9331-905d417df885"), "RenamedBaseMethod", arg); }
+            [ScriptMember("renamedOverriddenMethod")] public virtual double RenamedOverriddenMethod(object arg) { return TestUtil.CalcTestValue(new Guid("051b3239-df62-4a14-967c-0291e02ad48f"), "RenamedOverriddenMethod", arg); }
         }
 
         public interface ITestInterface
@@ -474,12 +469,12 @@ namespace Microsoft.ClearScript.Test
             Guid ITestInterface.BlockedExplicitInterfaceProperty { get { return guids[7]; } set { } }
             [ScriptMember(ScriptAccess.ReadOnly)] public Guid ReadOnlyProperty { get { return guids[8]; } set { } }
 
-            [NoScriptAccess, MethodImpl(MethodImplOptions.NoInlining)] public double BlockedMethod(object arg) { return TestUtil.CalcTestValue("BlockedMethod", arg); }
-            [MethodImpl(MethodImplOptions.NoInlining)] public override double BlockedOverriddenMethod(object arg) { return TestUtil.CalcTestValue("BlockedOverriddenMethod", arg); }
-            [MethodImpl(MethodImplOptions.NoInlining)] public double BlockedInterfaceMethod(object arg) { return TestUtil.CalcTestValue("BlockedInterfaceMethod", arg); }
-            [MethodImpl(MethodImplOptions.NoInlining)] double ITestInterface.BlockedExplicitInterfaceMethod(object arg) { return TestUtil.CalcTestValue("BlockedExplicitInterfaceMethod", arg); }
-            [MethodImpl(MethodImplOptions.NoInlining)] public double BlockedOverloadedMethod(object arg) { return TestUtil.CalcTestValue("BlockedOverloadedMethod 1", arg); }
-            [NoScriptAccess, MethodImpl(MethodImplOptions.NoInlining)] public double BlockedOverloadedMethod<T>(T arg) { return TestUtil.CalcTestValue("BlockedOverloadedMethod 2", arg); }
+            [NoScriptAccess] public double BlockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("9e890478-709c-4e42-be5f-c4e291572a17"), "BlockedMethod", arg); }
+            public override double BlockedOverriddenMethod(object arg) { return TestUtil.CalcTestValue(new Guid("7ff033f5-f6f2-46cf-aba5-5adec6e210fd"), "BlockedOverriddenMethod", arg); }
+            public double BlockedInterfaceMethod(object arg) { return TestUtil.CalcTestValue(new Guid("0eb4c085-808d-40ec-9117-214084222b75"), "BlockedInterfaceMethod", arg); }
+            double ITestInterface.BlockedExplicitInterfaceMethod(object arg) { return TestUtil.CalcTestValue(new Guid("28318787-2195-46cf-8b57-a993c30b131f"), "BlockedExplicitInterfaceMethod", arg); }
+            public double BlockedOverloadedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("47a9e14b-65f6-4202-9e6c-528f05d2fd08"), "BlockedOverloadedMethod 1", arg); }
+            [NoScriptAccess] public double BlockedOverloadedMethod<T>(T arg) { return TestUtil.CalcTestValue(new Guid("60e54acc-0b47-4d0a-a29e-b6f420079095"), "BlockedOverloadedMethod 2", arg); }
 
             [ScriptMember("renamedEvent")] public event EventHandler RenamedEvent { add { } remove { } }
             public override event EventHandler RenamedOverriddenEvent { add { } remove { } }
@@ -495,12 +490,12 @@ namespace Microsoft.ClearScript.Test
             Guid ITestInterface.RenamedExplicitInterfaceProperty { get { return guids[12]; } set { } }
             [ScriptMember("renamedReadOnlyProperty", ScriptAccess.ReadOnly)] public Guid RenamedReadOnlyProperty { get { return guids[13]; } set { } }
 
-            [ScriptMember("renamedMethod"), MethodImpl(MethodImplOptions.NoInlining)] public double RenamedMethod(object arg) { return TestUtil.CalcTestValue("RenamedMethod", arg); }
-            [MethodImpl(MethodImplOptions.NoInlining)] public override double RenamedOverriddenMethod(object arg) { return TestUtil.CalcTestValue("RenamedOverriddenMethod", arg); }
-            [MethodImpl(MethodImplOptions.NoInlining)] public double RenamedInterfaceMethod(object arg) { return TestUtil.CalcTestValue("RenamedInterfaceMethod", arg); }
-            [MethodImpl(MethodImplOptions.NoInlining)] double ITestInterface.RenamedExplicitInterfaceMethod(object arg) { return TestUtil.CalcTestValue("RenamedExplicitInterfaceMethod", arg); }
-            [MethodImpl(MethodImplOptions.NoInlining)] public double RenamedOverloadedMethod(object arg) { return TestUtil.CalcTestValue("RenamedOverloadedMethod 1", arg); }
-            [ScriptMember("renamedOverloadedMethod"), MethodImpl(MethodImplOptions.NoInlining)] public double RenamedOverloadedMethod<T>(T arg) { return TestUtil.CalcTestValue("RenamedOverloadedMethod 2", arg); }
+            [ScriptMember("renamedMethod")] public double RenamedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("d6c05624-6357-4ef1-b54a-d7a03864a034"), "RenamedMethod", arg); }
+            public override double RenamedOverriddenMethod(object arg) { return TestUtil.CalcTestValue(new Guid("77382ed3-feec-4d49-bd6e-d1d590827c35"), "RenamedOverriddenMethod", arg); }
+            public double RenamedInterfaceMethod(object arg) { return TestUtil.CalcTestValue(new Guid("d3a7c549-1ee3-4890-b933-6b8ab6988e49"), "RenamedInterfaceMethod", arg); }
+            double ITestInterface.RenamedExplicitInterfaceMethod(object arg) { return TestUtil.CalcTestValue(new Guid("d0505e09-e152-40e2-b279-59e980109d9c"), "RenamedExplicitInterfaceMethod", arg); }
+            public double RenamedOverloadedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("c3b7cfd5-c870-422e-9bce-c361429c8c74"), "RenamedOverloadedMethod 1", arg); }
+            [ScriptMember("renamedOverloadedMethod")] public double RenamedOverloadedMethod<T>(T arg) { return TestUtil.CalcTestValue(new Guid("8b79b6b1-8e54-4fff-9054-bfba76e092b7"), "RenamedOverloadedMethod 2", arg); }
         }
 
         private void AssertBlockedMember(string objectName, string memberName)

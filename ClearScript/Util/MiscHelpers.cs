@@ -102,7 +102,7 @@ namespace Microsoft.ClearScript.Util
 
         public static string FormatCode(string code)
         {
-            var lines = code.Replace("\r\n", "\n").Split('\n');
+            var lines = (code ?? string.Empty).Replace("\r\n", "\n").Split('\n');
 
             lines = lines.SkipWhile(string.IsNullOrWhiteSpace).Reverse().SkipWhile(string.IsNullOrWhiteSpace).Reverse().ToArray();
             if (lines.Length > 0)
@@ -111,9 +111,9 @@ namespace Microsoft.ClearScript.Util
                 for (var indentLength = firstLine.TakeWhile(char.IsWhiteSpace).Count(); indentLength > 0; indentLength--)
                 {
                     var indent = firstLine.Substring(0, indentLength);
-                    if (lines.Skip(1).All(line => line.StartsWith(indent, StringComparison.Ordinal)))
+                    if (lines.Skip(1).All(line => string.IsNullOrWhiteSpace(line) || line.StartsWith(indent, StringComparison.Ordinal)))
                     {
-                        lines = lines.Select(line => line.Substring(indent.Length)).ToArray();
+                        lines = lines.Select(line => string.IsNullOrWhiteSpace(line) ? string.Empty : line.Substring(indent.Length)).ToArray();
                         break;
                     }
                 }
@@ -145,6 +145,11 @@ namespace Microsoft.ClearScript.Util
         public static int UnsignedAsSigned(uint value)
         {
             return BitConverter.ToInt32(BitConverter.GetBytes(value), 0);
+        }
+
+        public static uint SignedAsUnsigned(int value)
+        {
+            return BitConverter.ToUInt32(BitConverter.GetBytes(value), 0);
         }
 
         public static T[] GetEmptyArray<T>()

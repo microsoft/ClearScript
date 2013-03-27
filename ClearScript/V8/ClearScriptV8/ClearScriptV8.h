@@ -66,6 +66,7 @@
 #include "V8ObjectHolder.h"
 #include "HostObjectHolder.h"
 #include "V8Value.h"
+#include "HostException.h"
 #include "V8Exception.h"
 #include "V8Context.h"
 #include "V8ContextImpl.h"

@@ -39,7 +39,7 @@
     <SyntaxFilters>Standard</SyntaxFilters>
     <SdkLinkTarget>Blank</SdkLinkTarget>
     <RootNamespaceContainer>True</RootNamespaceContainer>
-    <NamingMethod>Guid</NamingMethod>
+    <NamingMethod>MemberName</NamingMethod>
     <ContentPlacement>AboveNamespaces</ContentPlacement>
     <CopyrightText>Copyright &amp;#169%3b Microsoft Corporation. All rights reserved.</CopyrightText>
     <NamespaceSummaries>

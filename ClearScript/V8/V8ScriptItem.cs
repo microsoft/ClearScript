@@ -189,7 +189,15 @@ namespace Microsoft.ClearScript.V8
             {
                 if (engine.CurrentScriptFrame != null)
                 {
-                    engine.CurrentScriptFrame.SetScriptError(exception);
+                    var scriptError = exception as IScriptEngineException;
+                    if (scriptError != null)
+                    {
+                        engine.CurrentScriptFrame.ScriptError = scriptError;
+                    }
+                    else
+                    {
+                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception);
+                    }
                 }
             }
 

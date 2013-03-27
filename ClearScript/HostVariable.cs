@@ -87,12 +87,12 @@ namespace Microsoft.ClearScript
 
         public HostVariable(T initValue)
         {
-            if (typeof(HostTarget).IsAssignableFrom(typeof(T)))
+            if (typeof(HostItem).IsAssignableFrom(typeof(T)) || typeof(HostTarget).IsAssignableFrom(typeof(T)))
             {
                 throw new NotSupportedException("Unsupported variable type");
             }
 
-            if (initValue is HostTarget)
+            if ((initValue is HostItem) || (initValue is HostTarget))
             {
                 throw new NotSupportedException("Unsupported value type");
             }
@@ -183,9 +183,9 @@ namespace Microsoft.ClearScript
                         return true;
                     }
 
-                    if (invokeFlags.HasFlag(BindingFlags.GetField))
+                    if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                     {
-                        result = value;
+                        result = HostObject.WrapResult(value);
                         return true;
                     }
 
@@ -195,7 +195,7 @@ namespace Microsoft.ClearScript
 
                 if ((invokeFlags & getPropertyFlags) != 0)
                 {
-                    result = value;
+                    result = HostObject.WrapResult(value);
                     return true;
                 }
 
@@ -203,7 +203,7 @@ namespace Microsoft.ClearScript
                 {
                     if (args.Length == 1)
                     {
-                        result = ((IHostVariable)this).Value = args[0];
+                        result = HostObject.WrapResult(((IHostVariable)this).Value = args[0], typeof(T));
                         return true;
                     }
                 }
@@ -234,7 +234,7 @@ namespace Microsoft.ClearScript
                     throw new InvalidOperationException("Assignment invalid due to type mismatch");
                 }
 
-                if (tempValue is HostTarget)
+                if ((tempValue is HostItem) || (tempValue is HostTarget))
                 {
                     throw new NotSupportedException("Unsupported value type");
                 }

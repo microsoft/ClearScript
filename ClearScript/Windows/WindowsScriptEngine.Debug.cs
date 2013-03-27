@@ -103,6 +103,11 @@ namespace Microsoft.ClearScript.Windows
                 node.Attach(rootNode);
             }
 
+            public string Code
+            {
+                get { return code; }
+            }
+
             public void Close()
             {
                 node.Detach();
@@ -118,7 +123,7 @@ namespace Microsoft.ClearScript.Windows
                 {
                     case DocumentNameType.URL:
                         var fullName = Path.HasExtension(name) ? name : Path.ChangeExtension(name, engine.FileNameExtension);
-                        documentName = MiscHelpers.FormatInvariant("{0}/{1}", engine.debugApplicationName, fullName);
+                        documentName = MiscHelpers.FormatInvariant("{0}/{1}", engine.Name, fullName);
                         break;
 
                     default:

@@ -66,7 +66,6 @@ using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util;
 
@@ -499,14 +498,11 @@ namespace Microsoft.ClearScript
                     {
                         return targetDynamic.Invoke(args, false);
                     }
-                    catch (Exception exception)
+                    catch (Exception)
                     {
-                        if ((exception is NotSupportedException) || (exception is InvalidOperationException) || (exception is ExternalException))
+                        if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                         {
-                            if (invokeFlags.HasFlag(BindingFlags.GetField))
-                            {
-                                return targetDynamic;
-                            }
+                            return targetDynamic;
                         }
 
                         throw;
@@ -517,14 +513,11 @@ namespace Microsoft.ClearScript
                 {
                     return targetDynamic.InvokeMethod(name, args);
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
-                    if ((exception is MissingMemberException) || (exception is NotSupportedException) || (exception is InvalidOperationException) || (exception is ExternalException))
+                    if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                     {
-                        if (invokeFlags.HasFlag(BindingFlags.GetField))
-                        {
-                            return targetDynamic.GetProperty(name);
-                        }
+                        return targetDynamic.GetProperty(name);
                     }
 
                     throw;
@@ -552,7 +545,7 @@ namespace Microsoft.ClearScript
             {
                 if (name == SpecialMemberNames.Default)
                 {
-                    if (invokeFlags.HasFlag(BindingFlags.GetField))
+                    if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                     {
                         return targetPropertyBag;
                     }
@@ -572,7 +565,7 @@ namespace Microsoft.ClearScript
                     return result;
                 }
 
-                if (invokeFlags.HasFlag(BindingFlags.GetField))
+                if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                 {
                     return value;
                 }
@@ -609,7 +602,7 @@ namespace Microsoft.ClearScript
                     return result;
                 }
 
-                if (invokeFlags.HasFlag(BindingFlags.GetField))
+                if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                 {
                     return targetList[index];
                 }
@@ -688,7 +681,7 @@ namespace Microsoft.ClearScript
                         return result;
                     }
 
-                    if (invokeFlags.HasFlag(BindingFlags.GetField))
+                    if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                     {
                         return target;
                     }
@@ -803,13 +796,15 @@ namespace Microsoft.ClearScript
                     return new HostIndexer(this, name);
                 }
 
-                return property.GetValue(target.InvokeTarget, invokeFlags, Type.DefaultBinder, args, culture);
+                var result = property.GetValue(target.InvokeTarget, invokeFlags, Type.DefaultBinder, args, culture);
+                return property.IsRestrictedForScript() ? HostObject.WrapResult(result, property.PropertyType) : result;
             }
 
             var field = target.Type.GetScriptableField(name, invokeFlags);
             if (field != null)
             {
-                return field.GetValue(target.InvokeTarget);
+                var result = field.GetValue(target.InvokeTarget);
+                return field.IsRestrictedForScript() ? HostObject.WrapResult(result, field.FieldType) : result;
             }
 
             var eventInfo = target.Type.GetScriptableEvent(name, invokeFlags);

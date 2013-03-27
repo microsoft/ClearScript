@@ -147,7 +147,13 @@ namespace Microsoft.ClearScript.Util
                 item.ByRefArg.Value = array.GetValue(item.Index);
             }
 
-            return (method.ReturnType == typeof(void)) ? VoidResult.Value : result;
+            var type = method.ReturnType;
+            if (type == typeof(void))
+            {
+                return VoidResult.Value;
+            }
+
+            return method.IsRestrictedForScript() ? HostObject.WrapResult(result, type) : result;
         }
 
         public static object InvokeDelegate(Delegate del, object[] args)

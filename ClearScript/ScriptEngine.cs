@@ -63,7 +63,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
@@ -73,23 +72,35 @@ namespace Microsoft.ClearScript
     /// </summary>
     public abstract class ScriptEngine : IDisposable
     {
-        #region constructors
+        #region data
 
-        // ReSharper disable EmptyConstructor
+        private readonly string name;
+        private static readonly IUniqueNameManager nameManager = new UniqueNameManager();
+
+        #endregion
+
+        #region constructors
 
         /// <summary>
         /// Initializes a new script engine instance.
         /// </summary>
-        protected ScriptEngine()
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        protected ScriptEngine(string name)
         {
-            // the help file builder (SHFB) insists on an empty constructor here
+            this.name = nameManager.GetUniqueName(name, GetType().GetRootName());
         }
-
-        // ReSharper restore EmptyConstructor
 
         #endregion
 
         #region public members
+
+        /// <summary>
+        /// Gets the name associated with the script engine instance.
+        /// </summary>
+        public string Name
+        {
+            get { return name; }
+        }
 
         /// <summary>
         /// Gets the script engine's recommended file name extension for script files.
@@ -710,11 +721,6 @@ namespace Microsoft.ClearScript
                 return marshaledResult.ToString();
             }
 
-            if (marshaledResult is ScriptItem)
-            {
-                return "[ScriptItem]";
-            }
-
             return result.ToString();
         }
 
@@ -739,61 +745,14 @@ namespace Microsoft.ClearScript
 
         #region host-side invocation
 
-        internal void HostInvoke(Action action)
+        internal virtual void HostInvoke(Action action)
         {
-            try
-            {
-                action();
-            }
-            catch (Exception exception)
-            {
-                var registeredException = RegisterHostException(exception);
-                if (registeredException != exception)
-                {
-                    throw registeredException;
-                }
-
-                throw;
-            }
+            action();
         }
 
-        internal T HostInvoke<T>(Func<T> func)
+        internal virtual T HostInvoke<T>(Func<T> func)
         {
-            try
-            {
-                return func();
-            }
-            catch (Exception exception)
-            {
-                var registeredException = RegisterHostException(exception);
-                if (registeredException != exception)
-                {
-                    throw registeredException;
-                }
-
-                throw;
-            }
-        }
-
-        private Exception RegisterHostException(Exception exception)
-        {
-            while (exception is TargetInvocationException)
-            {
-                var innerException = exception.InnerException;
-                if (innerException == null)
-                {
-                    break;
-                }
-
-                exception = innerException;
-            }
-
-            if (CurrentScriptFrame != null)
-            {
-                CurrentScriptFrame.SetHostException(exception);
-            }
-
-            return exception;
+            return func();
         }
 
         #endregion
@@ -811,16 +770,6 @@ namespace Microsoft.ClearScript
             {
                 action();
             }
-            catch (Exception)
-            {
-                var exception = CurrentScriptFrame.Exception;
-                if (exception != null)
-                {
-                    throw exception;
-                }
-
-                throw;
-            }
             finally
             {
                 CurrentScriptFrame = prevScriptFrame;
@@ -836,31 +785,30 @@ namespace Microsoft.ClearScript
             {
                 return func();
             }
-            catch (Exception)
-            {
-                var exception = CurrentScriptFrame.Exception;
-                if (exception != null)
-                {
-                    throw exception;
-                }
-
-                throw;
-            }
             finally
             {
                 CurrentScriptFrame = prevScriptFrame;
             }
         }
 
-        internal void ThrowScriptFrameException()
+        internal void ThrowScriptError()
         {
             if (CurrentScriptFrame != null)
             {
-                var exception = CurrentScriptFrame.ReportedException;
-                if (exception != null)
+                ThrowScriptError(CurrentScriptFrame.ScriptError);
+            }
+        }
+
+        internal static void ThrowScriptError(IScriptEngineException scriptError)
+        {
+            if (scriptError != null)
+            {
+                if (scriptError is ScriptInterruptedException)
                 {
-                    throw exception;
+                    throw new ScriptInterruptedException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.InnerException);
                 }
+
+                throw new ScriptEngineException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.InnerException);
             }
         }
 
@@ -965,35 +913,13 @@ namespace Microsoft.ClearScript
 
         internal class ScriptFrame
         {
+            public Exception HostException { get; set; }
+
+            public IScriptEngineException ScriptError { get; set; }
+
+            public IScriptEngineException PendingScriptError { get; set; }
+
             public bool InterruptRequested { get; set; }
-
-            private Exception hostException;
-            public void SetHostException(Exception value)
-            {
-                hostException = value;
-            }
-
-            private Exception scriptError;
-            public void SetScriptError(Exception value)
-            {
-                scriptError = value;
-            }
-
-            private Exception pendingScriptError;
-            public void SetPendingScriptError(Exception value)
-            {
-                pendingScriptError = value;
-            }
-
-            public Exception Exception
-            {
-                get { return hostException ?? scriptError ?? pendingScriptError; }
-            }
-
-            public Exception ReportedException
-            {
-                get { return hostException ?? scriptError; }
-            }
         }
 
         #endregion

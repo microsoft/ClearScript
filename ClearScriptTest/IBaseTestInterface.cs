@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright © Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -60,7 +60,6 @@
 //       
 
 using System;
-using System.Runtime.CompilerServices;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -83,28 +82,24 @@ namespace Microsoft.ClearScript.Test
 
     public static class BaseTestInterfaceExtensions
     {
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double BaseInterfaceExtensionMethod(this IBaseTestInterface self, string arg1, int arg2)
         {
-            return TestUtil.CalcTestValue(self, arg1.Length, arg2);
+            return TestUtil.CalcTestValue(new Guid("4b62c135-85fe-40fd-94f3-b97a8961bd7e"), self, arg1.Length, arg2);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double BaseInterfaceExtensionMethod<T>(this IBaseTestInterface self, string arg1, int arg2, T arg3) where T : struct
         {
-            return TestUtil.CalcTestValue(self, arg1.Length, arg2, arg3.ToString().Length);
+            return TestUtil.CalcTestValue(new Guid("25091ed2-88a2-4efb-aceb-b8c1c6aeb66e"), self, arg1.Length, arg2, arg3.ToString().Length);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double BaseInterfaceExtensionMethod<T>(this IBaseTestInterface self, int arg) where T : struct
         {
-            return TestUtil.CalcTestValue(self, typeof(T).Name.Length, arg);
+            return TestUtil.CalcTestValue(new Guid("589b2ea2-cec8-4ee2-9d25-684d8e3b8e2a"), self, typeof(T).Name.Length, arg);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double BaseInterfaceExtensionBindTestMethod<T>(this IBaseTestInterface self, T arg)
         {
-            return TestUtil.CalcTestValue(self, typeof(T), arg);
+            return TestUtil.CalcTestValue(new Guid("5fb43a52-2268-430c-9f90-5dfa06d98603"), self, typeof(T), arg);
         }
     }
 }

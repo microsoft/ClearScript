@@ -148,6 +148,42 @@ namespace Microsoft.ClearScript.Windows
 
     #endregion
 
+    #region structures
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct DebugStackFrameDescriptor
+    {
+        [MarshalAs(UnmanagedType.Interface)]
+        public IDebugStackFrame Frame;
+
+        public uint Minimum;
+        public uint Limit;
+
+        [MarshalAs(UnmanagedType.Bool)]
+        public bool IsFinal;
+
+        [MarshalAs(UnmanagedType.Interface)]
+        public object FinalObject;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct DebugStackFrameDescriptor64
+    {
+        [MarshalAs(UnmanagedType.Interface)]
+        public IDebugStackFrame Frame;
+
+        public ulong Minimum;
+        public ulong Limit;
+
+        [MarshalAs(UnmanagedType.Bool)]
+        public bool final;
+
+        [MarshalAs(UnmanagedType.Interface)]
+        public object FinalObject;
+    }
+
+    #endregion
+
     #region interfaces
 
     [ComImport]
@@ -876,6 +912,136 @@ namespace Microsoft.ClearScript.Windows
         );
     };
 
+    [ComImport]
+    [Guid("51973c18-cb0c-11d0-b5c9-00a0244a0e7a")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IDebugStackFrameSniffer
+    {
+        void EnumStackFrames( 
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IEnumDebugStackFrames enumFrames
+        );
+    }
+
+    [ComImport]
+    [Guid("51973c19-cb0c-11d0-b5c9-00a0244a0e7a")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IDebugStackFrameSnifferEx32 // : IDebugStackFrameSniffer
+    {
+        #region IDebugStackFrameSniffer methods
+
+        void EnumStackFrames( 
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IEnumDebugStackFrames enumFrames
+        );
+
+        #endregion
+
+        void EnumStackFramesEx32( 
+            [In] uint minimum,
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IEnumDebugStackFrames enumFrames
+        );
+    }
+
+    [ComImport]
+    [Guid("8cd12af4-49c1-4d52-8d8a-c146f47581aa")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IDebugStackFrameSnifferEx64 // : IDebugStackFrameSniffer
+    {
+        #region IDebugStackFrameSniffer methods
+
+        void EnumStackFrames( 
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IEnumDebugStackFrames enumFrames
+        );
+
+        #endregion
+
+        void EnumStackFramesEx64( 
+            [In] ulong minimum,
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IEnumDebugStackFrames enumFrames
+        );
+    }
+
+    [ComImport]
+    [Guid("51973c1e-cb0c-11d0-b5c9-00a0244a0e7a")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IEnumDebugStackFrames
+    {
+        void Next(
+            [In] uint count,
+            [Out] [MarshalAs(UnmanagedType.Struct)] out DebugStackFrameDescriptor descriptor,
+            [Out] out uint countFetched
+        );
+
+        void Skip(
+            [In] uint count
+        );
+
+        void Reset();
+
+        void Clone(
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IEnumDebugStackFrames enumFrames
+        );
+    };
+
+    [ComImport]
+    [Guid("0dc38853-c1b0-4176-a984-b298361027af")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IEnumDebugStackFrames64 // : IEnumDebugStackFrames
+    {
+        #region IEnumDebugStackFrames methods
+
+        void Next(
+            [In] uint count,
+            [Out] [MarshalAs(UnmanagedType.Struct)] out DebugStackFrameDescriptor descriptor,
+            [Out] out uint countFetched
+        );
+
+        void Skip(
+            [In] uint count
+        );
+
+        void Reset();
+
+        void Clone(
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IEnumDebugStackFrames enumFrames
+        );
+
+        #endregion
+
+        void Next64(
+            [In] uint count,
+            [Out] [MarshalAs(UnmanagedType.Struct)] out DebugStackFrameDescriptor64 descriptor,
+            [Out] out uint countFetched
+        );
+    }
+
+    [ComImport]
+    [Guid("51973c17-cb0c-11d0-b5c9-00a0244a0e7a")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IDebugStackFrame
+    {
+        void GetCodeContext( 
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IDebugCodeContext context
+        );
+        
+        void GetDescriptionString( 
+            [In] [MarshalAs(UnmanagedType.Bool)] bool longString,
+            [Out] [MarshalAs(UnmanagedType.BStr)] out string description
+        );
+        
+        void GetLanguageString( 
+            [In] [MarshalAs(UnmanagedType.Bool)] bool longString,
+            [Out] [MarshalAs(UnmanagedType.BStr)] out string language
+        );
+        
+        void GetThread( 
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IDebugApplicationThread thread
+        );
+        
+        void GetDebugProperty(
+            [Out] [MarshalAs(UnmanagedType.Interface)] out IDebugProperty property
+        );
+    }
+
     #endregion
 
     #region interface stubs
@@ -961,14 +1127,6 @@ namespace Microsoft.ClearScript.Windows
     }
 
     [ComImport]
-    [Guid("51973c18-cb0c-11d0-b5c9-00a0244a0e7a")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IDebugStackFrameSniffer
-    {
-        // methods omitted
-    }
-
-    [ComImport]
     [Guid("51973c36-cb0c-11d0-b5c9-00a0244a0e7a")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IDebugThreadCall32
@@ -1022,6 +1180,14 @@ namespace Microsoft.ClearScript.Windows
     [Guid("51973c27-cb0c-11d0-b5c9-00a0244a0e7a")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IDebugDocumentHost
+    {
+        // methods omitted
+    }
+
+    [ComImport]
+    [Guid("51973c50-cb0c-11d0-b5c9-00a0244a0e7a")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IDebugProperty
     {
         // methods omitted
     }

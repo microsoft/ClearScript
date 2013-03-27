@@ -98,5 +98,5 @@ using namespace Microsoft::ClearScript::Util;
             msclr::lock t_LockScope(obj);
 
 #define END_LOCK_SCOPE \
-            t_LockScope; \
+            (void) t_LockScope; \
         }

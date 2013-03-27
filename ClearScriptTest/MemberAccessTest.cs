@@ -121,10 +121,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void MemberAccess_Field_BadAssignment()
         {
-            engine.Execute("testObject.Field = host.newArr(System.Double, 5)");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.Field = host.newArr(System.Double, 5)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -137,17 +136,15 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(OverflowException))]
         public void MemberAccess_Field_Scalar_Overflow()
         {
-            engine.Execute("testObject.ScalarField = 54321");
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("testObject.ScalarField = 54321"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void MemberAccess_Field_Scalar_BadAssignment()
         {
-            engine.Execute("testObject.ScalarField = TestEnum.Second");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.ScalarField = TestEnum.Second"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -167,10 +164,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void MemberAccess_Field_Enum_BadAssignment()
         {
-            engine.Execute("testObject.EnumField = 1");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.EnumField = 1"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -183,10 +179,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void MemberAccess_Field_Struct_BadAssignment()
         {
-            engine.Execute("testObject.StructField = System.DateTime.Now");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.StructField = System.DateTime.Now"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -206,10 +201,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void MemberAccess_Property_BadAssignment()
         {
-            engine.Execute("testObject.Property = host.newArr(System.Double, 5)");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.Property = host.newArr(System.Double, 5)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -222,17 +216,15 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(OverflowException))]
         public void MemberAccess_Property_Scalar_Overflow()
         {
-            engine.Execute("testObject.ScalarProperty = 54321");
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("testObject.ScalarProperty = 54321"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void MemberAccess_Property_Scalar_BadAssignment()
         {
-            engine.Execute("testObject.ScalarProperty = TestEnum.Second");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.ScalarProperty = TestEnum.Second"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -252,10 +244,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void MemberAccess_Property_Enum_BadAssignment()
         {
-            engine.Execute("testObject.EnumProperty = 1");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.EnumProperty = 1"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -268,10 +259,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void MemberAccess_Property_Struct_BadAssignment()
         {
-            engine.Execute("testObject.StructProperty = System.DateTime.Now");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.StructProperty = System.DateTime.Now"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -281,10 +271,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void MemberAccess_ReadOnlyProperty_Write()
         {
-            engine.Execute("testObject.ReadOnlyProperty = 2");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.ReadOnlyProperty = 2"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -305,10 +294,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_Method_NoMatchingOverload()
         {
-            engine.Execute("testObject.Method('foo', TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.Method('foo', TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -318,10 +306,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_Method_Generic_TypeArgConstraintFailure()
         {
-            engine.Execute("testObject.Method('foo', 4, testObject)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.Method('foo', 4, testObject)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -331,10 +318,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_Method_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Execute("testObject.Method(System.Int32, 'foo', 4, TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.Method(System.Int32, 'foo', 4, TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -344,10 +330,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_Method_GenericExplicit_MissingTypeArg()
         {
-            engine.Execute("testObject.Method(4)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.Method(4)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -358,10 +343,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(UnauthorizedAccessException))]
         public void MemberAccess_Method_GetType_Blocked()
         {
-            engine.Execute("testObject.GetType()");
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.GetType()"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -387,10 +371,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_ExtensionMethod_NoMatchingOverload()
         {
-            engine.Execute("testObject.ExtensionMethod('foo', TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.ExtensionMethod('foo', TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -400,10 +383,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_ExtensionMethod_Generic_TypeArgConstraintFailure()
         {
-            engine.Execute("testObject.ExtensionMethod('foo', 4, testObject)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.ExtensionMethod('foo', 4, testObject)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -413,10 +395,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_ExtensionMethod_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Execute("testObject.ExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.ExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]
@@ -426,10 +407,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void MemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
-            engine.Execute("testObject.ExtensionMethod(4)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.ExtensionMethod(4)"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]

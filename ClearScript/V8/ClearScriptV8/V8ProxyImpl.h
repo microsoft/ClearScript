@@ -88,6 +88,7 @@ namespace V8 {
 
         static V8Value ImportValue(Object^ gcObject);
         static Object^ ExportValue(const V8Value& value);
+        static void __declspec(noreturn) ThrowScriptEngineException(const V8Exception& exception);
 
     private:
 

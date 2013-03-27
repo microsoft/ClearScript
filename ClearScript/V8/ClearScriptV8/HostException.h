@@ -1,5 +1,5 @@
-﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// 
+// Copyright � Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -61,17 +61,44 @@
 
 #pragma once
 
-#include "ManagedPlatform.h"
-#include "SharedPtr.h"
-#include "StringToUniPtr.h"
-#include "V8ObjectHolder.h"
-#include "HostObjectHolder.h"
-#include "V8Value.h"
-#include "HostException.h"
-#include "V8Exception.h"
-#include "V8Context.h"
-#include "V8ProxyImpl.h"
-#include "V8ObjectImpl.h"
-#include "HostObjectHolderImpl.h"
-#include "V8ObjectHelpers.h"
-#include "HostObjectHelpers.h"
+//-----------------------------------------------------------------------------
+// V8Exception
+//-----------------------------------------------------------------------------
+
+class HostException
+{
+public:
+
+    HostException(LPCWSTR pMessage, const V8Value& exception):
+        m_Exception(exception)
+    {
+        if (pMessage != nullptr)
+        {
+            m_Message = pMessage;
+        }
+    }
+
+    HostException(LPCWSTR pMessage, V8Value&& exception):
+        m_Exception(exception)
+    {
+        if (pMessage != nullptr)
+        {
+            m_Message = pMessage;
+        }
+    }
+
+    LPCWSTR GetMessage() const
+    {
+        return m_Message.c_str();
+    }
+
+    const V8Value& GetException() const
+    {
+        return m_Exception;
+    }
+
+private:
+
+    wstring m_Message;
+    V8Value m_Exception;
+};

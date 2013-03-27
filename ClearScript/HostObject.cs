@@ -85,10 +85,45 @@ namespace Microsoft.ClearScript
             return (target != null) ? new HostObject(target, type) : null;
         }
 
+        public static object WrapResult<T>(T result)
+        {
+            return WrapResult(result, typeof(T));
+        }
+
+        public static object WrapResult(object result, Type type)
+        {
+            if (result == null)
+            {
+                return null;
+            }
+
+            if ((result is HostItem) || (result is HostTarget))
+            {
+                return result;
+            }
+
+            if ((type == typeof(void)) || (type == typeof(object)))
+            {
+                return result;
+            }
+
+            if ((type == result.GetType()) || (Type.GetTypeCode(type) != TypeCode.Object))
+            {
+                return result;
+            }
+
+            return Wrap(result, type);
+        }
+
         #region Object overrides
 
         public override string ToString()
         {
+            if ((target is ScriptItem) && (typeof(ScriptItem).IsAssignableFrom(type)))
+            {
+                return "ScriptItem";
+            }
+
             var objectName = target.GetFriendlyName(type);
             return MiscHelpers.FormatInvariant("HostObject:{0}", objectName);
         }

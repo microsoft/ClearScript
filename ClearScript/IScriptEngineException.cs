@@ -59,19 +59,38 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
+using System;
 
-#include "ManagedPlatform.h"
-#include "SharedPtr.h"
-#include "StringToUniPtr.h"
-#include "V8ObjectHolder.h"
-#include "HostObjectHolder.h"
-#include "V8Value.h"
-#include "HostException.h"
-#include "V8Exception.h"
-#include "V8Context.h"
-#include "V8ProxyImpl.h"
-#include "V8ObjectImpl.h"
-#include "HostObjectHolderImpl.h"
-#include "V8ObjectHelpers.h"
-#include "HostObjectHelpers.h"
+namespace Microsoft.ClearScript
+{
+    /// <summary>
+    /// Defines common script engine exception properties.
+    /// </summary>
+    public interface IScriptEngineException
+    {
+        /// <summary>
+        /// Gets the error message.
+        /// </summary>
+        string Message { get; }
+
+        /// <summary>
+        /// Gets an <see href="http://en.wikipedia.org/wiki/HRESULT">HRESULT</see> error code if one is available, zero otherwise.
+        /// </summary>
+        int HResult { get; }
+
+        /// <summary>
+        /// Gets the name associated with the script engine instance.
+        /// </summary>
+        string EngineName { get; }
+
+        /// <summary>
+        /// Gets a detailed error message if one is available, <c>null</c> otherwise.
+        /// </summary>
+        string ErrorDetails { get; }
+
+        /// <summary>
+        /// Gets the exception that caused the current exception to be thrown, or <c>null</c> if one was not specified.
+        /// </summary>
+        Exception InnerException { get; }
+    }
+}

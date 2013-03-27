@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClInclude Include="..\ClearScriptV8.h" />
     <ClInclude Include="..\ClearScriptV8Managed.h" />
+    <ClInclude Include="..\HostException.h" />
     <ClInclude Include="..\HostObjectHelpers.h" />
     <ClInclude Include="..\HostObjectHolder.h" />
     <ClInclude Include="..\HostObjectHolderImpl.h" />

@@ -147,12 +147,20 @@ namespace Microsoft.ClearScript.Util
             public const int FACILITY_WINDOWS = 8;
             public const int FACILITY_CONTROL = 10;
             public const int FACILITY_INTERNET = 12;
+            public const int FACILITY_URT = 19;
 
-            public const uint S_OK = 0;
-            public const uint S_FALSE = 1;
-            public const uint E_NOINTERFACE = 0x80004002;
-            public const uint E_ABORT = 0x80004004;
-            public const uint DISP_E_MEMBERNOTFOUND = 0x80020003;
+            public const int S_OK = 0;
+            public const int S_FALSE = 1;
+
+            public static readonly int E_NOINTERFACE = MiscHelpers.UnsignedAsSigned(0x80004002U);
+            public static readonly int E_ABORT = MiscHelpers.UnsignedAsSigned(0x80004004U);
+            public static readonly int E_INVALIDARG = MiscHelpers.UnsignedAsSigned(0x80070057U);
+
+            public static readonly int DISP_E_MEMBERNOTFOUND = MiscHelpers.UnsignedAsSigned(0x80020003U);
+            public static readonly int SCRIPT_E_REPORTED = MiscHelpers.UnsignedAsSigned(0x80020101U);
+
+            public static readonly int CLEARSCRIPT_E_HOSTEXCEPTION = MakeResult(SEVERITY_ERROR, FACILITY_URT, 0xBAFF);
+            public static readonly int CLEARSCRIPT_E_SCRIPTITEMEXCEPTION = MakeResult(SEVERITY_ERROR, FACILITY_URT, 0xB0FF);
 
             // ReSharper restore InconsistentNaming
 
@@ -194,6 +202,11 @@ namespace Microsoft.ClearScript.Util
             public static int GetCode(int result)
             {
                 return result & 0xFFFF;
+            }
+
+            public static int MakeResult(int severity, int facility, int code)
+            {
+                return MiscHelpers.UnsignedAsSigned((uint)(code & 0xFFFF) | ((uint)(facility & 0x1FFF) << 16) | ((uint)(severity & 0x1) << 31));
             }
         }
 

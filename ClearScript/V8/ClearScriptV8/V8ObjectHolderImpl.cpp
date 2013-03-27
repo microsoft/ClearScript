@@ -104,7 +104,7 @@ V8Value V8ObjectHolderImpl::GetProperty(LPCWSTR pName) const
 
 void V8ObjectHolderImpl::SetProperty(LPCWSTR pName, const V8Value& value) const
 {
-    return m_psContextImpl->SetV8ObjectProperty(m_pvObject, pName, value);
+    m_psContextImpl->SetV8ObjectProperty(m_pvObject, pName, value);
 }
 
 //-----------------------------------------------------------------------------
@@ -132,7 +132,7 @@ V8Value V8ObjectHolderImpl::GetProperty(int index) const
 
 void V8ObjectHolderImpl::SetProperty(int index, const V8Value& value) const
 {
-    return m_psContextImpl->SetV8ObjectProperty(m_pvObject, index, value);
+    m_psContextImpl->SetV8ObjectProperty(m_pvObject, index, value);
 }
 
 //-----------------------------------------------------------------------------

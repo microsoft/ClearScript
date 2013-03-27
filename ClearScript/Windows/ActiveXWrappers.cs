@@ -98,6 +98,8 @@ namespace Microsoft.ClearScript.Windows
 
         public abstract void EnumCodeContextsOfPosition(UIntPtr sourceContext, uint offset, uint length, out IEnumDebugCodeContexts enumContexts);
 
+        public abstract void EnumStackFrames(out IEnumDebugStackFrames enumFrames);
+
         public abstract void Close();
     }
 
@@ -105,13 +107,15 @@ namespace Microsoft.ClearScript.Windows
     {
         // ReSharper disable NotAccessedField.Local
 
-        private IntPtr pClearScript;
-        private IntPtr pClearScriptParse;
-        private IntPtr pClearScriptDebug;
+        private IntPtr pActiveScript;
+        private IntPtr pActiveScriptParse;
+        private IntPtr pActiveScriptDebug;
+        private IntPtr pDebugStackFrameSniffer;
 
         private IActiveScript activeScript;
         private IActiveScriptParse32 activeScriptParse;
         private IActiveScriptDebug32 activeScriptDebug;
+        private IDebugStackFrameSnifferEx32 debugStackFrameSniffer;
 
         // ReSharper restore NotAccessedField.Local
 
@@ -132,13 +136,15 @@ namespace Microsoft.ClearScript.Windows
 
         public ActiveScriptWrapper32(string progID)
         {
-            pClearScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
-            pClearScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse32>(pClearScript);
-            pClearScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug32>(pClearScript);
+            pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
+            pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse32>(pActiveScript);
+            pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug32>(pActiveScript);
+            pDebugStackFrameSniffer = RawCOMHelpers.QueryInterface<IDebugStackFrameSnifferEx32>(pActiveScript);
 
-            activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pClearScript);
+            activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pActiveScript);
             activeScriptParse = (IActiveScriptParse32)activeScript;
             activeScriptDebug = (IActiveScriptDebug32)activeScript;
+            debugStackFrameSniffer = (IDebugStackFrameSnifferEx32)activeScript;
         }
 
         public override void SetScriptSite(IActiveScriptSite site)
@@ -178,27 +184,34 @@ namespace Microsoft.ClearScript.Windows
 
         public override void InterruptScriptThread(uint scriptThreadID, ref EXCEPINFO excepInfo, ScriptInterruptFlags flags)
         {
-            var del = RawCOMHelpers.GetMethodDelegate<RawInterruptScriptThread>(pClearScript, 14);
-            del(pClearScript, scriptThreadID, ref excepInfo, flags);
+            var del = RawCOMHelpers.GetMethodDelegate<RawInterruptScriptThread>(pActiveScript, 14);
+            del(pActiveScript, scriptThreadID, ref excepInfo, flags);
         }
 
         public override void EnumCodeContextsOfPosition(UIntPtr sourceContext, uint offset, uint length, out IEnumDebugCodeContexts enumContexts)
         {
-            var del = RawCOMHelpers.GetMethodDelegate<RawEnumCodeContextsOfPosition>(pClearScriptDebug, 5);
-            RawCOMHelpers.HResult.Check(del(pClearScriptDebug, sourceContext.ToUInt32(), offset, length, out enumContexts));
+            var del = RawCOMHelpers.GetMethodDelegate<RawEnumCodeContextsOfPosition>(pActiveScriptDebug, 5);
+            RawCOMHelpers.HResult.Check(del(pActiveScriptDebug, sourceContext.ToUInt32(), offset, length, out enumContexts));
+        }
+
+        public override void EnumStackFrames(out IEnumDebugStackFrames enumFrames)
+        {
+            debugStackFrameSniffer.EnumStackFrames(out enumFrames);
         }
 
         public override void Close()
         {
             activeScript.Close();
 
+            debugStackFrameSniffer = null;
             activeScriptDebug = null;
             activeScriptParse = null;
             activeScript = null;
 
-            RawCOMHelpers.ReleaseAndEmpty(ref pClearScriptDebug);
-            RawCOMHelpers.ReleaseAndEmpty(ref pClearScriptParse);
-            RawCOMHelpers.ReleaseAndEmpty(ref pClearScript);
+            RawCOMHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
+            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
+            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
+            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScript);
         }
     }
 
@@ -206,13 +219,15 @@ namespace Microsoft.ClearScript.Windows
     {
         // ReSharper disable NotAccessedField.Local
 
-        private IntPtr pClearScript;
-        private IntPtr pClearScriptParse;
-        private IntPtr pClearScriptDebug;
+        private IntPtr pActiveScript;
+        private IntPtr pActiveScriptParse;
+        private IntPtr pActiveScriptDebug;
+        private IntPtr pDebugStackFrameSniffer;
 
         private IActiveScript activeScript;
         private IActiveScriptParse64 activeScriptParse;
         private IActiveScriptDebug64 activeScriptDebug;
+        private IDebugStackFrameSnifferEx64 debugStackFrameSniffer;
 
         // ReSharper restore NotAccessedField.Local
 
@@ -233,13 +248,15 @@ namespace Microsoft.ClearScript.Windows
 
         public ActiveScriptWrapper64(string progID)
         {
-            pClearScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
-            pClearScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse64>(pClearScript);
-            pClearScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug64>(pClearScript);
+            pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
+            pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse64>(pActiveScript);
+            pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug64>(pActiveScript);
+            pDebugStackFrameSniffer = RawCOMHelpers.QueryInterface<IDebugStackFrameSnifferEx64>(pActiveScript);
 
-            activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pClearScript);
+            activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pActiveScript);
             activeScriptParse = (IActiveScriptParse64)activeScript;
             activeScriptDebug = (IActiveScriptDebug64)activeScript;
+            debugStackFrameSniffer = (IDebugStackFrameSnifferEx64)activeScript;
         }
 
         public override void SetScriptSite(IActiveScriptSite site)
@@ -279,27 +296,34 @@ namespace Microsoft.ClearScript.Windows
 
         public override void InterruptScriptThread(uint scriptThreadID, ref EXCEPINFO excepInfo, ScriptInterruptFlags flags)
         {
-            var del = RawCOMHelpers.GetMethodDelegate<RawInterruptScriptThread>(pClearScript, 14);
-            del(pClearScript, scriptThreadID, ref excepInfo, flags);
+            var del = RawCOMHelpers.GetMethodDelegate<RawInterruptScriptThread>(pActiveScript, 14);
+            del(pActiveScript, scriptThreadID, ref excepInfo, flags);
         }
 
         public override void EnumCodeContextsOfPosition(UIntPtr sourceContext, uint offset, uint length, out IEnumDebugCodeContexts enumContexts)
         {
-            var del = RawCOMHelpers.GetMethodDelegate<RawEnumCodeContextsOfPosition>(pClearScriptDebug, 5);
-            RawCOMHelpers.HResult.Check(del(pClearScriptDebug, sourceContext.ToUInt64(), offset, length, out enumContexts));
+            var del = RawCOMHelpers.GetMethodDelegate<RawEnumCodeContextsOfPosition>(pActiveScriptDebug, 5);
+            RawCOMHelpers.HResult.Check(del(pActiveScriptDebug, sourceContext.ToUInt64(), offset, length, out enumContexts));
+        }
+
+        public override void EnumStackFrames(out IEnumDebugStackFrames enumFrames)
+        {
+            debugStackFrameSniffer.EnumStackFrames(out enumFrames);
         }
 
         public override void Close()
         {
             activeScript.Close();
 
+            debugStackFrameSniffer = null;
             activeScriptDebug = null;
             activeScriptParse = null;
             activeScript = null;
 
-            RawCOMHelpers.ReleaseAndEmpty(ref pClearScriptDebug);
-            RawCOMHelpers.ReleaseAndEmpty(ref pClearScriptParse);
-            RawCOMHelpers.ReleaseAndEmpty(ref pClearScript);
+            RawCOMHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
+            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
+            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
+            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScript);
         }
     }
 

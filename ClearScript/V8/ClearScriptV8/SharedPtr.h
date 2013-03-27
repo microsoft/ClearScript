@@ -258,7 +258,7 @@ private:
         AddRef();
     }
 
-    template<typename U> void Move(SharedPtr<U>&& that)
+    template<typename U> void Move(SharedPtr<U>& that)
     {
         m_pTarget = that.m_pTarget;
         m_pRefCount = that.m_pRefCount;

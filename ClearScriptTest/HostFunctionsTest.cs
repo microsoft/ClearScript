@@ -568,27 +568,24 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("HostFunctions")]
-        [ExpectedException(typeof(UnauthorizedAccessException))]
         public void HostFunctions_typeOf_TypeArg_Blocked()
         {
             engine.AddHostType("Int32", typeof(int));
-            engine.Execute("host.typeOf(Int32)");
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("host.typeOf(Int32)"));
         }
 
         [TestMethod, TestCategory("HostFunctions")]
-        [ExpectedException(typeof(UnauthorizedAccessException))]
         public void HostFunctions_typeOf_NonTypeArg_Blocked()
         {
             engine.AddHostType("Console", typeof(Console));
-            engine.Execute("host.typeOf(Console)");
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("host.typeOf(Console)"));
         }
 
         [TestMethod, TestCategory("HostFunctions")]
-        [ExpectedException(typeof(ArgumentException))]
         public void HostFunctions_typeOf_NonType()
         {
             engine.AllowReflection = true;
-            engine.Execute("host.typeOf(5)");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("host.typeOf(5)"));
         }
 
         [TestMethod, TestCategory("HostFunctions")]
@@ -609,20 +606,18 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("HostFunctions")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void HostFunctions_flags_Mismatch()
         {
             engine.AddHostType("UnsignedFlags", HostItemFlags.PrivateAccess, typeof(UnsignedFlags));
             engine.AddHostType("SignedFlags", HostItemFlags.PrivateAccess, typeof(SignedFlags));
-            engine.Execute("host.flags(SignedFlags.Second, SignedFlags.Fourth, UnsignedFlags.Sixth, UnsignedFlags.Eighth)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("host.flags(SignedFlags.Second, SignedFlags.Fourth, UnsignedFlags.Sixth, UnsignedFlags.Eighth)"));
         }
 
         [TestMethod, TestCategory("HostFunctions")]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void HostFunctions_flags_NonFlags()
         {
             engine.AddHostType("NonFlags", HostItemFlags.PrivateAccess, typeof(NonFlags));
-            engine.Execute("host.flags(NonFlags.Second, NonFlags.Fourth, NonFlags.Sixth, NonFlags.Eighth)");
+            TestUtil.AssertException<InvalidOperationException>(() => engine.Execute("host.flags(NonFlags.Second, NonFlags.Fourth, NonFlags.Sixth, NonFlags.Eighth)"));
         }
 
         // ReSharper restore InconsistentNaming
@@ -641,7 +636,7 @@ namespace Microsoft.ClearScript.Test
 
         private void VerifyNewArr<T>(params int[] lengths)
         {
-            var value = host.newArr<T>(lengths);
+            var value = (Array)host.newArr<T>(lengths);
             Assert.IsInstanceOfType(value, typeof(T).MakeArrayType(lengths.Length));
             lengths.ForEach((length, index) => Assert.AreEqual(lengths[index], value.GetLength(index)));
         }

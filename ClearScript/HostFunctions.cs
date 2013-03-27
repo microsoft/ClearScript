@@ -173,7 +173,7 @@ namespace Microsoft.ClearScript
         /// </code>
         /// </example>
         /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
-        public Array newArr<T>(params int[] lengths)
+        public object newArr<T>(params int[] lengths)
         {
             return Array.CreateInstance(typeof(T), lengths);
         }

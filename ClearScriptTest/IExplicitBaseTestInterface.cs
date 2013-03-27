@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright © Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -60,7 +60,6 @@
 //       
 
 using System;
-using System.Runtime.CompilerServices;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -83,28 +82,24 @@ namespace Microsoft.ClearScript.Test
 
     public static class ExplicitBaseTestInterfaceExtensions
     {
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double ExplicitBaseInterfaceExtensionMethod(this IExplicitBaseTestInterface self, string arg1, int arg2)
         {
-            return TestUtil.CalcTestValue(self, arg1.Length, arg2);
+            return TestUtil.CalcTestValue(new Guid("7cc1fa3e-6193-4914-9e0e-cff8a84e9beb"), self, arg1.Length, arg2);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double ExplicitBaseInterfaceExtensionMethod<T>(this IExplicitBaseTestInterface self, string arg1, int arg2, T arg3) where T : struct
         {
-            return TestUtil.CalcTestValue(self, arg1.Length, arg2, arg3.ToString().Length);
+            return TestUtil.CalcTestValue(new Guid("5db749b9-bc1a-408c-a630-4c3aaa177a26"), self, arg1.Length, arg2, arg3.ToString().Length);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double ExplicitBaseInterfaceExtensionMethod<T>(this IExplicitBaseTestInterface self, int arg) where T : struct
         {
-            return TestUtil.CalcTestValue(self, typeof(T).Name.Length, arg);
+            return TestUtil.CalcTestValue(new Guid("ee25eedb-4a80-4db6-9c5e-5fe79178b9be"), self, typeof(T).Name.Length, arg);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double ExplicitBaseInterfaceExtensionBindTestMethod<T>(this IExplicitBaseTestInterface self, T arg)
         {
-            return TestUtil.CalcTestValue(self, typeof(T), arg);
+            return TestUtil.CalcTestValue(new Guid("a6815002-5517-43c3-94bc-282d53c32cb3"), self, typeof(T), arg);
         }
     }
 }

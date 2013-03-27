@@ -139,9 +139,9 @@ namespace Microsoft.ClearScript.Util
                 result = InvokeExpression(binding.Expression);
                 return true;
             }
-            catch (ApplicationException)
+            catch (Exception exception)
             {
-                result = null;
+                result = exception;
                 return false;
             }
         }

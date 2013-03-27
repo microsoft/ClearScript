@@ -140,6 +140,7 @@ cd ..
 :Build
 
 set GYP_MSVS_VERSION=2012
+set PYTHONHOME=
 
 :Copy32Bit
 echo Building 32-bit V8 ...
@@ -154,7 +155,7 @@ if errorlevel 1 goto Error1
 cd v8-ia32
 third_party\python_26\python build\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false >gyp.log
 if errorlevel 1 goto Error2
-msbuild /p:Configuration=%mode% /p:Platform=Win32 tools\gyp\v8.sln >build.log
+msbuild /p:Configuration=%mode% /p:Platform=Win32 /t:v8 tools\gyp\v8.sln >build.log
 if errorlevel 1 goto Error2
 cd ..
 :Build32BitDone
@@ -172,7 +173,7 @@ if errorlevel 1 goto Error1
 cd v8-x64
 third_party\python_26\python build\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false >gyp.log
 if errorlevel 1 goto Error2
-msbuild /p:Configuration=%mode% /p:Platform=x64 tools\gyp\v8.sln >build.log
+msbuild /p:Configuration=%mode% /p:Platform=x64 /t:v8 tools\gyp\v8.sln >build.log
 if errorlevel 1 goto Error2
 cd ..
 :Build64BitDone

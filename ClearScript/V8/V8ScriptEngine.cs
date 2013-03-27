@@ -90,7 +90,6 @@ namespace Microsoft.ClearScript.V8
         private readonly dynamic script;
         private bool disposed;
 
-        private static readonly IUniqueNameManager embeddingHostNameManager = new UniqueNameManager();
         private readonly IUniqueNameManager documentNameManager = new UniqueFileNameManager();
         private readonly List<string> documentNames = new List<string>();
 
@@ -141,11 +140,10 @@ namespace Microsoft.ClearScript.V8
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="debugPort">A TCP/IP port number on which to listen for a debugger connection.</param>
         public V8ScriptEngine(string name, V8ScriptEngineFlags flags, int debugPort)
+            : base(name)
         {
-            var uniqueName = embeddingHostNameManager.GetUniqueName(name, GetType().GetRootName());
-
             engineFlags = flags;
-            proxy = V8Proxy.Create(uniqueName, flags.HasFlag(V8ScriptEngineFlags.EnableDebugging), flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers), debugPort);
+            proxy = V8Proxy.Create(Name, flags.HasFlag(V8ScriptEngineFlags.EnableDebugging), flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers), debugPort);
             script = GetRootItem();
 
             var engineInternal = Evaluate(
@@ -347,7 +345,13 @@ namespace Microsoft.ClearScript.V8
                     return obj;
                 }
 
-                obj = hostItem.Unwrap();
+                obj = hostItem.Target;
+            }
+
+            var hostTarget = obj as HostTarget;
+            if (hostTarget != null)
+            {
+                obj = hostTarget.Target;
             }
 
             var scriptItem = obj as ScriptItem;
@@ -359,7 +363,7 @@ namespace Microsoft.ClearScript.V8
                 }
             }
 
-            return HostItem.Wrap(this, obj, flags);
+            return HostItem.Wrap(this, hostTarget ?? obj, flags);
         }
 
         internal override object MarshalToHost(object obj, bool preserveHostTarget)
@@ -372,6 +376,12 @@ namespace Microsoft.ClearScript.V8
             if (obj is DBNull)
             {
                 return null;
+            }
+
+            var hostTarget = obj as HostTarget;
+            if (hostTarget != null)
+            {
+                return preserveHostTarget ? hostTarget : hostTarget.Target;
             }
 
             var hostItem = obj as HostItem;

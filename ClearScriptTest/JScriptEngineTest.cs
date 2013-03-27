@@ -65,8 +65,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
+using System.Reflection;
 using System.Threading;
+using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -143,7 +144,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
-        [ExpectedException(typeof(ExternalException))]
+        [ExpectedException(typeof(ScriptEngineException))]
         public void JScriptEngine_AddHostObject_DefaultAccess()
         {
             engine.AddHostObject("test", this);
@@ -163,7 +164,7 @@ namespace Microsoft.ClearScript.Test
             var host = new ExtendedHostFunctions() as HostFunctions;
             engine.AddRestrictedHostObject("host", host);
             Assert.IsInstanceOfType(engine.Evaluate("host.newObj()"), typeof(PropertyBag));
-            TestUtil.AssertException<ExternalException>(() => engine.Evaluate("host.type('System.Int32')"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("host.type('System.Int32')"));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -195,7 +196,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
-        [ExpectedException(typeof(ExternalException))]
+        [ExpectedException(typeof(ScriptEngineException))]
         public void JScriptEngine_AddHostType_DefaultAccess()
         {
             engine.AddHostType("Test", GetType());
@@ -351,23 +352,12 @@ namespace Microsoft.ClearScript.Test
             });
 
             engine.AddHostObject("checkpoint", checkpoint);
-
-            var gotException = false;
-            try
-            {
-                engine.Execute("checkpoint.Set(); while (true) { var foo = 'hello'; }");
-            }
-            catch (OperationCanceledException)
-            {
-                gotException = true;
-            }
-
-            Assert.IsTrue(gotException);
+            TestUtil.AssertException<OperationCanceledException>(() => engine.Execute("checkpoint.Set(); while (true) { var foo = 'hello'; }"));
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
-        [ExpectedException(typeof(ExternalException))]
+        [ExpectedException(typeof(ScriptEngineException))]
         public void JScriptEngine_AccessContext_Default()
         {
             engine.AddHostObject("test", this);
@@ -386,19 +376,7 @@ namespace Microsoft.ClearScript.Test
         public void JScriptEngine_ContinuationCallback()
         {
             engine.ContinuationCallback = () => false;
-
-            var gotException = false;
-            try
-            {
-                engine.Execute("while (true) { var foo = 'hello'; }");
-            }
-            catch (OperationCanceledException)
-            {
-                gotException = true;
-            }
-
-            Assert.IsTrue(gotException);
-
+            TestUtil.AssertException<OperationCanceledException>(() => engine.Execute("while (true) { var foo = 'hello'; }"));
             engine.ContinuationCallback = null;
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
         }
@@ -527,11 +505,10 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
-        [ExpectedException(typeof(MissingMemberException), AllowDerivedTypes = true)]
         public void JScriptEngine_new_NoMatch()
         {
             engine.AddHostObject("clr", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));
-            engine.Execute("new System.Random('a')");
+            TestUtil.AssertException<MissingMemberException>(() => engine.Execute("new System.Random('a')"));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -548,6 +525,144 @@ namespace Microsoft.ClearScript.Test
                 engine.Execute(generalScript);
                 Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
             }
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ErrorHandling_ScriptError()
+        {
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("foo = {}; foo();");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNull(exception.InnerException);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ErrorHandling_HostException()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Evaluate("host.newObj(null)");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNotNull(exception.InnerException);
+
+                    var hostException = exception.InnerException;
+                    Assert.IsInstanceOfType(hostException, typeof(RuntimeBinderException));
+                    TestUtil.AssertValidException(hostException);
+                    Assert.IsNull(hostException.InnerException);
+
+                    Assert.AreEqual(hostException.Message, exception.Message);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ErrorHandling_IgnoredHostException()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("try { host.newObj(null); } catch(ex) {} foo = {}; foo();");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNull(exception.InnerException);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ErrorHandling_NestedScriptError()
+        {
+            var innerEngine = new JScriptEngine("inner", WindowsScriptEngineFlags.EnableDebugging);
+            engine.AddHostObject("engine", innerEngine);
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("engine.Execute('foo = {}; foo();')");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNotNull(exception.InnerException);
+
+                    var hostException = exception.InnerException;
+                    Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
+                    TestUtil.AssertValidException(hostException);
+                    Assert.IsNotNull(hostException.InnerException);
+
+                    var nestedException = hostException.InnerException as ScriptEngineException;
+                    Assert.IsNotNull(nestedException);
+                    TestUtil.AssertValidException(innerEngine, nestedException);
+                    Assert.IsNull(nestedException.InnerException);
+
+                    Assert.AreEqual(hostException.Message, exception.Message);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ErrorHandling_NestedHostException()
+        {
+            var innerEngine = new JScriptEngine("inner", WindowsScriptEngineFlags.EnableDebugging);
+            innerEngine.AddHostObject("host", new HostFunctions());
+            engine.AddHostObject("engine", innerEngine);
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("engine.Evaluate('host.newObj(null)')");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNotNull(exception.InnerException);
+
+                    var hostException = exception.InnerException;
+                    Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
+                    TestUtil.AssertValidException(hostException);
+                    Assert.IsNotNull(hostException.InnerException);
+
+                    var nestedException = hostException.InnerException as ScriptEngineException;
+                    Assert.IsNotNull(nestedException);
+                    TestUtil.AssertValidException(innerEngine, nestedException);
+                    Assert.IsNotNull(nestedException.InnerException);
+
+                    var nestedHostException = nestedException.InnerException;
+                    Assert.IsInstanceOfType(nestedHostException, typeof(RuntimeBinderException));
+                    TestUtil.AssertValidException(nestedHostException);
+                    Assert.IsNull(nestedHostException.InnerException);
+
+                    Assert.AreEqual(nestedHostException.Message, nestedException.Message);
+                    Assert.AreEqual(hostException.Message, exception.Message);
+                    throw;
+                }
+            });
         }
 
         // ReSharper restore InconsistentNaming

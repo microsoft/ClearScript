@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright © Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -60,7 +60,6 @@
 //       
 
 using System;
-using System.Runtime.CompilerServices;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -90,28 +89,24 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double StaticMethod(string arg1, int arg2)
         {
-            return TestUtil.CalcTestValue(typeof(StaticTestClass), arg1.Length, arg2);
+            return TestUtil.CalcTestValue(new Guid("e9bc20b4-3f24-4c99-b2dd-34d7e533bc10"), typeof(StaticTestClass), arg1.Length, arg2);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double StaticMethod<T>(string arg1, int arg2, T arg3) where T : struct
         {
-            return TestUtil.CalcTestValue(typeof(StaticTestClass), arg1.Length, arg2, arg3.ToString().Length);
+            return TestUtil.CalcTestValue(new Guid("1f78dcb0-ecd9-4497-b67a-88684a5b3352"), typeof(StaticTestClass), arg1.Length, arg2, arg3.ToString().Length);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double StaticMethod<T>(int arg) where T : struct
         {
-            return TestUtil.CalcTestValue(typeof(StaticTestClass), typeof(T).Name.Length, arg);
+            return TestUtil.CalcTestValue(new Guid("6298f0a4-01c7-4600-870b-99917b92a4de"), typeof(StaticTestClass), typeof(T).Name.Length, arg);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static double StaticBindTestMethod<T>(T arg)
         {
-            return TestUtil.CalcTestValue(typeof(StaticTestClass), typeof(T), arg);
+            return TestUtil.CalcTestValue(new Guid("d1e979f2-47cd-44fa-a21a-7b215f18bd67"), typeof(StaticTestClass), typeof(T), arg);
         }
     }
 }

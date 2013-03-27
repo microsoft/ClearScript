@@ -118,10 +118,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void StaticMemberAccess_Field_BadAssignment()
         {
-            engine.Execute("StaticTestClass.StaticField = host.newArr(System.Double, 5)");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticField = host.newArr(System.Double, 5)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -134,17 +133,15 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(OverflowException))]
         public void StaticMemberAccess_Field_Scalar_Overflow()
         {
-            engine.Execute("StaticTestClass.StaticScalarField = 54321");
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("StaticTestClass.StaticScalarField = 54321"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void StaticMemberAccess_Field_Scalar_BadAssignment()
         {
-            engine.Execute("StaticTestClass.StaticScalarField = TestEnum.Second");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticScalarField = TestEnum.Second"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -164,10 +161,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void StaticMemberAccess_Field_Enum_BadAssignment()
         {
-            engine.Execute("StaticTestClass.StaticEnumField = 1");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticEnumField = 1"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -180,10 +176,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void StaticMemberAccess_Field_Struct_BadAssignment()
         {
-            engine.Execute("StaticTestClass.StaticStructField = System.DateTime.Now");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticStructField = System.DateTime.Now"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -203,10 +198,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void StaticMemberAccess_Property_BadAssignment()
         {
-            engine.Execute("StaticTestClass.StaticProperty = host.newArr(System.Double, 5)");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticProperty = host.newArr(System.Double, 5)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -219,17 +213,15 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(OverflowException))]
         public void StaticMemberAccess_Property_Scalar_Overflow()
         {
-            engine.Execute("StaticTestClass.StaticScalarProperty = 54321");
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("StaticTestClass.StaticScalarProperty = 54321"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void StaticMemberAccess_Property_Scalar_BadAssignment()
         {
-            engine.Execute("StaticTestClass.StaticScalarProperty = TestEnum.Second");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticScalarProperty = TestEnum.Second"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -249,10 +241,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void StaticMemberAccess_Property_Enum_BadAssignment()
         {
-            engine.Execute("StaticTestClass.StaticEnumProperty = 1");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticEnumProperty = 1"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -265,10 +256,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void StaticMemberAccess_Property_Struct_BadAssignment()
         {
-            engine.Execute("StaticTestClass.StaticStructProperty = System.DateTime.Now");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticStructProperty = System.DateTime.Now"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -278,10 +268,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void StaticMemberAccess_ReadOnlyProperty_Write()
         {
-            engine.Execute("StaticTestClass.StaticReadOnlyProperty = 2");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticReadOnlyProperty = 2"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -302,10 +291,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void StaticMemberAccess_Method_NoMatchingOverload()
         {
-            engine.Execute("StaticTestClass.StaticMethod('foo', TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("StaticTestClass.StaticMethod('foo', TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -315,10 +303,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void StaticMemberAccess_Method_Generic_TypeArgConstraintFailure()
         {
-            engine.Execute("StaticTestClass.StaticMethod('foo', 4, StaticTestClass)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("StaticTestClass.StaticMethod('foo', 4, StaticTestClass)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -328,10 +315,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void StaticMemberAccess_Method_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Execute("StaticTestClass.StaticMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("StaticTestClass.StaticMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -341,10 +327,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void StaticMemberAccess_Method_GenericExplicit_MissingTypeArg()
         {
-            engine.Execute("StaticTestClass.StaticMethod(4)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("StaticTestClass.StaticMethod(4)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]

@@ -62,6 +62,7 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
@@ -79,6 +80,138 @@ namespace Microsoft.ClearScript.Windows
             public ScriptSite(WindowsScriptEngine engine)
             {
                 this.engine = engine;
+            }
+
+            private string GetDetails(object error, string message)
+            {
+                if (engine.engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging))
+                {
+                    try
+                    {
+                        var stackTrace = GetStackTrace();
+                        if (!string.IsNullOrWhiteSpace(stackTrace))
+                        {
+                            return message + "\n" + stackTrace;
+                        }
+
+                        var errorLocation = GetErrorLocation(error);
+                        if (!string.IsNullOrWhiteSpace(errorLocation))
+                        {
+                            return message + "\n" + errorLocation;
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        Debug.Assert(false, "Exception caught during error processing", exception.ToString());
+                    }
+                }
+
+                return message;
+            }
+
+            private string GetStackTrace()
+            {
+                var stackTrace = string.Empty;
+
+                IEnumDebugStackFrames enumFrames;
+                engine.activeScript.EnumStackFrames(out enumFrames);
+
+                while (true)
+                {
+                    DebugStackFrameDescriptor descriptor;
+                    uint countFetched;
+                    enumFrames.Next(1, out descriptor, out countFetched);
+                    if (countFetched < 1)
+                    {
+                        break;
+                    }
+
+                    try
+                    {
+                        string description;
+                        descriptor.Frame.GetDescriptionString(true, out description);
+
+                        IDebugCodeContext codeContext;
+                        descriptor.Frame.GetCodeContext(out codeContext);
+
+                        IDebugDocumentContext documentContext;
+                        codeContext.GetDocumentContext(out documentContext);
+
+                        IDebugDocument document;
+                        documentContext.GetDocument(out document);
+                        var documentText = (IDebugDocumentText)document;
+
+                        string documentName;
+                        document.GetName(DocumentNameType.Title, out documentName);
+
+                        uint position;
+                        uint length;
+                        documentText.GetPositionOfContext(documentContext, out position, out length);
+
+                        var pBuffer = Marshal.AllocCoTaskMem((int)(sizeof(char) * length));
+                        try
+                        {
+                            uint lengthReturned = 0;
+                            documentText.GetText(position, pBuffer, IntPtr.Zero, ref lengthReturned, length);
+                            var codeLine = Marshal.PtrToStringUni(pBuffer, (int)lengthReturned);
+
+                            uint lineNumber;
+                            uint offsetInLine;
+                            documentText.GetLineOfPosition(position, out lineNumber, out offsetInLine);
+
+                            stackTrace += MiscHelpers.FormatInvariant("    at {0} ({1}:{2}:{3}) -> {4}\n", description, documentName, lineNumber, offsetInLine, codeLine);
+                        }
+                        finally
+                        {
+                            Marshal.FreeCoTaskMem(pBuffer);
+                        }
+                    }
+                    finally
+                    {
+                        if (descriptor.FinalObject != null)
+                        {
+                            Marshal.ReleaseComObject(descriptor.FinalObject);
+                        }
+                    }
+                }
+
+                return stackTrace;
+            }
+
+            private string GetErrorLocation(object error)
+            {
+                var scriptError = error as IActiveScriptError;
+                if (scriptError != null)
+                {
+                    uint sourceContext;
+                    uint lineNumber;
+                    int offsetInLine;
+                    scriptError.GetSourcePosition(out sourceContext, out lineNumber, out offsetInLine);
+
+                    DebugDocument document;
+                    if (engine.debugDocumentMap.TryGetValue(new UIntPtr(sourceContext), out document))
+                    {
+                        string documentName;
+                        document.GetName(DocumentNameType.Title, out documentName);
+
+                        int position;
+                        if (lineNumber > 0)
+                        {
+                            uint linePosition;
+                            document.GetPositionOfLine(--lineNumber, out linePosition);
+                            position = (int)linePosition + offsetInLine;
+                        }
+                        else
+                        {
+                            position = offsetInLine;
+                        }
+
+                        var text = new string(document.Code.Skip(position).TakeWhile(ch => ch != '\n').ToArray());
+                        return MiscHelpers.FormatInvariant("    at ({0}:{1}:{2}) -> {3}", documentName, lineNumber, offsetInLine, text);
+                    }
+                }
+
+                return null;
             }
 
             #region IActiveScriptSite implementation
@@ -122,18 +255,36 @@ namespace Microsoft.ClearScript.Windows
                 {
                     EXCEPINFO excepInfo;
                     error.GetExceptionInfo(out excepInfo);
-                    if (excepInfo.scode == MiscHelpers.UnsignedAsSigned(RawCOMHelpers.HResult.E_ABORT))
+                    if (excepInfo.scode == RawCOMHelpers.HResult.E_ABORT)
                     {
                         // Script execution was interrupted explicitly. At this point the script
                         // engine might be in an odd state; the following call seems to get it back
                         // to normal.
 
                         engine.activeScript.SetScriptState(ScriptState.Started);
-                        engine.CurrentScriptFrame.SetScriptError(new OperationCanceledException(excepInfo.bstrDescription ?? "Script execution interrupted by host"));
+
+                        var description = excepInfo.bstrDescription ?? "Script execution interrupted by host";
+                        engine.CurrentScriptFrame.ScriptError = new ScriptInterruptedException(engine.Name, description, GetDetails(error, description), excepInfo.scode, null);
                     }
                     else
                     {
-                        engine.CurrentScriptFrame.SetScriptError(new ExternalException(excepInfo.bstrDescription, excepInfo.scode));
+                        var description = excepInfo.bstrDescription;
+
+                        Exception innerException;
+                        if (excepInfo.scode != RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
+                        {
+                            innerException = null;
+                        }
+                        else
+                        {
+                            innerException = engine.CurrentScriptFrame.HostException;
+                            if ((innerException != null) && string.IsNullOrWhiteSpace(description))
+                            {
+                                description = innerException.Message;
+                            }
+                        }
+
+                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, description, GetDetails(error, description), excepInfo.scode, innerException);
                     }
                 }
             }
@@ -160,7 +311,7 @@ namespace Microsoft.ClearScript.Windows
                     keepGoing = keepGoing && !engine.CurrentScriptFrame.InterruptRequested;
                 }
 
-                return keepGoing ? RawCOMHelpers.HResult.S_OK : RawCOMHelpers.HResult.E_ABORT;
+                return keepGoing ? RawCOMHelpers.HResult.S_OK : MiscHelpers.SignedAsUnsigned(RawCOMHelpers.HResult.E_ABORT);
             }
 
             #endregion
@@ -193,13 +344,30 @@ namespace Microsoft.ClearScript.Windows
                 {
                     EXCEPINFO excepInfo;
                     errorDebug.GetExceptionInfo(out excepInfo);
-                    if (excepInfo.scode == MiscHelpers.UnsignedAsSigned(RawCOMHelpers.HResult.E_ABORT))
+                    if (excepInfo.scode == RawCOMHelpers.HResult.E_ABORT)
                     {
-                        engine.CurrentScriptFrame.SetPendingScriptError(new OperationCanceledException(excepInfo.bstrDescription ?? "Script execution interrupted by host"));
+                        var description = excepInfo.bstrDescription ?? "Script execution interrupted by host";
+                        engine.CurrentScriptFrame.PendingScriptError = new ScriptInterruptedException(engine.Name, description, GetDetails(errorDebug, description), excepInfo.scode, null);
                     }
                     else
                     {
-                        engine.CurrentScriptFrame.SetPendingScriptError(new ExternalException(excepInfo.bstrDescription, excepInfo.scode));
+                        var description = excepInfo.bstrDescription;
+
+                        Exception innerException;
+                        if (excepInfo.scode != RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
+                        {
+                            innerException = null;
+                        }
+                        else
+                        {
+                            innerException = engine.CurrentScriptFrame.HostException;
+                            if ((innerException != null) && string.IsNullOrWhiteSpace(description))
+                            {
+                                description = innerException.Message;
+                            }
+                        }
+
+                        engine.CurrentScriptFrame.PendingScriptError = new ScriptEngineException(engine.Name, description, GetDetails(errorDebug, description), excepInfo.scode, innerException);
                     }
                 }
 

@@ -152,6 +152,11 @@ private:
     V8Value ExportValue(Handle<Value> hValue);
     void ImportValues(const vector<V8Value>& values, vector<Handle<Value>>& importedValues);
 
+    void Verify(const TryCatch& tryCatch);
+    template<typename T> T Verify(const TryCatch& tryCatch, T result);
+    void ThrowScriptException(const HostException& exception);
+
+    wstring m_Name;
     Isolate* m_pIsolate;
     bool m_DebugAgentEnabled;
     long m_DebugMessageDispatchCount;
@@ -159,6 +164,7 @@ private:
     Persistent<Object> m_hGlobal;
     vector<Persistent<Object>> m_GlobalMembersStack;
     Persistent<String> m_hHostObjectCookieName;
+    Persistent<String> m_hInnerExceptionName;
     Persistent<FunctionTemplate> m_hHostObjectTemplate;
     hash_map<int, Persistent<Integer>> m_IntegerCache;
 };

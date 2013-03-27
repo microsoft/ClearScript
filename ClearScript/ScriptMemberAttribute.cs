@@ -106,6 +106,50 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
+        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified script options.
+        /// </summary>
+        /// <param name="flags">The script options for the type member.</param>
+        public ScriptMemberAttribute(ScriptMemberFlags flags)
+        {
+            Flags = flags;
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name and script options.
+        /// </summary>
+        /// <param name="name">The name that script code will use to access the type member.</param>
+        /// <param name="flags">The script options for the type member.</param>
+        public ScriptMemberAttribute(string name, ScriptMemberFlags flags)
+        {
+            Name = name;
+            Flags = flags;
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified script access setting and script options.
+        /// </summary>
+        /// <param name="access">The script access setting for the type member.</param>
+        /// <param name="flags">The script options for the type member.</param>
+        public ScriptMemberAttribute(ScriptAccess access, ScriptMemberFlags flags)
+            : base(access)
+        {
+            Flags = flags;
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name, script access setting, and script options.
+        /// </summary>
+        /// <param name="name">The name that script code will use to access the type member.</param>
+        /// <param name="access">The script access setting for the type member.</param>
+        /// <param name="flags">The script options for the type member.</param>
+        public ScriptMemberAttribute(string name, ScriptAccess access, ScriptMemberFlags flags)
+            : base(access)
+        {
+            Name = name;
+            Flags = flags;
+        }
+
+        /// <summary>
         /// Gets or sets the name that script code will use to access the type member.
         /// </summary>
         /// <remarks>
@@ -115,5 +159,10 @@ namespace Microsoft.ClearScript
         /// could receive the call.
         /// </remarks>
         public string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the script options for the type member.
+        /// </summary>
+        public ScriptMemberFlags Flags { get; set; }
     }
 }

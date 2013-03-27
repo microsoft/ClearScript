@@ -65,7 +65,6 @@ using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util;
 
@@ -101,6 +100,77 @@ namespace Microsoft.ClearScript.Windows
             return obj;
         }
 
+        private IScriptEngineException GetScriptError(Exception exception)
+        {
+            IScriptEngineException scriptError;
+            if (TryGetScriptError(exception, out scriptError))
+            {
+                return scriptError;
+            }
+
+            return new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception);
+        }
+
+        private bool TryGetScriptError(Exception exception, out IScriptEngineException scriptError)
+        {
+            // WORKAROUND: Windows Script items often throw ugly exceptions. The code here
+            // attempts to clean up specific cases.
+
+            while (exception is TargetInvocationException)
+            {
+                exception = exception.InnerException;
+            }
+
+            scriptError = exception as IScriptEngineException;
+            if (scriptError != null)
+            {
+                return true;
+            }
+
+            if (exception != null)
+            {
+                var hr = exception.HResult;
+                if ((hr == RawCOMHelpers.HResult.SCRIPT_E_REPORTED) && (engine.CurrentScriptFrame != null))
+                {
+                    scriptError = engine.CurrentScriptFrame.ScriptError ?? engine.CurrentScriptFrame.PendingScriptError;
+                    if (scriptError != null)
+                    {
+                        return true;
+                    }
+                }
+                else if (RawCOMHelpers.HResult.GetFacility(hr) == RawCOMHelpers.HResult.FACILITY_CONTROL)
+                {
+                    // These exceptions often have awful messages that include COM error codes.
+                    // The engine itself may be able to provide a better message.
+
+                    string message;
+                    if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(hr), out message) && (message != exception.Message))
+                    {
+                        scriptError = new ScriptEngineException(engine.Name, message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception.InnerException);
+                        return true;
+                    }
+                }
+                else if (hr == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
+                {
+                    // this usually indicates invalid object or property access in JScript
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception.InnerException);
+                    return true;
+                }
+                else if (hr == RawCOMHelpers.HResult.E_INVALIDARG)
+                {
+                    var argumentException = exception as ArgumentException;
+                    if ((argumentException != null) && (argumentException.ParamName == null))
+                    {
+                        // this usually indicates invalid object or property access in VBScript
+                        scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception.InnerException);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         #region ScriptItem overrides
 
         public override ScriptEngine Engine
@@ -110,7 +180,28 @@ namespace Microsoft.ClearScript.Windows
 
         protected override bool TryBindAndInvoke(DynamicMetaObjectBinder binder, object[] args, out object result)
         {
-            return DynamicHelpers.TryBindAndInvoke(binder, target, args, out result);
+            var succeeded = DynamicHelpers.TryBindAndInvoke(binder, target, args, out result);
+            if (!succeeded)
+            {
+                var exception = result as Exception;
+                if ((exception != null) && (engine.CurrentScriptFrame != null))
+                {
+                    var scriptError = exception as IScriptEngineException;
+                    if (scriptError != null)
+                    {
+                        engine.CurrentScriptFrame.ScriptError = scriptError;
+                    }
+                    else
+                    {
+                        engine.CurrentScriptFrame.ScriptError = GetScriptError(exception);
+                    }
+                }
+
+                result = null;
+                return false;
+            }
+
+            return true;
         }
 
         protected override object[] AdjustInvokeArgs(object[] args)
@@ -131,22 +222,17 @@ namespace Microsoft.ClearScript.Windows
                 {
                     return target.InvokeMember(name, BindingFlags.GetProperty, null, target, MiscHelpers.GetEmptyArray<object>(), null, CultureInfo.InvariantCulture, null);
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
-                    if ((exception is MissingMemberException) || (exception is ArgumentException) || (exception is ExternalException))
+                    if (target.GetMethod(name, BindingFlags.GetProperty) != null)
                     {
-                        if (target.GetMethod(name, BindingFlags.GetProperty) != null)
-                        {
-                            // Property retrieval failed, but a method with the given name exists;
-                            // create a tear-off method. This currently applies only to VBScript.
+                        // Property retrieval failed, but a method with the given name exists;
+                        // create a tear-off method. This currently applies only to VBScript.
 
-                            return new ScriptMethod(this, name);
-                        }
-
-                        return Nonexistent.Value;
+                        return new ScriptMethod(this, name);
                     }
 
-                    throw;
+                    return Nonexistent.Value;
                 }
             }), false);
 
@@ -241,25 +327,10 @@ namespace Microsoft.ClearScript.Windows
             }
             catch (Exception exception)
             {
-                if ((exception is MissingMemberException) || (exception is ArgumentException) || (exception is ExternalException))
+                IScriptEngineException scriptError;
+                if (TryGetScriptError(exception, out scriptError))
                 {
-                    // These exceptions tend to have awful messages that include COM error codes.
-                    // The engine may be able to provide a better message.
-
-                    var hr = Marshal.GetHRForException(exception);
-                    if (RawCOMHelpers.HResult.GetFacility(hr) == RawCOMHelpers.HResult.FACILITY_CONTROL)
-                    {
-                        string message;
-                        if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(hr), out message))
-                        {
-                            throw (Exception)typeof(Exception).CreateInstance(message, exception);
-                        }
-                    }
-
-                    if (hr == MiscHelpers.UnsignedAsSigned(RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND))
-                    {
-                        throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}'", name));
-                    }
+                    throw (Exception)scriptError;
                 }
 
                 throw;

@@ -102,6 +102,11 @@ namespace Microsoft.ClearScript.Util
             return member.GetScriptAccess() == ScriptAccess.ReadOnly;
         }
 
+        public static bool IsRestrictedForScript(this MemberInfo member)
+        {
+            return !member.GetScriptMemberFlags().HasFlag(ScriptMemberFlags.ExposeRuntimeType);
+        }
+
         public static string GetShortName(this MemberInfo member)
         {
             var name = member.Name;
@@ -118,6 +123,12 @@ namespace Microsoft.ClearScript.Util
         {
             var attribute = member.GetAttribute<ScriptUsageAttribute>(true);
             return (attribute != null) ? attribute.Access : ScriptAccess.Full;
+        }
+
+        private static ScriptMemberFlags GetScriptMemberFlags(this MemberInfo member)
+        {
+            var attribute = member.GetAttribute<ScriptMemberAttribute>(true);
+            return (attribute != null) ? attribute.Flags : ScriptMemberFlags.None;
         }
 
         private static T GetAttribute<T>(this MemberInfo member, bool inherit) where T : Attribute

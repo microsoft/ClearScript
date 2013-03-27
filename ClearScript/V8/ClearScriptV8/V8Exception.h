@@ -75,9 +75,35 @@ public:
         Type_Interrupt
     };
 
-    explicit V8Exception(Type type, LPCWSTR pMessage, LPCWSTR pStackTrace):
-        m_Type(type)
+    V8Exception(Type type, LPCWSTR pEngineName, LPCWSTR pMessage, LPCWSTR pStackTrace, const V8Value& innerException):
+        m_Type(type),
+        m_InnerException(innerException)
     {
+        if (pEngineName != nullptr)
+        {
+            m_EngineName = pEngineName;
+        }
+
+        if (pMessage != nullptr)
+        {
+            m_Message = pMessage;
+        }
+
+        if (pStackTrace != nullptr)
+        {
+            m_StackTrace = pStackTrace;
+        }
+    }
+
+    V8Exception(Type type, LPCWSTR pEngineName, LPCWSTR pMessage, LPCWSTR pStackTrace, V8Value&& innerException):
+        m_Type(type),
+        m_InnerException(innerException)
+    {
+        if (pEngineName != nullptr)
+        {
+            m_EngineName = pEngineName;
+        }
+
         if (pMessage != nullptr)
         {
             m_Message = pMessage;
@@ -94,6 +120,11 @@ public:
         return m_Type;
     }
 
+    LPCWSTR GetEngineName() const
+    {
+        return m_EngineName.c_str();
+    }
+
     LPCWSTR GetMessage() const
     {
         return m_Message.c_str();
@@ -104,9 +135,16 @@ public:
         return m_StackTrace.c_str();
     }
 
+    const V8Value& GetInnerException() const
+    {
+        return m_InnerException;
+    }
+
 private:
 
     Type m_Type;
+    wstring m_EngineName;
     wstring m_Message;
     wstring m_StackTrace;
+    V8Value m_InnerException;
 };

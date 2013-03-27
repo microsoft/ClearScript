@@ -59,19 +59,24 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
+using System;
 
-#include "ManagedPlatform.h"
-#include "SharedPtr.h"
-#include "StringToUniPtr.h"
-#include "V8ObjectHolder.h"
-#include "HostObjectHolder.h"
-#include "V8Value.h"
-#include "HostException.h"
-#include "V8Exception.h"
-#include "V8Context.h"
-#include "V8ProxyImpl.h"
-#include "V8ObjectImpl.h"
-#include "HostObjectHolderImpl.h"
-#include "V8ObjectHelpers.h"
-#include "HostObjectHelpers.h"
+namespace Microsoft.ClearScript
+{
+    /// <summary>
+    /// Defines options for exposing type members to script code.
+    /// </summary>
+    [Flags]
+    public enum ScriptMemberFlags
+    {
+        /// <summary>
+        /// Specifies that no options are selected.
+        /// </summary>
+        None = 0x00,
+
+        /// <summary>
+        /// Specifies that the field, property, or method return value is not to be restricted to its declared type.
+        /// </summary>
+        ExposeRuntimeType = 0x00000001,
+    }
+}

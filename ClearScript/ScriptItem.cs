@@ -60,8 +60,10 @@
 //       
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Microsoft.ClearScript.Util;
@@ -86,7 +88,7 @@ namespace Microsoft.ClearScript
             {
                 if (!TryBindAndInvoke(binder, Engine.MarshalToScript(args), out tempResult))
                 {
-                    Engine.ThrowScriptFrameException();
+                    Engine.ThrowScriptError();
                     return false;
                 }
 
@@ -147,6 +149,11 @@ namespace Microsoft.ClearScript
         }
 
         #region DynamicObject overrides
+
+        public override IEnumerable<string> GetDynamicMemberNames()
+        {
+            return GetPropertyNames().Concat(GetPropertyIndices().Select(index => index.ToString(CultureInfo.InvariantCulture)));
+        }
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {

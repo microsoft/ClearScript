@@ -117,10 +117,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void InterfaceMemberAccess_Property_BadAssignment()
         {
-            engine.Execute("testObject.InterfaceProperty = host.newArr(System.Double, 5)");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.InterfaceProperty = host.newArr(System.Double, 5)"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -133,17 +132,15 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(OverflowException))]
         public void InterfaceMemberAccess_Property_Scalar_Overflow()
         {
-            engine.Execute("testObject.InterfaceScalarProperty = 54321");
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("testObject.InterfaceScalarProperty = 54321"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void InterfaceMemberAccess_Property_Scalar_BadAssignment()
         {
-            engine.Execute("testObject.InterfaceScalarProperty = TestEnum.Second");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.InterfaceScalarProperty = TestEnum.Second"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -163,10 +160,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void InterfaceMemberAccess_Property_Enum_BadAssignment()
         {
-            engine.Execute("testObject.InterfaceEnumProperty = 1");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.InterfaceEnumProperty = 1"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -179,10 +175,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void InterfaceMemberAccess_Property_Struct_BadAssignment()
         {
-            engine.Execute("testObject.InterfaceStructProperty = System.DateTime.Now");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.InterfaceStructProperty = System.DateTime.Now"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -192,10 +187,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(ArgumentException))]
         public void InterfaceMemberAccess_ReadOnlyProperty_Write()
         {
-            engine.Execute("testObject.InterfaceReadOnlyProperty = 2");
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.InterfaceReadOnlyProperty = 2"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -216,10 +210,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_Method_NoMatchingOverload()
         {
-            engine.Execute("testObject.InterfaceMethod('foo', TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.InterfaceMethod('foo', TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -229,10 +222,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_Method_Generic_TypeArgConstraintFailure()
         {
-            engine.Execute("testObject.InterfaceMethod('foo', 4, testObject)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.InterfaceMethod('foo', 4, testObject)"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -242,10 +234,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_Method_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Execute("testObject.InterfaceMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.InterfaceMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -255,10 +246,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_Method_GenericExplicit_MissingTypeArg()
         {
-            engine.Execute("testObject.InterfaceMethod(4)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.InterfaceMethod(4)"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -284,10 +274,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_ExtensionMethod_NoMatchingOverload()
         {
-            engine.Execute("testObject.InterfaceExtensionMethod('foo', TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.InterfaceExtensionMethod('foo', TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -297,10 +286,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_ExtensionMethod_Generic_TypeArgConstraintFailure()
         {
-            engine.Execute("testObject.InterfaceExtensionMethod('foo', 4, testObject)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.InterfaceExtensionMethod('foo', 4, testObject)"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -310,10 +298,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_ExtensionMethod_GenericRedundant_MismatchedTypeArg()
         {
-            engine.Execute("testObject.InterfaceExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.InterfaceExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
@@ -323,10 +310,9 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void InterfaceMemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
-            engine.Execute("testObject.InterfaceExtensionMethod(4)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.InterfaceExtensionMethod(4)"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]

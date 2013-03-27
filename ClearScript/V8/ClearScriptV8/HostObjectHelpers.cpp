@@ -61,12 +61,19 @@
 
 #include "ClearScriptV8Managed.h"
 
-//-----------------------------------------------------------------------------
-// HostObjectHelpers implementation
-//-----------------------------------------------------------------------------
-
 using namespace Microsoft::ClearScript::V8;
 
+//-----------------------------------------------------------------------------
+// local helper functions
+//-----------------------------------------------------------------------------
+
+static void __declspec(noreturn) ThrowHostException(Exception^ gcException)
+{
+    throw HostException(StringToUniPtr(gcException->Message), V8ProxyImpl::ImportValue(gcException));
+}
+
+//-----------------------------------------------------------------------------
+// HostObjectHelpers implementation
 //-----------------------------------------------------------------------------
 
 LPVOID HostObjectHelpers::AddRef(LPVOID pvObject)
@@ -91,7 +98,7 @@ V8Value HostObjectHelpers::GetProperty(LPVOID pvObject, LPCWSTR pName)
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 
@@ -105,7 +112,7 @@ void HostObjectHelpers::SetProperty(LPVOID pvObject, LPCWSTR pName, const V8Valu
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 
@@ -119,7 +126,7 @@ bool HostObjectHelpers::DeleteProperty(LPVOID pvObject, LPCWSTR pName)
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 
@@ -140,7 +147,7 @@ void HostObjectHelpers::GetPropertyNames(LPVOID pvObject, vector<wstring>& names
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 
@@ -154,7 +161,7 @@ V8Value HostObjectHelpers::GetProperty(LPVOID pvObject, int index)
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 
@@ -168,7 +175,7 @@ void HostObjectHelpers::SetProperty(LPVOID pvObject, int index, const V8Value& v
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 
@@ -182,7 +189,7 @@ bool HostObjectHelpers::DeleteProperty(LPVOID pvObject, int index)
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 
@@ -203,7 +210,7 @@ void HostObjectHelpers::GetPropertyIndices(LPVOID pvObject, vector<int>& indices
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 
@@ -225,7 +232,7 @@ V8Value HostObjectHelpers::Invoke(LPVOID pvObject, const vector<V8Value>& args, 
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 
@@ -247,7 +254,7 @@ V8Value HostObjectHelpers::InvokeMethod(LPVOID pvObject, LPCWSTR pName, const ve
     }
     catch (Exception^ gcException)
     {
-        throw V8Exception(V8Exception::Type_General, StringToUniPtr(gcException->Message), StringToUniPtr(gcException->StackTrace));
+        ThrowHostException(gcException);
     }
 }
 

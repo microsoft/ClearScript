@@ -153,7 +153,7 @@ namespace Microsoft.ClearScript
                 {
                     if (result is MethodBindSuccess)
                     {
-                        result = new MethodBindFailure(new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}' that matches the specified arguments", name)));
+                        result = new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}' that matches the specified arguments", name)));
                     }
 
                     foreach (var altName in GetAltMethodNames(name))
@@ -254,13 +254,13 @@ namespace Microsoft.ClearScript
                 {
                     if ((method.IsStatic) && !hostTarget.Flags.HasFlag(HostTargetFlags.AllowStaticMembers))
                     {
-                        return new MethodBindFailure(new InvalidOperationException(MiscHelpers.FormatInvariant("Cannot access static method '{0}' in non-static context", method.Name)));
+                        return new MethodBindFailure(() => new InvalidOperationException(MiscHelpers.FormatInvariant("Cannot access static method '{0}' in non-static context", method.Name)));
                     }
 
                     return new MethodBindSuccess(hostTarget, method, args);
                 }
 
-                return new MethodBindFailure((rawResult as Exception) ?? new NotSupportedException(MiscHelpers.FormatInvariant("Invocation of method '{0}' failed (unrecognized binding)", name)));
+                return new MethodBindFailure((rawResult as Func<Exception>) ?? (() => new NotSupportedException(MiscHelpers.FormatInvariant("Invocation of method '{0}' failed (unrecognized binding)", name))));
             }
 
             public abstract object RawResult { get; }
@@ -327,18 +327,18 @@ namespace Microsoft.ClearScript
 
         private class MethodBindFailure : MethodBindResult
         {
-            private readonly Exception exception;
+            private readonly Func<Exception> exceptionFactory;
 
-            public MethodBindFailure(Exception exception)
+            public MethodBindFailure(Func<Exception> exceptionFactory)
             {
-                this.exception = exception;
+                this.exceptionFactory = exceptionFactory;
             }
 
             #region MethodBindResult overrides
 
             public override object RawResult
             {
-                get { return exception; }
+                get { return exceptionFactory; }
             }
 
             public override bool IsPreferredMethod(string name)
@@ -350,9 +350,10 @@ namespace Microsoft.ClearScript
             {
                 return false;
             }
+
             public override object Invoke(ScriptEngine engine)
             {
-                throw exception;
+                throw exceptionFactory();
             }
 
             #endregion
@@ -377,7 +378,7 @@ namespace Microsoft.ClearScript
                 if (results.Count != 1)
                 {
                     results.Clear();
-                    results.Add(new NotSupportedException(MiscHelpers.FormatInvariant("Invocation of method '{0}' failed (unrecognized binding)", name)));
+                    AddResult(() => new NotSupportedException(MiscHelpers.FormatInvariant("Invocation of method '{0}' failed (unrecognized binding)", name)));
                 }
                 else
                 {
@@ -398,7 +399,7 @@ namespace Microsoft.ClearScript
             {
                 if (node.Method.Name == name)
                 {
-                    results.Add(node.Method);
+                    AddResult(node.Method);
                 }
 
                 return base.VisitMethodCall(node);
@@ -412,7 +413,7 @@ namespace Microsoft.ClearScript
                     var del = DynamicHelpers.InvokeExpression(node.Expression) as Delegate;
                     if (del == targetDelegate)
                     {
-                        results.Add(del.GetType().GetMethod("Invoke"));
+                        AddResult(del.GetType().GetMethod("Invoke"));
                     }
                 }
 
@@ -426,11 +427,21 @@ namespace Microsoft.ClearScript
                     var exception = DynamicHelpers.InvokeExpression(node.Operand) as Exception;
                     if (exception != null)
                     {
-                        results.Add(exception);
+                        AddResult(() => (Exception)DynamicHelpers.InvokeExpression(node.Operand));
                     }
                 }
 
                 return base.VisitUnary(node);
+            }
+
+            private void AddResult(MethodInfo method)
+            {
+                results.Add(method);
+            }
+
+            private void AddResult(Func<Exception> exceptionFactory)
+            {
+                results.Add(exceptionFactory);
             }
         }
 

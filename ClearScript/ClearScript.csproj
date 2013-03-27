@@ -60,6 +60,7 @@
     <Compile Include="HostTargetFlags.cs" />
     <Compile Include="IScriptableObject.cs" />
     <Compile Include="BindSignature.cs" />
+    <Compile Include="IScriptEngineException.cs" />
     <Compile Include="NoScriptAccessAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <AutoGen>True</AutoGen>
@@ -67,6 +68,9 @@
       <DependentUpon>AssemblyInfo.tt</DependentUpon>
     </Compile>
     <Compile Include="ScriptAccess.cs" />
+    <Compile Include="ScriptEngineException.cs" />
+    <Compile Include="ScriptInterruptedException.cs" />
+    <Compile Include="ScriptMemberFlags.cs" />
     <Compile Include="ScriptMethod.cs" />
     <Compile Include="ScriptMemberAttribute.cs" />
     <Compile Include="ScriptUsageAttribute.cs" />

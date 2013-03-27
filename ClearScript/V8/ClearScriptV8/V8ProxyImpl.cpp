@@ -98,7 +98,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            ThrowScriptEngineException(exception);
         }
     }
 
@@ -112,7 +112,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            ThrowScriptEngineException(exception);
         }
     }
 
@@ -126,12 +126,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            if (exception.GetType() == V8Exception::Type_Interrupt)
-            {
-                throw gcnew OperationCanceledException(gcnew String(exception.GetMessage()));
-            }
-
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            ThrowScriptEngineException(exception);
         }
     }
 
@@ -421,7 +416,20 @@ namespace V8 {
         return nullptr;
     }
 
-    //-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+
+    void __declspec(noreturn) V8ProxyImpl::ThrowScriptEngineException(const V8Exception& exception)
+    {
+        if (exception.GetType() == V8Exception::Type_Interrupt)
+        {
+            throw gcnew ScriptInterruptedException(gcnew String(exception.GetEngineName()), gcnew String(exception.GetMessage()), gcnew String(exception.GetStackTrace()), 0, nullptr);
+        }
+
+        auto gcInnerException = dynamic_cast<Exception^>(ExportValue(exception.GetInnerException()));
+        throw gcnew ScriptEngineException(gcnew String(exception.GetEngineName()), gcnew String(exception.GetMessage()), gcnew String(exception.GetStackTrace()), 0, gcInnerException);
+    }
+
+//-------------------------------------------------------------------------
 
     SharedPtr<V8Context> V8ProxyImpl::GetContext()
     {

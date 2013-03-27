@@ -106,11 +106,10 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        [ExpectedException(typeof(RuntimeBinderException))]
         public void BugFix_NullArgBinding_Ambiguous()
         {
             engine.AddHostObject("lib", new HostTypeCollection("mscorlib"));
-            engine.Execute("lib.System.Console.WriteLine(null)");
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("lib.System.Console.WriteLine(null)"));
         }
 
         [TestMethod, TestCategory("BugFix")]

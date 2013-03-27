@@ -65,7 +65,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
+using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -146,7 +148,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        [ExpectedException(typeof(InvalidOperationException))]
+        [ExpectedException(typeof(ScriptEngineException))]
         public void V8ScriptEngine_AddHostObject_DefaultAccess()
         {
             engine.AddHostObject("test", this);
@@ -166,7 +168,7 @@ namespace Microsoft.ClearScript.Test
             var host = new ExtendedHostFunctions() as HostFunctions;
             engine.AddRestrictedHostObject("host", host);
             Assert.IsInstanceOfType(engine.Evaluate("host.newObj()"), typeof(PropertyBag));
-            TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("host.type('System.Int32')"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("host.type('System.Int32')"));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -198,7 +200,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        [ExpectedException(typeof(InvalidOperationException))]
+        [ExpectedException(typeof(ScriptEngineException))]
         public void V8ScriptEngine_AddHostType_DefaultAccess()
         {
             engine.AddHostType("Test", GetType());
@@ -358,22 +360,12 @@ namespace Microsoft.ClearScript.Test
             // V8 can't interrupt code that accesses only native data
             engine.AddHostObject("test", new { foo = "bar" });
 
-            var gotException = false;
-            try
-            {
-                engine.Execute("checkpoint.Set(); while (true) { var foo = test.foo; }");
-            }
-            catch (OperationCanceledException)
-            {
-                gotException = true;
-            }
-
-            Assert.IsTrue(gotException);
+            TestUtil.AssertException<OperationCanceledException>(() => engine.Execute("checkpoint.Set(); while (true) { var foo = test.foo; }"));
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        [ExpectedException(typeof(InvalidOperationException))]
+        [ExpectedException(typeof(ScriptEngineException))]
         public void V8ScriptEngine_AccessContext_Default()
         {
             engine.AddHostObject("test", this);
@@ -391,23 +383,11 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_ContinuationCallback()
         {
-            engine.ContinuationCallback = () => false;
-
             // V8 can't interrupt code that accesses only native data
             engine.AddHostObject("test", new { foo = "bar" });
 
-            var gotException = false;
-            try
-            {
-                engine.Execute("while (true) { var foo = test.foo; }");
-            }
-            catch (OperationCanceledException)
-            {
-                gotException = true;
-            }
-
-            Assert.IsTrue(gotException);
-
+            engine.ContinuationCallback = () => false;
+            TestUtil.AssertException<OperationCanceledException>(() => engine.Execute("while (true) { var foo = test.foo; }"));
             engine.ContinuationCallback = null;
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
         }
@@ -572,11 +552,10 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        [ExpectedException(typeof(MissingMemberException), AllowDerivedTypes = true)]
         public void V8ScriptEngine_new_NoMatch()
         {
             engine.AddHostObject("clr", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));
-            engine.Execute("new System.Random('a')");
+            TestUtil.AssertException<MissingMemberException>(() => engine.Execute("new System.Random('a')"));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -593,6 +572,144 @@ namespace Microsoft.ClearScript.Test
                 engine.Execute(generalScript);
                 Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
             }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ErrorHandling_ScriptError()
+        {
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("foo = {}; foo();");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNull(exception.InnerException);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ErrorHandling_HostException()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Evaluate("host.newObj(null)");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNotNull(exception.InnerException);
+
+                    var hostException = exception.InnerException;
+                    Assert.IsInstanceOfType(hostException, typeof(RuntimeBinderException));
+                    TestUtil.AssertValidException(hostException);
+                    Assert.IsNull(hostException.InnerException);
+
+                    Assert.AreEqual("Error: " + hostException.Message, exception.Message);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ErrorHandling_IgnoredHostException()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("try { host.newObj(null); } catch(ex) {} foo = {}; foo();");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNull(exception.InnerException);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ErrorHandling_NestedScriptError()
+        {
+            var innerEngine = new V8ScriptEngine("inner", V8ScriptEngineFlags.EnableDebugging);
+            engine.AddHostObject("engine", innerEngine);
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("engine.Execute('foo = {}; foo();')");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNotNull(exception.InnerException);
+
+                    var hostException = exception.InnerException;
+                    Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
+                    TestUtil.AssertValidException(hostException);
+                    Assert.IsNotNull(hostException.InnerException);
+
+                    var nestedException = hostException.InnerException as ScriptEngineException;
+                    Assert.IsNotNull(nestedException);
+                    TestUtil.AssertValidException(innerEngine, nestedException);
+                    Assert.IsNull(nestedException.InnerException);
+
+                    Assert.AreEqual("Error: " + hostException.Message, exception.Message);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ErrorHandling_NestedHostException()
+        {
+            var innerEngine = new V8ScriptEngine("inner", V8ScriptEngineFlags.EnableDebugging);
+            innerEngine.AddHostObject("host", new HostFunctions());
+            engine.AddHostObject("engine", innerEngine);
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("engine.Evaluate('host.newObj(null)')");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNotNull(exception.InnerException);
+
+                    var hostException = exception.InnerException;
+                    Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
+                    TestUtil.AssertValidException(hostException);
+                    Assert.IsNotNull(hostException.InnerException);
+
+                    var nestedException = hostException.InnerException as ScriptEngineException;
+                    Assert.IsNotNull(nestedException);
+                    TestUtil.AssertValidException(innerEngine, nestedException);
+                    Assert.IsNotNull(nestedException.InnerException);
+
+                    var nestedHostException = nestedException.InnerException;
+                    Assert.IsInstanceOfType(nestedHostException, typeof(RuntimeBinderException));
+                    TestUtil.AssertValidException(nestedHostException);
+                    Assert.IsNull(nestedHostException.InnerException);
+
+                    Assert.AreEqual("Error: " + nestedHostException.Message, nestedException.Message);
+                    Assert.AreEqual("Error: " + hostException.Message, exception.Message);
+                    throw;
+                }
+            });
         }
 
         // ReSharper restore InconsistentNaming

@@ -101,7 +101,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
@@ -115,7 +115,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
@@ -129,7 +129,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
@@ -153,7 +153,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
@@ -167,7 +167,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
@@ -181,7 +181,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
@@ -195,7 +195,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
@@ -219,7 +219,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
@@ -236,7 +236,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
@@ -253,7 +253,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            throw gcnew InvalidOperationException(gcnew String(exception.GetMessage()));
+            V8ProxyImpl::ThrowScriptEngineException(exception);
         }
     }
 
