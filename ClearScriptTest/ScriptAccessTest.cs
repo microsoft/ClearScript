@@ -553,7 +553,7 @@ namespace Microsoft.ClearScript.Test
             var property = member as PropertyInfo;
             if (property != null)
             {
-                Assert.AreEqual(property.GetValue(target), engine.Evaluate(objectName + "." + scriptMemberName));
+                Assert.AreEqual(property.GetValue(target, MiscHelpers.GetEmptyArray<object>()), engine.Evaluate(objectName + "." + scriptMemberName));
                 return;
             }
 

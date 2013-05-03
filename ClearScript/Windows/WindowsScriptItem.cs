@@ -65,6 +65,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util;
 
@@ -127,9 +128,10 @@ namespace Microsoft.ClearScript.Windows
                 return true;
             }
 
-            if (exception != null)
+            var comException = exception as COMException;
+            if (comException != null)
             {
-                var hr = exception.HResult;
+                var hr = comException.ErrorCode;
                 if ((hr == RawCOMHelpers.HResult.SCRIPT_E_REPORTED) && (engine.CurrentScriptFrame != null))
                 {
                     scriptError = engine.CurrentScriptFrame.ScriptError ?? engine.CurrentScriptFrame.PendingScriptError;
@@ -156,15 +158,15 @@ namespace Microsoft.ClearScript.Windows
                     scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception.InnerException);
                     return true;
                 }
-                else if (hr == RawCOMHelpers.HResult.E_INVALIDARG)
+            }
+            else
+            {
+                var argumentException = exception as ArgumentException;
+                if ((argumentException != null) && (argumentException.ParamName == null))
                 {
-                    var argumentException = exception as ArgumentException;
-                    if ((argumentException != null) && (argumentException.ParamName == null))
-                    {
-                        // this usually indicates invalid object or property access in VBScript
-                        scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception.InnerException);
-                        return true;
-                    }
+                    // this usually indicates invalid object or property access in VBScript
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception.InnerException);
+                    return true;
                 }
             }
 

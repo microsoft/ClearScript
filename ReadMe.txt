@@ -44,7 +44,7 @@ build, and import V8:
 3. Open a Visual Studio developer command prompt and run the V8Update script
    from your ClearScript root directory:
 
-    C:\ClearScript> V8Update [/N] [Debug|Release]
+      C:\ClearScript> V8Update [/N] [Debug|Release]
 
    This script downloads the latest versions of V8 and its prerequisites,
    builds 32-bit and 64-bit V8 shared libraries, and imports the results into
@@ -65,14 +65,23 @@ build, and import V8:
 
 You are now ready to build the full ClearScript solution using Visual Studio.
 
+OPTIONAL: If you'd like your copy of ClearScript to use .NET Framework 4.0
+instead of 4.5, you must change the Target Framework setting for all projects
+in the solution. Note that the Visual Studio IDE does not allow you to change
+this setting for C++ projects. Instead, you must open the following files in a
+text editor and change the TargetFrameworkVersion element manually:
+
+   ClearScript\V8\ClearScriptV8\32\ClearScriptV8-32.vcxproj
+   ClearScript\V8\ClearScriptV8\64\ClearScriptV8-64.vcxproj
+
 OPTIONAL: The ClearScript distribution includes a copy of the ClearScript
 Library Reference in Compiled HTML (.CHM) format. If you'd like to rebuild this
 file, use Sandcastle Help File Builder (SHFB, http://shfb.codeplex.com) with
 the provided SHFB project file (ClearScript\doc\Reference.shfbproj).
 
--------------------------------------------
-III. Adding ClearScript to your application
--------------------------------------------
+----------------------------------------------------------------
+III. Integrating and deploying ClearScript with your application
+----------------------------------------------------------------
 
 Once you've built ClearScript, here's how to add it to your application:
 
@@ -85,10 +94,15 @@ Once you've built ClearScript, here's how to add it to your application:
 3. IMPORTANT: If you're using V8, you must also copy the following files from
    your ClearScript output directory to your application's directory:
 
-     ClearScriptV8-32.dll
-     ClearScriptV8-64.dll
-     v8-ia32.dll
-     v8-x64.dll
+      ClearScriptV8-32.dll
+      ClearScriptV8-64.dll
+      v8-ia32.dll
+      v8-x64.dll
+
+   In addition, if Visual Studio is not installed on the deployment machine,
+   you must install 32-bit and 64-bit Visual C++ Redistributable packages:
+   
+      http://www.microsoft.com/en-us/download/details.aspx?id=30679
 
 -------------------------------------
 IV. Debugging with ClearScript and V8
@@ -100,14 +114,14 @@ code running in V8 is to use the open-source Eclipse IDE:
 
 1. Install Eclipse:
 
-    http://www.eclipse.org/downloads/
+      http://www.eclipse.org/downloads/
 
 2. Install Google Chrome Developer Tools for Java:
 
     a. Launch Eclipse and click "Help" -> "Install New Software...".
     b. Paste the following URL into the "Work with:" field:
 
-        http://chromedevtools.googlecode.com/svn/update/dev/
+          http://chromedevtools.googlecode.com/svn/update/dev/
 
     c. Select "Google Chrome Developer Tools" and complete the dialog.
     d. Restart Eclipse.

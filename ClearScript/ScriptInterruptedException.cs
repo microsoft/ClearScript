@@ -133,6 +133,14 @@ namespace Microsoft.ClearScript
         #region IScriptEngineException implementation
 
         /// <summary>
+        /// Gets an <see href="http://en.wikipedia.org/wiki/HRESULT">HRESULT</see> error code if one is available, zero otherwise.
+        /// </summary>
+        int IScriptEngineException.HResult
+        {
+            get { return HResult; }
+        }
+
+        /// <summary>
         /// Gets the name associated with the script engine instance.
         /// </summary>
         public string EngineName
