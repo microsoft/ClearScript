@@ -183,7 +183,7 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGl
 
         if (disableGlobalMembers)
         {
-            m_hContext = Context::New();
+            m_hContext = Persistent<Context>::New(m_pIsolate, Context::New(m_pIsolate));
         }
         else
         {
@@ -192,7 +192,7 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGl
             hGlobalTemplate->SetNamedPropertyHandler(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyNames);
             hGlobalTemplate->SetIndexedPropertyHandler(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyIndices);
 
-            m_hContext = Context::New(nullptr, hGlobalTemplate);
+            m_hContext = Persistent<Context>::New(m_pIsolate, Context::New(m_pIsolate, nullptr, hGlobalTemplate));
 
             m_hGlobal = Persistent<Object>::New(m_pIsolate, m_hContext->Global()->GetPrototype()->ToObject());
             _ASSERTE(m_hGlobal->InternalFieldCount() > 0);
