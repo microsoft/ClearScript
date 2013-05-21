@@ -480,6 +480,13 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_CollectGarbage()
+        {
+            // VBScript doesn't support GC
+            engine.CollectGarbage(true);
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_General()
         {
             using (var console = new StringWriter())

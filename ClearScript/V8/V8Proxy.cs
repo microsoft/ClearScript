@@ -60,36 +60,143 @@
 //       
 
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8
 {
     internal abstract class V8Proxy : IDisposable
     {
-        public static V8Proxy Create(string name, bool enableDebugging, bool disableGlobalMembers, int debugPort)
+        private static readonly object mapLock = new object();
+        private static readonly Dictionary<Type, Type> map = new Dictionary<Type, Type>();
+        private static bool loadedAssembly;
+        private static Assembly assembly;
+
+        protected static T CreateImpl<T>(params object[] args) where T : V8Proxy
         {
-            var suffix = Environment.Is64BitProcess ? "64" : "32";
-            var type = Type.GetType("Microsoft.ClearScript.V8.V8ProxyImpl, ClearScriptV8-" + suffix);
-            if (type == null)
+            Type implType;
+            lock (mapLock)
             {
-                throw new TypeLoadException("Cannot load V8 proxy implementation type; verify that the following files are installed with your application: ClearScriptV8-32.dll, ClearScriptV8-64.dll, v8-ia32.dll, v8-x64.dll");
+                var type = typeof(T);
+                if (!map.TryGetValue(type, out implType))
+                {
+                    implType = GetImplType(type);
+                    map.Add(type, implType);
+                }
             }
 
-            return (V8Proxy)Activator.CreateInstance(type, name, enableDebugging, disableGlobalMembers, debugPort);
+            return (T)Activator.CreateInstance(implType, args);
         }
 
-        public abstract object GetRootItem();
+        private static Type GetImplType(Type type)
+        {
+            var name = type.GetFullRootName();
 
-        public abstract void AddGlobalItem(string name, object item, bool globalMembers);
+            var implType = GetAssembly().GetType(name + "Impl");
+            if (implType == null)
+            {
+                throw new TypeLoadException("Cannot load " + name + " implementation type; verify that the following files are installed with your application: ClearScriptV8-32.dll, ClearScriptV8-64.dll, v8-ia32.dll, v8-x64.dll");
+            }
 
-        public abstract object Execute(string documentName, string code, bool discard);
+            return implType;
+        }
 
-        public abstract void InvokeWithLock(Action action);
+        private static Assembly GetAssembly()
+        {
+            if (!loadedAssembly)
+            {
+                LoadAssembly();
+                loadedAssembly = true;
+            }
 
-        public abstract void Interrupt();
+            if (assembly == null)
+            {
+                throw new TypeLoadException("Cannot load V8 interface assembly; verify that the following files are installed with your application: ClearScriptV8-32.dll, ClearScriptV8-64.dll, v8-ia32.dll, v8-x64.dll");
+            }
+
+            return assembly;
+        }
+
+        private static void LoadAssembly()
+        {
+            if (LoadNativeLibrary())
+            {
+                var suffix = Environment.Is64BitProcess ? "64" : "32";
+                var fileName = "ClearScriptV8-" + suffix + ".dll";
+
+                var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, fileName)).Distinct();
+                foreach (var path in paths)
+                {
+                    try
+                    {
+                        assembly = Assembly.LoadFrom(path);
+                        break;
+                    }
+                    catch (FileNotFoundException)
+                    {
+                    }
+                }
+            }
+        }
+
+        private static bool LoadNativeLibrary()
+        {
+            var hLibrary = IntPtr.Zero;
+
+            var suffix = Environment.Is64BitProcess ? "x64" : "ia32";
+            var fileName = "v8-" + suffix + ".dll";
+
+            var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, fileName)).Distinct();
+            foreach (var path in paths)
+            {
+                hLibrary = NativeMethods.LoadLibraryW(path);
+                if (hLibrary != IntPtr.Zero)
+                {
+                    break;
+                }
+            }
+
+            return hLibrary != IntPtr.Zero;
+        }
+
+        private static IEnumerable<string> GetDirPaths()
+        {
+            yield return Path.GetDirectoryName(typeof(V8Proxy).Assembly.Location);
+
+            var appDomain = AppDomain.CurrentDomain;
+            yield return appDomain.BaseDirectory;
+
+            var searchPath = appDomain.RelativeSearchPath;
+            if (!string.IsNullOrWhiteSpace(searchPath))
+            {
+                foreach (var dirPath in searchPath.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    yield return dirPath;
+                }
+            }
+
+            yield return string.Empty;
+        }
 
         #region IDisposable implementation (abstract)
 
         public abstract void Dispose();
+
+        #endregion
+
+        #region Nested type: NativeMethods
+
+        private static class NativeMethods
+        {
+            [DllImport("kernel32", ExactSpelling = true)]
+            public static extern IntPtr LoadLibraryW(
+                [In] [MarshalAs(UnmanagedType.LPWStr)] string path
+            );
+        }
 
         #endregion
     }

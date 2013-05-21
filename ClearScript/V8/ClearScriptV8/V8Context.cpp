@@ -59,13 +59,13 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#include "ClearScriptV8.h"
+#include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
 // V8Context implementation
 //-----------------------------------------------------------------------------
 
-V8Context* V8Context::Create(LPCWSTR pName, bool enableDebugging, bool disableGlobalMembers, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort)
+V8Context* V8Context::Create(const SharedPtr<V8Isolate>& spIsolate, const wchar_t* pName, bool enableDebugging, bool disableGlobalMembers, int debugPort)
 {
-    return new V8ContextImpl(pName, enableDebugging, disableGlobalMembers, pDebugMessageDispatcher, debugPort);
+    return new V8ContextImpl(static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr()), pName, enableDebugging, disableGlobalMembers, debugPort);
 }

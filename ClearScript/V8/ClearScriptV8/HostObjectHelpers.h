@@ -71,21 +71,26 @@ class HostObjectHelpers
 
 public:
 
-    static LPVOID AddRef(LPVOID pvObject);
-    static void Release(LPVOID pvObject);
+    static void* AddRef(void* pvObject);
+    static void Release(void* pvObject);
 
-    static V8Value GetProperty(LPVOID pvObject, LPCWSTR pName);
-    static void SetProperty(LPVOID pvObject, LPCWSTR pName, const V8Value& value);
-    static bool DeleteProperty(LPVOID pvObject, LPCWSTR pName);
-    static void GetPropertyNames(LPVOID pvObject, vector<wstring>& names);
+    static V8Value GetProperty(void* pvObject, const wchar_t* pName);
+    static void SetProperty(void* pvObject, const wchar_t* pName, const V8Value& value);
+    static bool DeleteProperty(void* pvObject, const wchar_t* pName);
+    static void GetPropertyNames(void* pvObject, vector<wstring>& names);
 
-    static V8Value GetProperty(LPVOID pvObject, int index);
-    static void SetProperty(LPVOID pvObject, int index, const V8Value& value);
-    static bool DeleteProperty(LPVOID pvObject, int index);
-    static void GetPropertyIndices(LPVOID pvObject, vector<int>& indices);
+    static V8Value GetProperty(void* pvObject, int index);
+    static void SetProperty(void* pvObject, int index, const V8Value& value);
+    static bool DeleteProperty(void* pvObject, int index);
+    static void GetPropertyIndices(void* pvObject, vector<int>& indices);
 
-    static V8Value Invoke(LPVOID pvObject, const vector<V8Value>& args, bool asConstructor);
-    static V8Value InvokeMethod(LPVOID pvObject, LPCWSTR pName, const vector<V8Value>& args);
+    static V8Value Invoke(void* pvObject, const vector<V8Value>& args, bool asConstructor);
+    static V8Value InvokeMethod(void* pvObject, const wchar_t* pName, const vector<V8Value>& args);
 
-    static bool TryParseInt32(LPCWSTR pString, int& result);
+    static void* CreateV8ObjectCache();
+    static void CacheV8Object(void* pvCache, void* pvObject, void* pvV8Object);
+    static void* GetCachedV8Object(void* pvCache, void* pvObject);
+    static bool RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject);
+
+    static bool TryParseInt32(const wchar_t* pString, int& result);
 };

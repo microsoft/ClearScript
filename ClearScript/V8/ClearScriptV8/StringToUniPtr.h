@@ -78,7 +78,7 @@ namespace V8 {
         {
         }
 
-        operator LPCWSTR()
+        operator const wchar_t*() const
         {
             return m_pValue;
         }
@@ -90,7 +90,7 @@ namespace V8 {
 
     private:
 
-        LPWSTR m_pValue;
+        wchar_t* m_pValue;
     };
 
 }}}

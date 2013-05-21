@@ -370,14 +370,14 @@ namespace Microsoft.ClearScript
             {
                 T member;
 
-                WeakReference wr;
-                if (map.TryGetValue(name, out wr))
+                WeakReference weakRef;
+                if (map.TryGetValue(name, out weakRef))
                 {
-                    member = wr.Target as T;
+                    member = weakRef.Target as T;
                     if (member == null)
                     {
                         member = (T)typeof(T).CreateInstance(name);
-                        wr.Target = member;
+                        weakRef.Target = member;
                     }
                 }
                 else

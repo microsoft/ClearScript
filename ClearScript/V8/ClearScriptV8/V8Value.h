@@ -123,7 +123,7 @@ public:
         m_Data.UInt32Value = value;
     }
 
-    explicit V8Value(LPCWSTR pValue):
+    explicit V8Value(const wchar_t* pValue):
         m_Type(Type_String)
     {
         m_Data.pString = new wstring(pValue);
@@ -224,7 +224,7 @@ public:
         return false;
     }
 
-    bool AsString(LPCWSTR& pResult) const
+    bool AsString(const wchar_t*& pResult) const
     {
         if (m_Type == Type_String)
         {

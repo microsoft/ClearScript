@@ -87,6 +87,11 @@ namespace Microsoft.ClearScript
 
         public HostVariable(T initValue)
         {
+            if ((typeof(T) == typeof(Undefined)) || (typeof(T) == typeof(VoidResult)))
+            {
+                throw new NotSupportedException("Unsupported variable type");
+            }
+
             if (typeof(HostItem).IsAssignableFrom(typeof(T)) || typeof(HostTarget).IsAssignableFrom(typeof(T)))
             {
                 throw new NotSupportedException("Unsupported variable type");

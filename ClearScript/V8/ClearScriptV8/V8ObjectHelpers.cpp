@@ -59,7 +59,7 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#include "ClearScriptV8.h"
+#include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
 // local helper functions
@@ -67,28 +67,28 @@
 
 V8ObjectHolderImpl* GetHolderImpl(V8ObjectHolder* pHolder)
 {
-    return reinterpret_cast<V8ObjectHolderImpl*>(pHolder);
+    return static_cast<V8ObjectHolderImpl*>(pHolder);
 }
 
 //-----------------------------------------------------------------------------
 // V8ObjectHelpers implementation
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHelpers::GetProperty(V8ObjectHolder* pHolder, LPCWSTR pName)
+V8Value V8ObjectHelpers::GetProperty(V8ObjectHolder* pHolder, const wchar_t* pName)
 {
     return GetHolderImpl(pHolder)->GetProperty(pName);
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHelpers::SetProperty(V8ObjectHolder* pHolder, LPCWSTR pName, const V8Value& value)
+void V8ObjectHelpers::SetProperty(V8ObjectHolder* pHolder, const wchar_t* pName, const V8Value& value)
 {
     GetHolderImpl(pHolder)->SetProperty(pName, value);
 }
 
 //-----------------------------------------------------------------------------
 
-bool V8ObjectHelpers::DeleteProperty(V8ObjectHolder* pHolder, LPCWSTR pName)
+bool V8ObjectHelpers::DeleteProperty(V8ObjectHolder* pHolder, const wchar_t* pName)
 {
     return GetHolderImpl(pHolder)->DeleteProperty(pName);
 }
@@ -137,7 +137,7 @@ V8Value V8ObjectHelpers::Invoke(V8ObjectHolder* pHolder, const vector<V8Value>& 
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHelpers::InvokeMethod(V8ObjectHolder* pHolder, LPCWSTR pName, const vector<V8Value>& args)
+V8Value V8ObjectHelpers::InvokeMethod(V8ObjectHolder* pHolder, const wchar_t* pName, const vector<V8Value>& args)
 {
     return GetHolderImpl(pHolder)->InvokeMethod(pName, args);
 }

@@ -59,7 +59,19 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
+#pragma once
 
+//-----------------------------------------------------------------------------
+// V8ScriptHolder
+//-----------------------------------------------------------------------------
 
-#define CLEARSCRIPT_VERSION_STRING "5.2.2.0"
-#define CLEARSCRIPT_VERSION_COMMA_SEPARATED 5,2,2,0
+class V8ScriptHolder
+{
+public:
+
+    virtual V8ScriptHolder* Clone() const = 0;
+    virtual void* GetIsolate() const = 0;
+    virtual void* GetScript() const = 0;
+
+    virtual ~V8ScriptHolder() {}
+};

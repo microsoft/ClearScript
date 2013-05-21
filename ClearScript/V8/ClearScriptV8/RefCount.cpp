@@ -59,50 +59,64 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
+#include "ClearScriptV8Native.h"
 
-namespace Microsoft {
-namespace ClearScript {
-namespace V8 {
+//-----------------------------------------------------------------------------
+// RefCountImpl
+//-----------------------------------------------------------------------------
 
-    //-------------------------------------------------------------------------
-    // V8ProxyImpl
-    //-------------------------------------------------------------------------
+class RefCountImpl
+{
+    PROHIBIT_COPY(RefCountImpl)
 
-    private ref class V8ProxyImpl : V8Proxy
+public:
+
+    RefCountImpl(size_t count):
+        m_Count(count)
     {
-    public:
+    }
 
-        V8ProxyImpl(String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Int32 debugPort);
+    size_t Increment()
+    {
+        return ++m_Count;
+    }
 
-        virtual Object^ GetRootItem() override;
-        virtual void AddGlobalItem(String^ gcName, Object^ gcItem, Boolean globalMembers) override;
-        virtual Object^ Execute(String^ gcDocumentName, String^ gcCode, Boolean discard) override;
-        virtual void InvokeWithLock(Action^ gcAction) override;
-        virtual void Interrupt() override;
+    size_t Decrement()
+    {
+        return --m_Count;
+    }
 
-        ~V8ProxyImpl();
-        !V8ProxyImpl();
+private:
 
-    internal:
+    atomic<size_t> m_Count;
+};
 
-        static V8Value ImportValue(Object^ gcObject);
-        static Object^ ExportValue(const V8Value& value);
-        static void __declspec(noreturn) ThrowScriptEngineException(const V8Exception& exception);
+//-----------------------------------------------------------------------------
+// RefCount implementation
+//-----------------------------------------------------------------------------
 
-    private:
+RefCount::RefCount(size_t count):
+    m_pImpl(new RefCountImpl(count))
+{
+}
 
-        SharedPtr<V8Context> GetContext();
-        bool TryGetContext(SharedPtr<V8Context>& psContext);
+//-----------------------------------------------------------------------------
 
-        void DispatchDebugMessages();
-        Action^ m_gcDispatchDebugMessagesAction;
+size_t RefCount::Increment()
+{
+    return m_pImpl->Increment();
+}
 
-        void ProcessDebugMessages(Object^ gcState);
-        WaitCallback^ m_gcProcessDebugMessagesCallback;
+//-----------------------------------------------------------------------------
 
-        Object^ m_gcLock;
-        SharedPtr<V8Context>* m_pContextPtr;
-    };
+size_t RefCount::Decrement()
+{
+    return m_pImpl->Decrement();
+}
 
-}}}
+//-----------------------------------------------------------------------------
+
+RefCount::~RefCount()
+{
+    delete m_pImpl;
+}

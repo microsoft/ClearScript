@@ -59,22 +59,22 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#include "ClearScriptV8.h"
+#include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
 // V8ObjectHolderImpl implementation
 //-----------------------------------------------------------------------------
 
-V8ObjectHolderImpl::V8ObjectHolderImpl(V8ContextImpl* pContextImpl, LPVOID pvObject):
-    m_psContextImpl(pContextImpl),
+V8ObjectHolderImpl::V8ObjectHolderImpl(V8ContextImpl* pContextImpl, void* pvObject):
+    m_spContextImpl(pContextImpl),
     m_pvObject(pvObject)
 {
 }
 
 //-----------------------------------------------------------------------------
 
-V8ObjectHolderImpl::V8ObjectHolderImpl(const SharedPtr<V8ContextImpl>& psContextImpl, LPVOID pvObject):
-    m_psContextImpl(psContextImpl),
+V8ObjectHolderImpl::V8ObjectHolderImpl(const SharedPtr<V8ContextImpl>& spContextImpl, void* pvObject):
+    m_spContextImpl(spContextImpl),
     m_pvObject(pvObject)
 {
 }
@@ -83,89 +83,89 @@ V8ObjectHolderImpl::V8ObjectHolderImpl(const SharedPtr<V8ContextImpl>& psContext
 
 V8ObjectHolderImpl* V8ObjectHolderImpl::Clone() const
 {
-    return new V8ObjectHolderImpl(m_psContextImpl, m_psContextImpl->AddRefV8Object(m_pvObject));
+    return new V8ObjectHolderImpl(m_spContextImpl, m_spContextImpl->AddRefV8Object(m_pvObject));
 }
 
 //-----------------------------------------------------------------------------
 
-LPVOID V8ObjectHolderImpl::GetObject() const
+void* V8ObjectHolderImpl::GetObject() const
 {
     return m_pvObject;
 }
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHolderImpl::GetProperty(LPCWSTR pName) const
+V8Value V8ObjectHolderImpl::GetProperty(const wchar_t* pName) const
 {
-    return m_psContextImpl->GetV8ObjectProperty(m_pvObject, pName);
+    return m_spContextImpl->GetV8ObjectProperty(m_pvObject, pName);
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHolderImpl::SetProperty(LPCWSTR pName, const V8Value& value) const
+void V8ObjectHolderImpl::SetProperty(const wchar_t* pName, const V8Value& value) const
 {
-    m_psContextImpl->SetV8ObjectProperty(m_pvObject, pName, value);
+    m_spContextImpl->SetV8ObjectProperty(m_pvObject, pName, value);
 }
 
 //-----------------------------------------------------------------------------
 
-bool V8ObjectHolderImpl::DeleteProperty(LPCWSTR pName) const
+bool V8ObjectHolderImpl::DeleteProperty(const wchar_t* pName) const
 {
-    return m_psContextImpl->DeleteV8ObjectProperty(m_pvObject, pName);
+    return m_spContextImpl->DeleteV8ObjectProperty(m_pvObject, pName);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ObjectHolderImpl::GetPropertyNames(vector<wstring>& names) const
 {
-    m_psContextImpl->GetV8ObjectPropertyNames(m_pvObject, names);
+    m_spContextImpl->GetV8ObjectPropertyNames(m_pvObject, names);
 }
 
 //-----------------------------------------------------------------------------
 
 V8Value V8ObjectHolderImpl::GetProperty(int index) const
 {
-    return m_psContextImpl->GetV8ObjectProperty(m_pvObject, index);
+    return m_spContextImpl->GetV8ObjectProperty(m_pvObject, index);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ObjectHolderImpl::SetProperty(int index, const V8Value& value) const
 {
-    m_psContextImpl->SetV8ObjectProperty(m_pvObject, index, value);
+    m_spContextImpl->SetV8ObjectProperty(m_pvObject, index, value);
 }
 
 //-----------------------------------------------------------------------------
 
 bool V8ObjectHolderImpl::DeleteProperty(int index) const
 {
-    return m_psContextImpl->DeleteV8ObjectProperty(m_pvObject, index);
+    return m_spContextImpl->DeleteV8ObjectProperty(m_pvObject, index);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ObjectHolderImpl::GetPropertyIndices(vector<int>& indices) const
 {
-    m_psContextImpl->GetV8ObjectPropertyIndices(m_pvObject, indices);
+    m_spContextImpl->GetV8ObjectPropertyIndices(m_pvObject, indices);
 }
 
 //-----------------------------------------------------------------------------
 
 V8Value V8ObjectHolderImpl::Invoke(const vector<V8Value>& args, bool asConstructor) const
 {
-    return m_psContextImpl->InvokeV8Object(m_pvObject, args, asConstructor);
+    return m_spContextImpl->InvokeV8Object(m_pvObject, args, asConstructor);
 }
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHolderImpl::InvokeMethod(LPCWSTR pName, const vector<V8Value>& args) const
+V8Value V8ObjectHolderImpl::InvokeMethod(const wchar_t* pName, const vector<V8Value>& args) const
 {
-    return m_psContextImpl->InvokeV8ObjectMethod(m_pvObject, pName, args);
+    return m_spContextImpl->InvokeV8ObjectMethod(m_pvObject, pName, args);
 }
 
 //-----------------------------------------------------------------------------
 
 V8ObjectHolderImpl::~V8ObjectHolderImpl()
 {
-    m_psContextImpl->ReleaseV8Object(m_pvObject);
+    m_spContextImpl->ReleaseV8Object(m_pvObject);
 }

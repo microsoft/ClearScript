@@ -59,9 +59,44 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-<#@ template debug="false" hostspecific="false" language="C#" #>
-<#@ output extension=".h" #>
-<#@ include file="..\Version.tt" #>
+#pragma once
 
-#define CLEARSCRIPT_VERSION_STRING "<#= version #>"
-#define CLEARSCRIPT_VERSION_COMMA_SEPARATED <#= version.Major #>,<#= version.Minor #>,<#= version.Build #>,<#= version.Revision #>
+namespace Microsoft {
+namespace ClearScript {
+namespace V8 {
+
+    //-------------------------------------------------------------------------
+    // V8ContextProxyImpl
+    //-------------------------------------------------------------------------
+
+    private ref class V8ContextProxyImpl : V8ContextProxy
+    {
+    public:
+
+        V8ContextProxyImpl(V8IsolateProxy^ gcIsolateProxy, String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Int32 debugPort);
+
+        virtual void InvokeWithLock(Action^ gcAction) override;
+        virtual Object^ GetRootItem() override;
+        virtual void AddGlobalItem(String^ gcName, Object^ gcItem, Boolean globalMembers) override;
+        virtual Object^ Execute(String^ gcDocumentName, String^ gcCode, Boolean discard) override;
+        virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode) override;
+        virtual Object^ Execute(V8Script^ gcScript) override;
+        virtual void Interrupt() override;
+        virtual V8RuntimeHeapInfo^ GetRuntimeHeapInfo() override;
+        virtual void CollectGarbage(bool exhaustive) override;
+
+        ~V8ContextProxyImpl();
+        !V8ContextProxyImpl();
+
+        static V8Value ImportValue(Object^ gcObject);
+        static Object^ ExportValue(const V8Value& value);
+
+    private:
+
+        SharedPtr<V8Context> GetContext();
+
+        Object^ m_gcLock;
+        SharedPtr<V8Context>* m_pspContext;
+    };
+
+}}}

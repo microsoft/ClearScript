@@ -1,0 +1,289 @@
+﻿// 
+// Copyright © Microsoft Corporation. All rights reserved.
+// 
+// Microsoft Public License (MS-PL)
+// 
+// This license governs use of the accompanying software. If you use the
+// software, you accept this license. If you do not accept the license, do not
+// use the software.
+// 
+// 1. Definitions
+// 
+//   The terms "reproduce," "reproduction," "derivative works," and
+//   "distribution" have the same meaning here as under U.S. copyright law. A
+//   "contribution" is the original software, or any additions or changes to
+//   the software. A "contributor" is any person that distributes its
+//   contribution under this license. "Licensed patents" are a contributor's
+//   patent claims that read directly on its contribution.
+// 
+// 2. Grant of Rights
+// 
+//   (A) Copyright Grant- Subject to the terms of this license, including the
+//       license conditions and limitations in section 3, each contributor
+//       grants you a non-exclusive, worldwide, royalty-free copyright license
+//       to reproduce its contribution, prepare derivative works of its
+//       contribution, and distribute its contribution or any derivative works
+//       that you create.
+// 
+//   (B) Patent Grant- Subject to the terms of this license, including the
+//       license conditions and limitations in section 3, each contributor
+//       grants you a non-exclusive, worldwide, royalty-free license under its
+//       licensed patents to make, have made, use, sell, offer for sale,
+//       import, and/or otherwise dispose of its contribution in the software
+//       or derivative works of the contribution in the software.
+// 
+// 3. Conditions and Limitations
+// 
+//   (A) No Trademark License- This license does not grant you rights to use
+//       any contributors' name, logo, or trademarks.
+// 
+//   (B) If you bring a patent claim against any contributor over patents that
+//       you claim are infringed by the software, your patent license from such
+//       contributor to the software ends automatically.
+// 
+//   (C) If you distribute any portion of the software, you must retain all
+//       copyright, patent, trademark, and attribution notices that are present
+//       in the software.
+// 
+//   (D) If you distribute any portion of the software in source code form, you
+//       may do so only under this license by including a complete copy of this
+//       license with your distribution. If you distribute any portion of the
+//       software in compiled or object code form, you may only do so under a
+//       license that complies with this license.
+// 
+//   (E) The software is licensed "as-is." You bear the risk of using it. The
+//       contributors give no express warranties, guarantees or conditions. You
+//       may have additional consumer rights under your local laws which this
+//       license cannot change. To the extent permitted under your local laws,
+//       the contributors exclude the implied warranties of merchantability,
+//       fitness for a particular purpose and non-infringement.
+//       
+
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".h" #>
+
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+
+<# const int maxArgCount = 16; #>
+<# const int slotCount = 64; #>
+
+#pragma once
+
+//-----------------------------------------------------------------------------
+// macros
+//-----------------------------------------------------------------------------
+
+#define DEFINE_CALLBACK_MANAGER(NAME, TYPE) \
+            DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, TYPE, NullMutex)
+
+#define DEFINE_CONCURRENT_CALLBACK_MANAGER(NAME, TYPE) \
+            DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, TYPE, RecursiveMutex)
+
+#define DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, CALLBACK_TYPE, MUTEX_TYPE) \
+            struct NAME##CallbackTraits: public CallbackTraits<NAME##CallbackTraits, CALLBACK_TYPE, MUTEX_TYPE> {};
+
+#define CALLBACK_MANAGER(NAME) \
+            CallbackManager<NAME##CallbackTraits>
+
+//-----------------------------------------------------------------------------
+// CallbackTraits
+//-----------------------------------------------------------------------------
+
+template <typename TTraits, typename TCallback, typename TMutex>
+class CallbackTraits
+{
+    PROHIBIT_CONSTRUCT(CallbackTraits)
+
+public:
+
+    typedef TCallback CallbackT;
+
+    template <typename TResult>
+    static TResult CallWithLock(const function<TResult()>& function)
+    {
+        BEGIN_MUTEX_SCOPE(*ms_pMutex)
+
+            return function();
+
+        END_MUTEX_SCOPE
+    }
+
+private:
+
+    // Put the mutex on the heap. At process shutdown, static cleanup races against GC,
+    // so using non-POD static data in conjunction with managed objects is problematic.
+
+    static TMutex* ms_pMutex;
+};
+
+template <typename TTraits, typename TCallback, typename TMutex>
+TMutex* CallbackTraits<TTraits, TCallback, TMutex>::ms_pMutex = new TMutex;
+
+//-----------------------------------------------------------------------------
+// CallbackSlot (unused)
+//-----------------------------------------------------------------------------
+
+template <typename TTraits, size_t NIndex, typename TCallback>
+class CallbackSlot
+{
+    PROHIBIT_CONSTRUCT(CallbackSlot)
+};
+
+//-----------------------------------------------------------------------------
+// CallbackSlot specializations
+//-----------------------------------------------------------------------------
+
+<#
+for (var count = 0; count <= maxArgCount; count++)
+{
+   var typeParamList = (count < 1) ? string.Empty : string.Concat(Enumerable.Range(0, count).Select(index => ", typename T" + index));
+   var paramTypeList = (count < 1) ? string.Empty : string.Join(", ", Enumerable.Range(0, count).Select(index => "T" + index));
+   var paramList = (count < 1) ? string.Empty : string.Join(", ", Enumerable.Range(0, count).Select(index => "T" + index + " a" + index));
+   var argList = (count < 1) ? string.Empty : string.Join(", ", Enumerable.Range(0, count).Select(index => "a" + index));
+#>
+
+template <typename TTraits, size_t NIndex, typename TResult<#= typeParamList #>>
+class CallbackSlot<TTraits, NIndex, TResult(<#= paramTypeList #>)>
+{
+    PROHIBIT_CONSTRUCT(CallbackSlot)
+
+public:
+
+    typedef TResult CallbackT(<#= paramTypeList #>);
+    typedef function<CallbackT> FunctionT;
+
+    static TResult Callback(<#= paramList #>)
+    {
+        return GetFunctionWithLock()(<#= argList #>);
+    }
+
+    static FunctionT GetFunctionWithLock()
+    {
+        return TTraits::CallWithLock<FunctionT>([]
+        {
+            return GetFunction();
+        });
+    }
+
+    static void SetFunctionWithLock(const FunctionT& function)
+    {
+        TTraits::CallWithLock<void>([&function]
+        {
+            SetFunction(function);
+        });
+    }
+
+    static FunctionT GetFunction()
+    {
+        return (ms_pFunction != nullptr) ? *ms_pFunction : nullptr;
+    }
+
+    static void SetFunction(const FunctionT& function)
+    {
+        if (ms_pFunction != nullptr)
+        {
+            delete ms_pFunction;
+        }
+
+        ms_pFunction = new FunctionT(function);
+    }
+
+    static bool HasFunction()
+    {
+        return (ms_pFunction != nullptr) ? static_cast<bool>(*ms_pFunction) : false;
+    }
+
+private:
+
+    // Put the functor on the heap. At process shutdown, static cleanup races against GC,
+    // so using non-POD static data in conjunction with managed objects is problematic.
+
+    static FunctionT* ms_pFunction;
+};
+
+template <typename TTraits, size_t NIndex, typename TResult<#= typeParamList #>>
+function<TResult(<#= paramTypeList #>)>* CallbackSlot<TTraits, NIndex, TResult(<#= paramTypeList #>)>::ms_pFunction = nullptr;
+<#
+}
+#>
+
+//-----------------------------------------------------------------------------
+// CallbackManager
+//-----------------------------------------------------------------------------
+
+template <typename TTraits>
+class CallbackManager
+{
+    PROHIBIT_CONSTRUCT(CallbackManager)
+
+public:
+
+    typedef typename TTraits::CallbackT CallbackT;
+    typedef function<CallbackT> FunctionT;
+
+    static CallbackT* Alloc(const FunctionT& function)
+    {
+        return TTraits::CallWithLock<CallbackT*>([&function]
+        {
+            <#
+            for (var index = 0; index < slotCount; index++)
+            {
+            #>
+
+            if (!HasFunction<<#= index #>>())
+            {
+                SetFunction<<#= index #>>(function);
+                return GetCallback<<#= index #>>();
+            }
+            <#
+            }
+            #>
+
+            return static_cast<CallbackT*>(nullptr);
+        });
+    }
+
+    static bool Free(CallbackT* pCallback)
+    {
+        return TTraits::CallWithLock<bool>([pCallback]
+        {
+            <#
+            for (var index = 0; index < slotCount; index++)
+            {
+            #>
+
+            if (pCallback == GetCallback<<#= index #>>())
+            {
+                _ASSERTE(HasFunction<<#= index #>>());
+                SetFunction<<#= index #>>(nullptr);
+                return true;
+            }
+            <#
+            }
+            #>
+
+            return false;
+        });
+    }
+
+private:
+
+    template <size_t NIndex>
+    static CallbackT* GetCallback()
+    {
+        return CallbackSlot<TTraits, NIndex, CallbackT>::Callback;
+    }
+
+    template <size_t NIndex>
+    static void SetFunction(const FunctionT& function)
+    {
+        CallbackSlot<TTraits, NIndex, CallbackT>::SetFunction(function);
+    }
+
+    template <size_t NIndex>
+    static bool HasFunction()
+    {
+        return CallbackSlot<TTraits, NIndex, CallbackT>::HasFunction();
+    }
+};

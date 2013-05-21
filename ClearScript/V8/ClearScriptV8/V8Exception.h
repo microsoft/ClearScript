@@ -72,10 +72,11 @@ public:
     enum Type
     {
         Type_General,
-        Type_Interrupt
+        Type_Interrupt,
+        Type_Fatal
     };
 
-    V8Exception(Type type, LPCWSTR pEngineName, LPCWSTR pMessage, LPCWSTR pStackTrace, const V8Value& innerException):
+    V8Exception(Type type, const wchar_t* pEngineName, const wchar_t* pMessage, const wchar_t* pStackTrace, const V8Value& innerException):
         m_Type(type),
         m_InnerException(innerException)
     {
@@ -95,7 +96,7 @@ public:
         }
     }
 
-    V8Exception(Type type, LPCWSTR pEngineName, LPCWSTR pMessage, LPCWSTR pStackTrace, V8Value&& innerException):
+    V8Exception(Type type, const wchar_t* pEngineName, const wchar_t* pMessage, const wchar_t* pStackTrace, V8Value&& innerException):
         m_Type(type),
         m_InnerException(innerException)
     {
@@ -115,30 +116,7 @@ public:
         }
     }
 
-    Type GetType() const
-    {
-        return m_Type;
-    }
-
-    LPCWSTR GetEngineName() const
-    {
-        return m_EngineName.c_str();
-    }
-
-    LPCWSTR GetMessage() const
-    {
-        return m_Message.c_str();
-    }
-
-    LPCWSTR GetStackTrace() const
-    {
-        return m_StackTrace.c_str();
-    }
-
-    const V8Value& GetInnerException() const
-    {
-        return m_InnerException;
-    }
+    void DECLSPEC_NORETURN ThrowScriptEngineException() const;
 
 private:
 

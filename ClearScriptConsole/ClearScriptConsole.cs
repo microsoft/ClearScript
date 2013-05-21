@@ -75,6 +75,7 @@ namespace Microsoft.ClearScript.Test
                 engine.AddHostObject("host", new ExtendedHostFunctions());
                 engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System", "System.Core", "ClearScript"));
                 engine.AllowReflection = true;
+
                 RunStartupFile(engine);
                 RunConsole(engine);
             }

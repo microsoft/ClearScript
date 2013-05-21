@@ -61,16 +61,101 @@
 
 #pragma once
 
-#include "Platform.h"
-#include "SharedPtr.h"
-#include "V8ObjectHolder.h"
-#include "HostObjectHolder.h"
-#include "V8Value.h"
-#include "HostException.h"
-#include "V8Exception.h"
-#include "V8Context.h"
-#include "V8ContextImpl.h"
-#include "V8ObjectHolderImpl.h"
-#include "HostObjectHolderImpl.h"
-#include "V8ObjectHelpers.h"
-#include "HostObjectHelpers.h"
+//-----------------------------------------------------------------------------
+// SimpleMutex
+//-----------------------------------------------------------------------------
+
+class SimpleMutex
+{
+    PROHIBIT_COPY(SimpleMutex)
+
+public:
+
+    SimpleMutex();
+
+    void Lock();
+    void Unlock();
+
+    ~SimpleMutex();
+
+private:
+
+    class SimpleMutexImpl* m_pImpl;
+};
+
+//-----------------------------------------------------------------------------
+// RecursiveMutex
+//-----------------------------------------------------------------------------
+
+class RecursiveMutex
+{
+    PROHIBIT_COPY(RecursiveMutex)
+
+public:
+
+    RecursiveMutex();
+
+    void Lock();
+    void Unlock();
+
+    ~RecursiveMutex();
+
+private:
+
+    class RecursiveMutexImpl* m_pImpl;
+};
+
+//-----------------------------------------------------------------------------
+// NullMutex
+//-----------------------------------------------------------------------------
+
+struct NullMutex
+{
+    PROHIBIT_COPY(NullMutex)
+
+public:
+
+    NullMutex() {}
+
+    void Lock() {}
+    void Unlock() {}
+};
+
+//-----------------------------------------------------------------------------
+// MutexLock
+//-----------------------------------------------------------------------------
+
+template<class TMutex> class MutexLock
+{
+    PROHIBIT_COPY(MutexLock)
+    PROHIBIT_HEAP(MutexLock)
+
+public:
+
+    explicit MutexLock(TMutex& mutex):
+        m_Mutex(mutex)
+    {
+        m_Mutex.Lock();
+    }
+
+    ~MutexLock()
+    {
+        m_Mutex.Unlock();
+    }
+
+private:
+
+    TMutex& m_Mutex;
+};
+
+//-----------------------------------------------------------------------------
+// lock scope macros
+//-----------------------------------------------------------------------------
+
+#define BEGIN_MUTEX_SCOPE(MUTEX) \
+        { \
+            MutexLock<decltype(MUTEX)> t_MutexLock(MUTEX);
+
+#define END_MUTEX_SCOPE \
+            IGNORE_UNUSED(t_MutexLock); \
+        }

@@ -59,7 +59,7 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#include "..\..\..\VersionSymbols.h"
+#include "VersionSymbols.h"
 
 using namespace System::Reflection;
 using namespace System::Runtime::CompilerServices;

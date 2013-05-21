@@ -71,24 +71,8 @@ namespace V8 {
 
     V8ObjectImpl::V8ObjectImpl(V8ObjectHolder* pHolder):
         m_gcLock(gcnew Object),
-        m_pHolderPtr(new SharedPtr<V8ObjectHolder>(pHolder))
+        m_pspHolder(new SharedPtr<V8ObjectHolder>(pHolder))
     {
-    }
-
-    //-------------------------------------------------------------------------
-
-    SharedPtr<V8ObjectHolder> V8ObjectImpl::GetHolder()
-    {
-        BEGIN_LOCK_SCOPE(m_gcLock)
-
-            if (m_pHolderPtr == nullptr)
-            {
-                throw gcnew ObjectDisposedException(ToString());
-            }
-
-            return *m_pHolderPtr;
-
-        END_LOCK_SCOPE
     }
 
     //-------------------------------------------------------------------------
@@ -97,11 +81,11 @@ namespace V8 {
     {
         try
         {
-            return V8ProxyImpl::ExportValue(V8ObjectHelpers::GetProperty(GetHolder().GetRawPtr(), StringToUniPtr(gcName)));
+            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::GetProperty(GetHolder(), StringToUniPtr(gcName)));
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
@@ -111,11 +95,11 @@ namespace V8 {
     {
         try
         {
-            V8ObjectHelpers::SetProperty(GetHolder().GetRawPtr(), StringToUniPtr(gcName), V8ProxyImpl::ImportValue(gcValue));
+            V8ObjectHelpers::SetProperty(GetHolder(), StringToUniPtr(gcName), V8ContextProxyImpl::ImportValue(gcValue));
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
@@ -125,11 +109,11 @@ namespace V8 {
     {
         try
         {
-            return V8ObjectHelpers::DeleteProperty(GetHolder().GetRawPtr(), StringToUniPtr(gcName));
+            return V8ObjectHelpers::DeleteProperty(GetHolder(), StringToUniPtr(gcName));
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
@@ -140,7 +124,7 @@ namespace V8 {
         try
         {
             vector<wstring> names;
-            V8ObjectHelpers::GetPropertyNames(GetHolder().GetRawPtr(), names);
+            V8ObjectHelpers::GetPropertyNames(GetHolder(), names);
             auto nameCount = (int)names.size();
 
             auto gcNames = gcnew array<String^>(nameCount);
@@ -153,7 +137,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
@@ -163,11 +147,11 @@ namespace V8 {
     {
         try
         {
-            return V8ProxyImpl::ExportValue(V8ObjectHelpers::GetProperty(GetHolder().GetRawPtr(), index));
+            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::GetProperty(GetHolder(), index));
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
@@ -177,11 +161,11 @@ namespace V8 {
     {
         try
         {
-            V8ObjectHelpers::SetProperty(GetHolder().GetRawPtr(), index, V8ProxyImpl::ImportValue(gcValue));
+            V8ObjectHelpers::SetProperty(GetHolder(), index, V8ContextProxyImpl::ImportValue(gcValue));
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
@@ -191,11 +175,11 @@ namespace V8 {
     {
         try
         {
-            return V8ObjectHelpers::DeleteProperty(GetHolder().GetRawPtr(), index);
+            return V8ObjectHelpers::DeleteProperty(GetHolder(), index);
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
@@ -206,7 +190,7 @@ namespace V8 {
         try
         {
             vector<int> indices;
-            V8ObjectHelpers::GetPropertyIndices(GetHolder().GetRawPtr(), indices);
+            V8ObjectHelpers::GetPropertyIndices(GetHolder(), indices);
             auto indexCount = (int)indices.size();
 
             auto gcIndices = gcnew array<int>(indexCount);
@@ -219,7 +203,7 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
@@ -232,11 +216,11 @@ namespace V8 {
             vector<V8Value> importedArgs;
             ImportValues(gcArgs, importedArgs);
 
-            return V8ProxyImpl::ExportValue(V8ObjectHelpers::Invoke(GetHolder().GetRawPtr(), importedArgs, asConstructor));
+            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::Invoke(GetHolder(), importedArgs, asConstructor));
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
@@ -249,28 +233,44 @@ namespace V8 {
             vector<V8Value> importedArgs;
             ImportValues(gcArgs, importedArgs);
 
-            return V8ProxyImpl::ExportValue(V8ObjectHelpers::InvokeMethod(GetHolder().GetRawPtr(), StringToUniPtr(gcName), importedArgs));
+            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::InvokeMethod(GetHolder(), StringToUniPtr(gcName), importedArgs));
         }
         catch (const V8Exception& exception)
         {
-            V8ProxyImpl::ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
+    }
+
+    //-------------------------------------------------------------------------
+
+    SharedPtr<V8ObjectHolder> V8ObjectImpl::GetHolder()
+    {
+        BEGIN_LOCK_SCOPE(m_gcLock)
+
+            if (m_pspHolder == nullptr)
+            {
+                throw gcnew ObjectDisposedException(ToString());
+            }
+
+            return *m_pspHolder;
+
+        END_LOCK_SCOPE
     }
 
     //-------------------------------------------------------------------------
 
     V8ObjectImpl::~V8ObjectImpl()
     {
-        SharedPtr<V8ObjectHolder> psHolder;
+        SharedPtr<V8ObjectHolder> spHolder;
 
         BEGIN_LOCK_SCOPE(m_gcLock)
 
-            if (m_pHolderPtr != nullptr)
+            if (m_pspHolder != nullptr)
             {
-                // hold V8 context for destruction outside lock scope
-                psHolder = *m_pHolderPtr;
-                delete m_pHolderPtr;
-                m_pHolderPtr = nullptr;
+                // hold V8 object holder for destruction outside lock scope
+                spHolder = *m_pspHolder;
+                delete m_pspHolder;
+                m_pspHolder = nullptr;
             }
 
         END_LOCK_SCOPE
@@ -280,9 +280,9 @@ namespace V8 {
 
     V8ObjectImpl::!V8ObjectImpl()
     {
-        if (m_pHolderPtr != nullptr)
+        if (m_pspHolder != nullptr)
         {
-            delete m_pHolderPtr;
+            delete m_pspHolder;
         }
     }
 
@@ -298,7 +298,7 @@ namespace V8 {
 
             for (auto index = 0; index < valueCount; index++)
             {
-                importedValues.push_back(V8ProxyImpl::ImportValue(gcValues[index]));
+                importedValues.push_back(V8ContextProxyImpl::ImportValue(gcValues[index]));
             }
         }
     }

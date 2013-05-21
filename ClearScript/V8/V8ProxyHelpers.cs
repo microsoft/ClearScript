@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 
@@ -206,6 +207,43 @@ namespace Microsoft.ClearScript.V8
         {
             return ((IDynamic)obj).InvokeMethod(name, args);
         }
+
+        #endregion
+
+        #region V8 object cache
+
+        public static unsafe void* CreateV8ObjectCache()
+        {
+            var cache = new ConditionalWeakTable<object, V8ObjectCacheEntry>();
+            return AddRefHostObject(cache);
+        }
+
+        public static unsafe void CacheV8Object(void* pV8ObjectCache, void* pObject, void* pV8Object)
+        {
+            var cache = (ConditionalWeakTable<object, V8ObjectCacheEntry>)GetHostObject(pV8ObjectCache);
+            cache.GetOrCreateValue(GetHostObject(pObject)).V8ObjectPtr = (IntPtr)pV8Object;
+        }
+
+        public static unsafe void* GetCachedV8Object(void* pV8ObjectCache, void* pObject)
+        {
+            var cache = (ConditionalWeakTable<object, V8ObjectCacheEntry>)GetHostObject(pV8ObjectCache);
+            return cache.GetOrCreateValue(GetHostObject(pObject)).V8ObjectPtr.ToPointer();
+        }
+
+        public static unsafe bool RemoveV8ObjectCacheEntry(void* pV8ObjectCache, void* pObject)
+        {
+            var cache = (ConditionalWeakTable<object, V8ObjectCacheEntry>)GetHostObject(pV8ObjectCache);
+            return cache.Remove(GetHostObject(pObject));
+        }
+
+        // ReSharper disable ClassNeverInstantiated.Local
+
+        private class V8ObjectCacheEntry
+        {
+            public IntPtr V8ObjectPtr;
+        }
+
+        // ReSharper restore ClassNeverInstantiated.Local
 
         #endregion
     }

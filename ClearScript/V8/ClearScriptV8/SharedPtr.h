@@ -62,36 +62,6 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
-// RefCount
-//-----------------------------------------------------------------------------
-
-class RefCount
-{
-    PROHIBIT_COPY(RefCount)
-
-public:
-
-    RefCount(DWORD i_Count):
-        m_Count(i_Count)
-    {
-    }
-
-    DWORD Increment()
-    {
-        return ::InterlockedIncrement(&m_Count);
-    }
-
-    DWORD Decrement()
-    {
-        return ::InterlockedDecrement(&m_Count);
-    }
-
-private:
-
-    DWORD m_Count;
-};
-
-//-----------------------------------------------------------------------------
 // SharedPtrTarget
 //-----------------------------------------------------------------------------
 
@@ -113,17 +83,53 @@ protected:
     {
     }
 
+    class AddRefScope
+    {
+        PROHIBIT_COPY(AddRefScope)
+        PROHIBIT_HEAP(AddRefScope)
+
+    public:
+
+        explicit AddRefScope(RefCount* pRefCount):
+            m_pRefCount(pRefCount)
+        {
+            m_pRefCount->Increment();
+        }
+
+        ~AddRefScope()
+        {
+            m_pRefCount->Decrement();
+        }
+
+    private:
+
+        RefCount* m_pRefCount;
+    };
+
 private:
 
     RefCount m_RefCount;
 };
 
 //-----------------------------------------------------------------------------
+
+#define BEGIN_ADDREF_SCOPE \
+        { \
+            AddRefScope t_AddRefScope(GetRefCount());
+
+#define END_ADDREF_SCOPE \
+            IGNORE_UNUSED(t_AddRefScope); \
+        }
+
+//-----------------------------------------------------------------------------
 // SharedPtr
 //-----------------------------------------------------------------------------
 
-template<typename T> class SharedPtr
+template <typename T>
+class SharedPtr
 {
+    friend class SharedPtrUtil;
+
 public:
 
     SharedPtr<T>()
@@ -143,22 +149,24 @@ public:
 
     SharedPtr<T>(const SharedPtr<T>& that)
     {
-        Copy(that);
+        SharedPtrUtil::CopyInitialize(*this, that);
     }
 
     SharedPtr<T>(SharedPtr<T>&& that)
     {
-        Move(that);
+        SharedPtrUtil::MoveInitialize(*this, that);
     }
 
-    template<typename U> SharedPtr<T>(const SharedPtr<U>& that)
+    template <typename TOther>
+    SharedPtr<T>(const SharedPtr<TOther>& that)
     {
-        Copy(that);
+        SharedPtrUtil::CopyInitialize(*this, that);
     }
 
-    template<typename U> SharedPtr<T>(SharedPtr<U>&& that)
+    template <typename TOther>
+    SharedPtr<T>(SharedPtr<TOther>&& that)
     {
-        Move(that);
+        SharedPtrUtil::MoveInitialize(*this, that);
     }
 
     const SharedPtr<T>& operator=(nullptr_t)
@@ -169,40 +177,47 @@ public:
 
     const SharedPtr<T>& operator=(T* pTarget)
     {
-        Release();
-        Initialize(pTarget);
+        if (m_pTarget != pTarget)
+        {
+            Release();
+            Initialize(pTarget);
+        }
+
         return *this;
     }
 
     const SharedPtr<T>& operator=(const SharedPtr<T>& that)
     {
-        Release();
-        Copy(that);
+        SharedPtrUtil::Copy(*this, that);
         return *this;
     }
 
     const SharedPtr<T>& operator=(SharedPtr<T>&& that)
     {
-        Release();
-        Move(that);
+        SharedPtrUtil::Move(*this, that);
         return *this;
     }
 
-    template<typename U> const SharedPtr<T>& operator=(const SharedPtr<U>& that)
+    template <typename TOther>
+    const SharedPtr<T>& operator=(const SharedPtr<TOther>& that)
     {
-        Release();
-        Copy(that);
+        SharedPtrUtil::Copy(*this, that);
         return *this;
     }
 
-    template<typename U> const SharedPtr<T>& operator=(SharedPtr<U>&& that)
+    template <typename TOther>
+    const SharedPtr<T>& operator=(SharedPtr<TOther>&& that)
     {
-        Release();
-        Move(that);
+        SharedPtrUtil::Move(*this, that);
         return *this;
     }
 
     T* operator->() const
+    {
+        return m_pTarget;
+    }
+
+    operator T*() const
     {
         return m_pTarget;
     }
@@ -251,20 +266,6 @@ private:
         }
     }
 
-    template<typename U> void Copy(const SharedPtr<U>& that)
-    {
-        m_pTarget = that.m_pTarget;
-        m_pRefCount = that.m_pRefCount;
-        AddRef();
-    }
-
-    template<typename U> void Move(SharedPtr<U>& that)
-    {
-        m_pTarget = that.m_pTarget;
-        m_pRefCount = that.m_pRefCount;
-        that.Initialize();
-    }
-
     void AddRef()
     {
         if (m_pTarget != nullptr)
@@ -301,16 +302,63 @@ private:
     {
     }
 
-    void AttachRefCount(LPVOID /* pvTarget */)
+    void AttachRefCount(void* /* pvTarget */)
     {
         m_pRefCount = new RefCount(1);
     }
 
-    void DetachRefCount(LPVOID /* pvTarget */)
+    void DetachRefCount(void* /* pvTarget */)
     {
         delete m_pRefCount;
     }
 
     T* m_pTarget;
     RefCount* m_pRefCount;
+};
+
+//-----------------------------------------------------------------------------
+// SharedPtrUtil
+//-----------------------------------------------------------------------------
+
+class SharedPtrUtil
+{
+    PROHIBIT_CONSTRUCT(SharedPtrUtil)
+
+public:
+
+    template<typename TTarget, typename TSource>
+    static void CopyInitialize(SharedPtr<TTarget>& target, const SharedPtr<TSource>& source)
+    {
+        target.m_pTarget = source.m_pTarget;
+        target.m_pRefCount = source.m_pRefCount;
+        target.AddRef();
+    }
+
+    template<typename TTarget, typename TSource>
+    static void MoveInitialize(SharedPtr<TTarget>& target, SharedPtr<TSource>& source)
+    {
+        target.m_pTarget = source.m_pTarget;
+        target.m_pRefCount = source.m_pRefCount;
+        source.Initialize();
+    }
+
+    template<typename TTarget, typename TSource>
+    static void Copy(SharedPtr<TTarget>& target, const SharedPtr<TSource>& source)
+    {
+        if (target.m_pTarget != source.m_pTarget)
+        {
+            target.Release();
+            CopyInitialize(target, source);
+        }
+    }
+
+    template<typename TTarget, typename TSource>
+    static void Move(SharedPtr<TTarget>& target, SharedPtr<TSource>& source)
+    {
+        if (target.m_pTarget != source.m_pTarget)
+        {
+            target.Release();
+            MoveInitialize(target, source);
+        }
+    }
 };

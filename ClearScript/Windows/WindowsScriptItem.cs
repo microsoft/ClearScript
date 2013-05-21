@@ -71,11 +71,12 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.Windows
 {
-    internal class WindowsScriptItem : ScriptItem
+    internal class WindowsScriptItem : ScriptItem, IDisposable
     {
         private readonly WindowsScriptEngine engine;
         private readonly IExpando target;
         private WindowsScriptItem holder;
+        private bool disposed;
 
         private WindowsScriptItem(WindowsScriptEngine engine, IExpando target)
         {
@@ -109,7 +110,7 @@ namespace Microsoft.ClearScript.Windows
                 return scriptError;
             }
 
-            return new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception);
+            return new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception);
         }
 
         private bool TryGetScriptError(Exception exception, out IScriptEngineException scriptError)
@@ -148,14 +149,14 @@ namespace Microsoft.ClearScript.Windows
                     string message;
                     if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(hr), out message) && (message != exception.Message))
                     {
-                        scriptError = new ScriptEngineException(engine.Name, message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception.InnerException);
+                        scriptError = new ScriptEngineException(engine.Name, message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
                         return true;
                     }
                 }
                 else if (hr == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
                 {
                     // this usually indicates invalid object or property access in JScript
-                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception.InnerException);
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
                     return true;
                 }
             }
@@ -165,12 +166,20 @@ namespace Microsoft.ClearScript.Windows
                 if ((argumentException != null) && (argumentException.ParamName == null))
                 {
                     // this usually indicates invalid object or property access in VBScript
-                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception.InnerException);
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private void VerifyNotDisposed()
+        {
+            if (disposed)
+            {
+                throw new ObjectDisposedException(ToString());
+            }
         }
 
         #region ScriptItem overrides
@@ -182,6 +191,8 @@ namespace Microsoft.ClearScript.Windows
 
         protected override bool TryBindAndInvoke(DynamicMetaObjectBinder binder, object[] args, out object result)
         {
+            VerifyNotDisposed();
+
             var succeeded = DynamicHelpers.TryBindAndInvoke(binder, target, args, out result);
             if (!succeeded)
             {
@@ -218,6 +229,8 @@ namespace Microsoft.ClearScript.Windows
 
         public override object GetProperty(string name)
         {
+            VerifyNotDisposed();
+
             var result = engine.MarshalToHost(engine.ScriptInvoke(() =>
             {
                 try
@@ -249,6 +262,8 @@ namespace Microsoft.ClearScript.Windows
 
         public override void SetProperty(string name, object value)
         {
+            VerifyNotDisposed();
+
             engine.ScriptInvoke(() =>
             {
                 var marshaledArgs = new[] { engine.MarshalToScript(value) };
@@ -266,6 +281,8 @@ namespace Microsoft.ClearScript.Windows
 
         public override bool DeleteProperty(string name)
         {
+            VerifyNotDisposed();
+
             return engine.ScriptInvoke(() =>
             {
                 var field = target.GetField(name, BindingFlags.Default);
@@ -288,31 +305,38 @@ namespace Microsoft.ClearScript.Windows
 
         public override string[] GetPropertyNames()
         {
+            VerifyNotDisposed();
             return engine.ScriptInvoke(() => target.GetProperties(BindingFlags.Default).Select(property => property.Name).ExcludeIndices().ToArray());
         }
 
         public override object GetProperty(int index)
         {
+            VerifyNotDisposed();
             return GetProperty(index.ToString(CultureInfo.InvariantCulture));
         }
 
         public override void SetProperty(int index, object value)
         {
+            VerifyNotDisposed();
             SetProperty(index.ToString(CultureInfo.InvariantCulture), value);
         }
 
         public override bool DeleteProperty(int index)
         {
+            VerifyNotDisposed();
             return DeleteProperty(index.ToString(CultureInfo.InvariantCulture));
         }
 
         public override int[] GetPropertyIndices()
         {
+            VerifyNotDisposed();
             return engine.ScriptInvoke(() => target.GetProperties(BindingFlags.Default).Select(property => property.Name).GetIndices().ToArray());
         }
 
         public override object Invoke(object[] args, bool asConstructor)
         {
+            VerifyNotDisposed();
+
             if (asConstructor)
             {
                 return engine.Script.EngineInternal.invokeConstructor(this, args);
@@ -323,6 +347,8 @@ namespace Microsoft.ClearScript.Windows
 
         public override object InvokeMethod(string name, object[] args)
         {
+            VerifyNotDisposed();
+
             try
             {
                 return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMember(name, BindingFlags.InvokeMethod, null, target, engine.MarshalToScript(args), null, CultureInfo.InvariantCulture, null)), false);
@@ -346,6 +372,19 @@ namespace Microsoft.ClearScript.Windows
         public override object Unwrap()
         {
             return target;
+        }
+
+        #endregion
+
+        #region IDisposable implementation
+
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                Marshal.FinalReleaseComObject(target);
+                disposed = true;
+            }
         }
 
         #endregion

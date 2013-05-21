@@ -71,14 +71,14 @@ class HostObjectHolderImpl: public HostObjectHolder
 
 public:
 
-    explicit HostObjectHolderImpl(LPVOID pvHostObject);
+    explicit HostObjectHolderImpl(void* pvObject);
 
     HostObjectHolderImpl* Clone() const;
-    LPVOID GetObject() const;
+    void* GetObject() const;
 
     ~HostObjectHolderImpl();
 
 private:
 
-    LPVOID m_pvObject;
+    void* m_pvObject;
 };

@@ -71,15 +71,15 @@ class V8ObjectHolderImpl: public V8ObjectHolder
 
 public:
 
-    V8ObjectHolderImpl(V8ContextImpl* pContextImpl, LPVOID pvV8Object);
-    V8ObjectHolderImpl(const SharedPtr<V8ContextImpl>& psContextImpl, LPVOID pvV8Object);
+    V8ObjectHolderImpl(V8ContextImpl* pContextImpl, void* pvObject);
+    V8ObjectHolderImpl(const SharedPtr<V8ContextImpl>& spContextImpl, void* pvObject);
 
     V8ObjectHolderImpl* Clone() const;
-    LPVOID GetObject() const;
+    void* GetObject() const;
 
-    V8Value GetProperty(LPCWSTR pName) const;
-    void SetProperty(LPCWSTR pName, const V8Value& value) const;
-    bool DeleteProperty(LPCWSTR pName) const;
+    V8Value GetProperty(const wchar_t* pName) const;
+    void SetProperty(const wchar_t* pName, const V8Value& value) const;
+    bool DeleteProperty(const wchar_t* pName) const;
     void GetPropertyNames(vector<wstring>& names) const;
 
     V8Value GetProperty(int index) const;
@@ -88,12 +88,12 @@ public:
     void GetPropertyIndices(vector<int>& indices) const;
 
     V8Value Invoke(const vector<V8Value>& args, bool asConstructor) const;
-    V8Value InvokeMethod(LPCWSTR pName, const vector<V8Value>& args) const;
+    V8Value InvokeMethod(const wchar_t* pName, const vector<V8Value>& args) const;
 
     ~V8ObjectHolderImpl();
 
 private:
 
-    SharedPtr<V8ContextImpl> m_psContextImpl;
-    LPVOID m_pvObject;
+    SharedPtr<V8ContextImpl> m_spContextImpl;
+    void* m_pvObject;
 };

@@ -62,10 +62,10 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
-// common headers
+// common platform headers
 //-----------------------------------------------------------------------------
 
-#include "Platform.h"
+#include "CommonPlatform.h"
 
 //-----------------------------------------------------------------------------
 // C++ support library headers
@@ -93,10 +93,10 @@ using namespace Microsoft::ClearScript::Util;
 // global macros
 //-----------------------------------------------------------------------------
 
-#define BEGIN_LOCK_SCOPE(obj) \
+#define BEGIN_LOCK_SCOPE(OBJECT) \
         { \
-            msclr::lock t_LockScope(obj);
+            msclr::lock t_Lock(OBJECT);
 
 #define END_LOCK_SCOPE \
-            (void) t_LockScope; \
+            IGNORE_UNUSED(t_Lock); \
         }

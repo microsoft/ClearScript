@@ -89,6 +89,11 @@ namespace Microsoft.ClearScript
         string ErrorDetails { get; }
 
         /// <summary>
+        /// Gets a value that indicates whether the exception represents a fatal error.
+        /// </summary>
+        bool IsFatal { get; }
+
+        /// <summary>
         /// Gets the exception that caused the current exception to be thrown, or <c>null</c> if one was not specified.
         /// </summary>
         Exception InnerException { get; }

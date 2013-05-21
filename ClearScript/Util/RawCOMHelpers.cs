@@ -83,6 +83,14 @@ namespace Microsoft.ClearScript.Util
             return pInterface;
         }
 
+        public static IntPtr QueryInterfaceNoThrow<T>(IntPtr pUnknown)
+        {
+            IntPtr pInterface;
+            var iid = typeof(T).GUID;
+            var result = Marshal.QueryInterface(pUnknown, ref iid, out pInterface);
+            return (result == HResult.S_OK) ? pInterface : IntPtr.Zero;
+        }
+
         public static T GetMethodDelegate<T>(IntPtr pInterface, int methodIndex) where T : class
         {
             var pVTable = Marshal.ReadIntPtr(pInterface);
@@ -92,8 +100,11 @@ namespace Microsoft.ClearScript.Util
 
         public static void ReleaseAndEmpty(ref IntPtr pInterface)
         {
-            Marshal.Release(pInterface);
-            pInterface = IntPtr.Zero;
+            if (pInterface != IntPtr.Zero)
+            {
+                Marshal.Release(pInterface);
+                pInterface = IntPtr.Zero;
+            }
         }
 
         private static Guid CLSIDFromProgID(string progID)

@@ -69,28 +69,46 @@ namespace V8 {
     // local helper functions
     //-------------------------------------------------------------------------
 
-    static void InvokeAction(LPVOID pvActionRef)
+    static void InvokeAction(void* pvActionRef)
     {
-        (*reinterpret_cast<Action^*>(pvActionRef))();
+        (*static_cast<Action^*>(pvActionRef))();
     }
 
     //-------------------------------------------------------------------------
-    // V8ProxyImpl implementation
+    // V8ContextProxyImpl implementation
     //-------------------------------------------------------------------------
 
-    V8ProxyImpl::V8ProxyImpl(String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Int32 debugPort):
+    V8ContextProxyImpl::V8ContextProxyImpl(V8IsolateProxy^ gcIsolateProxy, String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Int32 debugPort):
         m_gcLock(gcnew Object)
     {
-        m_gcDispatchDebugMessagesAction = gcnew Action(this, &V8ProxyImpl::DispatchDebugMessages);
-        m_gcProcessDebugMessagesCallback = gcnew WaitCallback(this, &V8ProxyImpl::ProcessDebugMessages);
-
-        auto pDispatcher = (V8Context::DebugMessageDispatcher*)Marshal::GetFunctionPointerForDelegate(m_gcDispatchDebugMessagesAction).ToPointer();
-        m_pContextPtr = new SharedPtr<V8Context>(V8Context::Create(StringToUniPtr(gcName), enableDebugging, disableGlobalMembers, pDispatcher, debugPort));
+        try
+        {
+            auto gcIsolateProxyImpl = dynamic_cast<V8IsolateProxyImpl^>(gcIsolateProxy);
+            m_pspContext = new SharedPtr<V8Context>(V8Context::Create(gcIsolateProxyImpl->GetIsolate(), StringToUniPtr(gcName), enableDebugging, disableGlobalMembers, debugPort));
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ThrowScriptEngineException();
+        }
     }
 
     //-------------------------------------------------------------------------
 
-    Object^ V8ProxyImpl::GetRootItem()
+    void V8ContextProxyImpl::InvokeWithLock(Action^ gcAction)
+    {
+        try
+        {
+            GetContext()->CallWithLock(InvokeAction, &gcAction);
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ThrowScriptEngineException();
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    Object^ V8ContextProxyImpl::GetRootItem()
     {
         try
         {
@@ -98,13 +116,13 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
     //-------------------------------------------------------------------------
 
-    void V8ProxyImpl::AddGlobalItem(String^ gcName, Object^ gcItem, Boolean globalMembers)
+    void V8ContextProxyImpl::AddGlobalItem(String^ gcName, Object^ gcItem, Boolean globalMembers)
     {
         try
         {
@@ -112,13 +130,13 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
     //-------------------------------------------------------------------------
 
-    Object^ V8ProxyImpl::Execute(String^ gcDocumentName, String^ gcCode, Boolean discard)
+    Object^ V8ContextProxyImpl::Execute(String^ gcDocumentName, String^ gcCode, Boolean discard)
     {
         try
         {
@@ -126,64 +144,113 @@ namespace V8 {
         }
         catch (const V8Exception& exception)
         {
-            ThrowScriptEngineException(exception);
+            exception.ThrowScriptEngineException();
         }
     }
 
     //-------------------------------------------------------------------------
 
-    void V8ProxyImpl::InvokeWithLock(Action^ gcAction)
+    V8Script^ V8ContextProxyImpl::Compile(String^ gcDocumentName, String^ gcCode)
     {
-        GetContext()->CallWithLock(InvokeAction, &gcAction);
+        try
+        {
+            return gcnew V8ScriptImpl(gcDocumentName, GetContext()->Compile(StringToUniPtr(gcDocumentName), StringToUniPtr(gcCode)));
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ThrowScriptEngineException();
+        }
     }
 
     //-------------------------------------------------------------------------
 
-    void V8ProxyImpl::Interrupt()
+    Object^ V8ContextProxyImpl::Execute(V8Script^ gcScript)
+    {
+        try
+        {
+            auto gcScriptImpl = dynamic_cast<V8ScriptImpl^>(gcScript);
+            if (gcScriptImpl == nullptr)
+            {
+                throw gcnew ArgumentException(L"Invalid compiled script", L"script");
+            }
+
+            auto spContext = GetContext();
+            auto spHolder = gcScriptImpl->GetHolder();
+            if (!spContext->CanExecute(spHolder))
+            {
+                throw gcnew ArgumentException(L"Invalid compiled script", L"script");
+            }
+
+            return ExportValue(spContext->Execute(spHolder));
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ThrowScriptEngineException();
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8ContextProxyImpl::Interrupt()
     {
         GetContext()->Interrupt();
     }
 
     //-------------------------------------------------------------------------
 
-    V8ProxyImpl::~V8ProxyImpl()
+    V8RuntimeHeapInfo^ V8ContextProxyImpl::GetRuntimeHeapInfo()
     {
-        SharedPtr<V8Context> psContext;
+        V8IsolateHeapInfo heapInfo;
+        GetContext()->GetIsolateHeapInfo(heapInfo);
+
+        auto gcHeapInfo = gcnew V8RuntimeHeapInfo();
+        gcHeapInfo->TotalHeapSize = heapInfo.GetTotalHeapSize();
+        gcHeapInfo->TotalHeapSizeExecutable = heapInfo.GetTotalHeapSizeExecutable();
+        gcHeapInfo->TotalPhysicalSize = heapInfo.GetTotalPhysicalSize();
+        gcHeapInfo->UsedHeapSize = heapInfo.GetUsedHeapSize();
+        gcHeapInfo->HeapSizeLimit = heapInfo.GetHeapSizeLimit();
+        return gcHeapInfo;
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8ContextProxyImpl::CollectGarbage(bool exhaustive)
+    {
+        GetContext()->CollectGarbage(exhaustive);
+    }
+
+    //-------------------------------------------------------------------------
+
+    V8ContextProxyImpl::~V8ContextProxyImpl()
+    {
+        SharedPtr<V8Context> spContext;
 
         BEGIN_LOCK_SCOPE(m_gcLock)
 
-            if (m_pContextPtr != nullptr)
+            if (m_pspContext != nullptr)
             {
                 // hold V8 context for destruction outside lock scope
-                psContext = *m_pContextPtr;
-                delete m_pContextPtr;
-                m_pContextPtr = nullptr;
+                spContext = *m_pspContext;
+                delete m_pspContext;
+                m_pspContext = nullptr;
             }
 
         END_LOCK_SCOPE
-
-        if (!psContext.IsEmpty())
-        {
-            // When enabled, the V8 context's debug agent holds a weak callback pointer into this
-            // managed proxy. The agent must therefore be disabled before the proxy goes away.
-
-            psContext->DisableDebugAgent();
-        }
     }
 
     //-------------------------------------------------------------------------
 
-    V8ProxyImpl::!V8ProxyImpl()
+    V8ContextProxyImpl::!V8ContextProxyImpl()
     {
-        if (m_pContextPtr != nullptr)
+        if (m_pspContext != nullptr)
         {
-            delete m_pContextPtr;
+            delete m_pspContext;
         }
     }
 
     //-------------------------------------------------------------------------
 
-    V8Value V8ProxyImpl::ImportValue(Object^ gcObject)
+    V8Value V8ContextProxyImpl::ImportValue(Object^ gcObject)
     {
         if (dynamic_cast<Nonexistent^>(gcObject) != nullptr)
         {
@@ -325,7 +392,7 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    Object^ V8ProxyImpl::ExportValue(const V8Value& value)
+    Object^ V8ContextProxyImpl::ExportValue(const V8Value& value)
     {
         if (value.IsNonexistent())
         {
@@ -390,7 +457,7 @@ namespace V8 {
         }
 
         {
-            LPCWSTR pResult;
+            const wchar_t* pResult;
             if (value.AsString(pResult))
             {
                 return gcnew String(pResult);
@@ -416,75 +483,20 @@ namespace V8 {
         return nullptr;
     }
 
-//-------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-    void __declspec(noreturn) V8ProxyImpl::ThrowScriptEngineException(const V8Exception& exception)
-    {
-        if (exception.GetType() == V8Exception::Type_Interrupt)
-        {
-            throw gcnew ScriptInterruptedException(gcnew String(exception.GetEngineName()), gcnew String(exception.GetMessage()), gcnew String(exception.GetStackTrace()), 0, nullptr);
-        }
-
-        auto gcInnerException = dynamic_cast<Exception^>(ExportValue(exception.GetInnerException()));
-        throw gcnew ScriptEngineException(gcnew String(exception.GetEngineName()), gcnew String(exception.GetMessage()), gcnew String(exception.GetStackTrace()), 0, gcInnerException);
-    }
-
-//-------------------------------------------------------------------------
-
-    SharedPtr<V8Context> V8ProxyImpl::GetContext()
+    SharedPtr<V8Context> V8ContextProxyImpl::GetContext()
     {
         BEGIN_LOCK_SCOPE(m_gcLock)
 
-            if (m_pContextPtr == nullptr)
+            if (m_pspContext == nullptr)
             {
                 throw gcnew ObjectDisposedException(ToString());
             }
 
-            return *m_pContextPtr;
+            return *m_pspContext;
 
         END_LOCK_SCOPE
-    }
-
-    //-------------------------------------------------------------------------
-
-    bool V8ProxyImpl::TryGetContext(SharedPtr<V8Context>& psContext)
-    {
-        BEGIN_LOCK_SCOPE(m_gcLock)
-
-            if (m_pContextPtr != nullptr)
-            {
-                psContext = *m_pContextPtr;
-                return true;
-            }
-
-            return false;
-
-        END_LOCK_SCOPE
-    }
-
-    //-------------------------------------------------------------------------
-
-    void V8ProxyImpl::DispatchDebugMessages()
-    {
-        SharedPtr<V8Context> psContext;
-        if (TryGetContext(psContext))
-        {
-            if (psContext->IncrementDebugMessageDispatchCount() == 1)
-            {
-                ThreadPool::QueueUserWorkItem(m_gcProcessDebugMessagesCallback);
-            }
-        }
-    }
-
-    //-------------------------------------------------------------------------
-
-    void V8ProxyImpl::ProcessDebugMessages(Object^ /* gcState */)
-    {
-        SharedPtr<V8Context> psContext;
-        if (TryGetContext(psContext))
-        {
-            psContext->ProcessDebugMessages();
-        }
     }
 
 }}}

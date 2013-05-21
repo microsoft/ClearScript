@@ -76,6 +76,13 @@
     <Compile Include="ScriptUsageAttribute.cs" />
     <Compile Include="Util\IScriptMarshalWrapper.cs" />
     <Compile Include="Util\MemberHelpers.cs" />
+    <Compile Include="V8\V8RuntimeHeapInfo.cs" />
+    <Compile Include="V8\V8Script.cs" />
+    <Compile Include="V8\V8IsolateProxy.cs" />
+    <Compile Include="V8\V8Proxy.cs" />
+    <Compile Include="V8\V8RuntimeConstraints.cs" />
+    <Compile Include="V8\V8Runtime.cs" />
+    <Compile Include="V8\V8RuntimeFlags.cs" />
     <Compile Include="Windows\WindowsScriptEngineFlags.cs" />
     <Compile Include="Util\IDynamic.cs" />
     <Compile Include="Util\SpecialMemberNames.cs" />
@@ -111,6 +118,10 @@
     <Compile Include="HostItem.cs" />
     <Compile Include="HostVariable.cs" />
     <Compile Include="Windows\JScriptEngine.cs" />
+    <None Include="Exports\CallbackManager.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CallbackManager.h</LastGenOutput>
+    </None>
     <None Include="Properties\AssemblyInfo.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>AssemblyInfo.cs</LastGenOutput>
@@ -132,7 +143,7 @@
     <Compile Include="Util\ConcurrentWeakSet.cs" />
     <Compile Include="Windows\VBScriptEngine.cs" />
     <Compile Include="V8\IV8Object.cs" />
-    <Compile Include="V8\V8Proxy.cs" />
+    <Compile Include="V8\V8ContextProxy.cs" />
     <Compile Include="V8\V8ProxyHelpers.cs" />
     <Compile Include="V8\V8ScriptEngine.cs" />
     <Compile Include="V8\V8ScriptItem.cs" />
@@ -142,7 +153,7 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>DelegateFactory.Generated.cs</LastGenOutput>
     </None>
-    <None Include="VersionSymbols.tt">
+    <None Include="Exports\VersionSymbols.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>VersionSymbols.h</LastGenOutput>
     </None>
@@ -151,7 +162,12 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="VersionSymbols.h">
+    <Content Include="Exports\CallbackManager.h">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CallbackManager.tt</DependentUpon>
+    </Content>
+    <Content Include="Exports\VersionSymbols.h">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>VersionSymbols.tt</DependentUpon>

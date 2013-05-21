@@ -112,11 +112,6 @@ namespace Microsoft.ClearScript
 
         #region constructors
 
-        private HostItem(ScriptEngine engine, object target, Type type, HostItemFlags flags)
-            : this(engine, (target as HostTarget) ?? HostObject.Wrap(target, type), flags)
-        {
-        }
-
         private HostItem(ScriptEngine engine, HostTarget target, HostItemFlags flags)
         {
             this.engine = engine;
@@ -160,7 +155,7 @@ namespace Microsoft.ClearScript
             var hostTarget = obj as HostTarget;
             if (hostTarget != null)
             {
-                return new HostItem(engine, hostTarget, flags);
+                return BindOrCreate(engine, hostTarget, flags);
             }
 
             if (type == null)
@@ -174,13 +169,13 @@ namespace Microsoft.ClearScript
 
             if (obj is Enum)
             {
-                return new HostItem(engine, obj, type, flags);
+                return BindOrCreate(engine, obj, type, flags);
             }
 
             var typeCode = Type.GetTypeCode(type);
             if ((typeCode == TypeCode.Object) || (typeCode == TypeCode.DateTime))
             {
-                return new HostItem(engine, obj, type, flags);
+                return BindOrCreate(engine, obj, type, flags);
             }
 
             return obj;
@@ -246,6 +241,21 @@ namespace Microsoft.ClearScript
         #endregion
 
         #region internal members
+
+        private static object BindOrCreate(ScriptEngine engine, object target, Type type, HostItemFlags flags)
+        {
+            return BindOrCreate(engine, (target as HostTarget) ?? HostObject.Wrap(target, type), flags);
+        }
+
+        private static object BindOrCreate(ScriptEngine engine, HostTarget target, HostItemFlags flags)
+        {
+            return engine.GetOrCreateHostItem(target, flags, Create);
+        }
+
+        private static HostItem Create(ScriptEngine engine, HostTarget target, HostItemFlags flags)
+        {
+            return new HostItem(engine, target, flags);
+        }
 
         private void Initialize()
         {

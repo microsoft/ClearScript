@@ -456,6 +456,14 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_CollectGarbage()
+        {
+            engine.Execute(@"x = []; for (i = 0; i < 1024 * 1024; i++) { x.push(x); }");
+            engine.CollectGarbage(true);
+            // can't test JScript GC effectiveness
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_new()
         {
             engine.AddHostObject("clr", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));

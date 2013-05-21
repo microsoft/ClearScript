@@ -62,18 +62,6 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
-// V8 headers
-//-----------------------------------------------------------------------------
-
-#pragma warning(push, 3)
-
-#include "v8.h"
-#include "v8-debug.h"
-using namespace v8;
-
-#pragma warning(pop)
-
-//-----------------------------------------------------------------------------
 // V8ContextImpl
 //-----------------------------------------------------------------------------
 
@@ -83,37 +71,138 @@ class V8ContextImpl: public V8Context
 
 public:
 
-    V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGlobalMembers, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort);
+    V8ContextImpl(V8IsolateImpl* pIsolateImpl, const wchar_t* pName, bool enableDebugging, bool disableGlobalMembers, int debugPort);
 
+    void CallWithLock(LockCallbackT* pCallback, void* pvArg);
     V8Value GetRootObject();
-    void SetGlobalProperty(LPCWSTR pName, const V8Value& value, bool globalMembers);
-    V8Value Execute(LPCWSTR pDocumentName, LPCWSTR pCode, bool discard);
-    void CallWithLock(LockCallback* pCallback, LPVOID pvArg);
+    void SetGlobalProperty(const wchar_t* pName, const V8Value& value, bool globalMembers);
+    V8Value Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool discard);
+    V8ScriptHolder* Compile(const wchar_t* pDocumentName, const wchar_t* pCode);
+    bool CanExecute(V8ScriptHolder* pHolder);
+    V8Value Execute(V8ScriptHolder* pHolder);
     void Interrupt();
+    void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo);
+    void CollectGarbage(bool exhaustive);
 
-    int IncrementDebugMessageDispatchCount();
+    void* AddRefV8Object(void* pvObject);
+    void ReleaseV8Object(void* pvObject);
+
+    V8Value GetV8ObjectProperty(void* pvObject, const wchar_t* pName);
+    void SetV8ObjectProperty(void* pvObject, const wchar_t* pName, const V8Value& value);
+    bool DeleteV8ObjectProperty(void* pvObject, const wchar_t* pName);
+    void GetV8ObjectPropertyNames(void* pvObject, vector<wstring>& names);
+
+    V8Value GetV8ObjectProperty(void* pvObject, int index);
+    void SetV8ObjectProperty(void* pvObject, int index, const V8Value& value);
+    bool DeleteV8ObjectProperty(void* pvObject, int index);
+    void GetV8ObjectPropertyIndices(void* pvObject, vector<int>& indices);
+
+    V8Value InvokeV8Object(void* pvObject, const vector<V8Value>& args, bool asConstructor);
+    V8Value InvokeV8ObjectMethod(void* pvObject, const wchar_t* pName, const vector<V8Value>& args);
+
     void ProcessDebugMessages();
-    void DisableDebugAgent();
-
-    LPVOID AddRefV8Object(LPVOID pvV8Object);
-    void ReleaseV8Object(LPVOID pvV8Object);
-
-    V8Value GetV8ObjectProperty(LPVOID pvV8Object, LPCWSTR pName);
-    void SetV8ObjectProperty(LPVOID pvV8Object, LPCWSTR pName, const V8Value& value);
-    bool DeleteV8ObjectProperty(LPVOID pvV8Object, LPCWSTR pName);
-    void GetV8ObjectPropertyNames(LPVOID pvV8Object, vector<wstring>& names);
-
-    V8Value GetV8ObjectProperty(LPVOID pvV8Object, int index);
-    void SetV8ObjectProperty(LPVOID pvV8Object, int index, const V8Value& value);
-    bool DeleteV8ObjectProperty(LPVOID pvV8Object, int index);
-    void GetV8ObjectPropertyIndices(LPVOID pvV8Object, vector<int>& indices);
-
-    V8Value InvokeV8Object(LPVOID pvV8Object, const vector<V8Value>& args, bool asConstructor);
-    V8Value InvokeV8ObjectMethod(LPVOID pvV8Object, LPCWSTR pName, const vector<V8Value>& args);
 
     ~V8ContextImpl();
 
 private:
+
+    class Scope
+    {
+        PROHIBIT_COPY(Scope)
+        PROHIBIT_HEAP(Scope)
+
+    public:
+
+        explicit Scope(V8ContextImpl* pContextImpl):
+            m_pContextImpl(pContextImpl),
+            m_ContextScope(m_pContextImpl->m_hContext)
+        {
+        }
+
+        ~Scope()
+        {
+            if (!uncaught_exception() &&m_pContextImpl->m_hContext->HasOutOfMemoryException())
+            {
+                m_pContextImpl->m_spIsolateImpl->ThrowOutOfMemoryException();
+            }
+        }
+
+    private:
+
+        V8ContextImpl* m_pContextImpl;
+        Context::Scope m_ContextScope;
+    };
+
+    Local<Context> CreateContext(ExtensionConfiguration* pExtensionConfiguation = nullptr, Handle<ObjectTemplate> hGlobalTemplate = Handle<ObjectTemplate>(), Handle<Value> hGlobalObject = Handle<Value>())
+    {
+        return m_spIsolateImpl->CreateContext(pExtensionConfiguation, hGlobalTemplate, hGlobalObject);
+    }
+
+    Handle<Primitive> GetUndefined()
+    {
+        return m_spIsolateImpl->GetUndefined();
+    }
+
+    Handle<Primitive> GetNull()
+    {
+        return m_spIsolateImpl->GetNull();
+    }
+
+    Handle<Boolean> GetTrue()
+    {
+        return m_spIsolateImpl->GetTrue();
+    }
+
+    Handle<Boolean> GetFalse()
+    {
+        return m_spIsolateImpl->GetFalse();
+    }
+
+    Local<Integer> CreateInteger(__int32 value)
+    {
+        return m_spIsolateImpl->CreateInteger(value);
+    }
+
+    Local<Integer> CreateInteger(unsigned __int32 value)
+    {
+        return m_spIsolateImpl->CreateInteger(value);
+    }
+
+    template <typename T>
+    Local<T> CreateLocal(Handle<T> hTarget)
+    {
+        return m_spIsolateImpl->CreateLocal(hTarget);
+    }
+
+    template <typename T>
+    Persistent<T> CreatePersistent(Handle<T> hTarget)
+    {
+        return m_spIsolateImpl->CreatePersistent(hTarget);
+    }
+
+    template <typename T>
+    Persistent<T> MakeWeak(Persistent<T> hTarget, void* pvArg, NearDeathCallback pCallback)
+    {
+        return m_spIsolateImpl->MakeWeak(hTarget, pvArg, pCallback);
+    }
+
+    template <typename T>
+    void Dispose(Persistent<T> hTarget)
+    {
+        return m_spIsolateImpl->Dispose(hTarget);
+    }
+
+    void TerminateExecution()
+    {
+        return m_spIsolateImpl->TerminateExecution();
+    }
+
+    template <typename T>
+    T Verify(const TryCatch& tryCatch, T result)
+    {
+        Verify(tryCatch);
+        return result;
+    }
 
     Handle<Value> Wrap();
 
@@ -145,7 +234,7 @@ private:
     static Handle<Array> GetHostObjectPropertyIndices(const AccessorInfo& info);
 
     static Handle<Value> InvokeHostObject(const Arguments& args);
-    static void DisposeWeakHandle(Isolate* pIsolate, Persistent<Value> hValue, void* parameter);
+    static void DisposeWeakHandle(Isolate* pIsolate, Persistent<Value> hValue, void* pvArg);
 
     Persistent<Integer> GetIntegerHandle(int value);
     Handle<Value> ImportValue(const V8Value& value);
@@ -153,18 +242,17 @@ private:
     void ImportValues(const vector<V8Value>& values, vector<Handle<Value>>& importedValues);
 
     void Verify(const TryCatch& tryCatch);
-    template<typename T> T Verify(const TryCatch& tryCatch, T result);
+    void VerifyNotOutOfMemory();
     void ThrowScriptException(const HostException& exception);
 
     wstring m_Name;
-    Isolate* m_pIsolate;
-    bool m_DebugAgentEnabled;
-    long m_DebugMessageDispatchCount;
+    SharedPtr<V8IsolateImpl> m_spIsolateImpl;
     Persistent<Context> m_hContext;
     Persistent<Object> m_hGlobal;
     vector<Persistent<Object>> m_GlobalMembersStack;
     Persistent<String> m_hHostObjectCookieName;
     Persistent<String> m_hInnerExceptionName;
     Persistent<FunctionTemplate> m_hHostObjectTemplate;
-    hash_map<int, Persistent<Integer>> m_IntegerCache;
+    unordered_map<int, Persistent<Integer>> m_IntegerCache;
+    void* m_pvV8ObjectCache;
 };

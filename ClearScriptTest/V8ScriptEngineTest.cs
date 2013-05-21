@@ -467,6 +467,15 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CollectGarbage()
+        {
+            engine.Execute(@"x = []; for (i = 0; i < 1024 * 1024; i++) { x.push(x); }");
+            var usedHeapSize = engine.GetRuntimeHeapInfo().UsedHeapSize;
+            engine.CollectGarbage(true);
+            Assert.IsTrue(usedHeapSize > engine.GetRuntimeHeapInfo().UsedHeapSize);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_Parallel()
         {
             engine.AddHostObject("host", new HostFunctions());
@@ -571,6 +580,81 @@ namespace Microsoft.ClearScript.Test
 
                 engine.Execute(generalScript);
                 Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_General_Precompiled()
+        {
+            using (var script = engine.Compile(generalScript))
+            {
+                using (var console = new StringWriter())
+                {
+                    var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                    clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                    engine.AddHostObject("host", new ExtendedHostFunctions());
+                    engine.AddHostObject("clr", clr);
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+
+                    console.GetStringBuilder().Clear();
+                    Assert.AreEqual(string.Empty, console.ToString());
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_General_Precompiled_Dual()
+        {
+            engine.Dispose();
+            using (var runtime = new V8Runtime())
+            {
+                using (var script = runtime.Compile(generalScript))
+                {
+                    engine = runtime.CreateScriptEngine();
+                    using (var console = new StringWriter())
+                    {
+                        var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                        clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                        engine.AddHostObject("host", new ExtendedHostFunctions());
+                        engine.AddHostObject("clr", clr);
+
+                        engine.Evaluate(script);
+                        Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+
+                        console.GetStringBuilder().Clear();
+                        Assert.AreEqual(string.Empty, console.ToString());
+
+                        engine.Evaluate(script);
+                        Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+                    }
+
+                    engine.Dispose();
+                    engine = runtime.CreateScriptEngine();
+                    using (var console = new StringWriter())
+                    {
+                        var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                        clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                        engine.AddHostObject("host", new ExtendedHostFunctions());
+                        engine.AddHostObject("clr", clr);
+
+                        engine.Evaluate(script);
+                        Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+
+                        console.GetStringBuilder().Clear();
+                        Assert.AreEqual(string.Empty, console.ToString());
+
+                        engine.Evaluate(script);
+                        Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+                    }
+                }
             }
         }
 
@@ -710,6 +794,87 @@ namespace Microsoft.ClearScript.Test
                     throw;
                 }
             });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ResourceConstraints()
+        {
+            const int limit = 4 * 1024 * 1024;
+            const string code = @"x = []; while (true) { x.push(x); }";
+
+            var constraints = new V8RuntimeConstraints
+            {
+                MaxYoungSpaceSize = limit,
+                MaxOldSpaceSize = limit,
+                MaxExecutableSize = limit
+            };
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(constraints);
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute(code);
+                }
+                catch (ScriptEngineException exception)
+                {
+                    Assert.IsTrue(exception.IsFatal);
+                    throw;
+                }
+            });
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.CollectGarbage(true);
+                    engine.Execute("x = 5");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    Assert.IsTrue(exception.IsFatal);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ResourceConstraints_Dual()
+        {
+            const int limit = 4 * 1024 * 1024;
+            const string code = @"x = []; for (i = 0; i < 1024 * 1024; i++) { x.push(x); }";
+
+            engine.Execute(code);
+            engine.CollectGarbage(true);
+            var usedHeapSize = engine.GetRuntimeHeapInfo().UsedHeapSize;
+
+            var constraints = new V8RuntimeConstraints
+            {
+                MaxYoungSpaceSize = limit,
+                MaxOldSpaceSize = limit,
+                MaxExecutableSize = limit
+            };
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(constraints);
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute(code);
+                }
+                catch (ScriptEngineException exception)
+                {
+                    Assert.IsTrue(exception.IsFatal);
+                    throw;
+                }
+            });
+
+            engine.CollectGarbage(true);
+            Assert.IsTrue(usedHeapSize > engine.GetRuntimeHeapInfo().UsedHeapSize);
         }
 
         // ReSharper restore InconsistentNaming

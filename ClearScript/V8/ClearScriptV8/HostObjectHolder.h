@@ -70,9 +70,7 @@ class HostObjectHolder
 public:
 
     virtual HostObjectHolder* Clone() const = 0;
-    virtual LPVOID GetObject() const = 0;
+    virtual void* GetObject() const = 0;
 
-    virtual ~HostObjectHolder()
-    {
-    }
+    virtual ~HostObjectHolder() {}
 };

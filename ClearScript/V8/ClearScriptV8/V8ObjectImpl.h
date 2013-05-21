@@ -74,7 +74,6 @@ namespace V8 {
     public:
 
         V8ObjectImpl(V8ObjectHolder* pHolder);
-        SharedPtr<V8ObjectHolder> GetHolder();
 
         virtual Object^ GetProperty(String^ gcName);
         virtual void SetProperty(String^ gcName, Object^ gcValue);
@@ -89,6 +88,8 @@ namespace V8 {
         virtual Object^ Invoke(array<Object^>^ gcArgs, bool asConstructor);
         virtual Object^ InvokeMethod(String^ gcName, array<Object^>^ gcArgs);
 
+        SharedPtr<V8ObjectHolder> GetHolder();
+
         ~V8ObjectImpl();
         !V8ObjectImpl();
 
@@ -97,7 +98,7 @@ namespace V8 {
         static void ImportValues(array<Object^>^ gcValues, vector<V8Value>& importedValues);
 
         Object^ m_gcLock;
-        SharedPtr<V8ObjectHolder>* m_pHolderPtr;
+        SharedPtr<V8ObjectHolder>* m_pspHolder;
     };
 
 }}}

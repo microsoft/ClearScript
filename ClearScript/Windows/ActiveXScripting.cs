@@ -135,6 +135,12 @@ namespace Microsoft.ClearScript.Windows
         IsXDomain = 0x00000100
     }
 
+    internal enum ScriptGCType
+    {
+        Normal = 0,
+        Exhaustive = 1
+    }
+
     #endregion
 
     #region constants
@@ -378,6 +384,16 @@ namespace Microsoft.ClearScript.Windows
             [Out] out ulong sourceContext,
             [Out] out uint lineNumber,
             [Out] out int position
+        );
+    }
+
+    [ComImport]
+    [Guid("6aa2c4a0-2b53-11d4-a2a0-00104bd35090")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IActiveScriptGarbageCollector
+    {
+        void CollectGarbage(
+            [In] ScriptGCType type
         );
     }
 

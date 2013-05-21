@@ -100,6 +100,8 @@ namespace Microsoft.ClearScript.Windows
 
         public abstract void EnumStackFrames(out IEnumDebugStackFrames enumFrames);
 
+        public abstract void CollectGarbage(ScriptGCType type);
+
         public abstract void Close();
     }
 
@@ -110,11 +112,13 @@ namespace Microsoft.ClearScript.Windows
         private IntPtr pActiveScript;
         private IntPtr pActiveScriptParse;
         private IntPtr pActiveScriptDebug;
+        private IntPtr pActiveScriptGarbageCollector;
         private IntPtr pDebugStackFrameSniffer;
 
         private IActiveScript activeScript;
         private IActiveScriptParse32 activeScriptParse;
         private IActiveScriptDebug32 activeScriptDebug;
+        private IActiveScriptGarbageCollector activeScriptGarbageCollector;
         private IDebugStackFrameSnifferEx32 debugStackFrameSniffer;
 
         // ReSharper restore NotAccessedField.Local
@@ -139,11 +143,13 @@ namespace Microsoft.ClearScript.Windows
             pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
             pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse32>(pActiveScript);
             pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug32>(pActiveScript);
+            pActiveScriptGarbageCollector = RawCOMHelpers.QueryInterfaceNoThrow<IActiveScriptGarbageCollector>(pActiveScript);
             pDebugStackFrameSniffer = RawCOMHelpers.QueryInterface<IDebugStackFrameSnifferEx32>(pActiveScript);
 
             activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pActiveScript);
             activeScriptParse = (IActiveScriptParse32)activeScript;
             activeScriptDebug = (IActiveScriptDebug32)activeScript;
+            activeScriptGarbageCollector = activeScript as IActiveScriptGarbageCollector;
             debugStackFrameSniffer = (IDebugStackFrameSnifferEx32)activeScript;
         }
 
@@ -199,16 +205,26 @@ namespace Microsoft.ClearScript.Windows
             debugStackFrameSniffer.EnumStackFrames(out enumFrames);
         }
 
+        public override void CollectGarbage(ScriptGCType type)
+        {
+            if (activeScriptGarbageCollector != null)
+            {
+                activeScriptGarbageCollector.CollectGarbage(type);
+            }
+        }
+
         public override void Close()
         {
             activeScript.Close();
 
             debugStackFrameSniffer = null;
+            activeScriptGarbageCollector = null;
             activeScriptDebug = null;
             activeScriptParse = null;
             activeScript = null;
 
             RawCOMHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
+            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptGarbageCollector);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScript);
@@ -222,11 +238,13 @@ namespace Microsoft.ClearScript.Windows
         private IntPtr pActiveScript;
         private IntPtr pActiveScriptParse;
         private IntPtr pActiveScriptDebug;
+        private IntPtr pActiveScriptGarbageCollector;
         private IntPtr pDebugStackFrameSniffer;
 
         private IActiveScript activeScript;
         private IActiveScriptParse64 activeScriptParse;
         private IActiveScriptDebug64 activeScriptDebug;
+        private IActiveScriptGarbageCollector activeScriptGarbageCollector;
         private IDebugStackFrameSnifferEx64 debugStackFrameSniffer;
 
         // ReSharper restore NotAccessedField.Local
@@ -251,11 +269,13 @@ namespace Microsoft.ClearScript.Windows
             pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
             pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse64>(pActiveScript);
             pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug64>(pActiveScript);
+            pActiveScriptGarbageCollector = RawCOMHelpers.QueryInterfaceNoThrow<IActiveScriptGarbageCollector>(pActiveScript);
             pDebugStackFrameSniffer = RawCOMHelpers.QueryInterface<IDebugStackFrameSnifferEx64>(pActiveScript);
 
             activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pActiveScript);
             activeScriptParse = (IActiveScriptParse64)activeScript;
             activeScriptDebug = (IActiveScriptDebug64)activeScript;
+            activeScriptGarbageCollector = activeScript as IActiveScriptGarbageCollector;
             debugStackFrameSniffer = (IDebugStackFrameSnifferEx64)activeScript;
         }
 
@@ -311,16 +331,26 @@ namespace Microsoft.ClearScript.Windows
             debugStackFrameSniffer.EnumStackFrames(out enumFrames);
         }
 
+        public override void CollectGarbage(ScriptGCType type)
+        {
+            if (activeScriptGarbageCollector != null)
+            {
+                activeScriptGarbageCollector.CollectGarbage(type);
+            }
+        }
+
         public override void Close()
         {
             activeScript.Close();
 
             debugStackFrameSniffer = null;
+            activeScriptGarbageCollector = null;
             activeScriptDebug = null;
             activeScriptParse = null;
             activeScript = null;
 
             RawCOMHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
+            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptGarbageCollector);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScript);

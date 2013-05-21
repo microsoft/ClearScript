@@ -59,13 +59,13 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#include "ClearScriptV8.h"
+#include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
 // HostObjectHolderImpl implementation
 //-----------------------------------------------------------------------------
 
-HostObjectHolderImpl::HostObjectHolderImpl(LPVOID pvObject):
+HostObjectHolderImpl::HostObjectHolderImpl(void* pvObject):
     m_pvObject(pvObject)
 {
 }
@@ -79,7 +79,7 @@ HostObjectHolderImpl* HostObjectHolderImpl::Clone() const
 
 //-----------------------------------------------------------------------------
 
-LPVOID HostObjectHolderImpl::GetObject() const
+void* HostObjectHolderImpl::GetObject() const
 {
     return m_pvObject;
 }

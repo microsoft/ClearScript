@@ -59,22 +59,36 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#include "ClearScriptV8.h"
+#include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
 // local helper functions
 //-----------------------------------------------------------------------------
 
-static LPVOID PtrFromObjectHandle(Persistent<Object> hObject)
+static void* PtrFromObjectHandle(Persistent<Object> hObject)
 {
     return *hObject;
 }
 
 //-----------------------------------------------------------------------------
 
-static Persistent<Object> ObjectHandleFromPtr(LPVOID pvV8Object)
+static Persistent<Object> ObjectHandleFromPtr(void* pvObject)
 {
-    return Persistent<Object>(reinterpret_cast<Object*>(pvV8Object));
+    return Persistent<Object>(static_cast<Object*>(pvObject));
+}
+
+//-----------------------------------------------------------------------------
+
+static void* PtrFromScriptHandle(Persistent<Script> hScript)
+{
+    return *hScript;
+}
+
+//-----------------------------------------------------------------------------
+
+static Persistent<Script> ScriptHandleFromPtr(void* pvScript)
+{
+    return Persistent<Script>(static_cast<Script*>(pvScript));
 }
 
 //-----------------------------------------------------------------------------
@@ -82,7 +96,7 @@ static Persistent<Object> ObjectHandleFromPtr(LPVOID pvV8Object)
 static HostObjectHolder* GetHostObjectHolder(Handle<Object> hObject)
 {
     _ASSERTE(hObject->InternalFieldCount() > 0);
-    return reinterpret_cast<HostObjectHolder*>(hObject->GetAlignedPointerFromInternalField(0));
+    return static_cast<HostObjectHolder*>(hObject->GetAlignedPointerFromInternalField(0));
 }
 
 //-----------------------------------------------------------------------------
@@ -95,7 +109,7 @@ static void SetHostObjectHolder(Handle<Object> hObject, HostObjectHolder* pHolde
 
 //-----------------------------------------------------------------------------
 
-static LPVOID GetHostObject(Handle<Object> hObject)
+static void* GetHostObject(Handle<Object> hObject)
 {
     auto pHolder = ::GetHostObjectHolder(hObject);
     return (pHolder != nullptr) ? pHolder->GetObject() : nullptr;
@@ -105,26 +119,26 @@ static LPVOID GetHostObject(Handle<Object> hObject)
 
 static V8ContextImpl* UnwrapContextImpl(const AccessorInfo& info)
 {
-    return reinterpret_cast<V8ContextImpl*>(Local<External>::Cast(info.Data())->Value());
+    return static_cast<V8ContextImpl*>(Local<External>::Cast(info.Data())->Value());
 }
 
 //-----------------------------------------------------------------------------
 
 static V8ContextImpl* UnwrapContextImpl(const Arguments& args)
 {
-    return reinterpret_cast<V8ContextImpl*>(Local<External>::Cast(args.Data())->Value());
+    return static_cast<V8ContextImpl*>(Local<External>::Cast(args.Data())->Value());
 }
 
 //-----------------------------------------------------------------------------
 
-static LPVOID UnwrapHostObject(const AccessorInfo& info)
+static void* UnwrapHostObject(const AccessorInfo& info)
 {
     return ::GetHostObject(info.Holder());
 }
 
 //-----------------------------------------------------------------------------
 
-static LPVOID UnwrapHostObject(const Arguments& args)
+static void* UnwrapHostObject(const Arguments& args)
 {
     return ::GetHostObject(args.Holder());
 }
@@ -135,22 +149,26 @@ static LPVOID UnwrapHostObject(const Arguments& args)
 
 #define BEGIN_ISOLATE_SCOPE \
         { \
-            Locker t_LockScope(m_pIsolate); \
-            Isolate::Scope t_IsolateScope(m_pIsolate); \
-            HandleScope t_HandleScope(m_pIsolate);
+            V8IsolateImpl::Scope t_IsolateScope(m_spIsolateImpl);
 
 #define END_ISOLATE_SCOPE \
-            (void) t_HandleScope; \
-            (void) t_IsolateScope; \
-            (void) t_LockScope; \
+            IGNORE_UNUSED(t_IsolateScope); \
         }
 
 #define BEGIN_CONTEXT_SCOPE \
         { \
-            Context::Scope t_ContextScope(m_hContext);
+            Scope t_ContextScope(this);
 
 #define END_CONTEXT_SCOPE \
-            (void) t_ContextScope; \
+            IGNORE_UNUSED(t_ContextScope); \
+        }
+
+#define BEGIN_CONTEXT_SCOPE_NOTHROW \
+        { \
+            Context::Scope t_ContextScopeNoThrow(m_hContext);
+
+#define END_CONTEXT_SCOPE_NOTHROW \
+            IGNORE_UNUSED(t_ContextScopeNoThrow); \
         }
 
 #define BEGIN_VERIFY_SCOPE \
@@ -158,22 +176,22 @@ static LPVOID UnwrapHostObject(const Arguments& args)
             TryCatch t_TryCatch;
 
 #define END_VERIFY_SCOPE \
-            (void) t_TryCatch; \
+            IGNORE_UNUSED(t_TryCatch); \
         }
 
-#define VERIFY(result) \
-            Verify(t_TryCatch, result)
+#define VERIFY(RESULT) \
+            Verify(t_TryCatch, RESULT)
 
 #define VERIFY_CHECKPOINT() \
             Verify(t_TryCatch)
 
 //-----------------------------------------------------------------------------
 
-V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGlobalMembers, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort):
-    m_pIsolate(Isolate::New()),
-    m_DebugAgentEnabled(false),
-    m_DebugMessageDispatchCount(0)
+V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const wchar_t* pName, bool enableDebugging, bool disableGlobalMembers, int debugPort):
+    m_spIsolateImpl(pIsolateImpl)
 {
+    VerifyNotOutOfMemory();
+
     if (pName != nullptr)
     {
         m_Name = pName;
@@ -183,7 +201,7 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGl
 
         if (disableGlobalMembers)
         {
-            m_hContext = Persistent<Context>::New(m_pIsolate, Context::New(m_pIsolate));
+            m_hContext = CreatePersistent(CreateContext());
         }
         else
         {
@@ -192,9 +210,9 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGl
             hGlobalTemplate->SetNamedPropertyHandler(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyNames);
             hGlobalTemplate->SetIndexedPropertyHandler(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyIndices);
 
-            m_hContext = Persistent<Context>::New(m_pIsolate, Context::New(m_pIsolate, nullptr, hGlobalTemplate));
+            m_hContext = CreatePersistent(CreateContext(nullptr, hGlobalTemplate));
 
-            m_hGlobal = Persistent<Object>::New(m_pIsolate, m_hContext->Global()->GetPrototype()->ToObject());
+            m_hGlobal = CreatePersistent(m_hContext->Global()->GetPrototype()->ToObject());
             _ASSERTE(m_hGlobal->InternalFieldCount() > 0);
             m_hGlobal->SetAlignedPointerInInternalField(0, this);
         }
@@ -204,10 +222,10 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGl
             // Be careful when renaming the cookie or changing the way host objects are marked.
             // Such a change will require a corresponding change in the V8ScriptEngine constructor.
 
-            m_hHostObjectCookieName = Persistent<String>::New(m_pIsolate, String::New(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}"));
-            m_hInnerExceptionName = Persistent<String>::New(m_pIsolate, String::New(L"inner"));
+            m_hHostObjectCookieName = CreatePersistent(String::New(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}"));
+            m_hInnerExceptionName = CreatePersistent(String::New(L"inner"));
 
-            m_hHostObjectTemplate = Persistent<FunctionTemplate>::New(m_pIsolate, FunctionTemplate::New());
+            m_hHostObjectTemplate = CreatePersistent(FunctionTemplate::New());
             m_hHostObjectTemplate->SetClassName(String::New(L"HostObject"));
 
             m_hHostObjectTemplate->InstanceTemplate()->SetInternalFieldCount(1);
@@ -217,11 +235,21 @@ V8ContextImpl::V8ContextImpl(LPCWSTR pName, bool enableDebugging, bool disableGl
 
         END_CONTEXT_SCOPE
 
-        if (enableDebugging)
-        {
-            Debug::SetDebugMessageDispatchHandler(pDebugMessageDispatcher);
-            m_DebugAgentEnabled = Debug::EnableAgent(*String::Utf8Value(String::New(pName)), debugPort);
-        }
+        m_spIsolateImpl->AddContext(this, enableDebugging, debugPort);
+        m_pvV8ObjectCache = HostObjectHelpers::CreateV8ObjectCache();
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::CallWithLock(LockCallbackT* pCallback, void* pvArg)
+{
+    VerifyNotOutOfMemory();
+
+    BEGIN_ISOLATE_SCOPE
+
+        (*pCallback)(pvArg);
 
     END_ISOLATE_SCOPE
 }
@@ -239,15 +267,15 @@ V8Value V8ContextImpl::GetRootObject()
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::SetGlobalProperty(LPCWSTR pName, const V8Value& value, bool globalMembers)
+void V8ContextImpl::SetGlobalProperty(const wchar_t* pName, const V8Value& value, bool globalMembers)
 {
     BEGIN_CONTEXT_SCOPE
 
         auto hValue = ImportValue(value);
-        m_hContext->Global()->Set(String::New(pName), hValue, (PropertyAttribute)(ReadOnly | DontDelete));
+        m_hContext->Global()->ForceSet(String::New(pName), hValue, (PropertyAttribute)(ReadOnly | DontDelete));
         if (globalMembers && hValue->IsObject())
         {
-            m_GlobalMembersStack.push_back(Persistent<Object>::New(m_pIsolate, hValue->ToObject()));
+            m_GlobalMembersStack.push_back(CreatePersistent(hValue->ToObject()));
         }
 
     END_CONTEXT_SCOPE
@@ -255,12 +283,12 @@ void V8ContextImpl::SetGlobalProperty(LPCWSTR pName, const V8Value& value, bool 
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::Execute(LPCWSTR pDocumentName, LPCWSTR pCode, bool /* discard */)
+V8Value V8ContextImpl::Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool /* discard */)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_VERIFY_SCOPE
 
-        auto hScript = VERIFY(Script::New(String::New(pCode), String::New(pDocumentName)));
+        auto hScript = VERIFY(Script::Compile(String::New(pCode), String::New(pDocumentName)));
         return ExportValue(VERIFY(hScript->Run()));
 
     END_VERIFY_SCOPE
@@ -269,175 +297,178 @@ V8Value V8ContextImpl::Execute(LPCWSTR pDocumentName, LPCWSTR pCode, bool /* dis
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::CallWithLock(LockCallback* pCallback, LPVOID pvArg)
+V8ScriptHolder* V8ContextImpl::Compile(const wchar_t* pDocumentName, const wchar_t* pCode)
 {
-    BEGIN_ISOLATE_SCOPE
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_VERIFY_SCOPE
 
-        (*pCallback)(pvArg);
+        auto hScript = VERIFY(Script::New(String::New(pCode), String::New(pDocumentName)));
+        return new V8ScriptHolderImpl(m_spIsolateImpl, ::PtrFromScriptHandle(CreatePersistent(hScript)));
 
-    END_ISOLATE_SCOPE
+    END_VERIFY_SCOPE
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8ContextImpl::CanExecute(V8ScriptHolder* pHolder)
+{
+    return m_spIsolateImpl.GetRawPtr() == pHolder->GetIsolate();
+}
+
+//-----------------------------------------------------------------------------
+
+V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder)
+{
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_VERIFY_SCOPE
+
+        auto hScript = ::ScriptHandleFromPtr(pHolder->GetScript());
+        return ExportValue(VERIFY(hScript->Run()));
+
+    END_VERIFY_SCOPE
+    END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::Interrupt()
 {
-    V8::TerminateExecution(m_pIsolate);
+    TerminateExecution();
 }
 
 //-----------------------------------------------------------------------------
 
-int V8ContextImpl::IncrementDebugMessageDispatchCount()
+void V8ContextImpl::GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo)
 {
-    return ::InterlockedIncrement(&m_DebugMessageDispatchCount);
+    m_spIsolateImpl->GetHeapInfo(heapInfo);
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::ProcessDebugMessages()
+void V8ContextImpl::CollectGarbage(bool exhaustive)
+{
+    m_spIsolateImpl->CollectGarbage(exhaustive);
+}
+
+//-----------------------------------------------------------------------------
+
+void* V8ContextImpl::AddRefV8Object(void* pvObject)
 {
     BEGIN_ISOLATE_SCOPE
 
-        ::InterlockedExchange(&m_DebugMessageDispatchCount, 0);
-        Debug::ProcessDebugMessages();
+        return ::PtrFromObjectHandle(CreatePersistent(::ObjectHandleFromPtr(pvObject)));
 
     END_ISOLATE_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::DisableDebugAgent()
+void V8ContextImpl::ReleaseV8Object(void* pvObject)
 {
     BEGIN_ISOLATE_SCOPE
 
-        if (m_DebugAgentEnabled)
-        {
-            Debug::DisableAgent();
-            Debug::SetMessageHandler2(nullptr);
-            m_DebugAgentEnabled = false;
-        }
+        Dispose(::ObjectHandleFromPtr(pvObject));
 
     END_ISOLATE_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-LPVOID V8ContextImpl::AddRefV8Object(LPVOID pvV8Object)
-{
-    BEGIN_ISOLATE_SCOPE
-
-        return ::PtrFromObjectHandle(Persistent<Object>::New(m_pIsolate, ::ObjectHandleFromPtr(pvV8Object)));
-
-    END_ISOLATE_SCOPE
-}
-
-//-----------------------------------------------------------------------------
-
-void V8ContextImpl::ReleaseV8Object(LPVOID pvV8Object)
-{
-    BEGIN_ISOLATE_SCOPE
-
-        ::ObjectHandleFromPtr(pvV8Object).Dispose(m_pIsolate);
-
-    END_ISOLATE_SCOPE
-}
-
-//-----------------------------------------------------------------------------
-
-V8Value V8ContextImpl::GetV8ObjectProperty(LPVOID pvV8Object, LPCWSTR pName)
+V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, const wchar_t* pName)
 {
     BEGIN_CONTEXT_SCOPE
 
-        return ExportValue(::ObjectHandleFromPtr(pvV8Object)->Get(String::New(pName)));
+        return ExportValue(::ObjectHandleFromPtr(pvObject)->Get(String::New(pName)));
 
     END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::SetV8ObjectProperty(LPVOID pvV8Object, LPCWSTR pName, const V8Value& value)
+void V8ContextImpl::SetV8ObjectProperty(void* pvObject, const wchar_t* pName, const V8Value& value)
 {
     BEGIN_CONTEXT_SCOPE
 
-        ::ObjectHandleFromPtr(pvV8Object)->Set(String::New(pName), ImportValue(value));
+        ::ObjectHandleFromPtr(pvObject)->Set(String::New(pName), ImportValue(value));
 
     END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-bool V8ContextImpl::DeleteV8ObjectProperty(LPVOID pvV8Object, LPCWSTR pName)
+bool V8ContextImpl::DeleteV8ObjectProperty(void* pvObject, const wchar_t* pName)
 {
     BEGIN_CONTEXT_SCOPE
 
-        return ::ObjectHandleFromPtr(pvV8Object)->Delete(String::New(pName));
+        return ::ObjectHandleFromPtr(pvObject)->Delete(String::New(pName));
 
     END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::GetV8ObjectPropertyNames(LPVOID pvV8Object, vector<wstring>& names)
+void V8ContextImpl::GetV8ObjectPropertyNames(void* pvObject, vector<wstring>& names)
 {
     BEGIN_CONTEXT_SCOPE
 
-        GetV8ObjectPropertyNames(::ObjectHandleFromPtr(pvV8Object), names);
+        GetV8ObjectPropertyNames(::ObjectHandleFromPtr(pvObject), names);
 
     END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::GetV8ObjectProperty(LPVOID pvV8Object, int index)
+V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, int index)
 {
     BEGIN_CONTEXT_SCOPE
 
-        return ExportValue(::ObjectHandleFromPtr(pvV8Object)->Get(index));
+        return ExportValue(::ObjectHandleFromPtr(pvObject)->Get(index));
 
     END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::SetV8ObjectProperty(LPVOID pvV8Object, int index, const V8Value& value)
+void V8ContextImpl::SetV8ObjectProperty(void* pvObject, int index, const V8Value& value)
 {
     BEGIN_CONTEXT_SCOPE
 
-        ::ObjectHandleFromPtr(pvV8Object)->Set(index, ImportValue(value));
+        ::ObjectHandleFromPtr(pvObject)->Set(index, ImportValue(value));
 
     END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-bool V8ContextImpl::DeleteV8ObjectProperty(LPVOID pvV8Object, int index)
+bool V8ContextImpl::DeleteV8ObjectProperty(void* pvObject, int index)
 {
     BEGIN_CONTEXT_SCOPE
 
-        return ::ObjectHandleFromPtr(pvV8Object)->Delete(index);
+        return ::ObjectHandleFromPtr(pvObject)->Delete(index);
 
     END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::GetV8ObjectPropertyIndices(LPVOID pvV8Object, vector<int>& indices)
+void V8ContextImpl::GetV8ObjectPropertyIndices(void* pvObject, vector<int>& indices)
 {
     BEGIN_CONTEXT_SCOPE
 
-        GetV8ObjectPropertyIndices(::ObjectHandleFromPtr(pvV8Object), indices);
+        GetV8ObjectPropertyIndices(::ObjectHandleFromPtr(pvObject), indices);
 
     END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::InvokeV8Object(LPVOID pvV8Object, const vector<V8Value>& args, bool asConstructor)
+V8Value V8ContextImpl::InvokeV8Object(void* pvObject, const vector<V8Value>& args, bool asConstructor)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_VERIFY_SCOPE
 
-        auto hObject = ::ObjectHandleFromPtr(pvV8Object);
+        auto hObject = ::ObjectHandleFromPtr(pvObject);
 
         vector<Handle<Value>> importedArgs;
         ImportValues(args, importedArgs);
@@ -455,12 +486,12 @@ V8Value V8ContextImpl::InvokeV8Object(LPVOID pvV8Object, const vector<V8Value>& 
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::InvokeV8ObjectMethod(LPVOID pvV8Object, LPCWSTR pName, const vector<V8Value>& args)
+V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const wchar_t* pName, const vector<V8Value>& args)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_VERIFY_SCOPE
 
-        auto hObject = ::ObjectHandleFromPtr(pvV8Object);
+        auto hObject = ::ObjectHandleFromPtr(pvObject);
 
         auto hName = String::New(pName);
         if (!hObject->Has(hName))
@@ -488,33 +519,41 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(LPVOID pvV8Object, LPCWSTR pName, co
 
 //-----------------------------------------------------------------------------
 
+void V8ContextImpl::ProcessDebugMessages()
+{
+    BEGIN_CONTEXT_SCOPE
+
+        Debug::ProcessDebugMessages();
+
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
 V8ContextImpl::~V8ContextImpl()
 {
     BEGIN_ISOLATE_SCOPE
 
-        if (m_DebugAgentEnabled)
-        {
-            Debug::DisableAgent();
-            Debug::SetMessageHandler2(nullptr);
-        }
+        HostObjectHelpers::Release(m_pvV8ObjectCache);
+        m_spIsolateImpl->RemoveContext(this);
 
-        BEGIN_CONTEXT_SCOPE
+        BEGIN_CONTEXT_SCOPE_NOTHROW
 
             for (auto it = m_GlobalMembersStack.rbegin(); it != m_GlobalMembersStack.rend(); it++)
             {
-                it->Dispose(m_pIsolate);
+                Dispose(*it);
             }
 
             for (auto it = m_IntegerCache.begin(); it != m_IntegerCache.end(); it++)
             {
-                it->second.Dispose(m_pIsolate);
+                Dispose(it->second);
             }
 
-            m_hHostObjectTemplate.Dispose(m_pIsolate);
-            m_hInnerExceptionName.Dispose(m_pIsolate);
-            m_hHostObjectCookieName.Dispose(m_pIsolate);
+            Dispose(m_hHostObjectTemplate);
+            Dispose(m_hInnerExceptionName);
+            Dispose(m_hHostObjectCookieName);
 
-        END_CONTEXT_SCOPE
+        END_CONTEXT_SCOPE_NOTHROW
 
         // As of V8 3.16.0, the global property getter for a disposed context
         // may be invoked during GC after the V8ContextImpl instance is gone.
@@ -523,10 +562,10 @@ V8ContextImpl::~V8ContextImpl()
         {
             _ASSERTE(m_hGlobal->InternalFieldCount() > 0);
             m_hGlobal->SetAlignedPointerInInternalField(0, nullptr);
-            m_hGlobal.Dispose(m_pIsolate);
+            Dispose(m_hGlobal);
         }
 
-        m_hContext.Dispose(m_pIsolate);
+        Dispose(m_hContext);
         V8::ContextDisposedNotification();
 
         // The context is gone, but it may have contained host object holders
@@ -538,8 +577,6 @@ V8ContextImpl::~V8ContextImpl()
         while (!V8::IdleNotification());
 
     END_ISOLATE_SCOPE
-
-    m_pIsolate->Dispose();
 }
 
 //-----------------------------------------------------------------------------
@@ -614,7 +651,7 @@ Handle<Value> V8ContextImpl::GetGlobalProperty(Local<String> hName, const Access
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
@@ -640,7 +677,7 @@ Handle<Value> V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value>
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
@@ -666,7 +703,7 @@ Handle<Integer> V8ContextImpl::QueryGlobalProperty(Local<String> hName, const Ac
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
@@ -692,7 +729,7 @@ Handle<Boolean> V8ContextImpl::DeleteGlobalProperty(Local<String> hName, const A
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
@@ -710,15 +747,15 @@ Handle<Boolean> V8ContextImpl::DeleteGlobalProperty(Local<String> hName, const A
                     {
                         try
                         {
-                            return HostObjectHelpers::DeleteProperty(::GetHostObject(*it), *String::Value(hName)) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
+                            return HostObjectHelpers::DeleteProperty(::GetHostObject(*it), *String::Value(hName)) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
                         }
                         catch (const HostException&)
                         {
-                            return False(pContextImpl->m_pIsolate);
+                            return pContextImpl->GetFalse();
                         }
                     }
 
-                    return (*it)->Delete(hName) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
+                    return (*it)->Delete(hName) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
                 }
             }
         }
@@ -734,7 +771,7 @@ Handle<Array> V8ContextImpl::GetGlobalPropertyNames(const AccessorInfo& info)
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         try
@@ -787,7 +824,7 @@ Handle<Value> V8ContextImpl::GetGlobalProperty(unsigned __int32 index, const Acc
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
@@ -813,13 +850,13 @@ Handle<Value> V8ContextImpl::SetGlobalProperty(unsigned __int32 index, Local<Val
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
         if (stack.size() > 0)
         {
-            auto hName = Uint32::New(index, pContextImpl->m_pIsolate)->ToString();
+            auto hName = pContextImpl->CreateInteger(index)->ToString();
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
                 if ((*it)->HasOwnProperty(hName) && (*it)->Set(index, value))
@@ -840,7 +877,7 @@ Handle<Integer> V8ContextImpl::QueryGlobalProperty(unsigned __int32 index, const
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
@@ -850,7 +887,7 @@ Handle<Integer> V8ContextImpl::QueryGlobalProperty(unsigned __int32 index, const
             {
                 if ((*it)->Has(index))
                 {
-                    return pContextImpl->GetIntegerHandle((*it)->GetPropertyAttributes(Uint32::New(index, pContextImpl->m_pIsolate)));
+                    return pContextImpl->GetIntegerHandle((*it)->GetPropertyAttributes(pContextImpl->CreateInteger(index)));
                 }
             }
         }
@@ -866,18 +903,18 @@ Handle<Boolean> V8ContextImpl::DeleteGlobalProperty(unsigned __int32 index, cons
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
         if (stack.size() > 0)
         {
-            auto hName = Uint32::New(index, pContextImpl->m_pIsolate)->ToString();
+            auto hName = pContextImpl->CreateInteger(index)->ToString();
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
                 if ((*it)->HasOwnProperty(hName))
                 {
-                    return (*it)->Delete(index) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
+                    return (*it)->Delete(index) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
                 }
             }
         }
@@ -893,7 +930,7 @@ Handle<Array> V8ContextImpl::GetGlobalPropertyIndices(const AccessorInfo& info)
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
 
-    auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
         try
@@ -924,7 +961,7 @@ Handle<Array> V8ContextImpl::GetGlobalPropertyIndices(const AccessorInfo& info)
                 auto hImportedIndices = Array::New(indexCount);
                 for (auto index = 0; index < indexCount; index++)
                 {
-                    hImportedIndices->Set(index, Int32::New(indices[index], pContextImpl->m_pIsolate));
+                    hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
                 }
 
                 return hImportedIndices;
@@ -949,7 +986,7 @@ Handle<Value> V8ContextImpl::GetHostObjectProperty(Local<String> hName, const Ac
     {
         if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
-            return True(pContextImpl->m_pIsolate);
+            return pContextImpl->GetTrue();
         }
 
         return pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), *String::Value(hName)));
@@ -1024,7 +1061,7 @@ Handle<Boolean> V8ContextImpl::DeleteHostObjectProperty(Local<String> hName, con
 
     try
     {
-        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), *String::Value(hName)) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
+        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), *String::Value(hName)) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
     }
     catch (const HostException& exception)
     {
@@ -1136,7 +1173,7 @@ Handle<Boolean> V8ContextImpl::DeleteHostObjectProperty(unsigned __int32 index, 
 
     try
     {
-        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), index) ? True(pContextImpl->m_pIsolate) : False(pContextImpl->m_pIsolate);
+        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), index) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
     }
     catch (const HostException& exception)
     {
@@ -1161,7 +1198,7 @@ Handle<Array> V8ContextImpl::GetHostObjectPropertyIndices(const AccessorInfo& in
         auto hImportedIndices = Array::New(indexCount);
         for (auto index = 0; index < indexCount; index++)
         {
-            hImportedIndices->Set(index, Int32::New(indices[index], pContextImpl->m_pIsolate));
+            hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
         }
 
         return hImportedIndices;
@@ -1204,9 +1241,13 @@ Handle<Value> V8ContextImpl::InvokeHostObject(const Arguments& args)
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::DisposeWeakHandle(Isolate* pIsolate, Persistent<Value> hValue, void* /* parameter */)
+void V8ContextImpl::DisposeWeakHandle(Isolate* pIsolate, Persistent<Value> hValue, void* pvV8ObjectCache)
 {
-    delete ::GetHostObjectHolder(hValue->ToObject());
+    auto pHolder = ::GetHostObjectHolder(hValue->ToObject());
+    ASSERT_EVAL(HostObjectHelpers::RemoveV8ObjectCacheEntry(pvV8ObjectCache, pHolder->GetObject()));
+
+    delete pHolder;
+    HostObjectHelpers::Release(pvV8ObjectCache);
     hValue.Dispose(pIsolate);
 }
 
@@ -1217,7 +1258,7 @@ Persistent<Integer> V8ContextImpl::GetIntegerHandle(int value)
     auto it = m_IntegerCache.find(value);
     if (it == m_IntegerCache.end())
     {
-        return m_IntegerCache[value] = Persistent<Integer>::New(m_pIsolate, Integer::New(value, m_pIsolate));
+        return m_IntegerCache[value] = CreatePersistent(CreateInteger(value));
     }
 
     return it->second;
@@ -1234,19 +1275,19 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
 
     if (value.IsUndefined())
     {
-        return Undefined(m_pIsolate);
+        return GetUndefined();
     }
 
     if (value.IsNull())
     {
-        return Null(m_pIsolate);
+        return GetNull();
     }
 
     {
         bool result;
         if (value.AsBoolean(result))
         {
-            return result ? True(m_pIsolate) : False(m_pIsolate);
+            return result ? GetTrue() : GetFalse();
         }
     }
 
@@ -1262,7 +1303,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         __int32 result;
         if (value.AsInt32(result))
         {
-            return Int32::New(result, m_pIsolate);
+            return CreateInteger(result);
         }
     }
 
@@ -1270,12 +1311,12 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         unsigned __int32 result;
         if (value.AsUInt32(result))
         {
-            return Uint32::New(result, m_pIsolate);
+            return CreateInteger(result);
         }
     }
 
     {
-        LPCWSTR pResult;
+        const wchar_t* pResult;
         if (value.AsString(pResult))
         {
             return String::New(pResult);
@@ -1286,9 +1327,18 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         HostObjectHolder* pHolder;
         if (value.AsHostObject(pHolder))
         {
+            auto pvV8Object = HostObjectHelpers::GetCachedV8Object(m_pvV8ObjectCache, pHolder->GetObject());
+            if (pvV8Object != nullptr)
+            {
+                return CreateLocal(::ObjectHandleFromPtr(pvV8Object));
+            }
+
             auto hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
             ::SetHostObjectHolder(hObject, pHolder->Clone());
-            Persistent<Object>::New(m_pIsolate, hObject).MakeWeak(m_pIsolate, nullptr, DisposeWeakHandle);
+
+            pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), HostObjectHelpers::AddRef(m_pvV8ObjectCache), DisposeWeakHandle));
+            HostObjectHelpers::CacheV8Object(m_pvV8ObjectCache, pHolder->GetObject(), pvV8Object);
+
             return hObject;
         }
     }
@@ -1297,11 +1347,11 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         V8ObjectHolder* pHolder;
         if (value.AsV8Object(pHolder))
         {
-            return Local<Object>::New(m_pIsolate, ::ObjectHandleFromPtr(pHolder->GetObject()));
+            return CreateLocal(::ObjectHandleFromPtr(pHolder->GetObject()));
         }
     }
 
-    return Undefined(m_pIsolate);
+    return GetUndefined();
 }
 
 //-----------------------------------------------------------------------------
@@ -1356,7 +1406,7 @@ V8Value V8ContextImpl::ExportValue(Handle<Value> hValue)
             return V8Value(::GetHostObjectHolder(hObject)->Clone());
         }
 
-        return V8Value(new V8ObjectHolderImpl(this, ::PtrFromObjectHandle(Persistent<Object>::New(m_pIsolate, hObject))));
+        return V8Value(new V8ObjectHolderImpl(this, ::PtrFromObjectHandle(CreatePersistent(hObject))));
     }
 
     return V8Value(V8Value::Undefined);
@@ -1402,10 +1452,12 @@ void V8ContextImpl::Verify(const TryCatch& tryCatch)
 
 //-----------------------------------------------------------------------------
 
-template<typename T> T V8ContextImpl::Verify(const TryCatch& tryCatch, T result)
+void V8ContextImpl::VerifyNotOutOfMemory()
 {
-    Verify(tryCatch);
-    return result;
+    if (m_spIsolateImpl->IsOutOfMemory())
+    {
+        m_spIsolateImpl->ThrowOutOfMemoryException();
+    }
 }
 
 //-----------------------------------------------------------------------------

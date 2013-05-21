@@ -34,10 +34,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -54,7 +54,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\V8\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\V8\include;..\..\..\Exports</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>
@@ -65,17 +65,21 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
       <SDLCheck>true</SDLCheck>
+      <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>..\..\V8\lib\v8-x64.lib</AdditionalDependencies>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>..\..\..\Exports</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\V8\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\V8\include;..\..\..\Exports</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>
@@ -86,15 +90,35 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
       <SDLCheck>true</SDLCheck>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>..\..\V8\lib\v8-x64.lib</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>..\..\..\Exports</AdditionalIncludeDirectories>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\HostObjectHelpers.cpp" />
     <ClCompile Include="..\HostObjectHolderImpl.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\Mutex.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\RefCount.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
     </ClCompile>
@@ -106,6 +130,17 @@
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
     </ClCompile>
+    <ClCompile Include="..\V8ContextProxyImpl.cpp" />
+    <ClCompile Include="..\V8Exception.cpp" />
+    <ClCompile Include="..\V8Isolate.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\V8IsolateImpl.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\V8IsolateProxyImpl.cpp" />
     <ClCompile Include="..\V8ObjectHelpers.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
@@ -115,7 +150,11 @@
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
     </ClCompile>
-    <ClCompile Include="..\V8ProxyImpl.cpp" />
+    <ClCompile Include="..\V8ScriptHolderImpl.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\V8ScriptImpl.cpp" />
     <ClCompile Include="AssemblyInfo.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -128,27 +167,6 @@
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeaderOutputFile>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\ClearScriptV8.h" />
-    <ClInclude Include="..\ClearScriptV8Managed.h" />
-    <ClInclude Include="..\HostException.h" />
-    <ClInclude Include="..\HostObjectHelpers.h" />
-    <ClInclude Include="..\HostObjectHolder.h" />
-    <ClInclude Include="..\HostObjectHolderImpl.h" />
-    <ClInclude Include="..\ManagedPlatform.h" />
-    <ClInclude Include="..\Platform.h" />
-    <ClInclude Include="..\SharedPtr.h" />
-    <ClInclude Include="..\StringToUniPtr.h" />
-    <ClInclude Include="..\V8Context.h" />
-    <ClInclude Include="..\V8ContextImpl.h" />
-    <ClInclude Include="..\V8Exception.h" />
-    <ClInclude Include="..\V8ObjectHelpers.h" />
-    <ClInclude Include="..\V8ObjectImpl.h" />
-    <ClInclude Include="..\V8ObjectHolder.h" />
-    <ClInclude Include="..\V8ObjectHolderImpl.h" />
-    <ClInclude Include="..\V8ProxyImpl.h" />
-    <ClInclude Include="..\V8Value.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
@@ -174,6 +192,40 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(Filename)%(Extension)</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\ClearScriptV8Managed.h" />
+    <ClInclude Include="..\ClearScriptV8Native.h" />
+    <ClInclude Include="..\CommonPlatform.h" />
+    <ClInclude Include="..\HostException.h" />
+    <ClInclude Include="..\HostObjectHelpers.h" />
+    <ClInclude Include="..\HostObjectHolder.h" />
+    <ClInclude Include="..\HostObjectHolderImpl.h" />
+    <ClInclude Include="..\ManagedPlatform.h" />
+    <ClInclude Include="..\Mutex.h" />
+    <ClInclude Include="..\NativePlatform.h" />
+    <ClInclude Include="..\RefCount.h" />
+    <ClInclude Include="..\SharedPtr.h" />
+    <ClInclude Include="..\StringToUniPtr.h" />
+    <ClInclude Include="..\V8Context.h" />
+    <ClInclude Include="..\V8ContextImpl.h" />
+    <ClInclude Include="..\V8ContextProxyImpl.h" />
+    <ClInclude Include="..\V8Exception.h" />
+    <ClInclude Include="..\V8Isolate.h" />
+    <ClInclude Include="..\V8IsolateConstraints.h" />
+    <ClInclude Include="..\V8IsolateHeapInfo.h" />
+    <ClInclude Include="..\V8IsolateImpl.h" />
+    <ClInclude Include="..\V8IsolateProxyImpl.h" />
+    <ClInclude Include="..\V8ObjectHelpers.h" />
+    <ClInclude Include="..\V8ObjectHolder.h" />
+    <ClInclude Include="..\V8ObjectHolderImpl.h" />
+    <ClInclude Include="..\V8ObjectImpl.h" />
+    <ClInclude Include="..\V8Platform.h" />
+    <ClInclude Include="..\V8ScriptHolder.h" />
+    <ClInclude Include="..\V8ScriptHolderImpl.h" />
+    <ClInclude Include="..\V8ScriptImpl.h" />
+    <ClInclude Include="..\V8Value.h" />
+    <ClInclude Include="..\WeakRef.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

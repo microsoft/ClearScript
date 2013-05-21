@@ -86,7 +86,7 @@ namespace Microsoft.ClearScript.Windows
         private ActiveScriptWrapper activeScript;
         private WindowsScriptEngineFlags engineFlags;
 
-        private HostItemMap hostItemMap = new HostItemMap();
+        private readonly HostItemMap hostItemMap = new HostItemMap();
         private readonly dynamic script;
 
         private ProcessDebugManagerWrapper processDebugManager;
@@ -269,6 +269,16 @@ namespace Microsoft.ClearScript.Windows
             activeScript.InterruptScriptThread(ScriptThreadID.Base, ref excepInfo, ScriptInterruptFlags.None);
         }
 
+        /// <summary>
+        /// Performs garbage collection.
+        /// </summary>
+        /// <param name="exhaustive"><c>True</c> to perform exhaustive garbage collection, <c>false</c> to favor speed over completeness.</param>
+        public override void CollectGarbage(bool exhaustive)
+        {
+            VerifyNotDisposed();
+            ScriptInvoke(() => activeScript.CollectGarbage(exhaustive ? ScriptGCType.Exhaustive : ScriptGCType.Normal));
+        }
+
         #endregion
 
         #region ScriptEngine overrides (internal members)
@@ -280,14 +290,14 @@ namespace Microsoft.ClearScript.Windows
             MiscHelpers.VerifyNonNullArgument(itemName, "itemName");
             Debug.Assert(item != null);
 
-            var marshaledItem = MarshalToScript(item, flags);
-            if (!(marshaledItem is HostItem))
-            {
-                throw new InvalidOperationException("Invalid host item");
-            }
-
             ScriptInvoke(() =>
             {
+                var marshaledItem = MarshalToScript(item, flags);
+                if (!(marshaledItem is HostItem))
+                {
+                    throw new InvalidOperationException("Invalid host item");
+                }
+
                 hostItemMap.Add(itemName, marshaledItem);
 
                 var nativeFlags = ScriptItemFlags.IsVisible;
@@ -528,7 +538,7 @@ namespace Microsoft.ClearScript.Windows
                     var hostException = CurrentScriptFrame.HostException;
                     if (hostException != null)
                     {
-                        throw new ScriptEngineException(Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, hostException);
+                        throw new ScriptEngineException(Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, hostException);
                     }
                 }
             }
@@ -570,25 +580,19 @@ namespace Microsoft.ClearScript.Windows
             {
                 if (disposing)
                 {
-                    hostItemMap.Clear();
-                    hostItemMap = null;
-
                     if (sourceManagement)
                     {
                         debugDocumentMap.Values.ForEach(debugDocument => debugDocument.Close());
-                        debugDocumentMap.Clear();
                     }
 
                     if (engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging))
                     {
                         processDebugManager.RemoveApplication(debugApplicationCookie);
                         debugApplication.Close();
-                        debugApplication = null;
-                        processDebugManager = null;
                     }
 
+                    ((IDisposable)script).Dispose();
                     activeScript.Close();
-                    activeScript = null;
                 }
 
                 disposed = true;

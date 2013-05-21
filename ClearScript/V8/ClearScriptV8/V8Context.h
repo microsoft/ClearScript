@@ -69,23 +69,22 @@ class V8Context: public SharedPtrTarget
 {
 public:
 
-    typedef void DebugMessageDispatcher();
-    static V8Context* Create(LPCWSTR pName, bool enableDebugging, bool disableGlobalMembers, DebugMessageDispatcher* pDebugMessageDispatcher, int debugPort);
+    static V8Context* Create(const SharedPtr<V8Isolate>& spIsolate, const wchar_t* pName, bool enableDebugging, bool disableGlobalMembers, int debugPort);
+
+    typedef void LockCallbackT(void* pvArg);
+    virtual void CallWithLock(LockCallbackT* pCallback, void* pvArg) = 0;
 
     virtual V8Value GetRootObject() = 0;
-    virtual void SetGlobalProperty(LPCWSTR pName, const V8Value& value, bool globalMembers) = 0;
-    virtual V8Value Execute(LPCWSTR pDocumentName, LPCWSTR pCode, bool discard) = 0;
+    virtual void SetGlobalProperty(const wchar_t* pName, const V8Value& value, bool globalMembers) = 0;
+    virtual V8Value Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool discard) = 0;
 
-    typedef void LockCallback(LPVOID pvArg);
-    virtual void CallWithLock(LockCallback* pCallback, LPVOID pvArg) = 0;
+    virtual V8ScriptHolder* Compile(const wchar_t* pDocumentName, const wchar_t* pCode) = 0;
+    virtual bool CanExecute(V8ScriptHolder* pHolder) = 0;
+    virtual V8Value Execute(V8ScriptHolder* pHolder) = 0;
 
     virtual void Interrupt() = 0;
+    virtual void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo) = 0;
+    virtual void CollectGarbage(bool exhaustive) = 0;
 
-    virtual int IncrementDebugMessageDispatchCount() = 0;
-    virtual void ProcessDebugMessages() = 0;
-    virtual void DisableDebugAgent() = 0;
-
-    virtual ~V8Context()
-    {
-    }
+    virtual ~V8Context() {}
 };

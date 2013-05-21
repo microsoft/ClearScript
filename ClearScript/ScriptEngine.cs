@@ -63,6 +63,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
@@ -655,6 +656,12 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public abstract void Interrupt();
 
+        /// <summary>
+        /// Performs garbage collection.
+        /// </summary>
+        /// <param name="exhaustive"><c>True</c> to perform exhaustive garbage collection, <c>false</c> to favor speed over completeness.</param>
+        public abstract void CollectGarbage(bool exhaustive);
+
         #endregion
 
         #region internal members
@@ -805,10 +812,10 @@ namespace Microsoft.ClearScript
             {
                 if (scriptError is ScriptInterruptedException)
                 {
-                    throw new ScriptInterruptedException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.InnerException);
+                    throw new ScriptInterruptedException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.IsFatal, scriptError.InnerException);
                 }
 
-                throw new ScriptEngineException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.InnerException);
+                throw new ScriptEngineException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.IsFatal, scriptError.InnerException);
             }
         }
 
@@ -859,6 +866,127 @@ namespace Microsoft.ClearScript
         internal bool TryGetCachedBindResult(BindSignature signature, out object result)
         {
             return bindCache.TryGetValue(signature, out result);
+        }
+
+        #endregion
+
+        #region host item cache
+
+        private readonly ConditionalWeakTable<object, List<WeakReference>> hostObjectHostItemCache = new ConditionalWeakTable<object, List<WeakReference>>();
+        private readonly ConditionalWeakTable<Type, List<WeakReference>> hostTypeHostItemCache = new ConditionalWeakTable<Type, List<WeakReference>>();
+
+        internal delegate HostItem HostItemFactory(ScriptEngine engine, HostTarget target, HostItemFlags flags);
+
+        internal HostItem GetOrCreateHostItem(HostTarget target, HostItemFlags flags, HostItemFactory createHostItem)
+        {
+            var hostObject = target as HostObject;
+            if (hostObject != null)
+            {
+                return GetOrCreateHostItemForHostObject(hostObject, flags, createHostItem);
+            }
+
+            var hostType = target as HostType;
+            if (hostType != null)
+            {
+                return GetOrCreateHostItemForHostType(hostType, flags, createHostItem);
+            }
+
+            return createHostItem(this, target, flags);
+        }
+
+        private HostItem GetOrCreateHostItemForHostObject(HostObject hostObject, HostItemFlags flags, HostItemFactory createHostItem)
+        {
+            var cacheEntry = hostObjectHostItemCache.GetOrCreateValue(hostObject.Target);
+
+            List<WeakReference> activeWeakRefs = null;
+            var staleWeakRefCount = 0;
+
+            foreach (var weakRef in cacheEntry)
+            {
+                var hostItem = weakRef.Target as HostItem;
+                if (hostItem == null)
+                {
+                    staleWeakRefCount++;
+                }
+                else
+                {
+                    if ((hostItem.Target.Type == hostObject.Type) && (hostItem.Flags == flags))
+                    {
+                        return hostItem;
+                    }
+
+                    if (activeWeakRefs == null)
+                    {
+                        activeWeakRefs = new List<WeakReference>(cacheEntry.Count);
+                    }
+
+                    activeWeakRefs.Add(weakRef);
+                }
+            }
+
+            if (staleWeakRefCount > 4)
+            {
+                cacheEntry.Clear();
+                if (activeWeakRefs != null)
+                {
+                    cacheEntry.Capacity = activeWeakRefs.Count + 1;
+                    cacheEntry.AddRange(activeWeakRefs);
+                }
+            }
+
+            var newHostItem = createHostItem(this, hostObject, flags);
+            cacheEntry.Add(new WeakReference(newHostItem));
+            return newHostItem;
+        }
+
+        private HostItem GetOrCreateHostItemForHostType(HostType hostType, HostItemFlags flags, HostItemFactory createHostItem)
+        {
+            if (hostType.Types.Length != 1)
+            {
+                return createHostItem(this, hostType, flags);
+            }
+
+            var cacheEntry = hostTypeHostItemCache.GetOrCreateValue(hostType.Types[0]);
+
+            List<WeakReference> activeWeakRefs = null;
+            var staleWeakRefCount = 0;
+
+            foreach (var weakRef in cacheEntry)
+            {
+                var hostItem = weakRef.Target as HostItem;
+                if (hostItem == null)
+                {
+                    staleWeakRefCount++;
+                }
+                else
+                {
+                    if (hostItem.Flags == flags)
+                    {
+                        return hostItem;
+                    }
+
+                    if (activeWeakRefs == null)
+                    {
+                        activeWeakRefs = new List<WeakReference>(cacheEntry.Count);
+                    }
+
+                    activeWeakRefs.Add(weakRef);
+                }
+            }
+
+            if (staleWeakRefCount > 4)
+            {
+                cacheEntry.Clear();
+                if (activeWeakRefs != null)
+                {
+                    cacheEntry.Capacity = activeWeakRefs.Count + 1;
+                    cacheEntry.AddRange(activeWeakRefs);
+                }
+            }
+
+            var newHostItem = createHostItem(this, hostType, flags);
+            cacheEntry.Add(new WeakReference(newHostItem));
+            return newHostItem;
         }
 
         #endregion

@@ -83,10 +83,9 @@ namespace Microsoft.ClearScript.V8
         #region data
 
         private const int continuationInterval = 2000;
-        private const int defaultDebugPort = 9222;
 
         private readonly V8ScriptEngineFlags engineFlags;
-        private readonly V8Proxy proxy;
+        private readonly V8ContextProxy proxy;
         private readonly dynamic script;
         private bool disposed;
 
@@ -100,8 +99,11 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Initializes a new V8 script engine instance.
         /// </summary>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
         public V8ScriptEngine()
-            : this(null)
+            : this(null, null)
         {
         }
 
@@ -109,8 +111,36 @@ namespace Microsoft.ClearScript.V8
         /// Initializes a new V8 script engine instance with the specified name.
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
         public V8ScriptEngine(string name)
-            : this(name, V8ScriptEngineFlags.None)
+            : this(name, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new V8 script engine instance with the specified resource constraints.
+        /// </summary>
+        /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
+        public V8ScriptEngine(V8RuntimeConstraints constraints)
+            : this(null, constraints)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new V8 script engine instance with the specified name and resource constraints.
+        /// </summary>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
+        public V8ScriptEngine(string name, V8RuntimeConstraints constraints)
+            : this(name, constraints, V8ScriptEngineFlags.None)
         {
         }
 
@@ -118,8 +148,24 @@ namespace Microsoft.ClearScript.V8
         /// Initializes a new V8 script engine instance with the specified options.
         /// </summary>
         /// <param name="flags">A value that selects options for the operation.</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
         public V8ScriptEngine(V8ScriptEngineFlags flags)
-            : this(null, flags)
+            : this(flags, 0)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new V8 script engine instance with the specified options and debug port.
+        /// </summary>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
+        public V8ScriptEngine(V8ScriptEngineFlags flags, int debugPort)
+            : this(null, null, flags, debugPort)
         {
         }
 
@@ -128,74 +174,219 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
         public V8ScriptEngine(string name, V8ScriptEngineFlags flags)
-            : this(name, flags, defaultDebugPort)
+            : this(name, flags, 0)
         {
         }
 
         /// <summary>
-        /// Initializes a new V8 script engine instance with the specified name, options, and debug port number.
+        /// Initializes a new V8 script engine instance with the specified name, options, and debug port.
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port number on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
         public V8ScriptEngine(string name, V8ScriptEngineFlags flags, int debugPort)
-            : base(name)
+            : this(name, null, flags, debugPort)
         {
-            engineFlags = flags;
-            proxy = V8Proxy.Create(Name, flags.HasFlag(V8ScriptEngineFlags.EnableDebugging), flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers), debugPort);
-            script = GetRootItem();
+        }
 
-            var engineInternal = Evaluate(
-                MiscHelpers.FormatInvariant("{0} [internal]", GetType().Name),
-                @"
-                    EngineInternal = (function () {
+        /// <summary>
+        /// Initializes a new V8 script engine instance with the specified resource constraints and options.
+        /// </summary>
+        /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
+        public V8ScriptEngine(V8RuntimeConstraints constraints, V8ScriptEngineFlags flags)
+            : this(constraints, flags, 0)
+        {
+        }
 
-                        function convertArgs(args) {
-                            var result = [];
-                            var count = args.Length;
-                            for (var i = 0; i < count; i++) {
-                                result.push(args[i]);
+        /// <summary>
+        /// Initializes a new V8 script engine instance with the specified resource constraints, options, and debug port.
+        /// </summary>
+        /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
+        public V8ScriptEngine(V8RuntimeConstraints constraints, V8ScriptEngineFlags flags, int debugPort)
+            : this(null, constraints, flags, debugPort)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new V8 script engine instance with the specified name, resource constraints and options.
+        /// </summary>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
+        public V8ScriptEngine(string name, V8RuntimeConstraints constraints, V8ScriptEngineFlags flags)
+            : this(name, constraints, flags, 0)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new V8 script engine instance with the specified name, resource constraints and options, and debug port.
+        /// </summary>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <remarks>
+        /// A separate V8 runtime is created for the new script engine instance.
+        /// </remarks>
+        public V8ScriptEngine(string name, V8RuntimeConstraints constraints, V8ScriptEngineFlags flags, int debugPort)
+            : this(null, name, constraints, flags, debugPort)
+        {
+        }
+
+        internal V8ScriptEngine(V8Runtime runtime, string name, V8RuntimeConstraints constraints, V8ScriptEngineFlags flags, int debugPort)
+            : base((runtime != null) ? runtime.Name + ":" + name : name)
+        {
+            using (var localRuntime = (runtime != null) ? null : new V8Runtime(name, constraints))
+            {
+                var activeRuntime = runtime ?? localRuntime;
+
+                engineFlags = flags;
+                proxy = V8ContextProxy.Create(activeRuntime.IsolateProxy, Name, flags.HasFlag(V8ScriptEngineFlags.EnableDebugging), flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers), debugPort);
+                script = GetRootItem();
+
+                var engineInternal = Evaluate(
+                    MiscHelpers.FormatInvariant("{0} [internal]", GetType().Name),
+                    false,
+                    @"
+                        EngineInternal = (function () {
+
+                            function convertArgs(args) {
+                                var result = [];
+                                var count = args.Length;
+                                for (var i = 0; i < count; i++) {
+                                    result.push(args[i]);
+                                }
+                                return result;
                             }
-                            return result;
-                        }
 
-                        function construct(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15) {
-                            return new this(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
-                        }
+                            function construct(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15) {
+                                return new this(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+                            }
 
-                        return {
+                            return {
 
-                            getCommandResult: function (value) {
-                                if (value != null) {
-                                    if (((typeof(value) == 'object') && !value.hasOwnProperty('{c2cf47d3-916b-4a3f-be2a-6ff567425808}')) || (typeof(value) == 'function')) {
-                                        if (typeof(value.toString) == 'function') {
-                                            return value.toString();
+                                getCommandResult: function (value) {
+                                    if (value != null) {
+                                        if (((typeof(value) == 'object') && !value.hasOwnProperty('{c2cf47d3-916b-4a3f-be2a-6ff567425808}')) || (typeof(value) == 'function')) {
+                                            if (typeof(value.toString) == 'function') {
+                                                return value.toString();
+                                            }
                                         }
                                     }
-                                }
-                                return value;
-                            },
+                                    return value;
+                                },
 
-                            invokeConstructor: function (constructor, args) {
-                                if (typeof(constructor) != 'function') {
-                                    throw new Error('Function expected');
-                                }
-                                return construct.apply(constructor, convertArgs(args));
-                            },
+                                invokeConstructor: function (constructor, args) {
+                                    if (typeof(constructor) != 'function') {
+                                        throw new Error('Function expected');
+                                    }
+                                    return construct.apply(constructor, convertArgs(args));
+                                },
 
-                            invokeMethod: function (target, method, args) {
-                                if (typeof(method) != 'function') {
-                                    throw new Error('Function expected');
+                                invokeMethod: function (target, method, args) {
+                                    if (typeof(method) != 'function') {
+                                        throw new Error('Function expected');
+                                    }
+                                    return method.apply(target, convertArgs(args));
                                 }
-                                return method.apply(target, convertArgs(args));
-                            }
-                        };
-                    })();
-                "
-            );
+                            };
+                        })();
+                    "
+                );
 
-            ((IDisposable)engineInternal).Dispose();
+                ((IDisposable)engineInternal).Dispose();
+            }
+        }
+
+        #endregion
+
+        #region public members
+
+        /// <summary>
+        /// Creates a compiled script.
+        /// </summary>
+        /// <param name="code">The script code to compile.</param>
+        /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
+        public V8Script Compile(string code)
+        {
+            return Compile(null, code);
+        }
+
+        /// <summary>
+        /// Creates a compiled script with an associated document name.
+        /// </summary>
+        /// <param name="documentName">A document name for the compiled script. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
+        public V8Script Compile(string documentName, string code)
+        {
+            VerifyNotDisposed();
+
+            return ScriptInvoke(() =>
+            {
+                var uniqueName = documentNameManager.GetUniqueName(documentName, "Script Document");
+                return proxy.Compile(uniqueName, MiscHelpers.FormatCode(code));
+            });
+        }
+
+        // ReSharper disable ParameterHidesMember
+
+        /// <summary>
+        /// Evaluates a compiled script.
+        /// </summary>
+        /// <param name="script">The compiled script to evaluate.</param>
+        /// <returns>The result value.</returns>
+        /// <remarks>
+        /// For information about the types of result values that script code can return, see
+        /// <see cref="ScriptEngine.Evaluate(string, bool, string)"/>.
+        /// </remarks>
+        public object Evaluate(V8Script script)
+        {
+            MiscHelpers.VerifyNonNullArgument(script, "script");
+            VerifyNotDisposed();
+
+            return ScriptInvoke(() =>
+            {
+                var stateObjects = new object[2];
+                using (var timer = new Timer(OnContinuationTimer, stateObjects, Timeout.Infinite, Timeout.Infinite))
+                {
+                    stateObjects[0] = new WeakReference(this);
+                    stateObjects[1] = timer;
+                    timer.Change(continuationInterval, Timeout.Infinite);
+                    return proxy.Execute(script);
+                }
+            });
+        }
+
+        // ReSharper restore ParameterHidesMember
+
+        /// <summary>
+        /// Returns memory usage information for the V8 runtime.
+        /// </summary>
+        /// <returns>A <see cref="V8RuntimeHeapInfo"/> object containing memory usage information for the V8 runtime.</returns>
+        public V8RuntimeHeapInfo GetRuntimeHeapInfo()
+        {
+            VerifyNotDisposed();
+            return proxy.GetRuntimeHeapInfo();
         }
 
         #endregion
@@ -294,6 +485,16 @@ namespace Microsoft.ClearScript.V8
             proxy.Interrupt();
         }
 
+        /// <summary>
+        /// Performs garbage collection.
+        /// </summary>
+        /// <param name="exhaustive"><c>True</c> to perform exhaustive garbage collection, <c>false</c> to favor speed over completeness.</param>
+        public override void CollectGarbage(bool exhaustive)
+        {
+            VerifyNotDisposed();
+            proxy.CollectGarbage(exhaustive);
+        }
+
         #endregion
 
         #region ScriptEngine overrides (internal members)
@@ -311,13 +512,16 @@ namespace Microsoft.ClearScript.V8
             MiscHelpers.VerifyNonNullArgument(itemName, "itemName");
             Debug.Assert(item != null);
 
-            var marshaledItem = MarshalToScript(item, flags);
-            if (!(marshaledItem is HostItem))
+            ScriptInvoke(() =>
             {
-                throw new InvalidOperationException("Invalid host item");
-            }
+                var marshaledItem = MarshalToScript(item, flags);
+                if (!(marshaledItem is HostItem))
+                {
+                    throw new InvalidOperationException("Invalid host item");
+                }
 
-            ScriptInvoke(() => proxy.AddGlobalItem(itemName, marshaledItem, globalMembers));
+                proxy.AddGlobalItem(itemName, marshaledItem, globalMembers);
+            });
         }
 
         internal override object MarshalToScript(object obj, HostItemFlags flags)
@@ -402,24 +606,27 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
 
-            var uniqueName = documentNameManager.GetUniqueName(documentName, "Script Document");
-            if (discard)
+            return ScriptInvoke(() =>
             {
-                uniqueName += " [temp]";
-            }
-            else
-            {
-                documentNames.Add(uniqueName);
-            }
+                var uniqueName = documentNameManager.GetUniqueName(documentName, "Script Document");
+                if (discard)
+                {
+                    uniqueName += " [temp]";
+                }
+                else
+                {
+                    documentNames.Add(uniqueName);
+                }
 
-            var stateObjects = new object[2];
-            using (var timer = new Timer(OnContinuationTimer, stateObjects, Timeout.Infinite, Timeout.Infinite))
-            {
-                stateObjects[0] = new WeakReference(this);
-                stateObjects[1] = timer;
-                timer.Change(continuationInterval, Timeout.Infinite);
-                return ScriptInvoke(() => proxy.Execute(uniqueName, MiscHelpers.FormatCode(code), discard));
-            }
+                var stateObjects = new object[2];
+                using (var timer = new Timer(OnContinuationTimer, stateObjects, Timeout.Infinite, Timeout.Infinite))
+                {
+                    stateObjects[0] = new WeakReference(this);
+                    stateObjects[1] = timer;
+                    timer.Change(continuationInterval, Timeout.Infinite);
+                    return proxy.Execute(uniqueName, MiscHelpers.FormatCode(code), discard);
+                }
+            });
         }
 
         private static void OnContinuationTimer(object state)

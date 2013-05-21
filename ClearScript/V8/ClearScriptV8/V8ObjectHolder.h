@@ -70,9 +70,7 @@ class V8ObjectHolder
 public:
 
     virtual V8ObjectHolder* Clone() const = 0;
-    virtual LPVOID GetObject() const = 0;
+    virtual void* GetObject() const = 0;
 
-    virtual ~V8ObjectHolder()
-    {
-    }
+    virtual ~V8ObjectHolder() {}
 };

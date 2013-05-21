@@ -67,7 +67,7 @@ namespace Microsoft.ClearScript.Util
     internal class ConcurrentWeakSet<T> where T : class
     {
         private readonly object dataLock = new object();
-        private List<WeakReference> refs = new List<WeakReference>();
+        private List<WeakReference> weakRefs = new List<WeakReference>();
 
         public int Count
         {
@@ -87,7 +87,7 @@ namespace Microsoft.ClearScript.Util
             {
                 if (!GetItemsInternal().Contains(item))
                 {
-                    refs.Add(new WeakReference(item));
+                    weakRefs.Add(new WeakReference(item));
                     return true;
                 }
 
@@ -112,18 +112,18 @@ namespace Microsoft.ClearScript.Util
         private List<T> GetItemsInternal()
         {
             var items = new List<T>();
-            var tempRefs = new List<WeakReference>();
-            foreach (var weakRef in refs)
+            var tempWeakRefs = new List<WeakReference>();
+            foreach (var weakRef in weakRefs)
             {
                 var item = weakRef.Target as T;
                 if (item != null)
                 {
                     items.Add(item);
-                    tempRefs.Add(weakRef);
+                    tempWeakRefs.Add(weakRef);
                 }
             }
 
-            refs = tempRefs;
+            weakRefs = tempWeakRefs;
             return items;
         }
     }

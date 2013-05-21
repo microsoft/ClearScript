@@ -134,7 +134,7 @@ namespace Microsoft.ClearScript.Test
         public static void AssertValidException(IScriptEngineException exception)
         {
             AssertValidException((Exception)exception);
-            if ((exception is ScriptEngineException) && (exception.HResult != RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION))
+            if ((exception is ScriptEngineException) && !exception.IsFatal && (exception.HResult != RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION))
             {
                 Assert.IsTrue(exception.ErrorDetails.StartsWith(exception.Message, StringComparison.Ordinal));
                 Assert.IsTrue(exception.ErrorDetails.Contains("\n    at "));

@@ -76,6 +76,9 @@ namespace Microsoft.ClearScript
         private readonly string errorDetails;
         private const string errorDetailsItemName = "ScriptErrorDetails";
 
+        private readonly bool isFatal;
+        private const string isFatalItemName = "IsFatal";
+
         #region constructors
 
         /// <summary>
@@ -114,13 +117,15 @@ namespace Microsoft.ClearScript
         {
             engineName = info.GetString(engineNameItemName);
             errorDetails = info.GetString(errorDetailsItemName);
+            isFatal = info.GetBoolean(isFatalItemName);
         }
 
-        internal ScriptInterruptedException(string engineName, string message, string errorDetails, int errorCode, Exception innerException)
+        internal ScriptInterruptedException(string engineName, string message, string errorDetails, int errorCode, bool isFatal, Exception innerException)
             : base(message, innerException)
         {
             this.engineName = engineName;
             this.errorDetails = errorDetails;
+            this.isFatal = isFatal;
 
             if (errorCode != 0)
             {
@@ -156,6 +161,14 @@ namespace Microsoft.ClearScript
             get { return errorDetails; }
         }
 
+        /// <summary>
+        /// Gets a value that indicates whether the exception represents a fatal error.
+        /// </summary>
+        public bool IsFatal
+        {
+            get { return isFatal; }
+        }
+
         #endregion
 
         #region OperationCanceledException overrides
@@ -170,6 +183,7 @@ namespace Microsoft.ClearScript
             base.GetObjectData(info, context);
             info.AddValue(engineNameItemName, engineName);
             info.AddValue(errorDetailsItemName, errorDetails);
+            info.AddValue(isFatalItemName, isFatal);
         }
 
         #endregion

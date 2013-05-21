@@ -69,7 +69,7 @@ class HostException
 {
 public:
 
-    HostException(LPCWSTR pMessage, const V8Value& exception):
+    HostException(const wchar_t* pMessage, const V8Value& exception):
         m_Exception(exception)
     {
         if (pMessage != nullptr)
@@ -78,7 +78,7 @@ public:
         }
     }
 
-    HostException(LPCWSTR pMessage, V8Value&& exception):
+    HostException(const wchar_t* pMessage, V8Value&& exception):
         m_Exception(exception)
     {
         if (pMessage != nullptr)
@@ -87,7 +87,7 @@ public:
         }
     }
 
-    LPCWSTR GetMessage() const
+    const wchar_t* GetMessage() const
     {
         return m_Message.c_str();
     }

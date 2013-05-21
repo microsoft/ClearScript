@@ -176,7 +176,7 @@ namespace Microsoft.ClearScript.Windows
         public ulong Limit;
 
         [MarshalAs(UnmanagedType.Bool)]
-        public bool final;
+        public bool IsFinal;
 
         [MarshalAs(UnmanagedType.Interface)]
         public object FinalObject;

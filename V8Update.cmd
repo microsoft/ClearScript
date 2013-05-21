@@ -5,6 +5,8 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
+set testedV8rev=14721
+
 :ProcessArgs
 
 set download=true
@@ -14,31 +16,33 @@ set mode=Release
 if "%1"=="" goto ProcessArgsDone
 if "%1"=="/?" goto EchoUsage
 if /i "%1"=="/n" goto SetDownloadFalse
-goto SetMode
+if /i "%1"=="debug" goto SetDebugMode
+if /i "%1"=="release" goto SetReleaseMode
+goto SetV8Rev
 
 :EchoUsage
 echo Downloads, builds, and imports V8 for use with ClearScript.
 echo.
-echo V8UPDATE [/N] [mode]
+echo V8UPDATE [/N] [mode] [revision]
 echo.
-echo   /N    Do not download; use previously downloaded files if possible.
-echo   mode  Build mode: "Debug" or "Release.
+echo   /N        Do not download; use previously downloaded files if possible.
+echo   mode      Build mode: "Debug" or "Release".
+echo   revision  V8 revision: "Latest", "Tested", or revision number.
 goto Exit
 
 :SetDownloadFalse
 set download=false
 goto NextArg
 
-:SetMode
-if /i "%1"=="debug" goto SetDebugMode
-if /i "%1"=="release" goto SetReleaseMode
-echo "%1": Invalid build mode; specify "Debug" or "Release"
-goto Exit
 :SetDebugMode
 set mode=Debug
 goto NextArg
 :SetReleaseMode
 set mode=Release
+goto NextArg
+
+:SetV8Rev
+set v8rev=%1
 goto NextArg
 
 :NextArg
@@ -77,11 +81,17 @@ goto Build
 
 :ResolveRev
 if "%v8rev%"=="" goto UseLatestRev
+if /i "%v8rev%"=="latest" goto UseLatestRev
+if /i "%v8rev%"=="tested" goto UseTestedRev
 echo V8 revision: %v8rev%
 goto ResolveRevDone
+:UseTestedRev
+set v8rev=%testedV8rev%
+echo V8 revision: Tested (%v8rev%)
+goto ResolveRevDone
 :UseLatestRev
-echo V8 revision: Latest
 set v8rev=HEAD
+echo V8 revision: Latest
 :ResolveRevDone
 
 :EnsureBuildDir
@@ -106,9 +116,9 @@ cd v8
 
 :PatchV8
 echo Patching V8 ...
-svn patch ..\..\V8Patch.txt >patchV8.log
+svn patch --ignore-whitespace ..\..\V8Patch.txt >patchV8.log
 if errorlevel 1 goto Error2
-svn diff -x --ignore-eol-style >V8Patch.txt
+svn diff -x --ignore-space-change -x --ignore-eol-style >V8Patch.txt
 :PatchV8Done
 
 :DownloadGYP

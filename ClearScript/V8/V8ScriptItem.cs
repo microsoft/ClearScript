@@ -97,6 +97,14 @@ namespace Microsoft.ClearScript.V8
             return obj;
         }
 
+        private void VerifyNotDisposed()
+        {
+            if (disposed)
+            {
+                throw new ObjectDisposedException(ToString());
+            }
+        }
+
         #region ScriptItem overrides
 
         public override ScriptEngine Engine
@@ -106,10 +114,7 @@ namespace Microsoft.ClearScript.V8
 
         protected override bool TryBindAndInvoke(DynamicMetaObjectBinder binder, object[] args, out object result)
         {
-            if (disposed)
-            {
-                throw new ObjectDisposedException(ToString());
-            }
+            VerifyNotDisposed();
 
             try
             {
@@ -196,7 +201,7 @@ namespace Microsoft.ClearScript.V8
                     }
                     else
                     {
-                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, exception);
+                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception);
                     }
                 }
             }
@@ -211,6 +216,8 @@ namespace Microsoft.ClearScript.V8
 
         public override object GetProperty(string name)
         {
+            VerifyNotDisposed();
+
             var result = engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(name)), false);
 
             var resultScriptItem = result as V8ScriptItem;
@@ -224,41 +231,50 @@ namespace Microsoft.ClearScript.V8
 
         public override void SetProperty(string name, object value)
         {
+            VerifyNotDisposed();
             engine.ScriptInvoke(() => target.SetProperty(name, engine.MarshalToScript(value)));
         }
 
         public override bool DeleteProperty(string name)
         {
+            VerifyNotDisposed();
             return engine.ScriptInvoke(() => target.DeleteProperty(name));
         }
 
         public override string[] GetPropertyNames()
         {
+            VerifyNotDisposed();
             return engine.ScriptInvoke(() => target.GetPropertyNames());
         }
 
         public override object GetProperty(int index)
         {
+            VerifyNotDisposed();
             return engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(index)), false);
         }
 
         public override void SetProperty(int index, object value)
         {
+            VerifyNotDisposed();
             engine.ScriptInvoke(() => target.SetProperty(index, engine.MarshalToScript(value)));
         }
 
         public override bool DeleteProperty(int index)
         {
+            VerifyNotDisposed();
             return engine.ScriptInvoke(() => target.DeleteProperty(index));
         }
 
         public override int[] GetPropertyIndices()
         {
+            VerifyNotDisposed();
             return engine.ScriptInvoke(() => target.GetPropertyIndices());
         }
 
         public override object Invoke(object[] args, bool asConstructor)
         {
+            VerifyNotDisposed();
+
             if (asConstructor)
             {
                 return engine.Script.EngineInternal.invokeConstructor(this, args);
@@ -269,6 +285,7 @@ namespace Microsoft.ClearScript.V8
 
         public override object InvokeMethod(string name, object[] args)
         {
+            VerifyNotDisposed();
             return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMethod(name, engine.MarshalToScript(args))), false);
         }
 
