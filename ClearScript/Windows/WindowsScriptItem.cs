@@ -220,7 +220,7 @@ namespace Microsoft.ClearScript.Windows
         protected override object[] AdjustInvokeArgs(object[] args)
         {
             // WORKAROUND: JScript seems to require at least one argument to invoke a function
-            return ((engine is JScriptEngine) && (args.Length < 1)) ? new object[] { 0 } : args;
+            return ((engine is JScriptEngine) && (args.Length < 1)) ? new object[] { Undefined.Value } : args;
         }
 
         #endregion

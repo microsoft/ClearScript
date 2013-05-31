@@ -62,6 +62,7 @@
 using System;
 using System.Diagnostics;
 using System.Dynamic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -130,6 +131,17 @@ namespace Microsoft.ClearScript.Util
                                         return true;
                                     }
                                 }
+                                else
+                                {
+                                    var invokeMemberBinder = binder as InvokeMemberBinder;
+                                    if (invokeMemberBinder != null)
+                                    {
+                                        if (TryInvokeMethod(reflect, invokeMemberBinder.Name, false, args, out result))
+                                        {
+                                            return true;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -191,6 +203,25 @@ namespace Microsoft.ClearScript.Util
                     result = args[args.Length - 1];
                     return true;
                 }
+            }
+
+            result = null;
+            return false;
+        }
+
+        private static bool TryInvokeMethod(IReflect target, string name, bool ignoreCase, object[] args, out object result)
+        {
+            var flags = BindingFlags.InvokeMethod | BindingFlags.Public;
+            if (ignoreCase)
+            {
+                flags |= BindingFlags.IgnoreCase;
+            }
+
+            var method = target.GetMethod(name, flags);
+            if (method != null)
+            {
+                result = method.Invoke(target, flags, null, args, CultureInfo.InvariantCulture);
+                return true;
             }
 
             result = null;

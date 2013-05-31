@@ -1,6 +1,6 @@
 Index: tools/gyp/v8.gyp
 ===================================================================
---- tools/gyp/v8.gyp	(revision 14724)
+--- tools/gyp/v8.gyp	(revision 14901)
 +++ tools/gyp/v8.gyp	(working copy)
 @@ -30,6 +30,7 @@
    'targets': [

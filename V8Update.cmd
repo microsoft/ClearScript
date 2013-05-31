@@ -5,7 +5,7 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedV8rev=14721
+set testedV8rev=14901
 
 :ProcessArgs
 

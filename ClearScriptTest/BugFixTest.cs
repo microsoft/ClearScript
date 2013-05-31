@@ -63,6 +63,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
+using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -127,6 +128,18 @@ namespace Microsoft.ClearScript.Test
             engine.Execute("cb = new (System.Func(System.Int32, System.Int32))(function (x) {return x * x; })");
             var func = (Func<int, int>)engine.Evaluate("new (System.Func(System.Int32, System.Int32))(cb)");
             Assert.AreEqual(25, func(5));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_JScriptCaseInsensitivity()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+            engine.Execute("abc = 1; ABC = 2; function foo() { return 3; } function FOO() { return 4; }");
+            Assert.AreEqual(1, engine.Script.abc);
+            Assert.AreEqual(2, engine.Script.ABC);
+            Assert.AreEqual(3, engine.Script.foo());
+            Assert.AreEqual(4, engine.Script.FOO());
         }
 
         // ReSharper restore InconsistentNaming
