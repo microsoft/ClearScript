@@ -1241,14 +1241,14 @@ Handle<Value> V8ContextImpl::InvokeHostObject(const Arguments& args)
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::DisposeWeakHandle(Isolate* pIsolate, Persistent<Value> hValue, void* pvV8ObjectCache)
+void V8ContextImpl::DisposeWeakHandle(Isolate* pIsolate, Persistent<Object>* phObject, void* pvV8ObjectCache)
 {
-    auto pHolder = ::GetHostObjectHolder(hValue->ToObject());
+    auto pHolder = ::GetHostObjectHolder(*phObject);
     ASSERT_EVAL(HostObjectHelpers::RemoveV8ObjectCacheEntry(pvV8ObjectCache, pHolder->GetObject()));
 
     delete pHolder;
     HostObjectHelpers::Release(pvV8ObjectCache);
-    hValue.Dispose(pIsolate);
+    phObject->Dispose(pIsolate);
 }
 
 //-----------------------------------------------------------------------------

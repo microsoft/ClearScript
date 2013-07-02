@@ -180,8 +180,8 @@ private:
         return m_spIsolateImpl->CreatePersistent(hTarget);
     }
 
-    template <typename T>
-    Persistent<T> MakeWeak(Persistent<T> hTarget, void* pvArg, NearDeathCallback pCallback)
+    template <typename T, typename P>
+    Persistent<T> MakeWeak(Persistent<T> hTarget, P* pvArg, typename WeakReferenceCallbacks<T, P>::Revivable pCallback)
     {
         return m_spIsolateImpl->MakeWeak(hTarget, pvArg, pCallback);
     }
@@ -234,7 +234,7 @@ private:
     static Handle<Array> GetHostObjectPropertyIndices(const AccessorInfo& info);
 
     static Handle<Value> InvokeHostObject(const Arguments& args);
-    static void DisposeWeakHandle(Isolate* pIsolate, Persistent<Value> hValue, void* pvArg);
+    static void DisposeWeakHandle(Isolate* pIsolate, Persistent<Object>* phObject, void* pvV8ObjectCache);
 
     Persistent<Integer> GetIntegerHandle(int value);
     Handle<Value> ImportValue(const V8Value& value);

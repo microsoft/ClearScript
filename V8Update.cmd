@@ -5,7 +5,8 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedV8rev=14901
+set testedRevision=14955
+set testedVersion=3.19.9
 
 :ProcessArgs
 
@@ -80,18 +81,21 @@ goto Build
 :Download
 
 :ResolveRev
-if "%v8rev%"=="" goto UseLatestRev
+if "%v8rev%"=="" goto UseTestedRev
 if /i "%v8rev%"=="latest" goto UseLatestRev
 if /i "%v8rev%"=="tested" goto UseTestedRev
+if /i "%v8rev%"=="%testedRevision%" goto UseTestedRev
 echo V8 revision: %v8rev%
+echo WARNING: This V8 revision may not be compatible with ClearScript.
 goto ResolveRevDone
 :UseTestedRev
-set v8rev=%testedV8rev%
-echo V8 revision: Tested (%v8rev%)
+set v8rev=%testedRevision%
+echo V8 revision: Tested (%v8rev%, Version %testedVersion%)
 goto ResolveRevDone
 :UseLatestRev
 set v8rev=HEAD
 echo V8 revision: Latest
+echo WARNING: This V8 revision may not be compatible with ClearScript.
 :ResolveRevDone
 
 :EnsureBuildDir

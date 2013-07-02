@@ -58,11 +58,11 @@ build, and import V8:
    Specifying "Debug" or "Release" is optional; the default is Release. The
    selected V8 variant will then be used for all ClearScript configurations.
 
-   By default, V8Update downloads the latest stable revision of the V8 source
-   code. If you'd like to use a specific revision instead, specify the desired
-   trunk revision number on the V8Update command line. To use a revision that
-   has been tested with the current version of ClearScript, specify "Tested".
-   Go to http://code.google.com/p/v8/source/list to view V8's revision history.
+   By default, V8Update downloads a V8 revision that has been tested with the
+   current version of ClearScript. If you'd like to use a specific revision
+   instead, place the desired trunk revision number on the V8Update command
+   line. To use the latest stable trunk revision, specify "Latest". Go to
+   http://code.google.com/p/v8/source/list to view V8's revision history.
 
 You are now ready to build the full ClearScript solution using Visual Studio.
 

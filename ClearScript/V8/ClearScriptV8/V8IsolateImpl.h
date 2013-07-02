@@ -147,8 +147,8 @@ public:
         return Persistent<T>::New(m_pIsolate, hTarget);
     }
 
-    template <typename T>
-    Persistent<T> MakeWeak(Persistent<T> hTarget, void* pvArg, NearDeathCallback pCallback)
+    template <typename T, typename P>
+    Persistent<T> MakeWeak(Persistent<T> hTarget, P* pvArg, typename WeakReferenceCallbacks<T, P>::Revivable pCallback)
     {
         hTarget.MakeWeak(m_pIsolate, pvArg, pCallback);
         return hTarget;
