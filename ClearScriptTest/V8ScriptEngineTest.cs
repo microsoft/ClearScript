@@ -659,6 +659,46 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ErrorHandling_SyntaxError()
+        {
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("function foo() { int c; }");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNull(exception.InnerException);
+                    Assert.IsTrue(exception.Message.Contains("SyntaxError"));
+                    Assert.IsTrue(exception.ErrorDetails.Contains(" -> "));
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ErrorHandling_ThrowNonError()
+        {
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("(function () { throw 123; })()");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNull(exception.InnerException);
+                    Assert.IsTrue(exception.Message.StartsWith("123", StringComparison.Ordinal));
+                    Assert.IsTrue(exception.ErrorDetails.Contains(" -> "));
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_ErrorHandling_ScriptError()
         {
             TestUtil.AssertException<ScriptEngineException>(() =>

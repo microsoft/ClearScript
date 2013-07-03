@@ -67,6 +67,7 @@
 
 #pragma warning(push, 3)
 
+#define V8_USE_UNSAFE_HANDLES
 #include "v8.h"
 #include "v8-debug.h"
 using namespace v8;

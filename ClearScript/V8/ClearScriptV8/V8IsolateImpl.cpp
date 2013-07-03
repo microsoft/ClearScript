@@ -118,6 +118,7 @@ V8IsolateImpl::V8IsolateImpl(const wchar_t* pName, const V8IsolateConstraints* p
 
         BEGIN_ISOLATE_ENTRY_SCOPE
 
+            V8::SetCaptureStackTraceForUncaughtExceptions(true, 64, StackTrace::kDetailed);
             V8::IgnoreOutOfMemoryException();
             if (pConstraints != nullptr)
             {

@@ -5,8 +5,8 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedRevision=14955
-set testedVersion=3.19.9
+set testedRevision=15192
+set testedVersion=3.19.18
 
 :ProcessArgs
 

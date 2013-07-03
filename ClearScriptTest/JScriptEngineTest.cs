@@ -536,6 +536,44 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ErrorHandling_SyntaxError()
+        {
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("function foo() { int c; }");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNull(exception.InnerException);
+                    Assert.IsTrue(exception.Message.StartsWith("Expected", StringComparison.Ordinal));
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ErrorHandling_ThrowNonError()
+        {
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute("(function () { throw 123; })()");
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNull(exception.InnerException);
+                    Assert.IsTrue(exception.ErrorDetails.Contains(" -> throw 123"));
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_ErrorHandling_ScriptError()
         {
             TestUtil.AssertException<ScriptEngineException>(() =>

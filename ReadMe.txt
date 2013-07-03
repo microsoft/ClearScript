@@ -21,9 +21,9 @@ II. Building ClearScript
 ------------------------
 
 The provided project and solution files require Visual Studio 2012. They
-produce architecture-neutral managed libraries that target .NET Framework 4.5,
-although ClearScript has been tested with .NET Framework 4.0 as well. It does
-not support older environments. The output directory is bin\[Debug|Release].
+produce architecture-neutral managed libraries that target .NET Framework 4.0.
+ClearScript has been tested with .NET Framework 4.5 as well. It does not
+support older environments. The output directory is bin\[Debug|Release].
 
 There are two ways to build ClearScript - with and without V8 support.
 
@@ -65,17 +65,6 @@ build, and import V8:
    http://code.google.com/p/v8/source/list to view V8's revision history.
 
 You are now ready to build the full ClearScript solution using Visual Studio.
-
-OPTIONAL: If you'd like your copy of ClearScript to use .NET Framework 4.0
-instead of 4.5, you must change the Target Framework setting for all projects
-in the solution. Note that the Visual Studio IDE does not allow you to change
-this setting for C++ projects. This affects the V8 interface library projects,
-ClearScriptV8-32 and ClearScriptV8-64. To change their .NET Framework targets,
-you must open each project file in a text or XML editor and modify the
-TargetFrameworkVersion element manually:
-
-   ClearScript\V8\ClearScriptV8\32\ClearScriptV8-32.vcxproj
-   ClearScript\V8\ClearScriptV8\64\ClearScriptV8-64.vcxproj
 
 OPTIONAL: The ClearScript distribution includes a copy of the ClearScript
 Library Reference in Compiled HTML (.CHM) format. If you'd like to rebuild this

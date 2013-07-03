@@ -1438,15 +1438,130 @@ void V8ContextImpl::Verify(const TryCatch& tryCatch)
             throw V8Exception(V8Exception::Type_Interrupt, m_Name.c_str(), L"Script execution interrupted by host", *String::Value(tryCatch.StackTrace()), V8Value(V8Value::Undefined));
         }
 
-        V8Value innerException(V8Value::Undefined);
-
         auto hException = tryCatch.Exception();
+        wstring message = *String::Value(hException);
+        wstring stackTrace;
+
+        auto hStackTrace = tryCatch.StackTrace();
+        if (!hStackTrace.IsEmpty())
+        {
+            stackTrace = *String::Value(hStackTrace);
+        }
+
+        auto hMessage = tryCatch.Message();
+        if (!hMessage.IsEmpty())
+        {
+            if (message.length() < 1)
+            {
+                message = *String::Value(hMessage->Get());
+            }
+
+            stackTrace = message;
+
+            auto hStackTrace = hMessage->GetStackTrace();
+            int frameCount = !hStackTrace.IsEmpty() ? hStackTrace->GetFrameCount() : 0;
+
+            if (frameCount < 1)
+            {
+                auto hScriptResourceName = hMessage->GetScriptResourceName();
+                if (!hScriptResourceName.IsEmpty() && !hScriptResourceName->IsNull() && !hScriptResourceName->IsUndefined())
+                {
+                    auto hScriptName = hScriptResourceName->ToString();
+                    if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
+                    {
+                        stackTrace += L"\n    at ";
+                        stackTrace += *String::Value(hScriptName);
+                    }
+                    else
+                    {
+                        stackTrace += L"\n    at <anonymous>";
+                    }
+                }
+                else
+                {
+                    stackTrace += L"\n    at <anonymous>";
+                }
+
+                stackTrace += L':';
+                stackTrace += to_wstring(hMessage->GetLineNumber());
+                stackTrace += L':';
+                stackTrace += to_wstring(hMessage->GetStartColumn() + 1);
+
+                auto hSourceLine = hMessage->GetSourceLine();
+                if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
+                {
+                    stackTrace += L" -> ";
+                    stackTrace += *String::Value(hSourceLine);
+                }
+            }
+            else
+            {
+                for (int index = 0; index < frameCount; index++)
+                {
+                    auto hFrame = hStackTrace->GetFrame(index);
+                    stackTrace += L"\n    at ";
+
+                    auto hFunctionName = hFrame->GetFunctionName();
+                    if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
+                    {
+                        if (hFrame->IsConstructor())
+                        {
+                            stackTrace += L"new ";
+                        }
+
+                        stackTrace += *String::Value(hFunctionName);
+                        stackTrace += L" (";
+                    }
+
+                    auto hScriptName = hFrame->GetScriptName();
+                    if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
+                    {
+                        stackTrace += *String::Value(hScriptName);
+                    }
+                    else
+                    {
+                        stackTrace += L"<anonymous>";
+                    }
+
+                    stackTrace += L':';
+                    auto lineNumber = hFrame->GetLineNumber();
+                    if (lineNumber != Message::kNoLineNumberInfo)
+                    {
+                        stackTrace += to_wstring(lineNumber);
+                    }
+
+                    stackTrace += L':';
+                    auto column = hFrame->GetColumn();
+                    if (column != Message::kNoColumnInfo)
+                    {
+                        stackTrace += to_wstring(column);
+                    }
+
+                    if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
+                    {
+                        stackTrace += L')';
+                    }
+
+                    if (index == 0)
+                    {
+                        auto hSourceLine = hMessage->GetSourceLine();
+                        if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
+                        {
+                            stackTrace += L" -> ";
+                            stackTrace += *String::Value(hSourceLine);
+                        }
+                    }
+                }
+            }
+        }
+
+        V8Value innerException(V8Value::Undefined);
         if (hException->IsObject())
         {
             innerException = ExportValue(hException->ToObject()->Get(m_hInnerExceptionName));
         }
 
-        throw V8Exception(V8Exception::Type_General, m_Name.c_str(), *String::Value(tryCatch.Exception()), *String::Value(tryCatch.StackTrace()), innerException);
+        throw V8Exception(V8Exception::Type_General, m_Name.c_str(), message.c_str(), stackTrace.c_str(), innerException);
     }
 }
 
