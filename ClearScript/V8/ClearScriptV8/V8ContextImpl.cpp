@@ -1333,11 +1333,16 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
                 return CreateLocal(::ObjectHandleFromPtr(pvV8Object));
             }
 
-            auto hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
-            ::SetHostObjectHolder(hObject, pHolder->Clone());
+            // WARNING: Instantiation may fail during script interruption. Check NewInstance()
+            // result to avoid access violations and V8 fatal errors in ::SetObjectHolder().
 
-            pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), HostObjectHelpers::AddRef(m_pvV8ObjectCache), DisposeWeakHandle));
-            HostObjectHelpers::CacheV8Object(m_pvV8ObjectCache, pHolder->GetObject(), pvV8Object);
+            auto hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
+            if (!hObject.IsEmpty())
+            {
+                ::SetHostObjectHolder(hObject, pHolder->Clone());
+                pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), HostObjectHelpers::AddRef(m_pvV8ObjectCache), DisposeWeakHandle));
+                HostObjectHelpers::CacheV8Object(m_pvV8ObjectCache, pHolder->GetObject(), pvV8Object);
+            }
 
             return hObject;
         }

@@ -61,6 +61,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.Windows;
@@ -131,7 +132,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_JScriptCaseInsensitivity()
+        public void BugFix_JScript_CaseInsensitivity()
         {
             engine.Dispose();
             engine = new JScriptEngine();
@@ -140,6 +141,49 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(2, engine.Script.ABC);
             Assert.AreEqual(3, engine.Script.foo());
             Assert.AreEqual(4, engine.Script.FOO());
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8_ScriptInterruptCrash()
+        {
+            // A V8 fatal error on a background thread may not kill the process, so a single run is
+            // inconclusive. It will kill the V8 runtime, however, causing subsequent runs to fail.
+
+            for (var iteration = 0; iteration < 16; iteration++)
+            {
+                var context = new PropertyBag();
+                engine.AddHostObject("context", context);
+
+                var startEvent = new ManualResetEventSlim(false);
+                var thread = new Thread(() =>
+                {
+                    context["startEvent"] = startEvent;
+                    context["counter"] = 0;
+
+                    try
+                    {
+                        engine.Execute(
+                        @"
+                            for (var i = 0; i < 10000000; i++ )
+                            {
+                                context.counter++;
+                                context.startEvent.Set();
+                            }
+                        ");
+                    }
+                    catch (ScriptInterruptedException)
+                    {
+                    }
+                });
+
+                thread.Start();
+                startEvent.Wait();
+                engine.Interrupt();
+                thread.Join();
+
+                var counter = (int)context["counter"];
+                Assert.IsTrue((counter > 0) && (counter < 10000000));
+            }
         }
 
         // ReSharper restore InconsistentNaming
