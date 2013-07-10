@@ -146,43 +146,36 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_V8_ScriptInterruptCrash()
         {
-            // A V8 fatal error on a background thread may not kill the process, so a single run is
-            // inconclusive. It will kill the V8 runtime, however, causing subsequent runs to fail.
+            // run the test several times to verify post-interrupt engine functionality
 
             for (var iteration = 0; iteration < 16; iteration++)
             {
                 var context = new PropertyBag();
                 engine.AddHostObject("context", context);
 
-                var startEvent = new ManualResetEventSlim(false);
-                var thread = new Thread(() =>
+                using (var startEvent = new ManualResetEventSlim(false))
                 {
                     context["startEvent"] = startEvent;
-                    context["counter"] = 0;
 
-                    try
+                    var interrupted = false;
+                    var thread = new Thread(() =>
                     {
-                        engine.Execute(
-                        @"
-                            for (var i = 0; i < 10000000; i++ )
-                            {
-                                context.counter++;
-                                context.startEvent.Set();
-                            }
-                        ");
-                    }
-                    catch (ScriptInterruptedException)
-                    {
-                    }
-                });
+                        try
+                        {
+                            engine.Execute("while (true) { context.startEvent.Set(); }");
+                        }
+                        catch (ScriptInterruptedException)
+                        {
+                            interrupted = true;
+                        }
+                    });
 
-                thread.Start();
-                startEvent.Wait();
-                engine.Interrupt();
-                thread.Join();
-
-                var counter = (int)context["counter"];
-                Assert.IsTrue((counter > 0) && (counter < 10000000));
+                    thread.Start();
+                    startEvent.Wait();
+                    engine.Interrupt();
+                    thread.Join();
+                    Assert.IsTrue(interrupted);
+                }
             }
         }
 
