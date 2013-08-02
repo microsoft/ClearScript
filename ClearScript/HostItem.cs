@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -61,6 +61,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
@@ -100,9 +101,13 @@ namespace Microsoft.ClearScript
         private FieldInfo[] cachedFields;
         private MethodInfo[] cachedMethods;
         private PropertyInfo[] cachedProperties;
-        private PropertyInfo[] cachedIndexProperties;
+
+        private string[] cachedMemberNames;
+        private int[] cachedPropertyIndices;
 
         private ExtensionMethodSummary cachedExtensionMethodSummary;
+        private int cachedListCount;
+        private HashSet<string> expandoMemberNames;
 
         private static readonly MemberMap<Field> fieldMap = new MemberMap<Field>();
         private static readonly MemberMap<Method> methodMap = new MemberMap<Method>();
@@ -259,7 +264,7 @@ namespace Microsoft.ClearScript
 
         private void Initialize()
         {
-            if (!(target is HostType) && (target.InvokeTarget != null))
+            if ((target is HostObject) || (target is IHostVariable) || (target is IByRefArg))
             {
                 BindSpecialTarget();
             }
@@ -278,30 +283,23 @@ namespace Microsoft.ClearScript
 
         private void BindSpecialTarget()
         {
-            // The checks here are required because the item may be bound to a specific target base
+            BindSpecialTarget(out targetDynamic);
+            BindSpecialTarget(out targetPropertyBag);
+            BindSpecialTarget(out targetList);
+        }
+
+        private void BindSpecialTarget<T>(out T specialTarget) where T : class
+        {
+            // The check here is required because the item may be bound to a specific target base
             // class or interface - one that must not trigger special treatment.
 
-            if (typeof(IDynamic).IsAssignableFrom(target.Type))
+            if (typeof(T).IsAssignableFrom(target.Type))
             {
-                targetDynamic = target.InvokeTarget as IDynamic;
-                if (targetDynamic != null)
-                {
-                    return;
-                }
+                specialTarget = target.InvokeTarget as T;
             }
-
-            if (typeof(IPropertyBag).IsAssignableFrom(target.Type))
+            else
             {
-                targetPropertyBag = target.InvokeTarget as IPropertyBag;
-                if (targetPropertyBag != null)
-                {
-                    return;
-                }
-            }
-
-            if (typeof(IList).IsAssignableFrom(target.Type))
-            {
-                targetList = target.InvokeTarget as IList;
+                specialTarget = null;
             }
         }
 
@@ -431,61 +429,122 @@ namespace Microsoft.ClearScript
 
         private string[] GetAllFieldNames()
         {
-            if ((targetDynamic != null) || (targetPropertyBag != null))
+            if ((targetDynamic == null) && (targetPropertyBag == null))
             {
-                return MiscHelpers.GetEmptyArray<string>();
+                return GetLocalFieldNames().Concat(GetLocalEventNames()).Distinct().ToArray();
             }
 
-            if (cachedFieldNames == null)
-            {
-                cachedFieldNames = GetLocalFieldNames().Concat(GetLocalEventNames()).ToArray();
-            }
-
-            return cachedFieldNames;
+            return MiscHelpers.GetEmptyArray<string>();
         }
 
         private string[] GetAllMethodNames()
         {
-            if ((targetDynamic != null) || (targetPropertyBag != null))
+            var names = target.GetAuxMethodNames(GetMethodBindFlags()).AsEnumerable();
+            if ((targetDynamic == null) && (targetPropertyBag == null))
             {
-                return MiscHelpers.GetEmptyArray<string>();
-            }
-
-            if (cachedMethodNames == null)
-            {
-                var names = GetLocalMethodNames().Concat(target.GetAuxMethodNames(GetMethodBindFlags()));
+                names = names.Concat(GetLocalMethodNames());
                 if (target.Flags.HasFlag(HostTargetFlags.AllowExtensionMethods))
                 {
-                    names = names.Concat(engine.ExtensionMethodSummary.MethodNames);
+                    cachedExtensionMethodSummary = engine.ExtensionMethodSummary;
+                    names = names.Concat(cachedExtensionMethodSummary.MethodNames);
                 }
-
-                cachedMethodNames = names.Distinct().ToArray();
             }
 
-            return cachedMethodNames;
+            return names.Distinct().ToArray();
         }
 
         private string[] GetAllPropertyNames()
         {
+            var names = target.GetAuxPropertyNames(GetCommonBindFlags()).AsEnumerable();
             if (targetDynamic != null)
             {
-                var names = targetDynamic.GetPropertyNames();
-                var indexStrings = targetDynamic.GetPropertyIndices().Select(index => index.ToString(CultureInfo.InvariantCulture));
-                return names.Concat(indexStrings).ToArray();
+                names = names.Concat(targetDynamic.GetPropertyNames());
+                names = names.Concat(targetDynamic.GetPropertyIndices().Select(index => index.ToString(CultureInfo.InvariantCulture)));
             }
-
-            if (targetPropertyBag != null)
+            else if (targetPropertyBag != null)
             {
-                return targetPropertyBag.Keys.ToArray();
+                names = names.Concat(targetPropertyBag.Keys);
             }
-
-            if (cachedPropertyNames == null)
+            else
             {
-                var names = GetLocalPropertyNames().Concat(target.GetAuxPropertyNames(GetCommonBindFlags()));
-                cachedPropertyNames = names.Distinct().ToArray();
+                names = names.Concat(GetLocalPropertyNames());
+                if (targetList != null)
+                {
+                    cachedListCount = targetList.Count;
+                    if (cachedListCount > 0)
+                    {
+                        names = names.Concat(Enumerable.Range(0, cachedListCount).Select(index => index.ToString(CultureInfo.InvariantCulture)));
+                    }
+                }
             }
 
-            return cachedPropertyNames;
+            if (expandoMemberNames != null)
+            {
+                names = names.Except(expandoMemberNames);
+            }
+
+            return names.Distinct().ToArray();
+        }
+
+        private void UpdateFieldNames(out bool updated)
+        {
+            if (cachedFieldNames == null)
+            {
+                cachedFieldNames = GetAllFieldNames();
+                updated = true;
+            }
+            else
+            {
+                updated = false;
+            }
+        }
+
+        private void UpdateMethodNames(out bool updated)
+        {
+            if ((cachedMethodNames == null) ||
+                (target.Flags.HasFlag(HostTargetFlags.AllowExtensionMethods) && (cachedExtensionMethodSummary != engine.ExtensionMethodSummary)))
+            {
+                cachedMethodNames = GetAllMethodNames();
+                updated = true;
+            }
+            else
+            {
+                updated = false;
+            }
+        }
+
+        private void UpdatePropertyNames(out bool updated)
+        {
+            if ((cachedPropertyNames == null) ||
+                (targetDynamic != null) ||
+                (targetPropertyBag != null) ||
+                ((targetList != null) && (cachedListCount != targetList.Count)))
+            {
+                cachedPropertyNames = GetAllPropertyNames();
+                updated = true;
+            }
+            else
+            {
+                updated = false;
+            }
+        }
+
+        private void AddExpandoMemberName(string name)
+        {
+            if (expandoMemberNames == null)
+            {
+                expandoMemberNames = new HashSet<string>();
+            }
+
+            expandoMemberNames.Add(name);
+        }
+
+        private void RemoveExpandoMemberName(string name)
+        {
+            if (expandoMemberNames != null)
+            {
+                expandoMemberNames.Remove(name);
+            }
         }
 
         private object InvokeDynamicMember(string name, BindingFlags invokeFlags, object[] args)
@@ -541,9 +600,14 @@ namespace Microsoft.ClearScript
 
             if (invokeFlags.HasFlag(BindingFlags.SetField))
             {
-                var value = args.First();
-                targetDynamic.SetProperty(name, value);
-                return value;
+                if (args.Length == 1)
+                {
+                    var value = args[0];
+                    targetDynamic.SetProperty(name, value);
+                    return value;
+                }
+
+                throw new InvalidOperationException("Invalid argument count");
             }
 
             throw new InvalidOperationException("Invalid member invocation mode");
@@ -585,18 +649,23 @@ namespace Microsoft.ClearScript
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
             {
-                object value;
-                return targetPropertyBag.TryGetValue(name, out value) ? value : Nonexistent.Value;
+                if (args.Length < 1)
+                {
+                    object value;
+                    return targetPropertyBag.TryGetValue(name, out value) ? value : Nonexistent.Value;
+                }
+
+                throw new InvalidOperationException("Invalid argument count");
             }
 
             if (invokeFlags.HasFlag(BindingFlags.SetField))
             {
-                if (!targetPropertyBag.IsReadOnly)
+                if (args.Length == 1)
                 {
-                    return targetPropertyBag[name] = args.First();
+                    return targetPropertyBag[name] = args[0];
                 }
 
-                throw new UnauthorizedAccessException("Object is read-only");
+                throw new InvalidOperationException("Invalid argument count");
             }
 
             throw new InvalidOperationException("Invalid member invocation mode");
@@ -622,12 +691,22 @@ namespace Microsoft.ClearScript
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
             {
-                return targetList[index];
+                if (args.Length < 1)
+                {
+                    return targetList[index];
+                }
+
+                throw new InvalidOperationException("Invalid argument count");
             }
 
             if (invokeFlags.HasFlag(BindingFlags.SetField))
             {
-                return targetList[index] = args.First();
+                if (args.Length == 1)
+                {
+                    return targetList[index] = args[0];
+                }
+
+                throw new InvalidOperationException("Invalid argument count");
             }
 
             throw new InvalidOperationException("Invalid member invocation mode");
@@ -803,7 +882,7 @@ namespace Microsoft.ClearScript
             {
                 if ((property.GetIndexParameters().Length > 0) && (args.Length < 1))
                 {
-                    return new HostIndexer(this, name);
+                    return new HostIndexedProperty(this, name);
                 }
 
                 var result = property.GetValue(target.InvokeTarget, invokeFlags, Type.DefaultBinder, args, culture);
@@ -845,6 +924,12 @@ namespace Microsoft.ClearScript
         #endregion
 
         #region DynamicObject overrides
+
+        public override bool TryCreateInstance(CreateInstanceBinder binder, object[] args, out object result)
+        {
+            result = thisDynamic.Invoke(args, true).ToDynamicResult(engine);
+            return true;
+        }
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
@@ -916,7 +1001,7 @@ namespace Microsoft.ClearScript
             {
                 if (binder.Type.IsAssignableFrom(target.Type))
                 {
-                    result = Convert.ChangeType(target.InvokeTarget, binder.ReturnType);
+                    result = Convert.ChangeType(target.InvokeTarget, binder.Type);
                     return true;
                 }
             }
@@ -951,9 +1036,11 @@ namespace Microsoft.ClearScript
             {
                 // ReSharper disable CoVariantArrayConversion
 
-                if (cachedFields == null)
+                bool updated;
+                UpdateFieldNames(out updated);
+                if (updated || (cachedFields == null))
                 {
-                    cachedFields = fieldMap.GetMembers(GetAllFieldNames());
+                    cachedFields = fieldMap.GetMembers(cachedFieldNames);
                 }
 
                 return cachedFields;
@@ -999,17 +1086,11 @@ namespace Microsoft.ClearScript
             {
                 // ReSharper disable CoVariantArrayConversion
 
-                var extensionMethodSummary = engine.ExtensionMethodSummary;
-                if (extensionMethodSummary != cachedExtensionMethodSummary)
+                bool updated;
+                UpdateMethodNames(out updated);
+                if (updated || (cachedMethods == null))
                 {
-                    cachedMethodNames = null;
-                    cachedMethods = null;
-                    cachedExtensionMethodSummary = extensionMethodSummary;
-                }
-
-                if (cachedMethods == null)
-                {
-                    cachedMethods = methodMap.GetMembers(GetAllMethodNames());
+                    cachedMethods = methodMap.GetMembers(cachedMethodNames);
                 }
 
                 return cachedMethods;
@@ -1024,19 +1105,11 @@ namespace Microsoft.ClearScript
             {
                 // ReSharper disable CoVariantArrayConversion
 
-                if (cachedProperties == null)
+                bool updated;
+                UpdatePropertyNames(out updated);
+                if (updated || (cachedProperties == null))
                 {
-                    cachedProperties = propertyMap.GetMembers(GetAllPropertyNames());
-                }
-
-                if ((targetList != null) && (targetList.Count > 0))
-                {
-                    if ((cachedIndexProperties == null) || (cachedIndexProperties.Length != targetList.Count))
-                    {
-                        cachedIndexProperties = propertyMap.GetMembers(Enumerable.Range(0, targetList.Count).Select(index => index.ToString(CultureInfo.InvariantCulture)).ToArray());
-                    }
-
-                    return cachedProperties.Concat(cachedIndexProperties).ToArray();
+                    cachedProperties = propertyMap.GetMembers(cachedPropertyNames);
                 }
 
                 return cachedProperties;
@@ -1073,13 +1146,13 @@ namespace Microsoft.ClearScript
                 var args = engine.MarshalToHost(wrappedArgs, false);
 
                 var skipFirst = false;
-                if ((namedParams != null) && (namedParams.Length > 0) && (namedParams[0] == SpecialParameterNames.This))
+                if ((namedParams != null) && (namedParams.Length > 0) && (namedParams[0] == SpecialParamNames.This))
                 {
                     args = args.Skip(1).ToArray();
                     skipFirst = true;
                 }
 
-                object[] bindArgs = null;
+                var bindArgs = args;
                 if (invokeFlags.HasFlag(BindingFlags.InvokeMethod) || invokeFlags.HasFlag(BindingFlags.CreateInstance))
                 {
                     bindArgs = engine.MarshalToHost(wrappedArgs, true);
@@ -1108,6 +1181,7 @@ namespace Microsoft.ClearScript
             {
                 if ((targetDynamic != null) || ((targetPropertyBag != null) && !targetPropertyBag.IsReadOnly))
                 {
+                    AddExpandoMemberName(name);
                     return fieldMap.GetMember(name);
                 }
 
@@ -1121,6 +1195,7 @@ namespace Microsoft.ClearScript
             {
                 if ((targetDynamic != null) || ((targetPropertyBag != null) && !targetPropertyBag.IsReadOnly))
                 {
+                    AddExpandoMemberName(name);
                     return propertyMap.GetMember(name);
                 }
 
@@ -1142,14 +1217,22 @@ namespace Microsoft.ClearScript
                     int index;
                     if (int.TryParse(member.Name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
                     {
-                        targetDynamic.DeleteProperty(index);
+                        if (targetDynamic.DeleteProperty(index))
+                        {
+                            RemoveExpandoMemberName(index.ToString(CultureInfo.InvariantCulture));
+                        }
                     }
-
-                    targetDynamic.DeleteProperty(member.Name);
+                    else if (targetDynamic.DeleteProperty(member.Name))
+                    {
+                        RemoveExpandoMemberName(member.Name);
+                    }
                 }
-                else if ((targetPropertyBag != null) && !targetPropertyBag.IsReadOnly)
+                else if (targetPropertyBag != null)
                 {
-                    targetPropertyBag.Remove(member.Name);
+                    if (targetPropertyBag.Remove(member.Name))
+                    {
+                        RemoveExpandoMemberName(member.Name);
+                    }
                 }
                 else
                 {
@@ -1181,7 +1264,7 @@ namespace Microsoft.ClearScript
                     return targetDynamic.DeleteProperty(name);
                 }
 
-                if ((targetPropertyBag != null) && !targetPropertyBag.IsReadOnly)
+                if (targetPropertyBag != null)
                 {
                     return targetPropertyBag.Remove(name);
                 }
@@ -1194,25 +1277,21 @@ namespace Microsoft.ClearScript
         {
             return engine.HostInvoke(() =>
             {
-                if (targetDynamic != null)
+                bool updatedFieldNames;
+                UpdateFieldNames(out updatedFieldNames);
+
+                bool updatedMethodNames;
+                UpdateMethodNames(out updatedMethodNames);
+
+                bool updatedPropertyNames;
+                UpdatePropertyNames(out updatedPropertyNames);
+
+                if (updatedFieldNames || updatedMethodNames || updatedPropertyNames || (cachedMemberNames == null))
                 {
-                    return targetDynamic.GetPropertyNames();
+                    cachedMemberNames = cachedFieldNames.Concat(cachedMethodNames).Concat(cachedPropertyNames).ExcludeIndices().Distinct().ToArray();
                 }
 
-                if (targetPropertyBag != null)
-                {
-                    return targetPropertyBag.Keys.ExcludeIndices().ToArray();
-                }
-
-                var extensionMethodSummary = engine.ExtensionMethodSummary;
-                if (extensionMethodSummary != cachedExtensionMethodSummary)
-                {
-                    cachedMethodNames = null;
-                    cachedMethods = null;
-                    cachedExtensionMethodSummary = extensionMethodSummary;
-                }
-
-                return GetAllFieldNames().Concat(GetAllPropertyNames()).Concat(GetAllMethodNames()).ToArray();
+                return cachedMemberNames;
             });
         }
 
@@ -1248,22 +1327,14 @@ namespace Microsoft.ClearScript
         {
             return engine.HostInvoke(() =>
             {
-                if (targetDynamic != null)
+                bool updated;
+                UpdatePropertyNames(out updated);
+                if (updated || (cachedPropertyIndices == null))
                 {
-                    return targetDynamic.GetPropertyIndices();
+                    cachedPropertyIndices = cachedPropertyNames.GetIndices().Distinct().ToArray();
                 }
 
-                if (targetPropertyBag != null)
-                {
-                    return targetPropertyBag.Keys.GetIndices().ToArray();
-                }
-
-                if ((targetList != null) && (targetList.Count > 0))
-                {
-                    return Enumerable.Range(0, targetList.Count).ToArray();
-                }
-
-                return MiscHelpers.GetEmptyArray<int>();
+                return cachedPropertyIndices;
             });
         }
 

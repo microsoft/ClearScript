@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -89,10 +89,16 @@ namespace Microsoft.ClearScript
     /// </summary>
     public class PropertyBag : IPropertyBag, INotifyPropertyChanged, IScriptableObject
     {
+        #region data
+
         private readonly Dictionary<string, object> dictionary;
         private readonly ICollection<KeyValuePair<string, object>> collection;
         private readonly bool isReadOnly;
         private readonly ConcurrentWeakSet<ScriptEngine> engineSet = new ConcurrentWeakSet<ScriptEngine>();
+
+        #endregion
+
+        #region constructors
 
         /// <summary>
         /// Initializes a new writable <see cref="PropertyBag"/>.
@@ -108,7 +114,9 @@ namespace Microsoft.ClearScript
         /// <param name="isReadOnly"><c>True</c> to make the <see cref="PropertyBag"/> read-only, <c>false</c> to make it writable.</param>
         /// <remarks>
         /// The host can modify a read-only <see cref="PropertyBag"/> by calling
-        /// <see cref="SetPropertyNoCheck">SetPropertyNoCheck</see>.
+        /// <see cref="SetPropertyNoCheck">SetPropertyNoCheck</see>,
+        /// <see cref="RemovePropertyNoCheck">RemovePropertyNoCheck</see>, or
+        /// <see cref="ClearNoCheck">ClearNoCheck</see>.
         /// </remarks>
         public PropertyBag(bool isReadOnly)
         {
@@ -116,6 +124,10 @@ namespace Microsoft.ClearScript
             collection = dictionary;
             this.isReadOnly = isReadOnly;
         }
+
+        #endregion
+
+        #region public members
 
         /// <summary>
         /// Sets a property value without checking whether the <see cref="PropertyBag"/> is read-only.
@@ -128,18 +140,72 @@ namespace Microsoft.ClearScript
         public void SetPropertyNoCheck(string name, object value)
         {
             dictionary[name] = value;
+            NotifyPropertyChanged(name);
             NotifyExposedToScriptCode(value);
         }
+
+        /// <summary>
+        /// Removes a property without checking whether the <see cref="PropertyBag"/> is read-only.
+        /// </summary>
+        /// <param name="name">The name of the property to remove.</param>
+        /// <returns><c>True</c> if the property was found and removed, <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// This operation is never exposed to script code.
+        /// </remarks>
+        public bool RemovePropertyNoCheck(string name)
+        {
+            if (dictionary.Remove(name))
+            {
+                NotifyPropertyChanged(name);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Removes all properties without checking whether the <see cref="PropertyBag"/> is read-only.
+        /// </summary>
+        /// <remarks>
+        /// This operation is never exposed to script code.
+        /// </remarks>
+        public void ClearNoCheck()
+        {
+            dictionary.Clear();
+            NotifyPropertyChanged(null);
+        }
+
+        #endregion
+
+        #region internal members
 
         internal int EngineCount
         {
             get { return engineSet.Count; }
         }
 
-        private void AddNoCheck(string name, object value)
+        private void CheckReadOnly()
+        {
+            if (isReadOnly)
+            {
+                throw new UnauthorizedAccessException("Object is read-only");
+            }
+        }
+
+        private void AddPropertyNoCheck(string name, object value)
         {
             dictionary.Add(name, value);
+            NotifyPropertyChanged(name);
             NotifyExposedToScriptCode(value);
+        }
+
+        private void NotifyPropertyChanged(string name)
+        {
+            var handler = PropertyChanged;
+            if (handler != null)
+            {
+                handler(this, new PropertyChangedEventArgs(name));
+            }
         }
 
         private void NotifyExposedToScriptCode(object value)
@@ -151,22 +217,7 @@ namespace Microsoft.ClearScript
             }
         }
 
-        private void CheckReadOnly()
-        {
-            if (isReadOnly)
-            {
-                throw new UnauthorizedAccessException("Object is read-only");
-            }
-        }
-
-        private void InvokePropertyChanged(string name)
-        {
-            var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(name));
-            }
-        }
+        #endregion
 
         #region IEnumerable<KeyValuePair<string, object>> implementation
 
@@ -191,15 +242,13 @@ namespace Microsoft.ClearScript
         {
             CheckReadOnly();
             SetPropertyNoCheck(item.Key, item.Value);
-            InvokePropertyChanged(item.Key);
         }
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         void ICollection<KeyValuePair<string, object>>.Clear()
         {
             CheckReadOnly();
-            collection.Clear();
-            InvokePropertyChanged(null);
+            ClearNoCheck();
         }
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
@@ -220,7 +269,7 @@ namespace Microsoft.ClearScript
             CheckReadOnly();
             if (collection.Remove(item))
             {
-                InvokePropertyChanged(item.Key);
+                NotifyPropertyChanged(item.Key);
                 return true;
             }
 
@@ -261,8 +310,7 @@ namespace Microsoft.ClearScript
         public void Add(string key, object value)
         {
             CheckReadOnly();
-            AddNoCheck(key, value);
-            InvokePropertyChanged(key);
+            AddPropertyNoCheck(key, value);
         }
 
         /// <summary>
@@ -273,13 +321,7 @@ namespace Microsoft.ClearScript
         public bool Remove(string key)
         {
             CheckReadOnly();
-            if (dictionary.Remove(key))
-            {
-                InvokePropertyChanged(key);
-                return true;
-            }
-
-            return false;
+            return RemovePropertyNoCheck(key);
         }
 
         /// <summary>
@@ -306,7 +348,6 @@ namespace Microsoft.ClearScript
             {
                 CheckReadOnly();
                 SetPropertyNoCheck(key, value);
-                InvokePropertyChanged(key);
             }
         }
 

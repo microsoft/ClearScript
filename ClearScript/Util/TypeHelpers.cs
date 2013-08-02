@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -231,7 +231,7 @@ namespace Microsoft.ClearScript.Util
             return type.GetFullRootName();
         }
 
-        public static int GetGenericParameterCount(this Type type)
+        public static int GetGenericParamCount(this Type type)
         {
             return type.GetGenericArguments().Count(typeArg => typeArg.IsGenericParameter);
         }
@@ -306,7 +306,7 @@ namespace Microsoft.ClearScript.Util
 
         public static Type MakeSpecificType(this Type template, params Type[] typeArgs)
         {
-            Debug.Assert(template.GetGenericParameterCount() <= typeArgs.Length);
+            Debug.Assert(template.GetGenericParamCount() <= typeArgs.Length);
             return template.ApplyTypeArguments(typeArgs);
         }
 

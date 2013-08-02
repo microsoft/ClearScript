@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -117,28 +117,32 @@ static void* GetHostObject(Handle<Object> hObject)
 
 //-----------------------------------------------------------------------------
 
-static V8ContextImpl* UnwrapContextImpl(const AccessorInfo& info)
+template <typename T>
+static V8ContextImpl* UnwrapContextImpl(const PropertyCallbackInfo<T>& info)
 {
     return static_cast<V8ContextImpl*>(Local<External>::Cast(info.Data())->Value());
 }
 
 //-----------------------------------------------------------------------------
 
-static V8ContextImpl* UnwrapContextImpl(const Arguments& args)
+template <typename T>
+static V8ContextImpl* UnwrapContextImpl(const FunctionCallbackInfo<T>& info)
 {
-    return static_cast<V8ContextImpl*>(Local<External>::Cast(args.Data())->Value());
+    return static_cast<V8ContextImpl*>(Local<External>::Cast(info.Data())->Value());
 }
 
 //-----------------------------------------------------------------------------
 
-static void* UnwrapHostObject(const AccessorInfo& info)
+template <typename T>
+static void* UnwrapHostObject(const PropertyCallbackInfo<T>& info)
 {
     return ::GetHostObject(info.Holder());
 }
 
 //-----------------------------------------------------------------------------
 
-static void* UnwrapHostObject(const Arguments& args)
+template <typename T>
+static void* UnwrapHostObject(const FunctionCallbackInfo<T>& args)
 {
     return ::GetHostObject(args.Holder());
 }
@@ -184,6 +188,14 @@ static void* UnwrapHostObject(const Arguments& args)
 
 #define VERIFY_CHECKPOINT() \
             Verify(t_TryCatch)
+
+#define CALLBACK_RETURN(RESULT) \
+            do \
+            { \
+                info.GetReturnValue().Set(RESULT); \
+                return; \
+            } \
+            while (false)
 
 //-----------------------------------------------------------------------------
 
@@ -544,11 +556,6 @@ V8ContextImpl::~V8ContextImpl()
                 Dispose(*it);
             }
 
-            for (auto it = m_IntegerCache.begin(); it != m_IntegerCache.end(); it++)
-            {
-                Dispose(it->second);
-            }
-
             Dispose(m_hHostObjectTemplate);
             Dispose(m_hInnerExceptionName);
             Dispose(m_hHostObjectCookieName);
@@ -646,7 +653,7 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(Handle<Object> hObject, vector<in
 
 //-----------------------------------------------------------------------------
 
-Handle<Value> V8ContextImpl::GetGlobalProperty(Local<String> hName, const AccessorInfo& info)
+void V8ContextImpl::GetGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -661,18 +668,16 @@ Handle<Value> V8ContextImpl::GetGlobalProperty(Local<String> hName, const Access
             {
                 if ((*it)->Has(hName))
                 {
-                    return (*it)->Get(hName);
+                    CALLBACK_RETURN((*it)->Get(hName));
                 }
             }
         }
     }
-
-    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Value> V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value> value, const AccessorInfo& info)
+void V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value> value, const PropertyCallbackInfo<Value>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -687,18 +692,16 @@ Handle<Value> V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value>
             {
                 if ((*it)->HasOwnProperty(hName) && (*it)->Set(hName, value))
                 {
-                    return value;
+                    CALLBACK_RETURN(value);
                 }
             }
         }
     }
-
-    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Integer> V8ContextImpl::QueryGlobalProperty(Local<String> hName, const AccessorInfo& info)
+void V8ContextImpl::QueryGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Integer>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -713,18 +716,16 @@ Handle<Integer> V8ContextImpl::QueryGlobalProperty(Local<String> hName, const Ac
             {
                 if ((*it)->Has(hName))
                 {
-                    return pContextImpl->GetIntegerHandle((*it)->GetPropertyAttributes(hName));
+                    CALLBACK_RETURN((*it)->GetPropertyAttributes(hName));
                 }
             }
         }
     }
-
-    return Handle<Integer>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Boolean> V8ContextImpl::DeleteGlobalProperty(Local<String> hName, const AccessorInfo& info)
+void V8ContextImpl::DeleteGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Boolean>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -747,26 +748,24 @@ Handle<Boolean> V8ContextImpl::DeleteGlobalProperty(Local<String> hName, const A
                     {
                         try
                         {
-                            return HostObjectHelpers::DeleteProperty(::GetHostObject(*it), *String::Value(hName)) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
+                            CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::GetHostObject(*it), *String::Value(hName)));
                         }
                         catch (const HostException&)
                         {
-                            return pContextImpl->GetFalse();
+                            CALLBACK_RETURN(false);
                         }
                     }
 
-                    return (*it)->Delete(hName) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
+                    CALLBACK_RETURN((*it)->Delete(hName));
                 }
             }
         }
     }
-
-    return Handle<Boolean>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Array> V8ContextImpl::GetGlobalPropertyNames(const AccessorInfo& info)
+void V8ContextImpl::GetGlobalPropertyNames(const PropertyCallbackInfo<Array>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -805,7 +804,7 @@ Handle<Array> V8ContextImpl::GetGlobalPropertyNames(const AccessorInfo& info)
                     hImportedNames->Set(index, String::New(names[index].c_str()));
                 }
 
-                return hImportedNames;
+                CALLBACK_RETURN(hImportedNames);
             }
         }
         catch (const HostException& exception)
@@ -813,13 +812,11 @@ Handle<Array> V8ContextImpl::GetGlobalPropertyNames(const AccessorInfo& info)
             pContextImpl->ThrowScriptException(exception);
         }
     }
-
-    return Handle<Array>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Value> V8ContextImpl::GetGlobalProperty(unsigned __int32 index, const AccessorInfo& info)
+void V8ContextImpl::GetGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Value>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -834,18 +831,16 @@ Handle<Value> V8ContextImpl::GetGlobalProperty(unsigned __int32 index, const Acc
             {
                 if ((*it)->Has(index))
                 {
-                    return (*it)->Get(index);
+                    CALLBACK_RETURN((*it)->Get(index));
                 }
             }
         }
     }
-
-    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Value> V8ContextImpl::SetGlobalProperty(unsigned __int32 index, Local<Value> value, const AccessorInfo& info)
+void V8ContextImpl::SetGlobalProperty(unsigned __int32 index, Local<Value> value, const PropertyCallbackInfo<Value>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -861,18 +856,16 @@ Handle<Value> V8ContextImpl::SetGlobalProperty(unsigned __int32 index, Local<Val
             {
                 if ((*it)->HasOwnProperty(hName) && (*it)->Set(index, value))
                 {
-                    return value;
+                    CALLBACK_RETURN(value);
                 }
             }
         }
     }
-
-    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Integer> V8ContextImpl::QueryGlobalProperty(unsigned __int32 index, const AccessorInfo& info)
+void V8ContextImpl::QueryGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Integer>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -887,18 +880,16 @@ Handle<Integer> V8ContextImpl::QueryGlobalProperty(unsigned __int32 index, const
             {
                 if ((*it)->Has(index))
                 {
-                    return pContextImpl->GetIntegerHandle((*it)->GetPropertyAttributes(pContextImpl->CreateInteger(index)));
+                    CALLBACK_RETURN((*it)->GetPropertyAttributes(pContextImpl->CreateInteger(index)));
                 }
             }
         }
     }
-
-    return Handle<Integer>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Boolean> V8ContextImpl::DeleteGlobalProperty(unsigned __int32 index, const AccessorInfo& info)
+void V8ContextImpl::DeleteGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Boolean>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -914,18 +905,16 @@ Handle<Boolean> V8ContextImpl::DeleteGlobalProperty(unsigned __int32 index, cons
             {
                 if ((*it)->HasOwnProperty(hName))
                 {
-                    return (*it)->Delete(index) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
+                    CALLBACK_RETURN((*it)->Delete(index));
                 }
             }
         }
     }
-
-    return Handle<Boolean>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Array> V8ContextImpl::GetGlobalPropertyIndices(const AccessorInfo& info)
+void V8ContextImpl::GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -964,7 +953,7 @@ Handle<Array> V8ContextImpl::GetGlobalPropertyIndices(const AccessorInfo& info)
                     hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
                 }
 
-                return hImportedIndices;
+                CALLBACK_RETURN(hImportedIndices);
             }
         }
         catch (const HostException& exception)
@@ -972,13 +961,11 @@ Handle<Array> V8ContextImpl::GetGlobalPropertyIndices(const AccessorInfo& info)
             pContextImpl->ThrowScriptException(exception);
         }
     }
-
-    return Handle<Array>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Value> V8ContextImpl::GetHostObjectProperty(Local<String> hName, const AccessorInfo& info)
+void V8ContextImpl::GetHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
@@ -986,41 +973,37 @@ Handle<Value> V8ContextImpl::GetHostObjectProperty(Local<String> hName, const Ac
     {
         if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
-            return pContextImpl->GetTrue();
+            CALLBACK_RETURN(true);
         }
 
-        return pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), *String::Value(hName)));
+        CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), *String::Value(hName))));
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Value> V8ContextImpl::SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const AccessorInfo& info)
+void V8ContextImpl::SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const PropertyCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
     try
     {
         HostObjectHelpers::SetProperty(::UnwrapHostObject(info), *String::Value(hName), pContextImpl->ExportValue(hValue));
-        return hValue;
+        CALLBACK_RETURN(hValue);
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Integer> V8ContextImpl::QueryHostObjectProperty(Local<String> hName, const AccessorInfo& info)
+void V8ContextImpl::QueryHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Integer>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
@@ -1028,7 +1011,7 @@ Handle<Integer> V8ContextImpl::QueryHostObjectProperty(Local<String> hName, cons
     {
         if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
-            return pContextImpl->GetIntegerHandle(ReadOnly | DontEnum | DontDelete);
+            CALLBACK_RETURN(ReadOnly | DontEnum | DontDelete);
         }
 
         vector<wstring> names;
@@ -1039,41 +1022,35 @@ Handle<Integer> V8ContextImpl::QueryHostObjectProperty(Local<String> hName, cons
         {
             if (it->compare(*nameValue) == 0)
             {
-                return pContextImpl->GetIntegerHandle(None);
+                CALLBACK_RETURN(None);
             }
         }
-
-        return Handle<Integer>();
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Integer>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Boolean> V8ContextImpl::DeleteHostObjectProperty(Local<String> hName, const AccessorInfo& info)
+void V8ContextImpl::DeleteHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Boolean>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
     try
     {
-        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), *String::Value(hName)) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
+        CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), *String::Value(hName)));
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Boolean>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Array> V8ContextImpl::GetHostObjectPropertyNames(const AccessorInfo& info)
+void V8ContextImpl::GetHostObjectPropertyNames(const PropertyCallbackInfo<Array>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
@@ -1089,56 +1066,50 @@ Handle<Array> V8ContextImpl::GetHostObjectPropertyNames(const AccessorInfo& info
             hImportedNames->Set(index, String::New(names[index].c_str()));
         }
 
-        return hImportedNames;
+        CALLBACK_RETURN(hImportedNames);
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Array>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Value> V8ContextImpl::GetHostObjectProperty(unsigned __int32 index, const AccessorInfo& info)
+void V8ContextImpl::GetHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
     try
     {
-        return pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), index));
+        CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), index)));
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Value> V8ContextImpl::SetHostObjectProperty(unsigned __int32 index, Local<Value> hValue, const AccessorInfo& info)
+void V8ContextImpl::SetHostObjectProperty(unsigned __int32 index, Local<Value> hValue, const PropertyCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
     try
     {
         HostObjectHelpers::SetProperty(::UnwrapHostObject(info), index, pContextImpl->ExportValue(hValue));
-        return hValue;
+        CALLBACK_RETURN(hValue);
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Integer> V8ContextImpl::QueryHostObjectProperty(unsigned __int32 index, const AccessorInfo& info)
+void V8ContextImpl::QueryHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Integer>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
@@ -1151,41 +1122,35 @@ Handle<Integer> V8ContextImpl::QueryHostObjectProperty(unsigned __int32 index, c
         {
             if (*it == (int)index)
             {
-                return pContextImpl->GetIntegerHandle(None);
+                CALLBACK_RETURN(None);
             }
         }
-
-        return Handle<Integer>();
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Integer>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Boolean> V8ContextImpl::DeleteHostObjectProperty(unsigned __int32 index, const AccessorInfo& info)
+void V8ContextImpl::DeleteHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Boolean>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
     try
     {
-        return HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), index) ? pContextImpl->GetTrue() : pContextImpl->GetFalse();
+        CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), index));
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Boolean>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Array> V8ContextImpl::GetHostObjectPropertyIndices(const AccessorInfo& info)
+void V8ContextImpl::GetHostObjectPropertyIndices(const PropertyCallbackInfo<Array>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
 
@@ -1201,42 +1166,38 @@ Handle<Array> V8ContextImpl::GetHostObjectPropertyIndices(const AccessorInfo& in
             hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
         }
 
-        return hImportedIndices;
+        CALLBACK_RETURN(hImportedIndices);
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Array>();
 }
 
 //-----------------------------------------------------------------------------
 
-Handle<Value> V8ContextImpl::InvokeHostObject(const Arguments& args)
+void V8ContextImpl::InvokeHostObject(const FunctionCallbackInfo<Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImpl(args);
+    auto pContextImpl = ::UnwrapContextImpl(info);
 
     try
     {
-        auto argCount = args.Length();
+        auto argCount = info.Length();
 
         vector<V8Value> exportedArgs;
         exportedArgs.reserve(argCount);
 
         for (auto index = 0; index < argCount; index++)
         {
-            exportedArgs.push_back(pContextImpl->ExportValue(args[index]));
+            exportedArgs.push_back(pContextImpl->ExportValue(info[index]));
         }
 
-        return pContextImpl->ImportValue(HostObjectHelpers::Invoke(::UnwrapHostObject(args), exportedArgs, args.IsConstructCall()));
+        CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::Invoke(::UnwrapHostObject(info), exportedArgs, info.IsConstructCall())));
     }
     catch (const HostException& exception)
     {
         pContextImpl->ThrowScriptException(exception);
     }
-
-    return Handle<Value>();
 }
 
 //-----------------------------------------------------------------------------
@@ -1249,19 +1210,6 @@ void V8ContextImpl::DisposeWeakHandle(Isolate* pIsolate, Persistent<Object>* phO
     delete pHolder;
     HostObjectHelpers::Release(pvV8ObjectCache);
     phObject->Dispose(pIsolate);
-}
-
-//-----------------------------------------------------------------------------
-
-Persistent<Integer> V8ContextImpl::GetIntegerHandle(int value)
-{
-    auto it = m_IntegerCache.find(value);
-    if (it == m_IntegerCache.end())
-    {
-        return m_IntegerCache[value] = CreatePersistent(CreateInteger(value));
-    }
-
-    return it->second;
 }
 
 //-----------------------------------------------------------------------------

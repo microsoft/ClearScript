@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -180,7 +180,25 @@ namespace Microsoft.ClearScript
 
             var binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, target, bindArgs);
             var rawResult = (new MethodBindingVisitor(target.InvokeTarget, name, binding.Expression)).Result;
-            return MethodBindResult.Create(name, rawResult, target, args);
+
+            var result = MethodBindResult.Create(name, rawResult, target, args);
+            if (!(result is MethodBindSuccess) && !(target is HostType) && target.Type.IsInterface)
+            {
+                foreach (var interfaceType in target.Type.GetInterfaces())
+                {
+                    var tempTarget = HostObject.Wrap(target.InvokeTarget, interfaceType);
+                    binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, tempTarget, bindArgs);
+                    rawResult = (new MethodBindingVisitor(target.InvokeTarget, name, binding.Expression)).Result;
+
+                    var tempResult = MethodBindResult.Create(name, rawResult, target, args);
+                    if (tempResult is MethodBindSuccess)
+                    {
+                        return tempResult;
+                    }
+                }
+            }
+
+            return result;
         }
 
         private IEnumerable<string> GetAltMethodNames(string name)
@@ -410,7 +428,7 @@ namespace Microsoft.ClearScript
                 var targetDelegate = target as Delegate;
                 if (targetDelegate != null)
                 {
-                    var del = DynamicHelpers.InvokeExpression(node.Expression) as Delegate;
+                    var del = DynamicHelpers.Invoke(node.Expression) as Delegate;
                     if (del == targetDelegate)
                     {
                         AddResult(del.GetType().GetMethod("Invoke"));
@@ -424,10 +442,10 @@ namespace Microsoft.ClearScript
             {
                 if (node.NodeType == ExpressionType.Throw)
                 {
-                    var exception = DynamicHelpers.InvokeExpression(node.Operand) as Exception;
+                    var exception = DynamicHelpers.Invoke(node.Operand) as Exception;
                     if (exception != null)
                     {
-                        AddResult(() => (Exception)DynamicHelpers.InvokeExpression(node.Operand));
+                        AddResult(() => (Exception)DynamicHelpers.Invoke(node.Operand));
                     }
                 }
 

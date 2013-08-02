@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -209,34 +209,33 @@ private:
     void GetV8ObjectPropertyNames(Handle<Object> hObject, vector<wstring>& names);
     void GetV8ObjectPropertyIndices(Handle<Object> hObject, vector<int>& indices);
 
-    static Handle<Value> GetGlobalProperty(Local<String> hName, const AccessorInfo& info);
-    static Handle<Value> SetGlobalProperty(Local<String> hName, Local<Value> value, const AccessorInfo& info);
-    static Handle<Integer> QueryGlobalProperty(Local<String> hName, const AccessorInfo& info);
-    static Handle<Boolean> DeleteGlobalProperty(Local<String> hName, const AccessorInfo& info);
-    static Handle<Array> GetGlobalPropertyNames(const AccessorInfo& info);
+    static void GetGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info);
+    static void SetGlobalProperty(Local<String> hName, Local<Value> value, const PropertyCallbackInfo<Value>& info);
+    static void QueryGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Integer>& info);
+    static void DeleteGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Boolean>& info);
+    static void GetGlobalPropertyNames(const PropertyCallbackInfo<Array>& info);
 
-    static Handle<Value> GetGlobalProperty(unsigned __int32 index, const AccessorInfo& info);
-    static Handle<Value> SetGlobalProperty(unsigned __int32 index, Local<Value> hValue, const AccessorInfo& info);
-    static Handle<Integer> QueryGlobalProperty(unsigned __int32 index, const AccessorInfo& info);
-    static Handle<Boolean> DeleteGlobalProperty(unsigned __int32 index, const AccessorInfo& info);
-    static Handle<Array> GetGlobalPropertyIndices(const AccessorInfo& info);
+    static void GetGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Value>& info);
+    static void SetGlobalProperty(unsigned __int32 index, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
+    static void QueryGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Integer>& info);
+    static void DeleteGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Boolean>& info);
+    static void GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& info);
 
-    static Handle<Value> GetHostObjectProperty(Local<String> hName, const AccessorInfo& info);
-    static Handle<Value> SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const AccessorInfo& info);
-    static Handle<Integer> QueryHostObjectProperty(Local<String> hName, const AccessorInfo& info);
-    static Handle<Boolean> DeleteHostObjectProperty(Local<String> hName, const AccessorInfo& info);
-    static Handle<Array> GetHostObjectPropertyNames(const AccessorInfo& info);
+    static void GetHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info);
+    static void SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
+    static void QueryHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Integer>& info);
+    static void DeleteHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Boolean>& info);
+    static void GetHostObjectPropertyNames(const PropertyCallbackInfo<Array>& info);
 
-    static Handle<Value> GetHostObjectProperty(unsigned __int32 index, const AccessorInfo& info);
-    static Handle<Value> SetHostObjectProperty(unsigned __int32 index, Local<Value> hValue, const AccessorInfo& info);
-    static Handle<Integer> QueryHostObjectProperty(unsigned __int32 index, const AccessorInfo& info);
-    static Handle<Boolean> DeleteHostObjectProperty(unsigned __int32 index, const AccessorInfo& info);
-    static Handle<Array> GetHostObjectPropertyIndices(const AccessorInfo& info);
+    static void GetHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Value>& info);
+    static void SetHostObjectProperty(unsigned __int32 index, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
+    static void QueryHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Integer>& info);
+    static void DeleteHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Boolean>& info);
+    static void GetHostObjectPropertyIndices(const PropertyCallbackInfo<Array>& info);
 
-    static Handle<Value> InvokeHostObject(const Arguments& args);
+    static void InvokeHostObject(const FunctionCallbackInfo<Value>& info);
     static void DisposeWeakHandle(Isolate* pIsolate, Persistent<Object>* phObject, void* pvV8ObjectCache);
 
-    Persistent<Integer> GetIntegerHandle(int value);
     Handle<Value> ImportValue(const V8Value& value);
     V8Value ExportValue(Handle<Value> hValue);
     void ImportValues(const vector<V8Value>& values, vector<Handle<Value>>& importedValues);
@@ -253,6 +252,5 @@ private:
     Persistent<String> m_hHostObjectCookieName;
     Persistent<String> m_hInnerExceptionName;
     Persistent<FunctionTemplate> m_hHostObjectTemplate;
-    unordered_map<int, Persistent<Integer>> m_IntegerCache;
     void* m_pvV8ObjectCache;
 };

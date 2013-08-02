@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -326,7 +326,7 @@ class SharedPtrUtil
 
 public:
 
-    template<typename TTarget, typename TSource>
+    template <typename TTarget, typename TSource>
     static void CopyInitialize(SharedPtr<TTarget>& target, const SharedPtr<TSource>& source)
     {
         target.m_pTarget = source.m_pTarget;
@@ -334,7 +334,7 @@ public:
         target.AddRef();
     }
 
-    template<typename TTarget, typename TSource>
+    template <typename TTarget, typename TSource>
     static void MoveInitialize(SharedPtr<TTarget>& target, SharedPtr<TSource>& source)
     {
         target.m_pTarget = source.m_pTarget;
@@ -342,7 +342,7 @@ public:
         source.Initialize();
     }
 
-    template<typename TTarget, typename TSource>
+    template <typename TTarget, typename TSource>
     static void Copy(SharedPtr<TTarget>& target, const SharedPtr<TSource>& source)
     {
         if (target.m_pTarget != source.m_pTarget)
@@ -352,7 +352,7 @@ public:
         }
     }
 
-    template<typename TTarget, typename TSource>
+    template <typename TTarget, typename TSource>
     static void Move(SharedPtr<TTarget>& target, SharedPtr<TSource>& source)
     {
         if (target.m_pTarget != source.m_pTarget)

@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -67,7 +67,7 @@ using namespace System::Runtime::InteropServices;
 
 [assembly:AssemblyTitle("ClearScript V8 Interface (32-bit)")];
 [assembly:AssemblyProduct("ClearScript")];
-[assembly:AssemblyCopyright("© Microsoft Corporation")]
+[assembly:AssemblyCopyright("(c) Microsoft Corporation")]
 [assembly:InternalsVisibleTo("ClearScript")];
 
 [assembly:ComVisible(false)];

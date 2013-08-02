@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -160,7 +160,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("PropertyBag")]
         public void PropertyBag_ScriptMethod()
         {
-            engine.Execute("methodInvoked = false; function method () { methodInvoked = true }");
+            engine.Execute("methodInvoked = false; function method() { methodInvoked = true }");
             var bag = new PropertyBag { { "method", engine.Script.method } };
             engine.AddHostObject("bag", bag);
             engine.Execute("bag.method()");
@@ -205,12 +205,60 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("PropertyBag")]
+        public void PropertyBag_Writable_Delete()
+        {
+            var bag = new PropertyBag { { "foo", false } };
+            engine.AddHostObject("bag", bag);
+            engine.Execute("delete bag.foo");
+            Assert.IsFalse(bag.ContainsKey("foo"));
+        }
+
+        [TestMethod, TestCategory("PropertyBag")]
         [ExpectedException(typeof(UnauthorizedAccessException))]
         public void PropertyBag_ReadOnly()
         {
             var bag = new PropertyBag(true) { { "foo", false } };
             engine.AddHostObject("bag", bag);
             engine.Execute("bag.foo = true");
+        }
+
+        [TestMethod, TestCategory("PropertyBag")]
+        [ExpectedException(typeof(UnauthorizedAccessException))]
+        public void PropertyBag_ReadOnly_Delete()
+        {
+            var bag = new PropertyBag(true) { { "foo", false } };
+            engine.AddHostObject("bag", bag);
+            engine.Execute("delete bag.foo");
+        }
+
+        [TestMethod, TestCategory("PropertyBag")]
+        public void PropertyBag_ExternalModification_AddProperty()
+        {
+            var bag = new PropertyBag { { "foo", 123 } };
+            engine.AddHostObject("bag", bag);
+            Assert.AreEqual(123, engine.Evaluate("bag.foo"));
+            bag.Add("bar", 456);
+            Assert.AreEqual(456, engine.Evaluate("bag.bar"));
+        }
+
+        [TestMethod, TestCategory("PropertyBag")]
+        public void PropertyBag_ExternalModification_ChangeProperty()
+        {
+            var bag = new PropertyBag { { "foo", 123 } };
+            engine.AddHostObject("bag", bag);
+            Assert.AreEqual(123, engine.Evaluate("bag.foo"));
+            bag["foo"] = 456;
+            Assert.AreEqual(456, engine.Evaluate("bag.foo"));
+        }
+
+        [TestMethod, TestCategory("PropertyBag")]
+        public void PropertyBag_ExternalModification_DeleteProperty()
+        {
+            var bag = new PropertyBag { { "foo", 123 }, { "bar", 456 } };
+            engine.AddHostObject("bag", bag);
+            Assert.AreEqual(456, engine.Evaluate("bag.bar"));
+            bag.Remove("bar");
+            Assert.AreSame(Undefined.Value, engine.Evaluate("bag.bar"));
         }
 
         [TestMethod, TestCategory("PropertyBag")]
@@ -279,9 +327,13 @@ namespace Microsoft.ClearScript.Test
             const int threadCount = 256;
             var engineCount = 0;
 
-            // V8 starts failing requests to create new contexts rather quickly
-            const int maxV8Count = 16;
-            const int maxJScriptCount = 128;
+            // 32-bit V8 starts failing requests to create new contexts rather quickly. This is
+            // because each V8 isolate requires (among other things) a 32MB address space
+            // reservation. 64-bit V8 reserves much larger blocks but benefits from the enormous
+            // available address space.
+
+            var maxV8Count = Environment.Is64BitProcess ? 128 : 16;
+            var maxJScriptCount = (threadCount - maxV8Count) / 2;
 
             var startEvent = new ManualResetEventSlim(false);
             var checkpointEvent = new ManualResetEventSlim(false);

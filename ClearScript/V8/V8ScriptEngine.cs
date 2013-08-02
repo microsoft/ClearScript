@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -224,7 +224,7 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
-        /// Initializes a new V8 script engine instance with the specified name, resource constraints and options.
+        /// Initializes a new V8 script engine instance with the specified name, resource constraints, and options.
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>
@@ -238,7 +238,7 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
-        /// Initializes a new V8 script engine instance with the specified name, resource constraints and options, and debug port.
+        /// Initializes a new V8 script engine instance with the specified name, resource constraints, options, and debug port.
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>

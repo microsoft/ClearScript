@@ -86,10 +86,10 @@
     <Compile Include="Windows\WindowsScriptEngineFlags.cs" />
     <Compile Include="Util\IDynamic.cs" />
     <Compile Include="Util\SpecialMemberNames.cs" />
-    <Compile Include="Util\SpecialParameterNames.cs" />
+    <Compile Include="Util\SpecialParamNames.cs" />
     <Compile Include="V8\V8ScriptEngineFlags.cs" />
     <Compile Include="Windows\WindowsScriptItem.cs" />
-    <Compile Include="HostIndexer.cs" />
+    <Compile Include="HostIndexedProperty.cs" />
     <Compile Include="HostMethod.cs" />
     <Compile Include="ScriptEngine.cs" />
     <Compile Include="Windows\ActiveXWrappers.cs" />
@@ -109,7 +109,7 @@
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="HostFunctions.cs" />
     <Compile Include="HostEvent.cs" />
-    <Compile Include="HostItem.Invoke.cs" />
+    <Compile Include="HostItem.InvokeMethod.cs" />
     <Compile Include="HostItem.Members.cs" />
     <Compile Include="HostObject.cs" />
     <Compile Include="HostTarget.cs" />

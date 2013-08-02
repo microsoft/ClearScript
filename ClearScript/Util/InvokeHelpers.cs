@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -75,12 +75,12 @@ namespace Microsoft.ClearScript.Util
             var parameters = method.GetParameters();
             for (var index = 0; index < parameters.Length; index++)
             {
-                var parameter = parameters[index];
-                if (Attribute.IsDefined(parameter, typeof(ParamArrayAttribute)))
+                var param = parameters[index];
+                if (Attribute.IsDefined(param, typeof(ParamArrayAttribute)))
                 {
-                    if ((index != (args.Length - 1)) || !parameter.ParameterType.IsInstanceOfType(args[index]))
+                    if ((index != (args.Length - 1)) || !param.ParameterType.IsInstanceOfType(args[index]))
                     {
-                        var tailArgs = Array.CreateInstance(parameter.ParameterType.GetElementType(), args.Length - index);
+                        var tailArgs = Array.CreateInstance(param.ParameterType.GetElementType(), args.Length - index);
                         for (var innerIndex = index; innerIndex < args.Length; innerIndex++)
                         {
                             var byRefArg = args[innerIndex] as IByRefArg;
@@ -113,13 +113,13 @@ namespace Microsoft.ClearScript.Util
                         byRefArgInfo.Add(new ByRefArgItem(byRefArg, null, index));
                     }
                 }
-                else if (parameter.IsOptional)
+                else if (param.IsOptional)
                 {
-                    if (parameter.Attributes.HasFlag(ParameterAttributes.HasDefault))
+                    if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
                     {
                         try
                         {
-                            argList.Add(parameter.DefaultValue);
+                            argList.Add(param.DefaultValue);
                         }
                         catch (FormatException)
                         {

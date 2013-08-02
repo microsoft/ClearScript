@@ -1,5 +1,5 @@
-// 
-// Copyright © Microsoft Corporation. All rights reserved.
+ï»¿// 
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 

@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -298,7 +299,8 @@ namespace Microsoft.ClearScript.Windows
                     throw new InvalidOperationException("Invalid host item");
                 }
 
-                hostItemMap.Add(itemName, marshaledItem);
+                var oldItem = ((IDictionary)hostItemMap)[itemName];
+                hostItemMap[itemName] = marshaledItem;
 
                 var nativeFlags = ScriptItemFlags.IsVisible;
                 if (flags.HasFlag(HostItemFlags.GlobalMembers))
@@ -312,7 +314,15 @@ namespace Microsoft.ClearScript.Windows
                 }
                 catch (Exception)
                 {
-                    hostItemMap.Remove(itemName);
+                    if (oldItem != null)
+                    {
+                        hostItemMap[itemName] = oldItem;
+                    }
+                    else
+                    {
+                        hostItemMap.Remove(itemName);
+                    }
+
                     throw;
                 }
             });

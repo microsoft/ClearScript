@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -60,6 +60,8 @@
 //       
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
@@ -68,10 +70,11 @@ namespace Microsoft.ClearScript
     {
         private readonly object target;
         private readonly Type type;
+        private static readonly CanonicalRefMap canonicalRefMap = new CanonicalRefMap();
 
-        protected HostObject(object target, Type type)
+        private HostObject(object target, Type type)
         {
-            this.target = target;
+            this.target = canonicalRefMap.GetCanonicalRef(target);
             this.type = type ?? target.GetType();
         }
 
@@ -155,6 +158,71 @@ namespace Microsoft.ClearScript
         public override HostTargetFlags Flags
         {
             get { return HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods; }
+        }
+
+        #endregion
+
+        #region Nested type: CanonicalRefMap
+
+        private class CanonicalRefMap
+        {
+            private readonly object dataLock = new object();
+            private readonly Dictionary<object, WeakReference> map = new Dictionary<object, WeakReference>();
+            private DateTime lastCompactionTime = DateTime.MinValue;
+
+            private const int compactionThreshold = 1024 * 1024;
+            private static readonly TimeSpan compactionInterval = TimeSpan.FromMinutes(3);
+
+            public object GetCanonicalRef(object obj)
+            {
+                if (obj.GetType().IsEnum)
+                {
+                    lock (dataLock)
+                    {
+                        var result = GetCanonicalRefInternal(obj);
+                        CompactIfNecessary();
+                        return result;
+                    }
+                }
+
+                return obj;
+            }
+
+            private object GetCanonicalRefInternal(object obj)
+            {
+                object result;
+
+                WeakReference weakRef;
+                if (map.TryGetValue(obj, out weakRef))
+                {
+                    result = weakRef.Target;
+                    if (result == null)
+                    {
+                        result = obj;
+                        weakRef.Target = result;
+                    }
+                }
+                else
+                {
+                    result = obj;
+                    map.Add(obj, new WeakReference(result));
+                }
+
+                return result;
+            }
+
+            private void CompactIfNecessary()
+            {
+                if (map.Count >= compactionThreshold)
+                {
+                    var now = DateTime.UtcNow;
+                    if ((lastCompactionTime + compactionInterval) <= now)
+                    {
+                        map.Where(pair => !pair.Value.IsAlive).ToList().ForEach(pair => map.Remove(pair.Key));
+                        lastCompactionTime = now;
+                    }
+                }
+            }
         }
 
         #endregion

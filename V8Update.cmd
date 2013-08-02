@@ -5,8 +5,8 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedRevision=15192
-set testedVersion=3.19.18
+set testedRevision=16011
+set testedVersion=3.20.12
 
 :ProcessArgs
 
@@ -17,6 +17,8 @@ set mode=Release
 if "%1"=="" goto ProcessArgsDone
 if "%1"=="/?" goto EchoUsage
 if /i "%1"=="/n" goto SetDownloadFalse
+if /i "%1"=="\n" goto SetDownloadFalse
+if /i "%1"=="-n" goto SetDownloadFalse
 if /i "%1"=="debug" goto SetDebugMode
 if /i "%1"=="release" goto SetReleaseMode
 goto SetV8Rev
@@ -86,7 +88,9 @@ if /i "%v8rev%"=="latest" goto UseLatestRev
 if /i "%v8rev%"=="tested" goto UseTestedRev
 if /i "%v8rev%"=="%testedRevision%" goto UseTestedRev
 echo V8 revision: %v8rev%
-echo WARNING: This V8 revision may not be compatible with ClearScript.
+echo *** WARNING: THIS V8 REVISION MAY NOT BE COMPATIBLE WITH CLEARSCRIPT ***
+choice /m Continue
+if errorlevel 2 goto Exit
 goto ResolveRevDone
 :UseTestedRev
 set v8rev=%testedRevision%
@@ -95,7 +99,9 @@ goto ResolveRevDone
 :UseLatestRev
 set v8rev=HEAD
 echo V8 revision: Latest
-echo WARNING: This V8 revision may not be compatible with ClearScript.
+echo *** WARNING: THIS V8 REVISION MAY NOT BE COMPATIBLE WITH CLEARSCRIPT ***
+choice /m Continue
+if errorlevel 2 goto Exit
 :ResolveRevDone
 
 :EnsureBuildDir

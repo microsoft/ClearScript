@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -598,9 +598,9 @@ namespace Microsoft.ClearScript
         ///         <term><b>Undefined</b></term>
         ///         <term><see cref="Undefined"/></term>
         ///         <description>
-        ///         This represents JavaScript’s
+        ///         This represents JavaScript's
         ///         <see href="http://msdn.microsoft.com/en-us/library/ie/dae3sbk5(v=vs.94).aspx">undefined</see>,
-        ///         VBScript’s
+        ///         VBScript's
         ///         <see href="http://msdn.microsoft.com/en-us/library/f8tbc79x(v=vs.85).aspx">Empty</see>,
         ///         etc.
         ///         </description>

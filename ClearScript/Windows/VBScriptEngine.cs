@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -197,8 +197,6 @@ namespace Microsoft.ClearScript.Windows
                                 getCommandResult = ""[null]""
                             elseif IsEmpty(value) then
                                 getCommandResult = ""[empty]""
-                            elseif IsArray(value) then
-                                getCommandResult = ""[array]""
                             else
                                 getCommandResult = CStr(value)
                             end if

@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -314,7 +314,7 @@ namespace Microsoft.ClearScript
             {
                 var types = new[] { type }.Concat(hostType.Types).ToArray();
 
-                var groups = types.GroupBy(testType => testType.GetGenericParameterCount()).ToIList();
+                var groups = types.GroupBy(testType => testType.GetGenericParamCount()).ToIList();
                 if (groups.Any(group => group.Count() > 1))
                 {
                     types = groups.Select(ResolveTypeConflict).ToArray();

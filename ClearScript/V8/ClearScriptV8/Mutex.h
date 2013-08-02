@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -125,7 +125,7 @@ public:
 // MutexLock
 //-----------------------------------------------------------------------------
 
-template<class TMutex> class MutexLock
+template <class TMutex> class MutexLock
 {
     PROHIBIT_COPY(MutexLock)
     PROHIBIT_HEAP(MutexLock)

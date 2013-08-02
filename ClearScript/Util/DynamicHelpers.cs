@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright © Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
 // 
@@ -60,34 +60,44 @@
 //       
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.Expando;
 
 namespace Microsoft.ClearScript.Util
 {
     internal static class DynamicHelpers
     {
+        #region public members
+
         public static DynamicMetaObject Bind(DynamicMetaObjectBinder binder, object target, object[] args)
         {
             return binder.Bind(CreateDynamicTarget(target), CreateDynamicArgs(args));
         }
 
-        public static object InvokeExpression(Expression expression)
+        public static object Invoke(Expression expr)
         {
-            Debug.Assert(expression != null);
-            return Expression.Lambda(expression).Compile().DynamicInvoke();
+            Debug.Assert(expr != null);
+            return Expression.Lambda(expr).Compile().DynamicInvoke();
+        }
+
+        public static object Invoke(Expression expr, IEnumerable<ParameterExpression> parameters, object[] args)
+        {
+            Debug.Assert(expr != null);
+            return Expression.Lambda(expr, parameters).Compile().DynamicInvoke(args);
         }
 
         public static bool TryBindAndInvoke(DynamicMetaObjectBinder binder, object target, object[] args, out object result)
         {
             try
             {
-                // For COM property access, use IReflect/IExpando if possible. This works around
+                // For COM member access, use IReflect/IExpando if possible. This works around
                 // some dynamic binder bugs and limitations observed during batch test runs.
 
                 var reflect = target as IReflect;
@@ -148,7 +158,7 @@ namespace Microsoft.ClearScript.Util
                 }
 
                 var binding = Bind(binder, target, args);
-                result = InvokeExpression(binding.Expression);
+                result = Invoke(binding.Expression);
                 return true;
             }
             catch (Exception exception)
@@ -157,6 +167,168 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
         }
+
+        #endregion
+
+        #region DynamicMetaObject extensions
+
+        public static bool TryCreateInstance(this DynamicMetaObject target, object[] args, out object result)
+        {
+            return TryDynamicOperation(() => target.CreateInstance(args), out result);
+        }
+
+        public static bool TryInvoke(this DynamicMetaObject target, object[] args, out object result)
+        {
+            return TryDynamicOperation(() => target.Invoke(args), out result);
+        }
+
+        public static bool TryInvokeMember(this DynamicMetaObject target, string name, BindingFlags invokeFlags, object[] args, out object result)
+        {
+            return TryDynamicOperation(() => target.InvokeMember(name, invokeFlags, args), out result);
+        }
+
+        public static bool TryGetMember(this DynamicMetaObject target, string name, out object result)
+        {
+            return TryDynamicOperation(() => target.GetMember(name), out result);
+        }
+
+        public static bool TrySetMember(this DynamicMetaObject target, string name, object value, out object result)
+        {
+            return TryDynamicOperation(() => target.SetMember(name, value), out result);
+        }
+
+        public static bool TryDeleteMember(this DynamicMetaObject target, string name, out bool result)
+        {
+            return TryDynamicOperation(() => target.DeleteMember(name), out result);
+        }
+
+        public static bool TryGetIndex(this DynamicMetaObject target, object[] indices, out object result)
+        {
+            return TryDynamicOperation(() => target.GetIndex(indices), out result);
+        }
+
+        public static bool TrySetIndex(this DynamicMetaObject target, object[] indices, object value, out object result)
+        {
+            return TryDynamicOperation(() => target.SetIndex(indices, value), out result);
+        }
+
+        public static bool TryDeleteIndex(this DynamicMetaObject target, object[] indices, out bool result)
+        {
+            return TryDynamicOperation(() => target.DeleteIndex(indices), out result);
+        }
+
+        public static object CreateInstance(this DynamicMetaObject target, object[] args)
+        {
+            var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindCreateInstance(new DynamicCreateInstanceBinder(paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, args);
+        }
+
+        public static object Invoke(this DynamicMetaObject target, object[] args)
+        {
+            var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindInvoke(new DynamicInvokeBinder(paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, args);
+        }
+
+        public static object InvokeMember(this DynamicMetaObject target, string name, BindingFlags invokeFlags, object[] args)
+        {
+            var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindInvokeMember(new DynamicInvokeMemberBinder(name, invokeFlags, paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, args);
+        }
+
+        public static object GetMember(this DynamicMetaObject target, string name)
+        {
+            var bindResult = target.BindGetMember(new DynamicGetMemberBinder(name));
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block);
+        }
+
+        public static object SetMember(this DynamicMetaObject target, string name, object value)
+        {
+            var bindResult = target.BindSetMember(new DynamicSetMemberBinder(name), CreateDynamicArg(value));
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block);
+        }
+
+        public static bool DeleteMember(this DynamicMetaObject target, string name)
+        {
+            var bindResult = target.BindDeleteMember(new DynamicDeleteMemberBinder(name));
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+
+            try
+            {
+                Invoke(block);
+                return true;
+            }
+            catch (TargetInvocationException exception)
+            {
+                if (exception.InnerException is InvalidDynamicOperationException)
+                {
+                    return false;
+                }
+
+                throw;
+            }
+        }
+
+        public static object GetIndex(this DynamicMetaObject target, object[] indices)
+        {
+            var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindGetIndex(new DynamicGetIndexBinder(paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, indices);
+        }
+
+        public static object SetIndex(this DynamicMetaObject target, object[] indices, object value)
+        {
+            var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindSetIndex(new DynamicSetIndexBinder(paramNames), parameters, CreateDynamicArg(value));
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, indices);
+        }
+
+        public static bool DeleteIndex(this DynamicMetaObject target, object[] indices)
+        {
+            var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindDeleteIndex(new DynamicDeleteIndexBinder(paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+
+            try
+            {
+                Invoke(block, paramExprs, indices);
+                return true;
+            }
+            catch (TargetInvocationException exception)
+            {
+                if (exception.InnerException is InvalidDynamicOperationException)
+                {
+                    return false;
+                }
+
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region internal members
 
         private static bool TryGetProperty(IReflect target, string name, bool ignoreCase, object[] args, out object result)
         {
@@ -228,6 +400,25 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
+        private static bool TryDynamicOperation<T>(Func<T> operation, out T result)
+        {
+            try
+            {
+                result = operation();
+                return true;
+            }
+            catch (TargetInvocationException exception)
+            {
+                if (exception.InnerException is InvalidDynamicOperationException)
+                {
+                    result = default(T);
+                    return false;
+                }
+
+                throw;
+            }
+        }
+
         private static DynamicMetaObject CreateDynamicTarget(object target)
         {
             var byRefArg = target as IByRefArg;
@@ -278,5 +469,297 @@ namespace Microsoft.ClearScript.Util
         {
             return args.Select(CreateDynamicArg).ToArray();
         }
+
+        private static Expression CreateThrowExpr<T>(string message) where T : Exception
+        {
+            var constructor = typeof(T).GetConstructor(new[] { typeof(string) });
+
+            Expression exceptionExpr;
+            if (constructor != null)
+            {
+                exceptionExpr = Expression.New(constructor, Expression.Constant(message));
+            }
+            else
+            {
+                exceptionExpr = Expression.Constant(typeof(T).CreateInstance(message));
+            }
+
+            return Expression.Throw(exceptionExpr);
+        }
+
+        #endregion
+
+        #region Nested type: DynamicCreateInstanceBinder
+
+        private class DynamicCreateInstanceBinder : CreateInstanceBinder
+        {
+            public DynamicCreateInstanceBinder(string[] paramNames)
+                : base(new CallInfo(paramNames.Length, paramNames))
+            {
+            }
+
+            public override DynamicMetaObject FallbackCreateInstance(DynamicMetaObject target, DynamicMetaObject[] args, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // errorSuggestion is the dynamic instantiation algorithm
+                    return errorSuggestion;
+                }
+
+                // Construct an algorithm for dealing with unsuccessful dynamic instantiation.
+                // A block returning a reference object appears to be required for some reason.
+                return new DynamicMetaObject(Expression.Block(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic instantiation"), Expression.Constant(Nonexistent.Value)), BindingRestrictions.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: DynamicInvokeBinder
+
+        private class DynamicInvokeBinder : InvokeBinder
+        {
+            public DynamicInvokeBinder(string[] paramNames)
+                : base(new CallInfo(paramNames.Length, paramNames))
+            {
+            }
+
+            public override DynamicMetaObject FallbackInvoke(DynamicMetaObject target, DynamicMetaObject[] args, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // errorSuggestion is the dynamic invocation algorithm
+                    return errorSuggestion;
+                }
+
+                // Construct an algorithm for dealing with unsuccessful dynamic invocation.
+                // A block returning a reference object appears to be required for some reason.
+                return new DynamicMetaObject(Expression.Block(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic object invocation"), Expression.Constant(Nonexistent.Value)), BindingRestrictions.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: DynamicGetMemberBinder
+
+        private class DynamicGetMemberBinder : GetMemberBinder
+        {
+            public DynamicGetMemberBinder(string name)
+                : base(name, false)
+            {
+            }
+
+            public override DynamicMetaObject FallbackGetMember(DynamicMetaObject target, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // errorSuggestion is the dynamic member retrieval algorithm
+                    return errorSuggestion;
+                }
+
+                // Construct an algorithm for dealing with unsuccessful dynamic member retrieval.
+                // A block returning a reference object appears to be required for some reason.
+                return new DynamicMetaObject(Expression.Block(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic member retrieval"), Expression.Constant(Nonexistent.Value)), BindingRestrictions.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: DynamicSetMemberBinder
+
+        private class DynamicSetMemberBinder : SetMemberBinder
+        {
+            public DynamicSetMemberBinder(string name)
+                : base(name, false)
+            {
+            }
+
+            public override DynamicMetaObject FallbackSetMember(DynamicMetaObject target, DynamicMetaObject value, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // errorSuggestion is the dynamic member assignment algorithm
+                    return errorSuggestion;
+                }
+
+                // Construct an algorithm for dealing with unsuccessful dynamic member assignment.
+                // A block returning a reference object appears to be required for some reason.
+                return new DynamicMetaObject(Expression.Block(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic member assignment"), Expression.Constant(Nonexistent.Value)), BindingRestrictions.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: DynamicInvokeMemberBinder
+
+        private class DynamicInvokeMemberBinder : InvokeMemberBinder
+        {
+            private static readonly MethodInfo invokeMemberValueMethod = typeof(DynamicInvokeMemberBinder).GetMethod("InvokeMemberValue", BindingFlags.NonPublic | BindingFlags.Static);
+            private readonly BindingFlags invokeFlags;
+
+            public DynamicInvokeMemberBinder(string name, BindingFlags invokeFlags, string[] paramNames)
+                : base(name, false, new CallInfo(paramNames.Length, paramNames))
+            {
+                this.invokeFlags = invokeFlags;
+            }
+
+            public override DynamicMetaObject FallbackInvokeMember(DynamicMetaObject target, DynamicMetaObject[] args, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // errorSuggestion is the dynamic member invocation algorithm
+                    return errorSuggestion;
+                }
+
+                // Construct an algorithm for dealing with unsuccessful dynamic member invocation.
+                // A block returning a reference object appears to be required for some reason.
+                return new DynamicMetaObject(Expression.Block(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic member invocation"), Expression.Constant(Nonexistent.Value)), BindingRestrictions.Empty);
+            }
+
+            public override DynamicMetaObject FallbackInvoke(DynamicMetaObject target, DynamicMetaObject[] args, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // behave as in other scenarios, but the observed value is always null
+                    return errorSuggestion;
+                }
+
+                // construct an algorithm for invoking a member value
+                var argExprs = new[] { target.Expression, Expression.Constant(invokeFlags), Expression.NewArrayInit(typeof(object), args.Select(arg => arg.Expression)) };
+                return new DynamicMetaObject(Expression.Call(invokeMemberValueMethod, argExprs), BindingRestrictions.Empty);
+            }
+
+            // ReSharper disable UnusedMember.Local
+
+            private static object InvokeMemberValue(object target, BindingFlags invokeFlags, object[] args)
+            {
+                object result;
+                if (InvokeHelpers.TryInvokeObject(target, BindingFlags.InvokeMethod, args, args, out result))
+                {
+                    return result;
+                }
+
+                if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
+                {
+                    return target;
+                }
+
+                throw new InvalidDynamicOperationException("Invalid dynamic member value invocation");
+            }
+
+            // ReSharper restore UnusedMember.Local
+        }
+
+        #endregion
+
+        #region Nested type: DynamicDeleteMemberBinder
+        
+        private class DynamicDeleteMemberBinder : DeleteMemberBinder
+        {
+            public DynamicDeleteMemberBinder(string name)
+                : base(name, false)
+            {
+            }
+
+            public override DynamicMetaObject FallbackDeleteMember(DynamicMetaObject target, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // errorSuggestion is the dynamic member deletion algorithm
+                    return errorSuggestion;
+                }
+
+                // construct an algorithm for dealing with unsuccessful dynamic member deletion
+                return new DynamicMetaObject(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic member deletion"), BindingRestrictions.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: DynamicGetIndexBinder
+
+        private class DynamicGetIndexBinder : GetIndexBinder
+        {
+            public DynamicGetIndexBinder(string[] paramNames)
+                : base(new CallInfo(paramNames.Length, paramNames))
+            {
+            }
+
+            public override DynamicMetaObject FallbackGetIndex(DynamicMetaObject target, DynamicMetaObject[] indexes, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // errorSuggestion is the dynamic index retrieval algorithm
+                    return errorSuggestion;
+                }
+
+                // Construct an algorithm for dealing with unsuccessful dynamic index retrieval.
+                // A block returning a reference object appears to be required for some reason.
+                return new DynamicMetaObject(Expression.Block(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic index retrieval"), Expression.Constant(Nonexistent.Value)), BindingRestrictions.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: DynamicSetIndexBinder
+
+        private class DynamicSetIndexBinder : SetIndexBinder
+        {
+            public DynamicSetIndexBinder(string[] paramNames)
+                : base(new CallInfo(paramNames.Length, paramNames))
+            {
+            }
+
+            public override DynamicMetaObject FallbackSetIndex(DynamicMetaObject target, DynamicMetaObject[] indexes, DynamicMetaObject value, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // errorSuggestion is the dynamic index assignment algorithm
+                    return errorSuggestion;
+                }
+
+                // Construct an algorithm for dealing with unsuccessful dynamic index assignment.
+                // A block returning a reference object appears to be required for some reason.
+                return new DynamicMetaObject(Expression.Block(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic index assignment"), Expression.Constant(Nonexistent.Value)), BindingRestrictions.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: DynamicDeleteIndexBinder
+
+        private class DynamicDeleteIndexBinder : DeleteIndexBinder
+        {
+            public DynamicDeleteIndexBinder(string[] paramNames)
+                : base(new CallInfo(paramNames.Length, paramNames))
+            {
+            }
+
+            public override DynamicMetaObject FallbackDeleteIndex(DynamicMetaObject target, DynamicMetaObject[] indices, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    // errorSuggestion is the dynamic index deletion algorithm
+                    return errorSuggestion;
+                }
+
+                // construct an algorithm for dealing with unsuccessful dynamic index deletion
+                return new DynamicMetaObject(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic index deletion"), BindingRestrictions.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: InvalidDynamicOperationException
+
+        [Serializable]
+        private sealed class InvalidDynamicOperationException : InvalidOperationException
+        {
+            public InvalidDynamicOperationException(string message)
+                : base(message)
+            {
+            }
+        }
+
+        #endregion
     }
 }
