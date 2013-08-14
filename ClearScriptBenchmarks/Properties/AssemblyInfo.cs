@@ -69,5 +69,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("(c) Microsoft Corporation")]
 
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("5.3.5.0")]
-[assembly: AssemblyFileVersion("5.3.5.0")]
+[assembly: AssemblyVersion("5.3.6.0")]
+[assembly: AssemblyFileVersion("5.3.6.0")]

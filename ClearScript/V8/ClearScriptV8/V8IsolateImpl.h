@@ -132,7 +132,7 @@ public:
 
     Local<Integer> CreateInteger(unsigned __int32 value)
     {
-        return Uint32::New(value, m_pIsolate);
+        return Uint32::NewFromUnsigned(value, m_pIsolate);
     }
 
     template <typename T>

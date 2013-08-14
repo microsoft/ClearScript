@@ -421,21 +421,6 @@ namespace V8 {
             double result;
             if (value.AsNumber(result))
             {
-                if (Math::Round(result) == result)
-                {
-                    if ((result >= Int32::MinValue) && (result <= Int32::MaxValue))
-                        return (Int32)result;
-
-                    if ((result >= UInt32::MinValue) && (result <= UInt32::MaxValue))
-                        return (UInt32)result;
-
-                    if ((result >= Int64::MinValue) && (result <= Int64::MaxValue))
-                        return (Int64)result;
-
-                    if ((result >= UInt64::MinValue) && (result <= UInt64::MaxValue))
-                        return (UInt64)result;
-                }
-
                 return result;
             }
         }

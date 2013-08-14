@@ -228,13 +228,33 @@ namespace Microsoft.ClearScript
 
             set
             {
-                T tempValue;
+                var tempValue = default(T);
+                var succeeded = false;
 
                 try
                 {
                     tempValue = (T)value;
+                    succeeded = true;
                 }
                 catch (InvalidCastException)
+                {
+                    try
+                    {
+                        tempValue = (T)Convert.ChangeType(value, typeof(T));
+                        succeeded = true;
+                    }
+                    catch (InvalidCastException)
+                    {
+                    }
+                    catch (FormatException)
+                    {
+                    }
+                    catch (OverflowException)
+                    {
+                    }
+                }
+
+                if (!succeeded)
                 {
                     throw new InvalidOperationException("Assignment invalid due to type mismatch");
                 }

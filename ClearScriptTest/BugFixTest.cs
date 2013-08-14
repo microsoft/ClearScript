@@ -204,6 +204,46 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue((bool)engine.Evaluate("host.flags(BindingFlags.Public, BindingFlags.Instance) == host.flags(BindingFlags.Public, BindingFlags.Instance)"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_FloatParameterBinding()
+        {
+            engine.AddHostType("Convert", typeof(Convert));
+            engine.Script.list = new List<float>();
+            const float floatPi = (float)Math.PI;
+            engine.Execute("list.Add(Convert.ToSingle(Math.PI))");
+            Assert.AreEqual(floatPi, engine.Script.list[0]);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_FloatParameterBinding_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+            BugFix_FloatParameterBinding();
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_UInt32RoundTrip()
+        {
+            engine.AddHostType("UInt32", typeof(uint));
+            Assert.AreEqual((long)uint.MaxValue, engine.Evaluate("UInt32.MaxValue"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_UInt32RoundTrip_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+            BugFix_UInt32RoundTrip();
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AutoInt64FromDouble()
+        {
+            engine.AddHostType("Int32", typeof(int));
+            Assert.AreEqual((long)int.MaxValue * 123 + 1, engine.Evaluate("Int32.MaxValue * 123 + 1"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

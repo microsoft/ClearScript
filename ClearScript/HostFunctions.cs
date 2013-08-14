@@ -604,6 +604,402 @@ namespace Microsoft.ClearScript
             }
         }
 
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.SByte"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.SByte"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.SByte"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.SByte"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.SByte"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.SByte");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toSByte(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toSByte(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToSByte(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.Byte"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.Byte"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.Byte"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.Byte"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.Byte"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.Byte");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toByte(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toByte(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToByte(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.Int16"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.Int16"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.Int16"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.Int16"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.Int16"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.Int16");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toInt16(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toInt16(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToInt16(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.UInt16"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.UInt16"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.UInt16"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.UInt16"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.UInt16"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.UInt16");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toUInt16(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toUInt16(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToUInt16(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.Char"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.Char"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.Char"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.Char"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.Char"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.Char");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toChar(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toChar(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToChar(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.Int32"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.Int32"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.Int32"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.Int32"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.Int32"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.Int32");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toInt32(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toInt32(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToInt32(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.UInt32"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.UInt32"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.UInt32"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.UInt32"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.UInt32"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.UInt32");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toUInt32(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toUInt32(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToUInt32(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.Int64"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.Int64"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.Int64"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.Int64"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.Int64"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.Int64");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toInt64(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toInt64(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToInt64(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.UInt64"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.UInt64"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.UInt64"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.UInt64"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.UInt64"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.UInt64");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toUInt64(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toUInt64(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToUInt64(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.Single"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.Single"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.Single"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.Single"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.Single"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.Single");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toSingle(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toSingle(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToSingle(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.Double"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.Double"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.Double"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.Double"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.Double"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.Double");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toDouble(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toDouble(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToDouble(value));
+        }
+
+        /// <summary>
+        /// Converts the specified value to a strongly typed <see cref="System.Decimal"/> instance.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>An object that can be passed to a parameter of type <see cref="System.Decimal"/>.</returns>
+        /// <remarks>
+        /// This function converts <paramref name="value"/> to <see cref="System.Decimal"/> and
+        /// packages the result to retain its numeric type across the host-script boundary. It may
+        /// be useful for passing arguments to <see cref="System.Decimal"/> parameters if the script
+        /// engine does not support that type natively.
+        /// </remarks>
+        /// <example>
+        /// The following code adds an element of type <see cref="System.Decimal"/> to a strongly
+        /// typed list.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// ElementT = host.type("System.Decimal");
+        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// // create a list
+        /// list = host.newObj(ListT);
+        /// // add a list element
+        /// list.Add(host.toDecimal(42));
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public object toDecimal(IConvertible value)
+        {
+            return HostObject.Wrap(Convert.ToDecimal(value));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

@@ -67,6 +67,7 @@ using System.Linq;
 using System.Windows;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -618,6 +619,186 @@ namespace Microsoft.ClearScript.Test
         {
             engine.AddHostType("NonFlags", HostItemFlags.PrivateAccess, typeof(NonFlags));
             TestUtil.AssertException<InvalidOperationException>(() => engine.Execute("host.flags(NonFlags.Second, NonFlags.Fourth, NonFlags.Sixth, NonFlags.Eighth)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toSByte()
+        {
+            Assert.AreEqual(Convert.ToSByte(127), engine.Evaluate("host.toSByte(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toByte()
+        {
+            Assert.AreEqual(Convert.ToByte(127), engine.Evaluate("host.toByte(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toInt16()
+        {
+            Assert.AreEqual(Convert.ToInt16(127), engine.Evaluate("host.toInt16(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toUInt16()
+        {
+            Assert.AreEqual(Convert.ToUInt16(127), engine.Evaluate("host.toUInt16(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toChar()
+        {
+            Assert.AreEqual(Convert.ToChar(127), engine.Evaluate("host.toChar(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toInt32()
+        {
+            Assert.AreEqual(Convert.ToInt32(127), engine.Evaluate("host.toInt32(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toUInt32()
+        {
+            Assert.AreEqual(Convert.ToUInt32(127), engine.Evaluate("host.toUInt32(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toInt64()
+        {
+            Assert.AreEqual(Convert.ToInt64(127), engine.Evaluate("host.toInt64(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toUInt64()
+        {
+            Assert.AreEqual(Convert.ToUInt64(127), engine.Evaluate("host.toUInt64(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toSingle()
+        {
+            Assert.AreEqual(Convert.ToSingle(127), engine.Evaluate("host.toSingle(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toDouble()
+        {
+            Assert.AreEqual(Convert.ToDouble(127), engine.Evaluate("host.toDouble(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toDecimal()
+        {
+            Assert.AreEqual(Convert.ToDecimal(127), engine.Evaluate("host.toDecimal(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toSByte_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions()); 
+            Assert.AreEqual(Convert.ToSByte(127), engine.Evaluate("host.toSByte(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toByte_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToByte(127), engine.Evaluate("host.toByte(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toInt16_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToInt16(127), engine.Evaluate("host.toInt16(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toUInt16_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToUInt16(127), engine.Evaluate("host.toUInt16(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toChar_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToChar(127), engine.Evaluate("host.toChar(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toInt32_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToInt32(127), engine.Evaluate("host.toInt32(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toUInt32_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToUInt32(127), engine.Evaluate("host.toUInt32(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toInt64_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToInt64(127), engine.Evaluate("host.toInt64(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toUInt64_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToUInt64(127), engine.Evaluate("host.toUInt64(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toSingle_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToSingle(127), engine.Evaluate("host.toSingle(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toDouble_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToDouble(127), engine.Evaluate("host.toDouble(127)"));
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_toDecimal_V8()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+            Assert.AreEqual(Convert.ToDecimal(127), engine.Evaluate("host.toDecimal(127)"));
         }
 
         // ReSharper restore InconsistentNaming

@@ -174,6 +174,74 @@ namespace Microsoft.ClearScript.Util
             return BitConverter.ToUInt32(BitConverter.GetBytes(value), 0);
         }
 
+        public static bool TryMarshalPrimitiveToHost(object obj, out object result)
+        {
+            var convertible = obj as IConvertible;
+            if (convertible != null)
+            {
+                switch (convertible.GetTypeCode())
+                {
+                    case TypeCode.String:
+                    case TypeCode.Boolean:
+                        result = obj;
+                        return true;
+
+                    case TypeCode.Double:
+                    case TypeCode.Single:
+                        result = MarshalDoubleToHost(convertible.ToDouble(CultureInfo.InvariantCulture));
+                        return true;
+
+                    case TypeCode.SByte:
+                    case TypeCode.Byte:
+                    case TypeCode.Int16:
+                    case TypeCode.UInt16:
+                    case TypeCode.Char:
+                    case TypeCode.Int32:
+                    case TypeCode.UInt32:
+                    case TypeCode.Int64:
+                    case TypeCode.UInt64:
+                    case TypeCode.Decimal:
+                        result = obj;
+                        return true;
+                }
+            }
+
+            result = null;
+            return false;
+        }
+
+        public static object MarshalDoubleToHost(double value)
+        {
+            // ReSharper disable CompareOfFloatsByEqualityOperator
+
+            if (Math.Round(value) == value)
+            {
+                const double maxIntInDouble = (1L << 53) - 1;
+                if (Math.Abs(value) <= maxIntInDouble)
+                {
+                    var longValue = Convert.ToInt64(value);
+                    if ((longValue >= int.MinValue) && (longValue <= int.MaxValue))
+                    {
+                        return (int)longValue;
+                    }
+
+                    return longValue;
+                }
+            }
+            else
+            {
+                var floatArg = Convert.ToSingle(value);
+                if (value == floatArg)
+                {
+                    return floatArg;
+                }
+            }
+
+            return value;
+
+            // ReSharper restore CompareOfFloatsByEqualityOperator
+        }
+
         public static T[] GetEmptyArray<T>()
         {
             return EmptyArray<T>.Value;

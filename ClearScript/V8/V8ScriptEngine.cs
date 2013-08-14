@@ -582,6 +582,12 @@ namespace Microsoft.ClearScript.V8
                 return null;
             }
 
+            object result;
+            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, out result))
+            {
+                return result;
+            }
+
             var hostTarget = obj as HostTarget;
             if (hostTarget != null)
             {

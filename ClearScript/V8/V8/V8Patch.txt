@@ -1,6 +1,6 @@
 Index: src/utils.h
 ===================================================================
---- src/utils.h	(revision 16011)
+--- src/utils.h	(revision 16178)
 +++ src/utils.h	(working copy)
 @@ -109,7 +109,7 @@
  // These are kind of 2's complement reciprocal of the divisors.
@@ -13,7 +13,7 @@ Index: src/utils.h
  // lithium-codegen-arm.cc : LCodeGen::TryEmitSignedIntegerDivisionByConstant().
 Index: tools/gyp/v8.gyp
 ===================================================================
---- tools/gyp/v8.gyp	(revision 16011)
+--- tools/gyp/v8.gyp	(revision 16178)
 +++ tools/gyp/v8.gyp	(working copy)
 @@ -33,6 +33,7 @@
    'targets': [

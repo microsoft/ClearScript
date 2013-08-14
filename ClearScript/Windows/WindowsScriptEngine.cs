@@ -386,6 +386,12 @@ namespace Microsoft.ClearScript.Windows
                 return null;
             }
 
+            object result;
+            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, out result))
+            {
+                return result;
+            }
+
             var array = obj as Array;
             if (array != null)
             {
