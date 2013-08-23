@@ -244,6 +244,16 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual((long)int.MaxValue * 123 + 1, engine.Evaluate("Int32.MaxValue * 123 + 1"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_CompiledScriptResult()
+        {
+            engine.Script.host = new HostFunctions();
+            using (var script = ((V8ScriptEngine)engine).Compile("host"))
+            {
+                Assert.IsInstanceOfType(((V8ScriptEngine)engine).Evaluate(script), typeof(HostFunctions));
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

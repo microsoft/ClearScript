@@ -5,8 +5,8 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedRevision=16178
-set testedVersion=3.20.16
+set testedRevision=16272
+set testedVersion=3.21.2
 
 :ProcessArgs
 
@@ -161,6 +161,7 @@ cd ..
 
 set GYP_MSVS_VERSION=2012
 set PYTHONHOME=
+set PYTHONPATH=
 
 :Copy32Bit
 echo Building 32-bit V8 ...

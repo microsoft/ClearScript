@@ -364,7 +364,7 @@ namespace Microsoft.ClearScript.V8
             MiscHelpers.VerifyNonNullArgument(script, "script");
             VerifyNotDisposed();
 
-            return ScriptInvoke(() =>
+            return MarshalToHost(ScriptInvoke(() =>
             {
                 var stateObjects = new object[2];
                 using (var timer = new Timer(OnContinuationTimer, stateObjects, Timeout.Infinite, Timeout.Infinite))
@@ -374,7 +374,7 @@ namespace Microsoft.ClearScript.V8
                     timer.Change(continuationInterval, Timeout.Infinite);
                     return proxy.Execute(script);
                 }
-            });
+            }), false);
         }
 
         // ReSharper restore ParameterHidesMember
