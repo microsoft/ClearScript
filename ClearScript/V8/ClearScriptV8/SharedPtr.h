@@ -91,9 +91,14 @@ protected:
     public:
 
         explicit AddRefScope(RefCount* pRefCount):
-            m_pRefCount(pRefCount)
+            m_pRefCount(pRefCount),
+            m_RefCountValue(pRefCount->Increment())
         {
-            m_pRefCount->Increment();
+        }
+
+        size_t GetRefCountValue() const
+        {
+            return m_RefCountValue;
         }
 
         ~AddRefScope()
@@ -104,6 +109,7 @@ protected:
     private:
 
         RefCount* m_pRefCount;
+        size_t m_RefCountValue;
     };
 
 private:

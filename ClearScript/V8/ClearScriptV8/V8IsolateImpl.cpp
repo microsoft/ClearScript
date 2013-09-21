@@ -188,12 +188,15 @@ void V8IsolateImpl::EnableDebugging(int debugPort)
         auto wrThis = CreateWeakRef();
         m_pDebugMessageDispatcher = CALLBACK_MANAGER(DebugMessageDispatcher)::Alloc([wrThis]
         {
-            auto spIsolate = wrThis.GetTarget();
-            if (!spIsolate.IsEmpty())
+            Concurrency::create_task([wrThis]
             {
-                auto pIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
-                pIsolateImpl->DispatchDebugMessages();
-            }
+                auto spIsolate = wrThis.GetTarget();
+                if (!spIsolate.IsEmpty())
+                {
+                    auto pIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
+                    pIsolateImpl->DispatchDebugMessages();
+                }
+            });
         });
 
         _ASSERTE(m_pDebugMessageDispatcher);
@@ -326,16 +329,7 @@ void V8IsolateImpl::DispatchDebugMessages()
 {
     if (++m_DebugMessageDispatchCount == 1)
     {
-        auto wrThis = CreateWeakRef();
-        Concurrency::create_task([wrThis]
-        {
-            auto spIsolate = wrThis.GetTarget();
-            if (!spIsolate.IsEmpty())
-            {
-                auto pIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
-                pIsolateImpl->ProcessDebugMessages();
-            }
-        });
+        ProcessDebugMessages();
     }
 }
 

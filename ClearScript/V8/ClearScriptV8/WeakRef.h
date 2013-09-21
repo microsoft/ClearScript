@@ -188,7 +188,18 @@ private:
     {
         return WeakRefUtil<T>::CallWithLock<SharedPtr<T>>([this]
         {
-            return SharedPtr<T>(m_pTarget);
+            SharedPtr<T> spTarget;
+
+            if (m_pTarget != nullptr)
+            {
+                AddRefScope addRefScope(m_pTarget->GetRefCount());
+                if (addRefScope.GetRefCountValue() > 1)
+                {
+                    spTarget = m_pTarget;
+                }
+            }
+
+            return spTarget;
         });
     }
 
