@@ -165,7 +165,14 @@ namespace Microsoft.ClearScript.V8
 
         private static IEnumerable<string> GetDirPaths()
         {
-            yield return Path.GetDirectoryName(typeof(V8Proxy).Assembly.Location);
+            // The assembly location may be empty if the the host preloaded the assembly
+            // from custom storage. Support for this scenario was requested on CodePlex.
+
+            var location = typeof(V8Proxy).Assembly.Location;
+            if (!string.IsNullOrWhiteSpace(location))
+            {
+                yield return Path.GetDirectoryName(location);
+            }
 
             var appDomain = AppDomain.CurrentDomain;
             yield return appDomain.BaseDirectory;
