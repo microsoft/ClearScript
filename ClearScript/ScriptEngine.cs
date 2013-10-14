@@ -672,7 +672,8 @@ namespace Microsoft.ClearScript
 
         internal object MarshalToScript(object obj)
         {
-            return MarshalToScript(obj, HostItemFlags.None);
+            var hostItem = obj as HostItem;
+            return MarshalToScript(obj, (hostItem != null) ? hostItem.Flags : HostItemFlags.None);
         }
 
         internal object[] MarshalToScript(object[] args)
@@ -875,14 +876,12 @@ namespace Microsoft.ClearScript
         private readonly ConditionalWeakTable<object, List<WeakReference>> hostObjectHostItemCache = new ConditionalWeakTable<object, List<WeakReference>>();
         private readonly ConditionalWeakTable<Type, List<WeakReference>> hostTypeHostItemCache = new ConditionalWeakTable<Type, List<WeakReference>>();
 
-        internal delegate HostItem HostItemFactory(ScriptEngine engine, HostTarget target, HostItemFlags flags);
-
-        internal HostItem GetOrCreateHostItem(HostTarget target, HostItemFlags flags, HostItemFactory createHostItem)
+        internal HostItem GetOrCreateHostItem(HostTarget target, HostItemFlags flags, Func<ScriptEngine, HostTarget, HostItemFlags, HostItem> createHostItem)
         {
             var hostObject = target as HostObject;
             if (hostObject != null)
             {
-                return GetOrCreateHostItemForHostObject(hostObject, flags, createHostItem);
+                return GetOrCreateHostItemForHostTarget(hostObject, flags, createHostItem);
             }
 
             var hostType = target as HostType;
@@ -891,12 +890,24 @@ namespace Microsoft.ClearScript
                 return GetOrCreateHostItemForHostType(hostType, flags, createHostItem);
             }
 
+            var hostMethod = target as HostMethod;
+            if (hostMethod != null)
+            {
+                return GetOrCreateHostItemForHostTarget(hostMethod, flags, createHostItem);
+            }
+
+            var hostIndexedProperty = target as HostIndexedProperty;
+            if (hostIndexedProperty != null)
+            {
+                return GetOrCreateHostItemForHostTarget(hostIndexedProperty, flags, createHostItem);
+            }
+
             return createHostItem(this, target, flags);
         }
 
-        private HostItem GetOrCreateHostItemForHostObject(HostObject hostObject, HostItemFlags flags, HostItemFactory createHostItem)
+        private HostItem GetOrCreateHostItemForHostTarget(HostTarget hostTarget, HostItemFlags flags, Func<ScriptEngine, HostTarget, HostItemFlags, HostItem> createHostItem)
         {
-            var cacheEntry = hostObjectHostItemCache.GetOrCreateValue(hostObject.Target);
+            var cacheEntry = hostObjectHostItemCache.GetOrCreateValue(hostTarget.Target);
 
             List<WeakReference> activeWeakRefs = null;
             var staleWeakRefCount = 0;
@@ -910,7 +921,7 @@ namespace Microsoft.ClearScript
                 }
                 else
                 {
-                    if ((hostItem.Target.Type == hostObject.Type) && (hostItem.Flags == flags))
+                    if ((hostItem.Target.Type == hostTarget.Type) && (hostItem.Flags == flags))
                     {
                         return hostItem;
                     }
@@ -934,12 +945,12 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            var newHostItem = createHostItem(this, hostObject, flags);
+            var newHostItem = createHostItem(this, hostTarget, flags);
             cacheEntry.Add(new WeakReference(newHostItem));
             return newHostItem;
         }
 
-        private HostItem GetOrCreateHostItemForHostType(HostType hostType, HostItemFlags flags, HostItemFactory createHostItem)
+        private HostItem GetOrCreateHostItemForHostType(HostType hostType, HostItemFlags flags, Func<ScriptEngine, HostTarget, HostItemFlags, HostItem> createHostItem)
         {
             if (hostType.Types.Length != 1)
             {

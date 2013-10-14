@@ -254,6 +254,17 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_GenericDelegateConstructorWithArgument()
+        {
+            engine.AddHostType("Func", "System.Func");
+            engine.AddHostType("StringT", typeof(string));
+            engine.AddHostType("IntT", typeof(int));
+            var func = (Func<string, int>)engine.Evaluate("new Func(StringT, IntT, function (s) { return s.length; })");
+            const string testString = "floccinaucinihilipilification";
+            Assert.AreEqual(testString.Length, func(testString));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

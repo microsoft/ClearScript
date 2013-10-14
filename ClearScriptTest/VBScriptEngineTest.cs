@@ -62,6 +62,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -638,6 +639,228 @@ namespace Microsoft.ClearScript.Test
                     throw;
                 }
             });
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_CreateInstance()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.AreEqual("foo bar baz qux", engine.Evaluate("host.newObj(testObject, \"foo\", \"bar\", \"baz\", \"qux\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_CreateInstance_Fail()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("host.newObj(testObject)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Invoke()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            Assert.AreEqual("foo,bar,baz,qux", engine.Evaluate("testObject(\"foo\", \"bar\", \"baz\", \"qux\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Invoke_Fail()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("testObject()"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_InvokeMethod()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            Assert.AreEqual("foo-bar-baz-qux", engine.Evaluate("testObject.DynamicMethod(\"foo\", \"bar\", \"baz\", \"qux\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_InvokeMethod_Fail()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            TestUtil.AssertException<MissingMemberException>(() => engine.Evaluate("testObject.DynamicMethod()"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_InvokeMethod_FieldOverride()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            Assert.AreEqual("foo.bar.baz.qux", engine.Evaluate("testObject.SomeField(\"foo\", \"bar\", \"baz\", \"qux\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_InvokeMethod_FieldOverride_Fail()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            TestUtil.AssertException<MissingMemberException>(() => engine.Evaluate("testObject.SomeField()"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_InvokeMethod_PropertyOverride()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            Assert.AreEqual("foo:bar:baz:qux", engine.Evaluate("testObject.SomeProperty(\"foo\", \"bar\", \"baz\", \"qux\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_InvokeMethod_PropertyOverride_Fail()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            TestUtil.AssertException<MissingMemberException>(() => engine.Evaluate("testObject.SomeProperty()"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_InvokeMethod_DynamicOverload()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            Assert.AreEqual("foo;bar;baz;qux", engine.Evaluate("testObject.SomeMethod(\"foo\", \"bar\", \"baz\", \"qux\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_InvokeMethod_NonDynamicOverload()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            Assert.AreEqual(Math.PI, engine.Evaluate("testObject.SomeMethod()"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_InvokeMethod_NonDynamic()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            Assert.AreEqual("Super Bass-O-Matic '76", engine.Evaluate("testObject.ToString()"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_StaticType_Field()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.IsInstanceOfType(engine.Evaluate("testObject.SomeField"), typeof(HostMethod));
+            Assert.AreEqual(12345, engine.Evaluate("host.toStaticType(testObject).SomeField"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_StaticType_Property()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.IsInstanceOfType(engine.Evaluate("testObject.SomeProperty"), typeof(HostMethod));
+            Assert.AreEqual("Bogus", engine.Evaluate("host.toStaticType(testObject).SomeProperty"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_StaticType_Method()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.AreEqual("bar+baz+qux", engine.Evaluate("host.toStaticType(testObject).SomeMethod(\"foo\", \"bar\", \"baz\", \"qux\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Property()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.IsInstanceOfType(engine.Evaluate("host.getProperty(testObject, \"foo\")"), typeof(Undefined));
+            Assert.AreEqual(123, engine.Evaluate("host.setProperty(testObject, \"foo\", clng(123))"));
+            Assert.AreEqual(123, engine.Evaluate("testObject.foo"));
+            Assert.IsTrue((bool)engine.Evaluate("host.removeProperty(testObject, \"foo\")"));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getProperty(testObject, \"foo\")"), typeof(Undefined));
+            Assert.IsFalse((bool)engine.Evaluate("host.removeProperty(testObject, \"foo\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Property_Fail()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.IsInstanceOfType(engine.Evaluate("host.getProperty(testObject, \"Zfoo\")"), typeof(Undefined));
+            TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("host.setProperty(testObject, \"Zfoo\", clng(123))"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Property_Invoke()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            engine.Execute("function secret(x) : secret = len(x) : end function");
+            Assert.IsInstanceOfType(engine.Evaluate("host.getProperty(testObject, \"foo\")"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.setProperty(testObject, \"foo\", GetRef(\"secret\"))"), typeof(DynamicObject));
+            Assert.AreEqual("floccinaucinihilipilification".Length, engine.Evaluate("testObject.foo(\"floccinaucinihilipilification\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Property_Invoke_Nested()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.IsInstanceOfType(engine.Evaluate("host.getProperty(testObject, \"foo\")"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.setProperty(testObject, \"foo\", testObject)"), typeof(DynamicObject));
+            Assert.AreEqual("foo,bar,baz,qux", engine.Evaluate("testObject.foo(\"foo\", \"bar\", \"baz\", \"qux\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Element()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, clng(1), clng(2), clng(3), \"foo\")"), typeof(Undefined));
+            Assert.AreEqual("bar", engine.Evaluate("host.setElement(testObject, \"bar\", clng(1), clng(2), clng(3), \"foo\")"));
+            Assert.AreEqual("bar", engine.Evaluate("host.getElement(testObject, clng(1), clng(2), clng(3), \"foo\")"));
+            Assert.IsTrue((bool)engine.Evaluate("host.removeElement(testObject, clng(1), clng(2), clng(3), \"foo\")"));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, clng(1), clng(2), clng(3), \"foo\")"), typeof(Undefined));
+            Assert.IsFalse((bool)engine.Evaluate("host.removeElement(testObject, clng(1), clng(2), clng(3), \"foo\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Element_Fail()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, clng(1), clng(2), clng(3), pi)"), typeof(Undefined));
+            TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("host.setElement(testObject, \"bar\", clng(1), clng(2), clng(3), pi)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Element_Convert()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            engine.AddHostType("int_t", typeof(int));
+            engine.AddHostType("string_t", typeof(string));
+            Assert.AreEqual(98765, engine.Evaluate("host.cast(int_t, testObject)"));
+            Assert.AreEqual("Booyakasha!", engine.Evaluate("host.cast(string_t, testObject)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_HostIndexers()
+        {
+            engine.Script.testObject = new TestObject();
+
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("testObject.Item(clng(123))"));
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("testObject.Item.get(clng(123))"));
+            engine.Execute("testObject.Item(clng(123)) = pi");
+            Assert.AreEqual(Math.PI, engine.Evaluate("testObject.Item(clng(123))"));
+            Assert.AreEqual(Math.E, engine.Evaluate("testObject.Item.set(clng(123), e)"));
+            Assert.AreEqual(Math.E, engine.Evaluate("testObject.Item.get(clng(123))"));
+
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("testObject.Item(\"456\")"));
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("testObject.Item.get(\"456\")"));
+            engine.Execute("testObject.Item(\"456\") = sqr(2)");
+            Assert.AreEqual(Math.Sqrt(2), engine.Evaluate("testObject.Item(\"456\")"));
+            Assert.AreEqual(Math.Sqrt(3), engine.Evaluate("testObject.Item.set(\"456\", sqr(3))"));
+            Assert.AreEqual(Math.Sqrt(3), engine.Evaluate("testObject.Item.get(\"456\")"));
+
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("testObject.Item(clng(123), \"456\", 789.987, -0.12345)"));
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("testObject.Item.get(clng(123), \"456\", 789.987, -0.12345)"));
+            engine.Execute("testObject.Item(clng(123), \"456\", 789.987, -0.12345) = sqr(5)");
+            Assert.AreEqual(Math.Sqrt(5), engine.Evaluate("testObject.Item(clng(123), \"456\", 789.987, -0.12345)"));
+            Assert.AreEqual(Math.Sqrt(7), engine.Evaluate("testObject.Item.set(clng(123), \"456\", 789.987, -0.12345, sqr(7))"));
+            Assert.AreEqual(Math.Sqrt(7), engine.Evaluate("testObject.Item.get(clng(123), \"456\", 789.987, -0.12345)"));
         }
 
         // ReSharper restore InconsistentNaming

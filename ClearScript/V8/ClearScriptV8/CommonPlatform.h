@@ -102,8 +102,10 @@ using namespace std;
 
 #ifdef _DEBUG
     #define ASSERT_EVAL _ASSERTE
+    #define DEBUG_EVAL IGNORE_UNUSED
 #else // !_DEBUG
     #define ASSERT_EVAL IGNORE_UNUSED
+    #define DEBUG_EVAL _ASSERTE
 #endif // !_DEBUG
 
 //-----------------------------------------------------------------------------

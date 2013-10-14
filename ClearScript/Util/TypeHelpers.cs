@@ -268,6 +268,7 @@ namespace Microsoft.ClearScript.Util
             if (type.IsInterface)
             {
                 methods = methods.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableMethods(bindFlags)));
+                methods = methods.Concat(typeof(object).GetScriptableMethods(bindFlags));
             }
 
             return methods.Where(method => method.IsScriptable());
@@ -289,9 +290,26 @@ namespace Microsoft.ClearScript.Util
             return properties.Where(property => property.IsScriptable());
         }
 
-        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags)
+        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, string name, BindingFlags bindFlags)
         {
-            return type.GetScriptableProperties(bindFlags).FirstOrDefault(property => property.GetScriptName() == name);
+            return type.GetScriptableProperties(bindFlags).Where(property => property.GetScriptName() == name);
+        }
+
+        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] bindArgs)
+        {
+            var properties = type.GetScriptableProperties(name, bindFlags).ToArray();
+
+            if (properties.Length < 1)
+            {
+                return null;
+            }
+
+            if (bindArgs.Length < 1)
+            {
+                return properties.FirstOrDefault(property => property.GetIndexParameters().Length < 1);
+            }
+
+            return Type.DefaultBinder.SelectProperty(bindFlags, properties, null, bindArgs.Select(GetPropertyIndexType).ToArray(), null);
         }
 
         public static object CreateInstance(this Type type, params object[] args)
@@ -466,6 +484,22 @@ namespace Microsoft.ClearScript.Util
             Debug.Assert(!string.IsNullOrWhiteSpace(name));
             var index = name.LastIndexOf('`');
             return (index >= 0) ? name.Substring(0, index) : name;
+        }
+
+        private static Type GetPropertyIndexType(object bindArg)
+        {
+            var hostTarget = bindArg as HostTarget;
+            if (hostTarget != null)
+            {
+                return hostTarget.Type;
+            }
+
+            if (bindArg != null)
+            {
+                return bindArg.GetType();
+            }
+
+            throw new InvalidOperationException("Property index value must not be null");
         }
     }
 }

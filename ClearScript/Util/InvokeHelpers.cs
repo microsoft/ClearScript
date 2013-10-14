@@ -61,6 +61,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Microsoft.ClearScript.Util
@@ -161,7 +163,7 @@ namespace Microsoft.ClearScript.Util
             return InvokeMethod(del, del.GetType().GetMethod("Invoke"), args);
         }
 
-        public static bool TryInvokeObject(object target, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public static bool TryInvokeObject(object target, BindingFlags invokeFlags, object[] args, object[] bindArgs, bool tryDynamic, out object result)
         {
             var hostTarget = target as HostTarget;
             if (hostTarget != null)
@@ -177,6 +179,7 @@ namespace Microsoft.ClearScript.Util
                 }
 
                 target = hostTarget.InvokeTarget;
+                tryDynamic = tryDynamic && typeof(IDynamicMetaObjectProvider).IsAssignableFrom(hostTarget.Type);
             }
 
             if ((target != null) && invokeFlags.HasFlag(BindingFlags.InvokeMethod))
@@ -191,6 +194,18 @@ namespace Microsoft.ClearScript.Util
                 {
                     result = InvokeDelegate(del, args);
                     return true;
+                }
+
+                if (tryDynamic)
+                {
+                    var dynamicMetaObjectProvider = target as IDynamicMetaObjectProvider;
+                    if (dynamicMetaObjectProvider != null)
+                    {
+                        if (dynamicMetaObjectProvider.GetMetaObject(Expression.Constant(target)).TryInvoke(args, out result))
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
 

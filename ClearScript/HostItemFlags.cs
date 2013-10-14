@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Dynamic;
 
 namespace Microsoft.ClearScript
 {
@@ -82,6 +83,12 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Specifies that the host resource's non-public members are to be exposed.
         /// </summary>
-        PrivateAccess = 0x00000002
+        PrivateAccess = 0x00000002,
+
+        /// <summary>
+        /// Specifies that the host resource's dynamic members are not to be exposed. This option
+        /// applies only to objects that implement <see cref="IDynamicMetaObjectProvider"/>.
+        /// </summary>
+        HideDynamicMembers = 0x00000004
     }
 }

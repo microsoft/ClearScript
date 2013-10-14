@@ -175,15 +175,18 @@ namespace Microsoft.ClearScript
 
         private MethodBindResult BindMethodInternal(string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
+            // create C# member invocation binder
             const CSharpBinderFlags binderFlags = CSharpBinderFlags.InvokeSimpleName | CSharpBinderFlags.ResultDiscarded;
             var binder = Binder.InvokeMember(binderFlags, name, typeArgs, accessContext ?? engine.AccessContext, CreateArgInfoEnum(bindArgs));
 
+            // perform default binding
             var binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, target, bindArgs);
             var rawResult = (new MethodBindingVisitor(target.InvokeTarget, name, binding.Expression)).Result;
 
             var result = MethodBindResult.Create(name, rawResult, target, args);
             if (!(result is MethodBindSuccess) && !(target is HostType) && target.Type.IsInterface)
             {
+                // binding through interface failed; try base interfaces
                 foreach (var interfaceType in target.Type.GetInterfaces())
                 {
                     var tempTarget = HostObject.Wrap(target.InvokeTarget, interfaceType);
@@ -195,6 +198,17 @@ namespace Microsoft.ClearScript
                     {
                         return tempResult;
                     }
+                }
+
+                // binding through base interfaces failed; try System.Object
+                var objectTarget = HostObject.Wrap(target.InvokeTarget, typeof(object));
+                binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, objectTarget, bindArgs);
+                rawResult = (new MethodBindingVisitor(target.InvokeTarget, name, binding.Expression)).Result;
+
+                var objectResult = MethodBindResult.Create(name, rawResult, target, args);
+                if (objectResult is MethodBindSuccess)
+                {
+                    return objectResult;
                 }
             }
 

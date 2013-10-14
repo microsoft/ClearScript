@@ -60,6 +60,8 @@
 //       
 
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -107,6 +109,26 @@ namespace Microsoft.ClearScript.Test
         public double BindTestMethod<T>(T arg)
         {
             return TestUtil.CalcTestValue(new Guid("06407870-c4dc-40f8-95ec-8d743c77c8b2"), this, typeof(T), arg);
+        }
+
+        private readonly Dictionary<string, object> dict = new Dictionary<string, object>();
+
+        public object this[string key]
+        {
+            get { return dict[key]; }
+            set { dict[key] = value; }
+        }
+
+        public object this[int index]
+        {
+            get { return dict[index.ToString(CultureInfo.InvariantCulture)]; }
+            set { dict[index.ToString(CultureInfo.InvariantCulture)] = value; }
+        }
+
+        public object this[object i1, object i2, object i3, object i4]
+        {
+            get { return dict[string.Join(":", i1, i2, i3, i4)]; }
+            set { dict[string.Join(":", i1, i2, i3, i4)] = value; }
         }
 
         #region Implementation of ITestInterface

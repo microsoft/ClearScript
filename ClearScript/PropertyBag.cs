@@ -73,12 +73,12 @@ namespace Microsoft.ClearScript
     /// Represents a scriptable collection of named properties.
     /// </summary>
     /// <remarks>
-    /// If an object implementing this interface is added to a script engine (see
+    /// If an object that implements this interface is added to a script engine (see
     /// <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>), script code
     /// will be able to access the properties stored in the collection as if they were members of
     /// the object itself, using the script language's native syntax for member access. No
     /// other members of the object will be accessible. This interface also allows objects to
-    /// implement "expando" functionality for script languages that support it.
+    /// implement dynamic properties for script languages that support them.
     /// </remarks>
     public interface IPropertyBag : IDictionary<string, object>
     {

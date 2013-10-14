@@ -67,14 +67,14 @@
 
 static void* PtrFromScriptHandle(Persistent<Script> hScript)
 {
-    return *hScript;
+    return hScript.ToPtr();
 }
 
 //-----------------------------------------------------------------------------
 
 static Persistent<Script> ScriptHandleFromPtr(void* pvScript)
 {
-    return Persistent<Script>(static_cast<Script*>(pvScript));
+    return Persistent<Script>::FromPtr(pvScript);
 }
 
 //-----------------------------------------------------------------------------
@@ -237,7 +237,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const wchar_t* pDocumentName, const wchar
     BEGIN_ISOLATE_SCOPE
 
         SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, nullptr, false, true, 0));
-        return  spContextImpl->Compile(pDocumentName, pCode);
+        return spContextImpl->Compile(pDocumentName, pCode);
 
     END_ISOLATE_SCOPE
 }

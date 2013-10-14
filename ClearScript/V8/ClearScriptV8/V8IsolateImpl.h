@@ -142,22 +142,33 @@ public:
     }
 
     template <typename T>
+    Local<T> CreateLocal(Persistent<T> hTarget)
+    {
+        return hTarget.CreateLocal(m_pIsolate);
+    }
+
+    template <typename T>
     Persistent<T> CreatePersistent(Handle<T> hTarget)
     {
         return Persistent<T>::New(m_pIsolate, hTarget);
     }
 
-    template <typename T, typename P>
-    Persistent<T> MakeWeak(Persistent<T> hTarget, P* pvArg, typename WeakReferenceCallbacks<T, P>::Revivable pCallback)
+    template <typename T>
+    Persistent<T> CreatePersistent(Persistent<T> hTarget)
     {
-        hTarget.MakeWeak(m_pIsolate, pvArg, pCallback);
-        return hTarget;
+        return Persistent<T>::New(m_pIsolate, hTarget);
+    }
+
+    template <typename T, typename TArg>
+    Persistent<T> MakeWeak(Persistent<T> hTarget, TArg* pArg, void (*pCallback)(Isolate*, Persistent<T>*, TArg*))
+    {
+        return hTarget.MakeWeak(m_pIsolate, pArg, pCallback);
     }
 
     template <typename T>
     void Dispose(Persistent<T> hTarget)
     {
-        hTarget.Dispose(m_pIsolate);
+        hTarget.Dispose();
     }
 
     void TerminateExecution()

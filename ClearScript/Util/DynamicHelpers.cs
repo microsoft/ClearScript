@@ -217,115 +217,6 @@ namespace Microsoft.ClearScript.Util
             return TryDynamicOperation(() => target.DeleteIndex(indices), out result);
         }
 
-        public static object CreateInstance(this DynamicMetaObject target, object[] args)
-        {
-            var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
-            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
-            var bindResult = target.BindCreateInstance(new DynamicCreateInstanceBinder(paramNames), parameters);
-            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
-            return Invoke(block, paramExprs, args);
-        }
-
-        public static object Invoke(this DynamicMetaObject target, object[] args)
-        {
-            var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
-            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
-            var bindResult = target.BindInvoke(new DynamicInvokeBinder(paramNames), parameters);
-            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
-            return Invoke(block, paramExprs, args);
-        }
-
-        public static object InvokeMember(this DynamicMetaObject target, string name, BindingFlags invokeFlags, object[] args)
-        {
-            var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
-            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
-            var bindResult = target.BindInvokeMember(new DynamicInvokeMemberBinder(name, invokeFlags, paramNames), parameters);
-            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
-            return Invoke(block, paramExprs, args);
-        }
-
-        public static object GetMember(this DynamicMetaObject target, string name)
-        {
-            var bindResult = target.BindGetMember(new DynamicGetMemberBinder(name));
-            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
-            return Invoke(block);
-        }
-
-        public static object SetMember(this DynamicMetaObject target, string name, object value)
-        {
-            var bindResult = target.BindSetMember(new DynamicSetMemberBinder(name), CreateDynamicArg(value));
-            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
-            return Invoke(block);
-        }
-
-        public static bool DeleteMember(this DynamicMetaObject target, string name)
-        {
-            var bindResult = target.BindDeleteMember(new DynamicDeleteMemberBinder(name));
-            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
-
-            try
-            {
-                Invoke(block);
-                return true;
-            }
-            catch (TargetInvocationException exception)
-            {
-                if (exception.InnerException is InvalidDynamicOperationException)
-                {
-                    return false;
-                }
-
-                throw;
-            }
-        }
-
-        public static object GetIndex(this DynamicMetaObject target, object[] indices)
-        {
-            var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
-            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
-            var bindResult = target.BindGetIndex(new DynamicGetIndexBinder(paramNames), parameters);
-            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
-            return Invoke(block, paramExprs, indices);
-        }
-
-        public static object SetIndex(this DynamicMetaObject target, object[] indices, object value)
-        {
-            var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
-            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
-            var bindResult = target.BindSetIndex(new DynamicSetIndexBinder(paramNames), parameters, CreateDynamicArg(value));
-            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
-            return Invoke(block, paramExprs, indices);
-        }
-
-        public static bool DeleteIndex(this DynamicMetaObject target, object[] indices)
-        {
-            var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
-            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
-            var bindResult = target.BindDeleteIndex(new DynamicDeleteIndexBinder(paramNames), parameters);
-            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
-
-            try
-            {
-                Invoke(block, paramExprs, indices);
-                return true;
-            }
-            catch (TargetInvocationException exception)
-            {
-                if (exception.InnerException is InvalidDynamicOperationException)
-                {
-                    return false;
-                }
-
-                throw;
-            }
-        }
-
         #endregion
 
         #region internal members
@@ -419,27 +310,136 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
+        private static object CreateInstance(this DynamicMetaObject target, object[] args)
+        {
+            var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindCreateInstance(new DynamicCreateInstanceBinder(paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, args);
+        }
+
+        private static object Invoke(this DynamicMetaObject target, object[] args)
+        {
+            var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindInvoke(new DynamicInvokeBinder(paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, args);
+        }
+
+        private static object InvokeMember(this DynamicMetaObject target, string name, BindingFlags invokeFlags, object[] args)
+        {
+            var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindInvokeMember(new DynamicInvokeMemberBinder(name, invokeFlags, paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, args);
+        }
+
+        private static object GetMember(this DynamicMetaObject target, string name)
+        {
+            var bindResult = target.BindGetMember(new DynamicGetMemberBinder(name));
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block);
+        }
+
+        private static object SetMember(this DynamicMetaObject target, string name, object value)
+        {
+            var bindResult = target.BindSetMember(new DynamicSetMemberBinder(name), CreateDynamicArg(value));
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block);
+        }
+
+        private static bool DeleteMember(this DynamicMetaObject target, string name)
+        {
+            var bindResult = target.BindDeleteMember(new DynamicDeleteMemberBinder(name));
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+
+            try
+            {
+                Invoke(block);
+                return true;
+            }
+            catch (TargetInvocationException exception)
+            {
+                if (exception.InnerException is InvalidDynamicOperationException)
+                {
+                    return false;
+                }
+
+                throw;
+            }
+        }
+
+        private static object GetIndex(this DynamicMetaObject target, object[] indices)
+        {
+            var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindGetIndex(new DynamicGetIndexBinder(paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, indices);
+        }
+
+        private static object SetIndex(this DynamicMetaObject target, object[] indices, object value)
+        {
+            var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindSetIndex(new DynamicSetIndexBinder(paramNames), parameters, CreateDynamicArg(value));
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block, paramExprs, indices);
+        }
+
+        private static bool DeleteIndex(this DynamicMetaObject target, object[] indices)
+        {
+            var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
+            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
+            var bindResult = target.BindDeleteIndex(new DynamicDeleteIndexBinder(paramNames), parameters);
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+
+            try
+            {
+                Invoke(block, paramExprs, indices);
+                return true;
+            }
+            catch (TargetInvocationException exception)
+            {
+                if (exception.InnerException is InvalidDynamicOperationException)
+                {
+                    return false;
+                }
+
+                throw;
+            }
+        }
+
         private static DynamicMetaObject CreateDynamicTarget(object target)
         {
             var byRefArg = target as IByRefArg;
             if (byRefArg != null)
             {
-                return DynamicMetaObject.Create(byRefArg.Value, Expression.Parameter(byRefArg.Type.MakeByRefType()));
+                return CreateDynamicMetaObject(byRefArg.Value, Expression.Parameter(byRefArg.Type.MakeByRefType()));
             }
 
             var hostTarget = target as HostTarget;
             if (hostTarget == null)
             {
-                return DynamicMetaObject.Create(target, Expression.Constant(target));
+                return CreateDynamicMetaObject(target, Expression.Constant(target));
             }
 
             target = hostTarget.DynamicInvokeTarget;
             if (hostTarget is HostType)
             {
-                return DynamicMetaObject.Create(target, Expression.Constant(target));
+                return CreateDynamicMetaObject(target, Expression.Constant(target));
             }
 
-            return DynamicMetaObject.Create(target, Expression.Constant(target, hostTarget.Type));
+            return CreateDynamicMetaObject(target, Expression.Constant(target, hostTarget.Type));
         }
 
         private static DynamicMetaObject CreateDynamicArg(object arg)
@@ -447,27 +447,32 @@ namespace Microsoft.ClearScript.Util
             var byRefArg = arg as IByRefArg;
             if (byRefArg != null)
             {
-                return DynamicMetaObject.Create(byRefArg.Value, Expression.Parameter(byRefArg.Type.MakeByRefType()));
+                return CreateDynamicMetaObject(byRefArg.Value, Expression.Parameter(byRefArg.Type.MakeByRefType()));
             }
 
             if (arg is HostType)
             {
-                return DynamicMetaObject.Create(arg, Expression.Constant(arg));
+                return CreateDynamicMetaObject(arg, Expression.Constant(arg));
             }
 
             var hostTarget = arg as HostTarget;
             if (hostTarget == null)
             {
-                return DynamicMetaObject.Create(arg, Expression.Constant(arg));
+                return CreateDynamicMetaObject(arg, Expression.Constant(arg));
             }
 
             arg = hostTarget.Target;
-            return DynamicMetaObject.Create(arg, Expression.Constant(arg, hostTarget.Type));
+            return CreateDynamicMetaObject(arg, Expression.Constant(arg, hostTarget.Type));
         }
 
         private static DynamicMetaObject[] CreateDynamicArgs(object[] args)
         {
             return args.Select(CreateDynamicArg).ToArray();
+        }
+
+        private static DynamicMetaObject CreateDynamicMetaObject(object value, Expression expr)
+        {
+            return new DynamicMetaObject(expr, BindingRestrictions.Empty, value);
         }
 
         private static Expression CreateThrowExpr<T>(string message) where T : Exception
@@ -633,7 +638,7 @@ namespace Microsoft.ClearScript.Util
             private static object InvokeMemberValue(object target, BindingFlags invokeFlags, object[] args)
             {
                 object result;
-                if (InvokeHelpers.TryInvokeObject(target, BindingFlags.InvokeMethod, args, args, out result))
+                if (InvokeHelpers.TryInvokeObject(target, BindingFlags.InvokeMethod, args, args, true, out result))
                 {
                     return result;
                 }

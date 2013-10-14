@@ -121,7 +121,7 @@ private:
 
         ~Scope()
         {
-            if (!uncaught_exception() &&m_pContextImpl->m_hContext->HasOutOfMemoryException())
+            if (!uncaught_exception() && m_pContextImpl->m_hContext->HasOutOfMemoryException())
             {
                 m_pContextImpl->m_spIsolateImpl->ThrowOutOfMemoryException();
             }
@@ -175,15 +175,27 @@ private:
     }
 
     template <typename T>
+    Local<T> CreateLocal(Persistent<T> hTarget)
+    {
+        return m_spIsolateImpl->CreateLocal(hTarget);
+    }
+
+    template <typename T>
     Persistent<T> CreatePersistent(Handle<T> hTarget)
     {
         return m_spIsolateImpl->CreatePersistent(hTarget);
     }
 
-    template <typename T, typename P>
-    Persistent<T> MakeWeak(Persistent<T> hTarget, P* pvArg, typename WeakReferenceCallbacks<T, P>::Revivable pCallback)
+    template <typename T>
+    Persistent<T> CreatePersistent(Persistent<T> hTarget)
     {
-        return m_spIsolateImpl->MakeWeak(hTarget, pvArg, pCallback);
+        return m_spIsolateImpl->CreatePersistent(hTarget);
+    }
+
+    template <typename T, typename TArg>
+    Persistent<T> MakeWeak(Persistent<T> hTarget, TArg* pArg, void (*pCallback)(Isolate*, Persistent<T>*, TArg*))
+    {
+        return m_spIsolateImpl->MakeWeak(hTarget, pArg, pCallback);
     }
 
     template <typename T>

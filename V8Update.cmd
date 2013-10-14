@@ -5,8 +5,8 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedRevision=16272
-set testedVersion=3.21.2
+set testedRevision=17179
+set testedVersion=3.22.11
 
 :ProcessArgs
 
@@ -128,7 +128,6 @@ cd v8
 echo Patching V8 ...
 svn patch --ignore-whitespace ..\..\V8Patch.txt >patchV8.log
 if errorlevel 1 goto Error2
-svn diff -x --ignore-space-change -x --ignore-eol-style >V8Patch.txt
 :PatchV8Done
 
 :DownloadGYP
@@ -163,6 +162,14 @@ set GYP_MSVS_VERSION=2012
 set PYTHONHOME=
 set PYTHONPATH=
 
+:CreatePatchFile
+echo Creating patch file ...
+cd v8
+svn diff -x --ignore-space-change -x --ignore-eol-style >V8Patch.txt
+if errorlevel 1 goto Error2
+cd ..
+:CreatePatchFileDone
+
 :Copy32Bit
 echo Building 32-bit V8 ...
 if exist v8-ia32\ goto Copy32BitDone
@@ -174,7 +181,7 @@ if errorlevel 1 goto Error1
 
 :Build32Bit
 cd v8-ia32
-third_party\python_26\python build\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false >gyp.log
+third_party\python_26\python build\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error2
 msbuild /p:Configuration=%mode% /p:Platform=Win32 /t:v8 tools\gyp\v8.sln >build.log
 if errorlevel 1 goto Error2
@@ -192,7 +199,7 @@ if errorlevel 1 goto Error1
 
 :Build64Bit
 cd v8-x64
-third_party\python_26\python build\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false >gyp.log
+third_party\python_26\python build\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error2
 msbuild /p:Configuration=%mode% /p:Platform=x64 /t:v8 tools\gyp\v8.sln >build.log
 if errorlevel 1 goto Error2
@@ -251,11 +258,11 @@ copy build\v8\include\*.* include\ >nul
 if errorlevel 1 goto Error
 :ImportHeadersDone
 
-:UpdatePatchFile
-echo Updating patch file ...
+:ImportPatchFile
+echo Importing patch file ...
 copy build\v8\V8Patch.txt .\ >nul
 if errorlevel 1 goto Error
-:UpdatePatchFileDone
+:ImportPatchFileDone
 
 :ImportDone
 

@@ -67,28 +67,28 @@
 
 static void* PtrFromObjectHandle(Persistent<Object> hObject)
 {
-    return *hObject;
+    return hObject.ToPtr();
 }
 
 //-----------------------------------------------------------------------------
 
 static Persistent<Object> ObjectHandleFromPtr(void* pvObject)
 {
-    return Persistent<Object>(static_cast<Object*>(pvObject));
+    return Persistent<Object>::FromPtr(pvObject);
 }
 
 //-----------------------------------------------------------------------------
 
 static void* PtrFromScriptHandle(Persistent<Script> hScript)
 {
-    return *hScript;
+    return hScript.ToPtr();
 }
 
 //-----------------------------------------------------------------------------
 
 static Persistent<Script> ScriptHandleFromPtr(void* pvScript)
 {
-    return Persistent<Script>(static_cast<Script*>(pvScript));
+    return Persistent<Script>::FromPtr(pvScript);
 }
 
 //-----------------------------------------------------------------------------
@@ -574,6 +574,12 @@ V8ContextImpl::~V8ContextImpl()
 
         Dispose(m_hContext);
         V8::ContextDisposedNotification();
+
+        // exit handle scope to maximize GC benefit (see below)
+
+    END_ISOLATE_SCOPE
+
+    BEGIN_ISOLATE_SCOPE
 
         // The context is gone, but it may have contained host object holders
         // that are now awaiting collection. Forcing collection will release
@@ -1204,12 +1210,13 @@ void V8ContextImpl::InvokeHostObject(const FunctionCallbackInfo<Value>& info)
 
 void V8ContextImpl::DisposeWeakHandle(Isolate* pIsolate, Persistent<Object>* phObject, void* pvV8ObjectCache)
 {
+    IGNORE_UNUSED(pIsolate);
     auto pHolder = ::GetHostObjectHolder(*phObject);
     ASSERT_EVAL(HostObjectHelpers::RemoveV8ObjectCacheEntry(pvV8ObjectCache, pHolder->GetObject()));
 
     delete pHolder;
     HostObjectHelpers::Release(pvV8ObjectCache);
-    phObject->Dispose(pIsolate);
+    phObject->Dispose();
 }
 
 //-----------------------------------------------------------------------------

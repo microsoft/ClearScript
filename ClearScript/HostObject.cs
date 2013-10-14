@@ -175,7 +175,7 @@ namespace Microsoft.ClearScript
 
             public object GetCanonicalRef(object obj)
             {
-                if (obj.GetType().IsEnum)
+                if (obj is Enum)
                 {
                     lock (dataLock)
                     {

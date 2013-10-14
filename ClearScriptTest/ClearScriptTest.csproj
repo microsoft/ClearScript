@@ -56,6 +56,7 @@
     <Compile Include="BugFixTest.cs" />
     <Compile Include="CrossEngineTest.cs" />
     <Compile Include="DynamicHostItemTest.cs" />
+    <Compile Include="DynamicTestObject.cs" />
     <Compile Include="ExplicitBaseInterfaceMemberAccessTest.cs" />
     <Compile Include="BaseInterfaceMemberAccessTest.cs" />
     <Compile Include="BaseMemberAccessTest.cs" />

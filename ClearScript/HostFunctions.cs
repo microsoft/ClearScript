@@ -61,8 +61,10 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Dynamic;
 using System.Globalization;
 using System.Linq;
+using System.Linq.Expressions;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
@@ -100,9 +102,9 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <returns>A new empty host object.</returns>
         /// <remarks>
-        /// This function is provided for script languages that support "expando" functionality.
-        /// It creates an object that supports dynamic property addition and removal. The host
-        /// can manipulate it via the <see cref="IPropertyBag"/> interface.
+        /// This function is provided for script languages that do not support external
+        /// instantiation. It creates an object that supports dynamic property addition and
+        /// removal. The host can manipulate it via the <see cref="IPropertyBag"/> interface.
         /// </remarks>
         /// <example>
         /// The following code creates an empty host object and adds several properties to it.
@@ -127,8 +129,9 @@ namespace Microsoft.ClearScript
         /// <param name="args">Optional constructor arguments.</param>
         /// <returns>A new host object of the specified type.</returns>
         /// <remarks>
-        /// For information about the mapping between host members and script-callable properties
-        /// and methods, see
+        /// This function is provided for script languages that do not support external
+        /// instantiation. For information about the mapping between host members and script-
+        /// callable properties and methods, see
         /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
         /// </remarks>
         /// <example>
@@ -149,6 +152,29 @@ namespace Microsoft.ClearScript
         public T newObj<T>(params object[] args)
         {
             return (T)typeof(T).CreateInstance(args);
+        }
+
+        /// <summary>
+        /// Performs dynamic instantiation.
+        /// </summary>
+        /// <param name="target">The dynamic host object that provides the instantiation operation to perform.</param>
+        /// <param name="args">Optional instantiation arguments.</param>
+        /// <returns>The result of the operation, which is usually a new dynamic host object.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support external
+        /// instantiation.
+        /// </remarks>
+        public object newObj(IDynamicMetaObjectProvider target, params object[] args)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+
+            object result;
+            if (target.GetMetaObject(Expression.Constant(target)).TryCreateInstance(args, out result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException("Invalid dynamic instantiation");
         }
 
         /// <summary>
@@ -998,6 +1024,209 @@ namespace Microsoft.ClearScript
         public object toDecimal(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToDecimal(value));
+        }
+
+        /// <summary>
+        /// Gets the value of a property in a dynamic host object that implements <see cref="IPropertyBag"/>.
+        /// </summary>
+        /// <param name="target">The dynamic host object that contains the property to get.</param>
+        /// <param name="name">The name of the property to get.</param>
+        /// <returns>The value of the specified property.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support dynamic properties.
+        /// </remarks>
+        public object getProperty(IPropertyBag target, string name)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+
+            object result;
+            if (target.TryGetValue(name, out result))
+            {
+                return result;
+            }
+
+            return Nonexistent.Value;
+        }
+
+        /// <summary>
+        /// Sets a property value in a dynamic host object that implements <see cref="IPropertyBag"/>.
+        /// </summary>
+        /// <param name="target">The dynamic host object that contains the property to set.</param>
+        /// <param name="name">The name of the property to set.</param>
+        /// <param name="value">The new value of the specified property.</param>
+        /// <returns>The result of the operation, which is usually the value assigned to the specified property.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support dynamic properties.
+        /// </remarks>
+        public object setProperty(IPropertyBag target, string name, object value)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+            return target[name] = value;
+        }
+
+        /// <summary>
+        /// Removes a property from a dynamic host object that implements <see cref="IPropertyBag"/>.
+        /// </summary>
+        /// <param name="target">The dynamic host object that contains the property to remove.</param>
+        /// <param name="name">The name of the property to remove.</param>
+        /// <returns><c>True</c> if the property was found and removed, <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support dynamic properties.
+        /// </remarks>
+        public bool removeProperty(IPropertyBag target, string name)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+            return target.Remove(name);
+        }
+
+        /// <summary>
+        /// Gets the value of a property in a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// </summary>
+        /// <param name="target">The dynamic host object that contains the property to get.</param>
+        /// <param name="name">The name of the property to get.</param>
+        /// <returns>The value of the specified property.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support dynamic properties.
+        /// </remarks>
+        public object getProperty(IDynamicMetaObjectProvider target, string name)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+
+            object result;
+            if (target.GetMetaObject(Expression.Constant(target)).TryGetMember(name, out result))
+            {
+                return result;
+            }
+
+            return Nonexistent.Value;
+        }
+
+        /// <summary>
+        /// Sets a property value in a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// </summary>
+        /// <param name="target">The dynamic host object that contains the property to set.</param>
+        /// <param name="name">The name of the property to set.</param>
+        /// <param name="value">The new value of the specified property.</param>
+        /// <returns>The result of the operation, which is usually the value assigned to the specified property.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support dynamic properties.
+        /// </remarks>
+        public object setProperty(IDynamicMetaObjectProvider target, string name, object value)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+
+            object result;
+            if (target.GetMetaObject(Expression.Constant(target)).TrySetMember(name, value, out result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException("Invalid dynamic property assignment");
+        }
+
+        /// <summary>
+        /// Removes a property from a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// </summary>
+        /// <param name="target">The dynamic host object that contains the property to remove.</param>
+        /// <param name="name">The name of the property to remove.</param>
+        /// <returns><c>True</c> if the property was found and removed, <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support dynamic properties.
+        /// </remarks>
+        public bool removeProperty(IDynamicMetaObjectProvider target, string name)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+
+            bool result;
+            if (target.GetMetaObject(Expression.Constant(target)).TryDeleteMember(name, out result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException("Invalid dynamic property deletion");
+        }
+
+        /// <summary>
+        /// Gets the value of an element in a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// </summary>
+        /// <param name="target">The dynamic host object that contains the element to get.</param>
+        /// <param name="indices">One or more indices that identify the element to get.</param>
+        /// <returns>The value of the specified element.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support general indexing.
+        /// </remarks>
+        public object getElement(IDynamicMetaObjectProvider target, params object[] indices)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+
+            object result;
+            if (target.GetMetaObject(Expression.Constant(target)).TryGetIndex(indices, out result))
+            {
+                return result;
+            }
+
+            return Nonexistent.Value;
+
+        }
+
+        /// <summary>
+        /// Sets an element value in a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// </summary>
+        /// <param name="target">The dynamic host object that contains the element to set.</param>
+        /// <param name="value">The new value of the element.</param>
+        /// <param name="indices">One or more indices that identify the element to set.</param>
+        /// <returns>The result of the operation, which is usually the value assigned to the specified element.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support general indexing.
+        /// </remarks>
+        public object setElement(IDynamicMetaObjectProvider target, object value, params object[] indices)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+
+            object result;
+            if (target.GetMetaObject(Expression.Constant(target)).TrySetIndex(indices, value, out result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException("Invalid dynamic element assignment");
+        }
+
+        /// <summary>
+        /// Removes an element from a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// </summary>
+        /// <param name="target">The dynamic host object that contains the element to remove.</param>
+        /// <param name="indices">One or more indices that identify the element to remove.</param>
+        /// <returns><c>True</c> if the element was found and removed, <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support general indexing.
+        /// </remarks>
+        public bool removeElement(IDynamicMetaObjectProvider target, params object[] indices)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, "target");
+
+            bool result;
+            if (target.GetMetaObject(Expression.Constant(target)).TryDeleteIndex(indices, out result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException("Invalid dynamic element deletion");
+        }
+
+        /// <summary>
+        /// Casts a dynamic host object to its static type.
+        /// </summary>
+        /// <param name="value">The object to cast to its static type.</param>
+        /// <returns>The specified object in its static type form, stripped of its dynamic members.</returns>
+        /// <remarks>
+        /// A dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/> may have
+        /// dynamic members that override members of its static type. This function can be used to
+        /// gain access to type members overridden in this manner.
+        /// </remarks>
+        public object toStaticType(IDynamicMetaObjectProvider value)
+        {
+            return HostItem.Wrap(GetEngine(), value, HostItemFlags.HideDynamicMembers);
         }
 
         // ReSharper restore InconsistentNaming

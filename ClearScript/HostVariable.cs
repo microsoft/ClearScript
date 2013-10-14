@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Dynamic;
 using System.Reflection;
 using Microsoft.ClearScript.Util;
 
@@ -183,7 +184,7 @@ namespace Microsoft.ClearScript
             {
                 if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
                 {
-                    if (InvokeHelpers.TryInvokeObject(value, invokeFlags, args, bindArgs, out result))
+                    if (InvokeHelpers.TryInvokeObject(value, invokeFlags, args, bindArgs, typeof(IDynamicMetaObjectProvider).IsAssignableFrom(typeof(T)), out result))
                     {
                         return true;
                     }

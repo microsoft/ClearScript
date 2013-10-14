@@ -67,9 +67,297 @@
 
 #pragma warning(push, 3)
 
-#define V8_USE_UNSAFE_HANDLES
 #include "v8.h"
 #include "v8-debug.h"
 using namespace v8;
 
 #pragma warning(pop)
+
+//-----------------------------------------------------------------------------
+// V8FastPersistent - a (nearly) drop-in replacement for classic v8::Persistent
+//
+// WARNING: This class breaks encapsulation in order to avoid heap allocation.
+// It makes assumptions about v8::Persistent implementation and memory layout.
+//-----------------------------------------------------------------------------
+
+template <typename T>
+class V8FastPersistent
+{
+    template <typename TOther>
+    friend class V8FastPersistent;
+
+public:
+
+    V8FastPersistent<T>():
+        m_pValue(nullptr)
+    {
+    }
+
+    template <typename TOther>
+    static V8FastPersistent<T> New(Isolate* pIsolate, const Handle<TOther>& hValue)
+    {
+        Persistent<T> hTemp(pIsolate, hValue);
+        return V8FastPersistent<T>(GetPtrAndClear(hTemp));
+    }
+
+    template <typename TOther>
+    static V8FastPersistent<T> New(Isolate* pIsolate, const V8FastPersistent<TOther>& hValue)
+    {
+        Persistent<T> hTemp(pIsolate, hValue.AsPersistent());
+        return V8FastPersistent<T>(GetPtrAndClear(hTemp));
+    }
+
+    bool IsEmpty() const
+    {
+        return AsPersistent().IsEmpty();
+    }
+
+    void* ToPtr() const
+    {
+        return m_pValue;
+    }
+
+    static V8FastPersistent<T> FromPtr(void* pvValue)
+    {
+        return V8FastPersistent<T>(static_cast<T*>(pvValue));
+    }
+
+    Handle<T> operator->() const
+    {
+        return CreateHandle();
+    }
+
+    template <typename TOther>
+    operator Handle<TOther>() const
+    {
+        return CreateHandle();
+    }
+
+    Local<T> CreateLocal(Isolate* pIsolate) const
+    {
+        return Local<T>::New(pIsolate, AsPersistent());
+    }
+
+    template <typename TArg>
+    V8FastPersistent<T> MakeWeak(Isolate* pIsolate, TArg* pArg, void (*pCallback)(Isolate*, V8FastPersistent<T>*, TArg*))
+    {
+        IGNORE_UNUSED(pIsolate);
+        AsPersistent().SetWeak(new WeakCallbackContext<TArg>(m_pValue, pArg, pCallback), WeakCallback);
+        return *this;
+    }
+
+    void Dispose()
+    {
+        AsPersistent().Dispose();
+    }
+
+private:
+
+    explicit V8FastPersistent<T>(T* pValue):
+        m_pValue(pValue)
+    {
+    }
+
+    Handle<T> CreateHandle() const
+    {
+        return Handle<T>::New(Isolate::GetCurrent(), AsPersistent());
+    }
+
+    const Persistent<T>& AsPersistent() const
+    {
+        return *(reinterpret_cast<const Persistent<T>*>(&m_pValue));
+    }
+
+    Persistent<T>& AsPersistent()
+    {
+        return *(reinterpret_cast<Persistent<T>*>(&m_pValue));
+    }
+
+    static T* GetPtrAndClear(Persistent<T>& hValue)
+    {
+        auto ppValue = reinterpret_cast<T**>(&hValue);
+        auto pValue = *ppValue;
+        *ppValue = nullptr;
+        _ASSERTE(hValue.IsEmpty());
+        return pValue;
+    }
+
+    template <typename TArg>
+    class WeakCallbackContext
+    {
+    public:
+
+        WeakCallbackContext(T* pValue, TArg* pArg, void (*pCallback)(Isolate*, V8FastPersistent<T>*, TArg*)):
+            m_pValue(pValue),
+            m_pArg(pArg),
+            m_pCallback(pCallback)
+        {
+        }
+
+        void InvokeCallback(Isolate* pIsolate) const
+        {
+            V8FastPersistent<T> hTarget(m_pValue);
+            m_pCallback(pIsolate, &hTarget, m_pArg);
+        }
+
+    private:
+
+        T* m_pValue;
+        TArg* m_pArg;
+        void (*m_pCallback)(Isolate*, V8FastPersistent<T>*, TArg*);
+    };
+
+    template <typename TArg>
+    static void WeakCallback(const WeakCallbackData<T, TArg>& data)
+    {
+        auto pContext = data.GetParameter();
+        _ASSERTE(pContext);
+        pContext->InvokeCallback(data.GetIsolate());
+        delete pContext;
+    }
+
+    T* m_pValue;
+};
+
+//-----------------------------------------------------------------------------
+// V8SafePersistent - a (nearly) drop-in replacement for classic v8::Persistent
+//-----------------------------------------------------------------------------
+
+template <typename T>
+class V8SafePersistent
+{
+    template <typename TOther>
+    friend class V8SafePersistent;
+
+public:
+
+    V8SafePersistent<T>():
+        m_pImpl(nullptr)
+    {
+    }
+
+    template <typename TOther>
+    static V8SafePersistent<T> New(Isolate* pIsolate, const Handle<TOther>& hValue)
+    {
+        return V8SafePersistent<T>(new Persistent<T>(pIsolate, hValue));
+    }
+
+    template <typename TOther>
+    static V8SafePersistent<T> New(Isolate* pIsolate, const V8SafePersistent<TOther>& hValue)
+    {
+        return V8SafePersistent<T>(new Persistent<T>(pIsolate, hValue.GetImpl()));
+    }
+
+    bool IsEmpty() const
+    {
+        return (m_pImpl == nullptr) || m_pImpl->IsEmpty();
+    }
+
+    void* ToPtr() const
+    {
+        return m_pImpl;
+    }
+
+    static V8SafePersistent<T> FromPtr(void* pvImpl)
+    {
+        return V8SafePersistent<T>(static_cast<Persistent<T>*>(pvImpl));
+    }
+
+    Handle<T> operator->() const
+    {
+        return CreateHandle();
+    }
+
+    template <typename TOther>
+    operator Handle<TOther>() const
+    {
+        return CreateHandle();
+    }
+
+    Local<T> CreateLocal(Isolate* pIsolate) const
+    {
+        return Local<T>::New(pIsolate, GetImpl());
+    }
+
+    template <typename TArg>
+    V8SafePersistent<T> MakeWeak(Isolate* pIsolate, TArg* pArg, void (*pCallback)(Isolate*, V8SafePersistent<T>*, TArg*))
+    {
+        IGNORE_UNUSED(pIsolate);
+        _ASSERTE(m_pImpl != nullptr);
+        m_pImpl->SetWeak(new WeakCallbackContext<TArg>(m_pImpl, pArg, pCallback), WeakCallback);
+        return *this;
+    }
+
+    void Dispose()
+    {
+        if (m_pImpl != nullptr)
+        {
+            m_pImpl->Dispose();
+            delete m_pImpl;
+            m_pImpl = nullptr;
+        }
+    }
+
+private:
+
+    explicit V8SafePersistent<T>(Persistent<T>* pImpl):
+        m_pImpl(pImpl)
+    {
+    }
+
+    Handle<T> CreateHandle() const
+    {
+        return Handle<T>::New(Isolate::GetCurrent(), GetImpl());
+    }
+
+    const Persistent<T>& GetImpl() const
+    {
+        return (m_pImpl != nullptr) ? *m_pImpl : ms_EmptyImpl;
+    }
+
+    template <typename TArg>
+    class WeakCallbackContext
+    {
+    public:
+
+        WeakCallbackContext(Persistent<T>* pImpl, TArg* pArg, void (*pCallback)(Isolate*, V8SafePersistent<T>*, TArg*)):
+            m_pImpl(pImpl),
+            m_pArg(pArg),
+            m_pCallback(pCallback)
+        {
+        }
+
+        void InvokeCallback(Isolate* pIsolate) const
+        {
+            V8SafePersistent<T> hTarget(m_pImpl);
+            m_pCallback(pIsolate, &hTarget, m_pArg);
+        }
+
+    private:
+
+        Persistent<T>* m_pImpl;
+        TArg* m_pArg;
+        void (*m_pCallback)(Isolate*, V8SafePersistent<T>*, TArg*);
+    };
+
+    template <typename TArg>
+    static void WeakCallback(const WeakCallbackData<T, TArg>& data)
+    {
+        auto pContext = data.GetParameter();
+        _ASSERTE(pContext);
+        pContext->InvokeCallback(data.GetIsolate());
+        delete pContext;
+    }
+
+    Persistent<T>* m_pImpl;
+    static const Persistent<T> ms_EmptyImpl;
+};
+
+template <typename T>
+const Persistent<T> V8SafePersistent<T>::ms_EmptyImpl;
+
+//-----------------------------------------------------------------------------
+// define classic v8::Persistent replacement
+//-----------------------------------------------------------------------------
+
+#define Persistent V8FastPersistent
