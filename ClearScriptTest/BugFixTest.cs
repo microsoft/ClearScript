@@ -62,6 +62,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -263,6 +264,33 @@ namespace Microsoft.ClearScript.Test
             var func = (Func<string, int>)engine.Evaluate("new Func(StringT, IntT, function (s) { return s.length; })");
             const string testString = "floccinaucinihilipilification";
             Assert.AreEqual(testString.Length, func(testString));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_HostMethodAsArgument()
+        {
+            var testObject = new TestObject();
+            engine.Script.testObject = testObject;
+            engine.Script.expando = new ExpandoObject();
+            engine.AddHostType("DateTime", typeof(DateTime));
+            engine.Execute("expando.method = testObject.Method");
+            Assert.AreEqual(testObject.Method("foo", 123), engine.Evaluate("expando.method('foo', 123)"));
+            Assert.AreEqual(testObject.Method<DateTime>(456), engine.Evaluate("expando.method(DateTime, 456)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_HostIndexedPropertyAsArgument()
+        {
+            var testObject = new TestObject();
+            engine.Script.testObject = testObject;
+            engine.Script.expando = new ExpandoObject();
+            engine.Execute("expando.property = testObject.Item");
+            Assert.AreEqual("foo", engine.Evaluate("expando.property.set(123, 'foo')"));
+            Assert.AreEqual("foo", engine.Evaluate("expando.property.get(123)"));
+            Assert.AreEqual("foo", engine.Evaluate("expando.property(123)"));
+            Assert.AreEqual(456, engine.Evaluate("expando.property.set('bar', 456)"));
+            Assert.AreEqual(456, engine.Evaluate("expando.property.get('bar')"));
+            Assert.AreEqual(456, engine.Evaluate("expando.property('bar')"));
         }
 
         // ReSharper restore InconsistentNaming

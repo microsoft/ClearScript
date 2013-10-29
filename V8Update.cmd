@@ -5,8 +5,12 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedRevision=17179
-set testedVersion=3.22.11
+set testedRevision=17421
+set testedVersion=3.22.23
+
+set gyprev=1685
+set pythonrev=89111
+set cygwinrev=66844
 
 :ProcessArgs
 
@@ -87,14 +91,14 @@ if "%v8rev%"=="" goto UseTestedRev
 if /i "%v8rev%"=="latest" goto UseLatestRev
 if /i "%v8rev%"=="tested" goto UseTestedRev
 if /i "%v8rev%"=="%testedRevision%" goto UseTestedRev
-echo V8 revision: %v8rev%
+echo V8 revision: r%v8rev%
 echo *** WARNING: THIS V8 REVISION MAY NOT BE COMPATIBLE WITH CLEARSCRIPT ***
 choice /m Continue
 if errorlevel 2 goto Exit
 goto ResolveRevDone
 :UseTestedRev
 set v8rev=%testedRevision%
-echo V8 revision: Tested (%v8rev%, Version %testedVersion%)
+echo V8 revision: Tested (r%v8rev%, Version %testedVersion%)
 goto ResolveRevDone
 :UseLatestRev
 set v8rev=HEAD
@@ -118,7 +122,7 @@ cd build
 
 :DownloadV8
 echo Downloading V8 ...
-svn checkout http://v8.googlecode.com/svn/trunk/@%v8rev% v8 >getV8.log
+svn checkout http://v8.googlecode.com/svn/trunk@%v8rev% v8 >getV8.log
 if errorlevel 1 goto Error1
 :DownloadV8Done
 
@@ -132,19 +136,19 @@ if errorlevel 1 goto Error2
 
 :DownloadGYP
 echo Downloading GYP ...
-svn checkout http://gyp.googlecode.com/svn/trunk build/gyp >getGYP.log
+svn checkout http://gyp.googlecode.com/svn/trunk@%gyprev% build/gyp >getGYP.log
 if errorlevel 1 goto Error2
 :DownloadGYPDone
 
 :DownloadPython
 echo Downloading Python ...
-svn checkout http://src.chromium.org/svn/trunk/tools/third_party/python_26 third_party/python_26 >getPython.log
+svn checkout http://src.chromium.org/svn/trunk/tools/third_party/python_26@%pythonrev% third_party/python_26 >getPython.log
 if errorlevel 1 goto Error2
 :DownloadPythonDone
 
 :DownloadCygwin
 echo Downloading Cygwin ...
-svn checkout http://src.chromium.org/svn/trunk/deps/third_party/cygwin third_party/cygwin >getCygwin.log
+svn checkout http://src.chromium.org/svn/trunk/deps/third_party/cygwin@%cygwinrev% third_party/cygwin >getCygwin.log
 if errorlevel 1 goto Error2
 :DownloadCygwinDone
 

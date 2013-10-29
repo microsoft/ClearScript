@@ -439,7 +439,15 @@ namespace Microsoft.ClearScript.Util
                 return CreateDynamicMetaObject(target, Expression.Constant(target));
             }
 
-            return CreateDynamicMetaObject(target, Expression.Constant(target, hostTarget.Type));
+            var type = hostTarget.Type;
+            try
+            {
+                return CreateDynamicMetaObject(target, Expression.Constant(target, type));
+            }
+            catch (ArgumentException)
+            {
+                return CreateDynamicMetaObject(target, Expression.Constant(target));
+            }
         }
 
         private static DynamicMetaObject CreateDynamicArg(object arg)
@@ -462,7 +470,16 @@ namespace Microsoft.ClearScript.Util
             }
 
             arg = hostTarget.Target;
-            return CreateDynamicMetaObject(arg, Expression.Constant(arg, hostTarget.Type));
+
+            var type = hostTarget.Type;
+            try
+            {
+                return CreateDynamicMetaObject(arg, Expression.Constant(arg, type));
+            }
+            catch (ArgumentException)
+            {
+                return CreateDynamicMetaObject(arg, Expression.Constant(arg));
+            }
         }
 
         private static DynamicMetaObject[] CreateDynamicArgs(object[] args)
