@@ -88,7 +88,7 @@ namespace Microsoft.ClearScript.Windows
                 {
                     try
                     {
-                        var stackTrace = GetStackTrace();
+                        var stackTrace = engine.GetStackTraceInternal();
                         if (!string.IsNullOrWhiteSpace(stackTrace))
                         {
                             return message + "\n" + stackTrace;
@@ -107,75 +107,6 @@ namespace Microsoft.ClearScript.Windows
                 }
 
                 return message;
-            }
-
-            private string GetStackTrace()
-            {
-                var stackTrace = string.Empty;
-
-                IEnumDebugStackFrames enumFrames;
-                engine.activeScript.EnumStackFrames(out enumFrames);
-
-                while (true)
-                {
-                    DebugStackFrameDescriptor descriptor;
-                    uint countFetched;
-                    enumFrames.Next(1, out descriptor, out countFetched);
-                    if (countFetched < 1)
-                    {
-                        break;
-                    }
-
-                    try
-                    {
-                        string description;
-                        descriptor.Frame.GetDescriptionString(true, out description);
-
-                        IDebugCodeContext codeContext;
-                        descriptor.Frame.GetCodeContext(out codeContext);
-
-                        IDebugDocumentContext documentContext;
-                        codeContext.GetDocumentContext(out documentContext);
-
-                        IDebugDocument document;
-                        documentContext.GetDocument(out document);
-                        var documentText = (IDebugDocumentText)document;
-
-                        string documentName;
-                        document.GetName(DocumentNameType.Title, out documentName);
-
-                        uint position;
-                        uint length;
-                        documentText.GetPositionOfContext(documentContext, out position, out length);
-
-                        var pBuffer = Marshal.AllocCoTaskMem((int)(sizeof(char) * length));
-                        try
-                        {
-                            uint lengthReturned = 0;
-                            documentText.GetText(position, pBuffer, IntPtr.Zero, ref lengthReturned, length);
-                            var codeLine = Marshal.PtrToStringUni(pBuffer, (int)lengthReturned);
-
-                            uint lineNumber;
-                            uint offsetInLine;
-                            documentText.GetLineOfPosition(position, out lineNumber, out offsetInLine);
-
-                            stackTrace += MiscHelpers.FormatInvariant("    at {0} ({1}:{2}:{3}) -> {4}\n", description, documentName, lineNumber, offsetInLine, codeLine);
-                        }
-                        finally
-                        {
-                            Marshal.FreeCoTaskMem(pBuffer);
-                        }
-                    }
-                    finally
-                    {
-                        if (descriptor.FinalObject != null)
-                        {
-                            Marshal.ReleaseComObject(descriptor.FinalObject);
-                        }
-                    }
-                }
-
-                return stackTrace;
             }
 
             private string GetErrorLocation(object error)
@@ -198,7 +129,7 @@ namespace Microsoft.ClearScript.Windows
                         if (lineNumber > 0)
                         {
                             uint linePosition;
-                            document.GetPositionOfLine(--lineNumber, out linePosition);
+                            document.GetPositionOfLine(lineNumber, out linePosition);
                             position = (int)linePosition + offsetInLine;
                         }
                         else

@@ -1127,6 +1127,108 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(Math.Sqrt(7), engine.Evaluate("testObject.Item.get(123, '456', 789.987, -0.12345)"));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_FormatCode()
+        {
+            try
+            {
+                engine.Execute("a", "\n\n\n     x = 3.a");
+            }
+            catch (ScriptEngineException exception)
+            {
+                Assert.IsTrue(exception.ErrorDetails.Contains(" a:4:10 "));
+            }
+
+            engine.FormatCode = true;
+            try
+            {
+                engine.Execute("b", "\n\n\n     x = 3.a");
+            }
+            catch (ScriptEngineException exception)
+            {
+                Assert.IsTrue(exception.ErrorDetails.Contains(" b:1:5 "));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_GetStackTrace()
+        {
+            engine.AddHostObject("qux", new Func<object>(() => engine.GetStackTrace()));
+            engine.Execute(@"
+                function baz() { return qux(); }
+                function bar() { return baz(); }
+                function foo() { return bar(); }
+            ");
+
+            Assert.AreEqual("    at baz (Script Document:2:41)\n    at bar (Script Document:3:41)\n    at foo (Script Document:4:41)\n    at Script Document [2] [temp]:1:1", engine.Evaluate("foo()"));
+            Assert.AreEqual("    at baz (Script Document:2:41)\n    at bar (Script Document:3:41)\n    at foo (Script Document:4:41)", engine.Script.foo());
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_MaxRuntimeStackUsage()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var engine1 = runtime.CreateScriptEngine())
+                {
+                    using (var engine2 = runtime.CreateScriptEngine())
+                    {
+                        var value = (UIntPtr)123456;
+                        engine1.MaxRuntimeStackUsage = value;
+                        Assert.AreEqual(value, engine1.MaxRuntimeStackUsage);
+                        Assert.AreEqual(value, engine2.MaxRuntimeStackUsage);
+                        Assert.AreEqual(value, runtime.MaxStackUsage);
+
+                        value = (UIntPtr)654321;
+                        runtime.MaxStackUsage = value;
+                        Assert.AreEqual(value, engine1.MaxRuntimeStackUsage);
+                        Assert.AreEqual(value, engine2.MaxRuntimeStackUsage);
+                        Assert.AreEqual(value, runtime.MaxStackUsage);
+                    }
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_MaxRuntimeStackUsage_ScriptOnly()
+        {
+            engine.MaxRuntimeStackUsage = (UIntPtr)(16 * 1024);
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("(function () { arguments.callee(); })()"), false);
+            Assert.AreEqual(Math.PI, engine.Evaluate("Math.PI"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_MaxRuntimeStackUsage_HostBounce()
+        {
+            engine.MaxRuntimeStackUsage = (UIntPtr)(16 * 1024);
+            dynamic foo = engine.Evaluate("(function () { arguments.callee(); })");
+            engine.Script.bar = new Action(() => foo());
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("bar()"), false);
+            Assert.AreEqual(Math.PI, engine.Evaluate("Math.PI"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_MaxRuntimeStackUsage_Alternating()
+        {
+            engine.MaxRuntimeStackUsage = (UIntPtr)(16 * 1024);
+            dynamic foo = engine.Evaluate("(function () { bar(); })");
+            engine.Script.bar = new Action(() => foo());
+            TestUtil.AssertException<ScriptEngineException>(() => foo(), false);
+            Assert.AreEqual(Math.PI, engine.Evaluate("Math.PI"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_MaxRuntimeStackUsage_Expansion()
+        {
+            engine.MaxRuntimeStackUsage = (UIntPtr)(16 * 1024);
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("count = 0; (function () { count++; arguments.callee(); })()"), false);
+            var count1 = engine.Script.count;
+            engine.MaxRuntimeStackUsage = (UIntPtr)(64 * 1024);
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("count = 0; (function () { count++; arguments.callee(); })()"), false);
+            var count2 = engine.Script.count;
+            Assert.IsTrue(count2 >= (count1 * 2));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

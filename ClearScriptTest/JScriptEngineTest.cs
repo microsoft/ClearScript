@@ -927,6 +927,43 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(Math.Sqrt(7), engine.Evaluate("testObject.Item.get(123, '456', 789.987, -0.12345)"));
         }
 
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_FormatCode()
+        {
+            try
+            {
+                engine.Execute("a", "\n\n\n     x = 3.a");
+            }
+            catch (ScriptEngineException exception)
+            {
+                Assert.IsTrue(exception.ErrorDetails.Contains("(a:3:11)"));
+            }
+
+            engine.FormatCode = true;
+            try
+            {
+                engine.Execute("b", "\n\n\n     x = 3.a");
+            }
+            catch (ScriptEngineException exception)
+            {
+                Assert.IsTrue(exception.ErrorDetails.Contains("(b:0:6)"));
+            }
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_GetStackTrace()
+        {
+            engine.AddHostObject("qux", new Func<object>(() => engine.GetStackTrace()));
+            engine.Execute(@"
+                function baz() { return qux(); }
+                function bar() { return baz(); }
+                function foo() { return bar(); }
+            ");
+
+            Assert.AreEqual("    at baz (Script Document:1:33) -> return qux()\n    at bar (Script Document:2:33) -> return baz()\n    at foo (Script Document:3:33) -> return bar()\n    at JScript global code (Script Document [2] [temp]:0:0) -> foo()", engine.Evaluate("foo()"));
+            Assert.AreEqual("    at baz (Script Document:1:33) -> return qux()\n    at bar (Script Document:2:33) -> return baz()\n    at foo (Script Document:3:33) -> return bar()", engine.Script.foo());
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

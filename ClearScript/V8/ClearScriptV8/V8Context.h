@@ -71,6 +71,9 @@ public:
 
     static V8Context* Create(const SharedPtr<V8Isolate>& spIsolate, const wchar_t* pName, bool enableDebugging, bool disableGlobalMembers, int debugPort);
 
+    virtual size_t GetMaxIsolateStackUsage() = 0;
+    virtual void SetMaxIsolateStackUsage(size_t value) = 0;
+
     typedef void LockCallbackT(void* pvArg);
     virtual void CallWithLock(LockCallbackT* pCallback, void* pvArg) = 0;
 

@@ -153,8 +153,18 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
+        public static bool IsNullable(this Type type)
+        {
+            return type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(Nullable<>));
+        }
+
         public static bool IsAssignableFrom(this Type type, ref object value)
         {
+            if (type.IsNullable())
+            {
+                return (value == null) || (Nullable.GetUnderlyingType(type).IsAssignableFrom(ref value));
+            }
+
             if (value == null)
             {
                 return !type.IsValueType;

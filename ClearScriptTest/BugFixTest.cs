@@ -293,7 +293,73 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(456, engine.Evaluate("expando.property('bar')"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_Nullable_Field()
+        {
+            engine.Script.test = new NullableTest();
+            Assert.IsNull(engine.Evaluate("test.Field"));
+            Assert.IsTrue((bool)engine.Evaluate("test.Field === null"));
+            engine.Execute("test.Field = 123");
+            Assert.AreEqual(123, engine.Evaluate("test.Field"));
+            Assert.IsTrue((bool)engine.Evaluate("test.Field === 123"));
+            engine.Execute("test.Field = null");
+            Assert.IsNull(engine.Evaluate("test.Field"));
+            Assert.IsTrue((bool)engine.Evaluate("test.Field === null"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_Nullable_Property()
+        {
+            engine.Script.test = new NullableTest();
+            Assert.IsNull(engine.Evaluate("test.Property"));
+            Assert.IsTrue((bool)engine.Evaluate("test.Property === null"));
+            engine.Execute("test.Property = 123");
+            Assert.AreEqual(123, engine.Evaluate("test.Property"));
+            Assert.IsTrue((bool)engine.Evaluate("test.Property === 123"));
+            engine.Execute("test.Property = null");
+            Assert.IsNull(engine.Evaluate("test.Property"));
+            Assert.IsTrue((bool)engine.Evaluate("test.Property === null"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_Nullable_ArgBinding()
+        {
+            var test = new NullableTest();
+            engine.Script.test = test;
+            Assert.IsNull(engine.Evaluate("test.Method(null)"));
+            Assert.AreEqual(test.Method(5), engine.Evaluate("test.Method(5)"));
+            Assert.AreEqual(test.Method(5.1), engine.Evaluate("test.Method(5.1)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_GlobalObjectCrash()
+        {
+            engine.AddHostObject("random", HostItemFlags.GlobalMembers, new Random());
+            Assert.AreEqual("[object global]", engine.ExecuteCommand("this"));
+        }
+
         // ReSharper restore InconsistentNaming
+
+        #endregion
+
+        #region miscellaneous
+
+        public class NullableTest
+        {
+            public int? Field;
+
+            public double? Property;
+
+            public object Method(int? value)
+            {
+                return value.HasValue ? (value + 1) : null;
+            }
+
+            public object Method(double? value)
+            {
+                return value.HasValue ? (value * 2.0) : null;
+            }
+        }
 
         #endregion
     }

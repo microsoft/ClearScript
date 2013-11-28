@@ -120,12 +120,12 @@ private:
 //-----------------------------------------------------------------------------
 
 #define BEGIN_ADDREF_SCOPE \
-        { \
-            AddRefScope t_AddRefScope(GetRefCount());
+    { \
+        AddRefScope t_AddRefScope(GetRefCount());
 
 #define END_ADDREF_SCOPE \
-            IGNORE_UNUSED(t_AddRefScope); \
-        }
+        IGNORE_UNUSED(t_AddRefScope); \
+    }
 
 //-----------------------------------------------------------------------------
 // SharedPtr

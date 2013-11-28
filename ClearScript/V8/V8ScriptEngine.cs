@@ -62,6 +62,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
@@ -307,6 +308,16 @@ namespace Microsoft.ClearScript.V8
                                         throw new Error('Function expected');
                                     }
                                     return method.apply(target, convertArgs(args));
+                                },
+
+                                getStackTrace: function () {
+                                    try {
+                                        throw new Error('[stack trace]');
+                                    }
+                                    catch (exception) {
+                                        return exception.stack;
+                                    }
+                                    return '';
                                 }
                             };
                         })();
@@ -320,6 +331,33 @@ namespace Microsoft.ClearScript.V8
         #endregion
 
         #region public members
+
+        /// <summary>
+        /// Gets or sets the maximum amount by which the V8 runtime is permitted to grow the stack during script execution.
+        /// </summary>
+        /// <remarks>
+        /// This property is specified in bytes. When it is set to the default value, no stack
+        /// usage limit is enforced, and unchecked recursion or other stack usage may lead to
+        /// unrecoverable errors and process termination.
+        /// <para>
+        /// Note that the V8 runtime does not monitor stack usage while a host call is in progress.
+        /// Monitoring is resumed when control returns to the runtime.
+        /// </para>
+        /// </remarks>
+        public UIntPtr MaxRuntimeStackUsage
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.MaxRuntimeStackUsage;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                proxy.MaxRuntimeStackUsage = value;
+            }
+        }
 
         /// <summary>
         /// Creates a compiled script.
@@ -344,7 +382,7 @@ namespace Microsoft.ClearScript.V8
             return ScriptInvoke(() =>
             {
                 var uniqueName = documentNameManager.GetUniqueName(documentName, "Script Document");
-                return proxy.Compile(uniqueName, MiscHelpers.FormatCode(code));
+                return proxy.Compile(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code);
             });
         }
 
@@ -471,6 +509,21 @@ namespace Microsoft.ClearScript.V8
                 Script.EngineInternal.command = command;
                 return base.ExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.command))");
             });
+        }
+
+        /// <summary>
+        /// Gets a string representation of the script call stack.
+        /// </summary>
+        /// <returns>The script call stack formatted as a string.</returns>
+        /// <remarks>
+        /// This method returns an empty string if the script engine is not executing script code.
+        /// The stack trace text format is defined by the script engine.
+        /// </remarks>
+        public override string GetStackTrace()
+        {
+            string stackTrace = Script.EngineInternal.getStackTrace();
+            var lines = stackTrace.Split('\n');
+            return string.Join("\n", lines.Skip(2));
         }
 
         /// <summary>
@@ -630,7 +683,7 @@ namespace Microsoft.ClearScript.V8
                     stateObjects[0] = new WeakReference(this);
                     stateObjects[1] = timer;
                     timer.Change(continuationInterval, Timeout.Infinite);
-                    return proxy.Execute(uniqueName, MiscHelpers.FormatCode(code), discard);
+                    return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, discard);
                 }
             });
         }

@@ -93,6 +93,20 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    UIntPtr V8IsolateProxyImpl::MaxStackUsage::get()
+    {
+        return (UIntPtr)GetIsolate()->GetMaxStackUsage();
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8IsolateProxyImpl::MaxStackUsage::set(UIntPtr value)
+    {
+        GetIsolate()->SetMaxStackUsage(static_cast<size_t>(value));
+    }
+
+    //-------------------------------------------------------------------------
+
     V8Script^ V8IsolateProxyImpl::Compile(String^ gcDocumentName, String^ gcCode)
     {
         try

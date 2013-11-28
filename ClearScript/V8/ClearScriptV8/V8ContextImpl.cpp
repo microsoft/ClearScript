@@ -152,50 +152,50 @@ static void* UnwrapHostObject(const FunctionCallbackInfo<T>& args)
 //-----------------------------------------------------------------------------
 
 #define BEGIN_ISOLATE_SCOPE \
-        { \
-            V8IsolateImpl::Scope t_IsolateScope(m_spIsolateImpl);
+    { \
+        V8IsolateImpl::Scope t_IsolateScope(m_spIsolateImpl);
 
 #define END_ISOLATE_SCOPE \
-            IGNORE_UNUSED(t_IsolateScope); \
-        }
+        IGNORE_UNUSED(t_IsolateScope); \
+    }
 
 #define BEGIN_CONTEXT_SCOPE \
-        { \
-            Scope t_ContextScope(this);
+    { \
+        Scope t_ContextScope(this);
 
 #define END_CONTEXT_SCOPE \
-            IGNORE_UNUSED(t_ContextScope); \
-        }
+        IGNORE_UNUSED(t_ContextScope); \
+    }
 
 #define BEGIN_CONTEXT_SCOPE_NOTHROW \
-        { \
-            Context::Scope t_ContextScopeNoThrow(m_hContext);
+    { \
+        Context::Scope t_ContextScopeNoThrow(m_hContext);
 
 #define END_CONTEXT_SCOPE_NOTHROW \
-            IGNORE_UNUSED(t_ContextScopeNoThrow); \
-        }
+        IGNORE_UNUSED(t_ContextScopeNoThrow); \
+    }
 
-#define BEGIN_VERIFY_SCOPE \
-        { \
-            TryCatch t_TryCatch;
+#define BEGIN_EXECUTION_SCOPE \
+    { \
+        V8IsolateImpl::ExecutionScope t_IsolateExecutionScope(m_spIsolateImpl); \
+        TryCatch t_TryCatch;
 
-#define END_VERIFY_SCOPE \
-            IGNORE_UNUSED(t_TryCatch); \
-        }
+#define END_EXECUTION_SCOPE \
+        IGNORE_UNUSED(t_TryCatch); \
+        IGNORE_UNUSED(t_IsolateExecutionScope); \
+    }
 
 #define VERIFY(RESULT) \
-            Verify(t_TryCatch, RESULT)
+    Verify(t_TryCatch, RESULT)
 
 #define VERIFY_CHECKPOINT() \
-            Verify(t_TryCatch)
+    Verify(t_TryCatch)
 
 #define CALLBACK_RETURN(RESULT) \
-            do \
-            { \
-                info.GetReturnValue().Set(RESULT); \
-                return; \
-            } \
-            while (false)
+    BEGIN_COMPOUND_MACRO \
+        info.GetReturnValue().Set(RESULT); \
+        return; \
+    END_COMPOUND_MACRO
 
 //-----------------------------------------------------------------------------
 
@@ -255,6 +255,20 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const wchar_t* pName, 
 
 //-----------------------------------------------------------------------------
 
+size_t V8ContextImpl::GetMaxIsolateStackUsage()
+{
+    return m_spIsolateImpl->GetMaxStackUsage();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::SetMaxIsolateStackUsage(size_t value)
+{
+    m_spIsolateImpl->SetMaxStackUsage(value);
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ContextImpl::CallWithLock(LockCallbackT* pCallback, void* pvArg)
 {
     VerifyNotOutOfMemory();
@@ -298,12 +312,12 @@ void V8ContextImpl::SetGlobalProperty(const wchar_t* pName, const V8Value& value
 V8Value V8ContextImpl::Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool /* discard */)
 {
     BEGIN_CONTEXT_SCOPE
-    BEGIN_VERIFY_SCOPE
+    BEGIN_EXECUTION_SCOPE
 
         auto hScript = VERIFY(Script::Compile(String::New(pCode), String::New(pDocumentName)));
         return ExportValue(VERIFY(hScript->Run()));
 
-    END_VERIFY_SCOPE
+    END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
 
@@ -312,12 +326,12 @@ V8Value V8ContextImpl::Execute(const wchar_t* pDocumentName, const wchar_t* pCod
 V8ScriptHolder* V8ContextImpl::Compile(const wchar_t* pDocumentName, const wchar_t* pCode)
 {
     BEGIN_CONTEXT_SCOPE
-    BEGIN_VERIFY_SCOPE
+    BEGIN_EXECUTION_SCOPE
 
         auto hScript = VERIFY(Script::New(String::New(pCode), String::New(pDocumentName)));
         return new V8ScriptHolderImpl(m_spIsolateImpl, ::PtrFromScriptHandle(CreatePersistent(hScript)));
 
-    END_VERIFY_SCOPE
+    END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
 
@@ -333,12 +347,12 @@ bool V8ContextImpl::CanExecute(V8ScriptHolder* pHolder)
 V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder)
 {
     BEGIN_CONTEXT_SCOPE
-    BEGIN_VERIFY_SCOPE
+    BEGIN_EXECUTION_SCOPE
 
         auto hScript = ::ScriptHandleFromPtr(pHolder->GetScript());
         return ExportValue(VERIFY(hScript->Run()));
 
-    END_VERIFY_SCOPE
+    END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
 
@@ -390,9 +404,11 @@ void V8ContextImpl::ReleaseV8Object(void* pvObject)
 V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, const wchar_t* pName)
 {
     BEGIN_CONTEXT_SCOPE
+    BEGIN_EXECUTION_SCOPE
 
         return ExportValue(::ObjectHandleFromPtr(pvObject)->Get(String::New(pName)));
 
+    END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
 
@@ -401,9 +417,11 @@ V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, const wchar_t* pName)
 void V8ContextImpl::SetV8ObjectProperty(void* pvObject, const wchar_t* pName, const V8Value& value)
 {
     BEGIN_CONTEXT_SCOPE
+    BEGIN_EXECUTION_SCOPE
 
         ::ObjectHandleFromPtr(pvObject)->Set(String::New(pName), ImportValue(value));
 
+    END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
 
@@ -434,9 +452,11 @@ void V8ContextImpl::GetV8ObjectPropertyNames(void* pvObject, vector<wstring>& na
 V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, int index)
 {
     BEGIN_CONTEXT_SCOPE
+    BEGIN_EXECUTION_SCOPE
 
         return ExportValue(::ObjectHandleFromPtr(pvObject)->Get(index));
 
+    END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
 
@@ -445,9 +465,11 @@ V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, int index)
 void V8ContextImpl::SetV8ObjectProperty(void* pvObject, int index, const V8Value& value)
 {
     BEGIN_CONTEXT_SCOPE
+    BEGIN_EXECUTION_SCOPE
 
         ::ObjectHandleFromPtr(pvObject)->Set(index, ImportValue(value));
 
+    END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
 
@@ -478,7 +500,7 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(void* pvObject, vector<int>& indi
 V8Value V8ContextImpl::InvokeV8Object(void* pvObject, const vector<V8Value>& args, bool asConstructor)
 {
     BEGIN_CONTEXT_SCOPE
-    BEGIN_VERIFY_SCOPE
+    BEGIN_EXECUTION_SCOPE
 
         auto hObject = ::ObjectHandleFromPtr(pvObject);
 
@@ -487,12 +509,12 @@ V8Value V8ContextImpl::InvokeV8Object(void* pvObject, const vector<V8Value>& arg
 
         if (asConstructor)
         {
-            return ExportValue(VERIFY(hObject->CallAsConstructor((int)importedArgs.size(), importedArgs.data())));
+            return ExportValue(VERIFY(hObject->CallAsConstructor(static_cast<int>(importedArgs.size()), importedArgs.data())));
         }
 
-        return ExportValue(VERIFY(hObject->CallAsFunction(hObject, (int)importedArgs.size(), importedArgs.data())));
+        return ExportValue(VERIFY(hObject->CallAsFunction(hObject, static_cast<int>(importedArgs.size()), importedArgs.data())));
 
-    END_VERIFY_SCOPE
+    END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
 
@@ -501,7 +523,7 @@ V8Value V8ContextImpl::InvokeV8Object(void* pvObject, const vector<V8Value>& arg
 V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const wchar_t* pName, const vector<V8Value>& args)
 {
     BEGIN_CONTEXT_SCOPE
-    BEGIN_VERIFY_SCOPE
+    BEGIN_EXECUTION_SCOPE
 
         auto hObject = ::ObjectHandleFromPtr(pvObject);
 
@@ -523,9 +545,9 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const wchar_t* pName
         ImportValues(args, importedArgs);
 
         auto hMethod = VERIFY(hValue->ToObject());
-        return ExportValue(VERIFY(hMethod->CallAsFunction(hObject, (int)importedArgs.size(), importedArgs.data())));
+        return ExportValue(VERIFY(hMethod->CallAsFunction(hObject, static_cast<int>(importedArgs.size()), importedArgs.data())));
 
-    END_VERIFY_SCOPE
+    END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
 
@@ -608,7 +630,7 @@ void V8ContextImpl::GetV8ObjectPropertyNames(Handle<Object> hObject, vector<wstr
     auto hNames = hObject->GetPropertyNames();
     if (!hNames.IsEmpty())
     {
-        auto nameCount = (int)hNames->Length();
+        auto nameCount = static_cast<int>(hNames->Length());
 
         names.reserve(nameCount);
         for (auto index = 0; index < nameCount; index++)
@@ -616,7 +638,7 @@ void V8ContextImpl::GetV8ObjectPropertyNames(Handle<Object> hObject, vector<wstr
             auto hName = hNames->Get(index);
             if (!hName.IsEmpty())
             {
-                wstring name(*String::Value(hName->ToString()));
+                wstring name(*String::Value(hName));
 
                 int propertyIndex;
                 if (!HostObjectHelpers::TryParseInt32(name.c_str(), propertyIndex))
@@ -637,7 +659,7 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(Handle<Object> hObject, vector<in
     auto hNames = hObject->GetPropertyNames();
     if (!hNames.IsEmpty())
     {
-        auto nameCount = (int)hNames->Length();
+        auto nameCount = static_cast<int>(hNames->Length());
 
         indices.reserve(nameCount);
         for (auto index = 0; index < nameCount; index++)
@@ -645,7 +667,7 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(Handle<Object> hObject, vector<in
             auto hName = hNames->Get(index);
             if (!hName.IsEmpty())
             {
-                wstring name(*String::Value(hName->ToString()));
+                wstring name(*String::Value(hName));
 
                 int propertyIndex;
                 if (HostObjectHelpers::TryParseInt32(name.c_str(), propertyIndex))
@@ -716,7 +738,7 @@ void V8ContextImpl::QueryGlobalProperty(Local<String> hName, const PropertyCallb
     if (pContextImpl != nullptr)
     {
         const vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+        if ((stack.size() > 0) && !hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
@@ -802,7 +824,7 @@ void V8ContextImpl::GetGlobalPropertyNames(const PropertyCallbackInfo<Array>& in
 
                 sort(names.begin(), names.end());
                 auto newEnd = unique(names.begin(), names.end());
-                auto nameCount = (int)(newEnd - names.begin());
+                auto nameCount = static_cast<int>(newEnd - names.begin());
 
                 auto hImportedNames = Array::New(nameCount);
                 for (auto index = 0; index < nameCount; index++)
@@ -951,7 +973,7 @@ void V8ContextImpl::GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& 
 
                 sort(indices.begin(), indices.end());
                 auto newEnd = unique(indices.begin(), indices.end());
-                auto indexCount = (int)(newEnd - indices.begin());
+                auto indexCount = static_cast<int>(newEnd - indices.begin());
 
                 auto hImportedIndices = Array::New(indexCount);
                 for (auto index = 0; index < indexCount; index++)
@@ -1064,7 +1086,7 @@ void V8ContextImpl::GetHostObjectPropertyNames(const PropertyCallbackInfo<Array>
     {
         vector<wstring> names;
         HostObjectHelpers::GetPropertyNames(::UnwrapHostObject(info), names);
-        auto nameCount = (int)names.size();
+        auto nameCount = static_cast<int>(names.size());
 
         auto hImportedNames = Array::New(nameCount);
         for (auto index = 0; index < nameCount; index++)
@@ -1126,7 +1148,7 @@ void V8ContextImpl::QueryHostObjectProperty(unsigned __int32 index, const Proper
 
         for (auto it = indices.begin(); it < indices.end(); it++)
         {
-            if (*it == (int)index)
+            if (*it == static_cast<int>(index))
             {
                 CALLBACK_RETURN(None);
             }
@@ -1164,7 +1186,7 @@ void V8ContextImpl::GetHostObjectPropertyIndices(const PropertyCallbackInfo<Arra
     {
         vector<int> indices;
         HostObjectHelpers::GetPropertyIndices(::UnwrapHostObject(info), indices);
-        auto indexCount = (int)indices.size();
+        auto indexCount = static_cast<int>(indices.size());
 
         auto hImportedIndices = Array::New(indexCount);
         for (auto index = 0; index < indexCount; index++)
@@ -1378,7 +1400,7 @@ void V8ContextImpl::ImportValues(const vector<V8Value>& values, vector<Handle<Va
 {
     importedValues.clear();
 
-    auto valueCount = (int)values.size();
+    auto valueCount = static_cast<int>(values.size());
     importedValues.reserve(valueCount);
 
     for (auto index = 0; index < valueCount; index++)
@@ -1399,126 +1421,167 @@ void V8ContextImpl::Verify(const TryCatch& tryCatch)
         }
 
         auto hException = tryCatch.Exception();
-        wstring message = *String::Value(hException);
-        wstring stackTrace;
 
-        auto hStackTrace = tryCatch.StackTrace();
-        if (!hStackTrace.IsEmpty())
+        wstring message;
+        bool stackOverflow;
+
+        String::Value value(hException);
+        if (value.length() > 0)
         {
-            stackTrace = *String::Value(hStackTrace);
+            message = *value;
+            stackOverflow = (_wcsicmp(message.c_str(), L"RangeError: Maximum call stack size exceeded") == 0);
+        }
+        else
+        {
+            // It is unclear why V8 sometimes generates blank exceptions, although it probably has
+            // to do with memory pressure. It seems to happen only during stack overflow recovery.
+
+            message = L"Unknown error; potential stack overflow detected";
+            stackOverflow = true;
         }
 
-        auto hMessage = tryCatch.Message();
-        if (!hMessage.IsEmpty())
+    #ifdef _DEBUG
+
+        if (stackOverflow)
         {
-            if (message.length() < 1)
+            // Stack overflow conditions require extreme care, as V8's behavior can be erratic
+            // until the stack is unwound a bit. Much of the code below can trigger unexpected
+            // fatal errors in this context, so it makes sense to bypass it. On the other hand,
+            // losing error information is also undesirable, and the detection code above is far
+            // from robust. These sanity checks are intended to mitigate this fragility.
+
+            _ASSERTE(hException->IsObject());
+            _ASSERTE(wstring(*String::Value(hException->ToObject()->GetConstructorName())) == L"RangeError");
+        }
+
+    #endif // _DEBUG
+
+        wstring stackTrace;
+        V8Value innerException(V8Value::Undefined);
+
+        if (stackOverflow)
+        {
+            stackTrace = message;
+        }
+        else
+        {
+            auto hStackTrace = tryCatch.StackTrace();
+            if (!hStackTrace.IsEmpty())
             {
-                message = *String::Value(hMessage->Get());
+                stackTrace = *String::Value(hStackTrace);
             }
 
-            stackTrace = message;
-
-            auto hStackTrace = hMessage->GetStackTrace();
-            int frameCount = !hStackTrace.IsEmpty() ? hStackTrace->GetFrameCount() : 0;
-
-            if (frameCount < 1)
+            auto hMessage = tryCatch.Message();
+            if (!hMessage.IsEmpty())
             {
-                auto hScriptResourceName = hMessage->GetScriptResourceName();
-                if (!hScriptResourceName.IsEmpty() && !hScriptResourceName->IsNull() && !hScriptResourceName->IsUndefined())
+                if (message.length() < 1)
                 {
-                    auto hScriptName = hScriptResourceName->ToString();
-                    if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
+                    message = *String::Value(hMessage->Get());
+                }
+
+                stackTrace = message;
+
+                auto hStackTrace = hMessage->GetStackTrace();
+                int frameCount = !hStackTrace.IsEmpty() ? hStackTrace->GetFrameCount() : 0;
+
+                if (frameCount < 1)
+                {
+                    auto hScriptResourceName = hMessage->GetScriptResourceName();
+                    if (!hScriptResourceName.IsEmpty() && !hScriptResourceName->IsNull() && !hScriptResourceName->IsUndefined())
                     {
-                        stackTrace += L"\n    at ";
-                        stackTrace += *String::Value(hScriptName);
+                        auto hScriptName = hScriptResourceName->ToString();
+                        if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
+                        {
+                            stackTrace += L"\n    at ";
+                            stackTrace += *String::Value(hScriptName);
+                        }
+                        else
+                        {
+                            stackTrace += L"\n    at <anonymous>";
+                        }
                     }
                     else
                     {
                         stackTrace += L"\n    at <anonymous>";
                     }
+
+                    stackTrace += L':';
+                    stackTrace += to_wstring(hMessage->GetLineNumber());
+                    stackTrace += L':';
+                    stackTrace += to_wstring(hMessage->GetStartColumn() + 1);
+
+                    auto hSourceLine = hMessage->GetSourceLine();
+                    if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
+                    {
+                        stackTrace += L" -> ";
+                        stackTrace += *String::Value(hSourceLine);
+                    }
                 }
                 else
                 {
-                    stackTrace += L"\n    at <anonymous>";
-                }
+                    for (int index = 0; index < frameCount; index++)
+                    {
+                        auto hFrame = hStackTrace->GetFrame(index);
+                        stackTrace += L"\n    at ";
 
-                stackTrace += L':';
-                stackTrace += to_wstring(hMessage->GetLineNumber());
-                stackTrace += L':';
-                stackTrace += to_wstring(hMessage->GetStartColumn() + 1);
+                        auto hFunctionName = hFrame->GetFunctionName();
+                        if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
+                        {
+                            if (hFrame->IsConstructor())
+                            {
+                                stackTrace += L"new ";
+                            }
 
-                auto hSourceLine = hMessage->GetSourceLine();
-                if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
-                {
-                    stackTrace += L" -> ";
-                    stackTrace += *String::Value(hSourceLine);
+                            stackTrace += *String::Value(hFunctionName);
+                            stackTrace += L" (";
+                        }
+
+                        auto hScriptName = hFrame->GetScriptName();
+                        if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
+                        {
+                            stackTrace += *String::Value(hScriptName);
+                        }
+                        else
+                        {
+                            stackTrace += L"<anonymous>";
+                        }
+
+                        stackTrace += L':';
+                        auto lineNumber = hFrame->GetLineNumber();
+                        if (lineNumber != Message::kNoLineNumberInfo)
+                        {
+                            stackTrace += to_wstring(lineNumber);
+                        }
+
+                        stackTrace += L':';
+                        auto column = hFrame->GetColumn();
+                        if (column != Message::kNoColumnInfo)
+                        {
+                            stackTrace += to_wstring(column);
+                        }
+
+                        if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
+                        {
+                            stackTrace += L')';
+                        }
+
+                        if (index == 0)
+                        {
+                            auto hSourceLine = hMessage->GetSourceLine();
+                            if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
+                            {
+                                stackTrace += L" -> ";
+                                stackTrace += *String::Value(hSourceLine);
+                            }
+                        }
+                    }
                 }
             }
-            else
+
+            if (hException->IsObject())
             {
-                for (int index = 0; index < frameCount; index++)
-                {
-                    auto hFrame = hStackTrace->GetFrame(index);
-                    stackTrace += L"\n    at ";
-
-                    auto hFunctionName = hFrame->GetFunctionName();
-                    if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
-                    {
-                        if (hFrame->IsConstructor())
-                        {
-                            stackTrace += L"new ";
-                        }
-
-                        stackTrace += *String::Value(hFunctionName);
-                        stackTrace += L" (";
-                    }
-
-                    auto hScriptName = hFrame->GetScriptName();
-                    if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
-                    {
-                        stackTrace += *String::Value(hScriptName);
-                    }
-                    else
-                    {
-                        stackTrace += L"<anonymous>";
-                    }
-
-                    stackTrace += L':';
-                    auto lineNumber = hFrame->GetLineNumber();
-                    if (lineNumber != Message::kNoLineNumberInfo)
-                    {
-                        stackTrace += to_wstring(lineNumber);
-                    }
-
-                    stackTrace += L':';
-                    auto column = hFrame->GetColumn();
-                    if (column != Message::kNoColumnInfo)
-                    {
-                        stackTrace += to_wstring(column);
-                    }
-
-                    if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
-                    {
-                        stackTrace += L')';
-                    }
-
-                    if (index == 0)
-                    {
-                        auto hSourceLine = hMessage->GetSourceLine();
-                        if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
-                        {
-                            stackTrace += L" -> ";
-                            stackTrace += *String::Value(hSourceLine);
-                        }
-                    }
-                }
+                innerException = ExportValue(hException->ToObject()->Get(m_hInnerExceptionName));
             }
-        }
-
-        V8Value innerException(V8Value::Undefined);
-        if (hException->IsObject())
-        {
-            innerException = ExportValue(hException->ToObject()->Get(m_hInnerExceptionName));
         }
 
         throw V8Exception(V8Exception::Type_General, m_Name.c_str(), message.c_str(), stackTrace.c_str(), innerException);

@@ -75,6 +75,12 @@ namespace V8 {
 
         V8IsolateProxyImpl(String^ gcName, V8RuntimeConstraints^ gcConstraints, Boolean enableDebugging, Int32 debugPort);
 
+        property UIntPtr MaxStackUsage
+        {
+            virtual UIntPtr get() override;
+            virtual void set(UIntPtr value) override;
+        }
+
         virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode) override;
         virtual V8RuntimeHeapInfo^ GetHeapInfo() override;
         virtual void CollectGarbage(bool exhaustive) override;

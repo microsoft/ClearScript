@@ -98,6 +98,29 @@ public:
         HandleScope m_HandleScope;
     };
 
+    class ExecutionScope
+    {
+        PROHIBIT_COPY(ExecutionScope)
+        PROHIBIT_HEAP(ExecutionScope)
+
+    public:
+
+        explicit ExecutionScope(V8IsolateImpl* pIsolateImpl):
+            m_pIsolateImpl(pIsolateImpl)
+        {
+            m_pIsolateImpl->EnterExecutionScope(reinterpret_cast<size_t*>(&pIsolateImpl));
+        }
+
+        ~ExecutionScope()
+        {
+            m_pIsolateImpl->ExitExecutionScope();
+        }
+
+    private:
+
+        V8IsolateImpl* m_pIsolateImpl;
+    };
+
     V8IsolateImpl(const wchar_t* pName, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort);
 
     Local<Context> CreateContext(ExtensionConfiguration* pExtensionConfiguation = nullptr, Handle<ObjectTemplate> hGlobalTemplate = Handle<ObjectTemplate>(), Handle<Value> hGlobalObject = Handle<Value>())
@@ -187,6 +210,9 @@ public:
     void EnableDebugging(int debugPort);
     void DisableDebugging();
 
+    size_t GetMaxStackUsage();
+    void SetMaxStackUsage(size_t value);
+
     V8ScriptHolder* Compile(const wchar_t* pDocumentName, const wchar_t* pCode);
     void GetHeapInfo(V8IsolateHeapInfo& heapInfo);
     void CollectGarbage(bool exhaustive);
@@ -203,6 +229,9 @@ private:
     void DispatchDebugMessages();
     void ProcessDebugMessages();
 
+    void EnterExecutionScope(size_t* pStackMarker);
+    void ExitExecutionScope();
+
     wstring m_Name;
     Isolate* m_pIsolate;
     list<V8ContextImpl*> m_ContextPtrs;
@@ -211,6 +240,10 @@ private:
     int m_DebugPort;
     Debug::DebugMessageDispatchHandler m_pDebugMessageDispatcher;
     atomic<size_t> m_DebugMessageDispatchCount;
+
+    atomic<size_t> m_MaxStackUsage;
+    size_t m_ExecutionLevel;
+    size_t* m_pStackLimit;
 
     atomic<bool> m_IsOutOfMemory;
 };

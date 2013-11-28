@@ -125,7 +125,7 @@ namespace V8 {
         {
             vector<wstring> names;
             V8ObjectHelpers::GetPropertyNames(GetHolder(), names);
-            auto nameCount = (int)names.size();
+            auto nameCount = static_cast<int>(names.size());
 
             auto gcNames = gcnew array<String^>(nameCount);
             for (auto index = 0; index < nameCount; index++)
@@ -191,7 +191,7 @@ namespace V8 {
         {
             vector<int> indices;
             V8ObjectHelpers::GetPropertyIndices(GetHolder(), indices);
-            auto indexCount = (int)indices.size();
+            auto indexCount = static_cast<int>(indices.size());
 
             auto gcIndices = gcnew array<int>(indexCount);
             for (auto index = 0; index < indexCount; index++)

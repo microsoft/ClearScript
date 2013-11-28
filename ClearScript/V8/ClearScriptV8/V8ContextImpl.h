@@ -73,6 +73,9 @@ public:
 
     V8ContextImpl(V8IsolateImpl* pIsolateImpl, const wchar_t* pName, bool enableDebugging, bool disableGlobalMembers, int debugPort);
 
+    size_t GetMaxIsolateStackUsage();
+    void SetMaxIsolateStackUsage(size_t value);
+
     void CallWithLock(LockCallbackT* pCallback, void* pvArg);
     V8Value GetRootObject();
     void SetGlobalProperty(const wchar_t* pName, const V8Value& value, bool globalMembers);

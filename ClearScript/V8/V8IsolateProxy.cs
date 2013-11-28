@@ -59,6 +59,8 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
+using System;
+
 namespace Microsoft.ClearScript.V8
 {
     internal abstract class V8IsolateProxy : V8Proxy
@@ -67,6 +69,8 @@ namespace Microsoft.ClearScript.V8
         {
             return CreateImpl<V8IsolateProxy>(name, constraints, enableDebugging, debugPort);
         }
+
+        public abstract UIntPtr MaxStackUsage { get; set; }
 
         public abstract V8Script Compile(string documentName, string code);
 

@@ -100,7 +100,7 @@ namespace Microsoft.ClearScript.Test
             return hashCode * Math.E / Math.PI;
         }
 
-        public static void AssertException<T>(Action action) where T : Exception
+        public static void AssertException<T>(Action action, bool checkScriptStackTrace = true) where T : Exception
         {
             var gotException = false;
 
@@ -111,12 +111,12 @@ namespace Microsoft.ClearScript.Test
             catch (T exception)
             {
                 gotException = true;
-                AssertValidExceptionChain(exception);
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
             }
             catch (Exception exception)
             {
                 gotException = exception.GetBaseException() is T;
-                AssertValidExceptionChain(exception);
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
             }
 
             Assert.IsTrue(gotException, "Expected " + typeof(T).Name + " was not thrown.");
@@ -131,30 +131,33 @@ namespace Microsoft.ClearScript.Test
             Assert.IsFalse(string.IsNullOrWhiteSpace(exception.StackTrace));
         }
 
-        public static void AssertValidException(IScriptEngineException exception)
+        public static void AssertValidException(IScriptEngineException exception, bool checkScriptStackTrace = true)
         {
             AssertValidException((Exception)exception);
             if ((exception is ScriptEngineException) && !exception.IsFatal && (exception.HResult != RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION))
             {
                 Assert.IsTrue(exception.ErrorDetails.StartsWith(exception.Message, StringComparison.Ordinal));
-                Assert.IsTrue(exception.ErrorDetails.Contains("\n    at "));
+                if (checkScriptStackTrace)
+                {
+                    Assert.IsTrue(exception.ErrorDetails.Contains("\n    at "));
+                }
             }
         }
 
-        public static void AssertValidException(ScriptEngine engine, IScriptEngineException exception)
+        public static void AssertValidException(ScriptEngine engine, IScriptEngineException exception, bool checkScriptStackTrace = true)
         {
-            AssertValidException(exception);
+            AssertValidException(exception, checkScriptStackTrace);
             Assert.AreEqual(engine.Name, exception.EngineName);
         }
 
-        private static void AssertValidExceptionChain(Exception exception)
+        private static void AssertValidExceptionChain(Exception exception, bool checkScriptStackTrace)
         {
             while (exception != null)
             {
                 var scriptError = exception as IScriptEngineException;
                 if (scriptError != null)
                 {
-                    AssertValidException(scriptError);
+                    AssertValidException(scriptError, checkScriptStackTrace);
                 }
                 else
                 {

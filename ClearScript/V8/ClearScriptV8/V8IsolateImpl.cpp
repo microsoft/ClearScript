@@ -82,20 +82,20 @@ static Persistent<Script> ScriptHandleFromPtr(void* pvScript)
 //-----------------------------------------------------------------------------
 
 #define BEGIN_ISOLATE_ENTRY_SCOPE \
-        { \
-            Isolate::Scope t_IsolateEntryScope(m_pIsolate);
+    { \
+        Isolate::Scope t_IsolateEntryScope(m_pIsolate);
 
 #define END_ISOLATE_ENTRY_SCOPE \
-            IGNORE_UNUSED(t_IsolateEntryScope); \
-        }
+        IGNORE_UNUSED(t_IsolateEntryScope); \
+    }
 
 #define BEGIN_ISOLATE_SCOPE \
-        { \
-            Scope t_IsolateScope(this);
+    { \
+        Scope t_IsolateScope(this);
 
 #define END_ISOLATE_SCOPE \
-            IGNORE_UNUSED(t_IsolateScope); \
-        }
+        IGNORE_UNUSED(t_IsolateScope); \
+    }
 
 //-----------------------------------------------------------------------------
 
@@ -103,10 +103,18 @@ DEFINE_CONCURRENT_CALLBACK_MANAGER(DebugMessageDispatcher, void())
 
 //-----------------------------------------------------------------------------
 
-V8IsolateImpl::V8IsolateImpl(const wchar_t* pName, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort):
+static const size_t s_StackBreathingRoom = static_cast<size_t>(16 * 1024);
+static size_t* const s_pMinStackLimit = reinterpret_cast<size_t*>(sizeof(size_t));
+
+//-----------------------------------------------------------------------------
+
+V8IsolateImpl::V8IsolateImpl(const wchar_t* pName, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort) :
     m_pIsolate(Isolate::New()),
     m_DebuggingEnabled(false),
     m_DebugMessageDispatchCount(0),
+    m_MaxStackUsage(0),
+    m_ExecutionLevel(0),
+    m_pStackLimit(nullptr),
     m_IsOutOfMemory(false)
 {
     BEGIN_ADDREF_SCOPE
@@ -126,7 +134,7 @@ V8IsolateImpl::V8IsolateImpl(const wchar_t* pName, const V8IsolateConstraints* p
                 constraints.set_max_young_space_size(pConstraints->GetMaxYoungSpaceSize());
                 constraints.set_max_old_space_size(pConstraints->GetMaxOldSpaceSize());
                 constraints.set_max_executable_size(pConstraints->GetMaxExecutableSize());
-                ASSERT_EVAL(SetResourceConstraints(&constraints));
+                ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
             }
 
         END_ISOLATE_ENTRY_SCOPE
@@ -228,6 +236,20 @@ void V8IsolateImpl::DisableDebugging()
         m_DebuggingEnabled = false;
         m_DebugMessageDispatchCount = 0;
     }
+}
+
+//-----------------------------------------------------------------------------
+
+size_t V8IsolateImpl::GetMaxStackUsage()
+{
+    return m_MaxStackUsage;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SetMaxStackUsage(size_t value)
+{
+    m_MaxStackUsage = value;
 }
 
 //-----------------------------------------------------------------------------
@@ -347,4 +369,73 @@ void V8IsolateImpl::ProcessDebugMessages()
         }
 
     END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
+{
+    _ASSERTE(m_pIsolate == Isolate::GetCurrent());
+    _ASSERTE(Locker::IsLocked(m_pIsolate));
+
+    if (m_ExecutionLevel == 0)
+    {
+        // entering top-level execution scope
+        _ASSERTE(m_pStackLimit == nullptr);
+
+        // is a stack usage limit specified?
+        size_t maxStackUsage = m_MaxStackUsage;
+        if (maxStackUsage > 0)
+        {
+            // yes; ensure minimum breathing room
+            maxStackUsage = max(maxStackUsage, s_StackBreathingRoom);
+
+            // calculate stack address limit
+            size_t* pStackLimit = pStackMarker - (maxStackUsage / sizeof(size_t));
+            if ((pStackLimit < s_pMinStackLimit) || (pStackLimit > pStackMarker))
+            {
+                // underflow; use minimum non-null stack address
+                pStackLimit = s_pMinStackLimit;
+            }
+            else
+            {
+                // check stack address limit sanity
+                _ASSERTE((pStackMarker - pStackLimit) >= (s_StackBreathingRoom / sizeof(size_t)));
+            }
+
+            // set and record stack address limit
+            ResourceConstraints constraints;
+            constraints.set_stack_limit(reinterpret_cast<uint32_t*>(pStackLimit));
+            ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
+            m_pStackLimit = pStackLimit;
+        }
+    }
+    else if ((m_pStackLimit != nullptr) && (pStackMarker < m_pStackLimit))
+    {
+        // stack usage limit exceeded (host-side detection)
+        throw V8Exception(V8Exception::Type_General, m_Name.c_str(), L"The V8 runtime has exceeded its stack usage limit", nullptr, V8Value(V8Value::Undefined));
+    }
+
+    m_ExecutionLevel++;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::ExitExecutionScope()
+{
+    _ASSERTE(m_pIsolate == Isolate::GetCurrent());
+    _ASSERTE(Locker::IsLocked(m_pIsolate));
+
+    if (--m_ExecutionLevel == 0)
+    {
+        // exiting top-level execution scope
+        if (m_pStackLimit != nullptr)
+        {
+            // V8 has no API for removing a stack address limit
+            ResourceConstraints constraints;
+            constraints.set_stack_limit(reinterpret_cast<uint32_t*>(s_pMinStackLimit));
+            ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
+            m_pStackLimit = nullptr;
+        }
+    }
 }

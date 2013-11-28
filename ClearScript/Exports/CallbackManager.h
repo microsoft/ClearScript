@@ -69,16 +69,16 @@
 //-----------------------------------------------------------------------------
 
 #define DEFINE_CALLBACK_MANAGER(NAME, TYPE) \
-            DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, TYPE, NullMutex)
+    DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, TYPE, NullMutex)
 
 #define DEFINE_CONCURRENT_CALLBACK_MANAGER(NAME, TYPE) \
-            DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, TYPE, RecursiveMutex)
+    DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, TYPE, RecursiveMutex)
 
 #define DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, CALLBACK_TYPE, MUTEX_TYPE) \
-            struct NAME##CallbackTraits: public CallbackTraits<NAME##CallbackTraits, CALLBACK_TYPE, MUTEX_TYPE> {};
+    struct NAME##CallbackTraits: public CallbackTraits<NAME##CallbackTraits, CALLBACK_TYPE, MUTEX_TYPE> {};
 
 #define CALLBACK_MANAGER(NAME) \
-            CallbackManager<NAME##CallbackTraits>
+    CallbackManager<NAME##CallbackTraits>
 
 //-----------------------------------------------------------------------------
 // CallbackTraits

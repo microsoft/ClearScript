@@ -269,7 +269,10 @@ namespace Microsoft.ClearScript.Test
 
             Action innerTest = () =>
             {
-                using (var scriptEngine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging))
+                // The Visual Studio 2013 debugging stack fails to release the engine properly,
+                // resulting in test failure. Visual Studio 2012 does not have this bug.
+
+                using (var scriptEngine = new VBScriptEngine())
                 {
                     scriptEngine.AddHostObject("bag", bag);
                     Assert.AreEqual(2, bag.EngineCount);
@@ -290,7 +293,10 @@ namespace Microsoft.ClearScript.Test
             var innerBag = new PropertyBag();
             Action innerTest = () =>
             {
-                using (var scriptEngine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging))
+                // The Visual Studio 2013 debugging stack fails to release the engine properly,
+                // resulting in test failure. Visual Studio 2012 does not have this bug.
+
+                using (var scriptEngine = new VBScriptEngine())
                 {
                     scriptEngine.AddHostObject("bag", outerBag);
                     outerBag.Add("innerBag", innerBag);

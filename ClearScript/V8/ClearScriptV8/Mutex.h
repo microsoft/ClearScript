@@ -153,9 +153,9 @@ private:
 //-----------------------------------------------------------------------------
 
 #define BEGIN_MUTEX_SCOPE(MUTEX) \
-        { \
-            MutexLock<decltype(MUTEX)> t_MutexLock(MUTEX);
+    { \
+        MutexLock<decltype(MUTEX)> t_MutexLock(MUTEX);
 
 #define END_MUTEX_SCOPE \
-            IGNORE_UNUSED(t_MutexLock); \
-        }
+        IGNORE_UNUSED(t_MutexLock); \
+    }

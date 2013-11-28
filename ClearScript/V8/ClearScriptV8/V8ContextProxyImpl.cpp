@@ -94,6 +94,20 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    UIntPtr V8ContextProxyImpl::MaxRuntimeStackUsage::get()
+    {
+        return (UIntPtr)GetContext()->GetMaxIsolateStackUsage();
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8ContextProxyImpl::MaxRuntimeStackUsage::set(UIntPtr value)
+    {
+        GetContext()->SetMaxIsolateStackUsage(static_cast<size_t>(value));
+    }
+
+    //-------------------------------------------------------------------------
+
     void V8ContextProxyImpl::InvokeWithLock(Action^ gcAction)
     {
         try

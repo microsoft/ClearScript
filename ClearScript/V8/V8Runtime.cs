@@ -217,6 +217,44 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
+        /// Enables or disables script code formatting.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, the V8 runtime may format script code before
+        /// executing or compiling it. This is intended to facilitate interactive debugging. The
+        /// formatting operation currently includes stripping leading and trailing blank lines and
+        /// removing global indentation.
+        /// </remarks>
+        public bool FormatCode { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum amount by which the stack is permitted to grow during script execution.
+        /// </summary>
+        /// <remarks>
+        /// This property is specified in bytes. When it is set to the default value, no stack
+        /// usage limit is enforced, and unchecked recursion or other stack usage may lead to
+        /// unrecoverable errors and process termination.
+        /// <para>
+        /// Note that the V8 runtime does not monitor stack usage while a host call is in progress.
+        /// Monitoring is resumed when control returns to the runtime.
+        /// </para>
+        /// </remarks>
+        public UIntPtr MaxStackUsage
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.MaxStackUsage;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                proxy.MaxStackUsage = value;
+            }
+        }
+
+        /// <summary>
         /// Creates a new V8 script engine instance.
         /// </summary>
         /// <returns>A new V8 script engine instance.</returns>
@@ -321,7 +359,7 @@ namespace Microsoft.ClearScript.V8
         public V8ScriptEngine CreateScriptEngine(string engineName, V8ScriptEngineFlags flags, int debugPort)
         {
             VerifyNotDisposed();
-            return new V8ScriptEngine(this, engineName, null, flags, debugPort);
+            return new V8ScriptEngine(this, engineName, null, flags, debugPort) { FormatCode = FormatCode };
         }
 
         /// <summary>
@@ -344,7 +382,7 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
             var uniqueName = name + ":" + documentNameManager.GetUniqueName(documentName, "Script Document");
-            return proxy.Compile(uniqueName, MiscHelpers.FormatCode(code));
+            return proxy.Compile(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code);
         }
 
         /// <summary>

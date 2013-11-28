@@ -105,7 +105,7 @@ namespace Microsoft.ClearScript
                 return result;
             }
 
-            if ((type == typeof(void)) || (type == typeof(object)))
+            if ((type == typeof(void)) || (type == typeof(object)) || type.IsNullable())
             {
                 return result;
             }

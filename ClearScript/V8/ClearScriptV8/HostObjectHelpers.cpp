@@ -220,7 +220,7 @@ V8Value HostObjectHelpers::Invoke(void* pvObject, const vector<V8Value>& args, b
 {
     try
     {
-        auto argCount = (int)args.size();
+        auto argCount = static_cast<int>(args.size());
 
         auto exportedArgs = gcnew array<Object^>(argCount);
         for (auto index = 0; index < argCount; index++)
@@ -242,7 +242,7 @@ V8Value HostObjectHelpers::InvokeMethod(void* pvObject, const wchar_t* pName, co
 {
     try
     {
-        auto argCount = (int)args.size();
+        auto argCount = static_cast<int>(args.size());
 
         auto exportedArgs = gcnew array<Object^>(argCount);
         for (auto index = 0; index < argCount; index++)

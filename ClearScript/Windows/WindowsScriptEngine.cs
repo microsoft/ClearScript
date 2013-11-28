@@ -185,7 +185,7 @@ namespace Microsoft.ClearScript.Windows
 
         private void Parse(string documentName, string code, ScriptTextFlags flags, IntPtr pVarResult, out EXCEPINFO excepInfo, bool discard)
         {
-            var formattedCode = MiscHelpers.FormatCode(code);
+            var formattedCode = FormatCode ? MiscHelpers.FormatCode(code) : code;
 
             DebugDocument debugDocument;
             var sourceContext = CreateDebugDocument(documentName, formattedCode, discard, out debugDocument);
@@ -227,6 +227,82 @@ namespace Microsoft.ClearScript.Windows
             return sourceContext;
         }
 
+        private string GetStackTraceInternal()
+        {
+            Debug.Assert(engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging));
+            var stackTrace = string.Empty;
+
+            IEnumDebugStackFrames enumFrames;
+            activeScript.EnumStackFrames(out enumFrames);
+
+            while (true)
+            {
+                DebugStackFrameDescriptor descriptor;
+                uint countFetched;
+                enumFrames.Next(1, out descriptor, out countFetched);
+                if (countFetched < 1)
+                {
+                    break;
+                }
+
+                try
+                {
+                    string description;
+                    descriptor.Frame.GetDescriptionString(true, out description);
+
+                    IDebugCodeContext codeContext;
+                    descriptor.Frame.GetCodeContext(out codeContext);
+
+                    IDebugDocumentContext documentContext;
+                    codeContext.GetDocumentContext(out documentContext);
+                    if (documentContext == null)
+                    {
+                        stackTrace += MiscHelpers.FormatInvariant("    at {0}\n", description);
+                    }
+                    else
+                    {
+                        IDebugDocument document;
+                        documentContext.GetDocument(out document);
+                        var documentText = (IDebugDocumentText)document;
+
+                        string documentName;
+                        document.GetName(DocumentNameType.Title, out documentName);
+
+                        uint position;
+                        uint length;
+                        documentText.GetPositionOfContext(documentContext, out position, out length);
+
+                        var pBuffer = Marshal.AllocCoTaskMem((int)(sizeof(char) * length));
+                        try
+                        {
+                            uint lengthReturned = 0;
+                            documentText.GetText(position, pBuffer, IntPtr.Zero, ref lengthReturned, length);
+                            var codeLine = Marshal.PtrToStringUni(pBuffer, (int)lengthReturned);
+
+                            uint lineNumber;
+                            uint offsetInLine;
+                            documentText.GetLineOfPosition(position, out lineNumber, out offsetInLine);
+
+                            stackTrace += MiscHelpers.FormatInvariant("    at {0} ({1}:{2}:{3}) -> {4}\n", description, documentName, lineNumber, offsetInLine, codeLine);
+                        }
+                        finally
+                        {
+                            Marshal.FreeCoTaskMem(pBuffer);
+                        }
+                    }
+                }
+                finally
+                {
+                    if (descriptor.FinalObject != null)
+                    {
+                        Marshal.ReleaseComObject(descriptor.FinalObject);
+                    }
+                }
+            }
+
+            return stackTrace.TrimEnd('\n');
+        }
+
         private void VerifyNotDisposed()
         {
             if (disposed)
@@ -254,6 +330,24 @@ namespace Microsoft.ClearScript.Windows
                 VerifyNotDisposed();
                 return script;
             }
+        }
+
+        /// <summary>
+        /// Gets a string representation of the script call stack.
+        /// </summary>
+        /// <returns>The script call stack formatted as a string.</returns>
+        /// <remarks>
+        /// This method returns an empty string if the script engine is not executing script code.
+        /// The stack trace text format is defined by the script engine.
+        /// <para>
+        /// The <see cref="WindowsScriptEngine"/> version of this method returns the empty string
+        /// if script debugging features have not been enabled for the instance.
+        /// </para>
+        /// </remarks>
+        public override string GetStackTrace()
+        {
+            VerifyNotDisposed();
+            return engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging) ? ScriptInvoke(() => GetStackTraceInternal()) : string.Empty;
         }
 
         /// <summary>

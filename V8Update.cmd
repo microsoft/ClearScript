@@ -5,8 +5,8 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedRevision=17421
-set testedVersion=3.22.23
+set testedRevision=18109
+set testedVersion=3.23.13
 
 set gyprev=1685
 set pythonrev=89111
@@ -162,7 +162,14 @@ cd ..
 
 :Build
 
+:SetMSVSVersion
+if "%VisualStudioVersion%"=="12.0" goto UseMSVS2013
 set GYP_MSVS_VERSION=2012
+goto SetMSVSVersionDone
+:UseMSVS2013
+set GYP_MSVS_VERSION=2013
+:SetMSVSVersionDone
+
 set PYTHONHOME=
 set PYTHONPATH=
 

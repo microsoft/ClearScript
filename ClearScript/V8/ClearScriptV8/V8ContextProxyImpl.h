@@ -75,6 +75,12 @@ namespace V8 {
 
         V8ContextProxyImpl(V8IsolateProxy^ gcIsolateProxy, String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Int32 debugPort);
 
+        property UIntPtr MaxRuntimeStackUsage
+        {
+            virtual UIntPtr get() override;
+            virtual void set(UIntPtr value) override;
+        }
+
         virtual void InvokeWithLock(Action^ gcAction) override;
         virtual Object^ GetRootItem() override;
         virtual void AddGlobalItem(String^ gcName, Object^ gcItem, Boolean globalMembers) override;

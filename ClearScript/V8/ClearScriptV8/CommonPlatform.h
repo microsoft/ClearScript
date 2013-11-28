@@ -68,6 +68,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <cstring>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -113,3 +114,16 @@ using namespace std;
 #ifndef DECLSPEC_NORETURN
     #define DECLSPEC_NORETURN __declspec(noreturn)
 #endif // !DECLSPEC_NORETURN
+
+//-----------------------------------------------------------------------------
+
+#define BEGIN_COMPOUND_MACRO \
+    do \
+    {
+
+#define END_COMPOUND_MACRO \
+    __pragma(warning(push)) \
+    __pragma(warning(disable:4127)) \
+    } \
+    while (false) \
+    __pragma(warning(pop))

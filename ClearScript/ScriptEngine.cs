@@ -120,6 +120,17 @@ namespace Microsoft.ClearScript
         public Type AccessContext { get; set; }
 
         /// <summary>
+        /// Enables or disables script code formatting.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, the script engine may format script code
+        /// before executing or compiling it. This is intended to facilitate interactive debugging.
+        /// The formatting operation currently includes stripping leading and trailing blank lines
+        /// and removing global indentation.
+        /// </remarks>
+        public bool FormatCode { get; set; }
+
+        /// <summary>
         /// Gets or sets a value that controls whether script code is permitted to use reflection.
         /// </summary>
         /// <remarks>
@@ -647,6 +658,16 @@ namespace Microsoft.ClearScript
         {
             return Evaluate(documentName, discard, code, true);
         }
+
+        /// <summary>
+        /// Gets a string representation of the script call stack.
+        /// </summary>
+        /// <returns>The script call stack formatted as a string.</returns>
+        /// <remarks>
+        /// This method returns an empty string if the script engine is not executing script code.
+        /// The stack trace text format is defined by the script engine.
+        /// </remarks>
+        public abstract string GetStackTrace();
 
         /// <summary>
         /// Interrupts script execution and causes the script engine to throw an exception.

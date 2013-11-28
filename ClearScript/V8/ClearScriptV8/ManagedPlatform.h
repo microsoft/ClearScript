@@ -94,9 +94,9 @@ using namespace Microsoft::ClearScript::Util;
 //-----------------------------------------------------------------------------
 
 #define BEGIN_LOCK_SCOPE(OBJECT) \
-        { \
-            msclr::lock t_Lock(OBJECT);
+    { \
+        msclr::lock t_Lock(OBJECT);
 
 #define END_LOCK_SCOPE \
-            IGNORE_UNUSED(t_Lock); \
-        }
+        IGNORE_UNUSED(t_Lock); \
+    }

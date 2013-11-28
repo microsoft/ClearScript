@@ -863,6 +863,43 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(Math.Sqrt(7), engine.Evaluate("testObject.Item.get(clng(123), \"456\", 789.987, -0.12345)"));
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_FormatCode()
+        {
+            try
+            {
+                engine.Execute("a", "\n\n\n     x = 3.a");
+            }
+            catch (ScriptEngineException exception)
+            {
+                Assert.IsTrue(exception.ErrorDetails.Contains("(a:3:11)"));
+            }
+
+            engine.FormatCode = true;
+            try
+            {
+                engine.Execute("b", "\n\n\n     x = 3.a");
+            }
+            catch (ScriptEngineException exception)
+            {
+                Assert.IsTrue(exception.ErrorDetails.Contains("(b:0:6)"));
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_GetStackTrace()
+        {
+            engine.AddHostObject("qux", new Func<object>(() => engine.GetStackTrace()));
+            engine.Execute(@"
+                function baz():baz = qux():end function
+                function bar():bar = baz():end function
+                function foo():foo = bar():end function
+            ");
+
+            Assert.AreEqual("    at baz (Script Document [3]:1:31) -> baz = qux()\n    at bar (Script Document [3]:2:31) -> bar = baz()\n    at foo (Script Document [3]:3:31) -> foo = bar()\n    at VBScript global code (Script Document [4] [temp]:0:0) -> foo()", engine.Evaluate("foo()"));
+            Assert.AreEqual("    at baz (Script Document [3]:1:31) -> baz = qux()\n    at bar (Script Document [3]:2:31) -> bar = baz()\n    at foo (Script Document [3]:3:31) -> foo = bar()", engine.Script.foo());
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
