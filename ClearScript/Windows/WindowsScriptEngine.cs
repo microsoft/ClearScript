@@ -122,7 +122,7 @@ namespace Microsoft.ClearScript.Windows
             AccessContext = typeof(ScriptEngine);
             script = base.ScriptInvoke(() =>
             {
-                activeScript = ActiveScriptWrapper.Create(progID);
+                activeScript = ActiveScriptWrapper.Create(progID, flags);
                 engineFlags = flags;
 
                 if (flags.HasFlag(WindowsScriptEngineFlags.EnableDebugging))
@@ -295,7 +295,7 @@ namespace Microsoft.ClearScript.Windows
                 {
                     if (descriptor.FinalObject != null)
                     {
-                        Marshal.ReleaseComObject(descriptor.FinalObject);
+                        Marshal.FinalReleaseComObject(descriptor.FinalObject);
                     }
                 }
             }
@@ -531,6 +531,7 @@ namespace Microsoft.ClearScript.Windows
                 else
                 {
                     var pVarResult = Marshal.AllocCoTaskMem(256);
+                    NativeMethods.VariantInit(pVarResult);
                     try
                     {
                         const ScriptTextFlags flags = ScriptTextFlags.IsExpression;
@@ -539,6 +540,7 @@ namespace Microsoft.ClearScript.Windows
                     }
                     finally
                     {
+                        NativeMethods.VariantClear(pVarResult);
                         Marshal.FreeCoTaskMem(pVarResult);
                     }
                 }
@@ -729,6 +731,23 @@ namespace Microsoft.ClearScript.Windows
 
         private class HostItemMap : Dictionary<string, object>
         {
+        }
+
+        #endregion
+
+        #region Nested type: NativeMethods
+
+        private static class NativeMethods
+        {
+            [DllImport("oleaut32.dll", ExactSpelling = true)]
+            public static extern void VariantInit(
+                [In] IntPtr pVariant
+            );
+
+            [DllImport("oleaut32.dll", ExactSpelling = true)]
+            public static extern uint VariantClear(
+                [In] IntPtr pVariant
+            );
         }
 
         #endregion

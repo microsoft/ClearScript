@@ -37,6 +37,10 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
@@ -90,6 +94,7 @@
     <Compile Include="StaticMemberAccessTest.cs" />
     <Compile Include="StaticTestClass.cs" />
     <Compile Include="TestObject.cs" />
+    <Compile Include="TypeRestrictionTest.cs" />
     <Compile Include="V8ScriptEngineTest.cs" />
     <Compile Include="VBScriptEngineTest.cs" />
   </ItemGroup>

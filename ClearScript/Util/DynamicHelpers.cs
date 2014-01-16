@@ -121,32 +121,32 @@ namespace Microsoft.ClearScript.Util
                                 return true;
                             }
                         }
-                        else if ((args != null) && (args.Length > 0))
+                        else
                         {
-                            var getIndexBinder = binder as GetIndexBinder;
-                            if (getIndexBinder != null)
+                            var invokeMemberBinder = binder as InvokeMemberBinder;
+                            if (invokeMemberBinder != null)
                             {
-                                if (TryGetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
+                                if (TryInvokeMethod(reflect, invokeMemberBinder.Name, false, args, out result))
                                 {
                                     return true;
                                 }
                             }
-                            else
+                            else if ((args != null) && (args.Length > 0))
                             {
-                                var setIndexBinder = binder as SetIndexBinder;
-                                if (setIndexBinder != null)
+                                var getIndexBinder = binder as GetIndexBinder;
+                                if (getIndexBinder != null)
                                 {
-                                    if (TrySetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
+                                    if (TryGetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
                                     {
                                         return true;
                                     }
                                 }
                                 else
                                 {
-                                    var invokeMemberBinder = binder as InvokeMemberBinder;
-                                    if (invokeMemberBinder != null)
+                                    var setIndexBinder = binder as SetIndexBinder;
+                                    if (setIndexBinder != null)
                                     {
-                                        if (TryInvokeMethod(reflect, invokeMemberBinder.Name, false, args, out result))
+                                        if (TrySetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
                                         {
                                             return true;
                                         }

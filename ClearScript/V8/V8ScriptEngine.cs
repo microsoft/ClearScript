@@ -672,7 +672,7 @@ namespace Microsoft.ClearScript.V8
                 {
                     uniqueName += " [temp]";
                 }
-                else
+                else if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableDebugging))
                 {
                     documentNames.Add(uniqueName);
                 }

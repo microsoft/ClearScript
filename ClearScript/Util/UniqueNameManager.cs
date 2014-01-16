@@ -86,7 +86,7 @@ namespace Microsoft.ClearScript.Util
                 map.TryGetValue(nonBlankName, out count);
 
                 map[nonBlankName] = ++count;
-                return (count < 2) ? nonBlankName : MiscHelpers.FormatInvariant("{0} [{1}]", nonBlankName, count);
+                return (count < 2) ? nonBlankName : string.Concat(nonBlankName, " [", count, "]");
             }
         }
 
@@ -105,13 +105,13 @@ namespace Microsoft.ClearScript.Util
             lock (mapLock)
             {
                 var nonBlankName = MiscHelpers.EnsureNonBlank(Path.GetFileNameWithoutExtension(inputName), alternate);
+                var extension = Path.GetExtension(inputName);
 
                 uint count;
                 map.TryGetValue(nonBlankName, out count);
 
                 map[nonBlankName] = ++count;
-                var uniqueName = (count < 2) ? nonBlankName : MiscHelpers.FormatInvariant("{0} [{1}]", nonBlankName, count);
-                return Path.HasExtension(inputName) ? Path.ChangeExtension(uniqueName, Path.GetExtension(inputName)) : uniqueName;
+                return (count < 2) ? string.Concat(nonBlankName, extension) : string.Concat(nonBlankName, " [", count, "]", extension);
             }
         }
 

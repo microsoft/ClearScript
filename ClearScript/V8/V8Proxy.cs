@@ -123,6 +123,15 @@ namespace Microsoft.ClearScript.V8
 
         private static void LoadAssembly()
         {
+            try
+            {
+                assembly = Assembly.Load("ClearScriptV8");
+                return;
+            }
+            catch (FileNotFoundException)
+            {
+            }
+
             if (LoadNativeLibrary())
             {
                 var suffix = Environment.Is64BitProcess ? "64" : "32";
@@ -197,7 +206,7 @@ namespace Microsoft.ClearScript.V8
 
         private static class NativeMethods
         {
-            [DllImport("kernel32", ExactSpelling = true)]
+            [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
             public static extern IntPtr LoadLibraryW(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string path
             );

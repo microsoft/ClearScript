@@ -87,6 +87,11 @@ namespace Microsoft.ClearScript.Windows
         /// <summary>
         /// Specifies that smart source document management is to be disabled. This option is ignored if <see cref="EnableDebugging"/> is not specified.
         /// </summary>
-        DisableSourceManagement = 0x00000004
+        DisableSourceManagement = 0x00000004,
+
+        /// <summary>
+        /// Specifies that script language features that enhance standards compliance are to be enabled. This option only affects <see cref="JScriptEngine"/>.
+        /// </summary>
+        EnableStandardsMode = 0x00000008
     }
 }

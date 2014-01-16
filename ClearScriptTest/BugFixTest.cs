@@ -60,15 +60,18 @@
 //       
 
 using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using Microsoft.ClearScript.Util;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.Windows;
+using Microsoft.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -338,11 +341,58 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("[object global]", engine.ExecuteCommand("this"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VariantClear()
+        {
+            // ReSharper disable RedundantAssignment
+
+            var x = new object();
+            var wr = new WeakReference(x);
+
+            VariantClearTestHelper(x);
+            x = null;
+
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+
+            Assert.IsFalse(wr.IsAlive);
+
+            // ReSharper restore RedundantAssignment
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBCallToParameterlessVBScriptSub()
+        {
+            var options = new CompilerParameters { GenerateInMemory = true };
+            options.ReferencedAssemblies.Add("ClearScript.dll");
+            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { @"
+                Module TestModule
+                    Sub TestMethod
+                        Using engine As New Microsoft.ClearScript.Windows.VBScriptEngine
+                            engine.Execute(""sub main : end sub"")
+                            engine.Script.main()
+                        End Using
+                    End Sub
+                End Module
+            "});
+
+            results.CompiledAssembly.GetType("TestModule").InvokeMember("TestMethod", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>());
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
 
         #region miscellaneous
+
+        private static void VariantClearTestHelper(object x)
+        {
+            using (var engine = new JScriptEngine())
+            {
+                engine.AddHostObject("x", x);
+                engine.Evaluate("x");
+            }
+        }
 
         public class NullableTest
         {

@@ -161,6 +161,11 @@ private:
         return m_spIsolateImpl->GetFalse();
     }
 
+    Local<Number> CreateNumber(double value)
+    {
+        return m_spIsolateImpl->CreateNumber(value);
+    }
+
     Local<Integer> CreateInteger(__int32 value)
     {
         return m_spIsolateImpl->CreateInteger(value);
@@ -169,6 +174,36 @@ private:
     Local<Integer> CreateInteger(unsigned __int32 value)
     {
         return m_spIsolateImpl->CreateInteger(value);
+    }
+
+    Local<String> CreateString(const char* pValue)
+    {
+        return m_spIsolateImpl->CreateString(pValue);
+    }
+
+    Local<String> CreateString(const wchar_t* pValue)
+    {
+        return m_spIsolateImpl->CreateString(pValue);
+    }
+
+    Local<Array> CreateArray(int length = 0)
+    {
+        return m_spIsolateImpl->CreateArray(length);
+    }
+
+    Local<External> CreateExternal(void* pvValue)
+    {
+        return m_spIsolateImpl->CreateExternal(pvValue);
+    }
+
+    Local<ObjectTemplate> CreateObjectTemplate()
+    {
+        return m_spIsolateImpl->CreateObjectTemplate();
+    }
+
+    Local<FunctionTemplate> CreateFunctionTemplate()
+    {
+        return m_spIsolateImpl->CreateFunctionTemplate();
     }
 
     template <typename T>
@@ -205,6 +240,11 @@ private:
     void Dispose(Persistent<T> hTarget)
     {
         return m_spIsolateImpl->Dispose(hTarget);
+    }
+
+    Local<Value> ThrowException(Local<Value> hException)
+    {
+        return m_spIsolateImpl->ThrowException(hException);
     }
 
     void TerminateExecution()

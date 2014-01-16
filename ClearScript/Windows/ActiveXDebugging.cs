@@ -967,7 +967,7 @@ namespace Microsoft.ClearScript.Windows
     {
         void Next(
             [In] uint count,
-            [Out] [MarshalAs(UnmanagedType.Struct)] out DebugStackFrameDescriptor descriptor,
+            [Out] out DebugStackFrameDescriptor descriptor,
             [Out] out uint countFetched
         );
 
@@ -991,7 +991,7 @@ namespace Microsoft.ClearScript.Windows
 
         void Next(
             [In] uint count,
-            [Out] [MarshalAs(UnmanagedType.Struct)] out DebugStackFrameDescriptor descriptor,
+            [Out] out DebugStackFrameDescriptor descriptor,
             [Out] out uint countFetched
         );
 
@@ -1009,7 +1009,7 @@ namespace Microsoft.ClearScript.Windows
 
         void Next64(
             [In] uint count,
-            [Out] [MarshalAs(UnmanagedType.Struct)] out DebugStackFrameDescriptor64 descriptor,
+            [Out] out DebugStackFrameDescriptor64 descriptor,
             [Out] out uint countFetched
         );
     }

@@ -90,36 +90,42 @@ namespace Microsoft.ClearScript.Util
 
         private static void LoadAssemblyTable()
         {
-            var dirPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            dirPath = Path.Combine(dirPath, "Microsoft", "ClearScript", Environment.Is64BitProcess ? "x64" : "x86", GetRuntimeVersionDirectoryName());
-            Directory.CreateDirectory(dirPath);
+            // ReSharper disable EmptyGeneralCatchClause
 
-            var filePath = Path.Combine(dirPath, "AssemblyTable.bin");
-            if (File.Exists(filePath))
+            string filePath = null;
+            try
             {
-                // ReSharper disable EmptyGeneralCatchClause
-
-                try
+                var dirPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                if (!string.IsNullOrWhiteSpace(dirPath))
                 {
-                    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    dirPath = Path.Combine(dirPath, "Microsoft", "ClearScript", Environment.Is64BitProcess ? "x64" : "x86", GetRuntimeVersionDirectoryName());
+                    Directory.CreateDirectory(dirPath);
+
+                    filePath = Path.Combine(dirPath, "AssemblyTable.bin");
+                    if (File.Exists(filePath))
                     {
-                        var formatter = new BinaryFormatter();
-                        table = (ConcurrentDictionary<string, string>)formatter.Deserialize(stream);
+                        try
+                        {
+                            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            {
+                                var formatter = new BinaryFormatter();
+                                table = (ConcurrentDictionary<string, string>)formatter.Deserialize(stream);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                        }
                     }
                 }
-                catch (Exception)
-                {
-                }
-
-                // ReSharper restore EmptyGeneralCatchClause
+            }
+            catch (Exception)
+            {
             }
 
             if (table == null)
             {
-                // ReSharper disable EmptyGeneralCatchClause
-
                 BuildAssemblyTable();
-                if (table != null)
+                if ((table != null) && (filePath != null))
                 {
                     try
                     {
@@ -133,35 +139,41 @@ namespace Microsoft.ClearScript.Util
                     {
                     }
                 }
-
-                // ReSharper restore EmptyGeneralCatchClause
             }
+
+            // ReSharper restore EmptyGeneralCatchClause
         }
 
         private static void BuildAssemblyTable()
         {
-            var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\.NETFramework");
-            if (key != null)
+            // ReSharper disable EmptyGeneralCatchClause
+
+            try
             {
-                var dirPath = Path.Combine((string)key.GetValue("InstallRoot"), GetRuntimeVersionDirectoryName());
-
-                table = new ConcurrentDictionary<string, string>();
-                foreach (var filePath in Directory.EnumerateFiles(dirPath, "*.dll", SearchOption.AllDirectories))
+                var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\.NETFramework");
+                if (key != null)
                 {
-                    // ReSharper disable EmptyGeneralCatchClause
+                    var dirPath = Path.Combine((string)key.GetValue("InstallRoot"), GetRuntimeVersionDirectoryName());
 
-                    try
+                    table = new ConcurrentDictionary<string, string>();
+                    foreach (var filePath in Directory.EnumerateFiles(dirPath, "*.dll", SearchOption.AllDirectories))
                     {
-                        var assemblyName = Assembly.ReflectionOnlyLoadFrom(filePath).GetName();
-                        table.TryAdd(assemblyName.Name, assemblyName.FullName);
+                        try
+                        {
+                            var assemblyName = Assembly.ReflectionOnlyLoadFrom(filePath).GetName();
+                            table.TryAdd(assemblyName.Name, assemblyName.FullName);
+                        }
+                        catch (Exception)
+                        {
+                        }
                     }
-                    catch (Exception)
-                    {
-                    }
-
-                    // ReSharper restore EmptyGeneralCatchClause
                 }
             }
+            catch (Exception)
+            {
+            }
+
+            // ReSharper restore EmptyGeneralCatchClause
         }
 
         private static string GetRuntimeVersionDirectoryName()

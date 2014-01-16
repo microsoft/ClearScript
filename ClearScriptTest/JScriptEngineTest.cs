@@ -964,6 +964,14 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("    at baz (Script Document:1:33) -> return qux()\n    at bar (Script Document:2:33) -> return baz()\n    at foo (Script Document:3:33) -> return bar()", engine.Script.foo());
         }
 
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_StandardsMode()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.EnableStandardsMode);
+            Assert.AreEqual("{\"foo\":123,\"bar\":456.789}", engine.Evaluate("JSON.stringify({ foo: 123, bar: 456.789 })"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

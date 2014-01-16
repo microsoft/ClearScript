@@ -5,10 +5,10 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedRevision=18109
-set testedVersion=3.23.13
+set testedRevision=18635
+set testedVersion=3.24.17
 
-set gyprev=1685
+set gyprev=1831
 set pythonrev=89111
 set cygwinrev=66844
 

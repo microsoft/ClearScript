@@ -68,7 +68,6 @@ using namespace System::Runtime::InteropServices;
 [assembly:AssemblyTitle("ClearScript V8 Interface (64-bit)")];
 [assembly:AssemblyProduct("ClearScript")];
 [assembly:AssemblyCopyright("(c) Microsoft Corporation")]
-[assembly:InternalsVisibleTo("ClearScript")];
 
 [assembly:ComVisible(false)];
 [assembly:AssemblyVersion(CLEARSCRIPT_VERSION_STRING)];

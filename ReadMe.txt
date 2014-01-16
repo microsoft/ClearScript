@@ -75,9 +75,31 @@ Library Reference in Compiled HTML (.CHM) format. If you'd like to rebuild this
 file, use Sandcastle Help File Builder (SHFB, http://shfb.codeplex.com) with
 the provided SHFB project file (ClearScript\doc\Reference.shfbproj).
 
-----------------------------------------------------------------
-III. Integrating and deploying ClearScript with your application
-----------------------------------------------------------------
+------------------------------------------------------------
+III. Building strong-named ClearScript assemblies (optional)
+------------------------------------------------------------
+
+ClearScript now includes optional support for building strong-named assemblies.
+Use the following one-time procedure to enable this feature:
+
+1. If the ClearScript solution is open in Visual Studio, close it.
+
+2. Generate a cryptographic key pair in your ClearScript root directory:
+
+      C:\ClearScript> sn -k ClearScript.snk
+      
+3. Open the ClearScript solution in Visual Studio.
+
+4. Click "Build" -> "Transform All T4 Templates".
+
+5. Rebuild the solution.
+
+Once you've performed these steps, the ClearScript assemblies you build will
+have strong names.
+      
+---------------------------------------------------------------
+IV. Integrating and deploying ClearScript with your application
+---------------------------------------------------------------
 
 Once you've built ClearScript, here's how to add it to your application:
 
@@ -108,9 +130,9 @@ Once you've built ClearScript, here's how to add it to your application:
       Visual Studio 2013:
       http://www.microsoft.com/en-us/download/details.aspx?id=40784
 
--------------------------------------
-IV. Debugging with ClearScript and V8
--------------------------------------
+------------------------------------
+V. Debugging with ClearScript and V8
+------------------------------------
 
 V8 does not support standard Windows script debugging. Instead, it implements
 its own TCP/IP-based debugging protocol. A convenient way to debug JavaScript
@@ -143,9 +165,9 @@ code running in V8 is to use the open-source Eclipse IDE:
 Note that you can also attach Visual Studio to your application for
 simultaneous debugging of script, managed, and native code.
 
-------------------
-V. V8 Known Issues
-------------------
+-------------------
+VI. V8 Known Issues
+-------------------
 
 1. V8 doesn't support indexers - properties with one or more parameters. Given
    the general syntax "A.B(C,D) = E" where A is an external object, JScript

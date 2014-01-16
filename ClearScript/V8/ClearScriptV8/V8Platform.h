@@ -122,15 +122,21 @@ public:
         return V8FastPersistent<T>(static_cast<T*>(pvValue));
     }
 
-    Handle<T> operator->() const
+    Local<T> operator->() const
     {
-        return CreateHandle();
+        return CreateLocal();
     }
 
     template <typename TOther>
     operator Handle<TOther>() const
     {
-        return CreateHandle();
+        return CreateLocal();
+    }
+
+    template <typename TOther>
+    operator Local<TOther>() const
+    {
+        return CreateLocal();
     }
 
     Local<T> CreateLocal(Isolate* pIsolate) const
@@ -148,7 +154,7 @@ public:
 
     void Dispose()
     {
-        AsPersistent().Dispose();
+        AsPersistent().Reset();
     }
 
 private:
@@ -158,9 +164,9 @@ private:
     {
     }
 
-    Handle<T> CreateHandle() const
+    Local<T> CreateLocal() const
     {
-        return Handle<T>::New(Isolate::GetCurrent(), AsPersistent());
+        return Local<T>::New(Isolate::GetCurrent(), AsPersistent());
     }
 
     const Persistent<T>& AsPersistent() const
@@ -263,15 +269,21 @@ public:
         return V8SafePersistent<T>(static_cast<Persistent<T>*>(pvImpl));
     }
 
-    Handle<T> operator->() const
+    Local<T> operator->() const
     {
-        return CreateHandle();
+        return CreateLocal();
     }
 
     template <typename TOther>
     operator Handle<TOther>() const
     {
-        return CreateHandle();
+        return CreateLocal();
+    }
+
+    template <typename TOther>
+    operator Local<TOther>() const
+    {
+        return CreateLocal();
     }
 
     Local<T> CreateLocal(Isolate* pIsolate) const
@@ -292,7 +304,7 @@ public:
     {
         if (m_pImpl != nullptr)
         {
-            m_pImpl->Dispose();
+            m_pImpl->Reset();
             delete m_pImpl;
             m_pImpl = nullptr;
         }
@@ -305,9 +317,9 @@ private:
     {
     }
 
-    Handle<T> CreateHandle() const
+    Local<T> CreateLocal() const
     {
-        return Handle<T>::New(Isolate::GetCurrent(), GetImpl());
+        return Local<T>::New(Isolate::GetCurrent(), GetImpl());
     }
 
     const Persistent<T>& GetImpl() const

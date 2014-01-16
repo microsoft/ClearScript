@@ -900,6 +900,18 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("    at baz (Script Document [3]:1:31) -> baz = qux()\n    at bar (Script Document [3]:2:31) -> bar = baz()\n    at foo (Script Document [3]:3:31) -> foo = bar()", engine.Script.foo());
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_StandardsMode()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.EnableStandardsMode);
+
+            // Standards Mode shouldn't affect VBScriptEngine at all
+            engine.Execute("function pi : pi = 4 * atn(1) : end function");
+            engine.Execute("function e : e = exp(1) : end function");
+            VBScriptEngine_Execute();
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

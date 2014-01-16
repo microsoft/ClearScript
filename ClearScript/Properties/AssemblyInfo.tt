@@ -59,9 +59,31 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ template debug="false" hostspecific="true" language="C#" #>
 <#@ output extension=".cs" #>
 <#@ include file="..\..\Version.tt" #>
+
+<#@ assembly name="EnvDTE" #>
+<#@ import namespace="EnvDTE" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Reflection" #>
+
+<#
+var dte = (DTE)((IServiceProvider)Host).GetService(typeof(DTE));
+var keyFilePath = Path.Combine(Path.GetDirectoryName(dte.Solution.FullName), "ClearScript.snk");
+var publicKeySpec = string.Empty;
+try
+{
+    using (var stream = new FileStream(keyFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+    {
+        var keyPair = new StrongNameKeyPair(stream);
+        publicKeySpec = ", PublicKey=" + BitConverter.ToString(keyPair.PublicKey).Replace("-", string.Empty);
+    }
+}
+catch (Exception)
+{
+}
+#>
 
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -70,9 +92,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("ClearScript Library")]
 [assembly: AssemblyProduct("ClearScript")]
 [assembly: AssemblyCopyright("(c) Microsoft Corporation")]
-[assembly: InternalsVisibleTo("ClearScriptV8-32")]
-[assembly: InternalsVisibleTo("ClearScriptV8-64")]
-[assembly: InternalsVisibleTo("ClearScriptTest")]
+[assembly: InternalsVisibleTo("<#= "ClearScriptV8-32" + publicKeySpec #>")]
+[assembly: InternalsVisibleTo("<#= "ClearScriptV8-64" + publicKeySpec #>")]
+[assembly: InternalsVisibleTo("<#= "ClearScriptTest" + publicKeySpec #>")]
 
 [assembly: ComVisible(false)]
 [assembly: AssemblyVersion("<#= version #>")]

@@ -141,6 +141,36 @@ namespace Microsoft.ClearScript.Windows
         Exhaustive = 1
     }
 
+    internal enum ScriptProp : uint
+    {
+        Name = 0x00000000,
+        MajorVersion = 0x00000001,
+        MinorVersion = 0x00000002,
+        BuildNumber = 0x00000003,
+        DelayedEventSinking = 0x00001000,
+        CatchException = 0x00001001,
+        ConversionLCID = 0x00001002,
+        HostStackRequired = 0x00001003,
+        Debugger = 0x00001100,
+        JITDebug = 0x00001101,
+        GCControlSoftClose = 0x00002000,
+        IntegerMode = 0x00003000,
+        StringCompareInstance = 0x00003001,
+        InvokeVersioning = 0x00004000,
+        HackFiberSupport = 0x70000000,
+        HackTridentEventSink = 0x70000001,
+        AbbreviateGlobalNameResolution = 0x70000002,
+        HostKeepAlive = 0x70000004
+    }
+
+    internal enum ScriptLanguageVersion
+    {
+        Default = 0,
+        Compatibility = 1,
+        Standards = 2,
+        Max = 255
+    }
+
     #endregion
 
     #region constants
@@ -251,7 +281,7 @@ namespace Microsoft.ClearScript.Windows
             [In] uint sourceContext,
             [In] uint startingLineNumber,
             [In] ScriptTextFlags flags,
-            [Out] IntPtr pVarResult,
+            [In] IntPtr pVarResult,
             [Out] out EXCEPINFO excepInfo
         );
     }
@@ -285,7 +315,7 @@ namespace Microsoft.ClearScript.Windows
             [In] ulong sourceContext,
             [In] uint startingLineNumber,
             [In] ScriptTextFlags flags,
-            [Out] IntPtr pVarResult,
+            [In] IntPtr pVarResult,
             [Out] out EXCEPINFO excepInfo
         );
     }
@@ -394,6 +424,24 @@ namespace Microsoft.ClearScript.Windows
     {
         void CollectGarbage(
             [In] ScriptGCType type
+        );
+    }
+
+    [ComImport]
+    [Guid("4954e0d0-fbc7-11d1-8410-006008c3fbfc")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IActiveScriptProperty
+    {
+        void GetProperty(
+            [In] ScriptProp property,
+            [In] IntPtr pVarIndex,
+            [Out] [MarshalAs(UnmanagedType.Struct)] out object value
+        );
+
+        void SetProperty(
+            [In] ScriptProp property,
+            [In] IntPtr pVarIndex,
+            [In] [MarshalAs(UnmanagedType.Struct)] ref object value
         );
     }
 

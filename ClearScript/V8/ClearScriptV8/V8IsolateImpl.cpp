@@ -209,7 +209,7 @@ void V8IsolateImpl::EnableDebugging(int debugPort)
 
         _ASSERTE(m_pDebugMessageDispatcher);
         Debug::SetDebugMessageDispatchHandler(m_pDebugMessageDispatcher);
-        ASSERT_EVAL(Debug::EnableAgent(*String::Utf8Value(String::New(m_Name.c_str())), debugPort));
+        ASSERT_EVAL(Debug::EnableAgent(*String::Utf8Value(CreateString(m_Name.c_str())), debugPort));
 
         m_DebuggingEnabled = true;
         m_DebugPort = debugPort;

@@ -217,7 +217,7 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const wchar_t* pName, 
         }
         else
         {
-            auto hGlobalTemplate = ObjectTemplate::New();
+            auto hGlobalTemplate = CreateObjectTemplate();
             hGlobalTemplate->SetInternalFieldCount(1);
             hGlobalTemplate->SetNamedPropertyHandler(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyNames);
             hGlobalTemplate->SetIndexedPropertyHandler(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyIndices);
@@ -234,11 +234,11 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const wchar_t* pName, 
             // Be careful when renaming the cookie or changing the way host objects are marked.
             // Such a change will require a corresponding change in the V8ScriptEngine constructor.
 
-            m_hHostObjectCookieName = CreatePersistent(String::New(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}"));
-            m_hInnerExceptionName = CreatePersistent(String::New(L"inner"));
+            m_hHostObjectCookieName = CreatePersistent(CreateString("{c2cf47d3-916b-4a3f-be2a-6ff567425808}"));
+            m_hInnerExceptionName = CreatePersistent(CreateString("inner"));
 
-            m_hHostObjectTemplate = CreatePersistent(FunctionTemplate::New());
-            m_hHostObjectTemplate->SetClassName(String::New(L"HostObject"));
+            m_hHostObjectTemplate = CreatePersistent(CreateFunctionTemplate());
+            m_hHostObjectTemplate->SetClassName(CreateString("HostObject"));
 
             m_hHostObjectTemplate->InstanceTemplate()->SetInternalFieldCount(1);
             m_hHostObjectTemplate->InstanceTemplate()->SetNamedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap());
@@ -298,7 +298,7 @@ void V8ContextImpl::SetGlobalProperty(const wchar_t* pName, const V8Value& value
     BEGIN_CONTEXT_SCOPE
 
         auto hValue = ImportValue(value);
-        m_hContext->Global()->ForceSet(String::New(pName), hValue, (PropertyAttribute)(ReadOnly | DontDelete));
+        m_hContext->Global()->ForceSet(CreateString(pName), hValue, (PropertyAttribute)(ReadOnly | DontDelete));
         if (globalMembers && hValue->IsObject())
         {
             m_GlobalMembersStack.push_back(CreatePersistent(hValue->ToObject()));
@@ -314,7 +314,7 @@ V8Value V8ContextImpl::Execute(const wchar_t* pDocumentName, const wchar_t* pCod
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
-        auto hScript = VERIFY(Script::Compile(String::New(pCode), String::New(pDocumentName)));
+        auto hScript = VERIFY(Script::Compile(CreateString(pCode), CreateString(pDocumentName)));
         return ExportValue(VERIFY(hScript->Run()));
 
     END_EXECUTION_SCOPE
@@ -328,7 +328,7 @@ V8ScriptHolder* V8ContextImpl::Compile(const wchar_t* pDocumentName, const wchar
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
-        auto hScript = VERIFY(Script::New(String::New(pCode), String::New(pDocumentName)));
+        auto hScript = VERIFY(Script::New(CreateString(pCode), CreateString(pDocumentName)));
         return new V8ScriptHolderImpl(m_spIsolateImpl, ::PtrFromScriptHandle(CreatePersistent(hScript)));
 
     END_EXECUTION_SCOPE
@@ -406,7 +406,7 @@ V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, const wchar_t* pName)
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
-        return ExportValue(::ObjectHandleFromPtr(pvObject)->Get(String::New(pName)));
+        return ExportValue(::ObjectHandleFromPtr(pvObject)->Get(CreateString(pName)));
 
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
@@ -419,7 +419,7 @@ void V8ContextImpl::SetV8ObjectProperty(void* pvObject, const wchar_t* pName, co
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
-        ::ObjectHandleFromPtr(pvObject)->Set(String::New(pName), ImportValue(value));
+        ::ObjectHandleFromPtr(pvObject)->Set(CreateString(pName), ImportValue(value));
 
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
@@ -431,7 +431,7 @@ bool V8ContextImpl::DeleteV8ObjectProperty(void* pvObject, const wchar_t* pName)
 {
     BEGIN_CONTEXT_SCOPE
 
-        return ::ObjectHandleFromPtr(pvObject)->Delete(String::New(pName));
+        return ::ObjectHandleFromPtr(pvObject)->Delete(CreateString(pName));
 
     END_CONTEXT_SCOPE
 }
@@ -527,18 +527,18 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const wchar_t* pName
 
         auto hObject = ::ObjectHandleFromPtr(pvObject);
 
-        auto hName = String::New(pName);
+        auto hName = CreateString(pName);
         if (!hObject->Has(hName))
         {
-            auto hError = Exception::TypeError(String::New(L"Method or property not found"))->ToObject();
-            throw V8Exception(V8Exception::Type_General, m_Name.c_str(), *String::Value(hError), *String::Value(hError->Get(String::New(L"stack"))), V8Value(V8Value::Undefined));
+            auto hError = Exception::TypeError(CreateString("Method or property not found"))->ToObject();
+            throw V8Exception(V8Exception::Type_General, m_Name.c_str(), *String::Value(hError), *String::Value(hError->Get(CreateString("stack"))), V8Value(V8Value::Undefined));
         }
 
         auto hValue = hObject->Get(hName);
         if (hValue->IsUndefined() || hValue->IsNull())
         {
-            auto hError = Exception::TypeError(String::New(L"Property value does not support invocation"))->ToObject();
-            throw V8Exception(V8Exception::Type_General, m_Name.c_str(), *String::Value(hError), *String::Value(hError->Get(String::New(L"stack"))), V8Value(V8Value::Undefined));
+            auto hError = Exception::TypeError(CreateString("Property value does not support invocation"))->ToObject();
+            throw V8Exception(V8Exception::Type_General, m_Name.c_str(), *String::Value(hError), *String::Value(hError->Get(CreateString("stack"))), V8Value(V8Value::Undefined));
         }
 
         vector<Handle<Value>> importedArgs;
@@ -618,7 +618,7 @@ V8ContextImpl::~V8ContextImpl()
 
 Handle<Value> V8ContextImpl::Wrap()
 {
-    return External::New(this);
+    return CreateExternal(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -826,10 +826,10 @@ void V8ContextImpl::GetGlobalPropertyNames(const PropertyCallbackInfo<Array>& in
                 auto newEnd = unique(names.begin(), names.end());
                 auto nameCount = static_cast<int>(newEnd - names.begin());
 
-                auto hImportedNames = Array::New(nameCount);
+                auto hImportedNames = pContextImpl->CreateArray(nameCount);
                 for (auto index = 0; index < nameCount; index++)
                 {
-                    hImportedNames->Set(index, String::New(names[index].c_str()));
+                    hImportedNames->Set(index, pContextImpl->CreateString(names[index].c_str()));
                 }
 
                 CALLBACK_RETURN(hImportedNames);
@@ -975,7 +975,7 @@ void V8ContextImpl::GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& 
                 auto newEnd = unique(indices.begin(), indices.end());
                 auto indexCount = static_cast<int>(newEnd - indices.begin());
 
-                auto hImportedIndices = Array::New(indexCount);
+                auto hImportedIndices = pContextImpl->CreateArray(indexCount);
                 for (auto index = 0; index < indexCount; index++)
                 {
                     hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
@@ -1088,10 +1088,10 @@ void V8ContextImpl::GetHostObjectPropertyNames(const PropertyCallbackInfo<Array>
         HostObjectHelpers::GetPropertyNames(::UnwrapHostObject(info), names);
         auto nameCount = static_cast<int>(names.size());
 
-        auto hImportedNames = Array::New(nameCount);
+        auto hImportedNames = pContextImpl->CreateArray(nameCount);
         for (auto index = 0; index < nameCount; index++)
         {
-            hImportedNames->Set(index, String::New(names[index].c_str()));
+            hImportedNames->Set(index, pContextImpl->CreateString(names[index].c_str()));
         }
 
         CALLBACK_RETURN(hImportedNames);
@@ -1188,7 +1188,7 @@ void V8ContextImpl::GetHostObjectPropertyIndices(const PropertyCallbackInfo<Arra
         HostObjectHelpers::GetPropertyIndices(::UnwrapHostObject(info), indices);
         auto indexCount = static_cast<int>(indices.size());
 
-        auto hImportedIndices = Array::New(indexCount);
+        auto hImportedIndices = pContextImpl->CreateArray(indexCount);
         for (auto index = 0; index < indexCount; index++)
         {
             hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
@@ -1272,7 +1272,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         double result;
         if (value.AsNumber(result))
         {
-            return Number::New(result);
+            return CreateNumber(result);
         }
     }
 
@@ -1296,7 +1296,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
         const wchar_t* pResult;
         if (value.AsString(pResult))
         {
-            return String::New(pResult);
+            return CreateString(pResult);
         }
     }
 
@@ -1316,7 +1316,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
             auto hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
             if (!hObject.IsEmpty())
             {
-                ::SetHostObjectHolder(hObject, pHolder->Clone());
+                ::SetHostObjectHolder(hObject, pHolder = pHolder->Clone());
                 pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), HostObjectHelpers::AddRef(m_pvV8ObjectCache), DisposeWeakHandle));
                 HostObjectHelpers::CacheV8Object(m_pvV8ObjectCache, pHolder->GetObject(), pvV8Object);
             }
@@ -1602,7 +1602,7 @@ void V8ContextImpl::VerifyNotOutOfMemory()
 
 void V8ContextImpl::ThrowScriptException(const HostException& exception)
 {
-    auto hException = Exception::Error(String::New(exception.GetMessage()))->ToObject();
+    auto hException = Exception::Error(CreateString(exception.GetMessage()))->ToObject();
 
     auto hInnerException = ImportValue(exception.GetException());
     if (!hInnerException.IsEmpty() && hInnerException->IsObject())

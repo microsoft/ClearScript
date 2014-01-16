@@ -148,14 +148,49 @@ public:
         return False(m_pIsolate);
     }
 
+    Local<Number> CreateNumber(double value)
+    {
+        return Number::New(m_pIsolate, value);
+    }
+
     Local<Integer> CreateInteger(__int32 value)
     {
-        return Int32::New(value, m_pIsolate);
+        return Int32::New(m_pIsolate, value);
     }
 
     Local<Integer> CreateInteger(unsigned __int32 value)
     {
-        return Uint32::NewFromUnsigned(value, m_pIsolate);
+        return Uint32::NewFromUnsigned(m_pIsolate, value);
+    }
+
+    Local<String> CreateString(const char* pValue)
+    {
+        return String::NewFromOneByte(m_pIsolate, reinterpret_cast<const uint8_t*>(pValue));
+    }
+
+    Local<String> CreateString(const wchar_t* pValue)
+    {
+        return String::NewFromTwoByte(m_pIsolate, reinterpret_cast<const uint16_t*>(pValue));
+    }
+
+    Local<Array> CreateArray(int length = 0)
+    {
+        return Array::New(m_pIsolate, length);
+    }
+
+    Local<External> CreateExternal(void* pvValue)
+    {
+        return External::New(m_pIsolate, pvValue);
+    }
+
+    Local<ObjectTemplate> CreateObjectTemplate()
+    {
+        return ObjectTemplate::New(m_pIsolate);
+    }
+
+    Local<FunctionTemplate> CreateFunctionTemplate()
+    {
+        return FunctionTemplate::New(m_pIsolate);
     }
 
     template <typename T>
@@ -192,6 +227,11 @@ public:
     void Dispose(Persistent<T> hTarget)
     {
         hTarget.Dispose();
+    }
+
+    Local<Value> ThrowException(Local<Value> hException)
+    {
+        return m_pIsolate->ThrowException(hException);
     }
 
     void TerminateExecution()

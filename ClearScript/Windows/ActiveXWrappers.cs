@@ -70,14 +70,14 @@ namespace Microsoft.ClearScript.Windows
 
     internal abstract class ActiveScriptWrapper
     {
-        public static ActiveScriptWrapper Create(string progID)
+        public static ActiveScriptWrapper Create(string progID, WindowsScriptEngineFlags flags)
         {
             if (Environment.Is64BitProcess)
             {
-                return new ActiveScriptWrapper64(progID);
+                return new ActiveScriptWrapper64(progID, flags);
             }
 
-            return new ActiveScriptWrapper32(progID);
+            return new ActiveScriptWrapper32(progID, flags);
         }
 
         public abstract void SetScriptSite(IActiveScriptSite site);
@@ -138,7 +138,7 @@ namespace Microsoft.ClearScript.Windows
             [Out] [MarshalAs(UnmanagedType.Interface)] out IEnumDebugCodeContexts enumContexts
         );
 
-        public ActiveScriptWrapper32(string progID)
+        public ActiveScriptWrapper32(string progID, WindowsScriptEngineFlags flags)
         {
             pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
             pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse32>(pActiveScript);
@@ -151,6 +151,21 @@ namespace Microsoft.ClearScript.Windows
             activeScriptDebug = (IActiveScriptDebug32)activeScript;
             activeScriptGarbageCollector = activeScript as IActiveScriptGarbageCollector;
             debugStackFrameSniffer = (IDebugStackFrameSnifferEx32)activeScript;
+
+            if (flags.HasFlag(WindowsScriptEngineFlags.EnableStandardsMode))
+            {
+                var activeScriptProperty = activeScript as IActiveScriptProperty;
+                if (activeScriptProperty != null)
+                {
+                    object name;
+                    activeScriptProperty.GetProperty(ScriptProp.Name, IntPtr.Zero, out name);
+                    if (Equals(name, "JScript"))
+                    {
+                        object value = ScriptLanguageVersion.Standards;
+                        activeScriptProperty.SetProperty(ScriptProp.InvokeVersioning, IntPtr.Zero, ref value);
+                    }
+                }
+            }
         }
 
         public override void SetScriptSite(IActiveScriptSite site)
@@ -215,19 +230,20 @@ namespace Microsoft.ClearScript.Windows
 
         public override void Close()
         {
-            activeScript.Close();
-
             debugStackFrameSniffer = null;
             activeScriptGarbageCollector = null;
             activeScriptDebug = null;
             activeScriptParse = null;
-            activeScript = null;
 
             RawCOMHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptGarbageCollector);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScript);
+
+            activeScript.Close();
+            Marshal.FinalReleaseComObject(activeScript);
+            activeScript = null;
         }
     }
 
@@ -264,7 +280,7 @@ namespace Microsoft.ClearScript.Windows
             [Out] [MarshalAs(UnmanagedType.Interface)] out IEnumDebugCodeContexts enumContexts
         );
 
-        public ActiveScriptWrapper64(string progID)
+        public ActiveScriptWrapper64(string progID, WindowsScriptEngineFlags flags)
         {
             pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
             pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse64>(pActiveScript);
@@ -277,6 +293,21 @@ namespace Microsoft.ClearScript.Windows
             activeScriptDebug = (IActiveScriptDebug64)activeScript;
             activeScriptGarbageCollector = activeScript as IActiveScriptGarbageCollector;
             debugStackFrameSniffer = (IDebugStackFrameSnifferEx64)activeScript;
+
+            if (flags.HasFlag(WindowsScriptEngineFlags.EnableStandardsMode))
+            {
+                var activeScriptProperty = activeScript as IActiveScriptProperty;
+                if (activeScriptProperty != null)
+                {
+                    object name;
+                    activeScriptProperty.GetProperty(ScriptProp.Name, IntPtr.Zero, out name);
+                    if (Equals(name, "JScript"))
+                    {
+                        object value = ScriptLanguageVersion.Standards;
+                        activeScriptProperty.SetProperty(ScriptProp.InvokeVersioning, IntPtr.Zero, ref value);
+                    }
+                }
+            }
         }
 
         public override void SetScriptSite(IActiveScriptSite site)
@@ -341,19 +372,20 @@ namespace Microsoft.ClearScript.Windows
 
         public override void Close()
         {
-            activeScript.Close();
-
             debugStackFrameSniffer = null;
             activeScriptGarbageCollector = null;
             activeScriptDebug = null;
             activeScriptParse = null;
-            activeScript = null;
 
             RawCOMHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptGarbageCollector);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
             RawCOMHelpers.ReleaseAndEmpty(ref pActiveScript);
+
+            activeScript.Close();
+            Marshal.FinalReleaseComObject(activeScript);
+            activeScript = null;
         }
     }
 
