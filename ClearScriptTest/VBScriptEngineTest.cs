@@ -912,6 +912,37 @@ namespace Microsoft.ClearScript.Test
             VBScriptEngine_Execute();
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_MarshalNullAsDispatch()
+        {
+            engine.Script.func = new Func<object>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("IsNull(func())"));
+
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalNullAsDispatch);
+
+            engine.Script.func = new Func<object>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() is nothing"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_MarshalDecimalAsCurrency()
+        {
+            // ReSharper disable AccessToDisposedClosure
+
+            engine.Script.func = new Func<object>(() => 123.456M);
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("TypeName(func())"));
+
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalDecimalAsCurrency);
+
+            engine.Script.func = new Func<object>(() => 123.456M);
+            Assert.AreEqual("Currency", engine.Evaluate("TypeName(func())"));
+            Assert.AreEqual(123.456M + 5, engine.Evaluate("func() + 5"));
+
+            // ReSharper restore AccessToDisposedClosure
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

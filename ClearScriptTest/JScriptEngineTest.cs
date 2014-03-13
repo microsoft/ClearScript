@@ -967,9 +967,44 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_StandardsMode()
         {
+            // ReSharper disable AccessToDisposedClosure
+
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("JSON"));
+
             engine.Dispose();
             engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.EnableStandardsMode);
+
             Assert.AreEqual("{\"foo\":123,\"bar\":456.789}", engine.Evaluate("JSON.stringify({ foo: 123, bar: 456.789 })"));
+
+            // ReSharper restore AccessToDisposedClosure
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_MarshalNullAsDispatch()
+        {
+            engine.Script.func = new Func<object>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalNullAsDispatch);
+
+            engine.Script.func = new Func<object>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_MarshalDecimalAsCurrency()
+        {
+            engine.Script.func = new Func<object>(() => 123.456M);
+            Assert.AreEqual("number", engine.Evaluate("typeof(func())"));
+            Assert.AreEqual(123.456 + 5, engine.Evaluate("func() + 5"));
+
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalDecimalAsCurrency);
+
+            engine.Script.func = new Func<object>(() => 123.456M);
+            Assert.AreEqual("number", engine.Evaluate("typeof(func())"));
+            Assert.AreEqual(123.456 + 5, engine.Evaluate("func() + 5"));
         }
 
         // ReSharper restore InconsistentNaming

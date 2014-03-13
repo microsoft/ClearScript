@@ -426,6 +426,11 @@ namespace Microsoft.ClearScript.Windows
         {
             if (obj == null)
             {
+                if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
+                {
+                    return new DispatchWrapper(null);
+                }
+
                 return DBNull.Value;
             }
 
@@ -437,6 +442,11 @@ namespace Microsoft.ClearScript.Windows
             if (obj is Nonexistent)
             {
                 return null;
+            }
+
+            if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalDecimalAsCurrency) && (obj is decimal))
+            {
+                return new CurrencyWrapper(obj);
             }
 
             var hostItem = obj as HostItem;

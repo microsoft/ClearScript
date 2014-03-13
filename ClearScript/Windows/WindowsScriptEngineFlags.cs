@@ -92,6 +92,16 @@ namespace Microsoft.ClearScript.Windows
         /// <summary>
         /// Specifies that script language features that enhance standards compliance are to be enabled. This option only affects <see cref="JScriptEngine"/>.
         /// </summary>
-        EnableStandardsMode = 0x00000008
+        EnableStandardsMode = 0x00000008,
+
+        /// <summary>
+        /// Specifies that <c>null</c> is to be marshaled as a variant of type <c>VT_DISPATCH</c>.
+        /// </summary>
+        MarshalNullAsDispatch = 0x00000010,
+
+        /// <summary>
+        /// Specifies that <see cref="decimal"/> values are to be marshaled as variants of type <c>VT_CY</c>.
+        /// </summary>
+        MarshalDecimalAsCurrency = 0x00000020
     }
 }
