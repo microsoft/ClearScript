@@ -110,50 +110,56 @@ namespace Microsoft.ClearScript.Test
             };
 
             {
-                var sig1 = new BindSignature(HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
-                var sig2 = new BindSignature(new HostVariable<string>(null), "foo", typeArgs1, args1);
+                var sig1 = new BindSignature(typeof(BindSignatureTest), HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
+                var sig2 = new BindSignature(typeof(ClearScriptTest), HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
                 AssertNotEqual(sig1, sig2);
             }
 
             {
-                var sig1 = new BindSignature(new HostVariable<string>(null), "foo", typeArgs1, args1);
-                var sig2 = new BindSignature(HostObject.Wrap("baz"), "foo", typeArgs1, args1);
+                var sig1 = new BindSignature(typeof(BindSignatureTest), HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
+                var sig2 = new BindSignature(typeof(BindSignatureTest), new HostVariable<string>(null), "foo", typeArgs1, args1);
                 AssertNotEqual(sig1, sig2);
             }
 
             {
-                var sig1 = new BindSignature(HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
-                var sig2 = new BindSignature(HostObject.Wrap("baz"), "foo", typeArgs1, args1);
+                var sig1 = new BindSignature(typeof(BindSignatureTest), new HostVariable<string>(null), "foo", typeArgs1, args1);
+                var sig2 = new BindSignature(typeof(BindSignatureTest), HostObject.Wrap("baz"), "foo", typeArgs1, args1);
                 AssertNotEqual(sig1, sig2);
             }
 
             {
-                var sig1 = new BindSignature(new HostVariable<string>(null), "foo", typeArgs1, args1);
-                var sig2 = new BindSignature(new HostVariable<string>("baz"), "foo", typeArgs1, args1);
+                var sig1 = new BindSignature(typeof(BindSignatureTest), HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
+                var sig2 = new BindSignature(typeof(BindSignatureTest), HostObject.Wrap("baz"), "foo", typeArgs1, args1);
                 AssertNotEqual(sig1, sig2);
             }
 
             {
-                var sig1 = new BindSignature(new HostVariable<string>("baz"), "foo", typeArgs1, args1);
-                var sig2 = new BindSignature(HostObject.Wrap("qux"), "foo", typeArgs1, args1);
+                var sig1 = new BindSignature(typeof(BindSignatureTest), new HostVariable<string>(null), "foo", typeArgs1, args1);
+                var sig2 = new BindSignature(typeof(BindSignatureTest), new HostVariable<string>("baz"), "foo", typeArgs1, args1);
+                AssertNotEqual(sig1, sig2);
+            }
+
+            {
+                var sig1 = new BindSignature(typeof(BindSignatureTest), new HostVariable<string>("baz"), "foo", typeArgs1, args1);
+                var sig2 = new BindSignature(typeof(BindSignatureTest), HostObject.Wrap("qux"), "foo", typeArgs1, args1);
                 AssertEqual(sig1, sig2);
             }
 
             {
-                var sig1 = new BindSignature(HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
-                var sig2 = new BindSignature(HostType.Wrap(typeof(string)), "bar", typeArgs1, args1);
+                var sig1 = new BindSignature(typeof(BindSignatureTest), HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
+                var sig2 = new BindSignature(typeof(BindSignatureTest), HostType.Wrap(typeof(string)), "bar", typeArgs1, args1);
                 AssertNotEqual(sig1, sig2);
             }
 
             {
-                var sig1 = new BindSignature(HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
-                var sig2 = new BindSignature(HostType.Wrap(typeof(string)), "foo", typeArgs2, args1);
+                var sig1 = new BindSignature(typeof(BindSignatureTest), HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
+                var sig2 = new BindSignature(typeof(BindSignatureTest), HostType.Wrap(typeof(string)), "foo", typeArgs2, args1);
                 AssertNotEqual(sig1, sig2);
             }
 
             {
-                var sig1 = new BindSignature(HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
-                var sig2 = new BindSignature(HostType.Wrap(typeof(string)), "foo", typeArgs1, args2);
+                var sig1 = new BindSignature(typeof(BindSignatureTest), HostType.Wrap(typeof(string)), "foo", typeArgs1, args1);
+                var sig2 = new BindSignature(typeof(BindSignatureTest), HostType.Wrap(typeof(string)), "foo", typeArgs1, args2);
                 AssertEqual(sig1, sig2);
             }
         }

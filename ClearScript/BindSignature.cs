@@ -65,13 +65,15 @@ namespace Microsoft.ClearScript
 {
     internal class BindSignature : IEquatable<BindSignature>
     {
+        private readonly Type context;
         private readonly TargetInfo targetInfo;
         private readonly string name;
         private readonly Type[] typeArgs;
         private readonly ArgInfo[] argData;
 
-        public BindSignature(HostTarget target, string name, Type[] typeArgs, object[] args)
+        public BindSignature(Type context, HostTarget target, string name, Type[] typeArgs, object[] args)
         {
+            this.context = context;
             targetInfo = new TargetInfo(target);
             this.typeArgs = typeArgs;
             this.name = name;
@@ -94,6 +96,7 @@ namespace Microsoft.ClearScript
         {
             var accumulator = new HashAccumulator();
 
+            accumulator.Update(context);
             targetInfo.UpdateHash(ref accumulator);
             accumulator.Update(name);
 
@@ -117,6 +120,11 @@ namespace Microsoft.ClearScript
         public bool Equals(BindSignature that)
         {
             if (that == null)
+            {
+                return false;
+            }
+
+            if (context != that.context)
             {
                 return false;
             }

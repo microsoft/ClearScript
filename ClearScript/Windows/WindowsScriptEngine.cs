@@ -84,6 +84,8 @@ namespace Microsoft.ClearScript.Windows
     {
         #region data
 
+        private static readonly object nullDispatch = new DispatchWrapper(null);
+
         private ActiveScriptWrapper activeScript;
         private WindowsScriptEngineFlags engineFlags;
 
@@ -428,7 +430,7 @@ namespace Microsoft.ClearScript.Windows
             {
                 if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
                 {
-                    return new DispatchWrapper(null);
+                    return nullDispatch;
                 }
 
                 return DBNull.Value;

@@ -379,6 +379,27 @@ namespace Microsoft.ClearScript.Test
             results.CompiledAssembly.GetType("TestModule").InvokeMember("TestMethod", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>());
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_CoreBindCache()
+        {
+            HostItem.ResetCoreBindCount();
+
+            engine.Dispose();
+            for (var i = 0; i < 10; i++)
+            {
+                using (engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
+                {
+                    engine.Script.host = new HostFunctions();
+                    Assert.AreEqual(' ', engine.Evaluate("host.toChar(32)"));
+                    Assert.AreEqual('A', engine.Evaluate("host.toChar(65)"));
+                    Assert.AreEqual(0.0F, engine.Evaluate("host.toSingle(0)"));
+                    Assert.AreEqual(1.0F, engine.Evaluate("host.toSingle(1)"));
+                }
+            }
+
+            Assert.AreEqual(2L, HostItem.GetCoreBindCount());
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

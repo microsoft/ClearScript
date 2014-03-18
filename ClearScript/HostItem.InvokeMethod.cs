@@ -60,12 +60,14 @@
 //       
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Binder = Microsoft.CSharp.RuntimeBinder.Binder;
@@ -74,6 +76,13 @@ namespace Microsoft.ClearScript
 {
     internal partial class HostItem
     {
+        #region data
+
+        private static readonly ConcurrentDictionary<BindSignature, object> coreBindCache = new ConcurrentDictionary<BindSignature, object>();
+        private static long coreBindCount;
+
+        #endregion
+
         #region internal members
 
         private object InvokeMethod(string name, object[] args, object[] bindArgs)
@@ -138,7 +147,8 @@ namespace Microsoft.ClearScript
             // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
             // will result in bugs that are difficult to diagnose. Create a copy if necessary.
 
-            var signature = new BindSignature(target, name, typeArgs, bindArgs);
+            var context = accessContext ?? engine.AccessContext;
+            var signature = new BindSignature(context, target, name, typeArgs, bindArgs);
             MethodBindResult result;
 
             object rawResult;
@@ -148,7 +158,7 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                result = BindMethodInternal(name, typeArgs, args, bindArgs);
+                result = BindMethodInternal(context, name, typeArgs, args, bindArgs);
                 if (!result.IsPreferredMethod(name))
                 {
                     if (result is MethodBindSuccess)
@@ -158,7 +168,7 @@ namespace Microsoft.ClearScript
 
                     foreach (var altName in GetAltMethodNames(name))
                     {
-                        var altResult = BindMethodInternal(altName, typeArgs, args, bindArgs);
+                        var altResult = BindMethodInternal(context, altName, typeArgs, args, bindArgs);
                         if (altResult.IsUnblockedMethod())
                         {
                             result = altResult;
@@ -173,11 +183,32 @@ namespace Microsoft.ClearScript
             return result;
         }
 
-        private MethodBindResult BindMethodInternal(string name, Type[] typeArgs, object[] args, object[] bindArgs)
+        private MethodBindResult BindMethodInternal(Type context, string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
+            var signature = new BindSignature(context, target, name, typeArgs, bindArgs);
+            MethodBindResult result;
+
+            object rawResult;
+            if (coreBindCache.TryGetValue(signature, out rawResult))
+            {
+                result = MethodBindResult.Create(name, rawResult, target, args);
+            }
+            else
+            {
+                result = BindMethodCore(context, name, typeArgs, args, bindArgs);
+                coreBindCache.TryAdd(signature, result.RawResult);
+            }
+
+            return result;
+        }
+
+        private MethodBindResult BindMethodCore(Type context, string name, Type[] typeArgs, object[] args, object[] bindArgs)
+        {
+            Interlocked.Increment(ref coreBindCount);
+
             // create C# member invocation binder
             const CSharpBinderFlags binderFlags = CSharpBinderFlags.InvokeSimpleName | CSharpBinderFlags.ResultDiscarded;
-            var binder = Binder.InvokeMember(binderFlags, name, typeArgs, accessContext ?? engine.AccessContext, CreateArgInfoEnum(bindArgs));
+            var binder = Binder.InvokeMember(binderFlags, name, typeArgs, context, CreateArgInfoEnum(bindArgs));
 
             // perform default binding
             var binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, target, bindArgs);
@@ -271,6 +302,20 @@ namespace Microsoft.ClearScript
         private static CSharpArgumentInfo CreateStaticTypeArgInfo()
         {
             return CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.IsStaticType, null);
+        }
+
+        #endregion
+
+        #region unit test support
+
+        internal static void ResetCoreBindCount()
+        {
+            Interlocked.Exchange(ref coreBindCount, 0);
+        }
+
+        internal static long GetCoreBindCount()
+        {
+            return Interlocked.Read(ref coreBindCount);
         }
 
         #endregion
