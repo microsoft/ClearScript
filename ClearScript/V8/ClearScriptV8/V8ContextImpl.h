@@ -79,10 +79,10 @@ public:
     void CallWithLock(LockCallbackT* pCallback, void* pvArg);
     V8Value GetRootObject();
     void SetGlobalProperty(const wchar_t* pName, const V8Value& value, bool globalMembers);
-    V8Value Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool discard);
+    V8Value Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool evaluate, bool discard);
     V8ScriptHolder* Compile(const wchar_t* pDocumentName, const wchar_t* pCode);
     bool CanExecute(V8ScriptHolder* pHolder);
-    V8Value Execute(V8ScriptHolder* pHolder);
+    V8Value Execute(V8ScriptHolder* pHolder, bool evaluate);
     void Interrupt();
     void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo);
     void CollectGarbage(bool exhaustive);

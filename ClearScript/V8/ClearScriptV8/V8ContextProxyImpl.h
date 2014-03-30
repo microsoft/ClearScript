@@ -84,9 +84,9 @@ namespace V8 {
         virtual void InvokeWithLock(Action^ gcAction) override;
         virtual Object^ GetRootItem() override;
         virtual void AddGlobalItem(String^ gcName, Object^ gcItem, Boolean globalMembers) override;
-        virtual Object^ Execute(String^ gcDocumentName, String^ gcCode, Boolean discard) override;
+        virtual Object^ Execute(String^ gcDocumentName, String^ gcCode, Boolean evaluate, Boolean discard) override;
         virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode) override;
-        virtual Object^ Execute(V8Script^ gcScript) override;
+        virtual Object^ Execute(V8Script^ gcScript, Boolean evaluate) override;
         virtual void Interrupt() override;
         virtual V8RuntimeHeapInfo^ GetRuntimeHeapInfo() override;
         virtual void CollectGarbage(bool exhaustive) override;

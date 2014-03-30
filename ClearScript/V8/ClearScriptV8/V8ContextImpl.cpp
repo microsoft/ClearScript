@@ -309,13 +309,19 @@ void V8ContextImpl::SetGlobalProperty(const wchar_t* pName, const V8Value& value
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool /* discard */)
+V8Value V8ContextImpl::Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool evaluate, bool /* discard */)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
         auto hScript = VERIFY(Script::Compile(CreateString(pCode), CreateString(pDocumentName)));
-        return ExportValue(VERIFY(hScript->Run()));
+		auto hResult = VERIFY(hScript->Run());
+		if (!evaluate)
+		{
+			hResult = GetUndefined();
+		}
+
+        return ExportValue(hResult);
 
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
@@ -344,13 +350,19 @@ bool V8ContextImpl::CanExecute(V8ScriptHolder* pHolder)
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder)
+V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder, bool evaluate)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
         auto hScript = ::ScriptHandleFromPtr(pHolder->GetScript());
-        return ExportValue(VERIFY(hScript->Run()));
+		auto hResult = VERIFY(hScript->Run());
+		if (!evaluate)
+		{
+			hResult = GetUndefined();
+		}
+
+        return ExportValue(hResult);
 
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE

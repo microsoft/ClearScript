@@ -152,7 +152,11 @@ namespace Microsoft.ClearScript.Windows
         /// </summary>
         public Dispatcher Dispatcher
         {
-            get { return dispatcher; }
+            get
+            {
+                VerifyNotDisposed();
+                return dispatcher;
+            }
         }
 
         /// <summary>
@@ -161,6 +165,7 @@ namespace Microsoft.ClearScript.Windows
         /// <returns><c>True</c> if the calling thread has access to the current script engine, <c>false</c> otherwise.</returns>
         public bool CheckAccess()
         {
+            VerifyNotDisposed();
             return dispatcher.CheckAccess();
         }
 
@@ -169,6 +174,7 @@ namespace Microsoft.ClearScript.Windows
         /// </summary>
         public void VerifyAccess()
         {
+            VerifyNotDisposed();
             dispatcher.VerifyAccess();
         }
 

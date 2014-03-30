@@ -308,8 +308,9 @@ namespace Microsoft.ClearScript
 
         #region unit test support
 
-        internal static void ResetCoreBindCount()
+        internal static void ResetCoreBindCache()
         {
+            coreBindCache.Clear();
             Interlocked.Exchange(ref coreBindCount, 0);
         }
 

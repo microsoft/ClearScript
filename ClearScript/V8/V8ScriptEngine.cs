@@ -404,13 +404,16 @@ namespace Microsoft.ClearScript.V8
 
             return MarshalToHost(ScriptInvoke(() =>
             {
-                var stateObjects = new object[2];
-                using (var timer = new Timer(OnContinuationTimer, stateObjects, Timeout.Infinite, Timeout.Infinite))
+                if (ContinuationCallback == null)
                 {
-                    stateObjects[0] = new WeakReference(this);
-                    stateObjects[1] = timer;
-                    timer.Change(continuationInterval, Timeout.Infinite);
-                    return proxy.Execute(script);
+                    return proxy.Execute(script, true);
+                }
+
+                var state = new Timer[] { null };
+                using (state[0] = new Timer(unused => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
+                {
+                    state[0].Change(continuationInterval, Timeout.Infinite);
+                    return proxy.Execute(script, true);
                 }
             }), false);
         }
@@ -677,35 +680,32 @@ namespace Microsoft.ClearScript.V8
                     documentNames.Add(uniqueName);
                 }
 
-                var stateObjects = new object[2];
-                using (var timer = new Timer(OnContinuationTimer, stateObjects, Timeout.Infinite, Timeout.Infinite))
+                if (ContinuationCallback == null)
                 {
-                    stateObjects[0] = new WeakReference(this);
-                    stateObjects[1] = timer;
-                    timer.Change(continuationInterval, Timeout.Infinite);
-                    return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, discard);
+                    return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate, discard);
+                }
+
+                var state = new Timer[] { null };
+                using (state[0] = new Timer(unused => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
+                {
+                    state[0].Change(continuationInterval, Timeout.Infinite);
+                    return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate, discard);
                 }
             });
         }
 
-        private static void OnContinuationTimer(object state)
+        private void OnContinuationTimer(Timer timer)
         {
             try
             {
-                var stateObjects = (object[])state;
-
-                var engine = ((WeakReference)stateObjects[0]).Target as V8ScriptEngine;
-                if (engine != null)
+                var callback = ContinuationCallback;
+                if ((callback != null) && !callback())
                 {
-                    var callback = engine.ContinuationCallback;
-                    if ((callback != null) && !callback())
-                    {
-                        engine.Interrupt();
-                    }
-                    else
-                    {
-                        ((Timer)stateObjects[1]).Change(continuationInterval, Timeout.Infinite);
-                    }
+                    Interrupt();
+                }
+                else
+                {
+                    timer.Change(continuationInterval, Timeout.Infinite);
                 }
             }
             catch (ObjectDisposedException)

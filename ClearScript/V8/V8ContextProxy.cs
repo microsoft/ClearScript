@@ -78,11 +78,11 @@ namespace Microsoft.ClearScript.V8
 
         public abstract void AddGlobalItem(string name, object item, bool globalMembers);
 
-        public abstract object Execute(string documentName, string code, bool discard);
+        public abstract object Execute(string documentName, string code, bool evaluate, bool discard);
 
         public abstract V8Script Compile(string documentName, string code);
 
-        public abstract object Execute(V8Script script);
+        public abstract object Execute(V8Script script, bool evaluate);
 
         public abstract void Interrupt();
 

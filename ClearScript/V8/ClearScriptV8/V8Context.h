@@ -79,11 +79,11 @@ public:
 
     virtual V8Value GetRootObject() = 0;
     virtual void SetGlobalProperty(const wchar_t* pName, const V8Value& value, bool globalMembers) = 0;
-    virtual V8Value Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool discard) = 0;
+    virtual V8Value Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool evaluate, bool discard) = 0;
 
     virtual V8ScriptHolder* Compile(const wchar_t* pDocumentName, const wchar_t* pCode) = 0;
     virtual bool CanExecute(V8ScriptHolder* pHolder) = 0;
-    virtual V8Value Execute(V8ScriptHolder* pHolder) = 0;
+    virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) = 0;
 
     virtual void Interrupt() = 0;
     virtual void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo) = 0;

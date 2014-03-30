@@ -150,11 +150,11 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    Object^ V8ContextProxyImpl::Execute(String^ gcDocumentName, String^ gcCode, Boolean discard)
+    Object^ V8ContextProxyImpl::Execute(String^ gcDocumentName, String^ gcCode, Boolean evaluate, Boolean discard)
     {
         try
         {
-            return ExportValue(GetContext()->Execute(StringToUniPtr(gcDocumentName), StringToUniPtr(gcCode), discard));
+            return ExportValue(GetContext()->Execute(StringToUniPtr(gcDocumentName), StringToUniPtr(gcCode), evaluate, discard));
         }
         catch (const V8Exception& exception)
         {
@@ -178,7 +178,7 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    Object^ V8ContextProxyImpl::Execute(V8Script^ gcScript)
+    Object^ V8ContextProxyImpl::Execute(V8Script^ gcScript, Boolean evaluate)
     {
         try
         {
@@ -195,7 +195,7 @@ namespace V8 {
                 throw gcnew ArgumentException(L"Invalid compiled script", L"script");
             }
 
-            return ExportValue(spContext->Execute(spHolder));
+            return ExportValue(spContext->Execute(spHolder, evaluate));
         }
         catch (const V8Exception& exception)
         {
