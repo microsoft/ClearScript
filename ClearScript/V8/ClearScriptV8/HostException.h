@@ -69,27 +69,15 @@ class HostException
 {
 public:
 
-    HostException(const wchar_t* pMessage, const V8Value& exception):
-        m_Exception(exception)
+    HostException(StdString&& message, V8Value&& exception):
+		m_Message(std::move(message)),
+        m_Exception(std::move(exception))
     {
-        if (pMessage != nullptr)
-        {
-            m_Message = pMessage;
-        }
     }
 
-    HostException(const wchar_t* pMessage, V8Value&& exception):
-        m_Exception(exception)
+    const StdString& GetMessage() const
     {
-        if (pMessage != nullptr)
-        {
-            m_Message = pMessage;
-        }
-    }
-
-    const wchar_t* GetMessage() const
-    {
-        return m_Message.c_str();
+        return m_Message;
     }
 
     const V8Value& GetException() const
@@ -99,6 +87,6 @@ public:
 
 private:
 
-    wstring m_Message;
+    StdString m_Message;
     V8Value m_Exception;
 };

@@ -81,7 +81,7 @@ namespace V8 {
     {
         try
         {
-            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::GetProperty(GetHolder(), StringToUniPtr(gcName)));
+            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::GetProperty(GetHolder(), StdString(gcName)));
         }
         catch (const V8Exception& exception)
         {
@@ -95,7 +95,7 @@ namespace V8 {
     {
         try
         {
-            V8ObjectHelpers::SetProperty(GetHolder(), StringToUniPtr(gcName), V8ContextProxyImpl::ImportValue(gcValue));
+            V8ObjectHelpers::SetProperty(GetHolder(), StdString(gcName), V8ContextProxyImpl::ImportValue(gcValue));
         }
         catch (const V8Exception& exception)
         {
@@ -109,7 +109,7 @@ namespace V8 {
     {
         try
         {
-            return V8ObjectHelpers::DeleteProperty(GetHolder(), StringToUniPtr(gcName));
+            return V8ObjectHelpers::DeleteProperty(GetHolder(), StdString(gcName));
         }
         catch (const V8Exception& exception)
         {
@@ -123,14 +123,14 @@ namespace V8 {
     {
         try
         {
-            vector<wstring> names;
+            std::vector<StdString> names;
             V8ObjectHelpers::GetPropertyNames(GetHolder(), names);
             auto nameCount = static_cast<int>(names.size());
 
             auto gcNames = gcnew array<String^>(nameCount);
             for (auto index = 0; index < nameCount; index++)
             {
-                gcNames[index] = gcnew String(names[index].c_str());
+                gcNames[index] = names[index].ToManagedString();
             }
 
             return gcNames;
@@ -189,7 +189,7 @@ namespace V8 {
     {
         try
         {
-            vector<int> indices;
+            std::vector<int> indices;
             V8ObjectHelpers::GetPropertyIndices(GetHolder(), indices);
             auto indexCount = static_cast<int>(indices.size());
 
@@ -213,7 +213,7 @@ namespace V8 {
     {
         try
         {
-            vector<V8Value> importedArgs;
+            std::vector<V8Value> importedArgs;
             ImportValues(gcArgs, importedArgs);
 
             return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::Invoke(GetHolder(), importedArgs, asConstructor));
@@ -230,10 +230,10 @@ namespace V8 {
     {
         try
         {
-            vector<V8Value> importedArgs;
+            std::vector<V8Value> importedArgs;
             ImportValues(gcArgs, importedArgs);
 
-            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::InvokeMethod(GetHolder(), StringToUniPtr(gcName), importedArgs));
+            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::InvokeMethod(GetHolder(), StdString(gcName), importedArgs));
         }
         catch (const V8Exception& exception)
         {
@@ -288,7 +288,7 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    void V8ObjectImpl::ImportValues(array<Object^>^ gcValues, vector<V8Value>& importedValues)
+    void V8ObjectImpl::ImportValues(array<Object^>^ gcValues, std::vector<V8Value>& importedValues)
     {
         importedValues.clear();
         if (gcValues != nullptr)

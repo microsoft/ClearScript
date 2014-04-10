@@ -62,6 +62,8 @@
 #pragma once
 
 #include "NativePlatform.h"
+#include "V8Platform.h"
+#include "StdString.h"
 #include "Mutex.h"
 #include "CallbackManager.h"
 #include "RefCount.h"
@@ -80,7 +82,6 @@
 #include "HostObjectHolderImpl.h"
 #include "V8ObjectHelpers.h"
 #include "HostObjectHelpers.h"
-#include "V8Platform.h"
 #include "V8IsolateImpl.h"
 #include "V8ContextImpl.h"
 #include "V8ObjectHolderImpl.h"

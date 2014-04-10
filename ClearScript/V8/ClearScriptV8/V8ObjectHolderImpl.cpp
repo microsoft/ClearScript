@@ -95,28 +95,28 @@ void* V8ObjectHolderImpl::GetObject() const
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHolderImpl::GetProperty(const wchar_t* pName) const
+V8Value V8ObjectHolderImpl::GetProperty(const StdString& name) const
 {
-    return m_spContextImpl->GetV8ObjectProperty(m_pvObject, pName);
+    return m_spContextImpl->GetV8ObjectProperty(m_pvObject, name);
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHolderImpl::SetProperty(const wchar_t* pName, const V8Value& value) const
+void V8ObjectHolderImpl::SetProperty(const StdString& name, const V8Value& value) const
 {
-    m_spContextImpl->SetV8ObjectProperty(m_pvObject, pName, value);
+    m_spContextImpl->SetV8ObjectProperty(m_pvObject, name, value);
 }
 
 //-----------------------------------------------------------------------------
 
-bool V8ObjectHolderImpl::DeleteProperty(const wchar_t* pName) const
+bool V8ObjectHolderImpl::DeleteProperty(const StdString& name) const
 {
-    return m_spContextImpl->DeleteV8ObjectProperty(m_pvObject, pName);
+    return m_spContextImpl->DeleteV8ObjectProperty(m_pvObject, name);
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHolderImpl::GetPropertyNames(vector<wstring>& names) const
+void V8ObjectHolderImpl::GetPropertyNames(std::vector<StdString>& names) const
 {
     m_spContextImpl->GetV8ObjectPropertyNames(m_pvObject, names);
 }
@@ -144,23 +144,23 @@ bool V8ObjectHolderImpl::DeleteProperty(int index) const
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHolderImpl::GetPropertyIndices(vector<int>& indices) const
+void V8ObjectHolderImpl::GetPropertyIndices(std::vector<int>& indices) const
 {
     m_spContextImpl->GetV8ObjectPropertyIndices(m_pvObject, indices);
 }
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHolderImpl::Invoke(const vector<V8Value>& args, bool asConstructor) const
+V8Value V8ObjectHolderImpl::Invoke(const std::vector<V8Value>& args, bool asConstructor) const
 {
     return m_spContextImpl->InvokeV8Object(m_pvObject, args, asConstructor);
 }
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHolderImpl::InvokeMethod(const wchar_t* pName, const vector<V8Value>& args) const
+V8Value V8ObjectHolderImpl::InvokeMethod(const StdString& name, const std::vector<V8Value>& args) const
 {
-    return m_spContextImpl->InvokeV8ObjectMethod(m_pvObject, pName, args);
+    return m_spContextImpl->InvokeV8ObjectMethod(m_pvObject, name, args);
 }
 
 //-----------------------------------------------------------------------------

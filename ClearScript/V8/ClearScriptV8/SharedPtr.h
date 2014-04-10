@@ -304,16 +304,16 @@ private:
         m_pRefCount->Increment();
     }
 
-    void DetachRefCount(SharedPtrTarget* /* pTarget */)
+    void DetachRefCount(SharedPtrTarget* /*pTarget*/)
     {
     }
 
-    void AttachRefCount(void* /* pvTarget */)
+    void AttachRefCount(void* /*pvTarget*/)
     {
         m_pRefCount = new RefCount(1);
     }
 
-    void DetachRefCount(void* /* pvTarget */)
+    void DetachRefCount(void* /*pvTarget*/)
     {
         delete m_pRefCount;
     }

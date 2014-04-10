@@ -121,7 +121,7 @@ public:
         V8IsolateImpl* m_pIsolateImpl;
     };
 
-    V8IsolateImpl(const wchar_t* pName, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort);
+    V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort);
 
     Local<Context> CreateContext(ExtensionConfiguration* pExtensionConfiguation = nullptr, Handle<ObjectTemplate> hGlobalTemplate = Handle<ObjectTemplate>(), Handle<Value> hGlobalObject = Handle<Value>())
     {
@@ -163,14 +163,9 @@ public:
         return Uint32::NewFromUnsigned(m_pIsolate, value);
     }
 
-    Local<String> CreateString(const char* pValue)
+    Local<String> CreateString(const StdString& value)
     {
-        return String::NewFromOneByte(m_pIsolate, reinterpret_cast<const uint8_t*>(pValue));
-    }
-
-    Local<String> CreateString(const wchar_t* pValue)
-    {
-        return String::NewFromTwoByte(m_pIsolate, reinterpret_cast<const uint16_t*>(pValue));
+        return value.ToV8String(m_pIsolate);
     }
 
     Local<Array> CreateArray(int length = 0)
@@ -253,7 +248,7 @@ public:
     size_t GetMaxStackUsage();
     void SetMaxStackUsage(size_t value);
 
-    V8ScriptHolder* Compile(const wchar_t* pDocumentName, const wchar_t* pCode);
+    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code);
     void GetHeapInfo(V8IsolateHeapInfo& heapInfo);
     void CollectGarbage(bool exhaustive);
 
@@ -272,18 +267,18 @@ private:
     void EnterExecutionScope(size_t* pStackMarker);
     void ExitExecutionScope();
 
-    wstring m_Name;
+    StdString m_Name;
     Isolate* m_pIsolate;
-    list<V8ContextImpl*> m_ContextPtrs;
+    std::list<V8ContextImpl*> m_ContextPtrs;
 
     bool m_DebuggingEnabled;
     int m_DebugPort;
     Debug::DebugMessageDispatchHandler m_pDebugMessageDispatcher;
-    atomic<size_t> m_DebugMessageDispatchCount;
+    std::atomic<size_t> m_DebugMessageDispatchCount;
 
-    atomic<size_t> m_MaxStackUsage;
+    std::atomic<size_t> m_MaxStackUsage;
     size_t m_ExecutionLevel;
     size_t* m_pStackLimit;
 
-    atomic<bool> m_IsOutOfMemory;
+    std::atomic<bool> m_IsOutOfMemory;
 };

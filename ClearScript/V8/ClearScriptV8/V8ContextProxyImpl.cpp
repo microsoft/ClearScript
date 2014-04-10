@@ -84,7 +84,7 @@ namespace V8 {
         try
         {
             auto gcIsolateProxyImpl = dynamic_cast<V8IsolateProxyImpl^>(gcIsolateProxy);
-            m_pspContext = new SharedPtr<V8Context>(V8Context::Create(gcIsolateProxyImpl->GetIsolate(), StringToUniPtr(gcName), enableDebugging, disableGlobalMembers, debugPort));
+            m_pspContext = new SharedPtr<V8Context>(V8Context::Create(gcIsolateProxyImpl->GetIsolate(), StdString(gcName), enableDebugging, disableGlobalMembers, debugPort));
         }
         catch (const V8Exception& exception)
         {
@@ -140,7 +140,7 @@ namespace V8 {
     {
         try
         {
-            GetContext()->SetGlobalProperty(StringToUniPtr(gcName), ImportValue(gcItem), globalMembers);
+            GetContext()->SetGlobalProperty(StdString(gcName), ImportValue(gcItem), globalMembers);
         }
         catch (const V8Exception& exception)
         {
@@ -154,7 +154,7 @@ namespace V8 {
     {
         try
         {
-            return ExportValue(GetContext()->Execute(StringToUniPtr(gcDocumentName), StringToUniPtr(gcCode), evaluate, discard));
+            return ExportValue(GetContext()->Execute(StdString(gcDocumentName), StdString(gcCode), evaluate, discard));
         }
         catch (const V8Exception& exception)
         {
@@ -168,7 +168,7 @@ namespace V8 {
     {
         try
         {
-            return gcnew V8ScriptImpl(gcDocumentName, GetContext()->Compile(StringToUniPtr(gcDocumentName), StringToUniPtr(gcCode)));
+            return gcnew V8ScriptImpl(gcDocumentName, GetContext()->Compile(StdString(gcDocumentName), StdString(gcCode)));
         }
         catch (const V8Exception& exception)
         {
@@ -389,7 +389,7 @@ namespace V8 {
             auto gcValue = dynamic_cast<String^>(gcObject);
             if (gcValue != nullptr)
             {
-                return V8Value(StringToUniPtr(gcValue));
+                return V8Value(new StdString(gcValue));
             }
         }
 
@@ -456,10 +456,10 @@ namespace V8 {
         }
 
         {
-            const wchar_t* pResult;
-            if (value.AsString(pResult))
+            const StdString* pString;
+            if (value.AsString(pString))
             {
-                return gcnew String(pResult);
+                return pString->ToManagedString();
             }
         }
 

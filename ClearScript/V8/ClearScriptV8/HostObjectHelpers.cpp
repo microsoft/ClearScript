@@ -69,7 +69,7 @@ using namespace Microsoft::ClearScript::V8;
 
 static void DECLSPEC_NORETURN ThrowHostException(Exception^ gcException)
 {
-    throw HostException(StringToUniPtr(gcException->Message), V8ContextProxyImpl::ImportValue(gcException));
+    throw HostException(StdString(gcException->Message), V8ContextProxyImpl::ImportValue(gcException));
 }
 
 //-----------------------------------------------------------------------------
@@ -90,11 +90,11 @@ void HostObjectHelpers::Release(void* pvObject)
 
 //-----------------------------------------------------------------------------
 
-V8Value HostObjectHelpers::GetProperty(void* pvObject, const wchar_t* pName)
+V8Value HostObjectHelpers::GetProperty(void* pvObject, const StdString& name)
 {
     try
     {
-        return V8ContextProxyImpl::ImportValue(V8ProxyHelpers::GetHostObjectProperty(pvObject, gcnew String(pName)));
+        return V8ContextProxyImpl::ImportValue(V8ProxyHelpers::GetHostObjectProperty(pvObject, name.ToManagedString()));
     }
     catch (Exception^ gcException)
     {
@@ -104,11 +104,11 @@ V8Value HostObjectHelpers::GetProperty(void* pvObject, const wchar_t* pName)
 
 //-----------------------------------------------------------------------------
 
-void HostObjectHelpers::SetProperty(void* pvObject, const wchar_t* pName, const V8Value& value)
+void HostObjectHelpers::SetProperty(void* pvObject, const StdString& name, const V8Value& value)
 {
     try
     {
-        V8ProxyHelpers::SetHostObjectProperty(pvObject, gcnew String(pName), V8ContextProxyImpl::ExportValue(value));
+        V8ProxyHelpers::SetHostObjectProperty(pvObject, name.ToManagedString(), V8ContextProxyImpl::ExportValue(value));
     }
     catch (Exception^ gcException)
     {
@@ -118,11 +118,11 @@ void HostObjectHelpers::SetProperty(void* pvObject, const wchar_t* pName, const 
 
 //-----------------------------------------------------------------------------
 
-bool HostObjectHelpers::DeleteProperty(void* pvObject, const wchar_t* pName)
+bool HostObjectHelpers::DeleteProperty(void* pvObject, const StdString& name)
 {
     try
     {
-        return V8ProxyHelpers::DeleteHostObjectProperty(pvObject, gcnew String(pName));
+        return V8ProxyHelpers::DeleteHostObjectProperty(pvObject, name.ToManagedString());
     }
     catch (Exception^ gcException)
     {
@@ -132,7 +132,7 @@ bool HostObjectHelpers::DeleteProperty(void* pvObject, const wchar_t* pName)
 
 //-----------------------------------------------------------------------------
 
-void HostObjectHelpers::GetPropertyNames(void* pvObject, vector<wstring>& names)
+void HostObjectHelpers::GetPropertyNames(void* pvObject, std::vector<StdString>& names)
 {
     try
     {
@@ -142,7 +142,7 @@ void HostObjectHelpers::GetPropertyNames(void* pvObject, vector<wstring>& names)
         names.resize(nameCount);
         for (auto index = 0; index < nameCount; index++)
         {
-            names[index] = StringToUniPtr(gcNames[index]);
+            names[index] = StdString(gcNames[index]);
         }
     }
     catch (Exception^ gcException)
@@ -195,7 +195,7 @@ bool HostObjectHelpers::DeleteProperty(void* pvObject, int index)
 
 //-----------------------------------------------------------------------------
 
-void HostObjectHelpers::GetPropertyIndices(void* pvObject, vector<int>& indices)
+void HostObjectHelpers::GetPropertyIndices(void* pvObject, std::vector<int>& indices)
 {
     try
     {
@@ -216,7 +216,7 @@ void HostObjectHelpers::GetPropertyIndices(void* pvObject, vector<int>& indices)
 
 //-----------------------------------------------------------------------------
 
-V8Value HostObjectHelpers::Invoke(void* pvObject, const vector<V8Value>& args, bool asConstructor)
+V8Value HostObjectHelpers::Invoke(void* pvObject, const std::vector<V8Value>& args, bool asConstructor)
 {
     try
     {
@@ -238,7 +238,7 @@ V8Value HostObjectHelpers::Invoke(void* pvObject, const vector<V8Value>& args, b
 
 //-----------------------------------------------------------------------------
 
-V8Value HostObjectHelpers::InvokeMethod(void* pvObject, const wchar_t* pName, const vector<V8Value>& args)
+V8Value HostObjectHelpers::InvokeMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args)
 {
     try
     {
@@ -250,7 +250,7 @@ V8Value HostObjectHelpers::InvokeMethod(void* pvObject, const wchar_t* pName, co
             exportedArgs[index] = V8ContextProxyImpl::ExportValue(args[index]);
         }
 
-        return V8ContextProxyImpl::ImportValue(V8ProxyHelpers::InvokeHostObjectMethod(pvObject, gcnew String(pName), exportedArgs));
+        return V8ContextProxyImpl::ImportValue(V8ProxyHelpers::InvokeHostObjectMethod(pvObject, name.ToManagedString(), exportedArgs));
     }
     catch (Exception^ gcException)
     {
@@ -288,7 +288,7 @@ bool HostObjectHelpers::RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject)
 
 //-----------------------------------------------------------------------------
 
-bool HostObjectHelpers::TryParseInt32(const wchar_t* pString, int& result)
+bool HostObjectHelpers::TryParseInt32(const StdString& text, int& result)
 {
-    return Int32::TryParse(gcnew String(pString), NumberStyles::Integer, CultureInfo::InvariantCulture, result);
+    return Int32::TryParse(text.ToManagedString(), NumberStyles::Integer, CultureInfo::InvariantCulture, result);
 }

@@ -74,28 +74,28 @@ V8ObjectHolderImpl* GetHolderImpl(V8ObjectHolder* pHolder)
 // V8ObjectHelpers implementation
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHelpers::GetProperty(V8ObjectHolder* pHolder, const wchar_t* pName)
+V8Value V8ObjectHelpers::GetProperty(V8ObjectHolder* pHolder, const StdString& name)
 {
-    return GetHolderImpl(pHolder)->GetProperty(pName);
+    return GetHolderImpl(pHolder)->GetProperty(name);
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHelpers::SetProperty(V8ObjectHolder* pHolder, const wchar_t* pName, const V8Value& value)
+void V8ObjectHelpers::SetProperty(V8ObjectHolder* pHolder, const StdString& name, const V8Value& value)
 {
-    GetHolderImpl(pHolder)->SetProperty(pName, value);
+    GetHolderImpl(pHolder)->SetProperty(name, value);
 }
 
 //-----------------------------------------------------------------------------
 
-bool V8ObjectHelpers::DeleteProperty(V8ObjectHolder* pHolder, const wchar_t* pName)
+bool V8ObjectHelpers::DeleteProperty(V8ObjectHolder* pHolder, const StdString& name)
 {
-    return GetHolderImpl(pHolder)->DeleteProperty(pName);
+    return GetHolderImpl(pHolder)->DeleteProperty(name);
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHelpers::GetPropertyNames(V8ObjectHolder* pHolder, vector<wstring>& names)
+void V8ObjectHelpers::GetPropertyNames(V8ObjectHolder* pHolder, std::vector<StdString>& names)
 {
     GetHolderImpl(pHolder)->GetPropertyNames(names);
 }
@@ -123,21 +123,21 @@ bool V8ObjectHelpers::DeleteProperty(V8ObjectHolder* pHolder, int index)
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHelpers::GetPropertyIndices(V8ObjectHolder* pHolder, vector<int>& indices)
+void V8ObjectHelpers::GetPropertyIndices(V8ObjectHolder* pHolder, std::vector<int>& indices)
 {
     GetHolderImpl(pHolder)->GetPropertyIndices(indices);
 }
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHelpers::Invoke(V8ObjectHolder* pHolder, const vector<V8Value>& args, bool asConstructor)
+V8Value V8ObjectHelpers::Invoke(V8ObjectHolder* pHolder, const std::vector<V8Value>& args, bool asConstructor)
 {
     return GetHolderImpl(pHolder)->Invoke(args, asConstructor);
 }
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHelpers::InvokeMethod(V8ObjectHolder* pHolder, const wchar_t* pName, const vector<V8Value>& args)
+V8Value V8ObjectHelpers::InvokeMethod(V8ObjectHolder* pHolder, const StdString& name, const std::vector<V8Value>& args)
 {
-    return GetHolderImpl(pHolder)->InvokeMethod(pName, args);
+    return GetHolderImpl(pHolder)->InvokeMethod(name, args);
 }

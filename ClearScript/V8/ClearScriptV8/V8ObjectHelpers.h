@@ -71,16 +71,16 @@ class V8ObjectHelpers
 
 public:
 
-    static V8Value GetProperty(V8ObjectHolder* pHolder, const wchar_t* pName);
-    static void SetProperty(V8ObjectHolder* pHolder, const wchar_t* pName, const V8Value& value);
-    static bool DeleteProperty(V8ObjectHolder* pHolder, const wchar_t* pName);
-    static void GetPropertyNames(V8ObjectHolder* pHolder, vector<wstring>& names);
+    static V8Value GetProperty(V8ObjectHolder* pHolder, const StdString& name);
+    static void SetProperty(V8ObjectHolder* pHolder, const StdString& name, const V8Value& value);
+    static bool DeleteProperty(V8ObjectHolder* pHolder, const StdString& name);
+    static void GetPropertyNames(V8ObjectHolder* pHolder, std::vector<StdString>& names);
 
     static V8Value GetProperty(V8ObjectHolder* pHolder, int index);
     static void SetProperty(V8ObjectHolder* pHolder, int index, const V8Value& value);
     static bool DeleteProperty(V8ObjectHolder* pHolder, int index);
-    static void GetPropertyIndices(V8ObjectHolder* pHolder, vector<int>& indices);
+    static void GetPropertyIndices(V8ObjectHolder* pHolder, std::vector<int>& indices);
 
-    static V8Value Invoke(V8ObjectHolder* pHolder, const vector<V8Value>& args, bool asConstructor);
-    static V8Value InvokeMethod(V8ObjectHolder* pHolder, const wchar_t* pName, const vector<V8Value>& args);
+    static V8Value Invoke(V8ObjectHolder* pHolder, const std::vector<V8Value>& args, bool asConstructor);
+    static V8Value InvokeMethod(V8ObjectHolder* pHolder, const StdString& name, const std::vector<V8Value>& args);
 };

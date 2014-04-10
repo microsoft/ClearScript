@@ -68,12 +68,9 @@
 #include <algorithm>
 #include <functional>
 #include <string>
-#include <cstring>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-using namespace std;
 
 //-----------------------------------------------------------------------------
 // global macros

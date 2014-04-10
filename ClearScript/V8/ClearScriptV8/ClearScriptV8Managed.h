@@ -62,6 +62,7 @@
 #pragma once
 
 #include "ManagedPlatform.h"
+#include "StdString.h"
 #include "Mutex.h"
 #include "RefCount.h"
 #include "SharedPtr.h"
@@ -83,4 +84,3 @@
 #include "V8ContextProxyImpl.h"
 #include "V8ObjectImpl.h"
 #include "V8ScriptImpl.h"
-#include "StringToUniPtr.h"

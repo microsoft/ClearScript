@@ -94,7 +94,7 @@ public:
     typedef TCallback CallbackT;
 
     template <typename TResult>
-    static TResult CallWithLock(const function<TResult()>& function)
+    static TResult CallWithLock(const std::function<TResult()>& function)
     {
         BEGIN_MUTEX_SCOPE(*ms_pMutex)
 
@@ -137,7 +137,7 @@ class CallbackSlot<TTraits, NIndex, TResult()>
 public:
 
     typedef TResult CallbackT();
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback()
     {
@@ -189,7 +189,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult>
-function<TResult()>* CallbackSlot<TTraits, NIndex, TResult()>::ms_pFunction = nullptr;
+std::function<TResult()>* CallbackSlot<TTraits, NIndex, TResult()>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0>
 class CallbackSlot<TTraits, NIndex, TResult(T0)>
@@ -199,7 +199,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0)>
 public:
 
     typedef TResult CallbackT(T0);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0)
     {
@@ -251,7 +251,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0>
-function<TResult(T0)>* CallbackSlot<TTraits, NIndex, TResult(T0)>::ms_pFunction = nullptr;
+std::function<TResult(T0)>* CallbackSlot<TTraits, NIndex, TResult(T0)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1)>
@@ -261,7 +261,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1)>
 public:
 
     typedef TResult CallbackT(T0, T1);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1)
     {
@@ -313,7 +313,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1>
-function<TResult(T0, T1)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2)>
@@ -323,7 +323,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2)>
 public:
 
     typedef TResult CallbackT(T0, T1, T2);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2)
     {
@@ -375,7 +375,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2>
-function<TResult(T0, T1, T2)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3)>
@@ -385,7 +385,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3)>
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3)
     {
@@ -437,7 +437,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3>
-function<TResult(T0, T1, T2, T3)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4)>
@@ -447,7 +447,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4)>
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4)
     {
@@ -499,7 +499,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4>
-function<TResult(T0, T1, T2, T3, T4)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5)>
@@ -509,7 +509,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5)>
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5)
     {
@@ -561,7 +561,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
-function<TResult(T0, T1, T2, T3, T4, T5)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6)>
@@ -571,7 +571,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6)>
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
     {
@@ -623,7 +623,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-function<TResult(T0, T1, T2, T3, T4, T5, T6)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7)>
@@ -633,7 +633,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7)>
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6, T7);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7)
     {
@@ -685,7 +685,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-function<TResult(T0, T1, T2, T3, T4, T5, T6, T7)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
@@ -695,7 +695,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6, T7, T8);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8)
     {
@@ -747,7 +747,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
@@ -757,7 +757,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, 
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9)
     {
@@ -809,7 +809,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)>
@@ -819,7 +819,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, 
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10)
     {
@@ -871,7 +871,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
-function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)>
@@ -881,7 +881,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, 
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11)
     {
@@ -933,7 +933,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11>
-function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)>
@@ -943,7 +943,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, 
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12)
     {
@@ -995,7 +995,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12>
-function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12, typename T13>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)>
@@ -1005,7 +1005,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, 
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13)
     {
@@ -1057,7 +1057,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12, typename T13>
-function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12, typename T13, typename T14>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)>
@@ -1067,7 +1067,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, 
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13, T14 a14)
     {
@@ -1119,7 +1119,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12, typename T13, typename T14>
-function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12, typename T13, typename T14, typename T15>
 class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)>
@@ -1129,7 +1129,7 @@ class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, 
 public:
 
     typedef TResult CallbackT(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(T0 a0, T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13, T14 a14, T15 a15)
     {
@@ -1181,7 +1181,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12, typename T13, typename T14, typename T15>
-function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)>::ms_pFunction = nullptr;
+std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)>::ms_pFunction = nullptr;
 
 //-----------------------------------------------------------------------------
 // CallbackManager
@@ -1195,7 +1195,7 @@ class CallbackManager
 public:
 
     typedef typename TTraits::CallbackT CallbackT;
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static CallbackT* Alloc(const FunctionT& function)
     {

@@ -76,44 +76,13 @@ public:
         Type_Fatal
     };
 
-    V8Exception(Type type, const wchar_t* pEngineName, const wchar_t* pMessage, const wchar_t* pStackTrace, const V8Value& innerException):
+    V8Exception(Type type, const StdString& engineName, StdString&& message, StdString&& stackTrace, V8Value&& innerException):
         m_Type(type),
-        m_InnerException(innerException)
+		m_EngineName(engineName),
+		m_Message(std::move(message)),
+		m_StackTrace(std::move(stackTrace)),
+        m_InnerException(std::move(innerException))
     {
-        if (pEngineName != nullptr)
-        {
-            m_EngineName = pEngineName;
-        }
-
-        if (pMessage != nullptr)
-        {
-            m_Message = pMessage;
-        }
-
-        if (pStackTrace != nullptr)
-        {
-            m_StackTrace = pStackTrace;
-        }
-    }
-
-    V8Exception(Type type, const wchar_t* pEngineName, const wchar_t* pMessage, const wchar_t* pStackTrace, V8Value&& innerException):
-        m_Type(type),
-        m_InnerException(innerException)
-    {
-        if (pEngineName != nullptr)
-        {
-            m_EngineName = pEngineName;
-        }
-
-        if (pMessage != nullptr)
-        {
-            m_Message = pMessage;
-        }
-
-        if (pStackTrace != nullptr)
-        {
-            m_StackTrace = pStackTrace;
-        }
     }
 
     void DECLSPEC_NORETURN ThrowScriptEngineException() const;
@@ -121,8 +90,8 @@ public:
 private:
 
     Type m_Type;
-    wstring m_EngineName;
-    wstring m_Message;
-    wstring m_StackTrace;
+    StdString m_EngineName;
+    StdString m_Message;
+    StdString m_StackTrace;
     V8Value m_InnerException;
 };

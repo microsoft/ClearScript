@@ -71,16 +71,16 @@ class V8ContextImpl: public V8Context
 
 public:
 
-    V8ContextImpl(V8IsolateImpl* pIsolateImpl, const wchar_t* pName, bool enableDebugging, bool disableGlobalMembers, int debugPort);
+    V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort);
 
     size_t GetMaxIsolateStackUsage();
     void SetMaxIsolateStackUsage(size_t value);
 
     void CallWithLock(LockCallbackT* pCallback, void* pvArg);
     V8Value GetRootObject();
-    void SetGlobalProperty(const wchar_t* pName, const V8Value& value, bool globalMembers);
-    V8Value Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool evaluate, bool discard);
-    V8ScriptHolder* Compile(const wchar_t* pDocumentName, const wchar_t* pCode);
+    void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers);
+    V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard);
+    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code);
     bool CanExecute(V8ScriptHolder* pHolder);
     V8Value Execute(V8ScriptHolder* pHolder, bool evaluate);
     void Interrupt();
@@ -90,18 +90,18 @@ public:
     void* AddRefV8Object(void* pvObject);
     void ReleaseV8Object(void* pvObject);
 
-    V8Value GetV8ObjectProperty(void* pvObject, const wchar_t* pName);
-    void SetV8ObjectProperty(void* pvObject, const wchar_t* pName, const V8Value& value);
-    bool DeleteV8ObjectProperty(void* pvObject, const wchar_t* pName);
-    void GetV8ObjectPropertyNames(void* pvObject, vector<wstring>& names);
+    V8Value GetV8ObjectProperty(void* pvObject, const StdString& name);
+    void SetV8ObjectProperty(void* pvObject, const StdString& name, const V8Value& value);
+    bool DeleteV8ObjectProperty(void* pvObject, const StdString& name);
+    void GetV8ObjectPropertyNames(void* pvObject, std::vector<StdString>& names);
 
     V8Value GetV8ObjectProperty(void* pvObject, int index);
     void SetV8ObjectProperty(void* pvObject, int index, const V8Value& value);
     bool DeleteV8ObjectProperty(void* pvObject, int index);
-    void GetV8ObjectPropertyIndices(void* pvObject, vector<int>& indices);
+    void GetV8ObjectPropertyIndices(void* pvObject, std::vector<int>& indices);
 
-    V8Value InvokeV8Object(void* pvObject, const vector<V8Value>& args, bool asConstructor);
-    V8Value InvokeV8ObjectMethod(void* pvObject, const wchar_t* pName, const vector<V8Value>& args);
+    V8Value InvokeV8Object(void* pvObject, const std::vector<V8Value>& args, bool asConstructor);
+    V8Value InvokeV8ObjectMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
 
     void ProcessDebugMessages();
 
@@ -124,7 +124,7 @@ private:
 
         ~Scope()
         {
-            if (!uncaught_exception() && m_pContextImpl->m_hContext->HasOutOfMemoryException())
+            if (!std::uncaught_exception() && m_pContextImpl->m_hContext->HasOutOfMemoryException())
             {
                 m_pContextImpl->m_spIsolateImpl->ThrowOutOfMemoryException();
             }
@@ -176,14 +176,9 @@ private:
         return m_spIsolateImpl->CreateInteger(value);
     }
 
-    Local<String> CreateString(const char* pValue)
+    Local<String> CreateString(const StdString& value)
     {
-        return m_spIsolateImpl->CreateString(pValue);
-    }
-
-    Local<String> CreateString(const wchar_t* pValue)
-    {
-        return m_spIsolateImpl->CreateString(pValue);
+        return m_spIsolateImpl->CreateString(value);
     }
 
     Local<Array> CreateArray(int length = 0)
@@ -261,8 +256,8 @@ private:
 
     Handle<Value> Wrap();
 
-    void GetV8ObjectPropertyNames(Handle<Object> hObject, vector<wstring>& names);
-    void GetV8ObjectPropertyIndices(Handle<Object> hObject, vector<int>& indices);
+    void GetV8ObjectPropertyNames(Handle<Object> hObject, std::vector<StdString>& names);
+    void GetV8ObjectPropertyIndices(Handle<Object> hObject, std::vector<int>& indices);
 
     static void GetGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info);
     static void SetGlobalProperty(Local<String> hName, Local<Value> value, const PropertyCallbackInfo<Value>& info);
@@ -293,17 +288,17 @@ private:
 
     Handle<Value> ImportValue(const V8Value& value);
     V8Value ExportValue(Handle<Value> hValue);
-    void ImportValues(const vector<V8Value>& values, vector<Handle<Value>>& importedValues);
+    void ImportValues(const std::vector<V8Value>& values, std::vector<Handle<Value>>& importedValues);
 
     void Verify(const TryCatch& tryCatch);
     void VerifyNotOutOfMemory();
     void ThrowScriptException(const HostException& exception);
 
-    wstring m_Name;
+    StdString m_Name;
     SharedPtr<V8IsolateImpl> m_spIsolateImpl;
     Persistent<Context> m_hContext;
     Persistent<Object> m_hGlobal;
-    vector<Persistent<Object>> m_GlobalMembersStack;
+    std::vector<Persistent<Object>> m_GlobalMembersStack;
     Persistent<String> m_hHostObjectCookieName;
     Persistent<String> m_hInnerExceptionName;
     Persistent<FunctionTemplate> m_hHostObjectTemplate;

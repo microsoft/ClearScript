@@ -74,23 +74,23 @@ public:
     static void* AddRef(void* pvObject);
     static void Release(void* pvObject);
 
-    static V8Value GetProperty(void* pvObject, const wchar_t* pName);
-    static void SetProperty(void* pvObject, const wchar_t* pName, const V8Value& value);
-    static bool DeleteProperty(void* pvObject, const wchar_t* pName);
-    static void GetPropertyNames(void* pvObject, vector<wstring>& names);
+    static V8Value GetProperty(void* pvObject, const StdString& name);
+    static void SetProperty(void* pvObject, const StdString& name, const V8Value& value);
+    static bool DeleteProperty(void* pvObject, const StdString& name);
+    static void GetPropertyNames(void* pvObject, std::vector<StdString>& names);
 
     static V8Value GetProperty(void* pvObject, int index);
     static void SetProperty(void* pvObject, int index, const V8Value& value);
     static bool DeleteProperty(void* pvObject, int index);
-    static void GetPropertyIndices(void* pvObject, vector<int>& indices);
+    static void GetPropertyIndices(void* pvObject, std::vector<int>& indices);
 
-    static V8Value Invoke(void* pvObject, const vector<V8Value>& args, bool asConstructor);
-    static V8Value InvokeMethod(void* pvObject, const wchar_t* pName, const vector<V8Value>& args);
+    static V8Value Invoke(void* pvObject, const std::vector<V8Value>& args, bool asConstructor);
+    static V8Value InvokeMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
 
     static void* CreateV8ObjectCache();
     static void CacheV8Object(void* pvCache, void* pvObject, void* pvV8Object);
     static void* GetCachedV8Object(void* pvCache, void* pvObject);
     static bool RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject);
 
-    static bool TryParseInt32(const wchar_t* pString, int& result);
+    static bool TryParseInt32(const StdString& text, int& result);
 };

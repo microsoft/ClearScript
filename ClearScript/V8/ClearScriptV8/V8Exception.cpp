@@ -70,9 +70,9 @@ using namespace Microsoft::ClearScript::V8;
 
 void DECLSPEC_NORETURN V8Exception::ThrowScriptEngineException() const
 {
-    auto gcEngineName = gcnew String(m_EngineName.c_str());
-    auto gcMessage = gcnew String(m_Message.c_str());
-    auto gcStackTrace = gcnew String(m_StackTrace.c_str());
+    auto gcEngineName = m_EngineName.ToManagedString();
+    auto gcMessage = m_Message.ToManagedString();
+    auto gcStackTrace = m_StackTrace.ToManagedString();
     auto gcInnerException = dynamic_cast<Exception^>(V8ContextProxyImpl::ExportValue(m_InnerException));
 
     switch (m_Type)

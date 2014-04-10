@@ -77,18 +77,18 @@ public:
     V8ObjectHolderImpl* Clone() const;
     void* GetObject() const;
 
-    V8Value GetProperty(const wchar_t* pName) const;
-    void SetProperty(const wchar_t* pName, const V8Value& value) const;
-    bool DeleteProperty(const wchar_t* pName) const;
-    void GetPropertyNames(vector<wstring>& names) const;
+    V8Value GetProperty(const StdString& name) const;
+    void SetProperty(const StdString& name, const V8Value& value) const;
+    bool DeleteProperty(const StdString& name) const;
+    void GetPropertyNames(std::vector<StdString>& names) const;
 
     V8Value GetProperty(int index) const;
     void SetProperty(int index, const V8Value& value) const;
     bool DeleteProperty(int index) const;
-    void GetPropertyIndices(vector<int>& indices) const;
+    void GetPropertyIndices(std::vector<int>& indices) const;
 
-    V8Value Invoke(const vector<V8Value>& args, bool asConstructor) const;
-    V8Value InvokeMethod(const wchar_t* pName, const vector<V8Value>& args) const;
+    V8Value Invoke(const std::vector<V8Value>& args, bool asConstructor) const;
+    V8Value InvokeMethod(const StdString& name, const std::vector<V8Value>& args) const;
 
     ~V8ObjectHolderImpl();
 

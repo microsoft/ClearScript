@@ -213,7 +213,7 @@
     <ClInclude Include="..\NativePlatform.h" />
     <ClInclude Include="..\RefCount.h" />
     <ClInclude Include="..\SharedPtr.h" />
-    <ClInclude Include="..\StringToUniPtr.h" />
+    <ClInclude Include="..\StdString.h" />
     <ClInclude Include="..\V8Context.h" />
     <ClInclude Include="..\V8ContextImpl.h" />
     <ClInclude Include="..\V8ContextProxyImpl.h" />

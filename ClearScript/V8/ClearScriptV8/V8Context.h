@@ -69,7 +69,7 @@ class V8Context: public SharedPtrTarget
 {
 public:
 
-    static V8Context* Create(const SharedPtr<V8Isolate>& spIsolate, const wchar_t* pName, bool enableDebugging, bool disableGlobalMembers, int debugPort);
+    static V8Context* Create(const SharedPtr<V8Isolate>& spIsolate, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort);
 
     virtual size_t GetMaxIsolateStackUsage() = 0;
     virtual void SetMaxIsolateStackUsage(size_t value) = 0;
@@ -78,10 +78,10 @@ public:
     virtual void CallWithLock(LockCallbackT* pCallback, void* pvArg) = 0;
 
     virtual V8Value GetRootObject() = 0;
-    virtual void SetGlobalProperty(const wchar_t* pName, const V8Value& value, bool globalMembers) = 0;
-    virtual V8Value Execute(const wchar_t* pDocumentName, const wchar_t* pCode, bool evaluate, bool discard) = 0;
+    virtual void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers) = 0;
+    virtual V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard) = 0;
 
-    virtual V8ScriptHolder* Compile(const wchar_t* pDocumentName, const wchar_t* pCode) = 0;
+    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) = 0;
     virtual bool CanExecute(V8ScriptHolder* pHolder) = 0;
     virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) = 0;
 

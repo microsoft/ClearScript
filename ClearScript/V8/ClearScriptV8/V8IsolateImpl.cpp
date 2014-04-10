@@ -108,7 +108,8 @@ static size_t* const s_pMinStackLimit = reinterpret_cast<size_t*>(sizeof(size_t)
 
 //-----------------------------------------------------------------------------
 
-V8IsolateImpl::V8IsolateImpl(const wchar_t* pName, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort) :
+V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort):
+	m_Name(name),
     m_pIsolate(Isolate::New()),
     m_DebuggingEnabled(false),
     m_DebugMessageDispatchCount(0),
@@ -118,11 +119,6 @@ V8IsolateImpl::V8IsolateImpl(const wchar_t* pName, const V8IsolateConstraints* p
     m_IsOutOfMemory(false)
 {
     BEGIN_ADDREF_SCOPE
-
-        if (pName != nullptr)
-        {
-            m_Name = pName;
-        }
 
         BEGIN_ISOLATE_ENTRY_SCOPE
 
@@ -209,7 +205,7 @@ void V8IsolateImpl::EnableDebugging(int debugPort)
 
         _ASSERTE(m_pDebugMessageDispatcher);
         Debug::SetDebugMessageDispatchHandler(m_pDebugMessageDispatcher);
-        ASSERT_EVAL(Debug::EnableAgent(*String::Utf8Value(CreateString(m_Name.c_str())), debugPort));
+        ASSERT_EVAL(Debug::EnableAgent(*String::Utf8Value(CreateString(m_Name)), debugPort));
 
         m_DebuggingEnabled = true;
         m_DebugPort = debugPort;
@@ -254,12 +250,12 @@ void V8IsolateImpl::SetMaxStackUsage(size_t value)
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8IsolateImpl::Compile(const wchar_t* pDocumentName, const wchar_t* pCode)
+V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdString& code)
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, nullptr, false, true, 0));
-        return spContextImpl->Compile(pDocumentName, pCode);
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, 0));
+        return spContextImpl->Compile(documentName, code);
 
     END_ISOLATE_SCOPE
 }
@@ -329,7 +325,7 @@ void V8IsolateImpl::ReleaseV8Script(void* pvScript)
 void DECLSPEC_NORETURN V8IsolateImpl::ThrowOutOfMemoryException()
 {
     m_IsOutOfMemory = true;
-    throw V8Exception(V8Exception::Type_Fatal, m_Name.c_str(), L"The V8 runtime has exceeded its memory limit", nullptr, V8Value(V8Value::Undefined));
+    throw V8Exception(V8Exception::Type_Fatal, m_Name, StdString(L"The V8 runtime has exceeded its memory limit"), StdString(), V8Value(V8Value::Undefined));
 }
 
 //-----------------------------------------------------------------------------
@@ -388,7 +384,7 @@ void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
         if (maxStackUsage > 0)
         {
             // yes; ensure minimum breathing room
-            maxStackUsage = max(maxStackUsage, s_StackBreathingRoom);
+            maxStackUsage = std::max(maxStackUsage, s_StackBreathingRoom);
 
             // calculate stack address limit
             size_t* pStackLimit = pStackMarker - (maxStackUsage / sizeof(size_t));
@@ -413,7 +409,7 @@ void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
     else if ((m_pStackLimit != nullptr) && (pStackMarker < m_pStackLimit))
     {
         // stack usage limit exceeded (host-side detection)
-        throw V8Exception(V8Exception::Type_General, m_Name.c_str(), L"The V8 runtime has exceeded its stack usage limit", nullptr, V8Value(V8Value::Undefined));
+        throw V8Exception(V8Exception::Type_General, m_Name, StdString(L"The V8 runtime has exceeded its stack usage limit"), StdString(), V8Value(V8Value::Undefined));
     }
 
     m_ExecutionLevel++;

@@ -100,7 +100,7 @@ public:
     typedef TCallback CallbackT;
 
     template <typename TResult>
-    static TResult CallWithLock(const function<TResult()>& function)
+    static TResult CallWithLock(const std::function<TResult()>& function)
     {
         BEGIN_MUTEX_SCOPE(*ms_pMutex)
 
@@ -151,7 +151,7 @@ class CallbackSlot<TTraits, NIndex, TResult(<#= paramTypeList #>)>
 public:
 
     typedef TResult CallbackT(<#= paramTypeList #>);
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static TResult Callback(<#= paramList #>)
     {
@@ -203,7 +203,7 @@ private:
 };
 
 template <typename TTraits, size_t NIndex, typename TResult<#= typeParamList #>>
-function<TResult(<#= paramTypeList #>)>* CallbackSlot<TTraits, NIndex, TResult(<#= paramTypeList #>)>::ms_pFunction = nullptr;
+std::function<TResult(<#= paramTypeList #>)>* CallbackSlot<TTraits, NIndex, TResult(<#= paramTypeList #>)>::ms_pFunction = nullptr;
 <#
 }
 #>
@@ -220,7 +220,7 @@ class CallbackManager
 public:
 
     typedef typename TTraits::CallbackT CallbackT;
-    typedef function<CallbackT> FunctionT;
+    typedef std::function<CallbackT> FunctionT;
 
     static CallbackT* Alloc(const FunctionT& function)
     {

@@ -95,7 +95,7 @@ namespace V8 {
 
     private:
 
-        static void ImportValues(array<Object^>^ gcValues, vector<V8Value>& importedValues);
+        static void ImportValues(array<Object^>^ gcValues, std::vector<V8Value>& importedValues);
 
         Object^ m_gcLock;
         SharedPtr<V8ObjectHolder>* m_pspHolder;

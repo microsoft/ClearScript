@@ -87,7 +87,7 @@ public:
 
 private:
 
-    mutex m_Mutex;
+    std::mutex m_Mutex;
 };
 
 //-----------------------------------------------------------------------------
@@ -146,7 +146,7 @@ public:
 
 private:
 
-    recursive_mutex m_Mutex;
+    std::recursive_mutex m_Mutex;
 };
 
 //-----------------------------------------------------------------------------

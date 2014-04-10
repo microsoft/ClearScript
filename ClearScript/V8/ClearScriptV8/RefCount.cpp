@@ -88,7 +88,7 @@ public:
 
 private:
 
-    atomic<size_t> m_Count;
+    std::atomic<size_t> m_Count;
 };
 
 //-----------------------------------------------------------------------------

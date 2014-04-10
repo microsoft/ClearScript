@@ -65,7 +65,7 @@
 // V8Isolate implementation
 //-----------------------------------------------------------------------------
 
-V8Isolate* V8Isolate::Create(const wchar_t* pName, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort)
+V8Isolate* V8Isolate::Create(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort)
 {
-    return new V8IsolateImpl(pName, pConstraints, enableDebugging, debugPort);
+    return new V8IsolateImpl(name, pConstraints, enableDebugging, debugPort);
 }

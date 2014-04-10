@@ -65,7 +65,7 @@
 // V8Context implementation
 //-----------------------------------------------------------------------------
 
-V8Context* V8Context::Create(const SharedPtr<V8Isolate>& spIsolate, const wchar_t* pName, bool enableDebugging, bool disableGlobalMembers, int debugPort)
+V8Context* V8Context::Create(const SharedPtr<V8Isolate>& spIsolate, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort)
 {
-    return new V8ContextImpl(static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr()), pName, enableDebugging, disableGlobalMembers, debugPort);
+    return new V8ContextImpl(static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr()), name, enableDebugging, disableGlobalMembers, debugPort);
 }

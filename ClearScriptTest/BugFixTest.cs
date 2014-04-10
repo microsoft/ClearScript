@@ -400,6 +400,19 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(2L, HostItem.GetCoreBindCount());
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_StringWithNullChar()
+        {
+            const string value = "abc\0def";
+            const string value2 = "ghi\0jkl";
+            dynamic func = engine.Evaluate("(function (x) { return x.length; }).valueOf()");
+            Assert.AreEqual(value.Length, func(value));
+            Assert.AreEqual(value, engine.Evaluate(@"'abc\0def'"));
+            dynamic obj = engine.Evaluate(@"({ 'abc\0def': 'ghi\0jkl' })");
+            Assert.IsTrue(((DynamicObject)obj).GetDynamicMemberNames().Contains(value));
+            Assert.AreEqual(value2, obj[value]);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

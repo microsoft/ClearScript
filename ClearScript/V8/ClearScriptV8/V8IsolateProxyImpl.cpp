@@ -83,7 +83,7 @@ namespace V8 {
 
         try
         {
-            m_pspIsolate = new SharedPtr<V8Isolate>(V8Isolate::Create(StringToUniPtr(gcName), pConstraints, enableDebugging, debugPort));
+            m_pspIsolate = new SharedPtr<V8Isolate>(V8Isolate::Create(StdString(gcName), pConstraints, enableDebugging, debugPort));
         }
         catch (const V8Exception& exception)
         {
@@ -111,7 +111,7 @@ namespace V8 {
     {
         try
         {
-            return gcnew V8ScriptImpl(gcDocumentName, GetIsolate()->Compile(StringToUniPtr(gcDocumentName), StringToUniPtr(gcCode)));
+            return gcnew V8ScriptImpl(gcDocumentName, GetIsolate()->Compile(StdString(gcDocumentName), StdString(gcCode)));
         }
         catch (const V8Exception& exception)
         {

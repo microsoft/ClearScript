@@ -123,10 +123,10 @@ public:
         m_Data.UInt32Value = value;
     }
 
-    explicit V8Value(const wchar_t* pValue):
+    explicit V8Value(const StdString* pString):
         m_Type(Type_String)
     {
-        m_Data.pString = new wstring(pValue);
+        m_Data.pString = pString;
     }
 
     explicit V8Value(V8ObjectHolder* pV8ObjectHolder):
@@ -224,11 +224,11 @@ public:
         return false;
     }
 
-    bool AsString(const wchar_t*& pResult) const
+    bool AsString(const StdString*& pString) const
     {
         if (m_Type == Type_String)
         {
-            pResult = m_Data.pString->c_str();
+            pString = m_Data.pString;
             return true;
         }
 
@@ -284,7 +284,7 @@ private:
         double DoubleValue;
         __int32 Int32Value;
         unsigned __int32 UInt32Value;
-        wstring* pString;
+        const StdString* pString;
         V8ObjectHolder* pV8ObjectHolder;
         HostObjectHolder* pHostObjectHolder;
     };
@@ -311,7 +311,7 @@ private:
         }
         else if (m_Type == Type_String)
         {
-            m_Data.pString = new wstring(*that.m_Data.pString);
+            m_Data.pString = new StdString(*that.m_Data.pString);
         }
         else if (m_Type == Type_V8Object)
         {

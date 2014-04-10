@@ -112,7 +112,7 @@ class WeakRefUtil
 private:
 
     template <typename TResult>
-    static TResult CallWithLock(const function<TResult()>& callback)
+    static TResult CallWithLock(const std::function<TResult()>& callback)
     {
         BEGIN_MUTEX_SCOPE(*ms_pMutex)
 
