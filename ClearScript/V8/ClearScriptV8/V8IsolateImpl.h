@@ -122,6 +122,7 @@ public:
     };
 
     V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort);
+    const StdString& GetName() const { return m_Name; }
 
     Local<Context> CreateContext(ExtensionConfiguration* pExtensionConfiguation = nullptr, Handle<ObjectTemplate> hGlobalTemplate = Handle<ObjectTemplate>(), Handle<Value> hGlobalObject = Handle<Value>())
     {
@@ -251,6 +252,9 @@ public:
     V8ScriptHolder* Compile(const StdString& documentName, const StdString& code);
     void GetHeapInfo(V8IsolateHeapInfo& heapInfo);
     void CollectGarbage(bool exhaustive);
+
+    void* AddRefV8Object(void* pvObject);
+    void ReleaseV8Object(void* pvObject);
 
     void* AddRefV8Script(void* pvScript);
     void ReleaseV8Script(void* pvScript);

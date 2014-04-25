@@ -65,16 +65,8 @@
 // V8ScriptHolderImpl implementation
 //-----------------------------------------------------------------------------
 
-V8ScriptHolderImpl::V8ScriptHolderImpl(V8IsolateImpl* pIsolateImpl, void* pvScript):
-    m_spIsolateImpl(pIsolateImpl),
-    m_pvScript(pvScript)
-{
-}
-
-//-----------------------------------------------------------------------------
-
-V8ScriptHolderImpl::V8ScriptHolderImpl(const SharedPtr<V8IsolateImpl>& spIsolateImpl, void* pvScript):
-    m_spIsolateImpl(spIsolateImpl),
+V8ScriptHolderImpl::V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvScript):
+    m_spBinding(pBinding),
     m_pvScript(pvScript)
 {
 }
@@ -83,14 +75,20 @@ V8ScriptHolderImpl::V8ScriptHolderImpl(const SharedPtr<V8IsolateImpl>& spIsolate
 
 V8ScriptHolderImpl* V8ScriptHolderImpl::Clone() const
 {
-    return new V8ScriptHolderImpl(m_spIsolateImpl, m_spIsolateImpl->AddRefV8Script(m_pvScript));
+    return new V8ScriptHolderImpl(m_spBinding, m_spBinding->GetIsolateImpl()->AddRefV8Script(m_pvScript));
 }
 
 //-----------------------------------------------------------------------------
 
-void* V8ScriptHolderImpl::GetIsolate() const
+bool V8ScriptHolderImpl::IsSameIsolate(void* pvIsolate) const
 {
-    return m_spIsolateImpl.GetRawPtr();
+    SharedPtr<V8IsolateImpl> spIsolateImpl;
+    if (m_spBinding->TryGetIsolateImpl(spIsolateImpl))
+    {
+        return spIsolateImpl.GetRawPtr() == pvIsolate;
+    }
+
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -104,5 +102,9 @@ void* V8ScriptHolderImpl::GetScript() const
 
 V8ScriptHolderImpl::~V8ScriptHolderImpl()
 {
-    m_spIsolateImpl->ReleaseV8Script(m_pvScript);
+    SharedPtr<V8IsolateImpl> spIsolateImpl;
+    if (m_spBinding->TryGetIsolateImpl(spIsolateImpl))
+    {
+        spIsolateImpl->ReleaseV8Script(m_pvScript);
+    }
 }

@@ -71,8 +71,7 @@ class V8ObjectHolderImpl: public V8ObjectHolder
 
 public:
 
-    V8ObjectHolderImpl(V8ContextImpl* pContextImpl, void* pvObject);
-    V8ObjectHolderImpl(const SharedPtr<V8ContextImpl>& spContextImpl, void* pvObject);
+    V8ObjectHolderImpl(V8WeakContextBinding* pBinding, void* pvObject);
 
     V8ObjectHolderImpl* Clone() const;
     void* GetObject() const;
@@ -94,6 +93,6 @@ public:
 
 private:
 
-    SharedPtr<V8ContextImpl> m_spContextImpl;
+    SharedPtr<V8WeakContextBinding> m_spBinding;
     void* m_pvObject;
 };

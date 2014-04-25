@@ -65,34 +65,6 @@
 // local helper functions
 //-----------------------------------------------------------------------------
 
-static void* PtrFromObjectHandle(Persistent<Object> hObject)
-{
-    return hObject.ToPtr();
-}
-
-//-----------------------------------------------------------------------------
-
-static Persistent<Object> ObjectHandleFromPtr(void* pvObject)
-{
-    return Persistent<Object>::FromPtr(pvObject);
-}
-
-//-----------------------------------------------------------------------------
-
-static void* PtrFromScriptHandle(Persistent<Script> hScript)
-{
-    return hScript.ToPtr();
-}
-
-//-----------------------------------------------------------------------------
-
-static Persistent<Script> ScriptHandleFromPtr(void* pvScript)
-{
-    return Persistent<Script>::FromPtr(pvScript);
-}
-
-//-----------------------------------------------------------------------------
-
 static HostObjectHolder* GetHostObjectHolder(Handle<Object> hObject)
 {
     _ASSERTE(hObject->InternalFieldCount() > 0);
@@ -331,7 +303,7 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
     BEGIN_EXECUTION_SCOPE
 
         auto hScript = VERIFY(Script::New(CreateString(code), CreateString(documentName)));
-        return new V8ScriptHolderImpl(m_spIsolateImpl, ::PtrFromScriptHandle(CreatePersistent(hScript)));
+        return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromScriptHandle(CreatePersistent(hScript)));
 
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
@@ -341,7 +313,7 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
 
 bool V8ContextImpl::CanExecute(V8ScriptHolder* pHolder)
 {
-    return m_spIsolateImpl.GetRawPtr() == pHolder->GetIsolate();
+    return pHolder->IsSameIsolate(m_spIsolateImpl.GetRawPtr());
 }
 
 //-----------------------------------------------------------------------------
@@ -383,28 +355,6 @@ void V8ContextImpl::GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo)
 void V8ContextImpl::CollectGarbage(bool exhaustive)
 {
     m_spIsolateImpl->CollectGarbage(exhaustive);
-}
-
-//-----------------------------------------------------------------------------
-
-void* V8ContextImpl::AddRefV8Object(void* pvObject)
-{
-    BEGIN_ISOLATE_SCOPE
-
-        return ::PtrFromObjectHandle(CreatePersistent(::ObjectHandleFromPtr(pvObject)));
-
-    END_ISOLATE_SCOPE
-}
-
-//-----------------------------------------------------------------------------
-
-void V8ContextImpl::ReleaseV8Object(void* pvObject)
-{
-    BEGIN_ISOLATE_SCOPE
-
-        Dispose(::ObjectHandleFromPtr(pvObject));
-
-    END_ISOLATE_SCOPE
 }
 
 //-----------------------------------------------------------------------------
@@ -627,6 +577,18 @@ V8ContextImpl::~V8ContextImpl()
 Handle<Value> V8ContextImpl::Wrap()
 {
     return CreateExternal(this);
+}
+
+//-----------------------------------------------------------------------------
+
+SharedPtr<V8WeakContextBinding> V8ContextImpl::GetWeakBinding()
+{
+    if (m_spWeakBinding.IsEmpty())
+    {
+        m_spWeakBinding = new V8WeakContextBinding(m_spIsolateImpl, this);
+    }
+
+    return m_spWeakBinding;
 }
 
 //-----------------------------------------------------------------------------
@@ -1396,7 +1358,7 @@ V8Value V8ContextImpl::ExportValue(Handle<Value> hValue)
             return V8Value(::GetHostObjectHolder(hObject)->Clone());
         }
 
-        return V8Value(new V8ObjectHolderImpl(this, ::PtrFromObjectHandle(CreatePersistent(hObject))));
+        return V8Value(new V8ObjectHolderImpl(GetWeakBinding(), ::PtrFromObjectHandle(CreatePersistent(hObject))));
     }
 
     return V8Value(V8Value::Undefined);

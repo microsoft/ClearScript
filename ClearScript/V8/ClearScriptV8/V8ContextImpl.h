@@ -62,6 +62,12 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
+// forward declarations
+//-----------------------------------------------------------------------------
+
+class V8WeakContextBinding;
+
+//-----------------------------------------------------------------------------
 // V8ContextImpl
 //-----------------------------------------------------------------------------
 
@@ -72,6 +78,7 @@ class V8ContextImpl: public V8Context
 public:
 
     V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort);
+    const StdString& GetName() const { return m_Name; }
 
     size_t GetMaxIsolateStackUsage();
     void SetMaxIsolateStackUsage(size_t value);
@@ -87,9 +94,6 @@ public:
     void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo);
     void CollectGarbage(bool exhaustive);
 
-    void* AddRefV8Object(void* pvObject);
-    void ReleaseV8Object(void* pvObject);
-
     V8Value GetV8ObjectProperty(void* pvObject, const StdString& name);
     void SetV8ObjectProperty(void* pvObject, const StdString& name, const V8Value& value);
     bool DeleteV8ObjectProperty(void* pvObject, const StdString& name);
@@ -104,7 +108,6 @@ public:
     V8Value InvokeV8ObjectMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
 
     void ProcessDebugMessages();
-
     ~V8ContextImpl();
 
 private:
@@ -255,6 +258,7 @@ private:
     }
 
     Handle<Value> Wrap();
+    SharedPtr<V8WeakContextBinding> GetWeakBinding();
 
     void GetV8ObjectPropertyNames(Handle<Object> hObject, std::vector<StdString>& names);
     void GetV8ObjectPropertyIndices(Handle<Object> hObject, std::vector<int>& indices);
@@ -302,5 +306,6 @@ private:
     Persistent<String> m_hHostObjectCookieName;
     Persistent<String> m_hInnerExceptionName;
     Persistent<FunctionTemplate> m_hHostObjectTemplate;
+    SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     void* m_pvV8ObjectCache;
 };

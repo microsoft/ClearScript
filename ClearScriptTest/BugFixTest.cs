@@ -413,6 +413,80 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(value2, obj[value]);
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8ScriptItemWeakBinding()
+        {
+            // This test verifies that V8 script items no longer prevent their isolates from being
+            // destroyed. Previously it exhausted address space and crashed in 32-bit mode.
+
+            for (var i = 0; i < 128; i++)
+            {
+                using (var tempEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
+                {
+                    tempEngine.Evaluate("(function () {}).valueOf()");
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8ScriptItemDispose()
+        {
+            dynamic item1;
+            using (var tempEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
+            {
+                item1 = tempEngine.Evaluate("(function () { return 123; }).valueOf()");
+                Assert.AreEqual(123, item1());
+
+                dynamic item2 = tempEngine.Evaluate("(function () { return 456; }).valueOf()");
+                using (item2 as IDisposable)
+                {
+                    Assert.AreEqual(456, item2());
+                   
+                }
+            }
+
+            using (item1 as IDisposable)
+            {
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8CompiledScriptWeakBinding()
+        {
+            // This test verifies that V8 compiled scripts no longer prevent their isolates from
+            // being destroyed. Previously it exhausted address space and crashed in 32-bit mode.
+
+            for (var i = 0; i < 128; i++)
+            {
+                using (var tempEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
+                {
+                    tempEngine.Compile("(function () {}).valueOf()");
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8CompiledScriptDispose()
+        {
+            V8Script script1;
+            using (var tempEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
+            {
+                script1 = tempEngine.Compile("(function () { return 123; })()");
+                Assert.AreEqual(123, tempEngine.Evaluate(script1));
+
+                V8Script script2 = tempEngine.Compile("(function () { return 456; })()");
+                using (script2)
+                {
+                    Assert.AreEqual(456, tempEngine.Evaluate(script2));
+
+                }
+            }
+
+            using (script1)
+            {
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

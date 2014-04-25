@@ -82,6 +82,28 @@ class WeakRef
 
 public:
 
+    WeakRef<T>(const WeakRef<T>& that):
+        m_spImpl(that.m_spImpl)
+    {
+    }
+
+    WeakRef<T>(WeakRef<T>&& that):
+        m_spImpl(std::move(that.m_spImpl))
+    {
+    }
+
+    const WeakRef<T>& operator=(const WeakRef<T>& that)
+    {
+        m_spImpl = that.m_spImpl;
+        return *this;
+    }
+
+    const WeakRef<T>& operator=(WeakRef<T>&& that)
+    {
+        m_spImpl = std::move(that.m_spImpl);
+        return *this;
+    }
+
     SharedPtr<T> GetTarget() const
     {
         return m_spImpl->GetTarget();
@@ -98,39 +120,6 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-// WeakRefUtil
-//-----------------------------------------------------------------------------
-
-template <typename T>
-class WeakRefUtil
-{
-    PROHIBIT_CONSTRUCT(WeakRefUtil)
-
-    friend class WeakRefTarget<T>;
-    friend class WeakRefImpl<T>;
-
-private:
-
-    template <typename TResult>
-    static TResult CallWithLock(const std::function<TResult()>& callback)
-    {
-        BEGIN_MUTEX_SCOPE(*ms_pMutex)
-
-            return callback();
-
-        END_MUTEX_SCOPE
-    }
-
-    // Put the mutex on the heap. At process shutdown, static cleanup races against GC,
-    // so using non-POD static data in conjunction with managed objects is problematic.
-
-    static SimpleMutex* ms_pMutex;
-};
-
-template <typename T>
-SimpleMutex* WeakRefUtil<T>::ms_pMutex = new SimpleMutex;
-
-//-----------------------------------------------------------------------------
 // WeakRefTarget
 //-----------------------------------------------------------------------------
 
@@ -139,27 +128,21 @@ class WeakRefTarget: public SharedPtrTarget
 {
 public:
 
+    WeakRefTarget<T>():
+        m_spWeakRefImpl(new WeakRefImpl<T>(static_cast<T*>(this)))
+    {
+    }
+
     WeakRef<T> CreateWeakRef()
     {
-        return WeakRefUtil<T>::CallWithLock<WeakRef<T>>([this]
-        {
-            if (m_spWeakRefImpl.IsEmpty())
-            {
-                m_spWeakRefImpl = new WeakRefImpl<T>(static_cast<T*>(this));
-            }
-
-            return WeakRef<T>(m_spWeakRefImpl);
-        });
+        return WeakRef<T>(m_spWeakRefImpl);
     }
 
 protected:
 
     ~WeakRefTarget()
     {
-        if (!m_spWeakRefImpl.IsEmpty())
-        {
-            m_spWeakRefImpl->OnTargetDeleted();
-        }
+        m_spWeakRefImpl->OnTargetDeleted();
     }
 
 private:
@@ -184,11 +167,11 @@ private:
     {
     }
 
-    SharedPtr<T> GetTarget() const
+    SharedPtr<T> GetTarget()
     {
-        return WeakRefUtil<T>::CallWithLock<SharedPtr<T>>([this]
-        {
-            SharedPtr<T> spTarget;
+        SharedPtr<T> spTarget;
+
+        BEGIN_MUTEX_SCOPE(m_Mutex)
 
             if (m_pTarget != nullptr)
             {
@@ -199,17 +182,20 @@ private:
                 }
             }
 
-            return spTarget;
-        });
+        END_MUTEX_SCOPE
+
+        return spTarget;
     }
 
     void OnTargetDeleted()
     {
-        WeakRefUtil<T>::CallWithLock<void>([this]
-        {
+        BEGIN_MUTEX_SCOPE(m_Mutex)
+
             m_pTarget = nullptr;
-        });
+
+        END_MUTEX_SCOPE
     }
 
+    SimpleMutex m_Mutex;
     T* m_pTarget;
 };

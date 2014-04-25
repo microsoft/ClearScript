@@ -65,16 +65,8 @@
 // V8ObjectHolderImpl implementation
 //-----------------------------------------------------------------------------
 
-V8ObjectHolderImpl::V8ObjectHolderImpl(V8ContextImpl* pContextImpl, void* pvObject):
-    m_spContextImpl(pContextImpl),
-    m_pvObject(pvObject)
-{
-}
-
-//-----------------------------------------------------------------------------
-
-V8ObjectHolderImpl::V8ObjectHolderImpl(const SharedPtr<V8ContextImpl>& spContextImpl, void* pvObject):
-    m_spContextImpl(spContextImpl),
+V8ObjectHolderImpl::V8ObjectHolderImpl(V8WeakContextBinding* pBinding, void* pvObject):
+    m_spBinding(pBinding),
     m_pvObject(pvObject)
 {
 }
@@ -83,7 +75,7 @@ V8ObjectHolderImpl::V8ObjectHolderImpl(const SharedPtr<V8ContextImpl>& spContext
 
 V8ObjectHolderImpl* V8ObjectHolderImpl::Clone() const
 {
-    return new V8ObjectHolderImpl(m_spContextImpl, m_spContextImpl->AddRefV8Object(m_pvObject));
+    return new V8ObjectHolderImpl(m_spBinding, m_spBinding->GetIsolateImpl()->AddRefV8Object(m_pvObject));
 }
 
 //-----------------------------------------------------------------------------
@@ -97,75 +89,79 @@ void* V8ObjectHolderImpl::GetObject() const
 
 V8Value V8ObjectHolderImpl::GetProperty(const StdString& name) const
 {
-    return m_spContextImpl->GetV8ObjectProperty(m_pvObject, name);
+    return m_spBinding->GetContextImpl()->GetV8ObjectProperty(m_pvObject, name);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ObjectHolderImpl::SetProperty(const StdString& name, const V8Value& value) const
 {
-    m_spContextImpl->SetV8ObjectProperty(m_pvObject, name, value);
+    m_spBinding->GetContextImpl()->SetV8ObjectProperty(m_pvObject, name, value);
 }
 
 //-----------------------------------------------------------------------------
 
 bool V8ObjectHolderImpl::DeleteProperty(const StdString& name) const
 {
-    return m_spContextImpl->DeleteV8ObjectProperty(m_pvObject, name);
+    return m_spBinding->GetContextImpl()->DeleteV8ObjectProperty(m_pvObject, name);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ObjectHolderImpl::GetPropertyNames(std::vector<StdString>& names) const
 {
-    m_spContextImpl->GetV8ObjectPropertyNames(m_pvObject, names);
+    m_spBinding->GetContextImpl()->GetV8ObjectPropertyNames(m_pvObject, names);
 }
 
 //-----------------------------------------------------------------------------
 
 V8Value V8ObjectHolderImpl::GetProperty(int index) const
 {
-    return m_spContextImpl->GetV8ObjectProperty(m_pvObject, index);
+    return m_spBinding->GetContextImpl()->GetV8ObjectProperty(m_pvObject, index);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ObjectHolderImpl::SetProperty(int index, const V8Value& value) const
 {
-    m_spContextImpl->SetV8ObjectProperty(m_pvObject, index, value);
+    m_spBinding->GetContextImpl()->SetV8ObjectProperty(m_pvObject, index, value);
 }
 
 //-----------------------------------------------------------------------------
 
 bool V8ObjectHolderImpl::DeleteProperty(int index) const
 {
-    return m_spContextImpl->DeleteV8ObjectProperty(m_pvObject, index);
+    return m_spBinding->GetContextImpl()->DeleteV8ObjectProperty(m_pvObject, index);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ObjectHolderImpl::GetPropertyIndices(std::vector<int>& indices) const
 {
-    m_spContextImpl->GetV8ObjectPropertyIndices(m_pvObject, indices);
+    m_spBinding->GetContextImpl()->GetV8ObjectPropertyIndices(m_pvObject, indices);
 }
 
 //-----------------------------------------------------------------------------
 
 V8Value V8ObjectHolderImpl::Invoke(const std::vector<V8Value>& args, bool asConstructor) const
 {
-    return m_spContextImpl->InvokeV8Object(m_pvObject, args, asConstructor);
+    return m_spBinding->GetContextImpl()->InvokeV8Object(m_pvObject, args, asConstructor);
 }
 
 //-----------------------------------------------------------------------------
 
 V8Value V8ObjectHolderImpl::InvokeMethod(const StdString& name, const std::vector<V8Value>& args) const
 {
-    return m_spContextImpl->InvokeV8ObjectMethod(m_pvObject, name, args);
+    return m_spBinding->GetContextImpl()->InvokeV8ObjectMethod(m_pvObject, name, args);
 }
 
 //-----------------------------------------------------------------------------
 
 V8ObjectHolderImpl::~V8ObjectHolderImpl()
 {
-    m_spContextImpl->ReleaseV8Object(m_pvObject);
+    SharedPtr<V8IsolateImpl> spIsolateImpl;
+    if (m_spBinding->TryGetIsolateImpl(spIsolateImpl))
+    {
+        spIsolateImpl->ReleaseV8Object(m_pvObject);
+    }
 }

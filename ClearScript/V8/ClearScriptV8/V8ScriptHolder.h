@@ -70,7 +70,7 @@ class V8ScriptHolder
 public:
 
     virtual V8ScriptHolder* Clone() const = 0;
-    virtual void* GetIsolate() const = 0;
+    virtual bool IsSameIsolate(void* pvIsolate) const = 0;
     virtual void* GetScript() const = 0;
 
     virtual ~V8ScriptHolder() {}

@@ -62,22 +62,6 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
-// local helper functions
-//-----------------------------------------------------------------------------
-
-static void* PtrFromScriptHandle(Persistent<Script> hScript)
-{
-    return hScript.ToPtr();
-}
-
-//-----------------------------------------------------------------------------
-
-static Persistent<Script> ScriptHandleFromPtr(void* pvScript)
-{
-    return Persistent<Script>::FromPtr(pvScript);
-}
-
-//-----------------------------------------------------------------------------
 // V8IsolateImpl implementation
 //-----------------------------------------------------------------------------
 
@@ -300,6 +284,28 @@ void V8IsolateImpl::CollectGarbage(bool exhaustive)
 
 //-----------------------------------------------------------------------------
 
+void* V8IsolateImpl::AddRefV8Object(void* pvObject)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        return ::PtrFromObjectHandle(CreatePersistent(::ObjectHandleFromPtr(pvObject)));
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::ReleaseV8Object(void* pvObject)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        Dispose(::ObjectHandleFromPtr(pvObject));
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
 void* V8IsolateImpl::AddRefV8Script(void* pvScript)
 {
     BEGIN_ISOLATE_SCOPE
@@ -325,7 +331,7 @@ void V8IsolateImpl::ReleaseV8Script(void* pvScript)
 void DECLSPEC_NORETURN V8IsolateImpl::ThrowOutOfMemoryException()
 {
     m_IsOutOfMemory = true;
-    throw V8Exception(V8Exception::Type_Fatal, m_Name, StdString(L"The V8 runtime has exceeded its memory limit"), StdString(), V8Value(V8Value::Undefined));
+    throw V8Exception(V8Exception::Type_Fatal, m_Name, StdString(L"The V8 runtime has exceeded its memory limit"));
 }
 
 //-----------------------------------------------------------------------------
@@ -409,7 +415,7 @@ void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
     else if ((m_pStackLimit != nullptr) && (pStackMarker < m_pStackLimit))
     {
         // stack usage limit exceeded (host-side detection)
-        throw V8Exception(V8Exception::Type_General, m_Name, StdString(L"The V8 runtime has exceeded its stack usage limit"), StdString(), V8Value(V8Value::Undefined));
+        throw V8Exception(V8Exception::Type_General, m_Name, StdString(L"The V8 runtime has exceeded its stack usage limit"));
     }
 
     m_ExecutionLevel++;

@@ -373,3 +373,33 @@ const Persistent<T> V8SafePersistent<T>::ms_EmptyImpl;
 //-----------------------------------------------------------------------------
 
 #define Persistent V8FastPersistent
+
+//-----------------------------------------------------------------------------
+// helper functions
+//-----------------------------------------------------------------------------
+
+inline void* PtrFromObjectHandle(Persistent<Object> hObject)
+{
+    return hObject.ToPtr();
+}
+
+//-----------------------------------------------------------------------------
+
+inline Persistent<Object> ObjectHandleFromPtr(void* pvObject)
+{
+    return Persistent<Object>::FromPtr(pvObject);
+}
+
+//-----------------------------------------------------------------------------
+
+inline void* PtrFromScriptHandle(Persistent<Script> hScript)
+{
+    return hScript.ToPtr();
+}
+
+//-----------------------------------------------------------------------------
+
+inline Persistent<Script> ScriptHandleFromPtr(void* pvScript)
+{
+    return Persistent<Script>::FromPtr(pvScript);
+}

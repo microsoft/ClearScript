@@ -169,5 +169,8 @@
     <ClInclude Include="..\StdString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\V8WeakContextBinding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

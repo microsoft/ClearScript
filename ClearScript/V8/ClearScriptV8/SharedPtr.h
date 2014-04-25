@@ -78,11 +78,6 @@ public:
 
 protected:
 
-    SharedPtrTarget():
-         m_RefCount(0)
-    {
-    }
-
     class AddRefScope
     {
         PROHIBIT_COPY(AddRefScope)
@@ -111,6 +106,11 @@ protected:
         RefCount* m_pRefCount;
         size_t m_RefCountValue;
     };
+
+    SharedPtrTarget():
+         m_RefCount(0)
+    {
+    }
 
 private:
 

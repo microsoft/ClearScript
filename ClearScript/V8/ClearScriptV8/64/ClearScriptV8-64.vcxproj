@@ -232,6 +232,7 @@
     <ClInclude Include="..\V8ScriptHolderImpl.h" />
     <ClInclude Include="..\V8ScriptImpl.h" />
     <ClInclude Include="..\V8Value.h" />
+    <ClInclude Include="..\V8WeakContextBinding.h" />
     <ClInclude Include="..\WeakRef.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

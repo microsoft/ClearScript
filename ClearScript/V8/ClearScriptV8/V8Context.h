@@ -65,7 +65,7 @@
 // V8Context
 //-----------------------------------------------------------------------------
 
-class V8Context: public SharedPtrTarget
+class V8Context: public WeakRefTarget<V8Context>
 {
 public:
 

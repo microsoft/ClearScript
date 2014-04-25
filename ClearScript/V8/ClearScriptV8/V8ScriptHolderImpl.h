@@ -71,17 +71,16 @@ class V8ScriptHolderImpl: public V8ScriptHolder
 
 public:
 
-    V8ScriptHolderImpl(V8IsolateImpl* pIsolateImpl, void* pvScript);
-    V8ScriptHolderImpl(const SharedPtr<V8IsolateImpl>& spIsolateImpl, void* pvScript);
+    V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvScript);
 
     V8ScriptHolderImpl* Clone() const;
-    void* GetIsolate() const;
+    bool IsSameIsolate(void* pvIsolate) const;
     void* GetScript() const;
 
     ~V8ScriptHolderImpl();
 
 private:
 
-    SharedPtr<V8IsolateImpl> m_spIsolateImpl;
+    SharedPtr<V8WeakContextBinding> m_spBinding;
     void* m_pvScript;
 };

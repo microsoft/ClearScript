@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -61,29 +61,73 @@
 
 #pragma once
 
-#include "NativePlatform.h"
-#include "V8Platform.h"
-#include "StdString.h"
-#include "Mutex.h"
-#include "CallbackManager.h"
-#include "RefCount.h"
-#include "SharedPtr.h"
-#include "WeakRef.h"
-#include "V8ObjectHolder.h"
-#include "V8ScriptHolder.h"
-#include "HostObjectHolder.h"
-#include "V8Value.h"
-#include "HostException.h"
-#include "V8Exception.h"
-#include "V8IsolateConstraints.h"
-#include "V8IsolateHeapInfo.h"
-#include "V8Isolate.h"
-#include "V8Context.h"
-#include "HostObjectHolderImpl.h"
-#include "V8ObjectHelpers.h"
-#include "HostObjectHelpers.h"
-#include "V8IsolateImpl.h"
-#include "V8ContextImpl.h"
-#include "V8WeakContextBinding.h"
-#include "V8ObjectHolderImpl.h"
-#include "V8ScriptHolderImpl.h"
+//-----------------------------------------------------------------------------
+// V8WeakContextBinding
+//-----------------------------------------------------------------------------
+
+class V8WeakContextBinding: public SharedPtrTarget
+{
+public:
+
+    V8WeakContextBinding(V8IsolateImpl* pIsolateImpl, V8ContextImpl* pContextImpl):
+        m_wrIsolate(pIsolateImpl->CreateWeakRef()),
+        m_IsolateName(pIsolateImpl->GetName()),
+        m_wrContext(pContextImpl->CreateWeakRef()),
+        m_ContextName(pContextImpl->GetName())
+    {
+    }
+
+    SharedPtr<V8IsolateImpl> GetIsolateImpl() const
+    {
+        SharedPtr<V8IsolateImpl> spIsolateImpl;
+        if (TryGetIsolateImpl(spIsolateImpl))
+        {
+            return spIsolateImpl;
+        }
+
+        throw V8Exception(V8Exception::Type_General, m_IsolateName, StdString(L"The V8 runtime has been destroyed"));
+    }
+
+    bool TryGetIsolateImpl(SharedPtr<V8IsolateImpl>& spIsolateImpl) const
+    {
+        auto spIsolate = m_wrIsolate.GetTarget();
+        if (!spIsolate.IsEmpty())
+        {
+            spIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
+            return true;
+        }
+
+        return false;
+    }
+
+    SharedPtr<V8ContextImpl> GetContextImpl() const
+    {
+        SharedPtr<V8ContextImpl> spContextImpl;
+        if (TryGetContextImpl(spContextImpl))
+        {
+            return spContextImpl;
+        }
+
+        throw V8Exception(V8Exception::Type_General, m_ContextName, StdString(L"The V8 script engine has been destroyed"));
+    }
+
+
+    bool TryGetContextImpl(SharedPtr<V8ContextImpl>& spContextImpl) const
+    {
+        auto spContext = m_wrContext.GetTarget();
+        if (!spContext.IsEmpty())
+        {
+            spContextImpl = static_cast<V8ContextImpl*>(spContext.GetRawPtr());
+            return true;
+        }
+
+        return false;
+    }
+
+private:
+
+    WeakRef<V8Isolate> m_wrIsolate;
+    StdString m_IsolateName;
+    WeakRef<V8Context> m_wrContext;
+    StdString m_ContextName;
+};
