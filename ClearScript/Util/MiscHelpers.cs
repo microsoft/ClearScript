@@ -63,6 +63,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace Microsoft.ClearScript.Util
 {
@@ -98,6 +99,11 @@ namespace Microsoft.ClearScript.Util
         public static string FormatInvariant(string format, params object[] args)
         {
             return string.Format(CultureInfo.InvariantCulture, format, args);
+        }
+
+        public static StringBuilder AppendInvariant(this StringBuilder builder, string format, params object[] args)
+        {
+            return builder.AppendFormat(CultureInfo.InvariantCulture, format, args);
         }
 
         public static string FormatCode(string code)

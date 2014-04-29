@@ -61,10 +61,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8
@@ -73,7 +75,6 @@ namespace Microsoft.ClearScript.V8
     {
         private static readonly object mapLock = new object();
         private static readonly Dictionary<Type, Type> map = new Dictionary<Type, Type>();
-        private static bool loadedAssembly;
         private static Assembly assembly;
 
         protected static T CreateImpl<T>(params object[] args) where T : V8Proxy
@@ -99,7 +100,7 @@ namespace Microsoft.ClearScript.V8
             var implType = GetAssembly().GetType(name + "Impl");
             if (implType == null)
             {
-                throw new TypeLoadException("Cannot load " + name + " implementation type; verify that the following files are installed with your application: ClearScriptV8-32.dll, ClearScriptV8-64.dll, v8-ia32.dll, v8-x64.dll");
+                throw new TypeLoadException("Cannot find " + name + " implementation type in V8 interface assembly.");
             }
 
             return implType;
@@ -107,69 +108,68 @@ namespace Microsoft.ClearScript.V8
 
         private static Assembly GetAssembly()
         {
-            if (!loadedAssembly)
-            {
-                LoadAssembly();
-                loadedAssembly = true;
-            }
-
             if (assembly == null)
             {
-                throw new TypeLoadException("Cannot load V8 interface assembly; verify that the following files are installed with your application: ClearScriptV8-32.dll, ClearScriptV8-64.dll, v8-ia32.dll, v8-x64.dll");
+                assembly = LoadAssembly();
             }
 
             return assembly;
         }
 
-        private static void LoadAssembly()
+        private static Assembly LoadAssembly()
         {
             try
             {
-                assembly = Assembly.Load("ClearScriptV8");
-                return;
+                return Assembly.Load("ClearScriptV8");
             }
             catch (FileNotFoundException)
             {
             }
 
-            if (LoadNativeLibrary())
-            {
-                var suffix = Environment.Is64BitProcess ? "64" : "32";
-                var fileName = "ClearScriptV8-" + suffix + ".dll";
+            LoadNativeLibrary();
 
-                var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, fileName)).Distinct();
-                foreach (var path in paths)
-                {
-                    try
-                    {
-                        assembly = Assembly.LoadFrom(path);
-                        break;
-                    }
-                    catch (FileNotFoundException)
-                    {
-                    }
-                }
-            }
-        }
+            var suffix = Environment.Is64BitProcess ? "64" : "32";
+            var fileName = "ClearScriptV8-" + suffix + ".dll";
+            var messageBuilder = new StringBuilder();
 
-        private static bool LoadNativeLibrary()
-        {
-            var hLibrary = IntPtr.Zero;
-
-            var suffix = Environment.Is64BitProcess ? "x64" : "ia32";
-            var fileName = "v8-" + suffix + ".dll";
-
-            var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, fileName)).Distinct();
+            var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
             foreach (var path in paths)
             {
-                hLibrary = NativeMethods.LoadLibraryW(path);
-                if (hLibrary != IntPtr.Zero)
+                try
                 {
-                    break;
+                    return Assembly.LoadFrom(path);
+                }
+                catch (Exception exception)
+                {
+                    messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
                 }
             }
 
-            return hLibrary != IntPtr.Zero;
+            var message = MiscHelpers.FormatInvariant("Cannot load V8 interface assembly. Load failure information for {0}:{1}", fileName, messageBuilder);
+            throw new TypeLoadException(message);
+        }
+
+        private static void LoadNativeLibrary()
+        {
+            var suffix = Environment.Is64BitProcess ? "x64" : "ia32";
+            var fileName = "v8-" + suffix + ".dll";
+            var messageBuilder = new StringBuilder();
+
+            var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
+            foreach (var path in paths)
+            {
+                var hLibrary = NativeMethods.LoadLibraryW(path);
+                if (hLibrary != IntPtr.Zero)
+                {
+                    return;
+                }
+
+                var exception = new Win32Exception(Marshal.GetLastWin32Error());
+                messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
+            }
+
+            var message = MiscHelpers.FormatInvariant("Cannot load V8 interface assembly. Load failure information for {0}:{1}", fileName, messageBuilder);
+            throw new TypeLoadException(message);
         }
 
         private static IEnumerable<string> GetDirPaths()
@@ -199,6 +199,31 @@ namespace Microsoft.ClearScript.V8
         #region IDisposable implementation (abstract)
 
         public abstract void Dispose();
+
+        #endregion
+
+        #region unit test support
+
+        private static string deploymentDirName = string.Empty;
+
+        internal static void RunWithDeploymentDir(string name, Action action)
+        {
+            lock (mapLock)
+            {
+                map.Clear();
+                assembly = null;
+            }
+
+            deploymentDirName = name;
+            try
+            {
+                action();
+            }
+            finally
+            {
+                deploymentDirName = string.Empty;
+            }
+        }
 
         #endregion
 
