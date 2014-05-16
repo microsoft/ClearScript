@@ -62,6 +62,70 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
+// V8ArrayBufferAllocator
+//-----------------------------------------------------------------------------
+
+class V8ArrayBufferAllocator: public ArrayBuffer::Allocator
+{
+public:
+
+	static void EnsureInstalled();
+
+    void* Allocate(size_t size);
+    void* AllocateUninitialized(size_t size);
+    void Free(void* pvData, size_t size);
+
+private:
+
+	V8ArrayBufferAllocator();
+
+	static V8ArrayBufferAllocator ms_Instance;
+	static std::once_flag ms_InstallationFlag;
+};
+
+//-----------------------------------------------------------------------------
+
+void V8ArrayBufferAllocator::EnsureInstalled()
+{
+	std::call_once(ms_InstallationFlag, []
+	{
+		V8::SetArrayBufferAllocator(&ms_Instance);
+	});
+}
+
+//-----------------------------------------------------------------------------
+
+void* V8ArrayBufferAllocator::Allocate(size_t size)
+{
+	return calloc(1, size);
+}
+
+//-----------------------------------------------------------------------------
+
+void* V8ArrayBufferAllocator::AllocateUninitialized(size_t size)
+{
+	return malloc(size);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ArrayBufferAllocator::Free(void* pvData, size_t /*size*/)
+{
+	free(pvData);
+}
+
+//-----------------------------------------------------------------------------
+
+V8ArrayBufferAllocator::V8ArrayBufferAllocator()
+{
+}
+
+//-----------------------------------------------------------------------------
+
+V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
+std::once_flag V8ArrayBufferAllocator::ms_InstallationFlag;
+
+//-----------------------------------------------------------------------------
 // V8IsolateImpl implementation
 //-----------------------------------------------------------------------------
 
@@ -102,6 +166,8 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     m_pStackLimit(nullptr),
     m_IsOutOfMemory(false)
 {
+	V8ArrayBufferAllocator::EnsureInstalled();
+
     BEGIN_ADDREF_SCOPE
 
         BEGIN_ISOLATE_ENTRY_SCOPE

@@ -487,6 +487,13 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8ArrayBufferAllocator()
+        {
+            engine.Execute("buffer = new ArrayBuffer(12345)");
+            Assert.AreEqual(12345, engine.Script.buffer.byteLength);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
