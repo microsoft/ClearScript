@@ -280,22 +280,17 @@ namespace Microsoft.ClearScript.Windows
                         uint length;
                         documentText.GetPositionOfContext(documentContext, out position, out length);
 
-                        var pBuffer = Marshal.AllocCoTaskMem((int)(sizeof(char) * length));
-                        try
+                        using (var bufferBlock = new CoTaskMemArrayBlock(sizeof(char), (int)length))
                         {
                             uint lengthReturned = 0;
-                            documentText.GetText(position, pBuffer, IntPtr.Zero, ref lengthReturned, length);
-                            var codeLine = Marshal.PtrToStringUni(pBuffer, (int)lengthReturned);
+                            documentText.GetText(position, bufferBlock.Addr, IntPtr.Zero, ref lengthReturned, length);
+                            var codeLine = Marshal.PtrToStringUni(bufferBlock.Addr, (int)lengthReturned);
 
                             uint lineNumber;
                             uint offsetInLine;
                             documentText.GetLineOfPosition(position, out lineNumber, out offsetInLine);
 
                             stackTrace += MiscHelpers.FormatInvariant("    at {0} ({1}:{2}:{3}) -> {4}\n", description, documentName, lineNumber, offsetInLine, codeLine);
-                        }
-                        finally
-                        {
-                            Marshal.FreeCoTaskMem(pBuffer);
                         }
                     }
                 }
@@ -536,35 +531,23 @@ namespace Microsoft.ClearScript.Windows
         {
             VerifyNotDisposed();
 
-            object result = null;
-
-            ScriptInvoke(() =>
+            return ScriptInvoke(() =>
             {
                 EXCEPINFO excepInfo;
                 if (!evaluate)
                 {
                     const ScriptTextFlags flags = ScriptTextFlags.IsVisible;
                     Parse(documentName, code, flags, IntPtr.Zero, out excepInfo, discard);
+                    return null;
                 }
-                else
+
+                using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
-                    var pVarResult = Marshal.AllocCoTaskMem(256);
-                    NativeMethods.VariantInit(pVarResult);
-                    try
-                    {
-                        const ScriptTextFlags flags = ScriptTextFlags.IsExpression;
-                        Parse(documentName, code, flags, pVarResult, out excepInfo, discard);
-                        result = Marshal.GetObjectForNativeVariant(pVarResult);
-                    }
-                    finally
-                    {
-                        NativeMethods.VariantClear(pVarResult);
-                        Marshal.FreeCoTaskMem(pVarResult);
-                    }
+                    const ScriptTextFlags flags = ScriptTextFlags.IsExpression;
+                    Parse(documentName, code, flags, resultVariantBlock.Addr, out excepInfo, discard);
+                    return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             });
-
-            return result;
         }
 
         #endregion
@@ -749,23 +732,6 @@ namespace Microsoft.ClearScript.Windows
 
         private class HostItemMap : Dictionary<string, object>
         {
-        }
-
-        #endregion
-
-        #region Nested type: NativeMethods
-
-        private static class NativeMethods
-        {
-            [DllImport("oleaut32.dll", ExactSpelling = true)]
-            public static extern void VariantInit(
-                [In] IntPtr pVariant
-            );
-
-            [DllImport("oleaut32.dll", ExactSpelling = true)]
-            public static extern uint VariantClear(
-                [In] IntPtr pVariant
-            );
         }
 
         #endregion

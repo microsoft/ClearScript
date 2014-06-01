@@ -132,8 +132,8 @@ namespace Microsoft.ClearScript.Windows
             var comException = exception as COMException;
             if (comException != null)
             {
-                var hr = comException.ErrorCode;
-                if ((hr == RawCOMHelpers.HResult.SCRIPT_E_REPORTED) && (engine.CurrentScriptFrame != null))
+                var result = comException.ErrorCode;
+                if ((result == RawCOMHelpers.HResult.SCRIPT_E_REPORTED) && (engine.CurrentScriptFrame != null))
                 {
                     scriptError = engine.CurrentScriptFrame.ScriptError ?? engine.CurrentScriptFrame.PendingScriptError;
                     if (scriptError != null)
@@ -141,19 +141,19 @@ namespace Microsoft.ClearScript.Windows
                         return true;
                     }
                 }
-                else if (RawCOMHelpers.HResult.GetFacility(hr) == RawCOMHelpers.HResult.FACILITY_CONTROL)
+                else if (RawCOMHelpers.HResult.GetFacility(result) == RawCOMHelpers.HResult.FACILITY_CONTROL)
                 {
                     // These exceptions often have awful messages that include COM error codes.
                     // The engine itself may be able to provide a better message.
 
                     string message;
-                    if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(hr), out message) && (message != exception.Message))
+                    if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out message) && (message != exception.Message))
                     {
                         scriptError = new ScriptEngineException(engine.Name, message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
                         return true;
                     }
                 }
-                else if (hr == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
+                else if (result == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
                 {
                     // this usually indicates invalid object or property access in JScript
                     scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);

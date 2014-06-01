@@ -223,6 +223,21 @@ namespace Microsoft.ClearScript.Util
 
         private static bool TryGetProperty(IReflect target, string name, bool ignoreCase, object[] args, out object result)
         {
+            // ReSharper disable SuspiciousTypeConversion.Global
+
+            var dispatchEx = target as IDispatchEx;
+            if (dispatchEx != null)
+            {
+                // Standard IExpando-over-IDispatchEx support appears to leak the variants it
+                // creates for the invocation arguments. This issue has been reported. In the
+                // meantime we'll bypass this facility and interface with IDispatchEx directly.
+
+                result = dispatchEx.GetProperty(name, ignoreCase, args);
+                return true;
+            }
+
+            // ReSharper restore SuspiciousTypeConversion.Global
+
             var flags = BindingFlags.Public;
             if (ignoreCase)
             {
@@ -244,6 +259,22 @@ namespace Microsoft.ClearScript.Util
         {
             if ((args != null) && (args.Length > 0))
             {
+                // ReSharper disable SuspiciousTypeConversion.Global
+
+                var dispatchEx = target as IDispatchEx;
+                if (dispatchEx != null)
+                {
+                    // Standard IExpando-over-IDispatchEx support appears to leak the variants it
+                    // creates for the invocation arguments. This issue has been reported. In the
+                    // meantime we'll bypass this facility and interface with IDispatchEx directly.
+
+                    dispatchEx.SetProperty(name, ignoreCase, args);
+                    result = args[args.Length - 1];
+                    return true;
+                }
+
+                // ReSharper restore SuspiciousTypeConversion.Global
+
                 var flags = BindingFlags.Public;
                 if (ignoreCase)
                 {
@@ -274,6 +305,21 @@ namespace Microsoft.ClearScript.Util
 
         private static bool TryInvokeMethod(IReflect target, string name, bool ignoreCase, object[] args, out object result)
         {
+            // ReSharper disable SuspiciousTypeConversion.Global
+
+            var dispatchEx = target as IDispatchEx;
+            if (dispatchEx != null)
+            {
+                // Standard IExpando-over-IDispatchEx support appears to leak the variants it
+                // creates for the invocation arguments. This issue has been reported. In the
+                // meantime we'll bypass this facility and interface with IDispatchEx directly.
+
+                result = dispatchEx.InvokeMethod(name, ignoreCase, args);
+                return true;
+            }
+
+            // ReSharper restore SuspiciousTypeConversion.Global
+
             var flags = BindingFlags.InvokeMethod | BindingFlags.Public;
             if (ignoreCase)
             {

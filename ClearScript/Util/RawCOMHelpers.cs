@@ -66,6 +66,8 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class RawCOMHelpers
     {
+        public static readonly int VariantSize = sizeof(ushort) * 4 + IntPtr.Size * 2;
+
         public static IntPtr CreateInstance<T>(string progID)
         {
             IntPtr pInterface;
@@ -118,28 +120,6 @@ namespace Microsoft.ClearScript.Util
             return clsid;
         }
 
-        #region Nested type: NativeMethods
-
-        private static class NativeMethods
-        {
-            [DllImport("ole32.dll", ExactSpelling = true)]
-            public static extern uint CoCreateInstance(
-                [In] ref Guid clsid,
-                [In] IntPtr pOuter,
-                [In] uint clsContext,
-                [In] ref Guid iid,
-                [Out] out IntPtr pInterface
-            );
-
-            [DllImport("ole32.dll", ExactSpelling = true)]
-            public static extern uint CLSIDFromProgID(
-                [In] [MarshalAs(UnmanagedType.LPWStr)] string progID,
-                [Out] out Guid clsid
-            );
-        }
-
-        #endregion
-
         #region Nested type: HResult
 
         public static class HResult
@@ -167,6 +147,7 @@ namespace Microsoft.ClearScript.Util
             public static readonly int E_ABORT = MiscHelpers.UnsignedAsSigned(0x80004004U);
             public static readonly int E_INVALIDARG = MiscHelpers.UnsignedAsSigned(0x80070057U);
 
+            public static readonly int DISP_E_UNKNOWNNAME = MiscHelpers.UnsignedAsSigned(0x80020006U);
             public static readonly int DISP_E_MEMBERNOTFOUND = MiscHelpers.UnsignedAsSigned(0x80020003U);
             public static readonly int SCRIPT_E_REPORTED = MiscHelpers.UnsignedAsSigned(0x80020101U);
 

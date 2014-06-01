@@ -65,6 +65,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using Microsoft.ClearScript.Util;
@@ -492,6 +493,195 @@ namespace Microsoft.ClearScript.Test
         {
             engine.Execute("buffer = new ArrayBuffer(12345)");
             Assert.AreEqual(12345, engine.Script.buffer.byteLength);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_IDispatchExArgLeak_SetProperty_JScript()
+        {
+            // ReSharper disable RedundantAssignment
+
+            engine.Dispose();
+            engine = new JScriptEngine();
+
+            object x = Guid.NewGuid();
+            var wr = new WeakReference(x);
+
+            new Action(() =>
+            {
+                // ReSharper disable AccessToModifiedClosure
+
+                var result = x.ToString();
+                engine.Script.x = x;
+
+                x = null;
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+                GC.WaitForPendingFinalizers();
+
+                Assert.AreEqual(result, engine.Evaluate("x.ToString()"));
+
+                engine.Script.x = null;
+                engine.CollectGarbage(true);
+
+                // ReSharper restore AccessToModifiedClosure
+            })();
+
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            Assert.IsFalse(wr.IsAlive);
+
+            // ReSharper restore RedundantAssignment
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_IDispatchExArgLeak_SetProperty_VBScript()
+        {
+            // ReSharper disable RedundantAssignment
+
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            object x = Guid.NewGuid();
+            var wr = new WeakReference(x);
+
+            new Action(() =>
+            {
+                // ReSharper disable AccessToModifiedClosure
+
+                var result = x.ToString();
+                engine.Script.x = x;
+
+                x = null;
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+                GC.WaitForPendingFinalizers();
+
+                Assert.AreEqual(result, engine.Evaluate("x.ToString()"));
+
+                engine.Script.x = null;
+                engine.CollectGarbage(true);
+
+                // ReSharper restore AccessToModifiedClosure
+            })();
+
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            Assert.IsFalse(wr.IsAlive);
+
+            // ReSharper restore RedundantAssignment
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_IDispatchExArgLeak_GetProperty_VBScript()
+        {
+            // ReSharper disable RedundantAssignment
+
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            object x1 = Guid.NewGuid();
+            var wr1 = new WeakReference(x1);
+            object x2 = Guid.NewGuid();
+            var wr2 = new WeakReference(x2);
+
+            new Action(() =>
+            {
+                // ReSharper disable AccessToModifiedClosure
+
+                engine.Execute(@"
+                    class MyClass
+                        public property get foo(x1, x2)
+                            foo = x1.ToString() & x2.ToString()
+                        end property
+                    end class
+                    set bar = new MyClass
+                ");
+
+                object result;
+                var bar = (DynamicObject)engine.Script.bar;
+                var args = new[] { "foo", HostItem.Wrap(engine, x1), HostItem.Wrap(engine, x2) };
+                Assert.IsTrue(bar.GetMetaObject(Expression.Constant(bar)).TryGetIndex(args, out result));
+                Assert.AreEqual(x1.ToString() + x2, result);
+
+                // ReSharper restore AccessToModifiedClosure
+            })();
+
+            x1 = null;
+            x2 = null;
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            Assert.IsFalse(wr1.IsAlive);
+            Assert.IsFalse(wr2.IsAlive);
+
+            // ReSharper restore RedundantAssignment
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_IDispatchExArgLeak_InvokeMethod_JScript()
+        {
+            // ReSharper disable RedundantAssignment
+
+            engine.Dispose();
+            engine = new JScriptEngine();
+
+            object x1 = Guid.NewGuid();
+            var wr1 = new WeakReference(x1);
+            object x2 = Guid.NewGuid();
+            var wr2 = new WeakReference(x2);
+
+            new Action(() =>
+            {
+                // ReSharper disable AccessToModifiedClosure
+
+                engine.Execute("function foo(x1, x2) { return x1.ToString() + x2.ToString(); }");
+                Assert.AreEqual(x1.ToString() + x2, engine.Script.foo(x1, x2));
+
+                engine.CollectGarbage(true);
+
+                // ReSharper restore AccessToModifiedClosure
+            })();
+
+            x1 = null;
+            x2 = null;
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            Assert.IsFalse(wr1.IsAlive);
+            Assert.IsFalse(wr2.IsAlive);
+
+            // ReSharper restore RedundantAssignment
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_IDispatchExArgLeak_InvokeMethod_VBScript()
+        {
+            // ReSharper disable RedundantAssignment
+
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            object x1 = Guid.NewGuid();
+            var wr1 = new WeakReference(x1);
+            object x2 = Guid.NewGuid();
+            var wr2 = new WeakReference(x2);
+
+            new Action(() =>
+            {
+                // ReSharper disable AccessToModifiedClosure
+
+                engine.Execute("function foo(x1, x2):foo = x1.ToString() & x2.ToString():end function");
+                Assert.AreEqual(x1.ToString() + x2, engine.Script.foo(x1, x2));
+
+                engine.CollectGarbage(true);
+
+                // ReSharper restore AccessToModifiedClosure
+            })();
+
+            x1 = null;
+            x2 = null;
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            Assert.IsFalse(wr1.IsAlive);
+            Assert.IsFalse(wr2.IsAlive);
+
+            // ReSharper restore RedundantAssignment
         }
 
         // ReSharper restore InconsistentNaming

@@ -226,17 +226,5 @@ namespace Microsoft.ClearScript.V8
         }
 
         #endregion
-
-        #region Nested type: NativeMethods
-
-        private static class NativeMethods
-        {
-            [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
-            public static extern IntPtr LoadLibraryW(
-                [In] [MarshalAs(UnmanagedType.LPWStr)] string path
-            );
-        }
-
-        #endregion
     }
 }

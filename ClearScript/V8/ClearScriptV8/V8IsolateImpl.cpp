@@ -69,7 +69,7 @@ class V8ArrayBufferAllocator: public ArrayBuffer::Allocator
 {
 public:
 
-	static void EnsureInstalled();
+    static void EnsureInstalled();
 
     void* Allocate(size_t size);
     void* AllocateUninitialized(size_t size);
@@ -77,41 +77,41 @@ public:
 
 private:
 
-	V8ArrayBufferAllocator();
+    V8ArrayBufferAllocator();
 
-	static V8ArrayBufferAllocator ms_Instance;
-	static std::once_flag ms_InstallationFlag;
+    static V8ArrayBufferAllocator ms_Instance;
+    static std::once_flag ms_InstallationFlag;
 };
 
 //-----------------------------------------------------------------------------
 
 void V8ArrayBufferAllocator::EnsureInstalled()
 {
-	std::call_once(ms_InstallationFlag, []
-	{
-		V8::SetArrayBufferAllocator(&ms_Instance);
-	});
+    std::call_once(ms_InstallationFlag, []
+    {
+        V8::SetArrayBufferAllocator(&ms_Instance);
+    });
 }
 
 //-----------------------------------------------------------------------------
 
 void* V8ArrayBufferAllocator::Allocate(size_t size)
 {
-	return calloc(1, size);
+    return calloc(1, size);
 }
 
 //-----------------------------------------------------------------------------
 
 void* V8ArrayBufferAllocator::AllocateUninitialized(size_t size)
 {
-	return malloc(size);
+    return malloc(size);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ArrayBufferAllocator::Free(void* pvData, size_t /*size*/)
 {
-	free(pvData);
+    free(pvData);
 }
 
 //-----------------------------------------------------------------------------
@@ -157,7 +157,7 @@ static size_t* const s_pMinStackLimit = reinterpret_cast<size_t*>(sizeof(size_t)
 //-----------------------------------------------------------------------------
 
 V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort):
-	m_Name(name),
+    m_Name(name),
     m_pIsolate(Isolate::New()),
     m_DebuggingEnabled(false),
     m_DebugMessageDispatchCount(0),
@@ -166,7 +166,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     m_pStackLimit(nullptr),
     m_IsOutOfMemory(false)
 {
-	V8ArrayBufferAllocator::EnsureInstalled();
+    V8ArrayBufferAllocator::EnsureInstalled();
 
     BEGIN_ADDREF_SCOPE
 
