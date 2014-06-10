@@ -477,6 +477,31 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CollectGarbage_HostObject()
+        {
+            // ReSharper disable RedundantAssignment
+
+            var x = new object();
+            var wr = new WeakReference(x);
+            engine.Script.x = x;
+
+            x = null;
+            engine.Script.x = null;
+
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            Assert.IsTrue(wr.IsAlive);
+
+            engine.CollectGarbage(true);
+
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            Assert.IsFalse(wr.IsAlive);
+
+            // ReSharper restore RedundantAssignment
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_Parallel()
         {
             engine.AddHostObject("host", new HostFunctions());
@@ -789,6 +814,7 @@ namespace Microsoft.ClearScript.Test
                     var nestedException = hostException.InnerException as ScriptEngineException;
                     Assert.IsNotNull(nestedException);
                     TestUtil.AssertValidException(innerEngine, nestedException);
+                    // ReSharper disable once PossibleNullReferenceException
                     Assert.IsNull(nestedException.InnerException);
 
                     Assert.AreEqual("Error: " + hostException.Message, exception.Message);
@@ -823,6 +849,7 @@ namespace Microsoft.ClearScript.Test
                     var nestedException = hostException.InnerException as ScriptEngineException;
                     Assert.IsNotNull(nestedException);
                     TestUtil.AssertValidException(innerEngine, nestedException);
+                    // ReSharper disable once PossibleNullReferenceException
                     Assert.IsNotNull(nestedException.InnerException);
 
                     var nestedHostException = nestedException.InnerException;

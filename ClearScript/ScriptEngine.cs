@@ -131,7 +131,7 @@ namespace Microsoft.ClearScript
         public bool FormatCode { get; set; }
 
         /// <summary>
-        /// Gets or sets a value that controls whether script code is permitted to use reflection.
+        /// Controls whether script code is permitted to use reflection.
         /// </summary>
         /// <remarks>
         /// When this property is set to <c>true</c>, script code running in the current script
@@ -141,6 +141,18 @@ namespace Microsoft.ClearScript
         /// from script code results in an exception.
         /// </remarks>
         public bool AllowReflection { get; set; }
+
+        /// <summary>
+        /// Enables or disables type restriction for field, property, and method return values.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, script code running in the current script
+        /// engine has access to the runtime types of all exposed host resources, which by default
+        /// are restricted to their declared types. The default behavior is a general requirement
+        /// for correct method binding, so setting this property to <c>true</c> is not recommended.
+        /// </remarks>
+        /// <seealso cref="ScriptMemberFlags"/>
+        public bool DisableTypeRestriction { get; set; }
 
         /// <summary>
         /// Gets or sets a callback that can be used to halt script execution.
@@ -688,6 +700,16 @@ namespace Microsoft.ClearScript
         #region internal members
 
         internal abstract void AddHostItem(string itemName, HostItemFlags flags, object item);
+
+        internal object PrepareResult<T>(T result, bool isRestricted)
+        {
+            return PrepareResult(result, typeof(T), isRestricted);
+        }
+
+        internal virtual object PrepareResult(object result, Type type, bool isRestricted)
+        {
+            return (isRestricted && !DisableTypeRestriction) ? HostObject.WrapResult(result, type) : result;
+        }
 
         internal abstract object MarshalToScript(object obj, HostItemFlags flags);
 

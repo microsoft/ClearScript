@@ -95,6 +95,7 @@ namespace Microsoft.ClearScript.Test
                 }
 
                 Assert.IsNotNull(caughtException);
+                // ReSharper disable once PossibleNullReferenceException
                 Assert.IsTrue(caughtException.Message.Contains(testException.Message));
             });
         }
@@ -121,6 +122,7 @@ namespace Microsoft.ClearScript.Test
                 }
 
                 Assert.IsNotNull(caughtException);
+                // ReSharper disable once PossibleNullReferenceException
                 Assert.IsTrue(caughtException.Message.Contains(testException.Message));
             });
         }

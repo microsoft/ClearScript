@@ -139,14 +139,6 @@ static void* UnwrapHostObject(const FunctionCallbackInfo<T>& args)
         IGNORE_UNUSED(t_ContextScope); \
     }
 
-#define BEGIN_CONTEXT_SCOPE_NOTHROW \
-    { \
-        Context::Scope t_ContextScopeNoThrow(m_hContext);
-
-#define END_CONTEXT_SCOPE_NOTHROW \
-        IGNORE_UNUSED(t_ContextScopeNoThrow); \
-    }
-
 #define BEGIN_EXECUTION_SCOPE \
     { \
         V8IsolateImpl::ExecutionScope t_IsolateExecutionScope(m_spIsolateImpl); \
@@ -172,7 +164,7 @@ static void* UnwrapHostObject(const FunctionCallbackInfo<T>& args)
 //-----------------------------------------------------------------------------
 
 V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort):
-	m_Name(name),
+    m_Name(name),
     m_spIsolateImpl(pIsolateImpl)
 {
     VerifyNotOutOfMemory();
@@ -197,23 +189,19 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
             m_hGlobal->SetAlignedPointerInInternalField(0, this);
         }
 
-        BEGIN_CONTEXT_SCOPE
+        // Be careful when renaming the cookie or changing the way host objects are marked.
+        // Such a change will require a corresponding change in the V8ScriptEngine constructor.
 
-            // Be careful when renaming the cookie or changing the way host objects are marked.
-            // Such a change will require a corresponding change in the V8ScriptEngine constructor.
+        m_hHostObjectCookieName = CreatePersistent(CreateString(StdString(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}")));
+        m_hInnerExceptionName = CreatePersistent(CreateString(StdString(L"inner")));
 
-            m_hHostObjectCookieName = CreatePersistent(CreateString(StdString(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}")));
-            m_hInnerExceptionName = CreatePersistent(CreateString(StdString(L"inner")));
+        m_hHostObjectTemplate = CreatePersistent(CreateFunctionTemplate());
+        m_hHostObjectTemplate->SetClassName(CreateString(StdString(L"HostObject")));
 
-            m_hHostObjectTemplate = CreatePersistent(CreateFunctionTemplate());
-            m_hHostObjectTemplate->SetClassName(CreateString(StdString(L"HostObject")));
-
-            m_hHostObjectTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-            m_hHostObjectTemplate->InstanceTemplate()->SetNamedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap());
-            m_hHostObjectTemplate->InstanceTemplate()->SetIndexedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, Wrap());
-            m_hHostObjectTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, Wrap());
-
-        END_CONTEXT_SCOPE
+        m_hHostObjectTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+        m_hHostObjectTemplate->InstanceTemplate()->SetNamedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap());
+        m_hHostObjectTemplate->InstanceTemplate()->SetIndexedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, Wrap());
+        m_hHostObjectTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, Wrap());
 
         m_spIsolateImpl->AddContext(this, enableDebugging, debugPort);
         m_pvV8ObjectCache = HostObjectHelpers::CreateV8ObjectCache();
@@ -283,11 +271,11 @@ V8Value V8ContextImpl::Execute(const StdString& documentName, const StdString& c
     BEGIN_EXECUTION_SCOPE
 
         auto hScript = VERIFY(Script::Compile(CreateString(code), CreateString(documentName)));
-		auto hResult = VERIFY(hScript->Run());
-		if (!evaluate)
-		{
-			hResult = GetUndefined();
-		}
+        auto hResult = VERIFY(hScript->Run());
+        if (!evaluate)
+        {
+            hResult = GetUndefined();
+        }
 
         return ExportValue(hResult);
 
@@ -324,11 +312,11 @@ V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder, bool evaluate)
     BEGIN_EXECUTION_SCOPE
 
         auto hScript = ::ScriptHandleFromPtr(pHolder->GetScript());
-		auto hResult = VERIFY(hScript->Run());
-		if (!evaluate)
-		{
-			hResult = GetUndefined();
-		}
+        auto hResult = VERIFY(hScript->Run());
+        if (!evaluate)
+        {
+            hResult = GetUndefined();
+        }
 
         return ExportValue(hResult);
 
@@ -526,21 +514,26 @@ V8ContextImpl::~V8ContextImpl()
 {
     BEGIN_ISOLATE_SCOPE
 
+        std::vector<void*> v8ObjectPtrs;
+        HostObjectHelpers::GetAllCachedV8Objects(m_pvV8ObjectCache, v8ObjectPtrs);
+        for (auto pvV8Object: v8ObjectPtrs)
+        {
+            auto hObject = ::ObjectHandleFromPtr(pvV8Object);
+            delete ::GetHostObjectHolder(hObject);
+            Dispose(hObject);
+        }
+
         HostObjectHelpers::Release(m_pvV8ObjectCache);
         m_spIsolateImpl->RemoveContext(this);
 
-        BEGIN_CONTEXT_SCOPE_NOTHROW
+        for (auto it = m_GlobalMembersStack.rbegin(); it != m_GlobalMembersStack.rend(); it++)
+        {
+            Dispose(*it);
+        }
 
-            for (auto it = m_GlobalMembersStack.rbegin(); it != m_GlobalMembersStack.rend(); it++)
-            {
-                Dispose(*it);
-            }
-
-            Dispose(m_hHostObjectTemplate);
-            Dispose(m_hInnerExceptionName);
-            Dispose(m_hHostObjectCookieName);
-
-        END_CONTEXT_SCOPE_NOTHROW
+        Dispose(m_hHostObjectTemplate);
+        Dispose(m_hInnerExceptionName);
+        Dispose(m_hHostObjectCookieName);
 
         // As of V8 3.16.0, the global property getter for a disposed context
         // may be invoked during GC after the V8ContextImpl instance is gone.
@@ -554,20 +547,6 @@ V8ContextImpl::~V8ContextImpl()
 
         Dispose(m_hContext);
         V8::ContextDisposedNotification();
-
-        // exit handle scope to maximize GC benefit (see below)
-
-    END_ISOLATE_SCOPE
-
-    BEGIN_ISOLATE_SCOPE
-
-        // The context is gone, but it may have contained host object holders
-        // that are now awaiting collection. Forcing collection will release
-        // the corresponding host objects. This isn't strictly necessary, but
-        // it greatly simplifies certain test scenarios. The technique here is
-        // not well documented, but it has been noted in several discussions.
-
-        while (!V8::IdleNotification());
 
     END_ISOLATE_SCOPE
 }
@@ -1203,11 +1182,11 @@ void V8ContextImpl::InvokeHostObject(const FunctionCallbackInfo<Value>& info)
 void V8ContextImpl::DisposeWeakHandle(Isolate* pIsolate, Persistent<Object>* phObject, void* pvV8ObjectCache)
 {
     IGNORE_UNUSED(pIsolate);
+
     auto pHolder = ::GetHostObjectHolder(*phObject);
     ASSERT_EVAL(HostObjectHelpers::RemoveV8ObjectCacheEntry(pvV8ObjectCache, pHolder->GetObject()));
 
     delete pHolder;
-    HostObjectHelpers::Release(pvV8ObjectCache);
     phObject->Dispose();
 }
 
@@ -1287,7 +1266,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
             if (!hObject.IsEmpty())
             {
                 ::SetHostObjectHolder(hObject, pHolder = pHolder->Clone());
-                pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), HostObjectHelpers::AddRef(m_pvV8ObjectCache), DisposeWeakHandle));
+                pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), m_pvV8ObjectCache, DisposeWeakHandle));
                 HostObjectHelpers::CacheV8Object(m_pvV8ObjectCache, pHolder->GetObject(), pvV8Object);
             }
 

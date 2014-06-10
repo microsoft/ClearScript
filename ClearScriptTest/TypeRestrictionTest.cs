@@ -103,6 +103,9 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(TestContainer.InterfaceTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.InterfaceField)"));
             Assert.AreEqual(TestContainer.ObjectTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.ObjectField)"));
             Assert.AreEqual(TestContainer.ObjectTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.UnrestrictedField)"));
+
+            engine.DisableTypeRestriction = true;
+            Assert.AreEqual(TestContainer.ObjectTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.InterfaceField)"));
         }
 
         [TestMethod, TestCategory("TypeRestriction")]
@@ -112,6 +115,9 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(TestContainer.InterfaceTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.InterfaceProperty)"));
             Assert.AreEqual(TestContainer.ObjectTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.ObjectProperty)"));
             Assert.AreEqual(TestContainer.ObjectTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.UnrestrictedProperty)"));
+
+            engine.DisableTypeRestriction = true;
+            Assert.AreEqual(TestContainer.ObjectTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.InterfaceProperty)"));
         }
 
         [TestMethod, TestCategory("TypeRestriction")]
@@ -121,6 +127,9 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(TestContainer.InterfaceTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.InterfaceMethod())"));
             Assert.AreEqual(TestContainer.ObjectTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.ObjectMethod())"));
             Assert.AreEqual(TestContainer.ObjectTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.UnrestrictedMethod())"));
+
+            engine.DisableTypeRestriction = true;
+            Assert.AreEqual(TestContainer.ObjectTestValue, engine.Evaluate("testContainer.TestMethod(testContainer.InterfaceMethod())"));
         }
 
         // ReSharper restore InconsistentNaming

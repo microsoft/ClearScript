@@ -538,6 +538,7 @@ namespace Microsoft.ClearScript.Test
             {
                 var eventSource = engine.Evaluate(objectName + "." + scriptMemberName) as EventSource<EventHandler>;
                 Assert.IsNotNull(eventSource);
+                // ReSharper disable once PossibleNullReferenceException
                 Assert.AreSame(target, eventSource.Source);
                 Assert.AreSame(eventInfo, eventSource.EventInfo);
                 return;

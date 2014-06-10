@@ -96,6 +96,9 @@ namespace Microsoft.ClearScript.Windows
 
         /// <summary>
         /// Specifies that <c>null</c> is to be marshaled as a variant of type <c>VT_DISPATCH</c>.
+        /// This option does not affect field, property, or method return values declared as
+        /// <see cref="object"/>, <see cref="string"/>, nullable <see cref="bool"/>, or nullable
+        /// numeric types.
         /// </summary>
         MarshalNullAsDispatch = 0x00000010,
 

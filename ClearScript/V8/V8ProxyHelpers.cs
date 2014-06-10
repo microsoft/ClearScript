@@ -60,7 +60,8 @@
 //       
 
 using System;
-using System.Runtime.CompilerServices;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 
@@ -214,36 +215,34 @@ namespace Microsoft.ClearScript.V8
 
         public static unsafe void* CreateV8ObjectCache()
         {
-            var cache = new ConditionalWeakTable<object, V8ObjectCacheEntry>();
+            var cache = new Dictionary<object, IntPtr>();
             return AddRefHostObject(cache);
         }
 
         public static unsafe void CacheV8Object(void* pV8ObjectCache, void* pObject, void* pV8Object)
         {
-            var cache = (ConditionalWeakTable<object, V8ObjectCacheEntry>)GetHostObject(pV8ObjectCache);
-            cache.GetOrCreateValue(GetHostObject(pObject)).V8ObjectPtr = (IntPtr)pV8Object;
+            var cache = (Dictionary<object, IntPtr>)GetHostObject(pV8ObjectCache);
+            cache.Add(GetHostObject(pObject), (IntPtr)pV8Object);
         }
 
         public static unsafe void* GetCachedV8Object(void* pV8ObjectCache, void* pObject)
         {
-            var cache = (ConditionalWeakTable<object, V8ObjectCacheEntry>)GetHostObject(pV8ObjectCache);
-            return cache.GetOrCreateValue(GetHostObject(pObject)).V8ObjectPtr.ToPointer();
+            IntPtr pV8Object;
+            var cache = (Dictionary<object, IntPtr>)GetHostObject(pV8ObjectCache);
+            return cache.TryGetValue(GetHostObject(pObject), out pV8Object) ? pV8Object.ToPointer() : null;
+        }
+
+        public static unsafe IntPtr[] GetAllCachedV8Objects(void* pV8ObjectCache)
+        {
+            var cache = (Dictionary<object, IntPtr>)GetHostObject(pV8ObjectCache);
+            return cache.Values.ToArray();
         }
 
         public static unsafe bool RemoveV8ObjectCacheEntry(void* pV8ObjectCache, void* pObject)
         {
-            var cache = (ConditionalWeakTable<object, V8ObjectCacheEntry>)GetHostObject(pV8ObjectCache);
+            var cache = (Dictionary<object, IntPtr>)GetHostObject(pV8ObjectCache);
             return cache.Remove(GetHostObject(pObject));
         }
-
-        // ReSharper disable ClassNeverInstantiated.Local
-
-        private class V8ObjectCacheEntry
-        {
-            public IntPtr V8ObjectPtr;
-        }
-
-        // ReSharper restore ClassNeverInstantiated.Local
 
         #endregion
     }

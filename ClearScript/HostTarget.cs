@@ -87,13 +87,13 @@ namespace Microsoft.ClearScript
             return MiscHelpers.GetEmptyArray<string>();
         }
 
-        public virtual bool TryInvokeAuxMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public virtual bool TryInvokeAuxMember(ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool TryInvoke(BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public virtual bool TryInvoke(ScriptEngine engine, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             result = null;
             return false;

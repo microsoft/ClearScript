@@ -95,6 +95,22 @@ namespace Microsoft.ClearScript.Util
             { TypeCode.Single, new[] { TypeCode.Double } },
         };
 
+        private static readonly HashSet<Type> nullableNumericTypes = new HashSet<Type>
+        {
+            typeof(char?),
+            typeof(sbyte?),
+            typeof(byte?),
+            typeof(short?),
+            typeof(ushort?),
+            typeof(int?),
+            typeof(uint?),
+            typeof(long?),
+            typeof(ulong?),
+            typeof(float?),
+            typeof(double?),
+            typeof(decimal?)
+        };
+
         public static bool IsStatic(this Type type)
         {
             return type.IsAbstract && type.IsSealed;
@@ -156,6 +172,11 @@ namespace Microsoft.ClearScript.Util
         public static bool IsNullable(this Type type)
         {
             return type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(Nullable<>));
+        }
+
+        public static bool IsNullableNumeric(this Type type)
+        {
+            return nullableNumericTypes.Contains(type);
         }
 
         public static bool IsAssignableFrom(this Type type, ref object value)

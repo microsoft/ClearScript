@@ -215,7 +215,7 @@ namespace Microsoft.ClearScript
             AdjustInvokeFlags(ref invokeFlags);
 
             object result;
-            if (target.TryInvokeAuxMember(name, invokeFlags, args, bindArgs, out result))
+            if (target.TryInvokeAuxMember(engine, name, invokeFlags, args, bindArgs, out result))
             {
                 if (target is IHostVariable)
                 {
@@ -668,7 +668,7 @@ namespace Microsoft.ClearScript
                 }
 
                 object result;
-                if (InvokeHelpers.TryInvokeObject(value, invokeFlags, args, bindArgs, true, out result))
+                if (InvokeHelpers.TryInvokeObject(engine, value, invokeFlags, args, bindArgs, true, out result))
                 {
                     return result;
                 }
@@ -710,7 +710,7 @@ namespace Microsoft.ClearScript
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
                 object result;
-                if (InvokeHelpers.TryInvokeObject(targetList[index], invokeFlags, args, bindArgs, true, out result))
+                if (InvokeHelpers.TryInvokeObject(engine, targetList[index], invokeFlags, args, bindArgs, true, out result))
                 {
                     return result;
                 }
@@ -761,7 +761,7 @@ namespace Microsoft.ClearScript
                             // ReSharper disable CoVariantArrayConversion
 
                             object result;
-                            if (hostType.TryInvoke(BindingFlags.InvokeMethod, typeArgs, typeArgs, out result))
+                            if (hostType.TryInvoke(engine, BindingFlags.InvokeMethod, typeArgs, typeArgs, out result))
                             {
                                 hostType = result as HostType;
                                 if (hostType != null)
@@ -805,7 +805,7 @@ namespace Microsoft.ClearScript
                     if (targetDynamicMetaObject != null)
                     {
                         object result;
-                        if (targetDynamicMetaObject.TryCreateInstance(args, out result))
+                        if (targetDynamicMetaObject.TryCreateInstance(engine, args, out result))
                         {
                             return result;
                         }
@@ -820,7 +820,7 @@ namespace Microsoft.ClearScript
                 if (name == SpecialMemberNames.Default)
                 {
                     object result;
-                    if (InvokeHelpers.TryInvokeObject(target, invokeFlags, args, bindArgs, targetDynamicMetaObject != null, out result))
+                    if (InvokeHelpers.TryInvokeObject(engine, target, invokeFlags, args, bindArgs, targetDynamicMetaObject != null, out result))
                     {
                         return result;
                     }
@@ -836,7 +836,7 @@ namespace Microsoft.ClearScript
                 if ((targetDynamicMetaObject != null) && (targetDynamicMetaObject.GetDynamicMemberNames().Contains(name)))
                 {
                     object result;
-                    if (targetDynamicMetaObject.TryInvokeMember(name, invokeFlags, args, out result))
+                    if (targetDynamicMetaObject.TryInvokeMember(engine, name, invokeFlags, args, out result))
                     {
                         return result;
                     }
@@ -851,14 +851,14 @@ namespace Microsoft.ClearScript
                 if ((property != null) && (typeof(Delegate).IsAssignableFrom(property.PropertyType)))
                 {
                     var del = (Delegate)property.GetValue(target.InvokeTarget, invokeFlags | BindingFlags.GetProperty, Type.DefaultBinder, MiscHelpers.GetEmptyArray<object>(), culture);
-                    return InvokeHelpers.InvokeDelegate(del, args);
+                    return InvokeHelpers.InvokeDelegate(engine, del, args);
                 }
 
                 var field = target.Type.GetScriptableField(name, GetCommonBindFlags());
                 if ((field != null) && (typeof(Delegate).IsAssignableFrom(field.FieldType)))
                 {
                     var del = (Delegate)field.GetValue(target.InvokeTarget);
-                    return InvokeHelpers.InvokeDelegate(del, args);
+                    return InvokeHelpers.InvokeDelegate(engine, del, args);
                 }
 
                 if (invokeFlags.HasFlag(BindingFlags.GetField))
@@ -911,7 +911,7 @@ namespace Microsoft.ClearScript
             if (property != null)
             {
                 var result = property.GetValue(target.InvokeTarget, invokeFlags, Type.DefaultBinder, args, culture);
-                return property.IsRestrictedForScript() ? HostObject.WrapResult(result, property.PropertyType) : result;
+                return engine.PrepareResult(result, property.PropertyType, property.IsRestrictedForScript());
             }
 
             if (target.Type.GetScriptableProperties(name, invokeFlags).Any())
@@ -935,7 +935,7 @@ namespace Microsoft.ClearScript
             if (field != null)
             {
                 var result = field.GetValue(target.InvokeTarget);
-                return field.IsRestrictedForScript() ? HostObject.WrapResult(result, field.FieldType) : result;
+                return engine.PrepareResult(result, field.FieldType, field.IsRestrictedForScript());
             }
 
             var eventInfo = target.Type.GetScriptableEvent(name, invokeFlags);
@@ -973,7 +973,7 @@ namespace Microsoft.ClearScript
                 // special case to enable JScript/VBScript "x(a) = b" syntax when x is a host indexed property 
 
                 object result;
-                if (InvokeHelpers.TryInvokeObject(target, invokeFlags, args, bindArgs, false, out result))
+                if (InvokeHelpers.TryInvokeObject(engine, target, invokeFlags, args, bindArgs, false, out result))
                 {
                     return result;
                 }

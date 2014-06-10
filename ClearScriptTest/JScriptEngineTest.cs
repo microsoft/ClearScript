@@ -664,6 +664,7 @@ namespace Microsoft.ClearScript.Test
                     var nestedException = hostException.InnerException as ScriptEngineException;
                     Assert.IsNotNull(nestedException);
                     TestUtil.AssertValidException(innerEngine, nestedException);
+                    // ReSharper disable once PossibleNullReferenceException
                     Assert.IsNull(nestedException.InnerException);
 
                     Assert.AreEqual(hostException.Message, exception.Message);
@@ -698,6 +699,7 @@ namespace Microsoft.ClearScript.Test
                     var nestedException = hostException.InnerException as ScriptEngineException;
                     Assert.IsNotNull(nestedException);
                     TestUtil.AssertValidException(innerEngine, nestedException);
+                    // ReSharper disable once PossibleNullReferenceException
                     Assert.IsNotNull(nestedException.InnerException);
 
                     var nestedHostException = nestedException.InnerException;
@@ -989,6 +991,38 @@ namespace Microsoft.ClearScript.Test
             engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalNullAsDispatch);
 
             engine.Script.func = new Func<object>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<string>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<bool?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<char?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<sbyte?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<byte?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<short?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<ushort?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<int?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<uint?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<long?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<ulong?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<float?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<double?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<decimal?>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<Random>(() => null);
+            Assert.IsTrue((bool)engine.Evaluate("func() === null"));
+            engine.Script.func = new Func<DayOfWeek?>(() => null);
             Assert.IsTrue((bool)engine.Evaluate("func() === null"));
         }
 

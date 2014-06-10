@@ -169,7 +169,7 @@ namespace Microsoft.ClearScript
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
             object result;
-            if (target.GetMetaObject(Expression.Constant(target)).TryCreateInstance(args, out result))
+            if (target.GetMetaObject(Expression.Constant(target)).TryCreateInstance(GetEngine(), args, out result))
             {
                 return result;
             }

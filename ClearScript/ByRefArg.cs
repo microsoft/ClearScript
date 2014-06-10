@@ -132,14 +132,14 @@ namespace Microsoft.ClearScript
             return target.GetAuxPropertyNames(bindFlags);
         }
 
-        public override bool TryInvokeAuxMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            return target.TryInvokeAuxMember(name, invokeFlags, args, bindArgs, out result);
+            return target.TryInvokeAuxMember(engine, name, invokeFlags, args, bindArgs, out result);
         }
 
-        public override bool TryInvoke(BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(ScriptEngine engine, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            return target.TryInvoke(invokeFlags, args, bindArgs, out result);
+            return target.TryInvoke(engine, invokeFlags, args, bindArgs, out result);
         }
 
         #endregion

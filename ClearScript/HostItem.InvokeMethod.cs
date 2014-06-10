@@ -393,7 +393,7 @@ namespace Microsoft.ClearScript
                     engine.CheckReflection();
                 }
 
-                return InvokeHelpers.InvokeMethod(hostTarget.InvokeTarget, method, args);
+                return InvokeHelpers.InvokeMethod(engine, hostTarget.InvokeTarget, method, args);
             }
 
             #endregion

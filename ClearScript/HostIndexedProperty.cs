@@ -119,7 +119,7 @@ namespace Microsoft.ClearScript
             return auxMethodNames;
         }
 
-        public override bool TryInvokeAuxMember(string memberName, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(ScriptEngine engine, string memberName, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
@@ -140,7 +140,7 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public override bool TryInvoke(BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(ScriptEngine engine, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             result = target.InvokeMember(name, invokeFlags.HasFlag(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty, args, bindArgs, null);
             return true;

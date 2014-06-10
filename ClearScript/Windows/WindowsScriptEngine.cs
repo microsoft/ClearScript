@@ -425,6 +425,22 @@ namespace Microsoft.ClearScript.Windows
             });
         }
 
+        internal override object PrepareResult(object result, Type type, bool isRestricted)
+        {
+            var tempResult = base.PrepareResult(result, type, isRestricted);
+            if ((tempResult != null) || !engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
+            {
+                return tempResult;
+            }
+
+            if ((type == typeof(object)) || (type == typeof(string)) || type == typeof(bool?) || type.IsNullableNumeric())
+            {
+                return DBNull.Value;
+            }
+
+            return null;
+        }
+
         internal override object MarshalToScript(object obj, HostItemFlags flags)
         {
             if (obj == null)

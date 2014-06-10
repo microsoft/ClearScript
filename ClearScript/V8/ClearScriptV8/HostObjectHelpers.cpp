@@ -281,6 +281,20 @@ void* HostObjectHelpers::GetCachedV8Object(void* pvCache, void* pvObject)
 
 //-----------------------------------------------------------------------------
 
+void HostObjectHelpers::GetAllCachedV8Objects(void* pvCache, std::vector<void*>& v8ObjectPtrs)
+{
+    auto gcV8ObjectPtrs = V8ProxyHelpers::GetAllCachedV8Objects(pvCache);
+    auto v8ObjectCount = gcV8ObjectPtrs->Length;
+
+    v8ObjectPtrs.resize(v8ObjectCount);
+    for (auto index = 0; index < v8ObjectCount; index++)
+    {
+        v8ObjectPtrs[index] = gcV8ObjectPtrs[index].ToPointer();
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 bool HostObjectHelpers::RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject)
 {
     return V8ProxyHelpers::RemoveV8ObjectCacheEntry(pvCache, pvObject);

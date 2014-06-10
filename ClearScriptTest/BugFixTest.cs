@@ -684,6 +684,31 @@ namespace Microsoft.ClearScript.Test
             // ReSharper restore RedundantAssignment
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8CachedObjectLeak()
+        {
+            object x = null;
+            WeakReference wr = null;
+
+            new Action(() =>
+            {
+                using (var tempEngine = new V8ScriptEngine())
+                {
+                    tempEngine.AddHostType("Action", typeof(Action));
+                    x = tempEngine.Evaluate("action = new Action(function () {})");
+                    wr = new WeakReference(tempEngine);
+                }
+            })();
+
+            Assert.IsInstanceOfType(x, typeof(Action));
+            TestUtil.AssertException<ObjectDisposedException>((Action)x);
+
+            x = null;
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            GC.WaitForPendingFinalizers();
+            Assert.IsFalse(wr.IsAlive);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

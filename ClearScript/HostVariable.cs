@@ -153,7 +153,7 @@ namespace Microsoft.ClearScript
             get { return HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods; }
         }
 
-        public override bool TryInvokeAuxMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             const BindingFlags getPropertyFlags =
                 BindingFlags.GetField |
@@ -184,14 +184,14 @@ namespace Microsoft.ClearScript
             {
                 if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
                 {
-                    if (InvokeHelpers.TryInvokeObject(value, invokeFlags, args, bindArgs, typeof(IDynamicMetaObjectProvider).IsAssignableFrom(typeof(T)), out result))
+                    if (InvokeHelpers.TryInvokeObject(engine, value, invokeFlags, args, bindArgs, typeof(IDynamicMetaObjectProvider).IsAssignableFrom(typeof(T)), out result))
                     {
                         return true;
                     }
 
                     if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                     {
-                        result = HostObject.WrapResult(value);
+                        result = engine.PrepareResult(value, true);
                         return true;
                     }
 
@@ -201,7 +201,7 @@ namespace Microsoft.ClearScript
 
                 if ((invokeFlags & getPropertyFlags) != 0)
                 {
-                    result = HostObject.WrapResult(value);
+                    result = engine.PrepareResult(value, true);
                     return true;
                 }
 
@@ -209,7 +209,7 @@ namespace Microsoft.ClearScript
                 {
                     if (args.Length == 1)
                     {
-                        result = HostObject.WrapResult(((IHostVariable)this).Value = args[0], typeof(T));
+                        result = engine.PrepareResult(((IHostVariable)this).Value = args[0], typeof(T), true);
                         return true;
                     }
                 }

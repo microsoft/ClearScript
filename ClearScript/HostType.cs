@@ -228,7 +228,7 @@ namespace Microsoft.ClearScript
             return MiscHelpers.GetEmptyArray<string>();
         }
 
-        public override bool TryInvokeAuxMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             var type = GetSpecificTypeNoThrow();
             if (type != null)
@@ -239,7 +239,7 @@ namespace Microsoft.ClearScript
                     var tempResult = Wrap(nestedTypes.Select(testType => testType.ApplyTypeArguments(type.GetGenericArguments())).ToArray());
                     if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
                     {
-                        return tempResult.TryInvoke(invokeFlags, args, bindArgs, out result);
+                        return tempResult.TryInvoke(engine, invokeFlags, args, bindArgs, out result);
                     }
 
                     result = tempResult;
@@ -251,7 +251,7 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public override bool TryInvoke(BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(ScriptEngine engine, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             if (!invokeFlags.HasFlag(BindingFlags.InvokeMethod) || (args.Length < 1))
             {

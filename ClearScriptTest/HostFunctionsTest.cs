@@ -811,6 +811,7 @@ namespace Microsoft.ClearScript.Test
         {
             var hostItem = host.asType<T>(value) as HostItem;
             Assert.IsNotNull(hostItem);
+            // ReSharper disable once PossibleNullReferenceException
             Assert.AreEqual(typeof(T), hostItem.Target.Type);
             Assert.AreEqual(value, hostItem.Unwrap());
         }

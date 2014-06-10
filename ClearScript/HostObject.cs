@@ -88,11 +88,6 @@ namespace Microsoft.ClearScript
             return (target != null) ? new HostObject(target, type) : null;
         }
 
-        public static object WrapResult<T>(T result)
-        {
-            return WrapResult(result, typeof(T));
-        }
-
         public static object WrapResult(object result, Type type)
         {
             if (result == null)
