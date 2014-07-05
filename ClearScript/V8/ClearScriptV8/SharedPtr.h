@@ -134,8 +134,6 @@ private:
 template <typename T>
 class SharedPtr
 {
-    friend class SharedPtrUtil;
-
 public:
 
     SharedPtr<T>()
@@ -155,24 +153,24 @@ public:
 
     SharedPtr<T>(const SharedPtr<T>& that)
     {
-        SharedPtrUtil::CopyInitialize(*this, that);
+        CopyInitialize(that);
     }
 
     SharedPtr<T>(SharedPtr<T>&& that)
     {
-        SharedPtrUtil::MoveInitialize(*this, that);
+        MoveInitialize(that);
     }
 
     template <typename TOther>
-    SharedPtr<T>(const SharedPtr<TOther>& that)
+    explicit SharedPtr<T>(const SharedPtr<TOther>& that)
     {
-        SharedPtrUtil::CopyInitialize(*this, that);
+        CopyInitialize(that);
     }
 
     template <typename TOther>
-    SharedPtr<T>(SharedPtr<TOther>&& that)
+    explicit SharedPtr<T>(SharedPtr<TOther>&& that)
     {
-        SharedPtrUtil::MoveInitialize(*this, that);
+        MoveInitialize(that);
     }
 
     const SharedPtr<T>& operator=(nullptr_t)
@@ -183,38 +181,34 @@ public:
 
     const SharedPtr<T>& operator=(T* pTarget)
     {
-        if (m_pTarget != pTarget)
-        {
-            Release();
-            Initialize(pTarget);
-        }
-
+        SharedPtr<T> spHolder(m_pTarget, m_pRefCount);
+        Initialize(pTarget);
         return *this;
     }
 
     const SharedPtr<T>& operator=(const SharedPtr<T>& that)
     {
-        SharedPtrUtil::Copy(*this, that);
+        Copy(that);
         return *this;
     }
 
     const SharedPtr<T>& operator=(SharedPtr<T>&& that)
     {
-        SharedPtrUtil::Move(*this, that);
+        Move(that);
         return *this;
     }
 
     template <typename TOther>
     const SharedPtr<T>& operator=(const SharedPtr<TOther>& that)
     {
-        SharedPtrUtil::Copy(*this, that);
+        Copy(that);
         return *this;
     }
 
     template <typename TOther>
     const SharedPtr<T>& operator=(SharedPtr<TOther>&& that)
     {
-        SharedPtrUtil::Move(*this, that);
+        Move(that);
         return *this;
     }
 
@@ -240,10 +234,7 @@ public:
 
     void Empty()
     {
-        if (Release())
-        {
-            Initialize();
-        }
+        SharedPtr<T> spHolder(std::move(*this));
     }
 
     ~SharedPtr()
@@ -253,6 +244,11 @@ public:
 
 private:
 
+    SharedPtr<T>(T* pTarget, RefCount* pRefCount)
+    {
+        Initialize(pTarget, pRefCount);
+    }
+
     void Initialize()
     {
         m_pTarget = nullptr;
@@ -261,15 +257,42 @@ private:
 
     void Initialize(T* pTarget)
     {
-        if (pTarget != nullptr)
-        {
-            m_pTarget = pTarget;
-            AttachRefCount(m_pTarget);
-        }
-        else
-        {
-            Initialize();
-        }
+        m_pTarget = pTarget;
+        m_pRefCount = (m_pTarget != nullptr) ? AttachRefCount(m_pTarget) : nullptr;
+    }
+
+    void Initialize(T* pTarget, RefCount* pRefCount)
+    {
+        m_pTarget = pTarget;
+        m_pRefCount = pRefCount;
+    }
+
+    template <typename TOther>
+    void CopyInitialize(const SharedPtr<TOther>& that)
+    {
+        Initialize(that.m_pTarget, that.m_pRefCount);
+        AddRef();
+    }
+
+    template <typename TOther>
+    void MoveInitialize(SharedPtr<TOther>& that)
+    {
+        Initialize(that.m_pTarget, that.m_pRefCount);
+        that.Initialize();
+    }
+
+    template <typename TOther>
+    void Copy(const SharedPtr<TOther>& that)
+    {
+        SharedPtr<T> spHolder(m_pTarget, m_pRefCount);
+        CopyInitialize(that);
+    }
+
+    template <typename TOther>
+    void Move(SharedPtr<TOther>& that)
+    {
+        SharedPtr<T> spHolder(m_pTarget, m_pRefCount);
+        MoveInitialize(that);
     }
 
     void AddRef()
@@ -281,90 +304,46 @@ private:
         }
     }
 
-    bool Release()
+    void Release()
     {
         if (m_pTarget != nullptr)
         {
-            _ASSERTE(m_pRefCount);
-            if (m_pRefCount->Decrement() == 0)
+            T* pTarget = m_pTarget;
+            m_pTarget = nullptr;
+
+            RefCount* pRefCount = m_pRefCount;
+            m_pRefCount = nullptr;
+
+            _ASSERTE(pRefCount);
+            if (pRefCount->Decrement() == 0)
             {
-                DetachRefCount(m_pTarget);
-                delete m_pTarget;
+                DetachRefCount(pTarget, pRefCount);
+                delete pTarget;
             }
-
-            return true;
         }
-
-        return false;
     }
 
-    void AttachRefCount(SharedPtrTarget* pTarget)
+    static RefCount* AttachRefCount(SharedPtrTarget* pTarget)
     {
-        m_pRefCount = pTarget->GetRefCount();
-        m_pRefCount->Increment();
+        RefCount* pRefCount = pTarget->GetRefCount();
+        pRefCount->Increment();
+        return pRefCount;
     }
 
-    void DetachRefCount(SharedPtrTarget* /*pTarget*/)
+    static void DetachRefCount(SharedPtrTarget* /*pTarget*/, RefCount* /*pRefCount*/)
     {
     }
 
-    void AttachRefCount(void* /*pvTarget*/)
+    static RefCount* AttachRefCount(void* /*pvTarget*/)
     {
-        m_pRefCount = new RefCount(1);
+        return new RefCount(1);
     }
 
-    void DetachRefCount(void* /*pvTarget*/)
+    static void DetachRefCount(void* /*pvTarget*/, RefCount* pRefCount)
     {
-        delete m_pRefCount;
+        delete pRefCount;
     }
 
     T* m_pTarget;
     RefCount* m_pRefCount;
-};
-
-//-----------------------------------------------------------------------------
-// SharedPtrUtil
-//-----------------------------------------------------------------------------
-
-class SharedPtrUtil
-{
-    PROHIBIT_CONSTRUCT(SharedPtrUtil)
-
-public:
-
-    template <typename TTarget, typename TSource>
-    static void CopyInitialize(SharedPtr<TTarget>& target, const SharedPtr<TSource>& source)
-    {
-        target.m_pTarget = source.m_pTarget;
-        target.m_pRefCount = source.m_pRefCount;
-        target.AddRef();
-    }
-
-    template <typename TTarget, typename TSource>
-    static void MoveInitialize(SharedPtr<TTarget>& target, SharedPtr<TSource>& source)
-    {
-        target.m_pTarget = source.m_pTarget;
-        target.m_pRefCount = source.m_pRefCount;
-        source.Initialize();
-    }
-
-    template <typename TTarget, typename TSource>
-    static void Copy(SharedPtr<TTarget>& target, const SharedPtr<TSource>& source)
-    {
-        if (target.m_pTarget != source.m_pTarget)
-        {
-            target.Release();
-            CopyInitialize(target, source);
-        }
-    }
-
-    template <typename TTarget, typename TSource>
-    static void Move(SharedPtr<TTarget>& target, SharedPtr<TSource>& source)
-    {
-        if (target.m_pTarget != source.m_pTarget)
-        {
-            target.Release();
-            MoveInitialize(target, source);
-        }
-    }
 };

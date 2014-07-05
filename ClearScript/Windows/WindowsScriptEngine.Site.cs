@@ -149,7 +149,7 @@ namespace Microsoft.ClearScript.Windows
 
             public void GetLCID(out uint lcid)
             {
-                lcid = (uint)CultureInfo.InvariantCulture.LCID;
+                lcid = (uint)CultureInfo.CurrentCulture.LCID;
             }
 
             public void GetItemInfo(string name, ScriptInfoFlags mask, ref IntPtr pUnkItem, ref IntPtr pTypeInfo)
