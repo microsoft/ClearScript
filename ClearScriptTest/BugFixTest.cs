@@ -381,6 +381,44 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBDynamicArgMarshaling_Numeric()
+        {
+            var options = new CompilerParameters { GenerateInMemory = true };
+            options.ReferencedAssemblies.Add("ClearScript.dll");
+            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { @"
+                Module TestModule
+                    Function TestFunction
+                        Using engine As New Microsoft.ClearScript.V8.V8ScriptEngine
+                            engine.Execute(""data = [5, 4, 'qux', 2, 1]; function getElement(i1, i2, i3) { return data[i1 + i2 - i3]; }"")
+                            TestFunction = engine.Script.getElement(CShort(1), CLng(99), CStr(98))
+                        End Using
+                    End Function
+                End Module
+            "});
+
+            Assert.AreEqual("qux", results.CompiledAssembly.GetType("TestModule").InvokeMember("TestFunction", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>()));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBDynamicArgMarshaling_String()
+        {
+            var options = new CompilerParameters { GenerateInMemory = true };
+            options.ReferencedAssemblies.Add("ClearScript.dll");
+            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { @"
+                Module TestModule
+                    Function TestFunction
+                        Using engine As New Microsoft.ClearScript.V8.V8ScriptEngine
+                            engine.Execute(""data = { foo26: 123, bar97: 456.789 }; function getElement(i1, i2) { return data[i1 + i2]; }"")
+                            TestFunction = engine.Script.getElement(""bar"", CLng(97))
+                        End Using
+                    End Function
+                End Module
+            "});
+
+            Assert.AreEqual(456.789, results.CompiledAssembly.GetType("TestModule").InvokeMember("TestFunction", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>()));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
         public void BugFix_CoreBindCache()
         {
             HostItem.ResetCoreBindCache();

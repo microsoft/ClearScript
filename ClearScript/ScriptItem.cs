@@ -179,13 +179,23 @@ namespace Microsoft.ClearScript
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
         {
-            var parameters = new StackFrame(1, false).GetMethod().GetParameters();
+            ParameterInfo[] parameters = null;
+            if (binder.GetType().FullName.StartsWith("Microsoft.CSharp.", StringComparison.Ordinal))
+            {
+                parameters = new StackFrame(1, false).GetMethod().GetParameters();
+            }
+
             return TryWrappedInvokeOrInvokeMember(binder, parameters, args, out result);
         }
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
-            var parameters = new StackFrame(1, false).GetMethod().GetParameters();
+            ParameterInfo[] parameters = null;
+            if (binder.GetType().FullName.StartsWith("Microsoft.CSharp.", StringComparison.Ordinal))
+            {
+                parameters = new StackFrame(1, false).GetMethod().GetParameters();
+            }
+
             return TryWrappedInvokeOrInvokeMember(binder, parameters, args, out result);
         }
 
