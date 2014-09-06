@@ -283,6 +283,7 @@ namespace V8 {
         if (m_pspHolder != nullptr)
         {
             delete m_pspHolder;
+            m_pspHolder = nullptr;
         }
     }
 

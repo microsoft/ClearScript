@@ -184,6 +184,7 @@ namespace V8 {
         if (m_pspIsolate != nullptr)
         {
             delete m_pspIsolate;
+            m_pspIsolate = nullptr;
         }
     }
 

@@ -747,6 +747,48 @@ namespace Microsoft.ClearScript.Test
             Assert.IsFalse(wr.IsAlive);
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_Resurrection_V8ScriptEngine()
+        {
+            for (var index = 0; index < 256; index++)
+            {
+                var wrapper = new ResurrectionTestWrapper(new V8ScriptEngine());
+                GC.Collect();
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_Resurrection_V8Runtime()
+        {
+            for (var index = 0; index < 256; index++)
+            {
+                var wrapper = new ResurrectionTestWrapper(new V8Runtime());
+                GC.Collect();
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_Resurrection_V8Script()
+        {
+            for (var index = 0; index < 256; index++)
+            {
+                var tempEngine = new V8ScriptEngine();
+                var wrapper = new ResurrectionTestWrapper(tempEngine.Compile("function foo() {}"));
+                GC.Collect();
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_Resurrection_V8ScriptItem()
+        {
+            for (var index = 0; index < 256; index++)
+            {
+                var tempEngine = new V8ScriptEngine();
+                var wrapper = new ResurrectionTestWrapper(tempEngine.Script.Math);
+                GC.Collect();
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -776,6 +818,21 @@ namespace Microsoft.ClearScript.Test
             public object Method(double? value)
             {
                 return value.HasValue ? (value * 2.0) : null;
+            }
+        }
+
+        public class ResurrectionTestWrapper
+        {
+            private readonly IDisposable target;
+
+            public ResurrectionTestWrapper(IDisposable target)
+            {
+                this.target = target;
+            }
+
+            ~ResurrectionTestWrapper()
+            {
+                target.Dispose();
             }
         }
 

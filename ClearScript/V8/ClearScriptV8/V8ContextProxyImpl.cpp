@@ -259,6 +259,7 @@ namespace V8 {
         if (m_pspContext != nullptr)
         {
             delete m_pspContext;
+            m_pspContext = nullptr;
         }
     }
 
