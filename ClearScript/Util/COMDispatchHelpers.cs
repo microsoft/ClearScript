@@ -112,6 +112,20 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
+        public static object Invoke(this IDispatchEx dispatchEx, object[] args)
+        {
+            using (var argVariantArrayBlock = new CoTaskMemVariantArrayBlock(args))
+            {
+                using (var resultVariantBlock = new CoTaskMemVariantBlock())
+                {
+                    EXCEPINFO excepInfo;
+                    var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
+                    dispatchEx.InvokeEx(SpecialDispIDs.Default, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out excepInfo);
+                    return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+                }
+            }
+        }
+
         public static object InvokeMethod(this IDispatchEx dispatchEx, string name, bool ignoreCase, object[] args)
         {
             int dispid;

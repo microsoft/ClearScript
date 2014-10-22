@@ -91,6 +91,14 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    Object^ V8ObjectImpl::GetProperty(String^ gcName, [Out] Boolean% isCacheable)
+    {
+        isCacheable = false;
+        return GetProperty(gcName);
+    }
+
+    //-------------------------------------------------------------------------
+
     void V8ObjectImpl::SetProperty(String^ gcName, Object^ gcValue)
     {
         try

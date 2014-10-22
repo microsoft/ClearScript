@@ -73,10 +73,11 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Specifies that no options are selected.
         /// </summary>
-        None = 0x00,
+        None = 0,
 
         /// <summary>
-        /// Specifies that the host resource's members are to be exposed as global items in the script engine's root namespace.
+        /// Specifies that the host resource's members are to be exposed as global items in the
+        /// script engine's root namespace.
         /// </summary>
         GlobalMembers = 0x00000001,
 

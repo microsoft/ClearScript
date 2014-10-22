@@ -61,6 +61,7 @@
 
 using System;
 using System.Runtime.Serialization;
+using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
@@ -79,13 +80,17 @@ namespace Microsoft.ClearScript
         private readonly bool isFatal;
         private const string isFatalItemName = "IsFatal";
 
+        private const string defaultMessage = "An error occurred during script execution";
+
         #region constructors
 
         /// <summary>
         /// Initializes a new <see cref="ScriptEngineException"/> instance.
         /// </summary>
         public ScriptEngineException()
+            : base(defaultMessage)
         {
+            errorDetails = base.Message;
         }
 
         /// <summary>
@@ -93,8 +98,9 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <param name="message">The error message.</param>
         public ScriptEngineException(string message)
-            : base(message)
+            : base(MiscHelpers.EnsureNonBlank(message, defaultMessage))
         {
+            errorDetails = base.Message;
         }
 
         /// <summary>
@@ -103,8 +109,9 @@ namespace Microsoft.ClearScript
         /// <param name="message">The error message.</param>
         /// <param name="innerException">The exception that caused the current exception to be thrown.</param>
         public ScriptEngineException(string message, Exception innerException)
-            : base(message, innerException)
+            : base(MiscHelpers.EnsureNonBlank(message, defaultMessage), innerException)
         {
+            errorDetails = base.Message;
         }
 
         /// <summary>
@@ -121,10 +128,10 @@ namespace Microsoft.ClearScript
         }
 
         internal ScriptEngineException(string engineName, string message, string errorDetails, int errorCode, bool isFatal, Exception innerException)
-            : base(message, innerException)
+            : base(MiscHelpers.EnsureNonBlank(message, defaultMessage), innerException)
         {
             this.engineName = engineName;
-            this.errorDetails = errorDetails;
+            this.errorDetails = MiscHelpers.EnsureNonBlank(errorDetails, base.Message);
             this.isFatal = isFatal;
 
             if (errorCode != 0)

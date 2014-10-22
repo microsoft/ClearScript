@@ -162,8 +162,7 @@ namespace Microsoft.ClearScript.Windows
         [MarshalAs(UnmanagedType.Bool)]
         public bool IsFinal;
 
-        [MarshalAs(UnmanagedType.Interface)]
-        public object FinalObject;
+        public IntPtr pFinalObject;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -178,8 +177,7 @@ namespace Microsoft.ClearScript.Windows
         [MarshalAs(UnmanagedType.Bool)]
         public bool IsFinal;
 
-        [MarshalAs(UnmanagedType.Interface)]
-        public object FinalObject;
+        public IntPtr pFinalObject;
     }
 
     #endregion

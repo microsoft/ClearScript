@@ -211,6 +211,34 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
 
 //-----------------------------------------------------------------------------
 
+size_t V8ContextImpl::GetMaxIsolateHeapSize()
+{
+    return m_spIsolateImpl->GetMaxHeapSize();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::SetMaxIsolateHeapSize(size_t value)
+{
+    m_spIsolateImpl->SetMaxHeapSize(value);
+}
+
+//-----------------------------------------------------------------------------
+
+double V8ContextImpl::GetIsolateHeapSizeSampleInterval()
+{
+    return m_spIsolateImpl->GetHeapSizeSampleInterval();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::SetIsolateHeapSizeSampleInterval(double value)
+{
+    m_spIsolateImpl->SetHeapSizeSampleInterval(value);
+}
+
+//-----------------------------------------------------------------------------
+
 size_t V8ContextImpl::GetMaxIsolateStackUsage()
 {
     return m_spIsolateImpl->GetMaxStackUsage();
@@ -253,10 +281,34 @@ void V8ContextImpl::SetGlobalProperty(const StdString& name, const V8Value& valu
 {
     BEGIN_CONTEXT_SCOPE
 
+        auto hName = CreateString(name);
         auto hValue = ImportValue(value);
-        m_hContext->Global()->ForceSet(CreateString(name), hValue, (PropertyAttribute)(ReadOnly | DontDelete));
+
+        Local<Value> hOldValue;
+        if (m_hContext->Global()->HasOwnProperty(hName))
+        {
+            hOldValue = m_hContext->Global()->GetRealNamedProperty(hName);
+        }
+
+        m_hContext->Global()->ForceSet(hName, hValue, (PropertyAttribute)(ReadOnly | DontDelete));
         if (globalMembers && hValue->IsObject())
         {
+            if (!hOldValue.IsEmpty() && hOldValue->IsObject())
+            {
+                for (auto it = m_GlobalMembersStack.begin(); it != m_GlobalMembersStack.end();)
+                {
+                    if ((*it)->Equals(hOldValue))
+                    {
+                        it->Dispose();
+                        it = m_GlobalMembersStack.erase(it);
+                    }
+                    else
+                    {
+                        it++;
+                    }
+                }
+            }
+
             m_GlobalMembersStack.push_back(CreatePersistent(hValue->ToObject()));
         }
 
@@ -265,12 +317,13 @@ void V8ContextImpl::SetGlobalProperty(const StdString& name, const V8Value& valu
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::Execute(const StdString& documentName, const StdString& code, bool evaluate, bool /* discard */)
+V8Value V8ContextImpl::Execute(const StdString& documentName, const StdString& code, bool evaluate, bool /*discard*/)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
-        auto hScript = VERIFY(Script::Compile(CreateString(code), CreateString(documentName)));
+        ScriptCompiler::Source source(CreateString(code), ScriptOrigin(CreateString(documentName)));
+        auto hScript = VERIFY(CreateScript(&source));
         auto hResult = VERIFY(hScript->Run());
         if (!evaluate)
         {
@@ -290,7 +343,8 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
-        auto hScript = VERIFY(Script::New(CreateString(code), CreateString(documentName)));
+        ScriptCompiler::Source source(CreateString(code), ScriptOrigin(CreateString(documentName)));
+        auto hScript = VERIFY(CreateUnboundScript(&source));
         return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromScriptHandle(CreatePersistent(hScript)));
 
     END_EXECUTION_SCOPE
@@ -312,7 +366,7 @@ V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder, bool evaluate)
     BEGIN_EXECUTION_SCOPE
 
         auto hScript = ::ScriptHandleFromPtr(pHolder->GetScript());
-        auto hResult = VERIFY(hScript->Run());
+        auto hResult = VERIFY(hScript->BindToCurrentContext()->Run());
         if (!evaluate)
         {
             hResult = GetUndefined();
@@ -654,7 +708,7 @@ void V8ContextImpl::GetGlobalProperty(Local<String> hName, const PropertyCallbac
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value> value, const PropertyCallbackInfo<Value>& info)
+void V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value> hValue, const PropertyCallbackInfo<Value>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -667,9 +721,9 @@ void V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value> value, c
         {
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName) && (*it)->Set(hName, value))
+                if ((*it)->HasOwnProperty(hName) && (*it)->Set(hName, hValue))
                 {
-                    CALLBACK_RETURN(value);
+                    CALLBACK_RETURN(hValue);
                 }
             }
         }
@@ -817,7 +871,7 @@ void V8ContextImpl::GetGlobalProperty(unsigned __int32 index, const PropertyCall
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::SetGlobalProperty(unsigned __int32 index, Local<Value> value, const PropertyCallbackInfo<Value>& info)
+void V8ContextImpl::SetGlobalProperty(unsigned __int32 index, Local<Value> hValue, const PropertyCallbackInfo<Value>& info)
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
@@ -831,9 +885,9 @@ void V8ContextImpl::SetGlobalProperty(unsigned __int32 index, Local<Value> value
             auto hName = pContextImpl->CreateInteger(index)->ToString();
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName) && (*it)->Set(index, value))
+                if ((*it)->HasOwnProperty(hName) && (*it)->Set(index, hValue))
                 {
-                    CALLBACK_RETURN(value);
+                    CALLBACK_RETURN(hValue);
                 }
             }
         }
@@ -953,7 +1007,20 @@ void V8ContextImpl::GetHostObjectProperty(Local<String> hName, const PropertyCal
             CALLBACK_RETURN(true);
         }
 
-        CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), StdString(hName))));
+        auto hHolder = info.Holder();
+
+        auto hResult = hHolder->GetRealNamedProperty(hName);
+        if (hResult.IsEmpty())
+        {
+            bool isCacheable;
+            hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), StdString(hName), isCacheable));
+            if (isCacheable)
+            {
+                hHolder->ForceSet(hName, hResult);
+            }
+        }
+
+        CALLBACK_RETURN(hResult);
     }
     catch (const HostException& exception)
     {
@@ -1366,6 +1433,7 @@ void V8ContextImpl::Verify(const TryCatch& tryCatch)
     {
         if (!tryCatch.CanContinue())
         {
+            VerifyNotOutOfMemory();
             throw V8Exception(V8Exception::Type_Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(tryCatch.StackTrace()), V8Value(V8Value::Undefined));
         }
 

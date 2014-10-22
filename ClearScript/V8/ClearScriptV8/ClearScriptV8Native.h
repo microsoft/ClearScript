@@ -69,6 +69,7 @@
 #include "RefCount.h"
 #include "SharedPtr.h"
 #include "WeakRef.h"
+#include "Timer.h"
 #include "V8ObjectHolder.h"
 #include "V8ScriptHolder.h"
 #include "HostObjectHolder.h"

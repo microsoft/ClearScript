@@ -179,8 +179,18 @@ namespace Microsoft.ClearScript.Util
             return nullableNumericTypes.Contains(type);
         }
 
+        public static bool IsUnknownCOMObject(this Type type)
+        {
+            return type.IsCOMObject && (type.GetInterfaces().Length < 1);
+        }
+
         public static bool IsAssignableFrom(this Type type, ref object value)
         {
+            if (type.IsByRef)
+            {
+                type = type.GetElementType();
+            }
+
             if (type.IsNullable())
             {
                 return (value == null) || (Nullable.GetUnderlyingType(type).IsAssignableFrom(ref value));
@@ -340,7 +350,19 @@ namespace Microsoft.ClearScript.Util
                 return properties.FirstOrDefault(property => property.GetIndexParameters().Length < 1);
             }
 
-            return Type.DefaultBinder.SelectProperty(bindFlags, properties, null, bindArgs.Select(GetPropertyIndexType).ToArray(), null);
+            var result = Type.DefaultBinder.SelectProperty(bindFlags, properties, null, bindArgs.Select(GetPropertyIndexType).ToArray(), null);
+            if (result != null)
+            {
+                return result;
+            }
+
+            // the default binder fails to bind to some COM properties because of by-ref parameter types
+            if ((properties.Length == 1) && (properties[0].GetIndexParameters().Length == bindArgs.Length))
+            {
+                return properties[0];
+            }
+
+            return null;
         }
 
         public static object CreateInstance(this Type type, params object[] args)

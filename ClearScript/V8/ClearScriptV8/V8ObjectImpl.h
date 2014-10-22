@@ -76,6 +76,7 @@ namespace V8 {
         V8ObjectImpl(V8ObjectHolder* pHolder);
 
         virtual Object^ GetProperty(String^ gcName);
+        virtual Object^ GetProperty(String^ gcName, [Out] Boolean% isCacheable);
         virtual void SetProperty(String^ gcName, Object^ gcValue);
         virtual bool DeleteProperty(String^ gcName);
         virtual array<String^>^ GetPropertyNames();

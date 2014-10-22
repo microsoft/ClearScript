@@ -72,10 +72,11 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Specifies that no options are selected.
         /// </summary>
-        None = 0x00,
+        None = 0,
 
         /// <summary>
-        /// Specifies that the field, property, or method return value is not to be restricted to its declared type.
+        /// Specifies that the field, property, or method return value is not to be restricted to
+        /// its declared type.
         /// </summary>
         ExposeRuntimeType = 0x00000001,
     }

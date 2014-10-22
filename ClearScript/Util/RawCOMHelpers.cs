@@ -166,6 +166,16 @@ namespace Microsoft.ClearScript.Util
                 Marshal.ThrowExceptionForHR(result);
             }
 
+            public static bool Succeeded(uint result)
+            {
+                return GetSeverity(result) == SEVERITY_SUCCESS;
+            }
+
+            public static bool Succeeded(int result)
+            {
+                return GetSeverity(result) == SEVERITY_SUCCESS;
+            }
+
             public static int GetSeverity(uint result)
             {
                 return GetSeverity(MiscHelpers.UnsignedAsSigned(result));

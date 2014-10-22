@@ -5,8 +5,8 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedRevision=18635
-set testedVersion=3.24.17
+set testedRevision=branches/3.26@24646
+set testedVersion=3.26.31.15
 
 set gyprev=1831
 set pythonrev=89111
@@ -33,8 +33,10 @@ echo.
 echo V8UPDATE [/N] [mode] [revision]
 echo.
 echo   /N        Do not download; use previously downloaded files if possible.
-echo   mode      Build mode: "Debug" or "Release".
-echo   revision  V8 revision: "Latest", "Tested", or revision number.
+echo   mode      Build mode: "Debug" or "Release" (default).
+echo   revision  V8 revision: "Latest", "Tested" (default), or branch@revision.
+echo             * Examples: "trunk@19256", "branches/3.24@HEAD".
+echo             * View history at http://code.google.com/p/v8/source/list.
 goto Exit
 
 :SetDownloadFalse
@@ -91,17 +93,17 @@ if "%v8rev%"=="" goto UseTestedRev
 if /i "%v8rev%"=="latest" goto UseLatestRev
 if /i "%v8rev%"=="tested" goto UseTestedRev
 if /i "%v8rev%"=="%testedRevision%" goto UseTestedRev
-echo V8 revision: r%v8rev%
+echo V8 revision: %v8rev%
 echo *** WARNING: THIS V8 REVISION MAY NOT BE COMPATIBLE WITH CLEARSCRIPT ***
 choice /m Continue
 if errorlevel 2 goto Exit
 goto ResolveRevDone
 :UseTestedRev
 set v8rev=%testedRevision%
-echo V8 revision: Tested (r%v8rev%, Version %testedVersion%)
+echo V8 revision: Tested (%v8rev%, Version %testedVersion%)
 goto ResolveRevDone
 :UseLatestRev
-set v8rev=HEAD
+set v8rev=trunk@HEAD
 echo V8 revision: Latest
 echo *** WARNING: THIS V8 REVISION MAY NOT BE COMPATIBLE WITH CLEARSCRIPT ***
 choice /m Continue
@@ -122,7 +124,7 @@ cd build
 
 :DownloadV8
 echo Downloading V8 ...
-svn checkout http://v8.googlecode.com/svn/trunk@%v8rev% v8 >getV8.log
+svn checkout http://v8.googlecode.com/svn/%v8rev% v8 >getV8.log
 if errorlevel 1 goto Error1
 :DownloadV8Done
 

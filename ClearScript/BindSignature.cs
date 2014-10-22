@@ -60,23 +60,26 @@
 //       
 
 using System;
+using System.Reflection;
 
 namespace Microsoft.ClearScript
 {
     internal class BindSignature : IEquatable<BindSignature>
     {
         private readonly Type context;
+        private readonly BindingFlags flags;
         private readonly TargetInfo targetInfo;
         private readonly string name;
         private readonly Type[] typeArgs;
         private readonly ArgInfo[] argData;
 
-        public BindSignature(Type context, HostTarget target, string name, Type[] typeArgs, object[] args)
+        public BindSignature(Type context, BindingFlags flags, HostTarget target, string name, Type[] typeArgs, object[] args)
         {
             this.context = context;
+            this.flags = flags;
             targetInfo = new TargetInfo(target);
-            this.typeArgs = typeArgs;
             this.name = name;
+            this.typeArgs = typeArgs;
 
             argData = new ArgInfo[args.Length];
             for (var index = 0; index < args.Length; index++)
@@ -97,6 +100,7 @@ namespace Microsoft.ClearScript
             var accumulator = new HashAccumulator();
 
             accumulator.Update(context);
+            accumulator.Update((int)flags);
             targetInfo.UpdateHash(ref accumulator);
             accumulator.Update(name);
 
@@ -125,6 +129,11 @@ namespace Microsoft.ClearScript
             }
 
             if (context != that.context)
+            {
+                return false;
+            }
+
+            if (flags != that.flags)
             {
                 return false;
             }

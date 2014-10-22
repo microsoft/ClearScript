@@ -61,11 +61,73 @@
 
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.CustomMarshalers;
 
 namespace Microsoft.ClearScript.Util
 {
     internal static class ObjectHelpers
     {
+        public static Type GetTypeOrTypeInfo(this object value)
+        {
+            var type = value.GetType();
+
+            Type typeInfo = null;
+            if (type.IsUnknownCOMObject())
+            {
+                // This appears to be a generic COM object with no specific type information.
+                // Attempt to acquire COM type information via IDispatch or IProvideClassInfo.
+
+                var dispatch = value as IDispatch;
+                if (dispatch != null)
+                {
+                    uint count;
+                    if (RawCOMHelpers.HResult.Succeeded(dispatch.GetTypeInfoCount(out count)) && (count > 0))
+                    {
+                        Type tempTypeInfo;
+                        if (RawCOMHelpers.HResult.Succeeded(dispatch.GetTypeInfo(0, 0, out tempTypeInfo)))
+                        {
+                            typeInfo = tempTypeInfo;
+                        }
+                    }
+                }
+
+                if (typeInfo == null)
+                {
+                    var provideClassInfo = value as IProvideClassInfo;
+                    if (provideClassInfo != null)
+                    {
+                        Type tempTypeInfo;
+                        if (RawCOMHelpers.HResult.Succeeded(provideClassInfo.GetClassInfo(out tempTypeInfo)))
+                        {
+                            typeInfo = tempTypeInfo;
+                        }
+                    }
+                }
+            }
+
+            if (typeInfo != null)
+            {
+                // COM type information acquired in this manner may not actually be valid for the
+                // original object. In some cases the original object implements a base interface.
+
+                if (typeInfo.IsInstanceOfType(value))
+                {
+                    return typeInfo;
+                }
+
+                foreach (var interfaceType in typeInfo.GetInterfaces())
+                {
+                    if (interfaceType.IsInstanceOfType(value))
+                    {
+                        return interfaceType;
+                    }
+                }
+            }
+
+            return type;
+        }
+
         public static string GetFriendlyName(this object value)
         {
             return value.GetFriendlyName(null);
@@ -124,5 +186,20 @@ namespace Microsoft.ClearScript.Util
 
             return result;
         }
+
+        #region Nested type: IProvideClassInfo
+
+        [ComImport]
+        [Guid("b196b283-bab4-101a-b69c-00aa00341d07")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface IProvideClassInfo
+        {
+            [PreserveSig]
+            int GetClassInfo(
+                [Out] [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(TypeToTypeInfoMarshaler))] out Type typeInfo
+            );
+        }
+
+        #endregion
     }
 }

@@ -69,9 +69,77 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class MiscHelpers
     {
-        public static object CreateCOMObject(string progID)
+        public static object CreateCOMObject(string progID, string serverName)
         {
-            return Activator.CreateInstance(Type.GetTypeFromProgID(progID));
+            return Activator.CreateInstance(GetCOMType(progID, serverName));
+        }
+
+        public static object CreateCOMObject(Guid clsid, string serverName)
+        {
+            return Activator.CreateInstance(GetCOMType(clsid, serverName));
+        }
+
+        public static bool TryCreateCOMObject<T>(string progID, string serverName, out T obj) where T : class
+        {
+            Type type;
+            if (!TryGetCOMType(progID, serverName, out type))
+            {
+                obj = null;
+                return false;
+            }
+
+            obj = Activator.CreateInstance(type) as T;
+            return obj != null;
+        }
+
+        public static bool TryCreateCOMObject<T>(Guid clsid, string serverName, out T obj) where T : class
+        {
+            Type type;
+            if (!TryGetCOMType(clsid, serverName, out type))
+            {
+                obj = null;
+                return false;
+            }
+
+            obj = Activator.CreateInstance(type) as T;
+            return obj != null;
+        }
+
+        public static Type GetCOMType(string progID, string serverName)
+        {
+            VerifyNonBlankArgument(progID, "progID", "Invalid programmatic identifier (ProgID)");
+
+            Type type;
+            if (!TryGetCOMType(progID, serverName, out type))
+            {
+                throw new TypeLoadException(FormatInvariant("Could not find a registered class for '{0}'", progID));
+            }
+
+            return type;
+        }
+
+        public static Type GetCOMType(Guid clsid, string serverName)
+        {
+            Type type;
+            if (!TryGetCOMType(clsid, serverName, out type))
+            {
+                throw new TypeLoadException(FormatInvariant("Could not find a registered class for '{0}'", clsid.ToString("B")));
+            }
+
+            return type;
+        }
+
+        public static bool TryGetCOMType(string progID, string serverName, out Type type)
+        {
+            Guid clsid;
+            type = Guid.TryParseExact(progID, "B", out clsid) ? Type.GetTypeFromCLSID(clsid, serverName) : Type.GetTypeFromProgID(progID, serverName);
+            return type != null;
+        }
+
+        public static bool TryGetCOMType(Guid clsid, string serverName, out Type type)
+        {
+            type = Type.GetTypeFromCLSID(clsid, serverName);
+            return type != null;
         }
 
         public static void VerifyNonNullArgument(object value, string name)
@@ -251,6 +319,11 @@ namespace Microsoft.ClearScript.Util
         public static T[] GetEmptyArray<T>()
         {
             return EmptyArray<T>.Value;
+        }
+
+        public static string GetDispIDName(int dispid)
+        {
+            return FormatInvariant("[DISPID={0}]", dispid);
         }
 
         #region Nested type: EmptyArray

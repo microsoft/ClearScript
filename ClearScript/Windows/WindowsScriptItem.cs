@@ -133,7 +133,7 @@ namespace Microsoft.ClearScript.Windows
             if (comException != null)
             {
                 var result = comException.ErrorCode;
-                if ((result == RawCOMHelpers.HResult.SCRIPT_E_REPORTED) && (engine.CurrentScriptFrame != null))
+                if (((result == RawCOMHelpers.HResult.SCRIPT_E_REPORTED) || (result == RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)) && (engine.CurrentScriptFrame != null))
                 {
                     scriptError = engine.CurrentScriptFrame.ScriptError ?? engine.CurrentScriptFrame.PendingScriptError;
                     if (scriptError != null)
@@ -153,7 +153,7 @@ namespace Microsoft.ClearScript.Windows
                         return true;
                     }
                 }
-                else if (result == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
+                else if ((result == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND) || (result == RawCOMHelpers.HResult.DISP_E_UNKNOWNNAME))
                 {
                     // this usually indicates invalid object or property access in JScript
                     scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
@@ -382,7 +382,7 @@ namespace Microsoft.ClearScript.Windows
         {
             if (!disposed)
             {
-                Marshal.FinalReleaseComObject(target);
+                Marshal.ReleaseComObject(target);
                 disposed = true;
             }
         }

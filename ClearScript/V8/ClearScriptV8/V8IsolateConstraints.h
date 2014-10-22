@@ -73,16 +73,16 @@ public:
     {
     }
 
-    void Set(int maxYoungSpaceSize, int maxOldSpaceSize, int maxExecutableSize)
+    void Set(int maxNewSpaceSize, int maxOldSpaceSize, int maxExecutableSize)
     {
-        m_MaxYoungSpaceSize = maxYoungSpaceSize;
+        m_MaxNewSpaceSize = maxNewSpaceSize;
         m_MaxOldSpaceSize = maxOldSpaceSize;
         m_MaxExecutableSize = maxExecutableSize;
     }
 
-    int GetMaxYoungSpaceSize() const
+    int GetMaxNewSpaceSize() const
     {
-        return m_MaxYoungSpaceSize;
+        return m_MaxNewSpaceSize;
     }
 
     int GetMaxOldSpaceSize() const
@@ -97,7 +97,7 @@ public:
 
 private:
 
-    int m_MaxYoungSpaceSize;
+    int m_MaxNewSpaceSize;
     int m_MaxOldSpaceSize;
     int m_MaxExecutableSize;
 };

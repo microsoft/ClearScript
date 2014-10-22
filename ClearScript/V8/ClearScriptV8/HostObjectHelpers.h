@@ -75,6 +75,7 @@ public:
     static void Release(void* pvObject);
 
     static V8Value GetProperty(void* pvObject, const StdString& name);
+    static V8Value GetProperty(void* pvObject, const StdString& name, bool& isCacheable);
     static void SetProperty(void* pvObject, const StdString& name, const V8Value& value);
     static bool DeleteProperty(void* pvObject, const StdString& name);
     static void GetPropertyNames(void* pvObject, std::vector<StdString>& names);

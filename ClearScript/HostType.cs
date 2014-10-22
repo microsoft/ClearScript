@@ -140,9 +140,15 @@ namespace Microsoft.ClearScript
         public Type GetTypeArg()
         {
             var type = GetSpecificType();
+
             if (type.IsStatic())
             {
                 throw new InvalidOperationException(MiscHelpers.FormatInvariant("'{0}': static types cannot be used as type arguments", type.GetRootName()));
+            }
+
+            if (type.IsUnknownCOMObject())
+            {
+                throw new InvalidOperationException("Unknown COM/ActiveX types cannot be used as type arguments");
             }
 
             return type;
@@ -151,7 +157,7 @@ namespace Microsoft.ClearScript
         public Type GetTypeArgNoThrow()
         {
             var type = GetSpecificTypeNoThrow();
-            return ((type == null) || type.IsStatic()) ? null : type;
+            return ((type == null) || type.IsStatic() || type.IsUnknownCOMObject()) ? null : type;
         }
 
         private Type GetSpecificTypeNoThrow()

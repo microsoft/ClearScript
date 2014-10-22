@@ -60,8 +60,12 @@
 //       
 
 using System;
+using System.CodeDom.Compiler;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using Microsoft.ClearScript.Util;
+using Microsoft.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -94,6 +98,90 @@ namespace Microsoft.ClearScript.Test
 
     public static class TestUtil
     {
+        public static void InvokeVBTestSub(string code)
+        {
+            var options = new CompilerParameters { GenerateInMemory = true };
+            options.ReferencedAssemblies.Add("ClearScript.dll");
+            options.ReferencedAssemblies.Add("ClearScriptTest.dll");
+            options.ReferencedAssemblies.Add(typeof(Enumerable).Assembly.Location);
+            options.ReferencedAssemblies.Add(typeof(Assert).Assembly.Location);
+            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { MiscHelpers.FormatInvariant(@"
+                Imports System
+                Imports System.Linq
+                Imports Microsoft.ClearScript
+                Imports Microsoft.ClearScript.Test
+                Imports Microsoft.ClearScript.V8
+                Imports Microsoft.ClearScript.Windows
+                Imports Microsoft.VisualStudio.TestTools.UnitTesting
+                Module TestModule
+                    Sub TestSub
+                        {0}
+                    End Sub
+                End Module
+            ", code)});
+
+            if (results.Errors.HasErrors)
+            {
+                var messageBuilder = new StringBuilder("Errors encountered during Visual Basic compilation:\n");
+                foreach (var error in results.Errors)
+                {
+                    messageBuilder.Append(error);
+                    messageBuilder.Append('\n');
+                }
+
+                throw new OperationCanceledException(messageBuilder.ToString());
+            }
+
+            results.CompiledAssembly.GetType("TestModule").InvokeMember("TestSub", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>());
+        }
+
+        public static object InvokeVBTestFunction(string code)
+        {
+            var options = new CompilerParameters { GenerateInMemory = true };
+            options.ReferencedAssemblies.Add("ClearScript.dll");
+            options.ReferencedAssemblies.Add("ClearScriptTest.dll");
+            options.ReferencedAssemblies.Add(typeof(Enumerable).Assembly.Location);
+            options.ReferencedAssemblies.Add(typeof(Assert).Assembly.Location);
+            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { MiscHelpers.FormatInvariant(@"
+                Imports System
+                Imports System.Linq
+                Imports Microsoft.ClearScript
+                Imports Microsoft.ClearScript.Test
+                Imports Microsoft.ClearScript.V8
+                Imports Microsoft.ClearScript.Windows
+                Imports Microsoft.VisualStudio.TestTools.UnitTesting
+                Module TestModule
+                    Function TestFunction
+                        {0}
+                    End Function
+                End Module
+            ", code)});
+
+            if (results.Errors.HasErrors)
+            {
+                var messageBuilder = new StringBuilder("Errors encountered during Visual Basic compilation:\n");
+                foreach (var error in results.Errors)
+                {
+                    messageBuilder.Append(error);
+                    messageBuilder.Append('\n');
+                }
+
+                throw new OperationCanceledException(messageBuilder.ToString());
+            }
+
+            return results.CompiledAssembly.GetType("TestModule").InvokeMember("TestFunction", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>());
+        }
+
+        public static void Iterate(Array array, Action<int[]> action)
+        {
+            array.Iterate(action);
+        }
+
+        public static string FormatInvariant(string format, params object[] args)
+        {
+            return MiscHelpers.FormatInvariant(format, args);
+        }
+
         public static double CalcTestValue(Guid callerGuid, params object[] args)
         {
             var hashCode = args.Aggregate(callerGuid.GetHashCode(), (currentHashCode, value) => unchecked((currentHashCode * 31) + ((value != null) ? value.GetHashCode() : 0)));
@@ -102,7 +190,8 @@ namespace Microsoft.ClearScript.Test
 
         public static void AssertException<T>(Action action, bool checkScriptStackTrace = true) where T : Exception
         {
-            var gotException = false;
+            Exception caughtException = null;
+            var gotExpectedException = false;
 
             try
             {
@@ -110,16 +199,24 @@ namespace Microsoft.ClearScript.Test
             }
             catch (T exception)
             {
-                gotException = true;
+                caughtException = exception;
+                gotExpectedException = true;
                 AssertValidExceptionChain(exception, checkScriptStackTrace);
             }
             catch (Exception exception)
             {
-                gotException = exception.GetBaseException() is T;
+                caughtException = exception;
+                gotExpectedException = exception.GetBaseException() is T;
                 AssertValidExceptionChain(exception, checkScriptStackTrace);
             }
 
-            Assert.IsTrue(gotException, "Expected " + typeof(T).Name + " was not thrown.");
+            var message = "Expected " + typeof(T).Name + " was not thrown.";
+            if (caughtException != null)
+            {
+                message += " " + caughtException.GetType().Name + " was thrown instead.";
+            }
+
+            Assert.IsTrue(gotExpectedException, message);
         }
 
         public static void AssertValidException(Exception exception)

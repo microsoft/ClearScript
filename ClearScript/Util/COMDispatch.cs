@@ -129,11 +129,13 @@ namespace Microsoft.ClearScript.Util
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IDispatch
     {
-        void GetTypeInfoCount(
+        [PreserveSig]
+        int GetTypeInfoCount(
             [Out] out uint count
         );
 
-        void GetTypeInfo(
+        [PreserveSig]
+        int GetTypeInfo(
             [In] uint index,
             [In] int lcid,
             [Out] [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(TypeToTypeInfoMarshaler))] out Type typeInfo
@@ -166,11 +168,13 @@ namespace Microsoft.ClearScript.Util
     {
         #region IDispatch members
 
-        void GetTypeInfoCount(
+        [PreserveSig]
+        int GetTypeInfoCount(
             [Out] out uint count
         );
 
-        void GetTypeInfo(
+        [PreserveSig]
+        int GetTypeInfo(
             [In] uint index,
             [In] int lcid,
             [Out] [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(TypeToTypeInfoMarshaler))] out Type typeInfo

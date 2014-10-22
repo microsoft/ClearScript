@@ -63,6 +63,7 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class SpecialMemberNames
     {
-        public const string Default = "[DISPID=0]";
+        public static string Default = MiscHelpers.GetDispIDName(SpecialDispIDs.Default);
+        public static string NewEnum = MiscHelpers.GetDispIDName(SpecialDispIDs.NewEnum);
     }
 }

@@ -70,6 +70,10 @@ namespace Microsoft.ClearScript.V8
             return CreateImpl<V8IsolateProxy>(name, constraints, enableDebugging, debugPort);
         }
 
+        public abstract UIntPtr MaxHeapSize { get; set; }
+
+        public abstract TimeSpan HeapSizeSampleInterval { get; set; }
+
         public abstract UIntPtr MaxStackUsage { get; set; }
 
         public abstract V8Script Compile(string documentName, string code);

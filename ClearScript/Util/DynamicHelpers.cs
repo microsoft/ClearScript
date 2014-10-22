@@ -123,32 +123,43 @@ namespace Microsoft.ClearScript.Util
                         }
                         else
                         {
-                            var invokeMemberBinder = binder as InvokeMemberBinder;
-                            if (invokeMemberBinder != null)
+                            var invokeBinder = binder as InvokeBinder;
+                            if (invokeBinder != null)
                             {
-                                if (TryInvokeMethod(reflect, invokeMemberBinder.Name, false, args, out result))
+                                if (TryInvoke(reflect, args, out result))
                                 {
                                     return true;
                                 }
                             }
-                            else if ((args != null) && (args.Length > 0))
+                            else
                             {
-                                var getIndexBinder = binder as GetIndexBinder;
-                                if (getIndexBinder != null)
+                                var invokeMemberBinder = binder as InvokeMemberBinder;
+                                if (invokeMemberBinder != null)
                                 {
-                                    if (TryGetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
+                                    if (TryInvokeMethod(reflect, invokeMemberBinder.Name, invokeMemberBinder.IgnoreCase, args, out result))
                                     {
                                         return true;
                                     }
                                 }
-                                else
+                                else if ((args != null) && (args.Length > 0))
                                 {
-                                    var setIndexBinder = binder as SetIndexBinder;
-                                    if (setIndexBinder != null)
+                                    var getIndexBinder = binder as GetIndexBinder;
+                                    if (getIndexBinder != null)
                                     {
-                                        if (TrySetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
+                                        if (TryGetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
                                         {
                                             return true;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        var setIndexBinder = binder as SetIndexBinder;
+                                        if (setIndexBinder != null)
+                                        {
+                                            if (TrySetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
+                                            {
+                                                return true;
+                                            }
                                         }
                                     }
                                 }
@@ -303,6 +314,27 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
+        private static bool TryInvoke(IReflect target, object[] args, out object result)
+        {
+            // ReSharper disable SuspiciousTypeConversion.Global
+
+            var dispatchEx = target as IDispatchEx;
+            if (dispatchEx != null)
+            {
+                // Standard IExpando-over-IDispatchEx support appears to leak the variants it
+                // creates for the invocation arguments. This issue has been reported. In the
+                // meantime we'll bypass this facility and interface with IDispatchEx directly.
+
+                result = dispatchEx.Invoke(args);
+                return true;
+            }
+
+            // ReSharper restore SuspiciousTypeConversion.Global
+
+            result = null;
+            return false;
+        }
+
         private static bool TryInvokeMethod(IReflect target, string name, bool ignoreCase, object[] args, out object result)
         {
             // ReSharper disable SuspiciousTypeConversion.Global
@@ -320,7 +352,7 @@ namespace Microsoft.ClearScript.Util
 
             // ReSharper restore SuspiciousTypeConversion.Global
 
-            var flags = BindingFlags.InvokeMethod | BindingFlags.Public;
+            var flags = BindingFlags.Public;
             if (ignoreCase)
             {
                 flags |= BindingFlags.IgnoreCase;
@@ -329,7 +361,7 @@ namespace Microsoft.ClearScript.Util
             var method = target.GetMethod(name, flags);
             if (method != null)
             {
-                result = method.Invoke(target, flags, null, args, CultureInfo.InvariantCulture);
+                result = method.Invoke(target, BindingFlags.InvokeMethod | flags, null, args, CultureInfo.InvariantCulture);
                 return true;
             }
 
@@ -359,7 +391,7 @@ namespace Microsoft.ClearScript.Util
         private static object CreateInstance(this DynamicMetaObject target, object[] args)
         {
             var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var paramExprs = paramNames.Select((paramName, index) => Expression.Parameter(GetParamTypeForArg(args[index]), paramName)).ToArray();
             var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
             var bindResult = target.BindCreateInstance(new DynamicCreateInstanceBinder(paramNames), parameters);
             var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
@@ -369,7 +401,7 @@ namespace Microsoft.ClearScript.Util
         private static object Invoke(this DynamicMetaObject target, object[] args)
         {
             var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var paramExprs = paramNames.Select((paramName, index) => Expression.Parameter(GetParamTypeForArg(args[index]), paramName)).ToArray();
             var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
             var bindResult = target.BindInvoke(new DynamicInvokeBinder(paramNames), parameters);
             var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
@@ -379,7 +411,7 @@ namespace Microsoft.ClearScript.Util
         private static object InvokeMember(this DynamicMetaObject target, ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args)
         {
             var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var paramExprs = paramNames.Select((paramName, index) => Expression.Parameter(GetParamTypeForArg(args[index]), paramName)).ToArray();
             var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
             var bindResult = target.BindInvokeMember(new DynamicInvokeMemberBinder(engine, name, invokeFlags, paramNames), parameters);
             var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
@@ -424,7 +456,7 @@ namespace Microsoft.ClearScript.Util
         private static object GetIndex(this DynamicMetaObject target, object[] indices)
         {
             var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var paramExprs = paramNames.Select((paramName, index) => Expression.Parameter(GetParamTypeForArg(indices[index]), paramName)).ToArray();
             var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
             var bindResult = target.BindGetIndex(new DynamicGetIndexBinder(paramNames), parameters);
             var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
@@ -434,7 +466,7 @@ namespace Microsoft.ClearScript.Util
         private static object SetIndex(this DynamicMetaObject target, object[] indices, object value)
         {
             var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var paramExprs = paramNames.Select((paramName, index) => Expression.Parameter(GetParamTypeForArg(indices[index]), paramName)).ToArray();
             var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
             var bindResult = target.BindSetIndex(new DynamicSetIndexBinder(paramNames), parameters, CreateDynamicArg(value));
             var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
@@ -444,7 +476,7 @@ namespace Microsoft.ClearScript.Util
         private static bool DeleteIndex(this DynamicMetaObject target, object[] indices)
         {
             var paramNames = Enumerable.Range(0, indices.Length).Select(index => "a" + index).ToArray();
-            var paramExprs = paramNames.Select(paramName => Expression.Parameter(typeof(object), paramName)).ToArray();
+            var paramExprs = paramNames.Select((paramName, index) => Expression.Parameter(GetParamTypeForArg(indices[index]), paramName)).ToArray();
             var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
             var bindResult = target.BindDeleteIndex(new DynamicDeleteIndexBinder(paramNames), parameters);
             var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
@@ -553,6 +585,11 @@ namespace Microsoft.ClearScript.Util
             }
 
             return Expression.Throw(exceptionExpr);
+        }
+
+        private static Type GetParamTypeForArg(object arg)
+        {
+            return (arg != null) ? arg.GetType() : typeof(object);
         }
 
         #endregion

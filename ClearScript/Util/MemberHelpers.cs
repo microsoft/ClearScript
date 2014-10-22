@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Linq;
 using System.Reflection;
 
 namespace Microsoft.ClearScript.Util
@@ -133,7 +134,22 @@ namespace Microsoft.ClearScript.Util
 
         private static T GetAttribute<T>(this MemberInfo member, bool inherit) where T : Attribute
         {
-            return Attribute.GetCustomAttribute(member, typeof(T), inherit) as T;
+            try
+            {
+                return Attribute.GetCustomAttributes(member, typeof(T), inherit).SingleOrDefault() as T;
+            }
+            catch (AmbiguousMatchException)
+            {
+                if (inherit)
+                {
+                    // this affects SqlDataReader and is indicative of a .NET issue described here:
+                    // http://connect.microsoft.com/VisualStudio/feedback/details/646399/attribute-isdefined-throws-ambiguousmatchexception-for-indexer-properties-and-inherited-attributes
+
+                    return Attribute.GetCustomAttributes(member, typeof(T), false).SingleOrDefault() as T;
+                }
+
+                throw;
+            }
         }
     }
 }

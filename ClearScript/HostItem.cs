@@ -68,12 +68,14 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal partial class HostItem : DynamicObject, IExpando, IDynamic, IScriptMarshalWrapper
+    internal partial class HostItem : DynamicObject, IExpando, IDynamic, IEnumVARIANT, ICustomQueryInterface, IScriptMarshalWrapper
     {
         #region data
 
@@ -90,6 +92,7 @@ namespace Microsoft.ClearScript
         private IPropertyBag targetPropertyBag;
         private IList targetList;
         private DynamicMetaObject targetDynamicMetaObject;
+        private IEnumerator targetEnumerator;
 
         private string[] cachedLocalEventNames;
         private string[] cachedLocalFieldNames;
@@ -113,10 +116,6 @@ namespace Microsoft.ClearScript
 
         private Dictionary<string, HostMethod> hostMethodMap;
         private Dictionary<string, HostIndexedProperty> hostIndexedPropertyMap;
-
-        private static readonly MemberMap<Field> fieldMap = new MemberMap<Field>();
-        private static readonly MemberMap<Method> methodMap = new MemberMap<Method>();
-        private static readonly MemberMap<Property> propertyMap = new MemberMap<Property>();
 
         #endregion
 
@@ -170,7 +169,7 @@ namespace Microsoft.ClearScript
 
             if (type == null)
             {
-                type = obj.GetType();
+                type = obj.GetTypeOrTypeInfo();
             }
             else
             {
@@ -212,7 +211,14 @@ namespace Microsoft.ClearScript
 
         public object InvokeMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture)
         {
+            bool isCacheable;
+            return InvokeMember(name, invokeFlags, args, bindArgs, culture, out isCacheable);
+        }
+
+        public object InvokeMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture, out bool isCacheable)
+        {
             AdjustInvokeFlags(ref invokeFlags);
+            isCacheable = false;
 
             object result;
             if (target.TryInvokeAuxMember(engine, name, invokeFlags, args, bindArgs, out result))
@@ -245,7 +251,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            return InvokeHostMember(name, invokeFlags, args, bindArgs, culture);
+            return InvokeHostMember(name, invokeFlags, args, bindArgs, culture, out isCacheable);
         }
 
         #endregion
@@ -328,6 +334,11 @@ namespace Microsoft.ClearScript
 
             specialTarget = null;
             return false;
+        }
+
+        private Type GetEffectiveAccessContext()
+        {
+            return accessContext ?? engine.AccessContext;
         }
 
         private BindingFlags GetCommonBindFlags()
@@ -581,6 +592,57 @@ namespace Microsoft.ClearScript
             }
         }
 
+        private object InvokeReflectMember(string name, BindingFlags invokeFlags, object[] wrappedArgs, CultureInfo culture, string[] namedParams)
+        {
+            bool isCacheable;
+            return InvokeReflectMember(name, invokeFlags, wrappedArgs, culture, namedParams, out isCacheable);
+        }
+
+        private object InvokeReflectMember(string name, BindingFlags invokeFlags, object[] wrappedArgs, CultureInfo culture, string[] namedParams, out bool isCacheable)
+        {
+            var resultIsCacheable = false;
+            var result = engine.MarshalToScript(engine.HostInvoke(() =>
+            {
+                var args = engine.MarshalToHost(wrappedArgs, false);
+
+                var argOffset = 0;
+                if ((namedParams != null) && (namedParams.Length > 0) && (namedParams[0] == SpecialParamNames.This))
+                {
+                    args = args.Skip(1).ToArray();
+                    argOffset = 1;
+                }
+
+                var bindArgs = args;
+                if ((args.Length > 0) && (invokeFlags.HasFlag(BindingFlags.InvokeMethod) || invokeFlags.HasFlag(BindingFlags.CreateInstance)))
+                {
+                    bindArgs = engine.MarshalToHost(wrappedArgs, true);
+                    if (argOffset > 0)
+                    {
+                        bindArgs = bindArgs.Skip(argOffset).ToArray();
+                    }
+
+                    var savedArgs = (object[])args.Clone();
+                    var tempResult = InvokeMember(name, invokeFlags, args, bindArgs, culture, out resultIsCacheable);
+
+                    for (var index = 0; index < args.Length; index++)
+                    {
+                        var arg = args[index];
+                        if (!ReferenceEquals(arg, savedArgs[index]))
+                        {
+                            wrappedArgs[argOffset + index] = engine.MarshalToScript(arg);
+                        }
+                    }
+
+                    return tempResult;
+                }
+
+                return InvokeMember(name, invokeFlags, args, bindArgs, culture, out resultIsCacheable);
+            }));
+
+            isCacheable = resultIsCacheable;
+            return result;
+        }
+
         private object InvokeDynamicMember(string name, BindingFlags invokeFlags, object[] args)
         {
             if (invokeFlags.HasFlag(BindingFlags.CreateInstance))
@@ -746,8 +808,10 @@ namespace Microsoft.ClearScript
             throw new InvalidOperationException("Invalid member invocation mode");
         }
 
-        private object InvokeHostMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture)
+        private object InvokeHostMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture, out bool isCacheable)
         {
+            isCacheable = false;
+
             if (invokeFlags.HasFlag(BindingFlags.CreateInstance))
             {
                 if (name == SpecialMemberNames.Default)
@@ -833,6 +897,20 @@ namespace Microsoft.ClearScript
                     throw new NotSupportedException("Object does not support the requested invocation operation");
                 }
 
+                if (name == SpecialMemberNames.NewEnum)
+                {
+                    if ((target is HostObject) || (target is IHostVariable) || (target is IByRefArg))
+                    {
+                        IEnumerable enumerable;
+                        if (BindSpecialTarget(out enumerable))
+                        {
+                            return HostObject.Wrap(enumerable.GetEnumerator(), typeof(IEnumerator));
+                        }
+                    }
+
+                    throw new NotSupportedException("Object is not a collection");
+                }
+
                 if ((targetDynamicMetaObject != null) && (targetDynamicMetaObject.GetDynamicMemberNames().Contains(name)))
                 {
                     object result;
@@ -863,7 +941,7 @@ namespace Microsoft.ClearScript
 
                 if (invokeFlags.HasFlag(BindingFlags.GetField))
                 {
-                    return GetHostProperty(name, invokeFlags, args, bindArgs, culture);
+                    return GetHostProperty(name, invokeFlags, args, bindArgs, culture, out isCacheable);
                 }
 
                 throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no suitable method named '{0}'", name));
@@ -871,7 +949,7 @@ namespace Microsoft.ClearScript
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
             {
-                return GetHostProperty(name, invokeFlags, args, bindArgs, culture);
+                return GetHostProperty(name, invokeFlags, args, bindArgs, culture, out isCacheable);
             }
 
             if (invokeFlags.HasFlag(BindingFlags.SetField))
@@ -882,8 +960,10 @@ namespace Microsoft.ClearScript
             throw new InvalidOperationException("Invalid member invocation mode");
         }
 
-        private object GetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture)
+        private object GetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture, out bool isCacheable)
         {
+            isCacheable = false;
+
             if ((targetDynamicMetaObject != null) && (targetDynamicMetaObject.GetDynamicMemberNames().Contains(name)))
             {
                 object result;
@@ -935,6 +1015,7 @@ namespace Microsoft.ClearScript
             if (field != null)
             {
                 var result = field.GetValue(target.InvokeTarget);
+                isCacheable = (targetDynamicMetaObject == null) && (field.IsLiteral || field.IsInitOnly);
                 return engine.PrepareResult(result, field.FieldType, field.IsRestrictedForScript());
             }
 
@@ -942,6 +1023,7 @@ namespace Microsoft.ClearScript
             if (eventInfo != null)
             {
                 var type = typeof(EventSource<>).MakeSpecificType(eventInfo.EventHandlerType);
+                isCacheable = (targetDynamicMetaObject == null);
                 return type.CreateInstance(BindingFlags.NonPublic, engine, target.InvokeTarget, eventInfo);
             }
 
@@ -960,6 +1042,7 @@ namespace Microsoft.ClearScript
                     hostMethodMap.Add(name, hostMethod);
                 }
 
+                isCacheable = (targetDynamicMetaObject == null);
                 return hostMethod;
             }
 
@@ -1008,6 +1091,20 @@ namespace Microsoft.ClearScript
                 {
                     property.SetValue(target.InvokeTarget, value, invokeFlags, Type.DefaultBinder, args.Take(args.Length - 1).ToArray(), culture);
                     return value;
+                }
+
+                // Some COM properties have setters where the final parameter type doesn't match
+                // the property type. The latter has failed, so let's try the former.
+
+                var method = property.GetSetMethod(invokeFlags.HasFlag(BindingFlags.NonPublic));
+                if (method != null)
+                {
+                    var parameters = method.GetParameters();
+                    if ((parameters.Length == args.Length) && (parameters[args.Length - 1].ParameterType.IsAssignableFrom(ref value)))
+                    {
+                        property.SetValue(target.InvokeTarget, value, invokeFlags, Type.DefaultBinder, args.Take(args.Length - 1).ToArray(), culture);
+                        return value;
+                    }
                 }
 
                 throw new ArgumentException("Invalid property assignment");
@@ -1167,7 +1264,7 @@ namespace Microsoft.ClearScript
                 UpdateFieldNames(out updated);
                 if (updated || (cachedFields == null))
                 {
-                    cachedFields = fieldMap.GetMembers(cachedFieldNames);
+                    cachedFields = MemberMap.GetFields(cachedFieldNames);
                 }
 
                 return cachedFields;
@@ -1217,7 +1314,7 @@ namespace Microsoft.ClearScript
                 UpdateMethodNames(out updated);
                 if (updated || (cachedMethods == null))
                 {
-                    cachedMethods = methodMap.GetMembers(cachedMethodNames);
+                    cachedMethods = MemberMap.GetMethods(cachedMethodNames);
                 }
 
                 return cachedMethods;
@@ -1236,7 +1333,7 @@ namespace Microsoft.ClearScript
                 UpdatePropertyNames(out updated);
                 if (updated || (cachedProperties == null))
                 {
-                    cachedProperties = propertyMap.GetMembers(cachedPropertyNames);
+                    cachedProperties = MemberMap.GetProperties(cachedPropertyNames);
                 }
 
                 return cachedProperties;
@@ -1268,29 +1365,7 @@ namespace Microsoft.ClearScript
 
         object IReflect.InvokeMember(string name, BindingFlags invokeFlags, Binder binder, object invokeTarget, object[] wrappedArgs, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParams)
         {
-            return engine.MarshalToScript(engine.HostInvoke(() =>
-            {
-                var args = engine.MarshalToHost(wrappedArgs, false);
-
-                var skipFirst = false;
-                if ((namedParams != null) && (namedParams.Length > 0) && (namedParams[0] == SpecialParamNames.This))
-                {
-                    args = args.Skip(1).ToArray();
-                    skipFirst = true;
-                }
-
-                var bindArgs = args;
-                if (invokeFlags.HasFlag(BindingFlags.InvokeMethod) || invokeFlags.HasFlag(BindingFlags.CreateInstance))
-                {
-                    bindArgs = engine.MarshalToHost(wrappedArgs, true);
-                    if (skipFirst)
-                    {
-                        bindArgs = bindArgs.Skip(1).ToArray();
-                    }
-                }
-
-                return InvokeMember(name, invokeFlags, args, bindArgs, culture);
-            }));
+            return InvokeReflectMember(name, invokeFlags, wrappedArgs, culture, namedParams);
         }
 
         Type IReflect.UnderlyingSystemType
@@ -1309,7 +1384,7 @@ namespace Microsoft.ClearScript
                 if ((targetDynamic != null) || ((targetPropertyBag != null) && !targetPropertyBag.IsReadOnly) || (targetDynamicMetaObject != null))
                 {
                     AddExpandoMemberName(name);
-                    return fieldMap.GetMember(name);
+                    return MemberMap.GetField(name);
                 }
 
                 throw new NotSupportedException("Object does not support dynamic fields");
@@ -1323,7 +1398,7 @@ namespace Microsoft.ClearScript
                 if ((targetDynamic != null) || ((targetPropertyBag != null) && !targetPropertyBag.IsReadOnly) || (targetDynamicMetaObject != null))
                 {
                     AddExpandoMemberName(name);
-                    return propertyMap.GetMember(name);
+                    return MemberMap.GetProperty(name);
                 }
 
                 throw new NotSupportedException("Object does not support dynamic properties");
@@ -1382,7 +1457,12 @@ namespace Microsoft.ClearScript
 
         object IDynamic.GetProperty(string name)
         {
-            return thisExpando.InvokeMember(name, BindingFlags.GetProperty, null, thisExpando, MiscHelpers.GetEmptyArray<object>(), null, CultureInfo.InvariantCulture, null);
+            return InvokeReflectMember(name, BindingFlags.GetProperty, MiscHelpers.GetEmptyArray<object>(), CultureInfo.InvariantCulture, null);
+        }
+
+        object IDynamic.GetProperty(string name, out bool isCacheable)
+        {
+            return InvokeReflectMember(name, BindingFlags.GetProperty, MiscHelpers.GetEmptyArray<object>(), CultureInfo.InvariantCulture, null, out isCacheable);
         }
 
         void IDynamic.SetProperty(string name, object value)
@@ -1503,6 +1583,79 @@ namespace Microsoft.ClearScript
         object IDynamic.InvokeMethod(string name, object[] args)
         {
             return thisExpando.InvokeMember(name, BindingFlags.InvokeMethod, null, thisExpando, args, null, CultureInfo.InvariantCulture, null);
+        }
+
+        #endregion
+
+        #region IEnumVARIANT implementation
+
+        int IEnumVARIANT.Next(int count, object[] elements, IntPtr pCountFetched)
+        {
+            return engine.HostInvoke(() =>
+            {
+                var index = 0;
+                if (elements != null)
+                {
+                    var maxCount = Math.Min(count, elements.Length);
+                    while ((index < maxCount) && targetEnumerator.MoveNext())
+                    {
+                        elements[index++] = engine.MarshalToScript(targetEnumerator.Current);
+                    }
+                }
+
+                if (pCountFetched != IntPtr.Zero)
+                {
+                    Marshal.WriteInt32(pCountFetched, index);
+                }
+
+                return (index == count) ? RawCOMHelpers.HResult.S_OK : RawCOMHelpers.HResult.S_FALSE;
+            });
+        }
+
+        int IEnumVARIANT.Skip(int count)
+        {
+            return engine.HostInvoke(() =>
+            {
+                var index = 0;
+                while ((index < count) && targetEnumerator.MoveNext())
+                {
+                    index++;
+                }
+
+                return (index == count) ? RawCOMHelpers.HResult.S_OK : RawCOMHelpers.HResult.S_FALSE;
+            });
+        }
+
+        int IEnumVARIANT.Reset()
+        {
+            return engine.HostInvoke(() =>
+            {
+                targetEnumerator.Reset();
+                return RawCOMHelpers.HResult.S_OK;
+            });
+        }
+
+        IEnumVARIANT IEnumVARIANT.Clone()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region ICustomQueryInterface implementation
+
+        public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr pInterface)
+        {
+            pInterface = IntPtr.Zero;
+            if (iid == typeof(IEnumVARIANT).GUID)
+            {
+                if ((target is HostObject) || (target is IHostVariable) || (target is IByRefArg))
+                {
+                    return BindSpecialTarget(out targetEnumerator) ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;
+                }
+            }
+
+            return CustomQueryInterfaceResult.NotHandled;
         }
 
         #endregion

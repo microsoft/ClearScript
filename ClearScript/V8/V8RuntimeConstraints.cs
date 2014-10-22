@@ -59,6 +59,8 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
+using System;
+
 namespace Microsoft.ClearScript.V8
 {
     /// <summary>
@@ -79,9 +81,9 @@ namespace Microsoft.ClearScript.V8
         // ReSharper restore EmptyConstructor
 
         /// <summary>
-        /// Gets or sets the maximum size of the young object heap in bytes.
+        /// Gets or sets the maximum size of the new object heap in bytes.
         /// </summary>
-        public int MaxYoungSpaceSize { get; set; }
+        public int MaxNewSpaceSize { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum size of the old object heap in bytes.
@@ -92,5 +94,15 @@ namespace Microsoft.ClearScript.V8
         /// Gets or sets the maximum size of the executable code heap in bytes.
         /// </summary>
         public int MaxExecutableSize { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum size of the young object heap in bytes.
+        /// </summary>
+        [Obsolete("This property is obsolete. Use MaxNewSpaceSize instead.")]
+        public int MaxYoungSpaceSize
+        {
+            get { return MaxNewSpaceSize; }
+            set { MaxNewSpaceSize = value; }
+        }
     }
 }

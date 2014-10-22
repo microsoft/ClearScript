@@ -161,8 +161,10 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     m_pIsolate(Isolate::New()),
     m_DebuggingEnabled(false),
     m_DebugMessageDispatchCount(0),
+    m_MaxHeapSize(0),
+    m_HeapWatchLevel(0),
     m_MaxStackUsage(0),
-    m_ExecutionLevel(0),
+    m_StackWatchLevel(0),
     m_pStackLimit(nullptr),
     m_IsOutOfMemory(false)
 {
@@ -170,14 +172,15 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
 
     BEGIN_ADDREF_SCOPE
 
+        m_pIsolate->SetData(0, this);
+
         BEGIN_ISOLATE_ENTRY_SCOPE
 
             V8::SetCaptureStackTraceForUncaughtExceptions(true, 64, StackTrace::kDetailed);
-            V8::IgnoreOutOfMemoryException();
             if (pConstraints != nullptr)
             {
                 ResourceConstraints constraints;
-                constraints.set_max_young_space_size(pConstraints->GetMaxYoungSpaceSize());
+                constraints.set_max_new_space_size(pConstraints->GetMaxNewSpaceSize());
                 constraints.set_max_old_space_size(pConstraints->GetMaxOldSpaceSize());
                 constraints.set_max_executable_size(pConstraints->GetMaxExecutableSize());
                 ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
@@ -239,12 +242,12 @@ void V8IsolateImpl::EnableDebugging(int debugPort)
             debugPort = 9222;
         }
 
-        auto wrThis = CreateWeakRef();
-        m_pDebugMessageDispatcher = CALLBACK_MANAGER(DebugMessageDispatcher)::Alloc([wrThis]
+        auto wrIsolate = CreateWeakRef();
+        m_pDebugMessageDispatcher = CALLBACK_MANAGER(DebugMessageDispatcher)::Alloc([wrIsolate]
         {
-            Concurrency::create_task([wrThis]
+            Concurrency::create_task([wrIsolate]
             {
-                auto spIsolate = wrThis.GetTarget();
+                auto spIsolate = wrIsolate.GetTarget();
                 if (!spIsolate.IsEmpty())
                 {
                     auto pIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
@@ -282,6 +285,35 @@ void V8IsolateImpl::DisableDebugging()
         m_DebuggingEnabled = false;
         m_DebugMessageDispatchCount = 0;
     }
+}
+
+//-----------------------------------------------------------------------------
+
+size_t V8IsolateImpl::GetMaxHeapSize()
+{
+    return m_MaxHeapSize;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SetMaxHeapSize(size_t value)
+{
+    m_MaxHeapSize = value;
+    m_IsOutOfMemory = false;
+}
+
+//-----------------------------------------------------------------------------
+
+double V8IsolateImpl::GetHeapSizeSampleInterval()
+{
+    return m_HeapSizeSampleInterval;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SetHeapSizeSampleInterval(double value)
+{
+    m_HeapSizeSampleInterval = value;
 }
 
 //-----------------------------------------------------------------------------
@@ -338,11 +370,11 @@ void V8IsolateImpl::CollectGarbage(bool exhaustive)
 
     if (exhaustive)
     {
-        while (!V8::IdleNotification());
+        V8::LowMemoryNotification();
     }
     else
     {
-        V8::IdleNotification();
+        while (!V8::IdleNotification());
     }
 
     END_ISOLATE_SCOPE
@@ -415,6 +447,24 @@ V8IsolateImpl::~V8IsolateImpl()
 
 //-----------------------------------------------------------------------------
 
+void V8IsolateImpl::OnInterrupt()
+{
+    std::function<void(V8IsolateImpl*)> callback; 
+
+    BEGIN_MUTEX_SCOPE(m_InterruptMutex)
+
+        callback = std::move(m_InterruptCallback);
+
+    END_MUTEX_SCOPE
+
+    if (callback)
+    {
+        callback(this);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void V8IsolateImpl::DispatchDebugMessages()
 {
     if (++m_DebugMessageDispatchCount == 1)
@@ -446,9 +496,33 @@ void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
     _ASSERTE(m_pIsolate == Isolate::GetCurrent());
     _ASSERTE(Locker::IsLocked(m_pIsolate));
 
-    if (m_ExecutionLevel == 0)
+    // is heap size monitoring in progress?
+    if (m_HeapWatchLevel == 0)
     {
-        // entering top-level execution scope
+        // no; there should be no heap watch timer
+        _ASSERTE(m_spHeapWatchTimer.IsEmpty());
+
+        // is a heap size limit specified?
+        size_t maxHeapSize = m_MaxHeapSize;
+        if (maxHeapSize > 0)
+        {
+            // yes; perform initial check and set up heap watch timer
+            CheckHeapSize(maxHeapSize);
+
+            // enter outermost heap size monitoring scope
+            m_HeapWatchLevel = 1;
+        }
+    }
+    else
+    {
+        // heap size monitoring in progress; enter nested scope
+        m_HeapWatchLevel++;
+    }
+
+    // is stack usage monitoring in progress?
+    if (m_StackWatchLevel == 0)
+    {
+        // no; there should be no stack address limit
         _ASSERTE(m_pStackLimit == nullptr);
 
         // is a stack usage limit specified?
@@ -476,15 +550,23 @@ void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
             constraints.set_stack_limit(reinterpret_cast<uint32_t*>(pStackLimit));
             ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
             m_pStackLimit = pStackLimit;
+
+            // enter outermost stack usage monitoring scope
+            m_StackWatchLevel = 1;
         }
     }
-    else if ((m_pStackLimit != nullptr) && (pStackMarker < m_pStackLimit))
+    else
     {
-        // stack usage limit exceeded (host-side detection)
-        throw V8Exception(V8Exception::Type_General, m_Name, StdString(L"The V8 runtime has exceeded its stack usage limit"));
-    }
+        // stack usage monitoring in progress
+        if ((m_pStackLimit != nullptr) && (pStackMarker < m_pStackLimit))
+        {
+            // stack usage limit exceeded (host-side detection)
+            throw V8Exception(V8Exception::Type_General, m_Name, StdString(L"The V8 runtime has exceeded its stack usage limit"));
+        }
 
-    m_ExecutionLevel++;
+        // enter nested stack usage monitoring scope
+        m_StackWatchLevel++;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -494,16 +576,96 @@ void V8IsolateImpl::ExitExecutionScope()
     _ASSERTE(m_pIsolate == Isolate::GetCurrent());
     _ASSERTE(Locker::IsLocked(m_pIsolate));
 
-    if (--m_ExecutionLevel == 0)
+    // is stack usage monitoring in progress?
+    if (m_StackWatchLevel > 0)
     {
-        // exiting top-level execution scope
-        if (m_pStackLimit != nullptr)
+        // yes; exit stack usage monitoring scope
+        if (--m_StackWatchLevel == 0)
         {
-            // V8 has no API for removing a stack address limit
-            ResourceConstraints constraints;
-            constraints.set_stack_limit(reinterpret_cast<uint32_t*>(s_pMinStackLimit));
-            ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
-            m_pStackLimit = nullptr;
+            // exited outermost scope; remove stack address limit
+            if (m_pStackLimit != nullptr)
+            {
+                // V8 has no API for removing a stack address limit
+                ResourceConstraints constraints;
+                constraints.set_stack_limit(reinterpret_cast<uint32_t*>(s_pMinStackLimit));
+                ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
+                m_pStackLimit = nullptr;
+            }
         }
     }
+
+    // is heap size monitoring in progress?
+    if (m_HeapWatchLevel > 0)
+    {
+        // yes; exit heap size monitoring scope
+        if (--m_HeapWatchLevel == 0)
+        {
+            // exited outermost scope; destroy heap watch timer
+            m_spHeapWatchTimer.Empty();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SetUpHeapWatchTimer(size_t maxHeapSize)
+{
+    _ASSERTE(m_pIsolate == Isolate::GetCurrent());
+    _ASSERTE(Locker::IsLocked(m_pIsolate));
+
+    // create heap watch timer
+    auto wrIsolate = CreateWeakRef();
+    m_spHeapWatchTimer = new Timer(static_cast<unsigned int>(std::max(GetHeapSizeSampleInterval(), 250.0)), false, [wrIsolate, maxHeapSize] (Timer* pTimer)
+    {
+        // heap watch callback; is the isolate still alive?
+        auto spIsolate = wrIsolate.GetTarget();
+        if (!spIsolate.IsEmpty())
+        {
+            // yes; request callback on execution thread
+            auto wrTimer = pTimer->CreateWeakRef();
+            static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr())->RequestInterrupt([wrTimer, maxHeapSize] (V8IsolateImpl* pIsolateImpl)
+            {
+                // execution thread callback; is the timer still alive?
+                auto spTimer = wrTimer.GetTarget();
+                if (!spTimer.IsEmpty())
+                {
+                    // yes; check heap size
+                    pIsolateImpl->CheckHeapSize(maxHeapSize);
+                }
+            });
+        }
+    });
+
+    // start heap watch timer
+    m_spHeapWatchTimer->Start();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::CheckHeapSize(size_t maxHeapSize)
+{
+    _ASSERTE(m_pIsolate == Isolate::GetCurrent());
+    _ASSERTE(Locker::IsLocked(m_pIsolate));
+
+    // is the total heap size over the limit?
+    V8IsolateHeapInfo heapInfo;
+    GetHeapInfo(heapInfo);
+    if (heapInfo.GetTotalHeapSize() > maxHeapSize)
+    {
+        // yes; collect garbage
+        V8::LowMemoryNotification();
+
+        // is the total heap size still over the limit?
+        GetHeapInfo(heapInfo);
+        if (heapInfo.GetTotalHeapSize() > maxHeapSize)
+        {
+            // yes; the isolate is out of memory; request script termination
+            m_IsOutOfMemory = true;
+            TerminateExecution();
+            return;
+        }
+    }
+
+    // the isolate is not out of memory; restart heap watch timer
+    SetUpHeapWatchTimer(maxHeapSize);
 }

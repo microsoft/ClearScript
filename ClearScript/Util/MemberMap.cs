@@ -64,12 +64,51 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using Microsoft.ClearScript.Util;
 
-namespace Microsoft.ClearScript
+namespace Microsoft.ClearScript.Util
 {
-    internal partial class HostItem
+    internal static class MemberMap
     {
+        private static readonly MemberMapImpl<Field> fieldMap = new MemberMapImpl<Field>();
+        private static readonly MemberMapImpl<Method> methodMap = new MemberMapImpl<Method>();
+        private static readonly MemberMapImpl<Property> propertyMap = new MemberMapImpl<Property>();
+
+        public static FieldInfo GetField(string name)
+        {
+            return fieldMap.GetMember(name);
+        }
+
+        public static FieldInfo[] GetFields(string[] names)
+        {
+            // ReSharper disable CoVariantArrayConversion
+            return fieldMap.GetMembers(names);
+            // ReSharper restore CoVariantArrayConversion
+        }
+
+        public static MethodInfo GetMethod(string name)
+        {
+            return methodMap.GetMember(name);
+        }
+
+        public static MethodInfo[] GetMethods(string[] names)
+        {
+            // ReSharper disable CoVariantArrayConversion
+            return methodMap.GetMembers(names);
+            // ReSharper restore CoVariantArrayConversion
+        }
+
+        public static PropertyInfo GetProperty(string name)
+        {
+            return propertyMap.GetMember(name);
+        }
+
+        public static PropertyInfo[] GetProperties(string[] names)
+        {
+            // ReSharper disable CoVariantArrayConversion
+            return propertyMap.GetMembers(names);
+            // ReSharper restore CoVariantArrayConversion
+        }
+
         // ReSharper disable ClassNeverInstantiated.Local
 
         #region Nested type: Field
@@ -97,12 +136,30 @@ namespace Microsoft.ClearScript
 
             public override Type FieldType
             {
-                get { throw new NotImplementedException(); }
+                get
+                {
+                    // This occurs during VB-based dynamic script item invocation. It was not
+                    // observed before script items gained an IReflect/IExpando implementation that
+                    // exposes script item properties as fields. Apparently VB's dynamic invocation
+                    // support not only recognizes IReflect/IExpando but actually favors it over
+                    // DynamicObject.
+
+                    return typeof(object);
+                }
             }
 
             public override Type DeclaringType
             {
-                get { throw new NotImplementedException(); }
+                get
+                {
+                    // This occurs during VB-based dynamic script item invocation. It was not
+                    // observed before script items gained an IReflect/IExpando implementation that
+                    // exposes script item properties as fields. Apparently VB's dynamic invocation
+                    // support not only recognizes IReflect/IExpando but actually favors it over
+                    // DynamicObject.
+
+                    return typeof(object);
+                }
             }
 
             public override string Name
@@ -117,12 +174,35 @@ namespace Microsoft.ClearScript
 
             public override object GetValue(object obj)
             {
-                throw new NotImplementedException();
+                // This occurs during VB-based dynamic script item invocation. It was not observed
+                // before script items gained an IReflect/IExpando implementation that exposes
+                // script item properties as fields. Apparently VB's dynamic invocation support not
+                // only recognizes IReflect/IExpando but actually favors it over DynamicObject.
+
+                var reflect = obj as IReflect;
+                if (reflect != null)
+                {
+                    return reflect.InvokeMember(name, BindingFlags.GetField, null, obj, MiscHelpers.GetEmptyArray<object>(), null, CultureInfo.InvariantCulture, null);
+                }
+
+                throw new InvalidOperationException("Invalid field retrieval");
             }
 
             public override void SetValue(object obj, object value, BindingFlags invokeFlags, Binder binder, CultureInfo culture)
             {
-                throw new NotImplementedException();
+                // This occurs during VB-based dynamic script item invocation. It was not observed
+                // before script items gained an IReflect/IExpando implementation that exposes
+                // script item properties as fields. Apparently VB's dynamic invocation support not
+                // only recognizes IReflect/IExpando but actually favors it over DynamicObject.
+
+                var reflect = obj as IReflect;
+                if (reflect != null)
+                {
+                    reflect.InvokeMember(name, BindingFlags.SetField, null, obj, new[] { value }, null, culture, null);
+                    return;
+                }
+
+                throw new InvalidOperationException("Invalid field assignment");
             }
 
             public override object[] GetCustomAttributes(Type attributeType, bool inherit)
@@ -338,9 +418,9 @@ namespace Microsoft.ClearScript
 
         #endregion
 
-        #region Nested type: MemberMap
+        #region Nested type: MemberMapImpl
 
-        private class MemberMap<T> : MemberMapBase where T : MemberInfo
+        private class MemberMapImpl<T> : MemberMapBase where T : MemberInfo
         {
             private readonly object dataLock = new object();
             private readonly Dictionary<string, WeakReference> map = new Dictionary<string, WeakReference>();

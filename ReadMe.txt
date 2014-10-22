@@ -41,10 +41,13 @@ build, and import V8:
 2. Install Subversion (http://subversion.apache.org/packages.html) and add it
    to your executable path.
 
-3. Open a Visual Studio developer command prompt and run the V8Update script
+3. IMPORTANT: Ensure that the path to the ClearScript root directory does not
+   contain any non-ASCII characters.
+
+4. Open a Visual Studio developer command prompt and run the V8Update script
    from your ClearScript root directory:
 
-      C:\ClearScript> V8Update [/N] [Debug|Release] [Latest|Tested|Revision#]
+      C:\ClearScript> V8Update [/N] [Debug|Release] [Latest|Tested|<Revision>]
 
    This script downloads the V8 source code and its prerequisites, builds
    32-bit and 64-bit V8 shared libraries, and imports the results into
@@ -60,8 +63,9 @@ build, and import V8:
 
    By default, V8Update downloads a V8 revision that has been tested with the
    current version of ClearScript. If you'd like to use a specific revision
-   instead, place the desired trunk revision number on the V8Update command
-   line. To use the latest stable trunk revision, specify "Latest". Go to
+   instead, place the desired revision specification on the V8Update command
+   line. Example specifications are "trunk@19256" and "branches/3.26@HEAD".
+   To use the latest stable trunk revision, specify "Latest". Browse to
    http://code.google.com/p/v8/source/list to view V8's revision history.
 
 You are now ready to build the full ClearScript solution using Visual Studio.
@@ -194,3 +198,14 @@ VI. V8 Known Issues
    an object has both a property and a method named Count.
 
    WORKAROUND: None.
+
+--------------------
+VII. Acknowledgments
+--------------------
+
+We'd like to thank:
+
+1. The V8 team (https://code.google.com/p/v8/people/list). 
+
+2. Kenneth Reitz (http://kennethreitz.org) for generously providing the Httpbin
+   service (http://httpbin.org).

@@ -60,12 +60,13 @@
 //       
 
 using System;
+using System.Globalization;
 using System.Reflection;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class ScriptMethod : HostTarget
+    internal class ScriptMethod : HostTarget, IReflect
     {
         private readonly ScriptItem target;
         private readonly string name;
@@ -74,6 +75,11 @@ namespace Microsoft.ClearScript
         {
             this.target = target;
             this.name = name;
+        }
+
+        public object Invoke(params object[] args)
+        {
+            return target.InvokeMethod(name, args);
         }
 
         #region Object overrides
@@ -116,6 +122,75 @@ namespace Microsoft.ClearScript
         {
             result = target.InvokeMethod(name, args);
             return true;
+        }
+
+        #endregion
+
+        #region IReflect implementation
+
+        MethodInfo IReflect.GetMethod(string methodName, BindingFlags bindFlags, Binder binder, Type[] types, ParameterModifier[] modifiers)
+        {
+            throw new NotImplementedException();
+        }
+
+        MethodInfo IReflect.GetMethod(string methodName, BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        MethodInfo[] IReflect.GetMethods(BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        FieldInfo IReflect.GetField(string fieldName, BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        FieldInfo[] IReflect.GetFields(BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        PropertyInfo IReflect.GetProperty(string propertyName, BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        PropertyInfo IReflect.GetProperty(string propertyName, BindingFlags bindFlags, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
+        {
+            throw new NotImplementedException();
+        }
+
+        PropertyInfo[] IReflect.GetProperties(BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        MemberInfo[] IReflect.GetMember(string memberName, BindingFlags bindFlags)
+        {
+            // This occurs during VB-based dynamic script item invocation. It was not observed
+            // before script items gained an IReflect/IExpando implementation that exposes
+            // script item properties as fields. Apparently VB's dynamic invocation support not
+            // only recognizes IReflect/IExpando but actually favors it over DynamicObject.
+
+            return typeof(ScriptMethod).GetMember(MiscHelpers.EnsureNonBlank(memberName, "Invoke"), bindFlags);
+        }
+
+        MemberInfo[] IReflect.GetMembers(BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        object IReflect.InvokeMember(string memberName, BindingFlags invokeFlags, Binder binder, object invokeTarget, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
+        {
+            throw new NotImplementedException();
+        }
+
+        Type IReflect.UnderlyingSystemType
+        {
+            get { throw new NotImplementedException(); }
         }
 
         #endregion

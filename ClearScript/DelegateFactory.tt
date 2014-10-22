@@ -69,6 +69,7 @@
 
 using System;
 using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.ClearScript
 {
@@ -84,10 +85,11 @@ namespace Microsoft.ClearScript
             var methodArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
         #>
 
+		[ExcludeFromCodeCoverage]
         private class ProcShim<#= typeParamList #> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<#= typeParamList #>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -101,7 +103,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(<#= methodParamList #>)
             {
-                Invoke(() => target(<#= methodArgList #>));
+                Invoke(() => ((dynamic)target)(<#= methodArgList #>));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -127,10 +129,11 @@ namespace Microsoft.ClearScript
             var methodArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
         #>
 
+		[ExcludeFromCodeCoverage]
         private class FuncShim<#= typeParamList #> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<#= typeParamList #>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -144,7 +147,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(<#= methodParamList #>)
             {
-                return Invoke(() => (TResult)target(<#= methodArgList #>));
+                return Invoke(() => (TResult)((dynamic)target)(<#= methodArgList #>));
             }
 
             // ReSharper restore UnusedMember.Local

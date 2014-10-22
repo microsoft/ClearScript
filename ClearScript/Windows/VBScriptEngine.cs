@@ -183,12 +183,12 @@ namespace Microsoft.ClearScript.Windows
                                 if value is nothing then
                                     getCommandResult = ""[nothing]""
                                 else
-                                    dim ValueTypeName
-                                    ValueTypeName = TypeName(value)
-                                    if (ValueTypeName = ""Object"" or ValueTypeName = ""Unknown"") then
+                                    dim valueTypeName
+                                    valueTypeName = TypeName(value)
+                                    if (valueTypeName = ""Object"" or valueTypeName = ""Unknown"") then
                                         set getCommandResult = value
                                     else
-                                        getCommandResult = ""[ScriptObject:"" + ValueTypeName + ""]""
+                                        getCommandResult = ""[ScriptObject:"" & valueTypeName & ""]""
                                     end if
                                 end if
                             elseif IsArray(value) then
@@ -205,7 +205,96 @@ namespace Microsoft.ClearScript.Windows
                             Err.Raise 445
                         end function
                         public function invokeMethod(target, method, args)
-                            Err.Raise 445
+                            if IsObject(target) then
+                                if target is nothing then
+                                else
+                                    Err.Raise 445
+                                end if
+                            elseif IsNull(target) then
+                            elseif IsEmpty(target) then
+                            else
+                                Err.Raise 445
+                            end if
+                            dim count
+                            if IsArray(args) then
+                                count = UBound(args) + 1
+                                if count < 1 then
+                                    invokeMethod = method()
+                                elseif count = 1 then
+                                    invokeMethod = method(args(0))
+                                elseif count = 2 then
+                                    invokeMethod = method(args(0), args(1))
+                                elseif count = 3 then
+                                    invokeMethod = method(args(0), args(1), args(2))
+                                elseif count = 4 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3))
+                                elseif count = 5 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4))
+                                elseif count = 6 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5))
+                                elseif count = 7 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6))
+                                elseif count = 8 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7))
+                                elseif count = 9 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8))
+                                elseif count = 10 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8), args(9))
+                                elseif count = 11 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8), args(9), args(10))
+                                elseif count = 12 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8), args(9), args(10), args(11))
+                                elseif count = 13 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8), args(9), args(10), args(11), args(12))
+                                elseif count = 14 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8), args(9), args(10), args(11), args(12), args(13))
+                                elseif count = 15 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8), args(9), args(10), args(11), args(12), args(13), args(14))
+                                elseif count = 16 then
+                                    invokeMethod = method(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7), args(8), args(9), args(10), args(11), args(12), args(13), args(14), args(15))
+                                else
+                                    Err.Raise 450
+                                end if
+                            else
+                                count = args.Length
+                                if count < 1 then
+                                    invokeMethod = method()
+                                elseif count = 1 then
+                                    invokeMethod = method(args.GetValue(0))
+                                elseif count = 2 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1))
+                                elseif count = 3 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2))
+                                elseif count = 4 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3))
+                                elseif count = 5 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4))
+                                elseif count = 6 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5))
+                                elseif count = 7 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6))
+                                elseif count = 8 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6), args.GetValue(7))
+                                elseif count = 9 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6), args.GetValue(7), args.GetValue(8))
+                                elseif count = 10 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6), args.GetValue(7), args.GetValue(8), args.GetValue(9))
+                                elseif count = 11 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6), args.GetValue(7), args.GetValue(8), args.GetValue(9), args.GetValue(10))
+                                elseif count = 12 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6), args.GetValue(7), args.GetValue(8), args.GetValue(9), args.GetValue(10), args.GetValue(11))
+                                elseif count = 13 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6), args.GetValue(7), args.GetValue(8), args.GetValue(9), args.GetValue(10), args.GetValue(11), args.GetValue(12))
+                                elseif count = 14 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6), args.GetValue(7), args.GetValue(8), args.GetValue(9), args.GetValue(10), args.GetValue(11), args.GetValue(12), args.GetValue(13))
+                                elseif count = 15 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6), args.GetValue(7), args.GetValue(8), args.GetValue(9), args.GetValue(10), args.GetValue(11), args.GetValue(12), args.GetValue(13), args.GetValue(14))
+                                elseif count = 16 then
+                                    invokeMethod = method(args.GetValue(0), args.GetValue(1), args.GetValue(2), args.GetValue(3), args.GetValue(4), args.GetValue(5), args.GetValue(6), args.GetValue(7), args.GetValue(8), args.GetValue(9), args.GetValue(10), args.GetValue(11), args.GetValue(12), args.GetValue(13), args.GetValue(14), args.GetValue(15))
+                                else
+                                    Err.Raise 450
+                                end if
+                            end if
                         end function
                     end class
                     set EngineInternal = new EngineInternalImpl

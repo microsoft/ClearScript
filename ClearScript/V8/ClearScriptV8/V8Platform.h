@@ -107,6 +107,30 @@ public:
         return V8FastPersistent<T>(GetPtrAndClear(hTemp));
     }
 
+	template <typename TOther>
+	bool operator==(const Handle<TOther>& hValue)
+	{
+		return AsPersistent() == hValue;
+	}
+
+	template <typename TOther>
+	bool operator==(const V8FastPersistent<TOther>& hValue)
+	{
+		return AsPersistent() == hValue.AsPersistent();
+	}
+
+	template <typename TOther>
+	bool operator!=(const Handle<TOther>& hValue)
+	{
+		return AsPersistent() != hValue;
+	}
+
+	template <typename TOther>
+	bool operator!=(const V8FastPersistent<TOther>& hValue)
+	{
+		return AsPersistent() != hValue.AsPersistent();
+	}
+
     bool IsEmpty() const
     {
         return AsPersistent().IsEmpty();
@@ -254,6 +278,30 @@ public:
         return V8SafePersistent<T>(new Persistent<T>(pIsolate, hValue.GetImpl()));
     }
 
+	template <typename TOther>
+	bool operator==(const Handle<TOther>& hValue)
+	{
+		return GetImpl() == hValue;
+	}
+
+	template <typename TOther>
+	bool operator==(const V8SafePersistent<TOther>& hValue)
+	{
+		return GetImpl() == hValue.GetImpl();
+	}
+
+	template <typename TOther>
+	bool operator!=(const Handle<TOther>& hValue)
+	{
+		return GetImpl() != hValue;
+	}
+
+	template <typename TOther>
+	bool operator!=(const V8SafePersistent<TOther>& hValue)
+	{
+		return GetImpl() != hValue.GetImpl();
+	}
+
     bool IsEmpty() const
     {
         return (m_pImpl == nullptr) || m_pImpl->IsEmpty();
@@ -392,14 +440,14 @@ inline Persistent<Object> ObjectHandleFromPtr(void* pvObject)
 
 //-----------------------------------------------------------------------------
 
-inline void* PtrFromScriptHandle(Persistent<Script> hScript)
+inline void* PtrFromScriptHandle(Persistent<UnboundScript> hScript)
 {
     return hScript.ToPtr();
 }
 
 //-----------------------------------------------------------------------------
 
-inline Persistent<Script> ScriptHandleFromPtr(void* pvScript)
+inline Persistent<UnboundScript> ScriptHandleFromPtr(void* pvScript)
 {
-    return Persistent<Script>::FromPtr(pvScript);
+    return Persistent<UnboundScript>::FromPtr(pvScript);
 }

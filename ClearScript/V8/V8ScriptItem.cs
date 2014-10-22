@@ -275,9 +275,9 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
 
-            if (asConstructor)
+            if (asConstructor || (holder == null))
             {
-                return engine.Script.EngineInternal.invokeConstructor(this, args);
+                return engine.MarshalToHost(engine.ScriptInvoke(() => target.Invoke(engine.MarshalToScript(args), asConstructor)), false);
             }
 
             return engine.Script.EngineInternal.invokeMethod(holder, this, args);

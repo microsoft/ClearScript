@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
@@ -68,6 +69,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Windows.Threading;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
@@ -343,6 +345,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Invoke_ScriptFunction()
+        {
+            engine.Execute("function foo(x) { return x * Math.PI; }");
+            Assert.AreEqual(Math.E * Math.PI, engine.Invoke("foo", Math.E));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Invoke_HostDelegate()
+        {
+            engine.Script.foo = new Func<double, double>(x => x * Math.PI);
+            Assert.AreEqual(Math.E * Math.PI, engine.Invoke("foo", Math.E));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_Interrupt()
         {
             var checkpoint = new ManualResetEvent(false);
@@ -453,7 +469,125 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_Script_Method()
         {
+            engine.Execute("function foo(x) { return x * x; }");
+            Assert.AreEqual(25, engine.Script.foo(5));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Script_Method_Intrinsic()
+        {
             Assert.AreEqual(Math.E * Math.PI, engine.Script.eval("Math.E * Math.PI"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Script_Property_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+                    Dim host as New HostFunctions
+                    engine.Script.host = host
+                    Assert.AreSame(host, engine.Script.host)
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Script_Property_Scalar_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+                    Dim value = 123
+                    engine.Script.value = value
+                    Assert.AreEqual(value, engine.Script.value)
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Script_Property_Enum_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+                    Dim value = DayOfWeek.Wednesday
+                    engine.Script.value = value
+                    Assert.AreEqual(value, engine.Script.value)
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Script_Property_Struct_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+                    Dim value As New DateTime(2007, 5, 22, 6, 15, 43)
+                    engine.Script.value = value
+                    Assert.AreEqual(value, engine.Script.value)
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Script_Index_ArrayItem_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+
+                    Dim index = 5
+                    engine.Execute(""foo = []"")
+
+                    engine.Script.foo(index) = engine.Script.Math.PI
+                    Assert.AreEqual(Math.PI, engine.Script.foo(index))
+                    Assert.AreEqual(index + 1, engine.Evaluate(""foo.length""))
+
+                    engine.Script.foo(index) = engine.Script.Math.E
+                    Assert.AreEqual(Math.E, engine.Script.foo(index))
+                    Assert.AreEqual(index + 1, engine.Evaluate(""foo.length""))
+
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Script_Index_Property_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+
+                    Dim name = ""bar""
+                    engine.Execute(""foo = {}"")
+
+                    engine.Script.foo(name) = engine.Script.Math.PI
+                    Assert.AreEqual(Math.PI, engine.Script.foo(name))
+                    Assert.AreEqual(Math.PI, engine.Script.foo.bar)
+
+                    engine.Script.foo(name) = engine.Script.Math.E
+                    Assert.AreEqual(Math.E, engine.Script.foo(name))
+                    Assert.AreEqual(Math.E, engine.Script.foo.bar)
+
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Script_Method_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+                    engine.Execute(""function foo(x) { return x * x; }"")
+                    Assert.AreEqual(25, engine.Script.foo(5))
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Script_Method_Intrinsic_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+                    Assert.AreEqual(Math.E * Math.PI, engine.Script.eval(""Math.E * Math.PI""))
+                End Using
+            ");
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -601,7 +735,7 @@ namespace Microsoft.ClearScript.Test
             {
                 try
                 {
-                    engine.Evaluate("host.newObj(0)");
+                    engine.Evaluate("host.proc(0)");
                 }
                 catch (ScriptEngineException exception)
                 {
@@ -684,7 +818,7 @@ namespace Microsoft.ClearScript.Test
             {
                 try
                 {
-                    engine.Execute("engine.Evaluate('host.newObj(0)')");
+                    engine.Execute("engine.Evaluate('host.proc(0)')");
                 }
                 catch (ScriptEngineException exception)
                 {
@@ -1039,6 +1173,502 @@ namespace Microsoft.ClearScript.Test
             engine.Script.func = new Func<object>(() => 123.456M);
             Assert.AreEqual("number", engine.Evaluate("typeof(func())"));
             Assert.AreEqual(123.456 + 5, engine.Evaluate("func() + 5"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_MarshalArraysByValue()
+        {
+            var foo = new[] { DayOfWeek.Saturday, DayOfWeek.Friday, DayOfWeek.Thursday };
+
+            engine.Script.foo = foo;
+            Assert.AreSame(foo, engine.Evaluate("foo"));
+
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalArraysByValue);
+
+            engine.Script.foo = foo;
+            Assert.AreNotSame(foo, engine.Evaluate("foo"));
+            engine.Execute("foo = new VBArray(foo)");
+
+            Assert.AreEqual(foo.GetUpperBound(0), engine.Evaluate("foo.ubound(1)"));
+            for (var index = 0; index < foo.Length; index++)
+            {
+                Assert.AreEqual(foo[index], engine.Evaluate("foo.getItem(" + index + ")"));
+            }
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_MarshalArraysByValue_invokeMethod()
+        {
+            var args = new[] { Math.PI, Math.E };
+
+            engine.Script.args = args;
+            engine.Execute("function foo(a, b) { return a * b; }");
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("EngineInternal.invokeMethod(null, foo, args)"));
+
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalArraysByValue);
+
+            engine.Script.args = args;
+            engine.Execute("function foo(a, b) { return a * b; }");
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("EngineInternal.invokeMethod(null, foo, args)"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_COMObject_FileSystemObject()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                fso = host.newComObj('Scripting.FileSystemObject');
+                drives = fso.Drives;
+                e = drives.GetEnumerator();
+                while (e.MoveNext()) {
+                    list.Add(e.Current.Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_COMObject_FileSystemObject_NativeEnumerator()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                fso = host.newComObj('Scripting.FileSystemObject');
+                drives = fso.Drives;
+                for (e = new Enumerator(drives); !e.atEnd(); e.moveNext()) {
+                    list.Add(e.item().Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_COMObject_Dictionary()
+        {
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Execute(@"
+                dict = host.newComObj('Scripting.Dictionary');
+                dict.Add('foo', Math.PI);
+                dict.Add('bar', Math.E);
+                dict.Add('baz', 'abc');
+            ");
+
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Item.set('foo', 'pushkin');
+                dict.Item.set('bar', 'gogol');
+                dict.Item.set('baz', Math.PI * Math.E);
+            ");
+
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Item('foo') = 987.654;
+                dict.Item('bar') = 321;
+                dict.Item('baz') = 'halloween';
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Key.set('foo', 'qux');
+                dict.Key.set('bar', Math.PI);
+                dict.Key.set('baz', Math.E);
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('qux')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('qux')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item(Math.PI)"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get(Math.PI)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(Math.E)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(Math.E)"));
+
+            engine.Execute(@"
+                dict.Key('qux') = 'foo';
+                dict.Key(Math.PI) = 'bar';
+                dict.Key(Math.E) = 'baz';
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get('baz')"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_COMType_FileSystemObject()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                FSO = host.comType('Scripting.FileSystemObject');
+                fso = host.newObj(FSO);
+                drives = fso.Drives;
+                e = drives.GetEnumerator();
+                while (e.MoveNext()) {
+                    list.Add(e.Current.Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_COMType_FileSystemObject_NativeEnumerator()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                FSO = host.comType('Scripting.FileSystemObject');
+                fso = host.newObj(FSO);
+                drives = fso.Drives;
+                for (e = new Enumerator(drives); !e.atEnd(); e.moveNext()) {
+                    list.Add(e.item().Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_COMType_Dictionary()
+        {
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Execute(@"
+                Dict = host.comType('Scripting.Dictionary');
+                dict = host.newObj(Dict);
+                dict.Add('foo', Math.PI);
+                dict.Add('bar', Math.E);
+                dict.Add('baz', 'abc');
+            ");
+
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Item.set('foo', 'pushkin');
+                dict.Item.set('bar', 'gogol');
+                dict.Item.set('baz', Math.PI * Math.E);
+            ");
+
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Item('foo') = 987.654;
+                dict.Item('bar') = 321;
+                dict.Item('baz') = 'halloween';
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Key.set('foo', 'qux');
+                dict.Key.set('bar', Math.PI);
+                dict.Key.set('baz', Math.E);
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('qux')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('qux')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item(Math.PI)"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get(Math.PI)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(Math.E)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(Math.E)"));
+
+            engine.Execute(@"
+                dict.Key('qux') = 'foo';
+                dict.Key(Math.PI) = 'bar';
+                dict.Key(Math.E) = 'baz';
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get('baz')"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddCOMObject_FileSystemObject()
+        {
+            var list = new ArrayList();
+
+            engine.Script.list = list;
+            engine.AddCOMObject("fso", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                drives = fso.Drives;
+                e = drives.GetEnumerator();
+                while (e.MoveNext()) {
+                    list.Add(e.Current.Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddCOMObject_Dictionary()
+        {
+            engine.AddCOMObject("dict", new Guid("{ee09b103-97e0-11cf-978f-00a02463e06f}"));
+            engine.Execute(@"
+                dict.Add('foo', Math.PI);
+                dict.Add('bar', Math.E);
+                dict.Add('baz', 'abc');
+            ");
+
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Item.set('foo', 'pushkin');
+                dict.Item.set('bar', 'gogol');
+                dict.Item.set('baz', Math.PI * Math.E);
+            ");
+
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Item('foo') = 987.654;
+                dict.Item('bar') = 321;
+                dict.Item('baz') = 'halloween';
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Key.set('foo', 'qux');
+                dict.Key.set('bar', Math.PI);
+                dict.Key.set('baz', Math.E);
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('qux')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('qux')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item(Math.PI)"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get(Math.PI)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(Math.E)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(Math.E)"));
+
+            engine.Execute(@"
+                dict.Key('qux') = 'foo';
+                dict.Key(Math.PI) = 'bar';
+                dict.Key(Math.E) = 'baz';
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get('baz')"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddCOMType_FileSystemObject()
+        {
+            var list = new ArrayList();
+
+            engine.Script.list = list;
+            engine.AddCOMType("FSO", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                fso = new FSO();
+                drives = fso.Drives;
+                e = drives.GetEnumerator();
+                while (e.MoveNext()) {
+                    list.Add(e.Current.Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddCOMType_Dictionary()
+        {
+            engine.AddCOMType("Dict", new Guid("{ee09b103-97e0-11cf-978f-00a02463e06f}"));
+            engine.Execute(@"
+                dict = new Dict();
+                dict.Add('foo', Math.PI);
+                dict.Add('bar', Math.E);
+                dict.Add('baz', 'abc');
+            ");
+
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Item.set('foo', 'pushkin');
+                dict.Item.set('bar', 'gogol');
+                dict.Item.set('baz', Math.PI * Math.E);
+            ");
+
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Item('foo') = 987.654;
+                dict.Item('bar') = 321;
+                dict.Item('baz') = 'halloween';
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get('baz')"));
+
+            engine.Execute(@"
+                dict.Key.set('foo', 'qux');
+                dict.Key.set('bar', Math.PI);
+                dict.Key.set('baz', Math.E);
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('qux')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('qux')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item(Math.PI)"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get(Math.PI)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(Math.E)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(Math.E)"));
+
+            engine.Execute(@"
+                dict.Key('qux') = 'foo';
+                dict.Key(Math.PI) = 'bar';
+                dict.Key(Math.E) = 'baz';
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item('foo')"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get('foo')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item('bar')"));
+            Assert.AreEqual(321, engine.Evaluate("dict.Item.get('bar')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item('baz')"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get('baz')"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddCOMType_XMLHTTP()
+        {
+            int status = 0;
+            string data = null;
+
+            var thread = new Thread(() =>
+            {
+                using (var testEngine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.EnableStandardsMode))
+                {
+                    testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
+                    {
+                        status = xhrStatus;
+                        data = xhrData;
+                        Dispatcher.ExitAllFrames();
+                    });
+
+                    Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                    {
+                        // ReSharper disable AccessToDisposedClosure
+
+                        testEngine.AddCOMType("XMLHttpRequest", "MSXML2.XMLHTTP");
+                        testEngine.Execute(@"
+                            xhr = new XMLHttpRequest();
+                            xhr.open('POST', 'http://httpbin.org/post', true);
+                            xhr.onreadystatechange = function() {
+                                if (xhr.readyState == 4) {
+                                    onComplete(xhr.status, JSON.parse(xhr.responseText).data);
+                                }
+                            };
+                            xhr.send('Hello, world!');
+                        ");
+
+                        // ReSharper restore AccessToDisposedClosure
+                    }));
+
+                    Dispatcher.Run();
+                }
+            });
+
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            Assert.AreEqual(200, status);
+            Assert.AreEqual("Hello, world!", data);
         }
 
         // ReSharper restore InconsistentNaming

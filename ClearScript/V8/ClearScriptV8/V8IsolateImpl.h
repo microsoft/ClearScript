@@ -189,6 +189,16 @@ public:
         return FunctionTemplate::New(m_pIsolate);
     }
 
+    Local<Script> CreateScript(ScriptCompiler::Source* pSource, ScriptCompiler::CompileOptions options = ScriptCompiler::kNoCompileOptions)
+    {
+        return ScriptCompiler::Compile(m_pIsolate, pSource, options);
+    }
+
+    Local<UnboundScript> CreateUnboundScript(ScriptCompiler::Source* pSource, ScriptCompiler::CompileOptions options = ScriptCompiler::kNoCompileOptions)
+    {
+        return ScriptCompiler::CompileUnbound(m_pIsolate, pSource, options);
+    }
+
     template <typename T>
     Local<T> CreateLocal(Handle<T> hTarget)
     {
@@ -235,6 +245,30 @@ public:
         V8::TerminateExecution(m_pIsolate);
     }
 
+    void RequestInterrupt(std::function<void(V8IsolateImpl*)>&& callback)
+    {
+        BEGIN_MUTEX_SCOPE(m_InterruptMutex)
+
+            m_InterruptCallback = std::move(callback);
+            m_pIsolate->RequestInterrupt([] (Isolate* pIsolate, void* /*pvData*/)
+            {
+                static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->OnInterrupt();
+
+            }, nullptr);
+
+        END_MUTEX_SCOPE
+    }
+
+    void ClearInterrupt()
+    {
+        BEGIN_MUTEX_SCOPE(m_InterruptMutex)
+
+            m_InterruptCallback = nullptr;
+            m_pIsolate->ClearInterrupt();
+
+        END_MUTEX_SCOPE
+    }
+
     bool IsOutOfMemory() const
     {
         return m_IsOutOfMemory;
@@ -245,6 +279,11 @@ public:
 
     void EnableDebugging(int debugPort);
     void DisableDebugging();
+
+    size_t GetMaxHeapSize();
+    void SetMaxHeapSize(size_t value);
+    double GetHeapSizeSampleInterval();
+    void SetHeapSizeSampleInterval(double value);
 
     size_t GetMaxStackUsage();
     void SetMaxStackUsage(size_t value);
@@ -265,23 +304,36 @@ public:
 
 private:
 
+    void OnInterrupt();
+
     void DispatchDebugMessages();
     void ProcessDebugMessages();
 
     void EnterExecutionScope(size_t* pStackMarker);
     void ExitExecutionScope();
 
+    void SetUpHeapWatchTimer(size_t maxHeapSize);
+    void CheckHeapSize(size_t maxHeapSize);
+
     StdString m_Name;
     Isolate* m_pIsolate;
     std::list<V8ContextImpl*> m_ContextPtrs;
+
+    SimpleMutex m_InterruptMutex;
+    std::function<void(V8IsolateImpl*)> m_InterruptCallback;
 
     bool m_DebuggingEnabled;
     int m_DebugPort;
     Debug::DebugMessageDispatchHandler m_pDebugMessageDispatcher;
     std::atomic<size_t> m_DebugMessageDispatchCount;
 
+    std::atomic<size_t> m_MaxHeapSize;
+    std::atomic<double> m_HeapSizeSampleInterval;
+    size_t m_HeapWatchLevel;
+    SharedPtr<Timer> m_spHeapWatchTimer;
+
     std::atomic<size_t> m_MaxStackUsage;
-    size_t m_ExecutionLevel;
+    size_t m_StackWatchLevel;
     size_t* m_pStackLimit;
 
     std::atomic<bool> m_IsOutOfMemory;

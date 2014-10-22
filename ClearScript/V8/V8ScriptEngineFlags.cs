@@ -80,7 +80,8 @@ namespace Microsoft.ClearScript.V8
         EnableDebugging = 0x00000001,
 
         /// <summary>
-        /// Specifies that support for <see cref="HostItemFlags.GlobalMembers"/> behavior is to be disabled. This option yields a significant performance benefit for global item access.
+        /// Specifies that support for <see cref="HostItemFlags.GlobalMembers"/> behavior is to be
+        /// disabled. This option yields a significant performance benefit for global item access.
         /// </summary>
         DisableGlobalMembers = 0x00000002
     }

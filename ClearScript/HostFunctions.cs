@@ -123,16 +123,21 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Creates a host object of the specified type.
+        /// Creates a host object of the specified type. This version is invoked if the specified
+        /// type can be used as a type argument.
         /// </summary>
         /// <typeparam name="T">The type of object to create.</typeparam>
         /// <param name="args">Optional constructor arguments.</param>
         /// <returns>A new host object of the specified type.</returns>
         /// <remarks>
         /// This function is provided for script languages that do not support external
-        /// instantiation. For information about the mapping between host members and script-
-        /// callable properties and methods, see
+        /// instantiation. It is overloaded with <see cref="newObj(object, object[])"/> and
+        /// selected at runtime if <typeparamref name="T"/> can be used as a type argument.
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see
         /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// </para>
         /// </remarks>
         /// <example>
         /// The following code imports the <see cref="System.Random"/> class, creates an
@@ -152,6 +157,29 @@ namespace Microsoft.ClearScript
         public T newObj<T>(params object[] args)
         {
             return (T)typeof(T).CreateInstance(args);
+        }
+
+        /// <summary>
+        /// Creates a host object of the specified type. This version is invoked if the specified
+        /// type cannot be used as a type argument.
+        /// </summary>
+        /// <param name="type">The type of object to create.</param>
+        /// <param name="args">Optional constructor arguments.</param>
+        /// <returns>A new host object of the specified type.</returns>
+        /// <remarks>
+        /// This function is provided for script languages that do not support external
+        /// instantiation. It is overloaded with <see cref="newObj{T}"/> and selected at runtime if
+        /// <paramref name="type"/> cannot be used as a type argument. Note that this applies
+        /// to some host types that support instantiation, such as certain COM/ActiveX types.
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see
+        /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// </para>
+        /// </remarks>
+        public object newObj(object type, params object[] args)
+        {
+            return GetUniqueHostType(type, "type").CreateInstance(args);
         }
 
         /// <summary>
@@ -443,19 +471,7 @@ namespace Microsoft.ClearScript
         public Type typeOf(object value)
         {
             GetEngine().CheckReflection();
-
-            var hostType = value as HostType;
-            if (hostType == null)
-            {
-                throw new ArgumentException("Invalid host type", "value");
-            }
-
-            if (hostType.Types.Length > 1)
-            {
-                throw new ArgumentException(MiscHelpers.FormatInvariant("'{0}' does not identify a unique host type", hostType.Types[0].GetLocator()), "value");
-            }
-
-            return hostType.Types[0];
+            return GetUniqueHostType(value, "value");
         }
 
         /// <summary>
@@ -649,10 +665,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.SByte");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.SByte");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toSByte(42));
         /// </code>
@@ -682,10 +698,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.Byte");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.Byte");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toByte(42));
         /// </code>
@@ -715,10 +731,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.Int16");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.Int16");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toInt16(42));
         /// </code>
@@ -748,10 +764,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.UInt16");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.UInt16");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toUInt16(42));
         /// </code>
@@ -781,10 +797,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.Char");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.Char");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toChar(42));
         /// </code>
@@ -814,10 +830,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.Int32");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.Int32");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toInt32(42));
         /// </code>
@@ -847,10 +863,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.UInt32");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.UInt32");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toUInt32(42));
         /// </code>
@@ -880,10 +896,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.Int64");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.Int64");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toInt64(42));
         /// </code>
@@ -913,10 +929,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.UInt64");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.UInt64");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toUInt64(42));
         /// </code>
@@ -946,10 +962,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.Single");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.Single");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toSingle(42));
         /// </code>
@@ -979,10 +995,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.Double");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.Double");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toDouble(42));
         /// </code>
@@ -1012,10 +1028,10 @@ namespace Microsoft.ClearScript
         /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
         /// <code lang="JavaScript">
         /// // import types
-        /// ElementT = host.type("System.Decimal");
-        /// ListT = host.type("System.Collections.Generic.List", ElementT);
+        /// var ElementT = host.type("System.Decimal");
+        /// var ListT = host.type("System.Collections.Generic.List", ElementT);
         /// // create a list
-        /// list = host.newObj(ListT);
+        /// var list = host.newObj(ListT);
         /// // add a list element
         /// list.Add(host.toDecimal(42));
         /// </code>
@@ -1229,6 +1245,80 @@ namespace Microsoft.ClearScript
             return HostItem.Wrap(GetEngine(), value, HostItemFlags.HideDynamicMembers);
         }
 
+        /// <summary>
+        /// Allows script code to handle host exceptions.
+        /// </summary>
+        /// <param name="tryFunc">A script function that invokes one or more host methods or properties.</param>
+        /// <param name="catchFunc">A script function to invoke if <paramref name="tryFunc"/> throws an exception.</param>
+        /// <param name="finallyFunc">An optional script function that performs cleanup for the operation.</param>
+        /// <returns><c>True</c> if <paramref name="tryFunc"/> completed successfully, <c>false</c> if it threw an exception that was handled by <paramref name="catchFunc"/>.</returns>
+        /// <remarks>
+        /// This function uses a <c>try</c>-<c>catch</c>-<c>finally</c> statement to invoke
+        /// <paramref name="tryFunc"/>. If an exception is thrown, it is caught and passed to
+        /// <paramref name="catchFunc"/> for analysis. If <paramref name="catchFunc"/> returns
+        /// <c>false</c>, the exception is rethrown. Regardless of the outcome,
+        /// <paramref name="finallyFunc"/>, if specified, is invoked as a final step before the
+        /// function exits.
+        /// </remarks>
+        /// <example>
+        /// The following code demonstrates handling host exceptions in script code.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// // import types
+        /// var ConsoleT = host.type("System.Console");
+        /// var WebClientT = host.type("System.Net.WebClient", "System");
+        /// // create a web client
+        /// var webClient = host.newObj(WebClientT);
+        /// host.tryCatch(
+        ///     function () {
+        ///         // download web document
+        ///         ConsoleT.WriteLine(webClient.DownloadString("http://cnn.com"));
+        ///     },
+        ///     function (exception) {
+        ///         // dump exception
+        ///         ConsoleT.WriteLine("*** ERROR: " + exception.GetBaseException().ToString());
+        ///         return true;
+        ///     },
+        ///     function () {
+        ///         // clean up
+        ///         ConsoleT.WriteLine("*** CLEANING UP ***");
+        ///         webClient.Dispose();
+        ///     }
+        /// );
+        /// </code>
+        /// </example>
+        /// <seealso cref="ExtendedHostFunctions.type(string, string, object[])"/>
+        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        public bool tryCatch(object tryFunc, object catchFunc, object finallyFunc = null)
+        {
+            MiscHelpers.VerifyNonNullArgument(tryFunc, "tryFunc");
+            MiscHelpers.VerifyNonNullArgument(catchFunc, "catchFunc");
+
+            try
+            {
+                ((dynamic)tryFunc)();
+                return true;
+            }
+            catch (Exception exception)
+            {
+                if (!((dynamic)catchFunc)(exception))
+                {
+                    throw;
+                }
+
+                return false;
+            }
+            finally
+            {
+                if (finallyFunc != null)
+                {
+                    ((dynamic)finallyFunc)();
+                }
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1241,6 +1331,22 @@ namespace Microsoft.ClearScript
             }
 
             return engine;
+        }
+
+        internal static Type GetUniqueHostType(object type, string paramName)
+        {
+            var hostType = type as HostType;
+            if (hostType == null)
+            {
+                throw new ArgumentException("Invalid host type", paramName);
+            }
+
+            if (hostType.Types.Length > 1)
+            {
+                throw new ArgumentException(MiscHelpers.FormatInvariant("'{0}' does not identify a unique host type", hostType.Types[0].GetLocator()), paramName);
+            }
+
+            return hostType.Types[0];
         }
 
         #region IScriptableObject implementation
@@ -1464,6 +1570,66 @@ namespace Microsoft.ClearScript
             var target = collection ?? new HostTypeCollection();
             Array.ForEach(assemblyNames, target.AddAssembly);
             return target;
+        }
+
+        /// <summary>
+        /// Imports a COM/ActiveX type.
+        /// </summary>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to import.</param>
+        /// <param name="serverName">An optional name that specifies the server from which to import the type.</param>
+        /// <returns>The imported COM/ActiveX type.</returns>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </remarks>
+        /// <example>
+        /// The following code imports the
+        /// <see href="http://msdn.microsoft.com/en-us/library/x4k5wbx4(v=vs.84).aspx">Scripting.Dictionary</see>
+        /// class and uses it to create and populate an instance.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// var DictT = host.comType('Scripting.Dictionary');
+        /// var dict = host.newObj(DictT);
+        /// dict.Add('foo', 123);
+        /// dict.Add('bar', 456.789);
+        /// dict.Add('baz', 'abc');
+        /// </code>
+        /// </example>
+        public object comType(string progID, string serverName = null)
+        {
+            return HostType.Wrap(MiscHelpers.GetCOMType(progID, serverName));
+        }
+
+        /// <summary>
+        /// Creates a COM/ActiveX object of the specified type.
+        /// </summary>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to instantiate.</param>
+        /// <param name="serverName">An optional name that specifies the server on which to create the object.</param>
+        /// <returns>A new COM/ActiveX object of the specified type.</returns>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </remarks>
+        /// <example>
+        /// The following code creates a 
+        /// <see href="http://msdn.microsoft.com/en-us/library/6kxy1a51(v=vs.84).aspx">Scripting.FileSystemObject</see>
+        /// instance and uses it to list the drives on the local machine.
+        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// the name "host"
+        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// <code lang="JavaScript">
+        /// var fso = host.newComObj('Scripting.FileSystemObject');
+        /// var ConsoleT = host.type('System.Console');
+        /// for (en = fso.Drives.GetEnumerator(); en.MoveNext();) {
+        ///     ConsoleT.WriteLine(en.Current.Path);
+        /// }
+        /// </code>
+        /// </example>
+        public object newComObj(string progID, string serverName = null)
+        {
+            return MiscHelpers.CreateCOMObject(progID, serverName);
         }
 
         // ReSharper restore InconsistentNaming

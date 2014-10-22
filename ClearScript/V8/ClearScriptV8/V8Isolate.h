@@ -71,6 +71,11 @@ public:
 
     static V8Isolate* Create(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort);
 
+    virtual size_t GetMaxHeapSize() = 0;
+    virtual void SetMaxHeapSize(size_t value) = 0;
+    virtual double GetHeapSizeSampleInterval() = 0;
+    virtual void SetHeapSizeSampleInterval(double value) = 0;
+
     virtual size_t GetMaxStackUsage() = 0;
     virtual void SetMaxStackUsage(size_t value) = 0;
 

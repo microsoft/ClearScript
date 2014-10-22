@@ -65,14 +65,39 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal abstract class ScriptItem : DynamicObject, IDynamic, IScriptMarshalWrapper
+    internal abstract class ScriptItem : DynamicObject, IExpando, IDynamic, IScriptMarshalWrapper
     {
+        private static readonly MethodInfo throwLastScriptErrorMethod = typeof(ScriptItem).GetMethod("ThrowLastScriptError");
+        private static readonly MethodInfo clearLastScriptErrorMethod = typeof(ScriptItem).GetMethod("ClearLastScriptError");
+        [ThreadStatic] private static IScriptEngineException lastScriptError;
+
         public abstract ScriptEngine Engine { get; }
+
+        public static void ThrowLastScriptError()
+        {
+            var scriptError = lastScriptError;
+            if (scriptError != null)
+            {
+                if (scriptError is ScriptInterruptedException)
+                {
+                    throw new ScriptInterruptedException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.IsFatal, scriptError.InnerException);
+                }
+
+                throw new ScriptEngineException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.IsFatal, scriptError.InnerException);
+            }
+        }
+
+        public static void ClearLastScriptError()
+        {
+            lastScriptError = null;
+        }
 
         protected abstract bool TryBindAndInvoke(DynamicMetaObjectBinder binder, object[] args, out object result);
 
@@ -88,7 +113,11 @@ namespace Microsoft.ClearScript
             {
                 if (!TryBindAndInvoke(binder, Engine.MarshalToScript(args), out tempResult))
                 {
-                    Engine.ThrowScriptError();
+                    if ((Engine.CurrentScriptFrame != null) && (lastScriptError == null))
+                    {
+                        lastScriptError = Engine.CurrentScriptFrame.ScriptError;
+                    }
+
                     return false;
                 }
 
@@ -148,7 +177,23 @@ namespace Microsoft.ClearScript
             return false;
         }
 
+        private string[] GetAllPropertyNames()
+        {
+            return GetPropertyNames().Concat(GetPropertyIndices().Select(index => index.ToString(CultureInfo.InvariantCulture))).ToArray();
+        }
+
+        private DynamicMetaObject PostProcessBindResult(DynamicMetaObject result)
+        {
+            var catchBody = Expression.Block(Expression.Call(throwLastScriptErrorMethod), Expression.Rethrow(), Expression.Default(result.Expression.Type));
+            return new DynamicMetaObject(Expression.TryCatchFinally(result.Expression, Expression.Call(clearLastScriptErrorMethod), Expression.Catch(typeof(Exception), catchBody)), result.Restrictions);
+        }
+
         #region DynamicObject overrides
+
+        public override DynamicMetaObject GetMetaObject(Expression parameter)
+        {
+            return new MetaScriptItem(this, base.GetMetaObject(parameter));
+        }
 
         public override IEnumerable<string> GetDynamicMemberNames()
         {
@@ -201,6 +246,149 @@ namespace Microsoft.ClearScript
 
         #endregion
 
+        #region IReflect implementation
+
+        public MethodInfo GetMethod(string name, BindingFlags bindFlags, Binder binder, Type[] types, ParameterModifier[] modifiers)
+        {
+            throw new NotImplementedException();
+        }
+
+        public MethodInfo GetMethod(string name, BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        public MethodInfo[] GetMethods(BindingFlags bindFlags)
+        {
+            return MiscHelpers.GetEmptyArray<MethodInfo>();
+        }
+
+        public FieldInfo GetField(string name, BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        public FieldInfo[] GetFields(BindingFlags bindFlags)
+        {
+            return MemberMap.GetFields(GetAllPropertyNames());
+        }
+
+        public PropertyInfo GetProperty(string name, BindingFlags bindFlags)
+        {
+            throw new NotImplementedException();
+        }
+
+        public PropertyInfo GetProperty(string name, BindingFlags bindFlags, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
+        {
+            throw new NotImplementedException();
+        }
+
+        public PropertyInfo[] GetProperties(BindingFlags bindFlags)
+        {
+            return MiscHelpers.GetEmptyArray<PropertyInfo>();
+        }
+
+        public MemberInfo[] GetMember(string name, BindingFlags bindFlags)
+        {
+            // ReSharper disable CoVariantArrayConversion
+            return GetFields(bindFlags).Where(propertyInfo => propertyInfo.Name == name).ToArray();
+            // ReSharper restore CoVariantArrayConversion
+        }
+
+        public MemberInfo[] GetMembers(BindingFlags bindFlags)
+        {
+            // ReSharper disable CoVariantArrayConversion
+            return GetFields(bindFlags);
+            // ReSharper restore CoVariantArrayConversion
+        }
+
+        public object InvokeMember(string name, BindingFlags invokeFlags, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
+        {
+            if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+            {
+                if (name == SpecialMemberNames.Default)
+                {
+                    return Invoke(args, false);
+                }
+
+                return InvokeMethod(name, args);
+            }
+
+            if (invokeFlags.HasFlag(BindingFlags.GetField))
+            {
+                int index;
+                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                {
+                    return GetProperty(index);
+                }
+
+                return GetProperty(name);
+            }
+
+            if (invokeFlags.HasFlag(BindingFlags.SetField))
+            {
+                if (args.Length != 1)
+                {
+                    throw new InvalidOperationException("Invalid argument count");
+                }
+
+                var value = args[0];
+
+                int index;
+                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                {
+                    SetProperty(index, value);
+                    return value;
+                }
+
+                SetProperty(name, value);
+                return value;
+            }
+
+            throw new InvalidOperationException("Invalid member access mode");
+        }
+
+        public Type UnderlyingSystemType
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        #endregion
+
+        #region IExpando implementation
+
+        public FieldInfo AddField(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public PropertyInfo AddProperty(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public MethodInfo AddMethod(string name, Delegate method)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RemoveMember(MemberInfo member)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region IDynamic implementation
+
+        public object GetProperty(string name, out bool isCacheable)
+        {
+            isCacheable = false;
+            return GetProperty(name);
+        }
+
+        #endregion
+
         #region IDynamic implementation (abstract)
 
         public abstract object GetProperty(string name);
@@ -219,6 +407,87 @@ namespace Microsoft.ClearScript
         #region IScriptMarshalWrapper implementation (abstract)
 
         public abstract object Unwrap();
+
+        #endregion
+
+        #region Nested type: MetaScriptItem
+
+        private class MetaScriptItem : DynamicMetaObject
+        {
+            private readonly ScriptItem scriptItem;
+            private readonly DynamicMetaObject metaDynamic;
+
+            public MetaScriptItem(ScriptItem scriptItem, DynamicMetaObject metaDynamic)
+                : base(metaDynamic.Expression, metaDynamic.Restrictions, metaDynamic.Value)
+            {
+                this.scriptItem = scriptItem;
+                this.metaDynamic = metaDynamic;
+            }
+
+            #region DynamicMetaObject overrides
+
+            public override DynamicMetaObject BindBinaryOperation(BinaryOperationBinder binder, DynamicMetaObject arg)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindBinaryOperation(binder, arg));
+            }
+
+            public override DynamicMetaObject BindConvert(ConvertBinder binder)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindConvert(binder));
+            }
+
+            public override DynamicMetaObject BindCreateInstance(CreateInstanceBinder binder, DynamicMetaObject[] args)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindCreateInstance(binder, args));
+            }
+
+            public override DynamicMetaObject BindDeleteIndex(DeleteIndexBinder binder, DynamicMetaObject[] indexes)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindDeleteIndex(binder, indexes));
+            }
+
+            public override DynamicMetaObject BindDeleteMember(DeleteMemberBinder binder)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindDeleteMember(binder));
+            }
+
+            public override DynamicMetaObject BindGetIndex(GetIndexBinder binder, DynamicMetaObject[] indexes)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindGetIndex(binder, indexes));
+            }
+
+            public override DynamicMetaObject BindGetMember(GetMemberBinder binder)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindGetMember(binder));
+            }
+
+            public override DynamicMetaObject BindInvoke(InvokeBinder binder, DynamicMetaObject[] args)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindInvoke(binder, args));
+            }
+
+            public override DynamicMetaObject BindInvokeMember(InvokeMemberBinder binder, DynamicMetaObject[] args)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindInvokeMember(binder, args));
+            }
+
+            public override DynamicMetaObject BindSetIndex(SetIndexBinder binder, DynamicMetaObject[] indexes, DynamicMetaObject value)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindSetIndex(binder, indexes, value));
+            }
+
+            public override DynamicMetaObject BindSetMember(SetMemberBinder binder, DynamicMetaObject value)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindSetMember(binder, value));
+            }
+
+            public override DynamicMetaObject BindUnaryOperation(UnaryOperationBinder binder)
+            {
+                return scriptItem.PostProcessBindResult(metaDynamic.BindUnaryOperation(binder));
+            }
+
+            #endregion
+        }
 
         #endregion
     }

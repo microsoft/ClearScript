@@ -228,12 +228,69 @@ namespace Microsoft.ClearScript.V8
         public bool FormatCode { get; set; }
 
         /// <summary>
+        /// Gets or sets a soft limit for the size of the V8 runtime's heap.
+        /// </summary>
+        /// <remarks>
+        /// This property is specified in bytes. When it is set to the default value, heap size
+        /// monitoring is disabled, and scripts with memory leaks or excessive memory usage
+        /// can cause unrecoverable errors and process termination.
+        /// <para>
+        /// A V8 runtime unconditionally terminates the process when it exceeds its resource
+        /// constraints (see <see cref="V8RuntimeConstraints"/>). This property enables external
+        /// heap size monitoring that can prevent termination in some scenarios. To be effective,
+        /// it should be set to a value that is significantly lower than
+        /// <see cref="V8RuntimeConstraints.MaxOldSpaceSize"/>. Note that enabling heap size
+        /// monitoring results in slower script execution.
+        /// </para>
+        /// <para>
+        /// Exceeding this limit causes the V8 runtime to interrupt script execution and throw an
+        /// exception. To re-enable script execution, set this property to a new value.
+        /// </para>
+        /// </remarks>
+        public UIntPtr MaxHeapSize
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.MaxHeapSize;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                proxy.MaxHeapSize = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the minimum time interval between consecutive heap size samples.
+        /// </summary>
+        /// <remarks>
+        /// This property is effective only when heap size monitoring is enabled (see
+        /// <see cref="MaxHeapSize"/>).
+        /// </remarks>
+        public TimeSpan HeapSizeSampleInterval
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.HeapSizeSampleInterval;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                proxy.HeapSizeSampleInterval = value;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the maximum amount by which the stack is permitted to grow during script execution.
         /// </summary>
         /// <remarks>
         /// This property is specified in bytes. When it is set to the default value, no stack
-        /// usage limit is enforced, and unchecked recursion or other stack usage may lead to
-        /// unrecoverable errors and process termination.
+        /// usage limit is enforced, and scripts with unchecked recursion or other excessive stack
+        /// usage can cause unrecoverable errors and process termination.
         /// <para>
         /// Note that the V8 runtime does not monitor stack usage while a host call is in progress.
         /// Monitoring is resumed when control returns to the runtime.

@@ -168,9 +168,18 @@ namespace Microsoft.ClearScript.Windows
 
                         function convertArgs(args) {
                             var result = [];
-                            var count = args.Length;
-                            for (var i = 0; i < count; i++) {
-                                result.push(args[i]);
+                            if (args.GetValue) {
+                                var count = args.Length;
+                                for (var i = 0; i < count; i++) {
+                                    result.push(args[i]);
+                                }
+                            }
+                            else {
+                                args = new VBArray(args);
+                                var count = args.ubound(1) + 1;
+                                for (var i = 0; i < count; i++) {
+                                    result.push(args.getItem(i));
+                                }
                             }
                             return result;
                         }

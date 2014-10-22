@@ -60,7 +60,6 @@
 //       
 
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
@@ -68,11 +67,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
-using Microsoft.ClearScript.Util;
-using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
+using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
-using Microsoft.VisualBasic;
+using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -364,58 +362,45 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_VBCallToParameterlessVBScriptSub()
         {
-            var options = new CompilerParameters { GenerateInMemory = true };
-            options.ReferencedAssemblies.Add("ClearScript.dll");
-            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { @"
-                Module TestModule
-                    Sub TestMethod
-                        Using engine As New Microsoft.ClearScript.Windows.VBScriptEngine
-                            engine.Execute(""sub main : end sub"")
-                            engine.Script.main()
-                        End Using
-                    End Sub
-                End Module
-            "});
-
-            results.CompiledAssembly.GetType("TestModule").InvokeMember("TestMethod", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>());
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+                    engine.Execute(""sub main : end sub"")
+                    engine.Script.main()
+                End Using
+            ");
         }
 
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_VBDynamicArgMarshaling_Numeric()
         {
-            var options = new CompilerParameters { GenerateInMemory = true };
-            options.ReferencedAssemblies.Add("ClearScript.dll");
-            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { @"
-                Module TestModule
-                    Function TestFunction
-                        Using engine As New Microsoft.ClearScript.V8.V8ScriptEngine
-                            engine.Execute(""data = [5, 4, 'qux', 2, 1]; function getElement(i1, i2, i3) { return data[i1 + i2 - i3]; }"")
-                            TestFunction = engine.Script.getElement(CShort(1), CLng(99), CStr(98))
-                        End Using
-                    End Function
-                End Module
-            "});
+            var result = TestUtil.InvokeVBTestFunction(@"
+                Using engine As New Microsoft.ClearScript.V8.V8ScriptEngine
+                    engine.Execute(""data = [5, 4, 'qux', 2, 1]; function getElement(i1, i2, i3) { return data[i1 + i2 - i3]; }"")
+                    TestFunction = engine.Script.getElement(CShort(1), CLng(99), CStr(98))
+                End Using
+            ");
 
-            Assert.AreEqual("qux", results.CompiledAssembly.GetType("TestModule").InvokeMember("TestFunction", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>()));
+            Assert.AreEqual("qux", result);
         }
 
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_VBDynamicArgMarshaling_String()
         {
-            var options = new CompilerParameters { GenerateInMemory = true };
-            options.ReferencedAssemblies.Add("ClearScript.dll");
-            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { @"
-                Module TestModule
-                    Function TestFunction
-                        Using engine As New Microsoft.ClearScript.V8.V8ScriptEngine
-                            engine.Execute(""data = { foo26: 123, bar97: 456.789 }; function getElement(i1, i2) { return data[i1 + i2]; }"")
-                            TestFunction = engine.Script.getElement(""bar"", CLng(97))
-                        End Using
-                    End Function
-                End Module
-            "});
+            var result = TestUtil.InvokeVBTestFunction(@"
+                Using engine As New Microsoft.ClearScript.V8.V8ScriptEngine
+                    engine.Execute(""data = { foo26: 123, bar97: 456.789 }; function getElement(i1, i2) { return data[i1 + i2]; }"")
+                    TestFunction = engine.Script.getElement(""bar"", CLng(97))
+                End Using
+            ");
 
-            Assert.AreEqual(456.789, results.CompiledAssembly.GetType("TestModule").InvokeMember("TestFunction", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>()));
+            Assert.AreEqual(456.789, result);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AmbiguousAttribute()
+        {
+            engine.Script.foo = new AmbiguousAttributeTest();
+            engine.Execute("foo.Foo()");
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -752,8 +737,12 @@ namespace Microsoft.ClearScript.Test
         {
             for (var index = 0; index < 256; index++)
             {
+                // ReSharper disable UnusedVariable
+
                 var wrapper = new ResurrectionTestWrapper(new V8ScriptEngine());
                 GC.Collect();
+
+                // ReSharper restore UnusedVariable
             }
         }
 
@@ -762,8 +751,12 @@ namespace Microsoft.ClearScript.Test
         {
             for (var index = 0; index < 256; index++)
             {
+                // ReSharper disable UnusedVariable
+
                 var wrapper = new ResurrectionTestWrapper(new V8Runtime());
                 GC.Collect();
+
+                // ReSharper restore UnusedVariable
             }
         }
 
@@ -772,9 +765,13 @@ namespace Microsoft.ClearScript.Test
         {
             for (var index = 0; index < 256; index++)
             {
+                // ReSharper disable UnusedVariable
+
                 var tempEngine = new V8ScriptEngine();
                 var wrapper = new ResurrectionTestWrapper(tempEngine.Compile("function foo() {}"));
                 GC.Collect();
+
+                // ReSharper restore UnusedVariable
             }
         }
 
@@ -783,9 +780,13 @@ namespace Microsoft.ClearScript.Test
         {
             for (var index = 0; index < 256; index++)
             {
+                // ReSharper disable UnusedVariable
+
                 var tempEngine = new V8ScriptEngine();
                 var wrapper = new ResurrectionTestWrapper(tempEngine.Script.Math);
                 GC.Collect();
+
+                // ReSharper restore UnusedVariable
             }
         }
 
@@ -819,6 +820,22 @@ namespace Microsoft.ClearScript.Test
             {
                 return value.HasValue ? (value * 2.0) : null;
             }
+        }
+
+        public abstract class AmbiguousAttributeTestBase
+        {
+            public abstract object this[int index] { get; }
+
+            public abstract object this[string key] { get; }
+        }
+
+        public class AmbiguousAttributeTest : AmbiguousAttributeTestBase
+        {
+            public override object this[int index] { get { return null; } }
+
+            public override object this[string key] { get { return null; } }
+
+            public void Foo() { }
         }
 
         public class ResurrectionTestWrapper

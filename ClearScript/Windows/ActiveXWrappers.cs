@@ -395,14 +395,14 @@ namespace Microsoft.ClearScript.Windows
 
     internal abstract class ProcessDebugManagerWrapper
     {
-        public static ProcessDebugManagerWrapper Create()
+        public static bool TryCreate(out ProcessDebugManagerWrapper wrapper)
         {
             if (Environment.Is64BitProcess)
             {
-                return new ProcessDebugManagerWrapper64();
+                return ProcessDebugManagerWrapper64.TryCreate(out wrapper);
             }
 
-            return new ProcessDebugManagerWrapper32();
+            return ProcessDebugManagerWrapper32.TryCreate(out wrapper);
         }
 
         public abstract void CreateApplication(out DebugApplicationWrapper applicationWrapper);
@@ -416,9 +416,22 @@ namespace Microsoft.ClearScript.Windows
     {
         private readonly IProcessDebugManager32 processDebugManager;
 
-        public ProcessDebugManagerWrapper32()
+        public new static bool TryCreate(out ProcessDebugManagerWrapper wrapper)
         {
-            processDebugManager = (IProcessDebugManager32)MiscHelpers.CreateCOMObject("ProcessDebugManager");
+            IProcessDebugManager32 processDebugManager;
+            if (MiscHelpers.TryCreateCOMObject("ProcessDebugManager", null, out processDebugManager))
+            {
+                wrapper = new ProcessDebugManagerWrapper32(processDebugManager);
+                return true;
+            }
+
+            wrapper = null;
+            return false;
+        }
+
+        private ProcessDebugManagerWrapper32(IProcessDebugManager32 processDebugManager)
+        {
+            this.processDebugManager = processDebugManager;
         }
 
         public override void CreateApplication(out DebugApplicationWrapper applicationWrapper)
@@ -443,9 +456,22 @@ namespace Microsoft.ClearScript.Windows
     {
         private readonly IProcessDebugManager64 processDebugManager;
 
-        public ProcessDebugManagerWrapper64()
+        public new static bool TryCreate(out ProcessDebugManagerWrapper wrapper)
         {
-            processDebugManager = (IProcessDebugManager64)MiscHelpers.CreateCOMObject("ProcessDebugManager");
+            IProcessDebugManager64 processDebugManager;
+            if (MiscHelpers.TryCreateCOMObject("ProcessDebugManager", null, out processDebugManager))
+            {
+                wrapper = new ProcessDebugManagerWrapper64(processDebugManager);
+                return true;
+            }
+
+            wrapper = null;
+            return false;
+        }
+
+        private ProcessDebugManagerWrapper64(IProcessDebugManager64 processDebugManager)
+        {
+            this.processDebugManager = processDebugManager;
         }
 
         public override void CreateApplication(out DebugApplicationWrapper applicationWrapper)

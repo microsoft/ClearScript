@@ -70,6 +70,10 @@ namespace Microsoft.ClearScript.V8
             return CreateImpl<V8ContextProxy>(isolateProxy, name, enableDebugging, disableGlobalMembers, debugPort);
         }
 
+        public abstract UIntPtr MaxRuntimeHeapSize { get; set; }
+
+        public abstract TimeSpan RuntimeHeapSizeSampleInterval { get; set; }
+
         public abstract UIntPtr MaxRuntimeStackUsage { get; set; }
 
         public abstract void InvokeWithLock(Action action);

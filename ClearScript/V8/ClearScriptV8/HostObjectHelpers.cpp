@@ -104,6 +104,20 @@ V8Value HostObjectHelpers::GetProperty(void* pvObject, const StdString& name)
 
 //-----------------------------------------------------------------------------
 
+V8Value HostObjectHelpers::GetProperty(void* pvObject, const StdString& name, bool& isCacheable)
+{
+    try
+    {
+        return V8ContextProxyImpl::ImportValue(V8ProxyHelpers::GetHostObjectProperty(pvObject, name.ToManagedString(), isCacheable));
+    }
+    catch (Exception^ gcException)
+    {
+        ThrowHostException(gcException);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void HostObjectHelpers::SetProperty(void* pvObject, const StdString& name, const V8Value& value)
 {
     try

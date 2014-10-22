@@ -90,8 +90,19 @@ namespace Microsoft.ClearScript
             var typeArgs = GetTypeArgs(args).ToArray();
             if (typeArgs.Length > 0)
             {
-                args = args.Skip(typeArgs.Length).ToArray();
-                bindArgs = bindArgs.Skip(typeArgs.Length).ToArray();
+                var mergedArgs = args;
+                var argOffset = typeArgs.Length;
+
+                args = args.Skip(argOffset).ToArray();
+                bindArgs = bindArgs.Skip(argOffset).ToArray();
+
+                var result = InvokeMethod(name, typeArgs, args, bindArgs);
+                for (var index = 0; index < args.Length; index++)
+                {
+                    mergedArgs[argOffset + index] = args[index];
+                }
+
+                return result;
             }
 
             return InvokeMethod(name, typeArgs, args, bindArgs);
@@ -114,7 +125,13 @@ namespace Microsoft.ClearScript
                     var extensionBindResult = extensionHostItem.BindMethod(name, typeArgs, extensionArgs, extensionBindArgs);
                     if (extensionBindResult is MethodBindSuccess)
                     {
-                        return extensionBindResult.Invoke(engine);
+                        var result = extensionBindResult.Invoke(engine);
+                        for (var index = 1; index < extensionArgs.Length; index++)
+                        {
+                            args[index - 1] = extensionArgs[index];
+                        }
+
+                        return result;
                     }
                 }
             }
@@ -144,11 +161,13 @@ namespace Microsoft.ClearScript
 
         private MethodBindResult BindMethod(string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
+            var bindContext = GetEffectiveAccessContext();
+            var bindFlags = GetMethodBindFlags();
+
             // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
             // will result in bugs that are difficult to diagnose. Create a copy if necessary.
 
-            var context = accessContext ?? engine.AccessContext;
-            var signature = new BindSignature(context, target, name, typeArgs, bindArgs);
+            var signature = new BindSignature(bindContext, bindFlags, target, name, typeArgs, bindArgs);
             MethodBindResult result;
 
             object rawResult;
@@ -158,7 +177,7 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                result = BindMethodInternal(context, name, typeArgs, args, bindArgs);
+                result = BindMethodInternal(bindContext, bindFlags, target, name, typeArgs, args, bindArgs);
                 if (!result.IsPreferredMethod(name))
                 {
                     if (result is MethodBindSuccess)
@@ -166,14 +185,23 @@ namespace Microsoft.ClearScript
                         result = new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}' that matches the specified arguments", name)));
                     }
 
-                    foreach (var altName in GetAltMethodNames(name))
+                    foreach (var altName in GetAltMethodNames(name, bindFlags))
                     {
-                        var altResult = BindMethodInternal(context, altName, typeArgs, args, bindArgs);
+                        var altResult = BindMethodInternal(bindContext, bindFlags, target, altName, typeArgs, args, bindArgs);
                         if (altResult.IsUnblockedMethod())
                         {
                             result = altResult;
                             break;
                         }
+                    }
+                }
+
+                if ((result is MethodBindFailure) && engine.UseReflectionBindFallback)
+                {
+                    var reflectionResult = BindMethodUsingReflection(bindFlags, target, name, typeArgs, args);
+                    if (reflectionResult is MethodBindSuccess)
+                    {
+                        result = reflectionResult;
                     }
                 }
 
@@ -183,9 +211,12 @@ namespace Microsoft.ClearScript
             return result;
         }
 
-        private MethodBindResult BindMethodInternal(Type context, string name, Type[] typeArgs, object[] args, object[] bindArgs)
+        private static MethodBindResult BindMethodInternal(Type bindContext, BindingFlags bindFlags, HostTarget target, string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
-            var signature = new BindSignature(context, target, name, typeArgs, bindArgs);
+            // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
+            // will result in bugs that are difficult to diagnose. Create a copy if necessary.
+
+            var signature = new BindSignature(bindContext, bindFlags, target, name, typeArgs, bindArgs);
             MethodBindResult result;
 
             object rawResult;
@@ -195,46 +226,43 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                result = BindMethodCore(context, name, typeArgs, args, bindArgs);
+                result = BindMethodCore(bindContext, bindFlags, target, name, typeArgs, args, bindArgs);
                 coreBindCache.TryAdd(signature, result.RawResult);
             }
 
             return result;
         }
 
-        private MethodBindResult BindMethodCore(Type context, string name, Type[] typeArgs, object[] args, object[] bindArgs)
+        private static MethodBindResult BindMethodCore(Type bindContext, BindingFlags bindFlags, HostTarget target, string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
             Interlocked.Increment(ref coreBindCount);
 
             // create C# member invocation binder
             const CSharpBinderFlags binderFlags = CSharpBinderFlags.InvokeSimpleName | CSharpBinderFlags.ResultDiscarded;
-            var binder = Binder.InvokeMember(binderFlags, name, typeArgs, context, CreateArgInfoEnum(bindArgs));
+            var binder = (InvokeMemberBinder)Binder.InvokeMember(binderFlags, name, typeArgs, bindContext, CreateArgInfoEnum(target, bindArgs));
 
             // perform default binding
-            var binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, target, bindArgs);
-            var rawResult = (new MethodBindingVisitor(target.InvokeTarget, name, binding.Expression)).Result;
+            var rawResult = BindMethodRaw(bindFlags, binder, target, bindArgs);
 
             var result = MethodBindResult.Create(name, rawResult, target, args);
-            if (!(result is MethodBindSuccess) && !(target is HostType) && target.Type.IsInterface)
+            if ((result is MethodBindFailure) && !(target is HostType) && target.Type.IsInterface)
             {
                 // binding through interface failed; try base interfaces
                 foreach (var interfaceType in target.Type.GetInterfaces())
                 {
-                    var tempTarget = HostObject.Wrap(target.InvokeTarget, interfaceType);
-                    binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, tempTarget, bindArgs);
-                    rawResult = (new MethodBindingVisitor(target.InvokeTarget, name, binding.Expression)).Result;
+                    var baseInterfaceTarget = HostObject.Wrap(target.InvokeTarget, interfaceType);
+                    rawResult = BindMethodRaw(bindFlags, binder, baseInterfaceTarget, bindArgs);
 
-                    var tempResult = MethodBindResult.Create(name, rawResult, target, args);
-                    if (tempResult is MethodBindSuccess)
+                    var baseInterfaceResult = MethodBindResult.Create(name, rawResult, target, args);
+                    if (baseInterfaceResult is MethodBindSuccess)
                     {
-                        return tempResult;
+                        return baseInterfaceResult;
                     }
                 }
 
                 // binding through base interfaces failed; try System.Object
                 var objectTarget = HostObject.Wrap(target.InvokeTarget, typeof(object));
-                binding = DynamicHelpers.Bind((DynamicMetaObjectBinder)binder, objectTarget, bindArgs);
-                rawResult = (new MethodBindingVisitor(target.InvokeTarget, name, binding.Expression)).Result;
+                rawResult = BindMethodRaw(bindFlags, binder, objectTarget, bindArgs);
 
                 var objectResult = MethodBindResult.Create(name, rawResult, target, args);
                 if (objectResult is MethodBindSuccess)
@@ -246,14 +274,44 @@ namespace Microsoft.ClearScript
             return result;
         }
 
-        private IEnumerable<string> GetAltMethodNames(string name)
+        private static object BindMethodRaw(BindingFlags bindFlags, InvokeMemberBinder binder, HostTarget target, object[] bindArgs)
         {
-            return GetAltMethodNamesInternal(name).Distinct();
+            var expr = DynamicHelpers.Bind(binder, target, bindArgs).Expression;
+            if (expr == null)
+            {
+                return new Func<Exception>(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}'", binder.Name)));
+            }
+
+            if (expr.NodeType == ExpressionType.Dynamic)
+            {
+                // The binding result is a dynamic call, which is indicative of COM interop. This
+                // sort of binding is not very useful here; it can't be resolved to a MethodInfo
+                // instance, and caching it is problematic because it includes argument bindings.
+                // Falling back to reflection should work in most cases because COM interfaces
+                // support neither generic nor overloaded methods.
+
+                try
+                {
+                    var method = target.Type.GetMethod(binder.Name, bindFlags);
+                    return (object)method ?? new Func<Exception>(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}'", binder.Name)));
+                }
+                catch (AmbiguousMatchException exception)
+                {
+                    return new Func<Exception>(() => new AmbiguousMatchException(exception.Message));
+                }
+            }
+
+            return (new MethodBindingVisitor(target.InvokeTarget, binder.Name, expr)).Result;
         }
 
-        private IEnumerable<string> GetAltMethodNamesInternal(string name)
+        private IEnumerable<string> GetAltMethodNames(string name, BindingFlags bindFlags)
         {
-            foreach (var method in target.Type.GetScriptableMethods(name, GetMethodBindFlags()))
+            return GetAltMethodNamesInternal(name, bindFlags).Distinct();
+        }
+
+        private IEnumerable<string> GetAltMethodNamesInternal(string name, BindingFlags bindFlags)
+        {
+            foreach (var method in target.Type.GetScriptableMethods(name, bindFlags))
             {
                 var methodName = method.GetShortName();
                 if (methodName != name)
@@ -263,7 +321,7 @@ namespace Microsoft.ClearScript
             }
         }
 
-        private IEnumerable<CSharpArgumentInfo> CreateArgInfoEnum(object[] args)
+        private static IEnumerable<CSharpArgumentInfo> CreateArgInfoEnum(HostTarget target, object[] args)
         {
             if (target is HostType)
             {
@@ -302,6 +360,89 @@ namespace Microsoft.ClearScript
         private static CSharpArgumentInfo CreateStaticTypeArgInfo()
         {
             return CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.IsStaticType, null);
+        }
+
+        private static MethodBindResult BindMethodUsingReflection(BindingFlags bindFlags, HostTarget target, string name, Type[] typeArgs, object[] args)
+        {
+            // ReSharper disable CoVariantArrayConversion
+
+            var candidates = GetReflectionCandidates(bindFlags, target, name, typeArgs).Distinct().ToArray();
+            if (candidates.Length > 0)
+            {
+                try
+                {
+                    object state;
+                    var rawResult = Type.DefaultBinder.BindToMethod(bindFlags, candidates, ref args, null, null, null, out state);
+                    return MethodBindResult.Create(name, rawResult, target, args);
+                }
+                catch (MissingMethodException)
+                {
+                }
+                catch (AmbiguousMatchException)
+                {
+                }
+            }
+
+            return new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}' that matches the specified arguments", name)));
+
+            // ReSharper restore CoVariantArrayConversion
+        }
+
+        private static IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, HostTarget target, string name, Type[] typeArgs)
+        {
+            foreach (var method in GetReflectionCandidates(bindFlags, target.Type, name, typeArgs))
+            {
+                yield return method;
+            }
+
+            if (!(target is HostType) && target.Type.IsInterface)
+            {
+                foreach (var interfaceType in target.Type.GetInterfaces())
+                {
+                    foreach (var method in GetReflectionCandidates(bindFlags, interfaceType, name, typeArgs))
+                    {
+                        yield return method;
+                    }
+                }
+
+                foreach (var method in GetReflectionCandidates(bindFlags, typeof(object), name, typeArgs))
+                {
+                    yield return method;
+                }
+            }
+        }
+
+        private static IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, Type type, string name, Type[] typeArgs)
+        {
+            foreach (var method in type.GetScriptableMethods(name, bindFlags))
+            {
+                MethodInfo tempMethod = null;
+
+                if (method.ContainsGenericParameters)
+                {
+                    try
+                    {
+                        tempMethod = method.MakeGenericMethod(typeArgs);
+                    }
+                    catch (ArgumentException)
+                    {
+                        continue;
+                    }
+                    catch (NotSupportedException)
+                    {
+                        continue;
+                    }
+                }
+                else if (typeArgs.Length < 1)
+                {
+                    tempMethod = method;
+                }
+
+                if ((tempMethod != null) && !tempMethod.ContainsGenericParameters)
+                {
+                    yield return tempMethod;
+                }
+            }
         }
 
         #endregion

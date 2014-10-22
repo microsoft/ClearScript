@@ -77,7 +77,7 @@ namespace V8 {
         V8IsolateConstraints constraints;
         if (gcConstraints != nullptr)
         {
-            constraints.Set(gcConstraints->MaxYoungSpaceSize, gcConstraints->MaxOldSpaceSize, gcConstraints->MaxExecutableSize);
+            constraints.Set(gcConstraints->MaxNewSpaceSize, gcConstraints->MaxOldSpaceSize, gcConstraints->MaxExecutableSize);
             pConstraints = &constraints;
         }
 
@@ -89,6 +89,34 @@ namespace V8 {
         {
             exception.ThrowScriptEngineException();
         }
+    }
+
+    //-------------------------------------------------------------------------
+
+    UIntPtr V8IsolateProxyImpl::MaxHeapSize::get()
+    {
+        return (UIntPtr)GetIsolate()->GetMaxHeapSize();
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8IsolateProxyImpl::MaxHeapSize::set(UIntPtr value)
+    {
+        GetIsolate()->SetMaxHeapSize(static_cast<size_t>(value));
+    }
+
+    //-------------------------------------------------------------------------
+
+    TimeSpan V8IsolateProxyImpl::HeapSizeSampleInterval::get()
+    {
+        return TimeSpan::FromMilliseconds(GetIsolate()->GetHeapSizeSampleInterval());
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8IsolateProxyImpl::HeapSizeSampleInterval::set(TimeSpan value)
+    {
+        GetIsolate()->SetHeapSizeSampleInterval(value.TotalMilliseconds);
     }
 
     //-------------------------------------------------------------------------

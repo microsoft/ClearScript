@@ -90,7 +90,7 @@ namespace Microsoft.ClearScript.Windows
         private WindowsScriptEngineFlags engineFlags;
 
         private readonly HostItemMap hostItemMap = new HostItemMap();
-        private readonly dynamic script;
+        private readonly object script;
 
         private ProcessDebugManagerWrapper processDebugManager;
         private DebugApplicationWrapper debugApplication;
@@ -127,9 +127,8 @@ namespace Microsoft.ClearScript.Windows
                 activeScript = ActiveScriptWrapper.Create(progID, flags);
                 engineFlags = flags;
 
-                if (flags.HasFlag(WindowsScriptEngineFlags.EnableDebugging))
+                if (flags.HasFlag(WindowsScriptEngineFlags.EnableDebugging) && ProcessDebugManagerWrapper.TryCreate(out processDebugManager))
                 {
-                    processDebugManager = ProcessDebugManagerWrapper.Create();
                     processDebugManager.CreateApplication(out debugApplication);
                     debugApplication.SetName(Name);
                     processDebugManager.AddApplication(debugApplication, out debugApplicationCookie);
@@ -237,7 +236,7 @@ namespace Microsoft.ClearScript.Windows
 
         private string GetStackTraceInternal()
         {
-            Debug.Assert(engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging));
+            Debug.Assert(processDebugManager != null);
             var stackTrace = string.Empty;
 
             IEnumDebugStackFrames enumFrames;
@@ -296,9 +295,9 @@ namespace Microsoft.ClearScript.Windows
                 }
                 finally
                 {
-                    if (descriptor.FinalObject != null)
+                    if (descriptor.pFinalObject != IntPtr.Zero)
                     {
-                        Marshal.FinalReleaseComObject(descriptor.FinalObject);
+                        Marshal.Release(descriptor.pFinalObject);
                     }
                 }
             }
@@ -350,7 +349,7 @@ namespace Microsoft.ClearScript.Windows
         public override string GetStackTrace()
         {
             VerifyNotDisposed();
-            return engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging) ? ScriptInvoke(() => GetStackTraceInternal()) : string.Empty;
+            return (processDebugManager != null) ? ScriptInvoke(() => GetStackTraceInternal()) : string.Empty;
         }
 
         /// <summary>
@@ -443,6 +442,11 @@ namespace Microsoft.ClearScript.Windows
 
         internal override object MarshalToScript(object obj, HostItemFlags flags)
         {
+            return MarshalToScriptInternal(obj, flags, null);
+        }
+
+        private object MarshalToScriptInternal(object obj, HostItemFlags flags, HashSet<Array> marshaledArraySet)
+        {
             if (obj == null)
             {
                 if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
@@ -494,10 +498,45 @@ namespace Microsoft.ClearScript.Windows
                 }
             }
 
+            if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalArraysByValue))
+            {
+                var array = obj as Array;
+                if ((array != null) && ((hostTarget == null) || (typeof(Array).IsAssignableFrom(hostTarget.Type))))
+                {
+                    bool alreadyMarshaled;
+                    if (marshaledArraySet != null)
+                    {
+                        alreadyMarshaled = marshaledArraySet.Contains(array);
+                    }
+                    else
+                    {
+                        marshaledArraySet = new HashSet<Array>();
+                        alreadyMarshaled = false;
+                    }
+
+                    if (!alreadyMarshaled)
+                    {
+                        marshaledArraySet.Add(array);
+                        var dimensions = Enumerable.Range(0, array.Rank).ToArray();
+                        var marshaledArray = Array.CreateInstance(typeof(object), dimensions.Select(array.GetLength).ToArray(), dimensions.Select(array.GetLowerBound).ToArray());
+                        array.Iterate(indices => marshaledArray.SetValue(MarshalToScriptInternal(array.GetValue(indices), flags, marshaledArraySet), indices));
+                        return marshaledArray;
+                    }
+
+                    // COM interop can't handle circularly referenced arrays
+                    return MarshalToScriptInternal(null, flags, marshaledArraySet);
+                }
+            }
+
             return HostItem.Wrap(this, hostTarget ?? obj, flags);
         }
 
         internal override object MarshalToHost(object obj, bool preserveHostTarget)
+        {
+            return MarshalToHostInternal(obj, preserveHostTarget, null);
+        }
+
+        private object MarshalToHostInternal(object obj, bool preserveHostTarget, HashSet<Array> marshaledArraySet)
         {
             if (obj == null)
             {
@@ -519,7 +558,24 @@ namespace Microsoft.ClearScript.Windows
             if (array != null)
             {
                 // COM interop converts VBScript arrays to managed arrays
-                array.Iterate(indices => array.SetValue(MarshalToHost(array.GetValue(indices), preserveHostTarget), indices));
+
+                bool alreadyMarshaled;
+                if (marshaledArraySet != null)
+                {
+                    alreadyMarshaled = marshaledArraySet.Contains(array);
+                }
+                else
+                {
+                    marshaledArraySet = new HashSet<Array>();
+                    alreadyMarshaled = false;
+                }
+
+                if (!alreadyMarshaled)
+                {
+                    marshaledArraySet.Add(array);
+                    array.Iterate(indices => array.SetValue(MarshalToHostInternal(array.GetValue(indices), preserveHostTarget, marshaledArraySet), indices));
+                }
+
                 return array;
             }
 
@@ -714,7 +770,7 @@ namespace Microsoft.ClearScript.Windows
                         debugDocumentMap.Values.ForEach(debugDocument => debugDocument.Close());
                     }
 
-                    if (engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging))
+                    if (processDebugManager != null)
                     {
                         processDebugManager.RemoveApplication(debugApplicationCookie);
                         debugApplication.Close();

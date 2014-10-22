@@ -94,6 +94,34 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    UIntPtr V8ContextProxyImpl::MaxRuntimeHeapSize::get()
+    {
+        return (UIntPtr)GetContext()->GetMaxIsolateHeapSize();
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8ContextProxyImpl::MaxRuntimeHeapSize::set(UIntPtr value)
+    {
+        GetContext()->SetMaxIsolateHeapSize(static_cast<size_t>(value));
+    }
+
+    //-------------------------------------------------------------------------
+
+    TimeSpan V8ContextProxyImpl::RuntimeHeapSizeSampleInterval::get()
+    {
+        return TimeSpan::FromMilliseconds(GetContext()->GetIsolateHeapSizeSampleInterval());
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8ContextProxyImpl::RuntimeHeapSizeSampleInterval::set(TimeSpan value)
+    {
+        GetContext()->SetIsolateHeapSizeSampleInterval(value.TotalMilliseconds);
+    }
+
+    //-------------------------------------------------------------------------
+
     UIntPtr V8ContextProxyImpl::MaxRuntimeStackUsage::get()
     {
         return (UIntPtr)GetContext()->GetMaxIsolateStackUsage();

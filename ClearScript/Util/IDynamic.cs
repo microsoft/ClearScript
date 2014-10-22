@@ -64,6 +64,7 @@ namespace Microsoft.ClearScript.Util
     internal interface IDynamic
     {
         object GetProperty(string name);
+        object GetProperty(string name, out bool isCacheable);
         void SetProperty(string name, object value);
         bool DeleteProperty(string name);
         string[] GetPropertyNames();

@@ -85,6 +85,7 @@
     <Compile Include="Util\COMDispatch.cs" />
     <Compile Include="Util\IScriptMarshalWrapper.cs" />
     <Compile Include="Util\MemberHelpers.cs" />
+    <Compile Include="Util\MemberMap.cs" />
     <Compile Include="Util\SpecialDispIDs.cs" />
     <Compile Include="V8\V8RuntimeHeapInfo.cs" />
     <Compile Include="V8\V8Script.cs" />
@@ -120,7 +121,6 @@
     <Compile Include="HostFunctions.cs" />
     <Compile Include="HostEvent.cs" />
     <Compile Include="HostItem.InvokeMethod.cs" />
-    <Compile Include="HostItem.Members.cs" />
     <Compile Include="HostObject.cs" />
     <Compile Include="HostTarget.cs" />
     <Compile Include="Windows\ActiveXDebugging.cs" />

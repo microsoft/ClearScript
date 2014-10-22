@@ -83,15 +83,16 @@ namespace Microsoft.ClearScript.V8
     {
         #region data
 
-        private const int continuationInterval = 2000;
-
         private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
-        private readonly dynamic script;
+        private readonly object script;
         private bool disposed;
 
+        private const int continuationInterval = 2000;
+        private bool inContinuationTimerScope;
+
         private readonly IUniqueNameManager documentNameManager = new UniqueFileNameManager();
-        private readonly List<string> documentNames = new List<string>();
+        private List<string> documentNames;
 
         #endregion
 
@@ -333,12 +334,69 @@ namespace Microsoft.ClearScript.V8
         #region public members
 
         /// <summary>
+        /// Gets or sets a soft limit for the size of the V8 runtime's heap.
+        /// </summary>
+        /// <remarks>
+        /// This property is specified in bytes. When it is set to the default value, heap size
+        /// monitoring is disabled, and scripts with memory leaks or excessive memory usage
+        /// can cause unrecoverable errors and process termination.
+        /// <para>
+        /// A V8 runtime unconditionally terminates the process when it exceeds its resource
+        /// constraints (see <see cref="V8RuntimeConstraints"/>). This property enables external
+        /// heap size monitoring that can prevent termination in some scenarios. To be effective,
+        /// it should be set to a value that is significantly lower than
+        /// <see cref="V8RuntimeConstraints.MaxOldSpaceSize"/>. Note that enabling heap size
+        /// monitoring results in slower script execution.
+        /// </para>
+        /// <para>
+        /// Exceeding this limit causes the V8 runtime to interrupt script execution and throw an
+        /// exception. To re-enable script execution, set this property to a new value.
+        /// </para>
+        /// </remarks>
+        public UIntPtr MaxRuntimeHeapSize
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.MaxRuntimeHeapSize;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                proxy.MaxRuntimeHeapSize = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the minimum time interval between consecutive heap size samples.
+        /// </summary>
+        /// <remarks>
+        /// This property is effective only when heap size monitoring is enabled (see
+        /// <see cref="MaxRuntimeHeapSize"/>).
+        /// </remarks>
+        public TimeSpan RuntimeHeapSizeSampleInterval
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.RuntimeHeapSizeSampleInterval;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                proxy.RuntimeHeapSizeSampleInterval = value;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the maximum amount by which the V8 runtime is permitted to grow the stack during script execution.
         /// </summary>
         /// <remarks>
         /// This property is specified in bytes. When it is set to the default value, no stack
-        /// usage limit is enforced, and unchecked recursion or other stack usage may lead to
-        /// unrecoverable errors and process termination.
+        /// usage limit is enforced, and scripts with unchecked recursion or other excessive stack
+        /// usage can cause unrecoverable errors and process termination.
         /// <para>
         /// Note that the V8 runtime does not monitor stack usage while a host call is in progress.
         /// Monitoring is resumed when control returns to the runtime.
@@ -399,23 +457,21 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public object Evaluate(V8Script script)
         {
-            MiscHelpers.VerifyNonNullArgument(script, "script");
-            VerifyNotDisposed();
+            return Execute(script, true);
+        }
 
-            return MarshalToHost(ScriptInvoke(() =>
-            {
-                if (ContinuationCallback == null)
-                {
-                    return proxy.Execute(script, true);
-                }
-
-                var state = new Timer[] { null };
-                using (state[0] = new Timer(unused => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
-                {
-                    state[0].Change(continuationInterval, Timeout.Infinite);
-                    return proxy.Execute(script, true);
-                }
-            }), false);
+        /// <summary>
+        /// Executes a compiled script.
+        /// </summary>
+        /// <param name="script">The compiled script to execute.</param>
+        /// <remarks>
+        /// This method is similar to <see cref="Evaluate(V8Script)"/> with the exception that it
+        /// does not marshal a result value to the host. It can provide a performance advantage
+        /// when the result value is not needed.
+        /// </remarks>
+        public void Execute(V8Script script)
+        {
+            Execute(script, false);
         }
 
         // ReSharper restore ParameterHidesMember
@@ -456,6 +512,39 @@ namespace Microsoft.ClearScript.V8
                 throw new ObjectDisposedException(ToString());
             }
         }
+
+        // ReSharper disable ParameterHidesMember
+
+        private object Execute(V8Script script, bool evaluate)
+        {
+            MiscHelpers.VerifyNonNullArgument(script, "script");
+            VerifyNotDisposed();
+
+            return MarshalToHost(ScriptInvoke(() =>
+            {
+                if (inContinuationTimerScope || (ContinuationCallback == null))
+                {
+                    return proxy.Execute(script, evaluate);
+                }
+
+                var state = new Timer[] { null };
+                using (state[0] = new Timer(unused => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
+                {
+                    inContinuationTimerScope = true;
+                    try
+                    {
+                        state[0].Change(continuationInterval, Timeout.Infinite);
+                        return proxy.Execute(script, evaluate);
+                    }
+                    finally
+                    {
+                        inContinuationTimerScope = false;
+                    }
+                }
+            }), false);
+        }
+
+        // ReSharper restore ParameterHidesMember
 
         #endregion
 
@@ -675,12 +764,12 @@ namespace Microsoft.ClearScript.V8
                 {
                     uniqueName += " [temp]";
                 }
-                else if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableDebugging))
+                else if (documentNames != null)
                 {
                     documentNames.Add(uniqueName);
                 }
 
-                if (ContinuationCallback == null)
+                if (inContinuationTimerScope || (ContinuationCallback == null))
                 {
                     return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate, discard);
                 }
@@ -688,8 +777,16 @@ namespace Microsoft.ClearScript.V8
                 var state = new Timer[] { null };
                 using (state[0] = new Timer(unused => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
                 {
-                    state[0].Change(continuationInterval, Timeout.Infinite);
-                    return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate, discard);
+                    inContinuationTimerScope = true;
+                    try
+                    {
+                        state[0].Change(continuationInterval, Timeout.Infinite);
+                        return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate, discard);
+                    }
+                    finally
+                    {
+                        inContinuationTimerScope = false;
+                    }
                 }
             });
         }
@@ -765,7 +862,12 @@ namespace Microsoft.ClearScript.V8
 
         #region unit test support
 
-        internal IEnumerable<string> GetDebugDocumentNames()
+        internal void EnableDocumentNameTracking()
+        {
+            documentNames = new List<string>();
+        }
+
+        internal IEnumerable<string> GetDocumentNames()
         {
             return documentNames;
         }

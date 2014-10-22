@@ -80,6 +80,11 @@ public:
     V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort);
     const StdString& GetName() const { return m_Name; }
 
+    size_t GetMaxIsolateHeapSize();
+    void SetMaxIsolateHeapSize(size_t value);
+    double GetIsolateHeapSizeSampleInterval();
+    void SetIsolateHeapSizeSampleInterval(double value);
+
     size_t GetMaxIsolateStackUsage();
     void SetMaxIsolateStackUsage(size_t value);
 
@@ -123,14 +128,6 @@ private:
             m_pContextImpl(pContextImpl),
             m_ContextScope(m_pContextImpl->m_hContext)
         {
-        }
-
-        ~Scope()
-        {
-            if (!std::uncaught_exception() && m_pContextImpl->m_hContext->HasOutOfMemoryException())
-            {
-                m_pContextImpl->m_spIsolateImpl->ThrowOutOfMemoryException();
-            }
         }
 
     private:
@@ -204,6 +201,16 @@ private:
         return m_spIsolateImpl->CreateFunctionTemplate();
     }
 
+    Local<Script> CreateScript(ScriptCompiler::Source* pSource, ScriptCompiler::CompileOptions options = ScriptCompiler::kNoCompileOptions)
+    {
+        return m_spIsolateImpl->CreateScript(pSource, options);
+    }
+
+    Local<UnboundScript> CreateUnboundScript(ScriptCompiler::Source* pSource, ScriptCompiler::CompileOptions options = ScriptCompiler::kNoCompileOptions)
+    {
+        return m_spIsolateImpl->CreateUnboundScript(pSource, options);
+    }
+
     template <typename T>
     Local<T> CreateLocal(Handle<T> hTarget)
     {
@@ -264,7 +271,7 @@ private:
     void GetV8ObjectPropertyIndices(Handle<Object> hObject, std::vector<int>& indices);
 
     static void GetGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info);
-    static void SetGlobalProperty(Local<String> hName, Local<Value> value, const PropertyCallbackInfo<Value>& info);
+    static void SetGlobalProperty(Local<String> hName, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
     static void QueryGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Integer>& info);
     static void DeleteGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Boolean>& info);
     static void GetGlobalPropertyNames(const PropertyCallbackInfo<Array>& info);

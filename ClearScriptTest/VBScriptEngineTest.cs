@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
@@ -68,6 +69,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Windows.Threading;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
@@ -362,6 +364,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Invoke_ScriptFunction()
+        {
+            engine.Execute("function foo(x) : foo = x * pi : end function");
+            Assert.AreEqual(Math.E * Math.PI, engine.Invoke("foo", Math.E));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Invoke_HostDelegate()
+        {
+            engine.Script.foo = new Func<double, double>(x => x * Math.PI);
+            Assert.AreEqual(Math.E * Math.PI, engine.Invoke("foo", Math.E));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_Interrupt()
         {
             var checkpoint = new ManualResetEvent(false);
@@ -481,6 +497,105 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Script_Variable_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+                    Dim host As New HostFunctions
+                    engine.Script.host = host
+                    Assert.AreSame(host, engine.Script.host)
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Script_Variable_Scalar_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+                    Dim value = 123
+                    engine.Script.value = value
+                    Assert.AreEqual(value, engine.Script.value)
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Script_Variable_Enum_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+                    Dim value = DayOfWeek.Wednesday
+                    engine.Script.value = value
+                    Assert.AreEqual(value, engine.Script.value)
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Script_Array_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+
+                    Dim lengths As Integer() = { 3, 5, 7 }
+                    Dim formatParams = String.Join("", "", Enumerable.Range(0, lengths.Length).Select(Function(position) ""{"" & position & ""}""))
+
+                    Dim hosts = Array.CreateInstance(GetType(Object), lengths)
+                    TestUtil.Iterate(hosts, Sub(indices) hosts.SetValue(New HostFunctions, indices))
+                    engine.Script.hostArray = hosts
+
+                    engine.Execute(TestUtil.FormatInvariant(""dim hosts("" & formatParams & "")"", lengths.Select(Function(length) CType(length - 1, Object)).ToArray()))
+                    TestUtil.Iterate(hosts, Sub(indices) engine.Execute(TestUtil.FormatInvariant(""set hosts("" & formatParams & "") = hostArray.GetValue("" & formatParams & "")"", indices.Select(Function(index) CType(index, Object)).ToArray())))
+                    TestUtil.Iterate(hosts, Sub(indices) Assert.AreSame(hosts.GetValue(indices), engine.Script.hosts.GetValue(indices)))
+
+                    Dim result = engine.Script.hosts
+                    Assert.IsInstanceOfType(result, GetType(Object(,,)))
+                    Dim hostArray As Object(,,) = result
+                    TestUtil.Iterate(hosts, Sub(indices) Assert.AreSame(hosts.GetValue(indices), hostArray.GetValue(indices)))
+
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Script_Variable_Struct_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+                    Dim stamp = New DateTime(2007, 5, 22, 6, 15, 43)
+                    engine.Script.stamp = stamp
+                    Assert.AreEqual(stamp, engine.Script.stamp)
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Script_Function_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+                    engine.Execute(""function test(x, y) : test = x * y : end function"")
+                    Assert.AreEqual(Math.E * Math.PI, engine.Script.test(Math.E, Math.PI))
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Script_Sub_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+                    Dim callbackInvoked = False
+                    Dim callback = Sub() callbackInvoked = True
+                    engine.Execute(""sub test(x) : call x() : end sub"")
+                    engine.Script.test(callback)
+                    Assert.IsTrue(callbackInvoked)
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_CollectGarbage()
         {
             // VBScript doesn't support GC
@@ -530,7 +645,7 @@ namespace Microsoft.ClearScript.Test
             {
                 try
                 {
-                    engine.Evaluate("host.newObj(0)");
+                    engine.Evaluate("host.proc(0)");
                 }
                 catch (ScriptEngineException exception)
                 {
@@ -613,7 +728,7 @@ namespace Microsoft.ClearScript.Test
             {
                 try
                 {
-                    engine.Execute("engine.Evaluate(\"host.newObj(0)\")");
+                    engine.Execute("engine.Evaluate(\"host.proc(0)\")");
                 }
                 catch (ScriptEngineException exception)
                 {
@@ -977,23 +1092,774 @@ namespace Microsoft.ClearScript.Test
             // ReSharper restore AccessToDisposedClosure
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ForEach()
+        {
+            var collection = new object[] { new HostFunctions(), new Random() };
+            engine.Script.collection = collection;
+            engine.Execute(forEachTestScript);
+            var result = (object[])engine.Evaluate("enumerate(collection)");
+            Assert.IsNotNull(result);
+            Assert.IsTrue(collection.SequenceEqual(result));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ForEach_Scalar()
+        {
+            var collection = new[] { 123.456, 789.012 };
+            engine.Script.collection = collection;
+            engine.Execute(forEachTestScript);
+            var result = (object[])engine.Evaluate("enumerate(collection)");
+            Assert.IsNotNull(result);
+            Assert.IsTrue(collection.SequenceEqual(result.Cast<double>()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ForEach_Enum()
+        {
+            var collection = new[] { DayOfWeek.Wednesday, DayOfWeek.Saturday };
+            engine.Script.collection = collection;
+            engine.Execute(forEachTestScript);
+            var result = (object[])engine.Evaluate("enumerate(collection)");
+            Assert.IsNotNull(result);
+            Assert.IsTrue(collection.SequenceEqual(result.Cast<DayOfWeek>()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ForEach_Struct()
+        {
+            var collection = new[] { DateTime.Now, new DateTime(1941, 8, 26, 11, 35, 20) };
+            engine.Script.collection = collection;
+            engine.Execute(forEachTestScript);
+            var result = (object[])engine.Evaluate("enumerate(collection)");
+            Assert.IsNotNull(result);
+            Assert.IsTrue(collection.SequenceEqual(result.Cast<DateTime>()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ReflectionBindFallback()
+        {
+            engine.UseReflectionBindFallback = true;
+            engine.Script.test = new ReflectionBindFallbackTest();
+            engine.AddHostType("Assert", typeof(Assert));
+            engine.Execute(@"
+                a = ""foo""
+                b = 123.456
+                test.Method a, b
+                call Assert.AreEqual(""foobar"", a)
+                call Assert.AreEqual(123.456 * pi, b)
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ReflectionBindFallback_Generic()
+        {
+            engine.UseReflectionBindFallback = true;
+            engine.Script.test = new ReflectionBindFallbackTest();
+            engine.AddHostType("String", typeof(string));
+            engine.AddHostType("Assert", typeof(Assert));
+            engine.Execute(@"
+                a = ""foo""
+                b = ""bar""
+                test.GenericMethod String, a, b
+                call Assert.AreEqual(""bar"", a)
+                call Assert.AreEqual(""foo"", b)
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ReflectionBindFallback_Static()
+        {
+            engine.UseReflectionBindFallback = true;
+            engine.AddHostType("Test", typeof(ReflectionBindFallbackTest));
+            engine.AddHostType("Assert", typeof(Assert));
+            engine.Execute(@"
+                a = ""foo""
+                b = 123.456
+                Test.StaticMethod a, b
+                call Assert.AreEqual(""foobaz"", a)
+                call Assert.AreEqual(123.456 * e, b)
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ReflectionBindFallback_Extension()
+        {
+            engine.UseReflectionBindFallback = true;
+            engine.Script.test = new ReflectionBindFallbackTest();
+            engine.AddHostType("ReflectionBindFallbackTestExtensions", typeof(ReflectionBindFallbackTestExtensions));
+            engine.AddHostType("Assert", typeof(Assert));
+            engine.Execute(@"
+                a = ""foo""
+                b = 123.456
+                test.ExtensionMethod a, b
+                call Assert.AreEqual(""foobar"", a)
+                call Assert.AreEqual(123.456 * pi, b)
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ReflectionBindFallback_GenericExtension()
+        {
+            engine.UseReflectionBindFallback = true;
+            engine.Script.test = new ReflectionBindFallbackTest();
+            engine.AddHostType("ReflectionBindFallbackTestExtensions", typeof(ReflectionBindFallbackTestExtensions));
+            engine.AddHostType("String", typeof(string));
+            engine.AddHostType("Assert", typeof(Assert));
+            engine.Execute(@"
+                a = ""foo""
+                b = ""bar""
+                test.GenericExtensionMethod String, a, b
+                call Assert.AreEqual(""bar"", a)
+                call Assert.AreEqual(""foo"", b)
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ReflectionBindFallback_HostMarshal()
+        {
+            engine.UseReflectionBindFallback = true;
+            engine.Script.test = new ReflectionBindFallbackTest();
+            engine.AddHostType("Assert", typeof(Assert));
+            engine.Execute(@"
+                dim self
+                test.GetSelf self
+                call Assert.AreEqual(""qux"", self.Property)
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ReflectionBindFallback_MarshalArrayByValue()
+        {
+            engine.UseReflectionBindFallback = true;
+            engine.Script.test = new ReflectionBindFallbackTest();
+            engine.Script.ArrayT = typeof(Array);
+            engine.AddHostType("Assert", typeof(Assert));
+            engine.Execute(@"
+                dim foo
+                test.GetArray foo
+                call Assert.IsFalse(IsArray(foo))
+                call Assert.AreEqual(""abc"", foo.GetValue(0))
+                call Assert.AreEqual(123.456, foo.GetValue(1))
+            ");
+
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalArraysByValue);
+
+            engine.UseReflectionBindFallback = true;
+            engine.Script.test = new ReflectionBindFallbackTest();
+            engine.AddHostType("Assert", typeof(Assert));
+            engine.Execute(@"
+                dim foo
+                test.GetArray foo
+                call Assert.IsTrue(IsArray(foo))
+                call Assert.AreEqual(""abc"", foo(0))
+                call Assert.AreEqual(123.456, foo(1))
+            ");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_MarshalArraysByValue()
+        {
+            var foo = new[] { DayOfWeek.Saturday, DayOfWeek.Friday, DayOfWeek.Thursday };
+
+            engine.Script.foo = foo;
+            Assert.IsFalse((bool)engine.Evaluate("IsArray(foo)"));
+
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalArraysByValue);
+
+            engine.Script.foo = foo;
+            Assert.IsTrue((bool)engine.Evaluate("IsArray(foo)"));
+            Assert.AreEqual(foo.GetUpperBound(0), engine.Evaluate("UBound(foo, 1)"));
+
+            for (var index = 0; index < foo.Length; index++)
+            {
+                Assert.AreEqual(foo[index], engine.Evaluate("foo(" + index + ")"));
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_MarshalArraysByValue_CircularReference()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalArraysByValue);
+
+            var host = new HostFunctions();
+            var foo = new object[] { DayOfWeek.Saturday, DayOfWeek.Friday, new object[] { "abc", 123.456, new object[] { host, null } } };
+            ((object[])((object[])foo[2])[2])[1] = foo;
+
+            engine.Script.foo = foo;
+            Assert.IsTrue((bool)engine.Evaluate("IsArray(foo)"));
+            Assert.AreEqual(foo[0], engine.Evaluate("foo(0)"));
+            Assert.AreEqual(foo[1], engine.Evaluate("foo(1)"));
+            Assert.IsTrue((bool)engine.Evaluate("IsArray(foo(2))"));
+            Assert.AreEqual(((object[])foo[2])[0], engine.Evaluate("foo(2)(0)"));
+            Assert.AreEqual(((object[])foo[2])[1], engine.Evaluate("foo(2)(1)"));
+            Assert.IsTrue((bool)engine.Evaluate("IsArray(foo(2)(2))"));
+            Assert.AreSame(((object[])((object[])foo[2])[2])[0], engine.Evaluate("foo(2)(2)(0)"));
+
+            // circular array reference should have been broken
+            Assert.AreSame(((object[])((object[])foo[2])[2])[1], foo);
+            Assert.IsNull(engine.Evaluate("foo(2)(2)(1)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_MarshalArraysByValue_Multidimensional()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalArraysByValue);
+
+            var foo = new string[4, 3, 2];
+            foo.Iterate(indices => foo.SetValue((string.Join(",", indices) + " " + (indices[0] * 256 + indices[1] * 16 + indices[2])), indices));
+
+            engine.Script.foo = foo;
+            Assert.IsTrue((bool)engine.Evaluate("IsArray(foo)"));
+
+            for (var dimension = 0; dimension < foo.Rank; dimension++)
+            {
+                Assert.AreEqual(foo.GetUpperBound(dimension), engine.Evaluate("UBound(foo, " + (dimension + 1) + ")"));
+            }
+
+            foo.Iterate(indices => Assert.AreEqual(foo.GetValue(indices), engine.Evaluate("foo(" + string.Join(",", indices) + ")")));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_MarshalArraysByValue_invokeMethod()
+        {
+            var args = new[] { Math.PI, Math.E };
+
+            engine.Script.args = args;
+            engine.Execute("function foo(a, b) : foo = a * b : end function");
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("EngineInternal.invokeMethod(null, GetRef(\"foo\"), args)"));
+
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalArraysByValue);
+
+            engine.Script.args = args;
+            engine.Execute("function foo(a, b) : foo = a * b : end function");
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("EngineInternal.invokeMethod(null,  GetRef(\"foo\"), args)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_COMObject_FileSystemObject()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                fso = host.newComObj(""Scripting.FileSystemObject"")
+                drives = fso.Drives
+                en = drives.GetEnumerator()
+                while en.MoveNext()
+                    list.Add(en.Current.Path)
+                wend
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_COMObject_FileSystemObject_ForEach()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                fso = host.newComObj(""Scripting.FileSystemObject"")
+                drives = fso.Drives
+                for each drive in drives
+                    list.Add(drive.Path)
+                next
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_COMObject_Dictionary()
+        {
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Execute(@"
+                dict = host.newComObj(""Scripting.Dictionary"")
+                call dict.Add(""foo"", pi)
+                call dict.Add(""bar"", e)
+                call dict.Add(""baz"", ""abc"")
+            ");
+
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item(\"bar\")"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get(\"bar\")"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                call dict.Item.set(""foo"", ""pushkin"")
+                call dict.Item.set(""bar"", ""gogol"")
+                call dict.Item.set(""baz"", pi * e)
+            ");
+
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item(\"bar\")"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get(\"bar\")"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                dict.Item(""foo"") = 987.654
+                dict.Item(""bar"") = 321
+                dict.Item(""baz"") = ""halloween""
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(\"bar\")")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(\"bar\")")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                call dict.Key.set(""foo"", ""qux"")
+                call dict.Key.set(""bar"", pi)
+                call dict.Key.set(""baz"", e)
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"qux\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"qux\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(pi)")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(pi)")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(e)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(e)"));
+
+            engine.Execute(@"
+                dict.Key(""qux"") = ""foo""
+                dict.Key(pi) = ""bar""
+                dict.Key(e) = ""baz""
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(\"bar\")")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(\"bar\")")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(\"baz\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_COMType_FileSystemObject()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                FSOT = host.comType(""Scripting.FileSystemObject"")
+                fso = host.newObj(FSOT)
+                drives = fso.Drives
+                en = drives.GetEnumerator()
+                while en.MoveNext()
+                    list.Add(en.Current.Path)
+                wend
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_COMType_FileSystemObject_ForEach()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                FSOT = host.comType(""Scripting.FileSystemObject"")
+                fso = host.newObj(FSOT)
+                drives = fso.Drives
+                for each drive in drives
+                    list.Add(drive.Path)
+                next
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_COMType_Dictionary()
+        {
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Execute(@"
+                DictT = host.comType(""Scripting.Dictionary"")
+                dict = host.newObj(DictT)
+                call dict.Add(""foo"", pi)
+                call dict.Add(""bar"", e)
+                call dict.Add(""baz"", ""abc"")
+            ");
+
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item(\"bar\")"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get(\"bar\")"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                call dict.Item.set(""foo"", ""pushkin"")
+                call dict.Item.set(""bar"", ""gogol"")
+                call dict.Item.set(""baz"", pi * e)
+            ");
+
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item(\"bar\")"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get(\"bar\")"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                dict.Item(""foo"") = 987.654
+                dict.Item(""bar"") = 321
+                dict.Item(""baz"") = ""halloween""
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(\"bar\")")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(\"bar\")")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                call dict.Key.set(""foo"", ""qux"")
+                call dict.Key.set(""bar"", pi)
+                call dict.Key.set(""baz"", e)
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"qux\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"qux\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(pi)")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(pi)")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(e)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(e)"));
+
+            engine.Execute(@"
+                dict.Key(""qux"") = ""foo""
+                dict.Key(pi) = ""bar""
+                dict.Key(e) = ""baz""
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(\"bar\")")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(\"bar\")")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(\"baz\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMObject_FileSystemObject()
+        {
+            var list = new ArrayList();
+
+            engine.Script.list = list;
+            engine.AddCOMObject("fso", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                drives = fso.Drives
+                en = drives.GetEnumerator()
+                while en.MoveNext()
+                    list.Add(en.Current.Path)
+                wend
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMObject_Dictionary()
+        {
+            engine.AddCOMObject("dict", new Guid("{ee09b103-97e0-11cf-978f-00a02463e06f}"));
+            engine.Execute(@"
+                call dict.Add(""foo"", pi)
+                call dict.Add(""bar"", e)
+                call dict.Add(""baz"", ""abc"")
+            ");
+
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item(\"bar\")"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get(\"bar\")"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                call dict.Item.set(""foo"", ""pushkin"")
+                call dict.Item.set(""bar"", ""gogol"")
+                call dict.Item.set(""baz"", pi * e)
+            ");
+
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item(\"bar\")"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get(\"bar\")"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                dict.Item(""foo"") = 987.654
+                dict.Item(""bar"") = 321
+                dict.Item(""baz"") = ""halloween""
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(\"bar\")")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(\"bar\")")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                call dict.Key.set(""foo"", ""qux"")
+                call dict.Key.set(""bar"", pi)
+                call dict.Key.set(""baz"", e)
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"qux\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"qux\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(pi)")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(pi)")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(e)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(e)"));
+
+            engine.Execute(@"
+                dict.Key(""qux"") = ""foo""
+                dict.Key(pi) = ""bar""
+                dict.Key(e) = ""baz""
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(\"bar\")")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(\"bar\")")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(\"baz\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMType_FileSystemObject()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new HostFunctions();
+            engine.Script.list = list;
+            engine.AddCOMType("FSOT", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                fso = host.newObj(FSOT)
+                drives = fso.Drives
+                en = drives.GetEnumerator()
+                while en.MoveNext()
+                    list.Add(en.Current.Path)
+                wend
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMType_Dictionary()
+        {
+            engine.Script.host = new HostFunctions();
+            engine.AddCOMType("DictT", new Guid("{ee09b103-97e0-11cf-978f-00a02463e06f}"));
+            engine.Execute(@"
+                dict = host.newObj(DictT)
+                call dict.Add(""foo"", pi)
+                call dict.Add(""bar"", e)
+                call dict.Add(""baz"", ""abc"")
+            ");
+
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item(\"bar\")"));
+            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get(\"bar\")"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                call dict.Item.set(""foo"", ""pushkin"")
+                call dict.Item.set(""bar"", ""gogol"")
+                call dict.Item.set(""baz"", pi * e)
+            ");
+
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item(\"bar\")"));
+            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get(\"bar\")"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                dict.Item(""foo"") = 987.654
+                dict.Item(""bar"") = 321
+                dict.Item(""baz"") = ""halloween""
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(\"bar\")")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(\"bar\")")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(\"baz\")"));
+
+            engine.Execute(@"
+                call dict.Key.set(""foo"", ""qux"")
+                call dict.Key.set(""bar"", pi)
+                call dict.Key.set(""baz"", e)
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"qux\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"qux\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(pi)")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(pi)")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(e)"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(e)"));
+
+            engine.Execute(@"
+                dict.Key(""qux"") = ""foo""
+                dict.Key(pi) = ""bar""
+                dict.Key(e) = ""baz""
+            ");
+
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item(\"foo\")"));
+            Assert.AreEqual(987.654, engine.Evaluate("dict.Item.get(\"foo\")"));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item(\"bar\")")));
+            Assert.AreEqual(321, Convert.ToInt32(engine.Evaluate("dict.Item.get(\"bar\")")));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item(\"baz\")"));
+            Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(\"baz\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMType_XMLHTTP()
+        {
+            int status = 0;
+            string data = null;
+
+            var thread = new Thread(() =>
+            {
+                using (var testEngine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging))
+                {
+                    using (var helperEngine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode))
+                    {
+                        // ReSharper disable AccessToDisposedClosure
+
+                        testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
+                        {
+                            status = xhrStatus;
+                            data = xhrData;
+                            Dispatcher.ExitAllFrames();
+                        });
+
+                        testEngine.Script.getData = new Func<string, string>(responseText =>
+                            helperEngine.Script.JSON.parse(responseText).data
+                        );
+
+                        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                        {
+                            testEngine.AddCOMType("XMLHttpRequest", "MSXML2.XMLHTTP");
+                            testEngine.Script.host = new HostFunctions();
+                            testEngine.Execute(@"
+                                sub onreadystatechange
+                                    if xhr.readyState = 4 then
+                                        call onComplete(xhr.status, getData(xhr.responseText))
+                                    end if
+                                end sub
+                                xhr = host.newObj(XMLHttpRequest)
+                                call xhr.open(""POST"", ""http://httpbin.org/post"", true)
+                                xhr.onreadystatechange = GetRef(""onreadystatechange"")
+                                call xhr.send(""Hello, world!"")
+                            ");
+                        }));
+
+                        Dispatcher.Run();
+
+                        // ReSharper restore AccessToDisposedClosure
+                    }
+                }
+            });
+
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            Assert.AreEqual(200, status);
+            Assert.AreEqual("Hello, world!", data);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
 
         #region miscellaneous
 
+        public class ReflectionBindFallbackTest
+        {
+            public string Property { get { return "qux"; } }
+
+            public void Method(ref string a, ref double b)
+            {
+                a = a + "bar";
+                b = b * Math.PI;
+            }
+
+            public void GenericMethod<T>(ref T a, ref T b)
+            {
+                var temp = a;
+                a = b;
+                b = temp;
+            }
+
+            public static void StaticMethod(ref string a, ref double b)
+            {
+                a = a + "baz";
+                b = b * Math.E;
+            }
+
+            public void GetSelf(out object self)
+            {
+                self = this;
+            }
+
+            public void GetArray(out object array)
+            {
+                array = new object[] { "abc", 123.456 };
+            }
+        }
+
         private const string generalScript =
         @"
             set System = clr.System
 
-            set TestObject = host.type(""Microsoft.ClearScript.Test.GeneralTestObject"", ""ClearScriptTest"")
-            set tlist = host.newObj(System.Collections.Generic.List(TestObject))
-            call tlist.Add(host.newObj(TestObject, ""Eóin"", 20))
-            call tlist.Add(host.newObj(TestObject, ""Shane"", 16))
-            call tlist.Add(host.newObj(TestObject, ""Cillian"", 8))
-            call tlist.Add(host.newObj(TestObject, ""Sasha"", 6))
-            call tlist.Add(host.newObj(TestObject, ""Brian"", 3))
+            set TestObjectT = host.type(""Microsoft.ClearScript.Test.GeneralTestObject"", ""ClearScriptTest"")
+            set tlist = host.newObj(System.Collections.Generic.List(TestObjectT))
+            call tlist.Add(host.newObj(TestObjectT, ""Eóin"", 20))
+            call tlist.Add(host.newObj(TestObjectT, ""Shane"", 16))
+            call tlist.Add(host.newObj(TestObjectT, ""Cillian"", 8))
+            call tlist.Add(host.newObj(TestObjectT, ""Sasha"", 6))
+            call tlist.Add(host.newObj(TestObjectT, ""Brian"", 3))
 
             class VBTestObject
                public name
@@ -1035,7 +1901,7 @@ namespace Microsoft.ClearScript.Test
             end sub
 
             set eventCookie = tlist.Item(0).Change.connect(onEventRef)
-            set staticEventCookie = TestObject.StaticChange.connect(onStaticEventRef)
+            set staticEventCookie = TestObjectT.StaticChange.connect(onStaticEventRef)
             tlist.Item(0).Name = ""Jerry""
             tlist.Item(1).Name = ""Ellis""
             tlist.Item(0).Name = ""Eóin""
@@ -1059,6 +1925,20 @@ namespace Microsoft.ClearScript.Test
             Property changed: Name; new value: Shane (static event)
         ";
 
+        private const string forEachTestScript =
+        @"
+            function enumerate(collection)
+                dim index, array()
+                index = -1
+                for each item in collection
+                    index = index + 1
+                    redim preserve array(index)
+                    array(index) = item
+                next
+                enumerate = array
+            end function
+        ";
+
         public object TestProperty { get; set; }
 
         public static object StaticTestProperty { get; set; }
@@ -1076,5 +1956,21 @@ namespace Microsoft.ClearScript.Test
         // ReSharper restore UnusedMember.Local
 
         #endregion
+    }
+
+    public static class ReflectionBindFallbackTestExtensions
+    {
+        public static void ExtensionMethod(this VBScriptEngineTest.ReflectionBindFallbackTest test, ref string a, ref double b)
+        {
+            a = a + "bar";
+            b = b * Math.PI;
+        }
+
+        public static void GenericExtensionMethod<T>(this VBScriptEngineTest.ReflectionBindFallbackTest test, ref T a, ref T b)
+        {
+            var temp = a;
+            a = b;
+            b = temp;
+        }
     }
 }

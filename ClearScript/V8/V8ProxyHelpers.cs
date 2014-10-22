@@ -119,6 +119,16 @@ namespace Microsoft.ClearScript.V8
             return ((IDynamic)obj).GetProperty(name);
         }
 
+        public static unsafe object GetHostObjectProperty(void* pObject, string name, out bool isCacheable)
+        {
+            return GetHostObjectProperty(GetHostObject(pObject), name, out isCacheable);
+        }
+
+        public static object GetHostObjectProperty(object obj, string name, out bool isCacheable)
+        {
+            return ((IDynamic)obj).GetProperty(name, out isCacheable);
+        }
+
         public static unsafe void SetHostObjectProperty(void* pObject, string name, object value)
         {
             SetHostObjectProperty(GetHostObject(pObject), name, value);

@@ -63,6 +63,6 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class SpecialParamNames
     {
-        public const string This = "[DISPID=-613]";
+        public static string This = MiscHelpers.GetDispIDName(SpecialDispIDs.This);
     }
 }

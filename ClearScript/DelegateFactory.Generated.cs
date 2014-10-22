@@ -64,6 +64,7 @@
 
 using System;
 using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.ClearScript
 {
@@ -72,10 +73,11 @@ namespace Microsoft.ClearScript
         private const int maxArgCount = 16;
 
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -89,7 +91,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget()
             {
-                Invoke(() => target());
+                Invoke(() => ((dynamic)target)());
             }
 
             // ReSharper restore UnusedMember.Local
@@ -104,10 +106,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -121,7 +124,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1)
             {
-                Invoke(() => target(a1));
+                Invoke(() => ((dynamic)target)(a1));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -136,10 +139,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -153,7 +157,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2)
             {
-                Invoke(() => target(a1, a2));
+                Invoke(() => ((dynamic)target)(a1, a2));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -168,10 +172,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -185,7 +190,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3)
             {
-                Invoke(() => target(a1, a2, a3));
+                Invoke(() => ((dynamic)target)(a1, a2, a3));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -200,10 +205,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -217,7 +223,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4)
             {
-                Invoke(() => target(a1, a2, a3, a4));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -232,10 +238,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -249,7 +256,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -264,10 +271,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -281,7 +289,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -296,10 +304,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -313,7 +322,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -328,10 +337,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -345,7 +355,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7, a8));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -360,10 +370,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -377,7 +388,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7, a8, a9));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -392,10 +403,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -409,7 +421,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -424,10 +436,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -441,7 +454,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -456,10 +469,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -473,7 +487,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -488,10 +502,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -505,7 +520,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -520,10 +535,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -537,7 +553,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13, T14 a14)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -552,10 +568,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -569,7 +586,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13, T14 a14, T15 a15)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -584,10 +601,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TDelegate> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public ProcShim(ScriptEngine engine, object target)
@@ -601,7 +619,7 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13, T14 a14, T15 a15, T16 a16)
             {
-                Invoke(() => target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16));
+                Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -617,10 +635,11 @@ namespace Microsoft.ClearScript
         }
         
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -634,7 +653,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget()
             {
-                return Invoke(() => (TResult)target());
+                return Invoke(() => (TResult)((dynamic)target)());
             }
 
             // ReSharper restore UnusedMember.Local
@@ -649,10 +668,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -666,7 +686,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1)
             {
-                return Invoke(() => (TResult)target(a1));
+                return Invoke(() => (TResult)((dynamic)target)(a1));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -681,10 +701,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -698,7 +719,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2)
             {
-                return Invoke(() => (TResult)target(a1, a2));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -713,10 +734,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -730,7 +752,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -745,10 +767,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -762,7 +785,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -777,10 +800,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -794,7 +818,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -809,10 +833,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -826,7 +851,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -841,10 +866,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -858,7 +884,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -873,10 +899,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -890,7 +917,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7, a8));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -905,10 +932,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -922,7 +950,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7, a8, a9));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -937,10 +965,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -954,7 +983,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -969,10 +998,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -986,7 +1016,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -1001,10 +1031,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -1018,7 +1049,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -1033,10 +1064,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -1050,7 +1082,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -1065,10 +1097,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -1082,7 +1115,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13, T14 a14)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -1097,10 +1130,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -1114,7 +1148,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13, T14 a14, T15 a15)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15));
             }
 
             // ReSharper restore UnusedMember.Local
@@ -1129,10 +1163,11 @@ namespace Microsoft.ClearScript
             #endregion
         }
         
+		[ExcludeFromCodeCoverage]
         private class FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult, TDelegate> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult, TDelegate>).GetMethod("InvokeTarget");
-            private readonly dynamic target;
+            private readonly object target;
             private readonly Delegate del;
 
             public FuncShim(ScriptEngine engine, object target)
@@ -1146,7 +1181,7 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7, T8 a8, T9 a9, T10 a10, T11 a11, T12 a12, T13 a13, T14 a14, T15 a15, T16 a16)
             {
-                return Invoke(() => (TResult)target(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16));
+                return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16));
             }
 
             // ReSharper restore UnusedMember.Local

@@ -84,7 +84,7 @@ namespace Microsoft.ClearScript.Windows
 
             private string GetDetails(object error, string message)
             {
-                if (engine.engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging))
+                if (engine.processDebugManager != null)
                 {
                     try
                     {
@@ -344,8 +344,7 @@ namespace Microsoft.ClearScript.Windows
                 pInterface = IntPtr.Zero;
                 if ((iid == typeof(IActiveScriptSiteDebug32).GUID) || (iid == typeof(IActiveScriptSiteDebug64).GUID) || (iid == typeof(IActiveScriptSiteDebugEx).GUID))
                 {
-                    var debuggingEnabled = engine.engineFlags.HasFlag(WindowsScriptEngineFlags.EnableDebugging);
-                    return debuggingEnabled ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;
+                    return (engine.processDebugManager != null) ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;
                 }
 
                 return CustomQueryInterfaceResult.NotHandled;

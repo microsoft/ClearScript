@@ -286,7 +286,7 @@ private:
         return std::wstring(*value, value.length());
     }
 
-#endif // _M_CEE
+#endif // !_M_CEE
 
 private:
 

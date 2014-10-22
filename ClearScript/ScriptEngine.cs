@@ -155,6 +155,17 @@ namespace Microsoft.ClearScript
         public bool DisableTypeRestriction { get; set; }
 
         /// <summary>
+        /// Enables or disables the use of reflection-based method binding as a fallback.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, the script engine attempts to use
+        /// reflection-based method binding when the default method binding algorithm fails. This
+        /// approach reduces type safety, but it may be useful for running legacy scripts that rely
+        /// on the specific behavior of reflection-based method binding.
+        /// </remarks>
+        public bool UseReflectionBindFallback { get; set; }
+
+        /// <summary>
         /// Gets or sets a callback that can be used to halt script execution.
         /// </summary>
         /// <remarks>
@@ -317,6 +328,150 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
+        /// Creates a COM/ActiveX object and exposes it to script code. The registered class is
+        /// specified by programmatic identifier (ProgID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to instantiate.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddCOMObject(string itemName, string progID)
+        {
+            AddCOMObject(itemName, HostItemFlags.None, progID);
+        }
+
+        /// <summary>
+        /// Creates a COM/ActiveX object on the specified server and exposes it to script code. The
+        /// registered class is specified by programmatic identifier (ProgID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to instantiate.</param>
+        /// <param name="serverName">The name of the server on which to create the object.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddCOMObject(string itemName, string progID, string serverName)
+        {
+            AddCOMObject(itemName, HostItemFlags.None, progID, serverName);
+        }
+
+        /// <summary>
+        /// Creates a COM/ActiveX object and exposes it to script code with the specified options.
+        /// The registered class is specified by programmatic identifier (ProgID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to instantiate.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddCOMObject(string itemName, HostItemFlags flags, string progID)
+        {
+            AddCOMObject(itemName, flags, progID, null);
+        }
+
+        /// <summary>
+        /// Creates a COM/ActiveX object on the specified server and exposes it to script code with
+        /// the specified options. The registered class is specified by programmatic identifier (ProgID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to instantiate.</param>
+        /// <param name="serverName">The name of the server on which to create the object.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddCOMObject(string itemName, HostItemFlags flags, string progID, string serverName)
+        {
+            AddHostItem(itemName, flags, MiscHelpers.CreateCOMObject(progID, serverName));
+        }
+
+        /// <summary>
+        /// Creates a COM/ActiveX object and exposes it to script code. The registered class is
+        /// specified by class identifier (CLSID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="clsid">The class identifier (CLSID) of the registered class to instantiate.</param>
+        /// <remarks>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </remarks>
+        public void AddCOMObject(string itemName, Guid clsid)
+        {
+            AddCOMObject(itemName, HostItemFlags.None, clsid);
+        }
+
+        /// <summary>
+        /// Creates a COM/ActiveX object on the specified server and exposes it to script code. The
+        /// registered class is specified by class identifier (CLSID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="clsid">The class identifier (CLSID) of the registered class to instantiate.</param>
+        /// <param name="serverName">The name of the server on which to create the object.</param>
+        /// <remarks>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </remarks>
+        public void AddCOMObject(string itemName, Guid clsid, string serverName)
+        {
+            AddCOMObject(itemName, HostItemFlags.None, clsid, serverName);
+        }
+
+        /// <summary>
+        /// Creates a COM/ActiveX object and exposes it to script code with the specified options.
+        /// The registered class is specified by class identifier (CLSID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="clsid">The class identifier (CLSID) of the registered class to instantiate.</param>
+        /// <remarks>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </remarks>
+        public void AddCOMObject(string itemName, HostItemFlags flags, Guid clsid)
+        {
+            AddCOMObject(itemName, flags, clsid, null);
+        }
+
+        /// <summary>
+        /// Creates a COM/ActiveX object on the specified server and exposes it to script code with
+        /// the specified options. The registered class is specified by class identifier (CLSID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the object.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="clsid">The class identifier (CLSID) of the registered class to instantiate.</param>
+        /// <param name="serverName">The name of the server on which to create the object.</param>
+        /// <remarks>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </remarks>
+        public void AddCOMObject(string itemName, HostItemFlags flags, Guid clsid, string serverName)
+        {
+            AddHostItem(itemName, flags, MiscHelpers.CreateCOMObject(clsid, serverName));
+        }
+
+        /// <summary>
         /// Exposes a host type to script code.
         /// </summary>
         /// <param name="itemName">A name for the new global script item that will represent the type.</param>
@@ -445,6 +600,150 @@ namespace Microsoft.ClearScript
         public void AddHostType(string itemName, HostItemFlags flags, string typeName, string assemblyName, params Type[] typeArgs)
         {
             AddHostItem(itemName, flags, TypeHelpers.ImportType(typeName, assemblyName, true, typeArgs));
+        }
+
+        /// <summary>
+        /// Imports a COM/ActiveX type and exposes it to script code. The registered class is
+        /// specified by programmatic identifier (ProgID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the type.</param>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to import.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddCOMType(string itemName, string progID)
+        {
+            AddCOMType(itemName, HostItemFlags.None, progID);
+        }
+
+        /// <summary>
+        /// Imports a COM/ActiveX type from the specified server and exposes it to script code. The
+        /// registered class is specified by programmatic identifier (ProgID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the type.</param>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to import.</param>
+        /// <param name="serverName">The name of the server from which to import the type.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddCOMType(string itemName, string progID, string serverName)
+        {
+            AddCOMType(itemName, HostItemFlags.None, progID, serverName);
+        }
+
+        /// <summary>
+        /// Imports a COM/ActiveX type and exposes it to script code with the specified options.
+        /// The registered class is specified by programmatic identifier (ProgID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the type.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to import.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddCOMType(string itemName, HostItemFlags flags, string progID)
+        {
+            AddCOMType(itemName, flags, progID, null);
+        }
+
+        /// <summary>
+        /// Imports a COM/ActiveX type from the specified server and exposes it to script code with
+        /// the specified options. The registered class is specified by programmatic identifier (ProgID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the type.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="progID">The programmatic identifier (ProgID) of the registered class to import.</param>
+        /// <param name="serverName">The name of the server from which to import the type.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// <para>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddCOMType(string itemName, HostItemFlags flags, string progID, string serverName)
+        {
+            AddHostItem(itemName, flags, HostType.Wrap(MiscHelpers.GetCOMType(progID, serverName)));
+        }
+
+        /// <summary>
+        /// Imports a COM/ActiveX type and exposes it to script code. The registered class is
+        /// specified by class identifier (CLSID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the type.</param>
+        /// <param name="clsid">The class identifier (CLSID) of the registered class to import.</param>
+        /// <remarks>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </remarks>
+        public void AddCOMType(string itemName, Guid clsid)
+        {
+            AddCOMType(itemName, HostItemFlags.None, clsid);
+        }
+
+        /// <summary>
+        /// Imports a COM/ActiveX type from the specified server and exposes it to script code. The
+        /// registered class is specified by class identifier (CLSID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the type.</param>
+        /// <param name="clsid">The class identifier (CLSID) of the registered class to import.</param>
+        /// <param name="serverName">The name of the server from which to import the type.</param>
+        /// <remarks>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </remarks>
+        public void AddCOMType(string itemName, Guid clsid, string serverName)
+        {
+            AddCOMType(itemName, HostItemFlags.None, clsid, serverName);
+        }
+
+        /// <summary>
+        /// Imports a COM/ActiveX type and exposes it to script code with the specified options.
+        /// The registered class is specified by class identifier (CLSID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the type.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="clsid">The class identifier (CLSID) of the registered class to import.</param>
+        /// <remarks>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </remarks>
+        public void AddCOMType(string itemName, HostItemFlags flags, Guid clsid)
+        {
+            AddCOMType(itemName, flags, clsid, null);
+        }
+
+        /// <summary>
+        /// Imports a COM/ActiveX type from the specified server and exposes it to script code with
+        /// the specified options. The registered class is specified by class identifier (CLSID).
+        /// </summary>
+        /// <param name="itemName">A name for the new global script item that will represent the type.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="clsid">The class identifier (CLSID) of the registered class to import.</param>
+        /// <param name="serverName">The name of the server from which to import the type.</param>
+        /// <remarks>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </remarks>
+        public void AddCOMType(string itemName, HostItemFlags flags, Guid clsid, string serverName)
+        {
+            AddHostItem(itemName, flags, HostType.Wrap(MiscHelpers.GetCOMType(clsid, serverName)));
         }
 
         /// <summary>
@@ -669,6 +968,18 @@ namespace Microsoft.ClearScript
         public object Evaluate(string documentName, bool discard, string code)
         {
             return Evaluate(documentName, discard, code, true);
+        }
+
+        /// <summary>
+        /// Invokes a global function or procedure.
+        /// </summary>
+        /// <param name="funcName">The name of the global function or procedure to invoke.</param>
+        /// <param name="args">Optional invocation arguments.</param>
+        /// <returns>The return value if a function was invoked, an undefined value otherwise.</returns>
+        public object Invoke(string funcName, params object[] args)
+        {
+            MiscHelpers.VerifyNonBlankArgument(funcName, "funcName", "Invalid function name");
+            return ((IDynamic)Script).InvokeMethod(funcName, args ?? MiscHelpers.GetEmptyArray<object>());
         }
 
         /// <summary>

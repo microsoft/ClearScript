@@ -80,17 +80,20 @@ namespace Microsoft.ClearScript.Windows
         EnableDebugging = 0x00000001,
 
         /// <summary>
-        /// Specifies that Just-In-Time script debugging is to be enabled. This option is ignored if <see cref="EnableDebugging"/> is not specified.
+        /// Specifies that Just-In-Time script debugging is to be enabled. This option is ignored
+        /// if <see cref="EnableDebugging"/> is not specified.
         /// </summary>
         EnableJITDebugging = 0x00000002,
 
         /// <summary>
-        /// Specifies that smart source document management is to be disabled. This option is ignored if <see cref="EnableDebugging"/> is not specified.
+        /// Specifies that smart source document management is to be disabled. This option is
+        /// ignored if <see cref="EnableDebugging"/> is not specified.
         /// </summary>
         DisableSourceManagement = 0x00000004,
 
         /// <summary>
-        /// Specifies that script language features that enhance standards compliance are to be enabled. This option only affects <see cref="JScriptEngine"/>.
+        /// Specifies that script language features that enhance standards compliance are to be
+        /// enabled. This option only affects <see cref="JScriptEngine"/>.
         /// </summary>
         EnableStandardsMode = 0x00000008,
 
@@ -103,8 +106,18 @@ namespace Microsoft.ClearScript.Windows
         MarshalNullAsDispatch = 0x00000010,
 
         /// <summary>
-        /// Specifies that <see cref="decimal"/> values are to be marshaled as variants of type <c>VT_CY</c>.
+        /// Specifies that <see cref="decimal"/> values are to be marshaled as variants of type
+        /// <c>VT_CY</c>.
         /// </summary>
-        MarshalDecimalAsCurrency = 0x00000020
+        MarshalDecimalAsCurrency = 0x00000020,
+
+        /// <summary>
+        /// Specifies that managed arrays that are passed or returned to script code are to be
+        /// converted to script arrays and marshaled as variants of type <c>VT_ARRAY</c>. In
+        /// VBScript these objects are the native array type. JScript code can use the
+        /// <see href="http://msdn.microsoft.com/en-us/library/y39d47w8(v=vs.84).aspx">VBArray</see>
+        /// object to to access them.
+        /// </summary>
+        MarshalArraysByValue = 0x00000040
     }
 }

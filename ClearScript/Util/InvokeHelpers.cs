@@ -73,6 +73,7 @@ namespace Microsoft.ClearScript.Util
         {
             var argList = new List<object>();
             var byRefArgInfo = new List<ByRefArgItem>();
+            object tailArgsArg = null;
 
             var parameters = method.GetParameters();
             for (var index = 0; index < parameters.Length; index++)
@@ -98,6 +99,7 @@ namespace Microsoft.ClearScript.Util
                         }
 
                         argList.Add(tailArgs);
+                        tailArgsArg = tailArgs;
                         break;
                     }
                 }
@@ -131,7 +133,7 @@ namespace Microsoft.ClearScript.Util
                     }
                     else
                     {
-                        argList.Add(null);
+                        argList.Add(Missing.Value);
                     }
                 }
                 else
@@ -147,6 +149,22 @@ namespace Microsoft.ClearScript.Util
             {
                 var array = item.Array ?? finalArgs;
                 item.ByRefArg.Value = array.GetValue(item.Index);
+            }
+
+            for (var index = 0; index < finalArgs.Length; index++)
+            {
+                if (index >= args.Length)
+                {
+                    break;
+                }
+
+                var finalArg = finalArgs[index];
+                if (ReferenceEquals(finalArg, tailArgsArg))
+                {
+                    break;
+                }
+
+                args[index] = finalArg;
             }
 
             var type = method.ReturnType;
@@ -184,9 +202,10 @@ namespace Microsoft.ClearScript.Util
 
             if ((target != null) && invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
-                if (target is ScriptItem)
+                var scriptItem = target as ScriptItem;
+                if (scriptItem != null)
                 {
-                    target = DelegateFactory.CreateFunc<object>(null, target, args.Length);
+                    target = DelegateFactory.CreateFunc<object>(scriptItem.Engine, target, args.Length);
                 }
 
                 var del = target as Delegate;

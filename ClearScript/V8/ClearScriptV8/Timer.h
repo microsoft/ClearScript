@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -59,21 +59,59 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
+#pragma once
 
+//-----------------------------------------------------------------------------
+// Timer
+//-----------------------------------------------------------------------------
 
+class Timer: public WeakRefTarget<Timer>
+{
+public:
 
+    Timer(unsigned int delay, bool repeating, std::function<void(Timer*)>&& func):
+        m_spTimer(std::make_shared<Concurrency::timer<int>>(delay, 0, nullptr, repeating)),
+        m_Func(std::move(func))
+    {
+        auto wrTimer = CreateWeakRef();
+        m_spCall = std::make_shared<Concurrency::call<int>>([wrTimer] (int)
+        {
+            Concurrency::create_task([wrTimer]
+            {
+                auto spTimer = wrTimer.GetTarget();
+                if (!spTimer.IsEmpty())
+                {
+                    spTimer->CallFunc();
+                }
+            });
+        });
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+        m_spTimer->link_target(m_spCall.get());
+    }
 
-[assembly: AssemblyTitle("ClearScript Library")]
-[assembly: AssemblyProduct("ClearScript")]
-[assembly: AssemblyCopyright("(c) Microsoft Corporation")]
-[assembly: InternalsVisibleTo("ClearScriptV8-32")]
-[assembly: InternalsVisibleTo("ClearScriptV8-64")]
-[assembly: InternalsVisibleTo("ClearScriptTest")]
+    void Start()
+    {
+        m_spTimer->start();
+    }
 
-[assembly: ComVisible(false)]
-[assembly: AssemblyVersion("5.4.0.0")]
-[assembly: AssemblyFileVersion("5.4.0.0")]
+    void Pause()
+    {
+        m_spTimer->pause();
+    }
+
+    void Stop()
+    {
+        m_spTimer->stop();
+    }
+
+private:
+
+    void CallFunc()
+    {
+        m_Func(this);
+    }
+
+    std::shared_ptr<Concurrency::timer<int>> m_spTimer;
+    std::shared_ptr<Concurrency::call<int>> m_spCall;
+    std::function<void(Timer*)> m_Func;
+};
