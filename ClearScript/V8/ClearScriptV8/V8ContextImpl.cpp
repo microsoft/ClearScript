@@ -697,7 +697,7 @@ void V8ContextImpl::GetGlobalProperty(Local<String> hName, const PropertyCallbac
         {
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->Has(hName))
+                if ((*it)->HasOwnProperty(hName))
                 {
                     CALLBACK_RETURN((*it)->Get(hName));
                 }
@@ -721,8 +721,9 @@ void V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value> hValue, 
         {
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName) && (*it)->Set(hName, hValue))
+                if ((*it)->HasOwnProperty(hName))
                 {
+                    (*it)->Set(hName, hValue);
                     CALLBACK_RETURN(hValue);
                 }
             }
@@ -745,7 +746,7 @@ void V8ContextImpl::QueryGlobalProperty(Local<String> hName, const PropertyCallb
         {
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->Has(hName))
+                if ((*it)->HasOwnProperty(hName))
                 {
                     CALLBACK_RETURN((*it)->GetPropertyAttributes(hName));
                 }

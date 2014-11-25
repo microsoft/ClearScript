@@ -790,6 +790,23 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8_GlobalMembers_ReadOnlyPropertyCrash()
+        {
+            // this test is for a crash that occurred only on debug V8 builds
+            engine.AddHostObject("bag", HostItemFlags.GlobalMembers, new PropertyBag());
+            engine.AddHostObject("test", HostItemFlags.GlobalMembers, new { foo = 123 });
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("foo = 456"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8_GlobalMembers_NativeFunctionHiding()
+        {
+            engine.Execute("function toString() { return 'ABC'; }");
+            engine.AddHostObject("bag", HostItemFlags.GlobalMembers, new PropertyBag());
+            Assert.AreEqual("ABC", engine.Evaluate("toString()"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
