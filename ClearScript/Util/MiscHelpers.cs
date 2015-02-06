@@ -326,6 +326,33 @@ namespace Microsoft.ClearScript.Util
             return FormatInvariant("[DISPID={0}]", dispid);
         }
 
+        public static bool Try(Action action)
+        {
+            try
+            {
+                action();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public static bool Try<T>(out T result, Func<T> func)
+        {
+            try
+            {
+                result = func();
+                return true;
+            }
+            catch (Exception)
+            {
+                result = default(T);
+                return false;
+            }
+        }
+
         #region Nested type: EmptyArray
 
         private static class EmptyArray<T>

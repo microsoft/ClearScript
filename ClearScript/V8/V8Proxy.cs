@@ -126,30 +126,36 @@ namespace Microsoft.ClearScript.V8
             {
             }
 
-            LoadNativeLibrary();
-
-            var suffix = Environment.Is64BitProcess ? "64" : "32";
-            var fileName = "ClearScriptV8-" + suffix + ".dll";
-            var messageBuilder = new StringBuilder();
-
-            var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
-            foreach (var path in paths)
+            var hLibrary = LoadNativeLibrary();
+            try
             {
-                try
-                {
-                    return Assembly.LoadFrom(path);
-                }
-                catch (Exception exception)
-                {
-                    messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
-                }
-            }
+                var suffix = Environment.Is64BitProcess ? "64" : "32";
+                var fileName = "ClearScriptV8-" + suffix + ".dll";
+                var messageBuilder = new StringBuilder();
 
-            var message = MiscHelpers.FormatInvariant("Cannot load V8 interface assembly. Load failure information for {0}:{1}", fileName, messageBuilder);
-            throw new TypeLoadException(message);
+                var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
+                foreach (var path in paths)
+                {
+                    try
+                    {
+                        return Assembly.LoadFrom(path);
+                    }
+                    catch (Exception exception)
+                    {
+                        messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
+                    }
+                }
+
+                var message = MiscHelpers.FormatInvariant("Cannot load V8 interface assembly. Load failure information for {0}:{1}", fileName, messageBuilder);
+                throw new TypeLoadException(message);
+            }
+            finally
+            {
+                NativeMethods.FreeLibrary(hLibrary);
+            }
         }
 
-        private static void LoadNativeLibrary()
+        private static IntPtr LoadNativeLibrary()
         {
             var suffix = Environment.Is64BitProcess ? "x64" : "ia32";
             var fileName = "v8-" + suffix + ".dll";
@@ -161,7 +167,7 @@ namespace Microsoft.ClearScript.V8
                 var hLibrary = NativeMethods.LoadLibraryW(path);
                 if (hLibrary != IntPtr.Zero)
                 {
-                    return;
+                    return hLibrary;
                 }
 
                 var exception = new Win32Exception(Marshal.GetLastWin32Error());

@@ -206,11 +206,11 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Creates a host array.
+        /// Creates a host array with the specified element type.
         /// </summary>
         /// <typeparam name="T">The element type of the array to create.</typeparam>
         /// <param name="lengths">One or more integers representing the array dimension lengths.</param>
-        /// <returns>A new host array.</returns>
+        /// <returns>A new host array with the specified element type.</returns>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see
@@ -226,10 +226,27 @@ namespace Microsoft.ClearScript
         /// var array = host.newArr(StringT, 5, 3);
         /// </code>
         /// </example>
+        /// <seealso cref="HostFunctions.newArr(int[])"/>
         /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
         public object newArr<T>(params int[] lengths)
         {
             return Array.CreateInstance(typeof(T), lengths);
+        }
+
+        /// <summary>
+        /// Creates a host array with <see cref="System.Object"/> as the element type.
+        /// </summary>
+        /// <param name="lengths">One or more integers representing the array dimension lengths.</param>
+        /// <returns>A new host array with <see cref="System.Object"/> as the element type.</returns>
+        /// <remarks>
+        /// For information about the mapping between host members and script-callable properties
+        /// and methods, see
+        /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// </remarks>
+        /// <seealso cref="HostFunctions.newArr{T}(int[])"/>
+        public object newArr(params int[] lengths)
+        {
+            return newArr<object>(lengths);
         }
 
         /// <summary>
@@ -400,11 +417,35 @@ namespace Microsoft.ClearScript
         /// array = array.Select(selector).ToArray();
         /// </code>
         /// </example>
+        /// <seealso cref="HostFunctions.func(int, object)"/>
         /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
         /// <seealso cref="ExtendedHostFunctions.type(string, string, object[])"/>
         public object func<T>(int argCount, object scriptFunc)
         {
             return DelegateFactory.CreateFunc<T>(GetEngine(), scriptFunc, argCount);
+        }
+
+        /// <summary>
+        /// Creates a delegate that invokes a script function and returns its result value.
+        /// </summary>
+        /// <param name="argCount">The number of arguments to pass to the script function.</param>
+        /// <param name="scriptFunc">The script function for which to create a delegate.</param>
+        /// <returns>A new delegate that invokes the specified script function and returns its result value.</returns>
+        /// <remarks>
+        /// This function creates a delegate that accepts <paramref name="argCount"/> arguments and
+        /// returns the result of invoking <paramref name="scriptFunc"/>. The type of all
+        /// parameters and the return value is <see cref="System.Object"/>. Such a delegate is
+        /// often useful in strongly typed contexts because of
+        /// <see href="http://msdn.microsoft.com/en-us/library/ms173174(VS.80).aspx">contravariance</see>.
+        /// <para>
+        /// For information about the types of result values that script code can return, see
+        /// <see cref="ScriptEngine.Evaluate(string, bool, string)"/>.
+        /// </para>
+        /// </remarks>
+        /// <seealso cref="HostFunctions.func{T}(int, object)"/>
+        public object func(int argCount, object scriptFunc)
+        {
+            return func<object>(argCount, scriptFunc);
         }
 
         /// <summary>
@@ -1325,12 +1366,13 @@ namespace Microsoft.ClearScript
 
         internal ScriptEngine GetEngine()
         {
-            if (engine == null)
+            var activeEngine = ScriptEngine.Current ?? engine;
+            if (activeEngine == null)
             {
                 throw new InvalidOperationException("Operation requires a script engine");
             }
 
-            return engine;
+            return activeEngine;
         }
 
         internal static Type GetUniqueHostType(object type, string paramName)
@@ -1357,17 +1399,7 @@ namespace Microsoft.ClearScript
         void IScriptableObject.OnExposedToScriptCode(ScriptEngine engine)
         {
             MiscHelpers.VerifyNonNullArgument(engine, "engine");
-
-            if (this.engine == null)
-            {
-                this.engine = engine;
-                return;
-            }
-
-            if (engine != this.engine)
-            {
-                throw new ArgumentException("Invalid script engine", "engine");
-            }
+            this.engine = engine;
         }
 
         // ReSharper restore ParameterHidesMember

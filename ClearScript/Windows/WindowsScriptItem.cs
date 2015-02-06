@@ -76,7 +76,7 @@ namespace Microsoft.ClearScript.Windows
         private readonly WindowsScriptEngine engine;
         private readonly IExpando target;
         private WindowsScriptItem holder;
-        private bool disposed;
+        private DisposedFlag disposedFlag = new DisposedFlag();
 
         private WindowsScriptItem(WindowsScriptEngine engine, IExpando target)
         {
@@ -176,18 +176,13 @@ namespace Microsoft.ClearScript.Windows
 
         private void VerifyNotDisposed()
         {
-            if (disposed)
+            if (disposedFlag.IsSet())
             {
                 throw new ObjectDisposedException(ToString());
             }
         }
 
         #region ScriptItem overrides
-
-        public override ScriptEngine Engine
-        {
-            get { return engine; }
-        }
 
         protected override bool TryBindAndInvoke(DynamicMetaObjectBinder binder, object[] args, out object result)
         {
@@ -369,6 +364,11 @@ namespace Microsoft.ClearScript.Windows
 
         #region IScriptMarshalWrapper implementation
 
+        public override ScriptEngine Engine
+        {
+            get { return engine; }
+        }
+
         public override object Unwrap()
         {
             return target;
@@ -380,10 +380,9 @@ namespace Microsoft.ClearScript.Windows
 
         public void Dispose()
         {
-            if (!disposed)
+            if (disposedFlag.Set())
             {
                 Marshal.ReleaseComObject(target);
-                disposed = true;
             }
         }
 

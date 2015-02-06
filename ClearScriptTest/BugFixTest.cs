@@ -60,7 +60,10 @@
 //       
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Linq;
@@ -150,7 +153,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_V8_ScriptInterruptCrash()
+        public void BugFix_V8ScriptInterruptCrash()
         {
             // run the test several times to verify post-interrupt engine functionality
 
@@ -791,7 +794,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_V8_GlobalMembers_ReadOnlyPropertyCrash()
+        public void BugFix_V8GlobalMembers_ReadOnlyPropertyCrash()
         {
             // this test is for a crash that occurred only on debug V8 builds
             engine.AddHostObject("bag", HostItemFlags.GlobalMembers, new PropertyBag());
@@ -800,11 +803,335 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_V8_GlobalMembers_NativeFunctionHiding()
+        public void BugFix_V8GlobalMembers_ReadOnlyPropertyCrash_Index()
+        {
+            // this test is for a crash that occurred only on debug V8 builds
+            engine.AddHostObject("bag", HostItemFlags.GlobalMembers, new PropertyBag());
+            engine.AddHostObject("test", HostItemFlags.GlobalMembers, new ReadOnlyCollection<int>(new [] { 5, 4, 3, 2, 1 }));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("this[2] = 123"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8GlobalMembers_NativeFunctionHiding()
         {
             engine.Execute("function toString() { return 'ABC'; }");
             engine.AddHostObject("bag", HostItemFlags.GlobalMembers, new PropertyBag());
             Assert.AreEqual("ABC", engine.Evaluate("toString()"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScriptItemArgsByRef()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            var a = new object();
+            var b = new object();
+            var c = new object();
+            var x = new object();
+            var y = new object();
+            var z = new object();
+
+            engine.Script.a = a;
+            engine.Script.b = b;
+            engine.Script.c = c;
+            engine.Script.x = x;
+            engine.Script.y = y;
+            engine.Script.z = z;
+
+            engine.Execute("sub test(i, j, k) : i = x : j = y : k = z : end sub");
+            engine.Script.test(ref a, out b, ref c);
+
+            Assert.AreSame(x, a);
+            Assert.AreSame(y, b);
+            Assert.AreSame(z, c);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScriptItemArgsByRef_Scalar()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            var a = 123;
+            var b = 456;
+            var c = 789;
+            const int x = 987;
+            const int y = 654;
+            const int z = 321;
+
+            engine.Script.a = a;
+            engine.Script.b = b;
+            engine.Script.c = c;
+            engine.Script.x = x;
+            engine.Script.y = y;
+            engine.Script.z = z;
+
+            engine.Execute("sub test(i, j, k) : i = x : j = y : k = z : end sub");
+            engine.Script.test(ref a, out b, ref c);
+
+            Assert.AreEqual(x, a);
+            Assert.AreEqual(y, b);
+            Assert.AreEqual(z, c);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScriptItemArgsByRef_Enum()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            var a = DayOfWeek.Monday;
+            var b = DayOfWeek.Tuesday;
+            var c = DayOfWeek.Wednesday;
+            const DayOfWeek x = DayOfWeek.Sunday;
+            const DayOfWeek y = DayOfWeek.Saturday;
+            const DayOfWeek z = DayOfWeek.Friday;
+
+            engine.Script.a = a;
+            engine.Script.b = b;
+            engine.Script.c = c;
+            engine.Script.x = x;
+            engine.Script.y = y;
+            engine.Script.z = z;
+
+            engine.Execute("sub test(i, j, k) : i = x : j = y : k = z : end sub");
+            engine.Script.test(ref a, out b, ref c);
+
+            Assert.AreEqual(x, a);
+            Assert.AreEqual(y, b);
+            Assert.AreEqual(z, c);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScriptItemArgsByRef_Struct()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            var random = new Random();
+            var a = TimeSpan.FromMilliseconds(random.NextDouble() * 1000);
+            var b = TimeSpan.FromMilliseconds(random.NextDouble() * 1000);
+            var c = TimeSpan.FromMilliseconds(random.NextDouble() * 1000);
+            var x = TimeSpan.FromMilliseconds(random.NextDouble() * 1000);
+            var y = TimeSpan.FromMilliseconds(random.NextDouble() * 1000);
+            var z = TimeSpan.FromMilliseconds(random.NextDouble() * 1000);
+
+            engine.Script.a = a;
+            engine.Script.b = b;
+            engine.Script.c = c;
+            engine.Script.x = x;
+            engine.Script.y = y;
+            engine.Script.z = z;
+
+            engine.Execute("sub test(i, j, k) : i = x : j = y : k = z : end sub");
+            engine.Script.test(ref a, out b, ref c);
+
+            Assert.AreEqual(x, a);
+            Assert.AreEqual(y, b);
+            Assert.AreEqual(z, c);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScriptItemArgsByRef_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+
+                    Dim a = New Object
+                    Dim b = New Object
+                    Dim c = New Object
+                    Dim x = New Object
+                    Dim y = New Object
+                    Dim z = New Object
+
+                    engine.Script.a = a
+                    engine.Script.b = b
+                    engine.Script.c = c
+                    engine.Script.x = x
+                    engine.Script.y = y
+                    engine.Script.z = z
+
+                    engine.Execute(""sub test(i, j, k) : i = x : j = y : k = z : end sub"")
+                    engine.Script.test(a, b, c)
+
+                    Assert.AreSame(x, a)
+                    Assert.AreSame(y, b)
+                    Assert.AreSame(z, c)
+
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScriptItemArgsByRef_VB_Scalar()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+
+                    Dim a = 123
+                    Dim b = 456
+                    Dim c = 789
+                    Dim x = 987
+                    Dim y = 654
+                    Dim z = 321
+
+                    engine.Script.a = a
+                    engine.Script.b = b
+                    engine.Script.c = c
+                    engine.Script.x = x
+                    engine.Script.y = y
+                    engine.Script.z = z
+
+                    engine.Execute(""sub test(i, j, k) : i = x : j = y : k = z : end sub"")
+                    engine.Script.test(a, b, c)
+
+                    Assert.AreEqual(x, a)
+                    Assert.AreEqual(y, b)
+                    Assert.AreEqual(z, c)
+
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScriptItemArgsByRef_VB_Enum()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+
+                    Dim a = DayOfWeek.Monday
+                    Dim b = DayOfWeek.Tuesday
+                    Dim c = DayOfWeek.Wednesday
+                    Dim x = DayOfWeek.Sunday
+                    Dim y = DayOfWeek.Saturday
+                    Dim z = DayOfWeek.Friday
+
+                    engine.Script.a = a
+                    engine.Script.b = b
+                    engine.Script.c = c
+                    engine.Script.x = x
+                    engine.Script.y = y
+                    engine.Script.z = z
+
+                    engine.Execute(""sub test(i, j, k) : i = x : j = y : k = z : end sub"")
+                    engine.Script.test(a, b, c)
+
+                    Assert.AreEqual(x, a)
+                    Assert.AreEqual(y, b)
+                    Assert.AreEqual(z, c)
+
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScriptItemArgsByRef_VB_Struct()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+
+                    Dim random = New Random
+                    Dim a = TimeSpan.FromMilliseconds(random.NextDouble() * 1000)
+                    Dim b = TimeSpan.FromMilliseconds(random.NextDouble() * 1000)
+                    Dim c = TimeSpan.FromMilliseconds(random.NextDouble() * 1000)
+                    Dim x = TimeSpan.FromMilliseconds(random.NextDouble() * 1000)
+                    Dim y = TimeSpan.FromMilliseconds(random.NextDouble() * 1000)
+                    Dim z = TimeSpan.FromMilliseconds(random.NextDouble() * 1000)
+
+                    engine.Script.a = a
+                    engine.Script.b = b
+                    engine.Script.c = c
+                    engine.Script.x = x
+                    engine.Script.y = y
+                    engine.Script.z = z
+
+                    engine.Execute(""sub test(i, j, k) : i = x : j = y : k = z : end sub"")
+                    engine.Script.test(a, b, c)
+
+                    Assert.AreEqual(x, a)
+                    Assert.AreEqual(y, b)
+                    Assert.AreEqual(z, c)
+
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_CallHostObjectFunctionAsConstructor()
+        {
+            engine.Script.random = new Random();
+            engine.AddHostType("Random", typeof(Random));
+            var result = engine.Evaluate(@"
+                (function () {
+                    var x = new Random().NextDouble();
+                    try {
+                        return new random.constructor();
+                    }
+                    catch (ex) {
+                        return new Random().NextDouble() * x;
+                    }
+                    return false;
+                })()
+            ");
+            Assert.IsInstanceOfType(result, typeof(double));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_HostItemCachingForHostVariables()
+        {
+            var foo = new HostFunctions().newVar(new object());
+            engine.Script.foo1 = foo;
+            engine.Script.foo2 = foo;
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo1 === foo2")));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_MetaScriptItem_GetDynamicMemberNames()
+        {
+            var dmop = (IDynamicMetaObjectProvider)engine.Evaluate("({ foo: 123, bar: 456, baz: 789 })");
+            var dmo = dmop.GetMetaObject(Expression.Constant(dmop));
+            var names = dmo.GetDynamicMemberNames().ToArray();
+            Assert.IsTrue(names.Contains("foo"));
+            Assert.IsTrue(names.Contains("bar"));
+            Assert.IsTrue(names.Contains("baz"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AmbiguousIndexer()
+        {
+            IAmbiguousIndexer indexer = new AmbiguousIndexer();
+            engine.AddRestrictedHostObject("indexer", indexer);
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("indexer.Item.set(123, 456)");
+            Assert.AreEqual(456, engine.Evaluate("indexer.Item(123)"));
+            Assert.IsNull(engine.Evaluate("indexer.Item(789)"));
+
+            engine.Execute("indexer.Item.set(DayOfWeek.Thursday, DayOfWeek.Sunday)");
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("indexer.Item(DayOfWeek.Thursday)"));
+            Assert.IsNull(engine.Evaluate("indexer.Item(DayOfWeek.Tuesday)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AmbiguousIndexer_ADODB()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging);
+
+            var recordSet = new ADODB.Recordset();
+            recordSet.Fields.Append("foo", ADODB.DataTypeEnum.adVarChar, 20);
+            recordSet.Open(Missing.Value, Missing.Value, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic, 0);
+            recordSet.AddNew(Missing.Value, Missing.Value);
+            recordSet.Fields["foo"].Value = "bar";
+
+            engine.AddHostObject("recordSet", recordSet);
+            Assert.AreEqual("bar", engine.Evaluate("recordSet.Fields.Item(\"foo\").Value"));
+
+            engine.Execute("recordSet.Fields.Item(\"foo\").Value = \"qux\"");
+            Assert.AreEqual("qux", engine.Evaluate("recordSet.Fields.Item(\"foo\").Value"));
+
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("recordSet.Fields.Item(\"baz\")"));
         }
 
         // ReSharper restore InconsistentNaming
@@ -867,6 +1194,40 @@ namespace Microsoft.ClearScript.Test
             ~ResurrectionTestWrapper()
             {
                 target.Dispose();
+            }
+        }
+
+        public interface IAmbiguousIndexerBase1
+        {
+            object this[int i] { get; set; }
+        }
+
+        public interface IAmbiguousIndexerBase2
+        {
+            object this[int i] { get; set; }
+            object this[DayOfWeek d] { get; set; }
+        }
+
+        public interface IAmbiguousIndexer : IAmbiguousIndexerBase1, IAmbiguousIndexerBase2
+        {
+            new object this[int i] { get; set; }
+        }
+
+        public class AmbiguousIndexer : IAmbiguousIndexer
+        {
+            private readonly IDictionary byInteger = new ListDictionary();
+            private readonly IDictionary byDayOfWeek = new ListDictionary();
+
+            public object this[int key]
+            {
+                get { return byInteger[key]; }
+                set { byInteger[key] = value; }
+            }
+
+            public object this[DayOfWeek key]
+            {
+                get { return byDayOfWeek[key]; }
+                set { byDayOfWeek[key] = value; }
             }
         }
 

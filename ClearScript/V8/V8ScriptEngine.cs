@@ -86,7 +86,7 @@ namespace Microsoft.ClearScript.V8
         private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
         private readonly object script;
-        private bool disposed;
+        private DisposedFlag disposedFlag = new DisposedFlag();
 
         private const int continuationInterval = 2000;
         private bool inContinuationTimerScope;
@@ -507,7 +507,7 @@ namespace Microsoft.ClearScript.V8
 
         private void VerifyNotDisposed()
         {
-            if (disposed)
+            if (disposedFlag.IsSet())
             {
                 throw new ObjectDisposedException(ToString());
             }
@@ -846,15 +846,13 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         protected override void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (disposedFlag.Set())
             {
                 if (disposing)
                 {
                     ((IDisposable)script).Dispose();
                     proxy.Dispose();
                 }
-
-                disposed = true;
             }
         }
 

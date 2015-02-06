@@ -77,6 +77,7 @@ namespace Microsoft.ClearScript
 
         private readonly string name;
         private static readonly IUniqueNameManager nameManager = new UniqueNameManager();
+        [ThreadStatic] private static ScriptEngine currentEngine;
 
         #endregion
 
@@ -101,6 +102,20 @@ namespace Microsoft.ClearScript
         public string Name
         {
             get { return name; }
+        }
+
+        /// <summary>
+        /// Gets the script engine that is invoking a host member on the current thread.
+        /// </summary>
+        /// <remarks>
+        /// If multiple script engines are invoking host members on the current thread, this
+        /// property gets the one responsible for the most deeply nested invocation. If no script
+        /// engines are invoking host members on the current thread, this property returns
+        /// <c>null</c>.
+        /// </remarks>
+        public static ScriptEngine Current
+        {
+            get { return currentEngine; }
         }
 
         /// <summary>
@@ -164,6 +179,17 @@ namespace Microsoft.ClearScript
         /// on the specific behavior of reflection-based method binding.
         /// </remarks>
         public bool UseReflectionBindFallback { get; set; }
+
+        /// <summary>
+        /// Enables or disables automatic host variable tunneling for by-reference arguments to script functions and delegates.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, the script engine replaces by-reference
+        /// arguments to script functions and delegates with host variables, allowing script code
+        /// to simulate output arguments if the script language does not support them natively.
+        /// </remarks>
+        /// <seealso cref="HostFunctions.newVar{T}(T)"/>
+        public bool EnableAutoHostVariables { get; set; }
 
         /// <summary>
         /// Gets or sets a callback that can be used to halt script execution.
@@ -1109,12 +1135,32 @@ namespace Microsoft.ClearScript
 
         internal virtual void HostInvoke(Action action)
         {
-            action();
+            var previousEngine = currentEngine;
+            currentEngine = this;
+
+            try
+            {
+                action();
+            }
+            finally
+            {
+                currentEngine = previousEngine;
+            }
         }
 
         internal virtual T HostInvoke<T>(Func<T> func)
         {
-            return func();
+            var previousEngine = currentEngine;
+            currentEngine = this;
+
+            try
+            {
+                return func();
+            }
+            finally
+            {
+                currentEngine = previousEngine;
+            }
         }
 
         #endregion
@@ -1125,7 +1171,7 @@ namespace Microsoft.ClearScript
 
         internal virtual void ScriptInvoke(Action action)
         {
-            var prevScriptFrame = CurrentScriptFrame;
+            var previousScriptFrame = CurrentScriptFrame;
             CurrentScriptFrame = new ScriptFrame();
 
             try
@@ -1134,13 +1180,13 @@ namespace Microsoft.ClearScript
             }
             finally
             {
-                CurrentScriptFrame = prevScriptFrame;
+                CurrentScriptFrame = previousScriptFrame;
             }
         }
 
         internal virtual T ScriptInvoke<T>(Func<T> func)
         {
-            var prevScriptFrame = CurrentScriptFrame;
+            var previousScriptFrame = CurrentScriptFrame;
             CurrentScriptFrame = new ScriptFrame();
 
             try
@@ -1149,7 +1195,7 @@ namespace Microsoft.ClearScript
             }
             finally
             {
-                CurrentScriptFrame = prevScriptFrame;
+                CurrentScriptFrame = previousScriptFrame;
             }
         }
 
@@ -1235,7 +1281,7 @@ namespace Microsoft.ClearScript
             var hostObject = target as HostObject;
             if (hostObject != null)
             {
-                return GetOrCreateHostItemForHostTarget(hostObject, flags, createHostItem);
+                return GetOrCreateHostItemForHostObject(hostObject, hostObject.Target, flags, createHostItem);
             }
 
             var hostType = target as HostType;
@@ -1247,21 +1293,27 @@ namespace Microsoft.ClearScript
             var hostMethod = target as HostMethod;
             if (hostMethod != null)
             {
-                return GetOrCreateHostItemForHostTarget(hostMethod, flags, createHostItem);
+                return GetOrCreateHostItemForHostObject(hostMethod, hostMethod, flags, createHostItem);
+            }
+
+            var hostVariable = target as HostVariableBase;
+            if (hostVariable != null)
+            {
+                return GetOrCreateHostItemForHostObject(hostVariable, hostVariable, flags, createHostItem);
             }
 
             var hostIndexedProperty = target as HostIndexedProperty;
             if (hostIndexedProperty != null)
             {
-                return GetOrCreateHostItemForHostTarget(hostIndexedProperty, flags, createHostItem);
+                return GetOrCreateHostItemForHostObject(hostIndexedProperty, hostIndexedProperty, flags, createHostItem);
             }
 
             return createHostItem(this, target, flags);
         }
 
-        private HostItem GetOrCreateHostItemForHostTarget(HostTarget hostTarget, HostItemFlags flags, Func<ScriptEngine, HostTarget, HostItemFlags, HostItem> createHostItem)
+        private HostItem GetOrCreateHostItemForHostObject(HostTarget hostTarget, object target, HostItemFlags flags, Func<ScriptEngine, HostTarget, HostItemFlags, HostItem> createHostItem)
         {
-            var cacheEntry = hostObjectHostItemCache.GetOrCreateValue(hostTarget.Target);
+            var cacheEntry = hostObjectHostItemCache.GetOrCreateValue(target);
 
             List<WeakReference> activeWeakRefs = null;
             var staleWeakRefCount = 0;

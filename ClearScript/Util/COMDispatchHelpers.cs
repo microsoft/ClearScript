@@ -73,7 +73,7 @@ namespace Microsoft.ClearScript.Util
             int dispid;
             Marshal.ThrowExceptionForHR(dispatchEx.GetDispID(name, ignoreCase ? DispatchNameFlags.CaseInsensitive : DispatchNameFlags.CaseSensitive, out dispid));
 
-            using (var argVariantArrayBlock = new CoTaskMemVariantArrayBlock(args))
+            using (var argVariantArrayBlock = new CoTaskMemVariantArgsBlock(args))
             {
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
@@ -100,7 +100,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             Marshal.ThrowExceptionForHR(result);
-            using (var argVariantArrayBlock = new CoTaskMemVariantArrayBlock(args))
+            using (var argVariantArrayBlock = new CoTaskMemVariantArgsBlock(args))
             {
                 using (var namedArgDispidBlock = new CoTaskMemBlock(sizeof(int)))
                 {
@@ -114,7 +114,7 @@ namespace Microsoft.ClearScript.Util
 
         public static object Invoke(this IDispatchEx dispatchEx, object[] args)
         {
-            using (var argVariantArrayBlock = new CoTaskMemVariantArrayBlock(args))
+            using (var argVariantArrayBlock = new CoTaskMemVariantArgsByRefBlock(args))
             {
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
@@ -131,7 +131,7 @@ namespace Microsoft.ClearScript.Util
             int dispid;
             Marshal.ThrowExceptionForHR(dispatchEx.GetDispID(name, ignoreCase ? DispatchNameFlags.CaseInsensitive : DispatchNameFlags.CaseSensitive, out dispid));
 
-            using (var argVariantArrayBlock = new CoTaskMemVariantArrayBlock(args))
+            using (var argVariantArrayBlock = new CoTaskMemVariantArgsByRefBlock(args))
             {
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {

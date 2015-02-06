@@ -78,17 +78,17 @@ public:
 
     V8Exception(Type type, const StdString& engineName, StdString&& message):
         m_Type(type),
-		m_EngineName(engineName),
-		m_Message(std::move(message)),
+        m_EngineName(engineName),
+        m_Message(std::move(message)),
         m_InnerException(V8Value::Undefined)
     {
     }
 
     V8Exception(Type type, const StdString& engineName, StdString&& message, StdString&& stackTrace, V8Value&& innerException):
         m_Type(type),
-		m_EngineName(engineName),
-		m_Message(std::move(message)),
-		m_StackTrace(std::move(stackTrace)),
+        m_EngineName(engineName),
+        m_Message(std::move(message)),
+        m_StackTrace(std::move(stackTrace)),
         m_InnerException(std::move(innerException))
     {
     }

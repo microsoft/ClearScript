@@ -318,6 +318,8 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("HostFunctions")]
         public void HostFunctions_del_CustomDelegate()
         {
+            engine.EnableAutoHostVariables = true;
+
             var fooVal = Enumerable.Range(1, 5).ToArray();
             const double barVal = Math.PI;
             const DayOfWeek bazVal = DayOfWeek.Wednesday;
@@ -372,6 +374,36 @@ namespace Microsoft.ClearScript.Test
             const int retVal = 42;
             Func<object, object, int> method = (value1, value2) => { methodInvoked = (bool)value1 && (bool)value2; return retVal; };
             Assert.AreEqual(retVal, ((Func<object, object, int>)host.func<int>(2, method))(true, true));
+            Assert.IsTrue(methodInvoked);
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_func_0_NonGeneric()
+        {
+            var methodInvoked = false;
+            const int retVal = 42;
+            Func<object> method = () => { methodInvoked = true; return retVal; };
+            Assert.AreEqual(retVal, ((Func<object>)host.func(0, method))());
+            Assert.IsTrue(methodInvoked);
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_func_1_NonGeneric()
+        {
+            var methodInvoked = false;
+            const int retVal = 42;
+            Func<object, object> method = value => { methodInvoked = (bool)value; return retVal; };
+            Assert.AreEqual(retVal, ((Func<object, object>)host.func(1, method))(true));
+            Assert.IsTrue(methodInvoked);
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_func_2_NonGeneric()
+        {
+            var methodInvoked = false;
+            const int retVal = 42;
+            Func<object, object, object> method = (value1, value2) => { methodInvoked = (bool)value1 && (bool)value2; return retVal; };
+            Assert.AreEqual(retVal, ((Func<object, object, object>)host.func(2, method))(true, true));
             Assert.IsTrue(methodInvoked);
         }
 
@@ -466,6 +498,13 @@ namespace Microsoft.ClearScript.Test
         {
             VerifyNewArr<DateTime>(5);
             VerifyNewArr<DateTime>(5, 3);
+        }
+
+        [TestMethod, TestCategory("HostFunctions")]
+        public void HostFunctions_newArr_NonGeneric()
+        {
+            VerifyNewArr(5);
+            VerifyNewArr(5, 3);
         }
 
         [TestMethod, TestCategory("HostFunctions")]
@@ -821,6 +860,11 @@ namespace Microsoft.ClearScript.Test
             var value = (Array)host.newArr<T>(lengths);
             Assert.IsInstanceOfType(value, typeof(T).MakeArrayType(lengths.Length));
             lengths.ForEach((length, index) => Assert.AreEqual(lengths[index], value.GetLength(index)));
+        }
+
+        private void VerifyNewArr(params int[] lengths)
+        {
+            VerifyNewArr<object>(lengths);
         }
 
         private void VerifyNewVar<T>()

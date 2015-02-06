@@ -77,7 +77,7 @@ namespace Microsoft.ClearScript.V8
         private readonly IUniqueNameManager documentNameManager = new UniqueFileNameManager();
 
         private readonly V8IsolateProxy proxy;
-        private bool disposed;
+        private DisposedFlag disposedFlag = new DisposedFlag();
 
         #endregion
 
@@ -477,7 +477,7 @@ namespace Microsoft.ClearScript.V8
 
         private void VerifyNotDisposed()
         {
-            if (disposed)
+            if (disposedFlag.IsSet())
             {
                 throw new ObjectDisposedException(ToString());
             }
@@ -498,10 +498,9 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public void Dispose()
         {
-            if (!disposed)
+            if (disposedFlag.Set())
             {
                 proxy.Dispose();
-                disposed = true;
             }
         }
 

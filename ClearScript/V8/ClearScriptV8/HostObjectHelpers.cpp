@@ -67,9 +67,9 @@ using namespace Microsoft::ClearScript::V8;
 // local helper functions
 //-----------------------------------------------------------------------------
 
-static void DECLSPEC_NORETURN ThrowHostException(Exception^ gcException)
+static void DECLSPEC_NORETURN ThrowHostException(void* pvSource, Exception^ gcException)
 {
-    throw HostException(StdString(gcException->Message), V8ContextProxyImpl::ImportValue(gcException));
+    throw HostException(StdString(gcException->GetBaseException()->Message), V8ContextProxyImpl::ImportValue(V8ProxyHelpers::MarshalExceptionToScript(pvSource, gcException)));
 }
 
 //-----------------------------------------------------------------------------
@@ -98,7 +98,7 @@ V8Value HostObjectHelpers::GetProperty(void* pvObject, const StdString& name)
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -112,7 +112,7 @@ V8Value HostObjectHelpers::GetProperty(void* pvObject, const StdString& name, bo
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -126,7 +126,7 @@ void HostObjectHelpers::SetProperty(void* pvObject, const StdString& name, const
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -140,7 +140,7 @@ bool HostObjectHelpers::DeleteProperty(void* pvObject, const StdString& name)
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -161,7 +161,7 @@ void HostObjectHelpers::GetPropertyNames(void* pvObject, std::vector<StdString>&
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -175,7 +175,7 @@ V8Value HostObjectHelpers::GetProperty(void* pvObject, int index)
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -189,7 +189,7 @@ void HostObjectHelpers::SetProperty(void* pvObject, int index, const V8Value& va
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -203,7 +203,7 @@ bool HostObjectHelpers::DeleteProperty(void* pvObject, int index)
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -224,7 +224,7 @@ void HostObjectHelpers::GetPropertyIndices(void* pvObject, std::vector<int>& ind
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -246,7 +246,7 @@ V8Value HostObjectHelpers::Invoke(void* pvObject, const std::vector<V8Value>& ar
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -268,7 +268,7 @@ V8Value HostObjectHelpers::InvokeMethod(void* pvObject, const StdString& name, c
     }
     catch (Exception^ gcException)
     {
-        ThrowHostException(gcException);
+        ThrowHostException(pvObject, gcException);
     }
 }
 
@@ -312,6 +312,27 @@ void HostObjectHelpers::GetAllCachedV8Objects(void* pvCache, std::vector<void*>&
 bool HostObjectHelpers::RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject)
 {
     return V8ProxyHelpers::RemoveV8ObjectCacheEntry(pvCache, pvObject);
+}
+
+//-----------------------------------------------------------------------------
+
+void* HostObjectHelpers::CreateDebugAgent(const StdString& name, const StdString& version, int port, DebugCallback&& callback)
+{
+    return V8ProxyHelpers::CreateDebugAgent(name.ToManagedString(), version.ToManagedString(), port, gcnew V8DebugListenerImpl(std::move(callback)));
+}
+
+//-----------------------------------------------------------------------------
+
+void HostObjectHelpers::SendDebugMessage(void* pvAgent, const StdString& content)
+{
+    return V8ProxyHelpers::SendDebugMessage(pvAgent, content.ToManagedString());
+}
+
+//-----------------------------------------------------------------------------
+
+void HostObjectHelpers::DestroyDebugAgent(void* pvAgent)
+{
+    V8ProxyHelpers::DestroyDebugAgent(pvAgent);
 }
 
 //-----------------------------------------------------------------------------

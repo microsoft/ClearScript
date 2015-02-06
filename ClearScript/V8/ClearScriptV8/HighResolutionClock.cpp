@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -59,34 +59,30 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
+#include "ClearScriptV8Native.h"
+#include <windows.h>
 
 //-----------------------------------------------------------------------------
-// HostException
+// HighResolutionClock implementation
 //-----------------------------------------------------------------------------
 
-class HostException
+static std::once_flag s_InitializationFlag;
+static LARGE_INTEGER s_TicksPerSecond;
+
+//-----------------------------------------------------------------------------
+
+double HighResolutionClock::GetRelativeSeconds()
 {
-public:
-
-    HostException(StdString&& message, V8Value&& exception):
-        m_Message(std::move(message)),
-        m_Exception(std::move(exception))
+    std::call_once(s_InitializationFlag, []
     {
-    }
+        ASSERT_EVAL(::QueryPerformanceFrequency(&s_TicksPerSecond));
+    });
 
-    const StdString& GetMessage() const
-    {
-        return m_Message;
-    }
+    LARGE_INTEGER tickCount;
+    ASSERT_EVAL(::QueryPerformanceCounter(&tickCount));
 
-    const V8Value& GetException() const
-    {
-        return m_Exception;
-    }
+    auto wholeSeconds = tickCount.QuadPart / s_TicksPerSecond.QuadPart;
+    auto remainingTicks = tickCount.QuadPart % s_TicksPerSecond.QuadPart;
 
-private:
-
-    StdString m_Message;
-    V8Value m_Exception;
-};
+    return wholeSeconds + (static_cast<double>(remainingTicks) / s_TicksPerSecond.QuadPart);
+}

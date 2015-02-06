@@ -88,3 +88,4 @@
 #include "V8WeakContextBinding.h"
 #include "V8ObjectHolderImpl.h"
 #include "V8ScriptHolderImpl.h"
+#include "HighResolutionClock.h"

@@ -156,21 +156,11 @@ namespace Microsoft.ClearScript.Util
         #endregion
     }
 
-    internal class CoTaskMemVariantArrayBlock : CoTaskMemBlock
+    internal class CoTaskMemVariantArgsBlock : CoTaskMemBlock
     {
         private readonly int length;
 
-        public CoTaskMemVariantArrayBlock(int length)
-            : base(RawCOMHelpers.VariantSize * length)
-        {
-            this.length = length;
-            for (var index = 0; index < length; index++)
-            {
-                NativeMethods.VariantInit(GetAddrInternal(index));
-            }
-        }
-
-        public CoTaskMemVariantArrayBlock(object[] args)
+        public CoTaskMemVariantArgsBlock(object[] args)
             : base(args.Length * RawCOMHelpers.VariantSize)
         {
             length = args.Length;
@@ -192,7 +182,7 @@ namespace Microsoft.ClearScript.Util
                 throw new ObjectDisposedException(ToString());
             }
 
-            return GetAddrInternal(index);
+            return GetAddrInternal(length - 1 - index);
         }
 
         private IntPtr GetAddrInternal(int index)
@@ -209,6 +199,65 @@ namespace Microsoft.ClearScript.Util
                 for (var index = 0; index < length; index++)
                 {
                     NativeMethods.VariantClear(GetAddrInternal(index));
+                }
+            }
+
+            base.Dispose(disposing);
+        }
+
+        #endregion
+    }
+
+    internal class CoTaskMemVariantArgsByRefBlock : CoTaskMemBlock
+    {
+        private readonly object[] args;
+
+        public CoTaskMemVariantArgsByRefBlock(object[] args)
+            : base(args.Length * 2 * RawCOMHelpers.VariantSize)
+        {
+            this.args = args;
+            for (var index = 0; index < args.Length; index++)
+            {
+                var pArg = GetAddrInternal(args.Length + index);
+                Marshal.GetNativeVariantForObject(args[index], pArg);
+
+                var pArgRef = GetAddrInternal(args.Length - 1 - index);
+                NativeMethods.VariantInit(pArgRef);
+                Marshal.WriteInt16(pArgRef, 0, 0x400C /*VT_BYREF | VT_VARIANT*/);
+                Marshal.WriteIntPtr(pArgRef, sizeof(ushort) * 4, pArg);
+            }
+        }
+        public IntPtr GetAddr(int index)
+        {
+            if ((index < 0) || (index >= args.Length))
+            {
+                throw new ArgumentOutOfRangeException("index");
+            }
+
+            if (Addr == IntPtr.Zero)
+            {
+                throw new ObjectDisposedException(ToString());
+            }
+
+            return GetAddrInternal(args.Length - 1 - index);
+        }
+
+        private IntPtr GetAddrInternal(int index)
+        {
+            return Addr + (index * RawCOMHelpers.VariantSize);
+        }
+
+        #region CoTaskMemBlock overrides
+
+        protected override void Dispose(bool disposing)
+        {
+            if (Addr != IntPtr.Zero)
+            {
+                for (var index = 0; index < args.Length; index++)
+                {
+                    var pArg = GetAddrInternal(args.Length + index);
+                    args[index] = Marshal.GetObjectForNativeVariant(pArg);
+                    NativeMethods.VariantClear(pArg);
                 }
             }
 

@@ -102,7 +102,7 @@ namespace Microsoft.ClearScript.Windows
         private uint nextSourceContext = 1;
 
         private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
-        private bool disposed;
+        private DisposedFlag disposedFlag = new DisposedFlag();
 
         #endregion
 
@@ -307,7 +307,7 @@ namespace Microsoft.ClearScript.Windows
 
         private void VerifyNotDisposed()
         {
-            if (disposed)
+            if (disposedFlag.IsSet())
             {
                 throw new ObjectDisposedException(ToString());
             }
@@ -761,7 +761,7 @@ namespace Microsoft.ClearScript.Windows
         /// </remarks>
         protected override void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (disposedFlag.Set())
             {
                 if (disposing)
                 {
@@ -779,8 +779,6 @@ namespace Microsoft.ClearScript.Windows
                     ((IDisposable)script).Dispose();
                     activeScript.Close();
                 }
-
-                disposed = true;
             }
         }
 

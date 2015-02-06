@@ -59,34 +59,22 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
+using System.Threading;
 
-//-----------------------------------------------------------------------------
-// HostException
-//-----------------------------------------------------------------------------
-
-class HostException
+namespace Microsoft.ClearScript.Util
 {
-public:
-
-    HostException(StdString&& message, V8Value&& exception):
-        m_Message(std::move(message)),
-        m_Exception(std::move(exception))
+    internal struct DisposedFlag
     {
+        private int disposed;
+
+        public bool IsSet()
+        {
+            return disposed != 0;
+        }
+
+        public bool Set()
+        {
+            return Interlocked.Exchange(ref disposed, 1) == 0;
+        }
     }
-
-    const StdString& GetMessage() const
-    {
-        return m_Message;
-    }
-
-    const V8Value& GetException() const
-    {
-        return m_Exception;
-    }
-
-private:
-
-    StdString m_Message;
-    V8Value m_Exception;
-};
+}

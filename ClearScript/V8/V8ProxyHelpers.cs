@@ -221,37 +221,71 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region exception marshaling
+
+        public static unsafe object MarshalExceptionToScript(void* pSource, Exception exception)
+        {
+            return MarshalExceptionToScript(GetHostObject(pSource), exception);
+        }
+
+        public static object MarshalExceptionToScript(object source, Exception exception)
+        {
+            return ((IScriptMarshalWrapper)source).Engine.MarshalToScript(exception);
+        }
+
+        public static Exception MarshalExceptionToHost(object exception)
+        {
+            return (exception != null) ? (Exception)((IScriptMarshalWrapper)exception).Engine.MarshalToHost(exception, false) : null;
+        }
+
+        #endregion
+
         #region V8 object cache
 
         public static unsafe void* CreateV8ObjectCache()
         {
-            var cache = new Dictionary<object, IntPtr>();
-            return AddRefHostObject(cache);
+            return AddRefHostObject(new Dictionary<object, IntPtr>());
         }
 
-        public static unsafe void CacheV8Object(void* pV8ObjectCache, void* pObject, void* pV8Object)
+        public static unsafe void CacheV8Object(void* pCache, void* pObject, void* pV8Object)
         {
-            var cache = (Dictionary<object, IntPtr>)GetHostObject(pV8ObjectCache);
-            cache.Add(GetHostObject(pObject), (IntPtr)pV8Object);
+            ((Dictionary<object, IntPtr>)GetHostObject(pCache)).Add(GetHostObject(pObject), (IntPtr)pV8Object);
         }
 
-        public static unsafe void* GetCachedV8Object(void* pV8ObjectCache, void* pObject)
+        public static unsafe void* GetCachedV8Object(void* pCache, void* pObject)
         {
             IntPtr pV8Object;
-            var cache = (Dictionary<object, IntPtr>)GetHostObject(pV8ObjectCache);
-            return cache.TryGetValue(GetHostObject(pObject), out pV8Object) ? pV8Object.ToPointer() : null;
+            return ((Dictionary<object, IntPtr>)GetHostObject(pCache)).TryGetValue(GetHostObject(pObject), out pV8Object) ? pV8Object.ToPointer() : null;
         }
 
-        public static unsafe IntPtr[] GetAllCachedV8Objects(void* pV8ObjectCache)
+        public static unsafe IntPtr[] GetAllCachedV8Objects(void* pCache)
         {
-            var cache = (Dictionary<object, IntPtr>)GetHostObject(pV8ObjectCache);
-            return cache.Values.ToArray();
+            return ((Dictionary<object, IntPtr>)GetHostObject(pCache)).Values.ToArray();
         }
 
-        public static unsafe bool RemoveV8ObjectCacheEntry(void* pV8ObjectCache, void* pObject)
+        public static unsafe bool RemoveV8ObjectCacheEntry(void* pCache, void* pObject)
         {
-            var cache = (Dictionary<object, IntPtr>)GetHostObject(pV8ObjectCache);
-            return cache.Remove(GetHostObject(pObject));
+            return ((Dictionary<object, IntPtr>)GetHostObject(pCache)).Remove(GetHostObject(pObject));
+        }
+
+        #endregion
+
+        #region V8 debug agent
+
+        public static unsafe void* CreateDebugAgent(string name, string version, int port, IV8DebugListener listener)
+        {
+            return AddRefHostObject(new V8DebugAgent(name, version, port, listener));
+        }
+
+        public static unsafe void SendDebugMessage(void* pAgent, string content)
+        {
+            ((V8DebugAgent)GetHostObject(pAgent)).SendMessage(content);
+        }
+
+        public static unsafe void DestroyDebugAgent(void* pAgent)
+        {
+            ((V8DebugAgent)GetHostObject(pAgent)).Dispose();
+            ReleaseHostObject(pAgent);
         }
 
         #endregion

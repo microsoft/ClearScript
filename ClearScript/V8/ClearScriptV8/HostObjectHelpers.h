@@ -94,5 +94,10 @@ public:
     static void GetAllCachedV8Objects(void* pvCache, std::vector<void*>& v8ObjectPtrs);
     static bool RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject);
 
+    typedef std::function<void(const StdString& command)> DebugCallback;
+    static void* CreateDebugAgent(const StdString& name, const StdString& version, int port, DebugCallback&& callback);
+    static void SendDebugMessage(void* pvAgent, const StdString& content);
+    static void DestroyDebugAgent(void* pvAgent);
+
     static bool TryParseInt32(const StdString& text, int& result);
 };

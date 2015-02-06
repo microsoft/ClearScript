@@ -124,3 +124,43 @@
     } \
     while (false) \
     __pragma(warning(pop))
+
+//-----------------------------------------------------------------------------
+// PulseValueScope
+//-----------------------------------------------------------------------------
+
+template<typename T>
+class PulseValueScope
+{
+    PROHIBIT_COPY(PulseValueScope)
+    PROHIBIT_HEAP(PulseValueScope)
+
+public:
+
+    PulseValueScope(T* pValue, T&& value):
+        m_pValue(pValue),
+        m_OriginalValue(std::move(*pValue))
+    {
+        *m_pValue = std::move(value);
+    }
+
+    ~PulseValueScope()
+    {
+        *m_pValue = std::move(m_OriginalValue);
+    }
+
+private:
+
+    T* m_pValue;
+    T m_OriginalValue;
+};
+
+//-----------------------------------------------------------------------------
+
+#define BEGIN_PULSE_VALUE_SCOPE(ADDRESS, VALUE) \
+        { \
+            PulseValueScope<std::remove_reference<decltype(*(ADDRESS))>::type> t_PulseValueScope((ADDRESS), (VALUE));
+
+#define END_PULSE_VALUE_SCOPE \
+            IGNORE_UNUSED(t_PulseValueScope); \
+        }

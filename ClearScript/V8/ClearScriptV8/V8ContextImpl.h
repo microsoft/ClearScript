@@ -257,6 +257,21 @@ private:
         return m_spIsolateImpl->TerminateExecution();
     }
 
+    int ContextDisposedNotification()
+    {
+        return m_spIsolateImpl->ContextDisposedNotification();
+    }
+
+    bool IdleNotification(int idleTimeInMilliseconds)
+    {
+        return m_spIsolateImpl->IdleNotification(idleTimeInMilliseconds);
+    }
+
+    void LowMemoryNotification()
+    {
+        m_spIsolateImpl->LowMemoryNotification();
+    }
+
     template <typename T>
     T Verify(const TryCatch& tryCatch, T result)
     {
@@ -281,6 +296,8 @@ private:
     static void QueryGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Integer>& info);
     static void DeleteGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Boolean>& info);
     static void GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& info);
+
+    static void HostObjectFunctionCallHandler(const FunctionCallbackInfo<Value>& info);
 
     static void GetHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info);
     static void SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
@@ -309,10 +326,11 @@ private:
     SharedPtr<V8IsolateImpl> m_spIsolateImpl;
     Persistent<Context> m_hContext;
     Persistent<Object> m_hGlobal;
-    std::vector<Persistent<Object>> m_GlobalMembersStack;
+    std::vector<std::pair<StdString, Persistent<Object>>> m_GlobalMembersStack;
     Persistent<String> m_hHostObjectCookieName;
-    Persistent<String> m_hInnerExceptionName;
+    Persistent<String> m_hHostExceptionName;
     Persistent<FunctionTemplate> m_hHostObjectTemplate;
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     void* m_pvV8ObjectCache;
+    bool m_AllowHostObjectFunctionCall;
 };

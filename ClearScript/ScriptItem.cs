@@ -78,8 +78,6 @@ namespace Microsoft.ClearScript
         private static readonly MethodInfo clearLastScriptErrorMethod = typeof(ScriptItem).GetMethod("ClearLastScriptError");
         [ThreadStatic] private static IScriptEngineException lastScriptError;
 
-        public abstract ScriptEngine Engine { get; }
-
         public static void ThrowLastScriptError()
         {
             var scriptError = lastScriptError;
@@ -106,12 +104,18 @@ namespace Microsoft.ClearScript
             return args;
         }
 
-        private bool TryWrappedBindAndInvoke(DynamicMetaObjectBinder binder, object[] args, out object result)
+        private bool TryWrappedBindAndInvoke(DynamicMetaObjectBinder binder, object[] wrappedArgs, out object result)
         {
+            object[] args = null;
+            object[] savedArgs = null;
+
             object tempResult = null;
             var succeeded = Engine.ScriptInvoke(() =>
             {
-                if (!TryBindAndInvoke(binder, Engine.MarshalToScript(args), out tempResult))
+                args = Engine.MarshalToScript(wrappedArgs);
+                savedArgs = (object[])args.Clone();
+
+                if (!TryBindAndInvoke(binder, args, out tempResult))
                 {
                     if ((Engine.CurrentScriptFrame != null) && (lastScriptError == null))
                     {
@@ -126,6 +130,15 @@ namespace Microsoft.ClearScript
 
             if (succeeded)
             {
+                for (var index = 0; index < args.Length; index++)
+                {
+                    var arg = args[index];
+                    if (!ReferenceEquals(arg, savedArgs[index]))
+                    {
+                        wrappedArgs[index] = Engine.MarshalToHost(args[index], false);
+                    }
+                }
+
                 result = Engine.MarshalToHost(tempResult, false).ToDynamicResult(Engine);
                 return true;
             }
@@ -139,7 +152,7 @@ namespace Microsoft.ClearScript
             Type[] paramTypes = null;
             if ((parameters != null) && (parameters.Length >= args.Length))
             {
-                paramTypes = parameters.Skip(parameters.Length - args.Length).Select(parameter => parameter.ParameterType).ToArray();
+                paramTypes = parameters.Skip(parameters.Length - args.Length).Select(param => param.ParameterType).ToArray();
             }
 
             if (paramTypes != null)
@@ -190,9 +203,9 @@ namespace Microsoft.ClearScript
 
         #region DynamicObject overrides
 
-        public override DynamicMetaObject GetMetaObject(Expression parameter)
+        public override DynamicMetaObject GetMetaObject(Expression param)
         {
-            return new MetaScriptItem(this, base.GetMetaObject(parameter));
+            return new MetaScriptItem(this, base.GetMetaObject(param));
         }
 
         public override IEnumerable<string> GetDynamicMemberNames()
@@ -225,7 +238,7 @@ namespace Microsoft.ClearScript
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
         {
             ParameterInfo[] parameters = null;
-            if (binder.GetType().FullName.StartsWith("Microsoft.CSharp.", StringComparison.Ordinal))
+            if (Engine.EnableAutoHostVariables)
             {
                 parameters = new StackFrame(1, false).GetMethod().GetParameters();
             }
@@ -236,7 +249,7 @@ namespace Microsoft.ClearScript
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             ParameterInfo[] parameters = null;
-            if (binder.GetType().FullName.StartsWith("Microsoft.CSharp.", StringComparison.Ordinal))
+            if (Engine.EnableAutoHostVariables)
             {
                 parameters = new StackFrame(1, false).GetMethod().GetParameters();
             }
@@ -406,6 +419,8 @@ namespace Microsoft.ClearScript
 
         #region IScriptMarshalWrapper implementation (abstract)
 
+        public abstract ScriptEngine Engine { get; }
+
         public abstract object Unwrap();
 
         #endregion
@@ -425,6 +440,11 @@ namespace Microsoft.ClearScript
             }
 
             #region DynamicMetaObject overrides
+
+            public override IEnumerable<string> GetDynamicMemberNames()
+            {
+                return metaDynamic.GetDynamicMemberNames();
+            }
 
             public override DynamicMetaObject BindBinaryOperation(BinaryOperationBinder binder, DynamicMetaObject arg)
             {

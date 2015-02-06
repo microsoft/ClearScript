@@ -59,34 +59,12 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
+using System;
 
-//-----------------------------------------------------------------------------
-// HostException
-//-----------------------------------------------------------------------------
-
-class HostException
+namespace Microsoft.ClearScript.V8
 {
-public:
-
-    HostException(StdString&& message, V8Value&& exception):
-        m_Message(std::move(message)),
-        m_Exception(std::move(exception))
+    internal interface IV8DebugListener: IDisposable
     {
+        void OnMessageReceived(string command);
     }
-
-    const StdString& GetMessage() const
-    {
-        return m_Message;
-    }
-
-    const V8Value& GetException() const
-    {
-        return m_Exception;
-    }
-
-private:
-
-    StdString m_Message;
-    V8Value m_Exception;
-};
+}

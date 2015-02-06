@@ -68,6 +68,7 @@
 #pragma warning(push, 3)
 
 #include "v8.h"
+#include "v8-platform.h"
 #include "v8-debug.h"
 using namespace v8;
 
@@ -107,29 +108,29 @@ public:
         return V8FastPersistent<T>(GetPtrAndClear(hTemp));
     }
 
-	template <typename TOther>
-	bool operator==(const Handle<TOther>& hValue)
-	{
-		return AsPersistent() == hValue;
-	}
+    template <typename TOther>
+    bool operator==(const Handle<TOther>& hValue)
+    {
+        return AsPersistent() == hValue;
+    }
 
-	template <typename TOther>
-	bool operator==(const V8FastPersistent<TOther>& hValue)
-	{
-		return AsPersistent() == hValue.AsPersistent();
-	}
+    template <typename TOther>
+    bool operator==(const V8FastPersistent<TOther>& hValue)
+    {
+        return AsPersistent() == hValue.AsPersistent();
+    }
 
-	template <typename TOther>
-	bool operator!=(const Handle<TOther>& hValue)
-	{
-		return AsPersistent() != hValue;
-	}
+    template <typename TOther>
+    bool operator!=(const Handle<TOther>& hValue)
+    {
+        return AsPersistent() != hValue;
+    }
 
-	template <typename TOther>
-	bool operator!=(const V8FastPersistent<TOther>& hValue)
-	{
-		return AsPersistent() != hValue.AsPersistent();
-	}
+    template <typename TOther>
+    bool operator!=(const V8FastPersistent<TOther>& hValue)
+    {
+        return AsPersistent() != hValue.AsPersistent();
+    }
 
     bool IsEmpty() const
     {
@@ -278,29 +279,29 @@ public:
         return V8SafePersistent<T>(new Persistent<T>(pIsolate, hValue.GetImpl()));
     }
 
-	template <typename TOther>
-	bool operator==(const Handle<TOther>& hValue)
-	{
-		return GetImpl() == hValue;
-	}
+    template <typename TOther>
+    bool operator==(const Handle<TOther>& hValue)
+    {
+        return GetImpl() == hValue;
+    }
 
-	template <typename TOther>
-	bool operator==(const V8SafePersistent<TOther>& hValue)
-	{
-		return GetImpl() == hValue.GetImpl();
-	}
+    template <typename TOther>
+    bool operator==(const V8SafePersistent<TOther>& hValue)
+    {
+        return GetImpl() == hValue.GetImpl();
+    }
 
-	template <typename TOther>
-	bool operator!=(const Handle<TOther>& hValue)
-	{
-		return GetImpl() != hValue;
-	}
+    template <typename TOther>
+    bool operator!=(const Handle<TOther>& hValue)
+    {
+        return GetImpl() != hValue;
+    }
 
-	template <typename TOther>
-	bool operator!=(const V8SafePersistent<TOther>& hValue)
-	{
-		return GetImpl() != hValue.GetImpl();
-	}
+    template <typename TOther>
+    bool operator!=(const V8SafePersistent<TOther>& hValue)
+    {
+        return GetImpl() != hValue.GetImpl();
+    }
 
     bool IsEmpty() const
     {

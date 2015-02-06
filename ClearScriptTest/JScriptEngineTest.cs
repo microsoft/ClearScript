@@ -484,7 +484,7 @@ namespace Microsoft.ClearScript.Test
         {
             TestUtil.InvokeVBTestSub(@"
                 Using engine As New JScriptEngine
-                    Dim host as New HostFunctions
+                    Dim host As New HostFunctions
                     engine.Script.host = host
                     Assert.AreSame(host, engine.Script.host)
                 End Using
@@ -1671,6 +1671,67 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("Hello, world!", data);
         }
 
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_EnableAutoHostVariables()
+        {
+            const string pre = "123";
+            var value = "foo";
+            const int post = 456;
+
+            engine.Execute("function foo(a, x, b) { var y = x; x = a + 'bar' + b; return y; }");
+            Assert.AreEqual("foo", engine.Script.foo(pre, ref value, post));
+            Assert.AreEqual("foo", value);  // JavaScript doesn't support output parameters
+
+            engine.EnableAutoHostVariables = true;
+            engine.Execute("function foo(a, x, b) { var y = x.value; x.value = a + 'bar' + b; return y; }");
+            Assert.AreEqual("foo", engine.Script.foo(pre, ref value, post));
+            Assert.AreEqual("123bar456", value);
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_EnableAutoHostVariables_Delegate()
+        {
+            const string pre = "123";
+            var value = "foo";
+            const int post = 456;
+
+            engine.Execute("function foo(a, x, b) { var y = x; x = a + 'bar' + b; return y; }");
+            var del = DelegateFactory.CreateDelegate<TestDelegate>(engine, engine.Evaluate("foo"));
+            Assert.AreEqual("foo", del(pre, ref value, post));
+            Assert.AreEqual("foo", value);  // JavaScript doesn't support output parameters
+
+            engine.EnableAutoHostVariables = true;
+            engine.Execute("function foo(a, x, b) { var y = x.value; x.value = a + 'bar' + b; return y; }");
+            del = DelegateFactory.CreateDelegate<TestDelegate>(engine, engine.Evaluate("foo"));
+            Assert.AreEqual("foo", del(pre, ref value, post));
+            Assert.AreEqual("123bar456", value);
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Current()
+        {
+            // ReSharper disable AccessToDisposedClosure
+
+            using (var innerEngine = new JScriptEngine())
+            {
+                engine.Script.test = new Action(() =>
+                {
+                    innerEngine.Script.test = new Action(() => Assert.AreSame(innerEngine, ScriptEngine.Current));
+                    Assert.AreSame(engine, ScriptEngine.Current);
+                    innerEngine.Execute("test()");
+                    innerEngine.Script.test();
+                    Assert.AreSame(engine, ScriptEngine.Current);
+                });
+
+                Assert.IsNull(ScriptEngine.Current);
+                engine.Execute("test()");
+                engine.Script.test();
+                Assert.IsNull(ScriptEngine.Current);
+            }
+
+            // ReSharper restore AccessToDisposedClosure
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1752,6 +1813,8 @@ namespace Microsoft.ClearScript.Test
         private static void PrivateStaticMethod()
         {
         }
+
+        private delegate string TestDelegate(string pre, ref string value, int post);
 
         // ReSharper restore UnusedMember.Local
 

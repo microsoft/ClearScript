@@ -81,12 +81,16 @@
     <Compile Include="ScriptUsageAttribute.cs" />
     <Compile Include="Util\COMDispatchHelpers.cs" />
     <Compile Include="Util\CoTaskMemBlock.cs" />
+    <Compile Include="Util\DisposedFlag.cs" />
     <Compile Include="Util\NativeMethods.cs" />
     <Compile Include="Util\COMDispatch.cs" />
     <Compile Include="Util\IScriptMarshalWrapper.cs" />
     <Compile Include="Util\MemberHelpers.cs" />
     <Compile Include="Util\MemberMap.cs" />
+    <Compile Include="Util\SocketHelpers.cs" />
     <Compile Include="Util\SpecialDispIDs.cs" />
+    <Compile Include="V8\IV8DebugListener.cs" />
+    <Compile Include="V8\V8DebugAgent.cs" />
     <Compile Include="V8\V8RuntimeHeapInfo.cs" />
     <Compile Include="V8\V8Script.cs" />
     <Compile Include="V8\V8IsolateProxy.cs" />

@@ -1,7 +1,59 @@
-Index: tools/gyp/v8.gyp
-===================================================================
---- tools/gyp/v8.gyp	(revision 24646)
-+++ tools/gyp/v8.gyp	(working copy)
+diff --git a/src/api.cc b/src/api.cc
+index 239c7ac..be3cfc8 100644
+--- a/src/api.cc
++++ b/src/api.cc
+@@ -5171,10 +5171,6 @@ void v8::V8::SetReturnAddressLocationResolver(
+ 
+ void v8::V8::SetArrayBufferAllocator(
+     ArrayBuffer::Allocator* allocator) {
+-  if (!Utils::ApiCheck(i::V8::ArrayBufferAllocator() == NULL,
+-                       "v8::V8::SetArrayBufferAllocator",
+-                       "ArrayBufferAllocator might only be set once"))
+-    return;
+   i::V8::SetArrayBufferAllocator(allocator);
+ }
+ 
+diff --git a/src/objects.cc b/src/objects.cc
+index a4c3bea..e78888a 100644
+--- a/src/objects.cc
++++ b/src/objects.cc
+@@ -6229,7 +6229,7 @@ MaybeHandle<Object> JSObject::DefineAccessor(Handle<JSObject> object,
+   if (is_observed) {
+     if (is_element) {
+       Maybe<bool> maybe = HasOwnElement(object, index);
+-      // Workaround for a GCC 4.4.3 bug which leads to "‘preexists’ may be used
++      // Workaround for a GCC 4.4.3 bug which leads to "'preexists' may be used
+       // uninitialized in this function".
+       if (!maybe.has_value) {
+         DCHECK(false);
+diff --git a/src/v8.cc b/src/v8.cc
+index 62c3da4..ab97c36 100644
+--- a/src/v8.cc
++++ b/src/v8.cc
+@@ -100,7 +100,6 @@ void V8::InitializeOncePerProcess() {
+ 
+ 
+ void V8::InitializePlatform(v8::Platform* platform) {
+-  CHECK(!platform_);
+   CHECK(platform);
+   platform_ = platform;
+ }
+diff --git a/src/v8.h b/src/v8.h
+index 13c33e1..c89fc1d 100644
+--- a/src/v8.h
++++ b/src/v8.h
+@@ -74,7 +74,6 @@ class V8 : public AllStatic {
+   }
+ 
+   static void SetArrayBufferAllocator(v8::ArrayBuffer::Allocator *allocator) {
+-    CHECK_EQ(NULL, array_buffer_allocator_);
+     array_buffer_allocator_ = allocator;
+   }
+ 
+diff --git a/tools/gyp/v8.gyp b/tools/gyp/v8.gyp
+index 5874865..52f6039 100644
+--- a/tools/gyp/v8.gyp
++++ b/tools/gyp/v8.gyp
 @@ -35,6 +35,7 @@
    'targets': [
      {

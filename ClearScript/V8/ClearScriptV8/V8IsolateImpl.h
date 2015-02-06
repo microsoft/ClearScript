@@ -245,16 +245,27 @@ public:
         V8::TerminateExecution(m_pIsolate);
     }
 
+    int ContextDisposedNotification()
+    {
+        return m_pIsolate->ContextDisposedNotification();
+    }
+
+    bool IdleNotification(int idleTimeInMilliseconds)
+    {
+        return m_pIsolate->IdleNotification(idleTimeInMilliseconds);
+    }
+
+    void LowMemoryNotification()
+    {
+        m_pIsolate->LowMemoryNotification();
+    }
+
     void RequestInterrupt(std::function<void(V8IsolateImpl*)>&& callback)
     {
         BEGIN_MUTEX_SCOPE(m_InterruptMutex)
 
             m_InterruptCallback = std::move(callback);
-            m_pIsolate->RequestInterrupt([] (Isolate* pIsolate, void* /*pvData*/)
-            {
-                static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->OnInterrupt();
-
-            }, nullptr);
+            m_pIsolate->RequestInterrupt(OnInterruptShared, nullptr);
 
         END_MUTEX_SCOPE
     }
@@ -304,8 +315,12 @@ public:
 
 private:
 
+    static void OnInterruptShared(Isolate* pIsolate, void* pvData);
     void OnInterrupt();
 
+    void SendDebugCommand(const StdString& command);
+    static void OnDebugMessageShared(const Debug::Message& message);
+    void OnDebugMessage(const Debug::Message& message);
     void DispatchDebugMessages();
     void ProcessDebugMessages();
 
@@ -324,7 +339,7 @@ private:
 
     bool m_DebuggingEnabled;
     int m_DebugPort;
-    Debug::DebugMessageDispatchHandler m_pDebugMessageDispatcher;
+    void* m_pvDebugAgent;
     std::atomic<size_t> m_DebugMessageDispatchCount;
 
     std::atomic<size_t> m_MaxHeapSize;

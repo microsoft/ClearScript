@@ -310,14 +310,25 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("PropertyBag")]
-        [ExpectedException(typeof(ArgumentException))]
         public void PropertyBag_MultiEngine_HostFunctions()
         {
-            var bag = new PropertyBag { { "host", new HostFunctions() } };
-            engine.AddHostObject("bag", bag);
-            using (var scriptEngine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging))
+            using (var scriptEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
             {
+                const string code = "bag.host.func(0, function () { return bag.func(); })";
+                var bag = new PropertyBag
+                {
+                    { "host", new HostFunctions() },
+                    { "func", new Func<object>(() => ScriptEngine.Current) }
+                };
+
+                engine.AddHostObject("bag", bag);
                 scriptEngine.AddHostObject("bag", bag);
+
+                var func = (Func<object>)engine.Evaluate(code);
+                Assert.AreSame(engine, func());
+
+                func = (Func<object>)scriptEngine.Evaluate(code);
+                Assert.AreSame(scriptEngine, func());
             }
         }
 

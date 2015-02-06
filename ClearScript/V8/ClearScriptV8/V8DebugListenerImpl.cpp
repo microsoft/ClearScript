@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -59,34 +59,78 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
+#include "ClearScriptV8Managed.h"
 
-//-----------------------------------------------------------------------------
-// HostException
-//-----------------------------------------------------------------------------
+namespace Microsoft {
+namespace ClearScript {
+namespace V8 {
 
-class HostException
-{
-public:
+    //-------------------------------------------------------------------------
+    // V8DebugListenerImpl implementation
+    //-------------------------------------------------------------------------
 
-    HostException(StdString&& message, V8Value&& exception):
-        m_Message(std::move(message)),
-        m_Exception(std::move(exception))
+    V8DebugListenerImpl::V8DebugListenerImpl(HostObjectHelpers::DebugCallback&& callback):
+        m_gcLock(gcnew Object),
+        m_pspCallback(new SharedPtr<HostObjectHelpers::DebugCallback>(new HostObjectHelpers::DebugCallback(std::move(callback))))
     {
     }
 
-    const StdString& GetMessage() const
+    //-------------------------------------------------------------------------
+
+    void V8DebugListenerImpl::OnMessageReceived(String^ gcCommand)
     {
-        return m_Message;
+        SharedPtr<HostObjectHelpers::DebugCallback> spCallback;
+        if (TryGetCallback(spCallback))
+        {
+            (*spCallback)(StdString(gcCommand));
+        }
     }
 
-    const V8Value& GetException() const
+    //-------------------------------------------------------------------------
+
+    V8DebugListenerImpl::~V8DebugListenerImpl()
     {
-        return m_Exception;
+        SharedPtr<HostObjectHelpers::DebugCallback> spCallback;
+
+        BEGIN_LOCK_SCOPE(m_gcLock)
+
+            if (m_pspCallback != nullptr)
+            {
+                // hold callback for destruction outside lock scope
+                spCallback = *m_pspCallback;
+                delete m_pspCallback;
+                m_pspCallback = nullptr;
+            }
+
+        END_LOCK_SCOPE
     }
 
-private:
+    //-------------------------------------------------------------------------
 
-    StdString m_Message;
-    V8Value m_Exception;
-};
+    V8DebugListenerImpl::!V8DebugListenerImpl()
+    {
+        if (m_pspCallback != nullptr)
+        {
+            delete m_pspCallback;
+            m_pspCallback = nullptr;
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    bool V8DebugListenerImpl::TryGetCallback(SharedPtr<HostObjectHelpers::DebugCallback>& spCallback)
+    {
+        BEGIN_LOCK_SCOPE(m_gcLock)
+
+            if (m_pspCallback == nullptr)
+            {
+                return false;
+            }
+
+            spCallback = *m_pspCallback;
+            return true;
+
+        END_LOCK_SCOPE
+    }
+
+}}}

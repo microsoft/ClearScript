@@ -84,3 +84,4 @@
 #include "V8ContextProxyImpl.h"
 #include "V8ObjectImpl.h"
 #include "V8ScriptImpl.h"
+#include "V8DebugListenerImpl.h"

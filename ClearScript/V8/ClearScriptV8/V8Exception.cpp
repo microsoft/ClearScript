@@ -73,7 +73,7 @@ void DECLSPEC_NORETURN V8Exception::ThrowScriptEngineException() const
     auto gcEngineName = m_EngineName.ToManagedString();
     auto gcMessage = m_Message.ToManagedString();
     auto gcStackTrace = m_StackTrace.ToManagedString();
-    auto gcInnerException = dynamic_cast<Exception^>(V8ContextProxyImpl::ExportValue(m_InnerException));
+    auto gcInnerException = V8ProxyHelpers::MarshalExceptionToHost(V8ContextProxyImpl::ExportValue(m_InnerException));
 
     switch (m_Type)
     {

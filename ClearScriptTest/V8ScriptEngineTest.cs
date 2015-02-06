@@ -524,7 +524,7 @@ namespace Microsoft.ClearScript.Test
         {
             TestUtil.InvokeVBTestSub(@"
                 Using engine As New V8ScriptEngine
-                    Dim host as New HostFunctions
+                    Dim host As New HostFunctions
                     engine.Script.host = host
                     Assert.AreSame(host, engine.Script.host)
                 End Using
@@ -1005,7 +1005,7 @@ namespace Microsoft.ClearScript.Test
                     // ReSharper disable once PossibleNullReferenceException
                     Assert.IsNull(nestedException.InnerException);
 
-                    Assert.AreEqual("Error: " + hostException.Message, exception.Message);
+                    Assert.AreEqual("Error: " + hostException.GetBaseException().Message, exception.Message);
                     throw;
                 }
             });
@@ -1046,7 +1046,7 @@ namespace Microsoft.ClearScript.Test
                     Assert.IsNull(nestedHostException.InnerException);
 
                     Assert.AreEqual("Error: " + nestedHostException.Message, nestedException.Message);
-                    Assert.AreEqual("Error: " + hostException.Message, exception.Message);
+                    Assert.AreEqual("Error: " + hostException.GetBaseException().Message, exception.Message);
                     throw;
                 }
             });
@@ -1858,6 +1858,90 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("Hello, world!", data);
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EnableAutoHostVariables()
+        {
+            const string pre = "123";
+            var value = "foo";
+            const int post = 456;
+
+            engine.Execute("function foo(a, x, b) { var y = x; x = a + 'bar' + b; return y; }");
+            Assert.AreEqual("foo", engine.Script.foo(pre, ref value, post));
+            Assert.AreEqual("foo", value);  // JavaScript doesn't support output parameters
+
+            engine.EnableAutoHostVariables = true;
+            engine.Execute("function foo(a, x, b) { var y = x.value; x.value = a + 'bar' + b; return y; }");
+            Assert.AreEqual("foo", engine.Script.foo(pre, ref value, post));
+            Assert.AreEqual("123bar456", value);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EnableAutoHostVariables_Delegate()
+        {
+            const string pre = "123";
+            var value = "foo";
+            const int post = 456;
+
+            engine.Execute("function foo(a, x, b) { var y = x; x = a + 'bar' + b; return y; }");
+            var del = DelegateFactory.CreateDelegate<TestDelegate>(engine, engine.Evaluate("foo"));
+            Assert.AreEqual("foo", del(pre, ref value, post));
+            Assert.AreEqual("foo", value);  // JavaScript doesn't support output parameters
+
+            engine.EnableAutoHostVariables = true;
+            engine.Execute("function foo(a, x, b) { var y = x.value; x.value = a + 'bar' + b; return y; }");
+            del = DelegateFactory.CreateDelegate<TestDelegate>(engine, engine.Evaluate("foo"));
+            Assert.AreEqual("foo", del(pre, ref value, post));
+            Assert.AreEqual("123bar456", value);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ExceptionMarshaling()
+        {
+            Exception exception = new IOException("something awful happened");
+            engine.AddRestrictedHostObject("exception", exception);
+
+            engine.Script.foo = new Action(() => { throw exception; });
+
+            engine.Execute(@"
+                function bar() {
+                    try {
+                        foo();
+                        return false;
+                    }
+                    catch (ex) {
+                        return ex.hostException.GetBaseException() === exception;
+                    }
+                }
+            ");
+
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("bar()")));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Current()
+        {
+            // ReSharper disable AccessToDisposedClosure
+
+            using (var innerEngine = new V8ScriptEngine())
+            {
+                engine.Script.test = new Action(() =>
+                {
+                    innerEngine.Script.test = new Action(() => Assert.AreSame(innerEngine, ScriptEngine.Current));
+                    Assert.AreSame(engine, ScriptEngine.Current);
+                    innerEngine.Execute("test()");
+                    innerEngine.Script.test();
+                    Assert.AreSame(engine, ScriptEngine.Current);
+                });
+
+                Assert.IsNull(ScriptEngine.Current);
+                engine.Execute("test()");
+                engine.Script.test();
+                Assert.IsNull(ScriptEngine.Current);
+            }
+
+            // ReSharper restore AccessToDisposedClosure
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1939,6 +2023,8 @@ namespace Microsoft.ClearScript.Test
         private static void PrivateStaticMethod()
         {
         }
+
+        private delegate string TestDelegate(string pre, ref string value, int post);
 
         // ReSharper restore UnusedMember.Local
 

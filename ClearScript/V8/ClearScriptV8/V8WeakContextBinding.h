@@ -111,7 +111,6 @@ public:
         throw V8Exception(V8Exception::Type_General, m_ContextName, StdString(L"The V8 script engine has been destroyed"));
     }
 
-
     bool TryGetContextImpl(SharedPtr<V8ContextImpl>& spContextImpl) const
     {
         auto spContext = m_wrContext.GetTarget();

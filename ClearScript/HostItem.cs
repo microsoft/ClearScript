@@ -194,11 +194,6 @@ namespace Microsoft.ClearScript
 
         #region public members
 
-        public ScriptEngine Engine
-        {
-            get { return engine; }
-        }
-
         public HostTarget Target
         {
             get { return target; }
@@ -1661,6 +1656,11 @@ namespace Microsoft.ClearScript
         #endregion
 
         #region IScriptMarshalWrapper implementation
+
+        public ScriptEngine Engine
+        {
+            get { return engine; }
+        }
 
         public object Unwrap()
         {

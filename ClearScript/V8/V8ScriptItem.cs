@@ -71,7 +71,7 @@ namespace Microsoft.ClearScript.V8
         private readonly V8ScriptEngine engine;
         private readonly IV8Object target;
         private V8ScriptItem holder;
-        private bool disposed;
+        private DisposedFlag disposedFlag = new DisposedFlag();
 
         private V8ScriptItem(V8ScriptEngine engine, IV8Object target)
         {
@@ -99,18 +99,13 @@ namespace Microsoft.ClearScript.V8
 
         private void VerifyNotDisposed()
         {
-            if (disposed)
+            if (disposedFlag.IsSet())
             {
                 throw new ObjectDisposedException(ToString());
             }
         }
 
         #region ScriptItem overrides
-
-        public override ScriptEngine Engine
-        {
-            get { return engine; }
-        }
 
         protected override bool TryBindAndInvoke(DynamicMetaObjectBinder binder, object[] args, out object result)
         {
@@ -293,6 +288,11 @@ namespace Microsoft.ClearScript.V8
 
         #region IScriptMarshalWrapper implementation
 
+        public override ScriptEngine Engine
+        {
+            get { return engine; }
+        }
+
         public override object Unwrap()
         {
             return target;
@@ -304,10 +304,9 @@ namespace Microsoft.ClearScript.V8
 
         public void Dispose()
         {
-            if (!disposed)
+            if (disposedFlag.Set())
             {
                 target.Dispose();
-                disposed = true;
             }
         }
 

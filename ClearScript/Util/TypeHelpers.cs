@@ -338,16 +338,10 @@ namespace Microsoft.ClearScript.Util
 
         public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] bindArgs)
         {
-            var properties = type.GetScriptableProperties(name, bindFlags).ToArray();
-
+            var properties = type.GetScriptableProperties(name, bindFlags).Distinct(PropertySignatureComparer.Instance).ToArray();
             if (properties.Length < 1)
             {
                 return null;
-            }
-
-            if (bindArgs.Length < 1)
-            {
-                return properties.FirstOrDefault(property => property.GetIndexParameters().Length < 1);
             }
 
             var result = Type.DefaultBinder.SelectProperty(bindFlags, properties, null, bindArgs.Select(GetPropertyIndexType).ToArray(), null);
@@ -357,9 +351,13 @@ namespace Microsoft.ClearScript.Util
             }
 
             // the default binder fails to bind to some COM properties because of by-ref parameter types
-            if ((properties.Length == 1) && (properties[0].GetIndexParameters().Length == bindArgs.Length))
+            if (properties.Length == 1)
             {
-                return properties[0];
+                var parameters = properties[0].GetIndexParameters();
+                if ((bindArgs.Length == parameters.Length) || ((bindArgs.Length > 0) && (parameters.Length >= bindArgs.Length)))
+                {
+                    return properties[0];
+                }
             }
 
             return null;
@@ -554,5 +552,40 @@ namespace Microsoft.ClearScript.Util
 
             throw new InvalidOperationException("Property index value must not be null");
         }
+
+        #region Nested type: PropertySignatureComparer
+
+        private class PropertySignatureComparer : IEqualityComparer<PropertyInfo>
+        {
+            private static readonly PropertySignatureComparer instance = new PropertySignatureComparer();
+
+            public static PropertySignatureComparer Instance { get { return instance; } }
+
+            #region IEqualityComparer<PropertyInfo> implementation
+
+            public bool Equals(PropertyInfo first, PropertyInfo second)
+            {
+                var firstParamTypes = first.GetIndexParameters().Select(param => param.ParameterType);
+                var secondParamTypes = second.GetIndexParameters().Select(param => param.ParameterType);
+                return firstParamTypes.SequenceEqual(secondParamTypes);
+            }
+
+            public int GetHashCode(PropertyInfo property)
+            {
+                var hashCode = 0;
+
+                var parameters = property.GetIndexParameters();
+                foreach (var param in parameters)
+                {
+                    hashCode = unchecked((hashCode * 31) + param.ParameterType.GetHashCode());
+                }
+
+                return hashCode;
+            }
+
+            #endregion
+        }
+
+        #endregion
     }
 }

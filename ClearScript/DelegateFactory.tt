@@ -81,14 +81,19 @@ namespace Microsoft.ClearScript
         for (var count = 0; count <= maxArgCount; count++)
         {
             var typeParamList = (count == 0) ? "<TDelegate>" : "<" + string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index)) + ", TDelegate>";
+            var allByValueExpr = (count == 0) ? "true" : "GetAllByValue(" + string.Join(", ", Enumerable.Range(1, count).Select(index => "typeof(T" + index + ")")) + ")";
             var methodParamList = string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index + " a" + index));
-            var methodArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
+            var argList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
+            var varDeclList = string.Join("\r\n                    ", Enumerable.Range(1, count).Select(index => "var v" + index + " = GetArgValue(a" + index + ");"));
+            var byRefArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "ref v" + index));
+            var varAssignList = string.Join("\r\n                        ", Enumerable.Range(1, count).Select(index => "SetArgValue(a" + index + ", v" + index + ");"));
         #>
 
-		[ExcludeFromCodeCoverage]
+        [ExcludeFromCodeCoverage]
         private class ProcShim<#= typeParamList #> : ProcShim
         {
             private static readonly MethodInfo method = typeof(ProcShim<#= typeParamList #>).GetMethod("InvokeTarget");
+            private static readonly bool allByValue = <#= allByValueExpr #>;
             private readonly object target;
             private readonly Delegate del;
 
@@ -103,7 +108,22 @@ namespace Microsoft.ClearScript
 
             public void InvokeTarget(<#= methodParamList #>)
             {
-                Invoke(() => ((dynamic)target)(<#= methodArgList #>));
+                if (allByValue || Engine.EnableAutoHostVariables)
+                {
+                    Invoke(() => ((dynamic)target)(<#= argList #>));
+                }
+                else
+                {
+                    <#= varDeclList #>
+                    try
+                    {
+                        Invoke(() => ((dynamic)target)(<#= byRefArgList #>));
+                    }
+                    finally
+                    {
+                        <#= varAssignList #>
+                    }
+                }
             }
 
             // ReSharper restore UnusedMember.Local
@@ -125,14 +145,19 @@ namespace Microsoft.ClearScript
         for (var count = 0; count <= maxArgCount; count++)
         {
             var typeParamList = (count == 0) ? "<TResult, TDelegate>" : "<" + string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index)) + ", TResult, TDelegate>";
+            var allByValueExpr = (count == 0) ? "true" : "GetAllByValue(" + string.Join(", ", Enumerable.Range(1, count).Select(index => "typeof(T" + index + ")")) + ")";
             var methodParamList = string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index + " a" + index));
-            var methodArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
+            var argList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
+            var varDeclList = string.Join("\r\n                ", Enumerable.Range(1, count).Select(index => "var v" + index + " = GetArgValue(a" + index + ");"));
+            var byRefArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "ref v" + index));
+            var varAssignList = string.Join("\r\n                    ", Enumerable.Range(1, count).Select(index => "SetArgValue(a" + index + ", v" + index + ");"));
         #>
 
-		[ExcludeFromCodeCoverage]
+        [ExcludeFromCodeCoverage]
         private class FuncShim<#= typeParamList #> : FuncShim<TResult>
         {
             private static readonly MethodInfo method = typeof(FuncShim<#= typeParamList #>).GetMethod("InvokeTarget");
+            private static readonly bool allByValue = <#= allByValueExpr #>;
             private readonly object target;
             private readonly Delegate del;
 
@@ -147,7 +172,20 @@ namespace Microsoft.ClearScript
 
             public TResult InvokeTarget(<#= methodParamList #>)
             {
-                return Invoke(() => (TResult)((dynamic)target)(<#= methodArgList #>));
+                if (allByValue || Engine.EnableAutoHostVariables)
+                {
+                    return Invoke(() => (TResult)((dynamic)target)(<#= argList #>));
+                }
+
+                <#= varDeclList #>
+                try
+                {
+                    return Invoke(() => (TResult)((dynamic)target)(<#= byRefArgList #>));
+                }
+                finally
+                {
+                    <#= varAssignList #>
+                }
             }
 
             // ReSharper restore UnusedMember.Local

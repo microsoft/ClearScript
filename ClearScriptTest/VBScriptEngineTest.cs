@@ -1809,6 +1809,69 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("Hello, world!", data);
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_EnableAutoHostVariables()
+        {
+            const string pre = "123";
+            var value = "foo";
+            const int post = 456;
+
+            engine.Execute("function foo(a, x, b) : dim y : y = x : x = a & \"bar\" & b: foo = y : end function");
+            Assert.AreEqual("foo", engine.Script.foo(pre, ref value, post));
+            Assert.AreEqual("123bar456", value);
+
+            value = "foo";
+            engine.EnableAutoHostVariables = true;
+            engine.Execute("function foo(a, x, b) : dim y : y = x.value : x.value = a & \"bar\" & b : foo = y : end function");
+            Assert.AreEqual("foo", engine.Script.foo(pre, ref value, post));
+            Assert.AreEqual("123bar456", value);
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_EnableAutoHostVariables_Delegate()
+        {
+            const string pre = "123";
+            var value = "foo";
+            const int post = 456;
+
+            engine.Execute("function foo(a, x, b) : dim y : y = x : x = a & \"bar\" & b : foo = y : end function");
+            var del = DelegateFactory.CreateDelegate<TestDelegate>(engine, engine.Evaluate("GetRef(\"foo\")"));
+            Assert.AreEqual("foo", del(pre, ref value, post));
+            Assert.AreEqual("123bar456", value);
+
+            value = "foo";
+            engine.EnableAutoHostVariables = true;
+            engine.Execute("function foo(a, x, b) : dim y : y = x.value : x.value = a & \"bar\" & b : foo = y : end function");
+            del = DelegateFactory.CreateDelegate<TestDelegate>(engine, engine.Evaluate("GetRef(\"foo\")"));
+            Assert.AreEqual("foo", del(pre, ref value, post));
+            Assert.AreEqual("123bar456", value);
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Current()
+        {
+            // ReSharper disable AccessToDisposedClosure
+
+            using (var innerEngine = new VBScriptEngine())
+            {
+                engine.Script.test = new Action(() =>
+                {
+                    innerEngine.Script.test = new Action(() => Assert.AreSame(innerEngine, ScriptEngine.Current));
+                    Assert.AreSame(engine, ScriptEngine.Current);
+                    innerEngine.Execute("test()");
+                    innerEngine.Script.test();
+                    Assert.AreSame(engine, ScriptEngine.Current);
+                });
+
+                Assert.IsNull(ScriptEngine.Current);
+                engine.Execute("test()");
+                engine.Script.test();
+                Assert.IsNull(ScriptEngine.Current);
+            }
+
+            // ReSharper restore AccessToDisposedClosure
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1954,6 +2017,8 @@ namespace Microsoft.ClearScript.Test
         }
 
         // ReSharper restore UnusedMember.Local
+
+        private delegate string TestDelegate(string pre, ref string value, int post);
 
         #endregion
     }

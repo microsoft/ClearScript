@@ -116,7 +116,7 @@ namespace Microsoft.ClearScript
                 throw new ArgumentException("Invalid delegate type (parameter count too large)");
             }
 
-            var paramTypes = parameters.Select(parameter => parameter.ParameterType).ToArray();
+            var paramTypes = parameters.Select(param => param.ParameterType).ToArray();
             if (paramTypes.Any(paramType => paramType.IsByRef))
             {
                 return CreateComplexDelegate(engine, target, delegateType);
@@ -128,7 +128,7 @@ namespace Microsoft.ClearScript
         private static Delegate CreateSimpleDelegate(ScriptEngine engine, object target, Type delegateType)
         {
             var method = delegateType.GetMethod("Invoke");
-            var paramTypes = method.GetParameters().Select(parameter => parameter.ParameterType).ToArray();
+            var paramTypes = method.GetParameters().Select(param => param.ParameterType).ToArray();
 
             Type shimType;
             if (method.ReturnType == typeof(void))
@@ -153,7 +153,7 @@ namespace Microsoft.ClearScript
             var method = delegateType.GetMethod("Invoke");
 
             var parameters = method.GetParameters();
-            var paramTypes = parameters.Select(parameter => parameter.ParameterType).ToArray();
+            var paramTypes = parameters.Select(param => param.ParameterType).ToArray();
 
             var innerParamTypes = new Type[parameters.Length];
             for (var index = 0; index < parameters.Length; index++)
@@ -232,6 +232,33 @@ namespace Microsoft.ClearScript
         {
             public abstract Delegate Delegate { get; }
 
+            protected ScriptEngine Engine { get; private set; }
+
+            protected DelegateShim(ScriptEngine engine)
+            {
+                Engine = engine;
+            }
+
+            protected static bool GetAllByValue(params Type[] types)
+            {
+                return !types.Any(type => typeof(IByRefArg).IsAssignableFrom(type));
+            }
+
+            protected static object GetArgValue(object arg)
+            {
+                var byRefArg = arg as IByRefArg;
+                return (byRefArg != null) ? byRefArg.Value : arg;
+            }
+
+            protected static void SetArgValue(object arg, object value)
+            {
+                var byRefArg = arg as IByRefArg;
+                if (byRefArg != null)
+                {
+                    byRefArg.Value = value;
+                }
+            }
+
             protected static object GetCompatibleTarget(Type delegateType, object target)
             {
                 var del = target as Delegate;
@@ -257,6 +284,7 @@ namespace Microsoft.ClearScript
             private readonly Action<Action> invoker;
 
             protected ProcShim(ScriptEngine engine)
+                : base(engine)
             {
                 if (engine == null)
                 {
@@ -279,6 +307,7 @@ namespace Microsoft.ClearScript
             private readonly Func<Func<TResult>, TResult> invoker;
 
             protected FuncShim(ScriptEngine engine)
+                : base(engine)
             {
                 if (engine == null)
                 {

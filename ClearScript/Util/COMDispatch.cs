@@ -61,7 +61,7 @@
 
 using System;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.CustomMarshalers;
+using System.Runtime.InteropServices.ComTypes;
 using DISPPARAMS = System.Runtime.InteropServices.ComTypes.DISPPARAMS;
 using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
 
@@ -138,7 +138,7 @@ namespace Microsoft.ClearScript.Util
         int GetTypeInfo(
             [In] uint index,
             [In] int lcid,
-            [Out] [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(TypeToTypeInfoMarshaler))] out Type typeInfo
+            [Out] [MarshalAs(UnmanagedType.Interface)] out ITypeInfo typeInfo
         );
 
         void GetIDsOfNames(
@@ -177,7 +177,7 @@ namespace Microsoft.ClearScript.Util
         int GetTypeInfo(
             [In] uint index,
             [In] int lcid,
-            [Out] [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(TypeToTypeInfoMarshaler))] out Type typeInfo
+            [Out] [MarshalAs(UnmanagedType.Interface)] out ITypeInfo typeInfo
         );
 
         void GetIDsOfNames(

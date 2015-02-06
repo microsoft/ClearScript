@@ -165,7 +165,8 @@ static void* UnwrapHostObject(const FunctionCallbackInfo<T>& args)
 
 V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort):
     m_Name(name),
-    m_spIsolateImpl(pIsolateImpl)
+    m_spIsolateImpl(pIsolateImpl),
+    m_AllowHostObjectFunctionCall(false)
 {
     VerifyNotOutOfMemory();
 
@@ -193,10 +194,11 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
         // Such a change will require a corresponding change in the V8ScriptEngine constructor.
 
         m_hHostObjectCookieName = CreatePersistent(CreateString(StdString(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}")));
-        m_hInnerExceptionName = CreatePersistent(CreateString(StdString(L"inner")));
+        m_hHostExceptionName = CreatePersistent(CreateString(StdString(L"hostException")));
 
         m_hHostObjectTemplate = CreatePersistent(CreateFunctionTemplate());
         m_hHostObjectTemplate->SetClassName(CreateString(StdString(L"HostObject")));
+        m_hHostObjectTemplate->SetCallHandler(HostObjectFunctionCallHandler, Wrap());
 
         m_hHostObjectTemplate->InstanceTemplate()->SetInternalFieldCount(1);
         m_hHostObjectTemplate->InstanceTemplate()->SetNamedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap());
@@ -295,21 +297,18 @@ void V8ContextImpl::SetGlobalProperty(const StdString& name, const V8Value& valu
         {
             if (!hOldValue.IsEmpty() && hOldValue->IsObject())
             {
-                for (auto it = m_GlobalMembersStack.begin(); it != m_GlobalMembersStack.end();)
+                for (auto it = m_GlobalMembersStack.begin(); it != m_GlobalMembersStack.end(); it++)
                 {
-                    if ((*it)->Equals(hOldValue))
+                    if (it->first == name)
                     {
-                        it->Dispose();
-                        it = m_GlobalMembersStack.erase(it);
-                    }
-                    else
-                    {
-                        it++;
+                        it->second.Dispose();
+                        m_GlobalMembersStack.erase(it);
+                        break;
                     }
                 }
             }
 
-            m_GlobalMembersStack.push_back(CreatePersistent(hValue->ToObject()));
+            m_GlobalMembersStack.emplace_back(name, CreatePersistent(hValue->ToObject()));
         }
 
     END_CONTEXT_SCOPE
@@ -582,11 +581,11 @@ V8ContextImpl::~V8ContextImpl()
 
         for (auto it = m_GlobalMembersStack.rbegin(); it != m_GlobalMembersStack.rend(); it++)
         {
-            Dispose(*it);
+            Dispose(it->second);
         }
 
         Dispose(m_hHostObjectTemplate);
-        Dispose(m_hInnerExceptionName);
+        Dispose(m_hHostExceptionName);
         Dispose(m_hHostObjectCookieName);
 
         // As of V8 3.16.0, the global property getter for a disposed context
@@ -600,7 +599,7 @@ V8ContextImpl::~V8ContextImpl()
         }
 
         Dispose(m_hContext);
-        V8::ContextDisposedNotification();
+        ContextDisposedNotification();
 
     END_ISOLATE_SCOPE
 }
@@ -692,14 +691,14 @@ void V8ContextImpl::GetGlobalProperty(Local<String> hName, const PropertyCallbac
     auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
-        const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        const auto& stack = pContextImpl->m_GlobalMembersStack;
         if ((stack.size() > 0) && !hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName))
+                if (it->second->HasOwnProperty(hName))
                 {
-                    CALLBACK_RETURN((*it)->Get(hName));
+                    CALLBACK_RETURN(it->second->Get(hName));
                 }
             }
         }
@@ -716,14 +715,14 @@ void V8ContextImpl::SetGlobalProperty(Local<String> hName, Local<Value> hValue, 
     auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
-        const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        const auto& stack = pContextImpl->m_GlobalMembersStack;
         if ((stack.size() > 0) && !hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName))
+                if (it->second->HasOwnProperty(hName))
                 {
-                    (*it)->Set(hName, hValue);
+                    it->second->Set(hName, hValue);
                     CALLBACK_RETURN(hValue);
                 }
             }
@@ -741,14 +740,14 @@ void V8ContextImpl::QueryGlobalProperty(Local<String> hName, const PropertyCallb
     auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
-        const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        const auto& stack = pContextImpl->m_GlobalMembersStack;
         if ((stack.size() > 0) && !hName->Equals(pContextImpl->m_hHostObjectCookieName))
         {
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName))
+                if (it->second->HasOwnProperty(hName))
                 {
-                    CALLBACK_RETURN((*it)->GetPropertyAttributes(hName));
+                    CALLBACK_RETURN(it->second->GetPropertyAttributes(hName));
                 }
             }
         }
@@ -765,22 +764,22 @@ void V8ContextImpl::DeleteGlobalProperty(Local<String> hName, const PropertyCall
     auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
-        const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        const auto& stack = pContextImpl->m_GlobalMembersStack;
         if (stack.size() > 0)
         {
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName))
+                if (it->second->HasOwnProperty(hName))
                 {
                     // WORKAROUND: Object::Delete() crashes if a custom property deleter calls
                     // ThrowException(). Interestingly, there is no crash if the same deleter is
                     // invoked directly from script via the delete operator.
 
-                    if ((*it)->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
+                    if (it->second->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
                     {
                         try
                         {
-                            CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::GetHostObject(*it), StdString(hName)));
+                            CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::GetHostObject(it->second), StdString(hName)));
                         }
                         catch (const HostException&)
                         {
@@ -788,7 +787,7 @@ void V8ContextImpl::DeleteGlobalProperty(Local<String> hName, const PropertyCall
                         }
                     }
 
-                    CALLBACK_RETURN((*it)->Delete(hName));
+                    CALLBACK_RETURN(it->second->Delete(hName));
                 }
             }
         }
@@ -807,20 +806,20 @@ void V8ContextImpl::GetGlobalPropertyNames(const PropertyCallbackInfo<Array>& in
     {
         try
         {
-            const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
             if (stack.size() > 0)
             {
                 std::vector<StdString> names;
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
                     std::vector<StdString> tempNames;
-                    if ((*it)->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
+                    if (it->second->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
                     {
-                        HostObjectHelpers::GetPropertyNames(::GetHostObject(*it), tempNames);
+                        HostObjectHelpers::GetPropertyNames(::GetHostObject(it->second), tempNames);
                     }
                     else
                     {
-                        pContextImpl->GetV8ObjectPropertyNames(*it, tempNames);
+                        pContextImpl->GetV8ObjectPropertyNames(it->second, tempNames);
                     }
 
                     names.insert(names.end(), tempNames.begin(), tempNames.end());
@@ -856,14 +855,15 @@ void V8ContextImpl::GetGlobalProperty(unsigned __int32 index, const PropertyCall
     auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
-        const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        const auto& stack = pContextImpl->m_GlobalMembersStack;
         if (stack.size() > 0)
         {
+            auto hName = pContextImpl->CreateInteger(index)->ToString();
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->Has(index))
+                if (it->second->HasOwnProperty(hName))
                 {
-                    CALLBACK_RETURN((*it)->Get(index));
+                    CALLBACK_RETURN(it->second->Get(index));
                 }
             }
         }
@@ -880,14 +880,15 @@ void V8ContextImpl::SetGlobalProperty(unsigned __int32 index, Local<Value> hValu
     auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
-        const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        const auto& stack = pContextImpl->m_GlobalMembersStack;
         if (stack.size() > 0)
         {
             auto hName = pContextImpl->CreateInteger(index)->ToString();
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName) && (*it)->Set(index, hValue))
+                if (it->second->HasOwnProperty(hName))
                 {
+                    it->second->Set(index, hValue);
                     CALLBACK_RETURN(hValue);
                 }
             }
@@ -905,14 +906,16 @@ void V8ContextImpl::QueryGlobalProperty(unsigned __int32 index, const PropertyCa
     auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
-        const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        const auto& stack = pContextImpl->m_GlobalMembersStack;
         if (stack.size() > 0)
         {
+            auto hIndex = pContextImpl->CreateInteger(index);
+            auto hName = hIndex->ToString();
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->Has(index))
+                if (it->second->HasOwnProperty(hName))
                 {
-                    CALLBACK_RETURN((*it)->GetPropertyAttributes(pContextImpl->CreateInteger(index)));
+                    CALLBACK_RETURN(it->second->GetPropertyAttributes(hIndex));
                 }
             }
         }
@@ -929,15 +932,15 @@ void V8ContextImpl::DeleteGlobalProperty(unsigned __int32 index, const PropertyC
     auto pContextImpl = static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
     if (pContextImpl != nullptr)
     {
-        const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+        const auto& stack = pContextImpl->m_GlobalMembersStack;
         if (stack.size() > 0)
         {
             auto hName = pContextImpl->CreateInteger(index)->ToString();
             for (auto it = stack.rbegin(); it != stack.rend(); it++)
             {
-                if ((*it)->HasOwnProperty(hName))
+                if (it->second->HasOwnProperty(hName))
                 {
-                    CALLBACK_RETURN((*it)->Delete(index));
+                    CALLBACK_RETURN(it->second->Delete(index));
                 }
             }
         }
@@ -956,20 +959,20 @@ void V8ContextImpl::GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& 
     {
         try
         {
-            const std::vector<Persistent<Object>>& stack = pContextImpl->m_GlobalMembersStack;
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
             if (stack.size() > 0)
             {
                 std::vector<int> indices;
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
                     std::vector<int> tempIndices;
-                    if ((*it)->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
+                    if (it->second->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
                     {
-                        HostObjectHelpers::GetPropertyIndices(::GetHostObject(*it), tempIndices);
+                        HostObjectHelpers::GetPropertyIndices(::GetHostObject(it->second), tempIndices);
                     }
                     else
                     {
-                        pContextImpl->GetV8ObjectPropertyIndices(*it, tempIndices);
+                        pContextImpl->GetV8ObjectPropertyIndices(it->second, tempIndices);
                     }
 
                     indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
@@ -993,6 +996,15 @@ void V8ContextImpl::GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& 
             pContextImpl->ThrowScriptException(exception);
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::HostObjectFunctionCallHandler(const FunctionCallbackInfo<Value>& info)
+{
+    auto pContextImpl = ::UnwrapContextImpl(info);
+    if (!pContextImpl->m_AllowHostObjectFunctionCall)
+        pContextImpl->ThrowException(Exception::Error(pContextImpl->CreateString(StdString(L"This function is for ClearScript internal use only"))));
 }
 
 //-----------------------------------------------------------------------------
@@ -1327,10 +1339,14 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
                 return CreateLocal(::ObjectHandleFromPtr(pvV8Object));
             }
 
+            Local<Object> hObject;
+            BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectFunctionCall, true)
+                hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
+            END_PULSE_VALUE_SCOPE
+
             // WARNING: Instantiation may fail during script interruption. Check NewInstance()
             // result to avoid access violations and V8 fatal errors in ::SetObjectHolder().
 
-            auto hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
             if (!hObject.IsEmpty())
             {
                 ::SetHostObjectHolder(hObject, pHolder = pHolder->Clone());
@@ -1442,12 +1458,14 @@ void V8ContextImpl::Verify(const TryCatch& tryCatch)
 
         StdString message;
         bool stackOverflow;
+        bool allowGenericError;
 
         StdString value(hException);
         if (value.GetLength() > 0)
         {
             message = std::move(value);
             stackOverflow = (_wcsicmp(message.ToCString(), L"RangeError: Maximum call stack size exceeded") == 0);
+            allowGenericError = false;
         }
         else
         {
@@ -1456,6 +1474,7 @@ void V8ContextImpl::Verify(const TryCatch& tryCatch)
 
             message = L"Unknown error; potential stack overflow detected";
             stackOverflow = true;
+            allowGenericError = true;
         }
 
     #ifdef _DEBUG
@@ -1469,13 +1488,14 @@ void V8ContextImpl::Verify(const TryCatch& tryCatch)
             // from robust. These sanity checks are intended to mitigate this fragility.
 
             _ASSERTE(hException->IsObject());
-            _ASSERTE(StdString(hException->ToObject()->GetConstructorName()) == L"RangeError");
+            StdString constructorName(hException->ToObject()->GetConstructorName());
+            _ASSERTE((constructorName == L"RangeError") || (allowGenericError && (constructorName == L"Error")));
         }
 
     #endif // _DEBUG
 
         StdString stackTrace;
-        V8Value innerException(V8Value::Undefined);
+        V8Value hostException(V8Value::Undefined);
 
         if (stackOverflow)
         {
@@ -1598,11 +1618,11 @@ void V8ContextImpl::Verify(const TryCatch& tryCatch)
 
             if (hException->IsObject())
             {
-                innerException = ExportValue(hException->ToObject()->Get(m_hInnerExceptionName));
+                hostException = ExportValue(hException->ToObject()->Get(m_hHostExceptionName));
             }
         }
 
-        throw V8Exception(V8Exception::Type_General, m_Name, std::move(message), std::move(stackTrace), std::move(innerException));
+        throw V8Exception(V8Exception::Type_General, m_Name, std::move(message), std::move(stackTrace), std::move(hostException));
     }
 }
 
@@ -1622,10 +1642,10 @@ void V8ContextImpl::ThrowScriptException(const HostException& exception)
 {
     auto hException = Exception::Error(CreateString(exception.GetMessage()))->ToObject();
 
-    auto hInnerException = ImportValue(exception.GetException());
-    if (!hInnerException.IsEmpty() && hInnerException->IsObject())
+    auto hHostException = ImportValue(exception.GetException());
+    if (!hHostException.IsEmpty() && hHostException->IsObject())
     {
-        hException->Set(m_hInnerExceptionName, hInnerException);
+        hException->Set(m_hHostExceptionName, hHostException);
     }
 
     ThrowException(hException);

@@ -71,6 +71,10 @@ namespace Microsoft.ClearScript.Util
             [In] [MarshalAs(UnmanagedType.LPWStr)] string path
         );
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool FreeLibrary(IntPtr hLibrary);
+
         [DllImport("ole32.dll", ExactSpelling = true)]
         public static extern uint CLSIDFromProgID(
             [In] [MarshalAs(UnmanagedType.LPWStr)] string progID,

@@ -29,11 +29,8 @@
     <CLRSupport>true</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(VisualStudioVersion)'=='12.0'">
+  <PropertyGroup>
     <PlatformToolset>v120</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(VisualStudioVersion)'=='11.0'">
-    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -116,6 +113,10 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\HighResolutionClock.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
     <ClCompile Include="..\HostObjectHelpers.cpp" />
     <ClCompile Include="..\HostObjectHolderImpl.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
@@ -138,6 +139,7 @@
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
     </ClCompile>
     <ClCompile Include="..\V8ContextProxyImpl.cpp" />
+    <ClCompile Include="..\V8DebugListenerImpl.cpp" />
     <ClCompile Include="..\V8Exception.cpp" />
     <ClCompile Include="..\V8Isolate.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
@@ -204,6 +206,7 @@
     <ClInclude Include="..\ClearScriptV8Managed.h" />
     <ClInclude Include="..\ClearScriptV8Native.h" />
     <ClInclude Include="..\CommonPlatform.h" />
+    <ClInclude Include="..\HighResolutionClock.h" />
     <ClInclude Include="..\HostException.h" />
     <ClInclude Include="..\HostObjectHelpers.h" />
     <ClInclude Include="..\HostObjectHolder.h" />
@@ -218,6 +221,7 @@
     <ClInclude Include="..\V8Context.h" />
     <ClInclude Include="..\V8ContextImpl.h" />
     <ClInclude Include="..\V8ContextProxyImpl.h" />
+    <ClInclude Include="..\V8DebugListenerImpl.h" />
     <ClInclude Include="..\V8Exception.h" />
     <ClInclude Include="..\V8Isolate.h" />
     <ClInclude Include="..\V8IsolateConstraints.h" />

@@ -5,12 +5,11 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set testedRevision=branches/3.26@24646
-set testedVersion=3.26.31.15
+set v8testedrev=3.30.33.16
 
-set gyprev=1831
-set pythonrev=89111
-set cygwinrev=66844
+set gyprev=a3e2a5caf24a1e0a45401e09ad131210bf16b852
+set pythonrev=67d19f904470effe3122d27101cc5a8195abd157
+set cygwinrev=06a117a90c15174436bfa20ceebbfdf43b7eb820
 
 :ProcessArgs
 
@@ -34,9 +33,9 @@ echo V8UPDATE [/N] [mode] [revision]
 echo.
 echo   /N        Do not download; use previously downloaded files if possible.
 echo   mode      Build mode: "Debug" or "Release" (default).
-echo   revision  V8 revision: "Latest", "Tested" (default), or branch@revision.
-echo             * Examples: "trunk@19256", "branches/3.24@HEAD".
-echo             * View history at http://code.google.com/p/v8/source/list.
+echo   revision  V8 revision: "Latest", "Tested" (default) or branch/commit/tag.
+echo             * Examples: "candidate", "3.29.88.16".
+echo             * View history at https://chromium.googlesource.com/v8/v8.git.
 goto Exit
 
 :SetDownloadFalse
@@ -59,6 +58,19 @@ shift
 goto ProcessArg
 
 :ProcessArgsDone
+
+::-----------------------------------------------------------------------------
+:: check environment
+::-----------------------------------------------------------------------------
+
+:CheckMSVS
+if "%VisualStudioVersion%"=="12.0" goto UseMSVS2013
+echo Error: This script requires a Visual Studio 2013 Developer Command Prompt.
+echo Browse to http://www.visualstudio.com for more information.
+goto Exit
+:UseMSVS2013
+set GYP_MSVS_VERSION=2013
+:CheckMSVSDone
 
 ::-----------------------------------------------------------------------------
 :: main
@@ -92,18 +104,18 @@ goto Build
 if "%v8rev%"=="" goto UseTestedRev
 if /i "%v8rev%"=="latest" goto UseLatestRev
 if /i "%v8rev%"=="tested" goto UseTestedRev
-if /i "%v8rev%"=="%testedRevision%" goto UseTestedRev
+if /i "%v8rev%"=="%v8testedrev%" goto UseTestedRev
 echo V8 revision: %v8rev%
 echo *** WARNING: THIS V8 REVISION MAY NOT BE COMPATIBLE WITH CLEARSCRIPT ***
 choice /m Continue
 if errorlevel 2 goto Exit
 goto ResolveRevDone
 :UseTestedRev
-set v8rev=%testedRevision%
-echo V8 revision: Tested (%v8rev%, Version %testedVersion%)
+set v8rev=%v8testedrev%
+echo V8 revision: Tested (%v8testedrev%)
 goto ResolveRevDone
 :UseLatestRev
-set v8rev=trunk@HEAD
+set v8rev=master
 echo V8 revision: Latest
 echo *** WARNING: THIS V8 REVISION MAY NOT BE COMPATIBLE WITH CLEARSCRIPT ***
 choice /m Continue
@@ -124,34 +136,50 @@ cd build
 
 :DownloadV8
 echo Downloading V8 ...
-svn checkout http://v8.googlecode.com/svn/%v8rev% v8 >getV8.log
-if errorlevel 1 goto Error1
+git clone -n -q https://chromium.googlesource.com/v8/v8.git
+if errorlevel 1 goto Error
+cd v8
+git checkout -q "%v8rev%"
+if errorlevel 1 goto Error
+cd ..
 :DownloadV8Done
 
 cd v8
 
 :PatchV8
 echo Patching V8 ...
-svn patch --ignore-whitespace ..\..\V8Patch.txt >patchV8.log
-if errorlevel 1 goto Error2
+git apply --ignore-whitespace ..\..\V8Patch.txt
+if errorlevel 1 goto Error
 :PatchV8Done
 
 :DownloadGYP
 echo Downloading GYP ...
-svn checkout http://gyp.googlecode.com/svn/trunk@%gyprev% build/gyp >getGYP.log
-if errorlevel 1 goto Error2
+git clone -n -q https://chromium.googlesource.com/external/gyp.git build\gyp
+if errorlevel 1 goto Error
+cd build\gyp
+git checkout -q "%gyprev%"
+if errorlevel 1 goto Error
+cd ..\..
 :DownloadGYPDone
 
 :DownloadPython
 echo Downloading Python ...
-svn checkout http://src.chromium.org/svn/trunk/tools/third_party/python_26@%pythonrev% third_party/python_26 >getPython.log
-if errorlevel 1 goto Error2
+git clone -n -q https://chromium.googlesource.com/chromium/deps/python_26.git third_party/python_26
+if errorlevel 1 goto Error
+cd third_party/python_26
+git checkout -q "%pythonrev%"
+if errorlevel 1 goto Error
+cd ..\..
 :DownloadPythonDone
 
 :DownloadCygwin
 echo Downloading Cygwin ...
-svn checkout http://src.chromium.org/svn/trunk/deps/third_party/cygwin@%cygwinrev% third_party/cygwin >getCygwin.log
-if errorlevel 1 goto Error2
+git clone -n -q https://chromium.googlesource.com/chromium/deps/cygwin.git third_party/cygwin
+if errorlevel 1 goto Error
+cd third_party/cygwin
+git checkout -q "%cygwinrev%"
+if errorlevel 1 goto Error
+cd ..\..
 :DownloadCygwinDone
 
 cd ..
@@ -164,22 +192,14 @@ cd ..
 
 :Build
 
-:SetMSVSVersion
-if "%VisualStudioVersion%"=="12.0" goto UseMSVS2013
-set GYP_MSVS_VERSION=2012
-goto SetMSVSVersionDone
-:UseMSVS2013
-set GYP_MSVS_VERSION=2013
-:SetMSVSVersionDone
-
 set PYTHONHOME=
 set PYTHONPATH=
 
 :CreatePatchFile
 echo Creating patch file ...
 cd v8
-svn diff -x --ignore-space-change -x --ignore-eol-style >V8Patch.txt
-if errorlevel 1 goto Error2
+git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt
+if errorlevel 1 goto Error
 cd ..
 :CreatePatchFileDone
 
@@ -187,17 +207,17 @@ cd ..
 echo Building 32-bit V8 ...
 if exist v8-ia32\ goto Copy32BitDone
 md v8-ia32
-if errorlevel 1 goto Error1
+if errorlevel 1 goto Error
 xcopy v8\*.* v8-ia32\ /e /y >nul
-if errorlevel 1 goto Error1
+if errorlevel 1 goto Error
 :Copy32BitDone
 
 :Build32Bit
 cd v8-ia32
 third_party\python_26\python build\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
-if errorlevel 1 goto Error2
+if errorlevel 1 goto Error
 msbuild /p:Configuration=%mode% /p:Platform=Win32 /t:v8 tools\gyp\v8.sln >build.log
-if errorlevel 1 goto Error2
+if errorlevel 1 goto Error
 cd ..
 :Build32BitDone
 
@@ -205,17 +225,17 @@ cd ..
 echo Building 64-bit V8 ...
 if exist v8-x64\ goto Copy64BitDone
 md v8-x64
-if errorlevel 1 goto Error1
+if errorlevel 1 goto Error
 xcopy v8\*.* v8-x64\ /e /y >nul
-if errorlevel 1 goto Error1
+if errorlevel 1 goto Error
 :Copy64BitDone
 
 :Build64Bit
 cd v8-x64
 third_party\python_26\python build\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
-if errorlevel 1 goto Error2
+if errorlevel 1 goto Error
 msbuild /p:Configuration=%mode% /p:Platform=x64 /t:v8 tools\gyp\v8.sln >build.log
-if errorlevel 1 goto Error2
+if errorlevel 1 goto Error
 cd ..
 :Build64BitDone
 
@@ -284,17 +304,10 @@ if errorlevel 1 goto Error
 ::-----------------------------------------------------------------------------
 
 echo Succeeded!
-goto End
+goto Exit
 
-:Error2
-cd ..
-:Error1
-cd ..
 :Error
 echo *** THE PREVIOUS STEP FAILED ***
-
-:End
-cd ..\..\..
 
 :Exit
 endlocal

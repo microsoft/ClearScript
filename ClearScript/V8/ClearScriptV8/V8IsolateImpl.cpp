@@ -62,6 +62,73 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
+// V8Platform
+//-----------------------------------------------------------------------------
+
+class V8Platform: public Platform
+{
+public:
+
+    static void EnsureInstalled();
+
+    virtual void CallOnBackgroundThread(Task* pTask, ExpectedRuntime runtime) override;
+    virtual void CallOnForegroundThread(Isolate* pIsolate, Task* pTask) override;
+    virtual double MonotonicallyIncreasingTime() override;
+
+private:
+
+    V8Platform();
+
+    static V8Platform ms_Instance;
+    static std::once_flag ms_InstallationFlag;
+};
+
+//-----------------------------------------------------------------------------
+
+void V8Platform::EnsureInstalled()
+{
+    std::call_once(ms_InstallationFlag, []
+    {
+        V8::InitializePlatform(&ms_Instance);
+        ASSERT_EVAL(V8::Initialize());
+    });
+}
+
+//-----------------------------------------------------------------------------
+
+void V8Platform::CallOnBackgroundThread(Task* pTask, ExpectedRuntime /*runtime*/)
+{
+    std::shared_ptr<Task> spTask(pTask);
+    Concurrency::create_task([spTask] { spTask->Run(); });
+}
+
+//-----------------------------------------------------------------------------
+
+void V8Platform::CallOnForegroundThread(Isolate* /*pIsolate*/, Task* /*pTask*/)
+{
+    // unexpected call to unsupported method
+    std::terminate();
+}
+
+//-----------------------------------------------------------------------------
+
+double V8Platform::MonotonicallyIncreasingTime()
+{
+    return HighResolutionClock::GetRelativeSeconds();
+}
+
+//-----------------------------------------------------------------------------
+
+V8Platform::V8Platform()
+{
+}
+
+//-----------------------------------------------------------------------------
+
+V8Platform V8Platform::ms_Instance;
+std::once_flag V8Platform::ms_InstallationFlag;
+
+//-----------------------------------------------------------------------------
 // V8ArrayBufferAllocator
 //-----------------------------------------------------------------------------
 
@@ -71,9 +138,9 @@ public:
 
     static void EnsureInstalled();
 
-    void* Allocate(size_t size);
-    void* AllocateUninitialized(size_t size);
-    void Free(void* pvData, size_t size);
+    virtual void* Allocate(size_t size) override;
+    virtual void* AllocateUninitialized(size_t size) override;
+    virtual void Free(void* pvData, size_t size) override;
 
 private:
 
@@ -97,21 +164,21 @@ void V8ArrayBufferAllocator::EnsureInstalled()
 
 void* V8ArrayBufferAllocator::Allocate(size_t size)
 {
-    return calloc(1, size);
+    return ::calloc(1, size);
 }
 
 //-----------------------------------------------------------------------------
 
 void* V8ArrayBufferAllocator::AllocateUninitialized(size_t size)
 {
-    return malloc(size);
+    return ::malloc(size);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ArrayBufferAllocator::Free(void* pvData, size_t /*size*/)
 {
-    free(pvData);
+    ::free(pvData);
 }
 
 //-----------------------------------------------------------------------------
@@ -147,10 +214,6 @@ std::once_flag V8ArrayBufferAllocator::ms_InstallationFlag;
 
 //-----------------------------------------------------------------------------
 
-DEFINE_CONCURRENT_CALLBACK_MANAGER(DebugMessageDispatcher, void())
-
-//-----------------------------------------------------------------------------
-
 static const size_t s_StackBreathingRoom = static_cast<size_t>(16 * 1024);
 static size_t* const s_pMinStackLimit = reinterpret_cast<size_t*>(sizeof(size_t));
 
@@ -158,7 +221,6 @@ static size_t* const s_pMinStackLimit = reinterpret_cast<size_t*>(sizeof(size_t)
 
 V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort):
     m_Name(name),
-    m_pIsolate(Isolate::New()),
     m_DebuggingEnabled(false),
     m_DebugMessageDispatchCount(0),
     m_MaxHeapSize(0),
@@ -168,7 +230,18 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     m_pStackLimit(nullptr),
     m_IsOutOfMemory(false)
 {
+    V8Platform::EnsureInstalled();
     V8ArrayBufferAllocator::EnsureInstalled();
+
+    Isolate::CreateParams params;
+    if (pConstraints != nullptr)
+    {
+        params.constraints.set_max_semi_space_size(pConstraints->GetMaxNewSpaceSize());
+        params.constraints.set_max_old_space_size(pConstraints->GetMaxOldSpaceSize());
+        params.constraints.set_max_executable_size(pConstraints->GetMaxExecutableSize());
+    }
+
+    m_pIsolate = Isolate::New(params);
 
     BEGIN_ADDREF_SCOPE
 
@@ -177,14 +250,6 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
         BEGIN_ISOLATE_ENTRY_SCOPE
 
             V8::SetCaptureStackTraceForUncaughtExceptions(true, 64, StackTrace::kDetailed);
-            if (pConstraints != nullptr)
-            {
-                ResourceConstraints constraints;
-                constraints.set_max_new_space_size(pConstraints->GetMaxNewSpaceSize());
-                constraints.set_max_old_space_size(pConstraints->GetMaxOldSpaceSize());
-                constraints.set_max_executable_size(pConstraints->GetMaxExecutableSize());
-                ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
-            }
 
         END_ISOLATE_ENTRY_SCOPE
 
@@ -237,28 +302,24 @@ void V8IsolateImpl::EnableDebugging(int debugPort)
 
     if (!m_DebuggingEnabled)
     {
+        StdString version(String::NewFromUtf8(m_pIsolate, V8::GetVersion()));
         if (debugPort < 1)
         {
             debugPort = 9222;
         }
 
         auto wrIsolate = CreateWeakRef();
-        m_pDebugMessageDispatcher = CALLBACK_MANAGER(DebugMessageDispatcher)::Alloc([wrIsolate]
+        m_pvDebugAgent = HostObjectHelpers::CreateDebugAgent(m_Name, version, debugPort, [wrIsolate] (const StdString& command)
         {
-            Concurrency::create_task([wrIsolate]
+            auto spIsolate = wrIsolate.GetTarget();
+            if (!spIsolate.IsEmpty())
             {
-                auto spIsolate = wrIsolate.GetTarget();
-                if (!spIsolate.IsEmpty())
-                {
-                    auto pIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
-                    pIsolateImpl->DispatchDebugMessages();
-                }
-            });
+                auto pIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
+                pIsolateImpl->SendDebugCommand(command);
+            }
         });
 
-        _ASSERTE(m_pDebugMessageDispatcher);
-        Debug::SetDebugMessageDispatchHandler(m_pDebugMessageDispatcher);
-        ASSERT_EVAL(Debug::EnableAgent(*String::Utf8Value(CreateString(m_Name)), debugPort));
+        Debug::SetMessageHandler(OnDebugMessageShared);
 
         m_DebuggingEnabled = true;
         m_DebugPort = debugPort;
@@ -274,13 +335,8 @@ void V8IsolateImpl::DisableDebugging()
 
     if (m_DebuggingEnabled)
     {
-        Debug::DisableAgent();
-        Debug::SetDebugMessageDispatchHandler(nullptr);
-
-        if (m_pDebugMessageDispatcher != nullptr)
-        {
-            ASSERT_EVAL(CALLBACK_MANAGER(DebugMessageDispatcher)::Free(m_pDebugMessageDispatcher));
-        }
+        Debug::SetMessageHandler(nullptr);
+        HostObjectHelpers::DestroyDebugAgent(m_pvDebugAgent);
 
         m_DebuggingEnabled = false;
         m_DebugMessageDispatchCount = 0;
@@ -370,11 +426,11 @@ void V8IsolateImpl::CollectGarbage(bool exhaustive)
 
     if (exhaustive)
     {
-        V8::LowMemoryNotification();
+        LowMemoryNotification();
     }
     else
     {
-        while (!V8::IdleNotification());
+        while (!IdleNotification(100));
     }
 
     END_ISOLATE_SCOPE
@@ -447,6 +503,13 @@ V8IsolateImpl::~V8IsolateImpl()
 
 //-----------------------------------------------------------------------------
 
+void V8IsolateImpl::OnInterruptShared(Isolate* pIsolate, void* /*pvData*/)
+{
+    static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->OnInterrupt();
+}
+
+//-----------------------------------------------------------------------------
+
 void V8IsolateImpl::OnInterrupt()
 {
     std::function<void(V8IsolateImpl*)> callback; 
@@ -460,6 +523,41 @@ void V8IsolateImpl::OnInterrupt()
     if (callback)
     {
         callback(this);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SendDebugCommand(const StdString& command)
+{
+    Debug::SendCommand(m_pIsolate, command.ToCString(), command.GetLength());
+
+    auto wrIsolate = CreateWeakRef();
+    Concurrency::create_task([wrIsolate]
+    {
+        auto spIsolate = wrIsolate.GetTarget();
+        if (!spIsolate.IsEmpty())
+        {
+            auto pIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
+            pIsolateImpl->DispatchDebugMessages();
+        }
+    });
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::OnDebugMessageShared(const Debug::Message& message)
+{
+    static_cast<V8IsolateImpl*>(message.GetIsolate()->GetData(0))->OnDebugMessage(message);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::OnDebugMessage(const Debug::Message& message)
+{
+    if (m_pvDebugAgent)
+    {
+        HostObjectHelpers::SendDebugMessage(m_pvDebugAgent, StdString(message.GetJSON()));
     }
 }
 
@@ -546,9 +644,7 @@ void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
             }
 
             // set and record stack address limit
-            ResourceConstraints constraints;
-            constraints.set_stack_limit(reinterpret_cast<uint32_t*>(pStackLimit));
-            ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
+            m_pIsolate->SetStackLimit(reinterpret_cast<uintptr_t>(pStackLimit));
             m_pStackLimit = pStackLimit;
 
             // enter outermost stack usage monitoring scope
@@ -586,9 +682,7 @@ void V8IsolateImpl::ExitExecutionScope()
             if (m_pStackLimit != nullptr)
             {
                 // V8 has no API for removing a stack address limit
-                ResourceConstraints constraints;
-                constraints.set_stack_limit(reinterpret_cast<uint32_t*>(s_pMinStackLimit));
-                ASSERT_EVAL(SetResourceConstraints(m_pIsolate, &constraints));
+                m_pIsolate->SetStackLimit(reinterpret_cast<uintptr_t>(s_pMinStackLimit));
                 m_pStackLimit = nullptr;
             }
         }
@@ -653,7 +747,7 @@ void V8IsolateImpl::CheckHeapSize(size_t maxHeapSize)
     if (heapInfo.GetTotalHeapSize() > maxHeapSize)
     {
         // yes; collect garbage
-        V8::LowMemoryNotification();
+        LowMemoryNotification();
 
         // is the total heap size still over the limit?
         GetHeapInfo(heapInfo);

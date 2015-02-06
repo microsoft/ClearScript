@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -61,32 +61,31 @@
 
 #pragma once
 
-//-----------------------------------------------------------------------------
-// HostException
-//-----------------------------------------------------------------------------
+namespace Microsoft {
+namespace ClearScript {
+namespace V8 {
 
-class HostException
-{
-public:
+    //-------------------------------------------------------------------------
+    // V8DebugListenerImpl
+    //-------------------------------------------------------------------------
 
-    HostException(StdString&& message, V8Value&& exception):
-        m_Message(std::move(message)),
-        m_Exception(std::move(exception))
+    private ref class V8DebugListenerImpl : IV8DebugListener
     {
-    }
+    public:
 
-    const StdString& GetMessage() const
-    {
-        return m_Message;
-    }
+        V8DebugListenerImpl(HostObjectHelpers::DebugCallback&& callback);
 
-    const V8Value& GetException() const
-    {
-        return m_Exception;
-    }
+        virtual void OnMessageReceived(String^ gcCommand);
 
-private:
+        ~V8DebugListenerImpl();
+        !V8DebugListenerImpl();
 
-    StdString m_Message;
-    V8Value m_Exception;
-};
+    private:
+
+        bool TryGetCallback(SharedPtr<HostObjectHelpers::DebugCallback>& spCallback);
+
+        Object^ m_gcLock;
+        SharedPtr<HostObjectHelpers::DebugCallback>* m_pspCallback;
+    };
+
+}}}

@@ -61,13 +61,19 @@
 
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.CustomMarshalers;
+using System.Runtime.InteropServices.ComTypes;
+using TYPEATTR = System.Runtime.InteropServices.ComTypes.TYPEATTR;
+using TYPELIBATTR = System.Runtime.InteropServices.ComTypes.TYPELIBATTR;
 
 namespace Microsoft.ClearScript.Util
 {
     internal static class ObjectHelpers
     {
+        // GUID_ManagedName (um\cor.h)
+        private static readonly Guid managedNameGuid = new Guid("{0f21f359-ab84-41e8-9a78-36d110e6d2f9}");
+
         public static Type GetTypeOrTypeInfo(this object value)
         {
             var type = value.GetType();
@@ -84,10 +90,10 @@ namespace Microsoft.ClearScript.Util
                     uint count;
                     if (RawCOMHelpers.HResult.Succeeded(dispatch.GetTypeInfoCount(out count)) && (count > 0))
                     {
-                        Type tempTypeInfo;
+                        ITypeInfo tempTypeInfo;
                         if (RawCOMHelpers.HResult.Succeeded(dispatch.GetTypeInfo(0, 0, out tempTypeInfo)))
                         {
-                            typeInfo = tempTypeInfo;
+                            typeInfo = GetTypeForTypeInfo(tempTypeInfo);
                         }
                     }
                 }
@@ -97,10 +103,10 @@ namespace Microsoft.ClearScript.Util
                     var provideClassInfo = value as IProvideClassInfo;
                     if (provideClassInfo != null)
                     {
-                        Type tempTypeInfo;
+                        ITypeInfo tempTypeInfo;
                         if (RawCOMHelpers.HResult.Succeeded(provideClassInfo.GetClassInfo(out tempTypeInfo)))
                         {
-                            typeInfo = tempTypeInfo;
+                            typeInfo = GetTypeForTypeInfo(tempTypeInfo);
                         }
                     }
                 }
@@ -187,6 +193,176 @@ namespace Microsoft.ClearScript.Util
             return result;
         }
 
+        private static Type GetTypeForTypeInfo(ITypeInfo typeInfo)
+        {
+            // ReSharper disable EmptyGeneralCatchClause
+
+            try
+            {
+                ITypeLib typeLib;
+                int index;
+                typeInfo.GetContainingTypeLib(out typeLib, out index);
+
+                var assembly = LoadPrimaryInteropAssembly(typeLib);
+                if (assembly != null)
+                {
+                    var name = GetManagedTypeInfoName(typeInfo, typeLib);
+                    var guid = GetTypeInfoGuid(typeInfo);
+
+                    var type = assembly.GetType(name, false /*throwOnError*/);
+                    if ((type != null) && (type.GUID == guid))
+                    {
+                        return type;
+                    }
+
+                    var types = assembly.GetTypes();
+                    if ((index >= 0) && (index < types.Length))
+                    {
+                        type = types[index];
+                        if ((type.GUID == guid) && (type.FullName == name))
+                        {
+                            return type;
+                        }
+                    }
+
+                    type = types.FirstOrDefault(testType => (testType.GUID == guid) && (testType.FullName == name));
+                    if (type != null)
+                    {
+                        return type;
+                    }
+                }
+
+                var pTypeInfo = RawCOMHelpers.QueryInterface<ITypeInfo>(Marshal.GetIUnknownForObject(typeInfo));
+                try
+                {
+                    return Marshal.GetTypeForITypeInfo(pTypeInfo);
+                }
+                finally
+                {
+                    Marshal.Release(pTypeInfo);
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            return null;
+
+            // ReSharper restore EmptyGeneralCatchClause
+        }
+
+        private static Assembly LoadPrimaryInteropAssembly(ITypeLib typeLib)
+        {
+            // ReSharper disable EmptyGeneralCatchClause
+
+            try
+            {
+                IntPtr pAttr;
+                typeLib.GetLibAttr(out pAttr);
+                try
+                {
+                    var attr = (TYPELIBATTR)Marshal.PtrToStructure(pAttr, typeof(TYPELIBATTR));
+
+                    string name;
+                    string codeBase;
+                    if (new TypeLibConverter().GetPrimaryInteropAssembly(attr.guid, attr.wMajorVerNum, attr.wMinorVerNum, attr.lcid, out name, out codeBase))
+                    {
+                        return Assembly.Load(new AssemblyName(name) { CodeBase = codeBase });
+                    }
+                }
+                finally
+                {
+                    typeLib.ReleaseTLibAttr(pAttr);
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            return null;
+
+            // ReSharper restore EmptyGeneralCatchClause
+        }
+
+        private static string GetManagedTypeInfoName(ITypeInfo typeInfo, ITypeLib typeLib)
+        {
+            var typeInfo2 = typeInfo as ITypeInfo2;
+            if (typeInfo2 != null)
+            {
+                // ReSharper disable EmptyGeneralCatchClause
+
+                try
+                {
+                    var guid = managedNameGuid;
+                    object data;
+                    typeInfo2.GetCustData(ref guid, out data);
+
+                    var name = data as string;
+                    if (name != null)
+                    {
+                        return name.Trim();
+                    }
+                }
+                catch (Exception)
+                {
+                }
+
+                // ReSharper restore EmptyGeneralCatchClause
+            }
+
+            return GetManagedTypeLibName(typeLib) + "." + Marshal.GetTypeInfoName(typeInfo);
+        }
+
+        private static string GetManagedTypeLibName(ITypeLib typeLib)
+        {
+            var typeLib2 = typeLib as ITypeLib2;
+            if (typeLib2 != null)
+            {
+                // ReSharper disable EmptyGeneralCatchClause
+
+                try
+                {
+                    var guid = managedNameGuid;
+                    object data;
+                    typeLib2.GetCustData(ref guid, out data);
+
+                    var name = data as string;
+                    if (name != null)
+                    {
+                        name = name.Trim();
+                        if (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return name.Substring(0, name.Length - 4);
+                        }
+
+                        return name;
+                    }
+                }
+                catch (Exception)
+                {
+                }
+
+                // ReSharper restore EmptyGeneralCatchClause
+            }
+
+            return Marshal.GetTypeLibName(typeLib);
+        }
+
+        private static Guid GetTypeInfoGuid(ITypeInfo typeInfo)
+        {
+            IntPtr pAttr;
+            typeInfo.GetTypeAttr(out pAttr);
+            try
+            {
+                var attr = (TYPEATTR)Marshal.PtrToStructure(pAttr, typeof(TYPEATTR));
+                return attr.guid;
+            }
+            finally
+            {
+                typeInfo.ReleaseTypeAttr(pAttr);
+            }
+        }
+
         #region Nested type: IProvideClassInfo
 
         [ComImport]
@@ -196,7 +372,7 @@ namespace Microsoft.ClearScript.Util
         {
             [PreserveSig]
             int GetClassInfo(
-                [Out] [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(TypeToTypeInfoMarshaler))] out Type typeInfo
+                [Out] [MarshalAs(UnmanagedType.Interface)] out ITypeInfo typeInfo
             );
         }
 
