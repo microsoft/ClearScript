@@ -73,7 +73,7 @@ namespace Microsoft.ClearScript.Windows
     {
         #region Nested type: ScriptSite
 
-        private class ScriptSite : IActiveScriptSite, IActiveScriptSiteInterruptPoll, IActiveScriptSiteDebug32, IActiveScriptSiteDebug64, IActiveScriptSiteDebugEx, ICustomQueryInterface
+        private class ScriptSite : IActiveScriptSite, IActiveScriptSiteInterruptPoll, IActiveScriptSiteWindow, IActiveScriptSiteDebug32, IActiveScriptSiteDebug64, IActiveScriptSiteDebugEx, ICustomQueryInterface
         {
             private readonly WindowsScriptEngine engine;
 
@@ -88,16 +88,50 @@ namespace Microsoft.ClearScript.Windows
                 {
                     try
                     {
-                        var stackTrace = engine.GetStackTraceInternal();
-                        if (!string.IsNullOrWhiteSpace(stackTrace))
+                        var syntaxError = false;
+
+                        var scriptError = error as IActiveScriptError;
+                        if (scriptError != null)
                         {
-                            return message + "\n" + stackTrace;
+                            EXCEPINFO excepInfo;
+                            scriptError.GetExceptionInfo(out excepInfo);
+                            if (RawCOMHelpers.HResult.GetFacility(excepInfo.scode) == RawCOMHelpers.HResult.FACILITY_CONTROL)
+                            {
+                                syntaxError = engine.SyntaxErrorMap.ContainsKey(RawCOMHelpers.HResult.GetCode(excepInfo.scode));
+                            }
                         }
 
-                        var errorLocation = GetErrorLocation(error);
-                        if (!string.IsNullOrWhiteSpace(errorLocation))
+                        if (syntaxError)
                         {
-                            return message + "\n" + errorLocation;
+                            var details = message;
+
+                            var errorLocation = GetErrorLocation(error);
+                            if (!string.IsNullOrWhiteSpace(errorLocation))
+                            {
+                                details += "\n" + errorLocation;
+                            }
+
+                            var stackTrace = engine.GetStackTraceInternal();
+                            if (!string.IsNullOrWhiteSpace(stackTrace))
+                            {
+                                details += "\n" + stackTrace;
+                            }
+
+                            return details;
+                        }
+                        else
+                        {
+                            var stackTrace = engine.GetStackTraceInternal();
+                            if (!string.IsNullOrWhiteSpace(stackTrace))
+                            {
+                                return message + "\n" + stackTrace;
+                            }
+
+                            var errorLocation = GetErrorLocation(error);
+                            if (!string.IsNullOrWhiteSpace(errorLocation))
+                            {
+                                return message + "\n" + errorLocation;
+                            }
                         }
                     }
                     catch (Exception exception)
@@ -247,6 +281,23 @@ namespace Microsoft.ClearScript.Windows
 
             #endregion
 
+            #region IActiveScriptSiteWindow implementation
+
+            public void GetWindow(out IntPtr hwnd)
+            {
+                var hostWindow = engine.HostWindow;
+                hwnd = (hostWindow != null) ? hostWindow.OwnerHandle : IntPtr.Zero;
+            }
+
+            public void EnableModeless(bool enable)
+            {
+                var hostWindow = engine.HostWindow;
+                if (hostWindow != null)
+                    hostWindow.EnableModeless(enable);
+            }
+
+            #endregion
+
             #region IActiveScriptSiteDebug32 implementation
 
             public void GetDocumentContextFromPosition(uint sourceContext, uint offset, uint length, out IDebugDocumentContext context)
@@ -342,9 +393,15 @@ namespace Microsoft.ClearScript.Windows
             public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr pInterface)
             {
                 pInterface = IntPtr.Zero;
+
                 if ((iid == typeof(IActiveScriptSiteDebug32).GUID) || (iid == typeof(IActiveScriptSiteDebug64).GUID) || (iid == typeof(IActiveScriptSiteDebugEx).GUID))
                 {
                     return (engine.processDebugManager != null) ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;
+                }
+
+                if (iid == typeof(IActiveScriptSiteWindow).GUID)
+                {
+                    return (engine.HostWindow != null) ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;
                 }
 
                 return CustomQueryInterfaceResult.NotHandled;

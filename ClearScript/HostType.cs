@@ -223,29 +223,29 @@ namespace Microsoft.ClearScript
             }
         }
 
-        public override string[] GetAuxPropertyNames(BindingFlags bindFlags)
+        public override string[] GetAuxPropertyNames(IHostInvokeContext context, BindingFlags bindFlags)
         {
             var type = GetSpecificTypeNoThrow();
             if (type != null)
             {
-                return type.GetNestedTypes(bindFlags).Select(testType => testType.GetRootName()).Distinct().ToArray();
+                return type.GetScriptableNestedTypes(bindFlags, context.DefaultAccess).Select(testType => testType.GetRootName()).Distinct().ToArray();
             }
 
             return MiscHelpers.GetEmptyArray<string>();
         }
 
-        public override bool TryInvokeAuxMember(ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             var type = GetSpecificTypeNoThrow();
             if (type != null)
             {
-                var nestedTypes = type.GetNestedTypes(invokeFlags).Where(testType => testType.GetRootName() == name).ToIList();
+                var nestedTypes = type.GetScriptableNestedTypes(invokeFlags, context.DefaultAccess).Where(testType => testType.GetRootName() == name).ToIList();
                 if (nestedTypes.Count > 0)
                 {
                     var tempResult = Wrap(nestedTypes.Select(testType => testType.ApplyTypeArguments(type.GetGenericArguments())).ToArray());
                     if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
                     {
-                        return tempResult.TryInvoke(engine, invokeFlags, args, bindArgs, out result);
+                        return tempResult.TryInvoke(context, invokeFlags, args, bindArgs, out result);
                     }
 
                     result = tempResult;
@@ -257,7 +257,7 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public override bool TryInvoke(ScriptEngine engine, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             if (!invokeFlags.HasFlag(BindingFlags.InvokeMethod) || (args.Length < 1))
             {

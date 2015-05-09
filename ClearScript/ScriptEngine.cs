@@ -76,7 +76,12 @@ namespace Microsoft.ClearScript
         #region data
 
         private readonly string name;
+
+        private Type accessContext;
+        private ScriptAccess defaultAccess;
+
         private static readonly IUniqueNameManager nameManager = new UniqueNameManager();
+        private static readonly object nullHostObjectProxy = new object();
         [ThreadStatic] private static ScriptEngine currentEngine;
 
         #endregion
@@ -132,7 +137,35 @@ namespace Microsoft.ClearScript
         /// so does not expose any host resources to script code, but it affects which host
         /// resources are importable and which members of exposed resources are accessible.
         /// </remarks>
-        public Type AccessContext { get; set; }
+        public Type AccessContext
+        {
+            get { return accessContext; }
+            set
+            {
+                accessContext = value;
+                OnAccessSettingsChanged();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the default script access setting for all members of exposed objects.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="DefaultScriptUsageAttribute"/>, <see cref="ScriptUsageAttribute"/>, or
+        /// their subclasses to override this property for individual types and members. Note that
+        /// this property has no effect on the method binding algorithm. If a script-based call is
+        /// bound to a method that is blocked by this property, it will be rejected even if an
+        /// overload exists that could receive the call.
+        /// </remarks>
+        public ScriptAccess DefaultAccess
+        {
+            get { return defaultAccess; }
+            set
+            {
+                defaultAccess = value;
+                OnAccessSettingsChanged();
+            }
+        }
 
         /// <summary>
         /// Enables or disables script code formatting.
@@ -166,8 +199,25 @@ namespace Microsoft.ClearScript
         /// are restricted to their declared types. The default behavior is a general requirement
         /// for correct method binding, so setting this property to <c>true</c> is not recommended.
         /// </remarks>
-        /// <seealso cref="ScriptMemberFlags"/>
+        /// <seealso cref="ScriptMemberFlags.ExposeRuntimeType"/>
         public bool DisableTypeRestriction { get; set; }
+
+        /// <summary>
+        /// Enables or disables <c>null</c> wrapping for field, property, and method return values.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, all field, property, and method return values
+        /// are marshaled with full .NET type information even if they are <c>null</c>. Note that
+        /// such values will always fail equality comparison with JavaScript's
+        /// <see href="https://msdn.microsoft.com/en-us/library/ie/fhcc96d6(v=vs.94).aspx">null</see>,
+        /// VBScript's
+        /// <see href="https://msdn.microsoft.com/en-us/library/f8tbc79x(v=vs.85).aspx">Nothing</see>,
+        /// and other similar values. Instead, use <see cref="HostFunctions.isNull"/> or
+        /// <see cref="object.Equals(object, object)"/> to perform such a comparison.
+        /// </remarks>
+        /// <seealso cref="ScriptMemberFlags.WrapNullResult"/>
+        /// <seealso cref="HostFunctions.isNull"/>
+        public bool EnableNullResultWrapping { get; set; }
 
         /// <summary>
         /// Enables or disables the use of reflection-based method binding as a fallback.
@@ -495,6 +545,53 @@ namespace Microsoft.ClearScript
         public void AddCOMObject(string itemName, HostItemFlags flags, Guid clsid, string serverName)
         {
             AddHostItem(itemName, flags, MiscHelpers.CreateCOMObject(clsid, serverName));
+        }
+
+        /// <summary>
+        /// Exposes a host type to script code with a default name.
+        /// </summary>
+        /// <param name="type">The type to expose.</param>
+        /// <remarks>
+        /// This method uses <paramref name="type"/>'s name for the new global script item that
+        /// will represent it.
+        /// <para>
+        /// Host types are exposed to script code in the form of objects whose properties and
+        /// methods are bound to the type's static members and nested types. If the type has
+        /// generic parameters, the corresponding object will be invocable with type arguments to
+        /// yield a specific type.
+        /// </para>
+        /// <para>
+        /// For more information about the mapping between host members and script-callable
+        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddHostType(Type type)
+        {
+            AddHostType(HostItemFlags.None, type);
+        }
+
+        /// <summary>
+        /// Exposes a host type to script code with a default name and the specified options.
+        /// </summary>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="type">The type to expose.</param>
+        /// <remarks>
+        /// This method uses <paramref name="type"/>'s name for the new global script item that
+        /// will represent it.
+        /// <para>
+        /// Host types are exposed to script code in the form of objects whose properties and
+        /// methods are bound to the type's static members and nested types. If the type has
+        /// generic parameters, the corresponding object will be invocable with type arguments to
+        /// yield a specific type.
+        /// </para>
+        /// <para>
+        /// For more information about the mapping between host members and script-callable
+        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddHostType(HostItemFlags flags, Type type)
+        {
+            AddHostType(type.GetRootName(), flags, type);
         }
 
         /// <summary>
@@ -1038,14 +1135,25 @@ namespace Microsoft.ClearScript
 
         internal abstract void AddHostItem(string itemName, HostItemFlags flags, object item);
 
-        internal object PrepareResult<T>(T result, bool isRestricted)
+        internal object PrepareResult<T>(T result, ScriptMemberFlags flags)
         {
-            return PrepareResult(result, typeof(T), isRestricted);
+            return PrepareResult(result, typeof(T), flags);
         }
 
-        internal virtual object PrepareResult(object result, Type type, bool isRestricted)
+        internal virtual object PrepareResult(object result, Type type, ScriptMemberFlags flags)
         {
-            return (isRestricted && !DisableTypeRestriction) ? HostObject.WrapResult(result, type) : result;
+            var wrapNull = flags.HasFlag(ScriptMemberFlags.WrapNullResult) || EnableNullResultWrapping;
+            if (wrapNull && (result == null))
+            {
+                return HostObject.WrapResult(null, type, true);
+            }
+
+            if (!flags.HasFlag(ScriptMemberFlags.ExposeRuntimeType) && !DisableTypeRestriction)
+            {
+                return HostObject.WrapResult(result, type, wrapNull);
+            }
+
+            return result;
         }
 
         internal abstract object MarshalToScript(object obj, HostItemFlags flags);
@@ -1127,6 +1235,10 @@ namespace Microsoft.ClearScript
             {
                 throw new UnauthorizedAccessException("Use of reflection is prohibited in this script engine");
             }
+        }
+
+        internal virtual void OnAccessSettingsChanged()
+        {
         }
 
         #endregion
@@ -1242,7 +1354,7 @@ namespace Microsoft.ClearScript
 
         internal void ProcessExtensionMethodType(Type type)
         {
-            if (extensionMethodTable.ProcessType(type))
+            if (extensionMethodTable.ProcessType(type, DefaultAccess))
             {
                 bindCache.Clear();
             }
@@ -1276,7 +1388,7 @@ namespace Microsoft.ClearScript
         private readonly ConditionalWeakTable<object, List<WeakReference>> hostObjectHostItemCache = new ConditionalWeakTable<object, List<WeakReference>>();
         private readonly ConditionalWeakTable<Type, List<WeakReference>> hostTypeHostItemCache = new ConditionalWeakTable<Type, List<WeakReference>>();
 
-        internal HostItem GetOrCreateHostItem(HostTarget target, HostItemFlags flags, Func<ScriptEngine, HostTarget, HostItemFlags, HostItem> createHostItem)
+        internal HostItem GetOrCreateHostItem(HostTarget target, HostItemFlags flags, HostItem.CreateFunc createHostItem)
         {
             var hostObject = target as HostObject;
             if (hostObject != null)
@@ -1311,9 +1423,9 @@ namespace Microsoft.ClearScript
             return createHostItem(this, target, flags);
         }
 
-        private HostItem GetOrCreateHostItemForHostObject(HostTarget hostTarget, object target, HostItemFlags flags, Func<ScriptEngine, HostTarget, HostItemFlags, HostItem> createHostItem)
+        private HostItem GetOrCreateHostItemForHostObject(HostTarget hostTarget, object target, HostItemFlags flags, HostItem.CreateFunc createHostItem)
         {
-            var cacheEntry = hostObjectHostItemCache.GetOrCreateValue(target);
+            var cacheEntry = hostObjectHostItemCache.GetOrCreateValue(target ?? nullHostObjectProxy);
 
             List<WeakReference> activeWeakRefs = null;
             var staleWeakRefCount = 0;
@@ -1356,7 +1468,7 @@ namespace Microsoft.ClearScript
             return newHostItem;
         }
 
-        private HostItem GetOrCreateHostItemForHostType(HostType hostType, HostItemFlags flags, Func<ScriptEngine, HostTarget, HostItemFlags, HostItem> createHostItem)
+        private HostItem GetOrCreateHostItemForHostType(HostType hostType, HostItemFlags flags, HostItem.CreateFunc createHostItem)
         {
             if (hostType.Types.Length != 1)
             {
@@ -1408,7 +1520,67 @@ namespace Microsoft.ClearScript
 
         #endregion
 
-        #region disposition / finalization
+        #region host item collateral
+
+        internal abstract HostItemCollateral HostItemCollateral { get; }
+
+        #endregion
+
+        #region shared host target member data
+
+        internal readonly HostTargetMemberData SharedHostMethodMemberData = new HostTargetMemberData();
+        internal readonly HostTargetMemberData SharedHostIndexedPropertyMemberData = new HostTargetMemberData();
+
+        private readonly ConditionalWeakTable<Type, List<WeakReference>> sharedHostObjectMemberDataCache = new ConditionalWeakTable<Type, List<WeakReference>>();
+
+        internal HostTargetMemberData GetSharedHostObjectMemberData(HostObject target, Type targetAccessContext, ScriptAccess targetDefaultAccess)
+        {
+            var cacheEntry = sharedHostObjectMemberDataCache.GetOrCreateValue(target.Type);
+
+            List<WeakReference> activeWeakRefs = null;
+            var staleWeakRefCount = 0;
+
+            foreach (var weakRef in cacheEntry)
+            {
+                var memberData = weakRef.Target as SharedHostObjectMemberData;
+                if (memberData == null)
+                {
+                    staleWeakRefCount++;
+                }
+                else
+                {
+                    if ((memberData.AccessContext == targetAccessContext) && (memberData.DefaultAccess == targetDefaultAccess))
+                    {
+                        return memberData;
+                    }
+
+                    if (activeWeakRefs == null)
+                    {
+                        activeWeakRefs = new List<WeakReference>(cacheEntry.Count);
+                    }
+
+                    activeWeakRefs.Add(weakRef);
+                }
+            }
+
+            if (staleWeakRefCount > 4)
+            {
+                cacheEntry.Clear();
+                if (activeWeakRefs != null)
+                {
+                    cacheEntry.Capacity = activeWeakRefs.Count + 1;
+                    cacheEntry.AddRange(activeWeakRefs);
+                }
+            }
+
+            var newMemberData = new SharedHostObjectMemberData(targetAccessContext, targetDefaultAccess);
+            cacheEntry.Add(new WeakReference(newMemberData));
+            return newMemberData;
+        }
+
+        #endregion
+
+        #region disposal / finalization
 
         /// <summary>
         /// Releases all resources used by the script engine.

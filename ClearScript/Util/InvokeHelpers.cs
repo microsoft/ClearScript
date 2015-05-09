@@ -69,7 +69,7 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class InvokeHelpers
     {
-        public static object InvokeMethod(ScriptEngine engine, object target, MethodInfo method, object[] args)
+        public static object InvokeMethod(IHostInvokeContext context, object target, MethodInfo method, object[] args)
         {
             var argList = new List<object>();
             var byRefArgInfo = new List<ByRefArgItem>();
@@ -173,20 +173,20 @@ namespace Microsoft.ClearScript.Util
                 return VoidResult.Value;
             }
 
-            return engine.PrepareResult(result, type, method.IsRestrictedForScript());
+            return context.Engine.PrepareResult(result, type, method.GetScriptMemberFlags());
         }
 
-        public static object InvokeDelegate(ScriptEngine engine, Delegate del, object[] args)
+        public static object InvokeDelegate(IHostInvokeContext context, Delegate del, object[] args)
         {
-            return InvokeMethod(engine, del, del.GetType().GetMethod("Invoke"), args);
+            return InvokeMethod(context, del, del.GetType().GetMethod("Invoke"), args);
         }
 
-        public static bool TryInvokeObject(ScriptEngine engine, object target, BindingFlags invokeFlags, object[] args, object[] bindArgs, bool tryDynamic, out object result)
+        public static bool TryInvokeObject(IHostInvokeContext context, object target, BindingFlags invokeFlags, object[] args, object[] bindArgs, bool tryDynamic, out object result)
         {
             var hostTarget = target as HostTarget;
             if (hostTarget != null)
             {
-                if (hostTarget.TryInvoke(engine, invokeFlags, args, bindArgs, out result))
+                if (hostTarget.TryInvoke(context, invokeFlags, args, bindArgs, out result))
                 {
                     return true;
                 }
@@ -211,7 +211,7 @@ namespace Microsoft.ClearScript.Util
                 var del = target as Delegate;
                 if (del != null)
                 {
-                    result = InvokeDelegate(engine, del, args);
+                    result = InvokeDelegate(context, del, args);
                     return true;
                 }
 
@@ -220,7 +220,7 @@ namespace Microsoft.ClearScript.Util
                     var dynamicMetaObjectProvider = target as IDynamicMetaObjectProvider;
                     if (dynamicMetaObjectProvider != null)
                     {
-                        if (dynamicMetaObjectProvider.GetMetaObject(Expression.Constant(target)).TryInvoke(engine, args, out result))
+                        if (dynamicMetaObjectProvider.GetMetaObject(Expression.Constant(target)).TryInvoke(context, args, out result))
                         {
                             return true;
                         }

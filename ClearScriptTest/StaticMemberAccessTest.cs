@@ -270,7 +270,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("StaticMemberAccess")]
         public void StaticMemberAccess_ReadOnlyProperty_Write()
         {
-            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticReadOnlyProperty = 2"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("StaticTestClass.StaticReadOnlyProperty = 2"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]

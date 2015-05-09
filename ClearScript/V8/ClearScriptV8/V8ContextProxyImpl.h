@@ -102,6 +102,7 @@ namespace V8 {
         virtual void Interrupt() override;
         virtual V8RuntimeHeapInfo^ GetRuntimeHeapInfo() override;
         virtual void CollectGarbage(bool exhaustive) override;
+        virtual void OnAccessSettingsChanged() override;
 
         ~V8ContextProxyImpl();
         !V8ContextProxyImpl();

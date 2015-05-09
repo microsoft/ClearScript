@@ -64,8 +64,12 @@ using System;
 namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Specifies how the target event, field, method, or property is to be exposed to script code.
+    /// Specifies how the target type member is to be exposed to script code. This extended version
+    /// supports additional options.
     /// </summary>
+    /// <remarks>
+    /// This attribute is applicable to events, fields, methods, and properties.
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Method | AttributeTargets.Property)]
     public sealed class ScriptMemberAttribute : ScriptUsageAttribute
     {
@@ -79,7 +83,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name.
         /// </summary>
-        /// <param name="name">The name that script code will use to access the type member.</param>
+        /// <param name="name">The name that script code will use to access the target type member.</param>
         public ScriptMemberAttribute(string name)
         {
             Name = name;
@@ -88,7 +92,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified script access setting.
         /// </summary>
-        /// <param name="access">The script access setting for the type member.</param>
+        /// <param name="access">The script access setting for the target type member.</param>
         public ScriptMemberAttribute(ScriptAccess access)
             : base(access)
         {
@@ -97,8 +101,8 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name and script access setting.
         /// </summary>
-        /// <param name="name">The name that script code will use to access the type member.</param>
-        /// <param name="access">The script access setting for the type member.</param>
+        /// <param name="name">The name that script code will use to access the target type member.</param>
+        /// <param name="access">The script access setting for the target type member.</param>
         public ScriptMemberAttribute(string name, ScriptAccess access)
             : base(access)
         {
@@ -108,7 +112,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified script options.
         /// </summary>
-        /// <param name="flags">The script options for the type member.</param>
+        /// <param name="flags">The script options for the target type member.</param>
         public ScriptMemberAttribute(ScriptMemberFlags flags)
         {
             Flags = flags;
@@ -117,8 +121,8 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name and script options.
         /// </summary>
-        /// <param name="name">The name that script code will use to access the type member.</param>
-        /// <param name="flags">The script options for the type member.</param>
+        /// <param name="name">The name that script code will use to access the target type member.</param>
+        /// <param name="flags">The script options for the target type member.</param>
         public ScriptMemberAttribute(string name, ScriptMemberFlags flags)
         {
             Name = name;
@@ -128,8 +132,8 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified script access setting and script options.
         /// </summary>
-        /// <param name="access">The script access setting for the type member.</param>
-        /// <param name="flags">The script options for the type member.</param>
+        /// <param name="access">The script access setting for the target type member.</param>
+        /// <param name="flags">The script options for the target type member.</param>
         public ScriptMemberAttribute(ScriptAccess access, ScriptMemberFlags flags)
             : base(access)
         {
@@ -139,9 +143,9 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name, script access setting, and script options.
         /// </summary>
-        /// <param name="name">The name that script code will use to access the type member.</param>
-        /// <param name="access">The script access setting for the type member.</param>
-        /// <param name="flags">The script options for the type member.</param>
+        /// <param name="name">The name that script code will use to access the target type member.</param>
+        /// <param name="access">The script access setting for the target type member.</param>
+        /// <param name="flags">The script options for the target type member.</param>
         public ScriptMemberAttribute(string name, ScriptAccess access, ScriptMemberFlags flags)
             : base(access)
         {
@@ -150,18 +154,18 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Gets or sets the name that script code will use to access the type member.
+        /// Gets or sets the name that script code will use to access the target type member.
         /// </summary>
         /// <remarks>
-        /// The default value is the name of the type member. Note that this property has no effect
-        /// on the method binding algorithm. If a script-based call is bound to a method that is
-        /// exposed under a different name, it will be rejected even if an overload exists that
-        /// could receive the call.
+        /// The default value is the name of the target type member. Note that this property has no
+        /// effect on the method binding algorithm. If a script-based call is bound to a method
+        /// that is exposed under a different name, it will be rejected even if an overload exists
+        /// that could receive the call.
         /// </remarks>
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the script options for the type member.
+        /// Gets or sets the script options for the target type member.
         /// </summary>
         public ScriptMemberFlags Flags { get; set; }
     }

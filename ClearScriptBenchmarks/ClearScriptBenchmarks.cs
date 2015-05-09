@@ -105,7 +105,7 @@ namespace Microsoft.ClearScript.Test
                     switch (selection)
                     {
                         case 1:
-                            Run(() => new JScriptEngine(), SunSpider.RunSuite);
+                            Run(() => new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode), SunSpider.RunSuite);
                             done = true;
                             break;
 

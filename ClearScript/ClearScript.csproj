@@ -61,11 +61,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ContinuationCallback.cs" />
+    <Compile Include="HostItemCollateral.cs" />
     <Compile Include="HostItemFlags.cs" />
+    <Compile Include="HostTargetMemberData.cs" />
     <Compile Include="HostTargetFlags.cs" />
     <Compile Include="IScriptableObject.cs" />
     <Compile Include="BindSignature.cs" />
     <Compile Include="IScriptEngineException.cs" />
+    <Compile Include="DefaultScriptUsageAttribute.cs" />
+    <Compile Include="NoDefaultScriptAccessAttribute.cs" />
     <Compile Include="NoScriptAccessAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <AutoGen>True</AutoGen>
@@ -79,9 +83,11 @@
     <Compile Include="ScriptMethod.cs" />
     <Compile Include="ScriptMemberAttribute.cs" />
     <Compile Include="ScriptUsageAttribute.cs" />
+    <Compile Include="Util\Collateral.cs" />
     <Compile Include="Util\COMDispatchHelpers.cs" />
     <Compile Include="Util\CoTaskMemBlock.cs" />
     <Compile Include="Util\DisposedFlag.cs" />
+    <Compile Include="Util\IHostInvokeContext.cs" />
     <Compile Include="Util\NativeMethods.cs" />
     <Compile Include="Util\COMDispatch.cs" />
     <Compile Include="Util\IScriptMarshalWrapper.cs" />
@@ -98,6 +104,7 @@
     <Compile Include="V8\V8RuntimeConstraints.cs" />
     <Compile Include="V8\V8Runtime.cs" />
     <Compile Include="V8\V8RuntimeFlags.cs" />
+    <Compile Include="Windows\IHostWindow.cs" />
     <Compile Include="Windows\WindowsScriptEngineFlags.cs" />
     <Compile Include="Util\IDynamic.cs" />
     <Compile Include="Util\SpecialMemberNames.cs" />

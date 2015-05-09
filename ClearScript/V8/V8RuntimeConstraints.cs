@@ -81,23 +81,55 @@ namespace Microsoft.ClearScript.V8
         // ReSharper restore EmptyConstructor
 
         /// <summary>
-        /// Gets or sets the maximum size of the new object heap in bytes.
+        /// Gets or sets the maximum size of the new object heap in
+        /// <see href="http://en.wikipedia.org/wiki/Mebibyte">MiB</see>.
         /// </summary>
+        /// <remarks>
+        /// For maximum compatibility with hosts that predate an inadvertent breaking change in
+        /// ClearScript 5.4.1, values greater than 1048576
+        /// (1 <see href="http://en.wikipedia.org/wiki/Tebibyte">TiB</see>) are assumed to be in
+        /// bytes rather than MiB. For example, the values 16 and 16777216 both specify a limit
+        /// of 16 MiB.
+        /// </remarks>
         public int MaxNewSpaceSize { get; set; }
 
         /// <summary>
-        /// Gets or sets the maximum size of the old object heap in bytes.
+        /// Gets or sets the maximum size of the old object heap in
+        /// <see href="http://en.wikipedia.org/wiki/Mebibyte">MiB</see>.
         /// </summary>
+        /// <remarks>
+        /// For maximum compatibility with hosts that predate an inadvertent breaking change in
+        /// ClearScript 5.4.1, values greater than 1048576
+        /// (1 <see href="http://en.wikipedia.org/wiki/Tebibyte">TiB</see>) are assumed to be in
+        /// bytes rather than MiB. For example, the values 16 and 16777216 both specify a limit
+        /// of 16 MiB.
+        /// </remarks>
         public int MaxOldSpaceSize { get; set; }
 
         /// <summary>
-        /// Gets or sets the maximum size of the executable code heap in bytes.
+        /// Gets or sets the maximum size of the executable code heap in
+        /// <see href="http://en.wikipedia.org/wiki/Mebibyte">MiB</see>.
         /// </summary>
+        /// <remarks>
+        /// For maximum compatibility with hosts that predate an inadvertent breaking change in
+        /// ClearScript 5.4.1, values greater than 1048576
+        /// (1 <see href="http://en.wikipedia.org/wiki/Tebibyte">TiB</see>) are assumed to be in
+        /// bytes rather than MiB. For example, the values 16 and 16777216 both specify a limit
+        /// of 16 MiB.
+        /// </remarks>
         public int MaxExecutableSize { get; set; }
 
         /// <summary>
-        /// Gets or sets the maximum size of the young object heap in bytes.
+        /// Gets or sets the maximum size of the young object heap in
+        /// <see href="http://en.wikipedia.org/wiki/Mebibyte">MiB</see>.
         /// </summary>
+        /// <remarks>
+        /// For maximum compatibility with hosts that predate an inadvertent breaking change in
+        /// ClearScript 5.4.1, values greater than 1048576
+        /// (1 <see href="http://en.wikipedia.org/wiki/Tebibyte">TiB</see>) are assumed to be in
+        /// bytes rather than MiB. For example, the values 16 and 16777216 both specify a limit
+        /// of 16 MiB.
+        /// </remarks>
         [Obsolete("This property is obsolete. Use MaxNewSpaceSize instead.")]
         public int MaxYoungSpaceSize
         {

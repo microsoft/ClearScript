@@ -77,23 +77,23 @@ namespace Microsoft.ClearScript
 
         public abstract HostTargetFlags Flags { get; }
 
-        public virtual string[] GetAuxMethodNames(BindingFlags bindFlags)
+        public virtual string[] GetAuxMethodNames(IHostInvokeContext context, BindingFlags bindFlags)
         {
             return MiscHelpers.GetEmptyArray<string>();
         }
 
-        public virtual string[] GetAuxPropertyNames(BindingFlags bindFlags)
+        public virtual string[] GetAuxPropertyNames(IHostInvokeContext context, BindingFlags bindFlags)
         {
             return MiscHelpers.GetEmptyArray<string>();
         }
 
-        public virtual bool TryInvokeAuxMember(ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public virtual bool TryInvokeAuxMember(IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             result = null;
             return false;
         }
 
-        public virtual bool TryInvoke(ScriptEngine engine, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public virtual bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             result = null;
             return false;

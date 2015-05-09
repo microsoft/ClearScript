@@ -377,7 +377,7 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_VBDynamicArgMarshaling_Numeric()
         {
             var result = TestUtil.InvokeVBTestFunction(@"
-                Using engine As New Microsoft.ClearScript.V8.V8ScriptEngine
+                Using engine As New V8ScriptEngine
                     engine.Execute(""data = [5, 4, 'qux', 2, 1]; function getElement(i1, i2, i3) { return data[i1 + i2 - i3]; }"")
                     TestFunction = engine.Script.getElement(CShort(1), CLng(99), CStr(98))
                 End Using
@@ -390,7 +390,7 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_VBDynamicArgMarshaling_String()
         {
             var result = TestUtil.InvokeVBTestFunction(@"
-                Using engine As New Microsoft.ClearScript.V8.V8ScriptEngine
+                Using engine As New V8ScriptEngine
                     engine.Execute(""data = { foo26: 123, bar97: 456.789 }; function getElement(i1, i2) { return data[i1 + i2]; }"")
                     TestFunction = engine.Script.getElement(""bar"", CLng(97))
                 End Using
@@ -1134,6 +1134,80 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("recordSet.Fields.Item(\"baz\")"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_InaccessiblePropertyAccessors()
+        {
+            engine.Script.foo = new InaccessiblePropertyAccessors();
+
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("foo.NoGetter"));
+            Assert.AreEqual(123, engine.Evaluate("foo.NoGetter = 123"));
+
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("foo.PrivateGetter"));
+            Assert.AreEqual(456, engine.Evaluate("foo.PrivateGetter = 456"));
+
+            Assert.AreEqual(456, engine.Evaluate("foo.NoSetter"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("foo.NoSetter = 789"));
+
+            Assert.AreEqual(456, engine.Evaluate("foo.PrivateSetter"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("foo.PrivateSetter = 789"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_InaccessiblePropertyAccessors_Static()
+        {
+            engine.AddHostType("foo", typeof(InaccessiblePropertyAccessorsStatic));
+
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("foo.NoGetter"));
+            Assert.AreEqual(123, engine.Evaluate("foo.NoGetter = 123"));
+
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("foo.PrivateGetter"));
+            Assert.AreEqual(456, engine.Evaluate("foo.PrivateGetter = 456"));
+
+            Assert.AreEqual(456, engine.Evaluate("foo.NoSetter"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("foo.NoSetter = 789"));
+
+            Assert.AreEqual(456, engine.Evaluate("foo.PrivateSetter"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("foo.PrivateSetter = 789"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8RuntimeConstraintScale()
+        {
+            const int maxNewSpaceSize = 16;
+            const int maxOldSpaceSize = 512;
+
+            var constraints = new V8RuntimeConstraints
+            {
+                MaxNewSpaceSize = maxNewSpaceSize,
+                MaxOldSpaceSize = maxOldSpaceSize
+            };
+
+            using (var tempEngine = new V8ScriptEngine(constraints))
+            {
+                Assert.AreEqual(Math.PI, tempEngine.Evaluate("Math.PI"));
+                Assert.AreEqual(Convert.ToUInt64(maxNewSpaceSize * 4 + maxOldSpaceSize), tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
+            }
+
+            constraints = new V8RuntimeConstraints
+            {
+                MaxNewSpaceSize = maxNewSpaceSize * 1024 * 1024,
+                MaxOldSpaceSize = maxOldSpaceSize * 1024 * 1024
+            };
+
+            using (var tempEngine = new V8ScriptEngine(constraints))
+            {
+                Assert.AreEqual(Math.E, tempEngine.Evaluate("Math.E"));
+                Assert.AreEqual(Convert.ToUInt64(maxNewSpaceSize * 4 + maxOldSpaceSize), tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_TooManyDebugApplications()
+        {
+            var engines = Enumerable.Range(0, 2048).Select(index => new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging)).ToArray();
+            Array.ForEach(engines, tempEngine => tempEngine.Dispose());
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1229,6 +1303,68 @@ namespace Microsoft.ClearScript.Test
                 get { return byDayOfWeek[key]; }
                 set { byDayOfWeek[key] = value; }
             }
+        }
+
+        public class InaccessiblePropertyAccessors
+        {
+            // ReSharper disable UnusedMember.Local
+
+            private int dummy;
+
+            public int NoGetter
+            {
+                set { dummy = value; }
+            }
+
+            public int PrivateGetter
+            {
+                private get { return dummy; }
+                set { dummy = value; }
+            }
+
+            public int NoSetter
+            {
+                get { return dummy; }
+            }
+
+            public int PrivateSetter
+            {
+                get { return dummy; }
+                private set { dummy = value; }
+            }
+
+            // ReSharper restore UnusedMember.Local
+        }
+
+        public static class InaccessiblePropertyAccessorsStatic
+        {
+            // ReSharper disable UnusedMember.Local
+
+            private static int dummy = 12345;
+
+            public static int NoGetter
+            {
+                set { dummy = value; }
+            }
+
+            public static int PrivateGetter
+            {
+                private get { return dummy; }
+                set { dummy = value; }
+            }
+
+            public static int NoSetter
+            {
+                get { return dummy; }
+            }
+
+            public static int PrivateSetter
+            {
+                get { return dummy; }
+                private set { dummy = value; }
+            }
+
+            // ReSharper restore UnusedMember.Local
         }
 
         #endregion

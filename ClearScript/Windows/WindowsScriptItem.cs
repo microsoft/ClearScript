@@ -146,10 +146,17 @@ namespace Microsoft.ClearScript.Windows
                     // These exceptions often have awful messages that include COM error codes.
                     // The engine itself may be able to provide a better message.
 
-                    string message;
-                    if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out message) && (message != exception.Message))
+                    string runtimeErrorMessage;
+                    if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out runtimeErrorMessage) && (runtimeErrorMessage != exception.Message))
                     {
-                        scriptError = new ScriptEngineException(engine.Name, message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
+                        scriptError = new ScriptEngineException(engine.Name, runtimeErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
+                        return true;
+                    }
+
+                    string syntaxErrorMessage;
+                    if (engine.SyntaxErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out syntaxErrorMessage) && (syntaxErrorMessage != exception.Message))
+                    {
+                        scriptError = new ScriptEngineException(engine.Name, syntaxErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
                         return true;
                     }
                 }

@@ -104,6 +104,8 @@ namespace V8 {
 
     private:
 
+        static int AdjustConstraint(int value);
+
         Object^ m_gcLock;
         SharedPtr<V8Isolate>* m_pspIsolate;
     };

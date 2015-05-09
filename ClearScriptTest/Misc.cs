@@ -61,8 +61,11 @@
 
 using System;
 using System.CodeDom.Compiler;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.ClearScript.Util;
 using Microsoft.VisualBasic;
@@ -96,9 +99,69 @@ namespace Microsoft.ClearScript.Test
         public T Arg { get; set; }
     }
 
+    public class NullResultWrappingTestObject<T>
+    {
+        private readonly T value;
+
+        public NullResultWrappingTestObject(T value)
+        {
+            this.value = value;
+        }
+
+        public T Method(T arg)
+        {
+            return arg;
+        }
+
+        public Random Method(Random arg)
+        {
+            return arg;
+        }
+
+        public T Value { get { return value; } }
+
+        public T NullValue { get { return default(T); } }
+
+        [ScriptMember(ScriptMemberFlags.WrapNullResult)]
+        public T WrappedNullValue { get { return NullValue; } }
+    }
+
+    public class DefaultPropertyTestObject
+    {
+        private readonly Dictionary<string, object> byName = new Dictionary<string, object>();
+        private readonly Dictionary<DayOfWeek, object> byDay = new Dictionary<DayOfWeek, object>();
+
+        public object this[string name]
+        {
+            get { return ((IDictionary)byName)[name]; }
+            set { byName[name] = value; }
+        }
+
+        public object this[DayOfWeek day]
+        {
+            get { return ((IDictionary)byDay)[day]; }
+            set { byDay[day] = value; }
+        }
+
+        [DispId(0)]
+        public int Value { get; set; }
+    }
+
+    public class DefaultPropertyTestContainer
+    {
+        public readonly DefaultPropertyTestObject Field = new DefaultPropertyTestObject();
+
+        public DefaultPropertyTestObject Property { get { return Field; } }
+
+        public DefaultPropertyTestObject Method()
+        {
+            return Field;
+        }
+    }
+
     public static class TestUtil
     {
-        public static void InvokeVBTestSub(string code)
+        public static void InvokeVBTestSub(string code, string extraDefinitions = null)
         {
             var options = new CompilerParameters { GenerateInMemory = true };
             options.ReferencedAssemblies.Add("ClearScript.dll");
@@ -108,17 +171,19 @@ namespace Microsoft.ClearScript.Test
             var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { MiscHelpers.FormatInvariant(@"
                 Imports System
                 Imports System.Linq
+                Imports System.Runtime.InteropServices
                 Imports Microsoft.ClearScript
                 Imports Microsoft.ClearScript.Test
                 Imports Microsoft.ClearScript.V8
                 Imports Microsoft.ClearScript.Windows
                 Imports Microsoft.VisualStudio.TestTools.UnitTesting
+                {1}
                 Module TestModule
                     Sub TestSub
                         {0}
                     End Sub
                 End Module
-            ", code)});
+            ", code, extraDefinitions ?? string.Empty)});
 
             if (results.Errors.HasErrors)
             {
@@ -135,7 +200,7 @@ namespace Microsoft.ClearScript.Test
             results.CompiledAssembly.GetType("TestModule").InvokeMember("TestSub", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>());
         }
 
-        public static object InvokeVBTestFunction(string code)
+        public static object InvokeVBTestFunction(string code, string extraDefinitions = null)
         {
             var options = new CompilerParameters { GenerateInMemory = true };
             options.ReferencedAssemblies.Add("ClearScript.dll");
@@ -145,17 +210,19 @@ namespace Microsoft.ClearScript.Test
             var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { MiscHelpers.FormatInvariant(@"
                 Imports System
                 Imports System.Linq
+                Imports System.Runtime.InteropServices
                 Imports Microsoft.ClearScript
                 Imports Microsoft.ClearScript.Test
                 Imports Microsoft.ClearScript.V8
                 Imports Microsoft.ClearScript.Windows
                 Imports Microsoft.VisualStudio.TestTools.UnitTesting
+                {1}
                 Module TestModule
                     Function TestFunction
                         {0}
                     End Function
                 End Module
-            ", code)});
+            ", code, extraDefinitions ?? string.Empty)});
 
             if (results.Errors.HasErrors)
             {

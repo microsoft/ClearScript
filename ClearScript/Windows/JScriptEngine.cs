@@ -73,7 +73,7 @@ namespace Microsoft.ClearScript.Windows
 
         private static readonly Dictionary<int, string> runtimeErrorMap = new Dictionary<int, string>
         {
-            // http://msdn.microsoft.com/en-us/library/1dk3k160(VS.84).aspx
+            // https://msdn.microsoft.com/en-us/library/1dk3k160(v=vs.84).aspx
             { 5029, "Array length must be a finite positive integer" },
             { 5030, "Array length must be assigned a finite positive number" },
             { 5028, "Array or arguments object expected" },
@@ -105,6 +105,40 @@ namespace Microsoft.ClearScript.Windows
             { 5009, "Undefined identifier" },
             { 5018, "Unexpected quantifier" },
             { 5013, "VBArray expected" }
+        };
+
+        private static readonly Dictionary<int, string> syntaxErrorMap = new Dictionary<int, string>
+        {
+            // https://msdn.microsoft.com/en-us/library/6bby3x2e(v=vs.84).aspx
+            { 1019, "Can't have 'break' outside of loop" },
+            { 1020, "Can't have 'continue' outside of loop" },
+            { 1030, "Conditional compilation is turned off" },
+            { 1027, "'default' can only appear once in a 'switch' statement" },
+            { 1005, "Expected '('" },
+            { 1006, "Expected ')'" },
+            { 1012, "Expected '/'" },
+            { 1003, "Expected ':'" },
+            { 1004, "Expected ';'" },
+            { 1032, "Expected '@'" },
+            { 1029, "Expected '@end'" },
+            { 1007, "Expected ']'" },
+            { 1008, "Expected '{'" },
+            { 1009, "Expected '}'" },
+            { 1011, "Expected '='" },
+            { 1033, "Expected 'catch'" },
+            { 1031, "Expected constant" },
+            { 1023, "Expected hexadecimal digit" },
+            { 1010, "Expected identifier" },
+            { 1028, "Expected identifier, string or number" },
+            { 1024, "Expected 'while'" },
+            { 1014, "Invalid character" },
+            { 1026, "Label not found" },
+            { 1025, "Label redefined" },
+            { 1018, "'return' statement outside of function" },
+            { 1002, "Syntax error" },
+            { 1035, "Throw must be followed by an expression on the same source line" },
+            { 1016, "Unterminated comment" },
+            { 1015, "Unterminated string constant" }
         };
 
         #endregion
@@ -260,6 +294,11 @@ namespace Microsoft.ClearScript.Windows
         internal override IDictionary<int, string> RuntimeErrorMap
         {
             get { return runtimeErrorMap; }
+        }
+
+        internal override IDictionary<int, string> SyntaxErrorMap
+        {
+            get { return syntaxErrorMap; }
         }
 
         #endregion

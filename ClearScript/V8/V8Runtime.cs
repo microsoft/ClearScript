@@ -75,6 +75,7 @@ namespace Microsoft.ClearScript.V8
         private static readonly IUniqueNameManager nameManager = new UniqueNameManager();
 
         private readonly IUniqueNameManager documentNameManager = new UniqueFileNameManager();
+        private readonly HostItemCollateral hostItemCollateral = new HostItemCollateral();
 
         private readonly V8IsolateProxy proxy;
         private DisposedFlag disposedFlag = new DisposedFlag();
@@ -465,6 +466,11 @@ namespace Microsoft.ClearScript.V8
         #endregion
 
         #region internal members
+
+        internal HostItemCollateral HostItemCollateral
+        {
+            get { return hostItemCollateral; }
+        }
 
         internal V8IsolateProxy IsolateProxy
         {

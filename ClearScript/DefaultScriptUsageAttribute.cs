@@ -60,65 +60,41 @@
 //       
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class ExtensionMethodTable
+    /// <summary>
+    /// Specifies defaults for how type members are to be exposed to script code.
+    /// </summary>
+    /// <remarks>
+    /// This attribute is applicable to classes, enums, interfaces, structs, and assemblies. Use
+    /// <see cref="ScriptUsageAttribute"/>, <see cref="ScriptMemberAttribute"/>, or
+    /// <see cref="NoScriptAccessAttribute"/> to override it for individual type members.
+    /// </remarks>
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Interface | AttributeTargets.Struct | AttributeTargets.Assembly)]
+    public class DefaultScriptUsageAttribute : Attribute
     {
-        private readonly Dictionary<Type, MethodInfo[]> table = new Dictionary<Type, MethodInfo[]>();
-        private ExtensionMethodSummary summary = new ExtensionMethodSummary();
+        private readonly ScriptAccess access;
 
-        public ExtensionMethodSummary Summary
+        /// <summary>
+        /// Initializes a new <see cref="DefaultScriptUsageAttribute"/> instance.
+        /// </summary>
+        public DefaultScriptUsageAttribute()
         {
-            get { return summary; }
         }
 
-        public bool ProcessType(Type type, ScriptAccess defaultAccess)
+        /// <summary>
+        /// Initializes a new <see cref="DefaultScriptUsageAttribute"/> instance with the specified default script access setting.
+        /// </summary>
+        /// <param name="access">The default script access setting for type members.</param>
+        public DefaultScriptUsageAttribute(ScriptAccess access)
         {
-            Debug.Assert(type.IsSpecific());
-            if (!table.ContainsKey(type) && type.HasExtensionMethods())
-            {
-                const BindingFlags bindFlags = BindingFlags.Public | BindingFlags.Static;
-                table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(method, defaultAccess)).ToArray();
-                summary = new ExtensionMethodSummary(table);
-                return true;
-            }
-
-            return false;
+            this.access = access;
         }
 
-        private static bool IsScriptableExtensionMethod(MethodInfo method, ScriptAccess defaultAccess)
-        {
-            return method.IsScriptable(defaultAccess) && method.IsDefined(typeof(ExtensionAttribute), false);
-        }
-    }
-
-    internal class ExtensionMethodSummary
-    {
-        public ExtensionMethodSummary()
-        {
-            Types = MiscHelpers.GetEmptyArray<Type>();
-            Methods = MiscHelpers.GetEmptyArray<MethodInfo>();
-            MethodNames = MiscHelpers.GetEmptyArray<string>();
-        }
-
-        public ExtensionMethodSummary(Dictionary<Type, MethodInfo[]> table)
-        {
-            Types = table.Keys.ToArray();
-            Methods = table.SelectMany(pair => pair.Value).ToArray();
-            MethodNames = Methods.Select(method => method.GetScriptName()).ToArray();
-        }
-
-        public Type[] Types { get; private set; }
-
-        public MethodInfo[] Methods { get; private set; }
-
-        public string[] MethodNames { get; private set; }
+        /// <summary>
+        /// Gets the default script access setting for type members.
+        /// </summary>
+        public ScriptAccess Access { get { return access; } }
     }
 }

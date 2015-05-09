@@ -189,7 +189,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("InterfaceMemberAccess")]
         public void InterfaceMemberAccess_ReadOnlyProperty_Write()
         {
-            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.InterfaceReadOnlyProperty = 2"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.InterfaceReadOnlyProperty = 2"));
         }
 
         [TestMethod, TestCategory("InterfaceMemberAccess")]

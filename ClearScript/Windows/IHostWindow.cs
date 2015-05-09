@@ -60,65 +60,24 @@
 //       
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using Microsoft.ClearScript.Util;
 
-namespace Microsoft.ClearScript
+namespace Microsoft.ClearScript.Windows
 {
-    internal class ExtensionMethodTable
+    /// <summary>
+    /// Allows Windows Script engines to display dialogs within the host's user interface.
+    /// </summary>
+    /// <seealso cref="WindowsScriptEngine.HostWindow"/>
+    public interface IHostWindow
     {
-        private readonly Dictionary<Type, MethodInfo[]> table = new Dictionary<Type, MethodInfo[]>();
-        private ExtensionMethodSummary summary = new ExtensionMethodSummary();
+        /// <summary>
+        /// Gets the handle of an owner window for displaying dialogs on behalf of script code.
+        /// </summary>
+        IntPtr OwnerHandle { get; }
 
-        public ExtensionMethodSummary Summary
-        {
-            get { return summary; }
-        }
-
-        public bool ProcessType(Type type, ScriptAccess defaultAccess)
-        {
-            Debug.Assert(type.IsSpecific());
-            if (!table.ContainsKey(type) && type.HasExtensionMethods())
-            {
-                const BindingFlags bindFlags = BindingFlags.Public | BindingFlags.Static;
-                table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(method, defaultAccess)).ToArray();
-                summary = new ExtensionMethodSummary(table);
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool IsScriptableExtensionMethod(MethodInfo method, ScriptAccess defaultAccess)
-        {
-            return method.IsScriptable(defaultAccess) && method.IsDefined(typeof(ExtensionAttribute), false);
-        }
-    }
-
-    internal class ExtensionMethodSummary
-    {
-        public ExtensionMethodSummary()
-        {
-            Types = MiscHelpers.GetEmptyArray<Type>();
-            Methods = MiscHelpers.GetEmptyArray<MethodInfo>();
-            MethodNames = MiscHelpers.GetEmptyArray<string>();
-        }
-
-        public ExtensionMethodSummary(Dictionary<Type, MethodInfo[]> table)
-        {
-            Types = table.Keys.ToArray();
-            Methods = table.SelectMany(pair => pair.Value).ToArray();
-            MethodNames = Methods.Select(method => method.GetScriptName()).ToArray();
-        }
-
-        public Type[] Types { get; private set; }
-
-        public MethodInfo[] Methods { get; private set; }
-
-        public string[] MethodNames { get; private set; }
+        /// <summary>
+        /// Enables or disables the host's modeless dialogs.
+        /// </summary>
+        /// <param name="enable"><c>True</c> to enable the host's modeless dialogs, <c>false</c> otherwise.</param>
+        void EnableModeless(bool enable);
     }
 }

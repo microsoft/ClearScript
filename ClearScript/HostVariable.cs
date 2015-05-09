@@ -76,7 +76,7 @@ namespace Microsoft.ClearScript
     {
         private static readonly string[] auxPropertyNames = { "out", "ref", "value" };
 
-        public override string[] GetAuxPropertyNames(BindingFlags bindFlags)
+        public override string[] GetAuxPropertyNames(IHostInvokeContext context, BindingFlags bindFlags)
         {
             return auxPropertyNames;
         }
@@ -112,7 +112,6 @@ namespace Microsoft.ClearScript
             // expression tree construction code in DelegateFactory.CreateComplexDelegate().
 
             get { return value; }
-
             set { this.value = value; }
         }
 
@@ -153,7 +152,7 @@ namespace Microsoft.ClearScript
             get { return HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods; }
         }
 
-        public override bool TryInvokeAuxMember(ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             const BindingFlags getPropertyFlags =
                 BindingFlags.GetField |
@@ -184,14 +183,14 @@ namespace Microsoft.ClearScript
             {
                 if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
                 {
-                    if (InvokeHelpers.TryInvokeObject(engine, value, invokeFlags, args, bindArgs, typeof(IDynamicMetaObjectProvider).IsAssignableFrom(typeof(T)), out result))
+                    if (InvokeHelpers.TryInvokeObject(context, value, invokeFlags, args, bindArgs, typeof(IDynamicMetaObjectProvider).IsAssignableFrom(typeof(T)), out result))
                     {
                         return true;
                     }
 
                     if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                     {
-                        result = engine.PrepareResult(value, true);
+                        result = context.Engine.PrepareResult(value, ScriptMemberFlags.None);
                         return true;
                     }
 
@@ -201,7 +200,7 @@ namespace Microsoft.ClearScript
 
                 if ((invokeFlags & getPropertyFlags) != 0)
                 {
-                    result = engine.PrepareResult(value, true);
+                    result = context.Engine.PrepareResult(value, ScriptMemberFlags.None);
                     return true;
                 }
 
@@ -209,7 +208,7 @@ namespace Microsoft.ClearScript
                 {
                     if (args.Length == 1)
                     {
-                        result = engine.PrepareResult(((IHostVariable)this).Value = args[0], typeof(T), true);
+                        result = context.Engine.PrepareResult(((IHostVariable)this).Value = args[0], typeof(T), ScriptMemberFlags.None);
                         return true;
                     }
                 }

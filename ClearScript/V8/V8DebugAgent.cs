@@ -234,7 +234,10 @@ namespace Microsoft.ClearScript.V8
                 disconnect = true;
             }
 
-            listener.OnMessageReceived(content);
+            if (listener.SendDebugCommand(content))
+            {
+                ThreadPool.QueueUserWorkItem(state => listener.DispatchDebugMessages());
+            }
 
             if (disconnect)
             {

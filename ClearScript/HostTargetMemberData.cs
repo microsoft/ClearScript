@@ -60,65 +60,37 @@
 //       
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class ExtensionMethodTable
+    internal class HostTargetMemberData
     {
-        private readonly Dictionary<Type, MethodInfo[]> table = new Dictionary<Type, MethodInfo[]>();
-        private ExtensionMethodSummary summary = new ExtensionMethodSummary();
+        public string[] TypeEventNames;
+        public string[] TypeFieldNames;
+        public string[] TypeMethodNames;
+        public string[] TypePropertyNames;
 
-        public ExtensionMethodSummary Summary
-        {
-            get { return summary; }
-        }
+        public string[] AllFieldNames;
+        public string[] AllMethodNames;
+        public string[] AllPropertyNames;
+        public string[] AllMemberNames;
 
-        public bool ProcessType(Type type, ScriptAccess defaultAccess)
-        {
-            Debug.Assert(type.IsSpecific());
-            if (!table.ContainsKey(type) && type.HasExtensionMethods())
-            {
-                const BindingFlags bindFlags = BindingFlags.Public | BindingFlags.Static;
-                table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(method, defaultAccess)).ToArray();
-                summary = new ExtensionMethodSummary(table);
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool IsScriptableExtensionMethod(MethodInfo method, ScriptAccess defaultAccess)
-        {
-            return method.IsScriptable(defaultAccess) && method.IsDefined(typeof(ExtensionAttribute), false);
-        }
+        public FieldInfo[] AllFields;
+        public MethodInfo[] AllMethods;
+        public PropertyInfo[] AllProperties;
+        public ExtensionMethodSummary ExtensionMethodSummary;
     }
 
-    internal class ExtensionMethodSummary
+    internal sealed class SharedHostObjectMemberData : HostTargetMemberData
     {
-        public ExtensionMethodSummary()
+        public readonly Type AccessContext;
+        public readonly ScriptAccess DefaultAccess;
+
+        public SharedHostObjectMemberData(Type accessContext, ScriptAccess defaultAccess)
         {
-            Types = MiscHelpers.GetEmptyArray<Type>();
-            Methods = MiscHelpers.GetEmptyArray<MethodInfo>();
-            MethodNames = MiscHelpers.GetEmptyArray<string>();
+            AccessContext = accessContext;
+            DefaultAccess = defaultAccess;
         }
-
-        public ExtensionMethodSummary(Dictionary<Type, MethodInfo[]> table)
-        {
-            Types = table.Keys.ToArray();
-            Methods = table.SelectMany(pair => pair.Value).ToArray();
-            MethodNames = Methods.Select(method => method.GetScriptName()).ToArray();
-        }
-
-        public Type[] Types { get; private set; }
-
-        public MethodInfo[] Methods { get; private set; }
-
-        public string[] MethodNames { get; private set; }
     }
 }

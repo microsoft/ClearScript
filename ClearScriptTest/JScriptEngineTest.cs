@@ -62,6 +62,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Globalization;
@@ -250,6 +251,25 @@ namespace Microsoft.ClearScript.Test
             engine.AddHostObject("host", new HostFunctions());
             engine.AddHostType("Dictionary", "System.Collections.Generic.Dictionary", typeof(string), typeof(int));
             Assert.IsInstanceOfType(engine.Evaluate("host.newObj(Dictionary)"), typeof(Dictionary<string, int>));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddHostType_DefaultName()
+        {
+            engine.AddHostType(typeof(Random));
+            Assert.IsInstanceOfType(engine.Evaluate("new Random()"), typeof(Random));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddHostType_DefaultNameGeneric()
+        {
+            engine.AddHostType(typeof(List<int>));
+            Assert.IsInstanceOfType(engine.Evaluate("new List()"), typeof(List<int>));
+
+            engine.AddHostType(typeof(Dictionary<,>));
+            engine.AddHostType(typeof(int));
+            engine.AddHostType(typeof(double));
+            Assert.IsInstanceOfType(engine.Evaluate("new Dictionary(Int32, Double, 100)"), typeof(Dictionary<int, double>));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -615,7 +635,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
-        public void JScriptEngine_new_GenericInner()
+        public void JScriptEngine_new_GenericNested()
         {
             engine.AddHostObject("clr", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System.Core"));
             engine.AddHostObject("dict", new Dictionary<int, string> { { 12345, "foo" }, { 54321, "bar" } });
@@ -1730,6 +1750,297 @@ namespace Microsoft.ClearScript.Test
             }
 
             // ReSharper restore AccessToDisposedClosure
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_EnableNullResultWrapping()
+        {
+            var testValue = new[] { 1, 2, 3, 4, 5 };
+            engine.Script.host = new HostFunctions();
+            engine.Script.foo = new NullResultWrappingTestObject<int[]>(testValue);
+
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.Value === null")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.Value)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo.NullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.NullValue)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.WrappedNullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.WrappedNullValue)")));
+
+            Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = true;
+            Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = false;
+            Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_EnableNullResultWrapping_String()
+        {
+            const string testValue = "bar";
+            engine.Script.host = new HostFunctions();
+            engine.Script.foo = new NullResultWrappingTestObject<string>(testValue);
+
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.Value === null")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.Value)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo.NullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.NullValue)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.WrappedNullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.WrappedNullValue)")));
+
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = true;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = false;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_EnableNullResultWrapping_Nullable()
+        {
+            int? testValue = 12345;
+            engine.Script.host = new HostFunctions();
+            engine.Script.foo = new NullResultWrappingTestObject<int?>(testValue);
+
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.Value === null")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.Value)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo.NullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.NullValue)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.WrappedNullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.WrappedNullValue)")));
+
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = true;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = false;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DefaultProperty()
+        {
+            engine.Script.foo = new DefaultPropertyTestObject();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo('abc') = 123");
+            Assert.AreEqual(123, engine.Evaluate("foo('abc')"));
+            Assert.AreEqual(123, engine.Evaluate("foo.Item('abc')"));
+            Assert.AreEqual(123, engine.Evaluate("foo.Item.get('abc')"));
+            Assert.IsNull(engine.Evaluate("foo('def')"));
+
+            engine.Execute("foo(DayOfWeek.Thursday) = 456");
+            Assert.AreEqual(456, engine.Evaluate("foo(DayOfWeek.Thursday)"));
+            Assert.AreEqual(456, engine.Evaluate("foo.Item(DayOfWeek.Thursday)"));
+            Assert.AreEqual(456, engine.Evaluate("foo.Item.get(DayOfWeek.Thursday)"));
+            Assert.IsNull(engine.Evaluate("foo(DayOfWeek.Friday)"));
+
+            engine.Execute("foo.Item('def') = 987");
+            Assert.AreEqual(987, engine.Evaluate("foo('def')"));
+            Assert.AreEqual(987, engine.Evaluate("foo.Item('def')"));
+            Assert.AreEqual(987, engine.Evaluate("foo.Item.get('def')"));
+            Assert.IsNull(engine.Evaluate("foo('ghi')"));
+
+            engine.Execute("foo.Item(DayOfWeek.Friday) = 654");
+            Assert.AreEqual(654, engine.Evaluate("foo(DayOfWeek.Friday)"));
+            Assert.AreEqual(654, engine.Evaluate("foo.Item(DayOfWeek.Friday)"));
+            Assert.AreEqual(654, engine.Evaluate("foo.Item.get(DayOfWeek.Friday)"));
+            Assert.IsNull(engine.Evaluate("foo(DayOfWeek.Saturday)"));
+
+            engine.Execute("foo.Item.set('ghi', 321)");
+            Assert.AreEqual(321, engine.Evaluate("foo('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Item('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Item.get('ghi')"));
+            Assert.IsNull(engine.Evaluate("foo('jkl')"));
+
+            engine.Execute("foo.Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("foo(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Item(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Item.get(DayOfWeek.Saturday)"));
+            Assert.IsNull(engine.Evaluate("foo(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DefaultProperty_FieldTunneling()
+        {
+            engine.Script.foo = new DefaultPropertyTestContainer();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Field('abc') = 123");
+            Assert.AreEqual(123, engine.Evaluate("foo.Field('abc')"));
+            Assert.AreEqual(123, engine.Evaluate("foo.Field.Item('abc')"));
+            Assert.AreEqual(123, engine.Evaluate("foo.Field.Item.get('abc')"));
+            Assert.IsNull(engine.Evaluate("foo.Field('def')"));
+
+            engine.Execute("foo.Field(DayOfWeek.Thursday) = 456");
+            Assert.AreEqual(456, engine.Evaluate("foo.Field(DayOfWeek.Thursday)"));
+            Assert.AreEqual(456, engine.Evaluate("foo.Field.Item(DayOfWeek.Thursday)"));
+            Assert.AreEqual(456, engine.Evaluate("foo.Field.Item.get(DayOfWeek.Thursday)"));
+            Assert.IsNull(engine.Evaluate("foo.Field(DayOfWeek.Friday)"));
+
+            engine.Execute("foo.Field.Item('def') = 987");
+            Assert.AreEqual(987, engine.Evaluate("foo.Field('def')"));
+            Assert.AreEqual(987, engine.Evaluate("foo.Field.Item('def')"));
+            Assert.AreEqual(987, engine.Evaluate("foo.Field.Item.get('def')"));
+            Assert.IsNull(engine.Evaluate("foo.Field('ghi')"));
+
+            engine.Execute("foo.Field.Item(DayOfWeek.Friday) = 654");
+            Assert.AreEqual(654, engine.Evaluate("foo.Field(DayOfWeek.Friday)"));
+            Assert.AreEqual(654, engine.Evaluate("foo.Field.Item(DayOfWeek.Friday)"));
+            Assert.AreEqual(654, engine.Evaluate("foo.Field.Item.get(DayOfWeek.Friday)"));
+            Assert.IsNull(engine.Evaluate("foo.Field(DayOfWeek.Saturday)"));
+
+            engine.Execute("foo.Field.Item.set('ghi', 321)");
+            Assert.AreEqual(321, engine.Evaluate("foo.Field('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Field.Item('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Field.Item.get('ghi')"));
+            Assert.IsNull(engine.Evaluate("foo.Field('jkl')"));
+
+            engine.Execute("foo.Field.Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("foo.Field(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Field.Item(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Field.Item.get(DayOfWeek.Saturday)"));
+            Assert.IsNull(engine.Evaluate("foo.Field(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DefaultProperty_PropertyTunneling()
+        {
+            engine.Script.foo = new DefaultPropertyTestContainer();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Property('abc') = 123");
+            Assert.AreEqual(123, engine.Evaluate("foo.Property('abc')"));
+            Assert.AreEqual(123, engine.Evaluate("foo.Property.Item('abc')"));
+            Assert.AreEqual(123, engine.Evaluate("foo.Property.Item.get('abc')"));
+            Assert.IsNull(engine.Evaluate("foo.Property('def')"));
+
+            engine.Execute("foo.Property(DayOfWeek.Thursday) = 456");
+            Assert.AreEqual(456, engine.Evaluate("foo.Property(DayOfWeek.Thursday)"));
+            Assert.AreEqual(456, engine.Evaluate("foo.Property.Item(DayOfWeek.Thursday)"));
+            Assert.AreEqual(456, engine.Evaluate("foo.Property.Item.get(DayOfWeek.Thursday)"));
+            Assert.IsNull(engine.Evaluate("foo.Property(DayOfWeek.Friday)"));
+
+            engine.Execute("foo.Property.Item('def') = 987");
+            Assert.AreEqual(987, engine.Evaluate("foo.Property('def')"));
+            Assert.AreEqual(987, engine.Evaluate("foo.Property.Item('def')"));
+            Assert.AreEqual(987, engine.Evaluate("foo.Property.Item.get('def')"));
+            Assert.IsNull(engine.Evaluate("foo.Property('ghi')"));
+
+            engine.Execute("foo.Property.Item(DayOfWeek.Friday) = 654");
+            Assert.AreEqual(654, engine.Evaluate("foo.Property(DayOfWeek.Friday)"));
+            Assert.AreEqual(654, engine.Evaluate("foo.Property.Item(DayOfWeek.Friday)"));
+            Assert.AreEqual(654, engine.Evaluate("foo.Property.Item.get(DayOfWeek.Friday)"));
+            Assert.IsNull(engine.Evaluate("foo.Property(DayOfWeek.Saturday)"));
+
+            engine.Execute("foo.Property.Item.set('ghi', 321)");
+            Assert.AreEqual(321, engine.Evaluate("foo.Property('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Property.Item('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Property.Item.get('ghi')"));
+            Assert.IsNull(engine.Evaluate("foo.Property('jkl')"));
+
+            engine.Execute("foo.Property.Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("foo.Property(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Property.Item(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Property.Item.get(DayOfWeek.Saturday)"));
+            Assert.IsNull(engine.Evaluate("foo.Property(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DefaultProperty_MethodTunneling()
+        {
+            engine.Script.foo = new DefaultPropertyTestContainer();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Method()('abc') = 123");
+            Assert.AreEqual(123, engine.Evaluate("foo.Method()('abc')"));
+            Assert.AreEqual(123, engine.Evaluate("foo.Method().Item('abc')"));
+            Assert.AreEqual(123, engine.Evaluate("foo.Method().Item.get('abc')"));
+            Assert.IsNull(engine.Evaluate("foo.Method()('def')"));
+
+            engine.Execute("foo.Method()(DayOfWeek.Thursday) = 456");
+            Assert.AreEqual(456, engine.Evaluate("foo.Method()(DayOfWeek.Thursday)"));
+            Assert.AreEqual(456, engine.Evaluate("foo.Method().Item(DayOfWeek.Thursday)"));
+            Assert.AreEqual(456, engine.Evaluate("foo.Method().Item.get(DayOfWeek.Thursday)"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(DayOfWeek.Friday)"));
+
+            engine.Execute("foo.Method().Item('def') = 987");
+            Assert.AreEqual(987, engine.Evaluate("foo.Method()('def')"));
+            Assert.AreEqual(987, engine.Evaluate("foo.Method().Item('def')"));
+            Assert.AreEqual(987, engine.Evaluate("foo.Method().Item.get('def')"));
+            Assert.IsNull(engine.Evaluate("foo.Method()('ghi')"));
+
+            engine.Execute("foo.Method().Item(DayOfWeek.Friday) = 654");
+            Assert.AreEqual(654, engine.Evaluate("foo.Method()(DayOfWeek.Friday)"));
+            Assert.AreEqual(654, engine.Evaluate("foo.Method().Item(DayOfWeek.Friday)"));
+            Assert.AreEqual(654, engine.Evaluate("foo.Method().Item.get(DayOfWeek.Friday)"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(DayOfWeek.Saturday)"));
+
+            engine.Execute("foo.Method().Item.set('ghi', 321)");
+            Assert.AreEqual(321, engine.Evaluate("foo.Method()('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Method().Item('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Method().Item.get('ghi')"));
+            Assert.IsNull(engine.Evaluate("foo.Method()('jkl')"));
+
+            engine.Execute("foo.Method().Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("foo.Method()(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Method().Item(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Method().Item.get(DayOfWeek.Saturday)"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DefaultProperty_Indexer()
+        {
+            engine.Script.dict = new Dictionary<string, object> { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
+            engine.Execute("item = dict.Item");
+
+            Assert.AreEqual(123, engine.Evaluate("item('abc')"));
+            Assert.AreEqual(456, engine.Evaluate("item('def')"));
+            Assert.AreEqual(789, engine.Evaluate("item('ghi')"));
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("item('jkl')"));
+
+            engine.Execute("item('abc') = 'foo'");
+            Assert.AreEqual("foo", engine.Evaluate("item('abc')"));
+            Assert.AreEqual(456, engine.Evaluate("item('def')"));
+            Assert.AreEqual(789, engine.Evaluate("item('ghi')"));
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("item('jkl')"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_PropertyAndMethodWithSameName()
+        {
+            engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System", "System.Core"));
+
+            engine.Script.dict = new Dictionary<string, object> { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
+            Assert.AreEqual(3, engine.Evaluate("dict.Count"));
+            Assert.AreEqual(3, engine.Evaluate("dict.Count()"));
+
+            engine.Script.listDict = new ListDictionary { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
+            Assert.AreEqual(3, engine.Evaluate("listDict.Count"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("listDict.Count()"));
         }
 
         // ReSharper restore InconsistentNaming

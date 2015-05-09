@@ -90,6 +90,7 @@ namespace Microsoft.ClearScript.Windows
         private WindowsScriptEngineFlags engineFlags;
 
         private readonly HostItemMap hostItemMap = new HostItemMap();
+        private readonly HostItemCollateral hostItemCollateral = new HostItemCollateral();
         private readonly object script;
 
         private ProcessDebugManagerWrapper processDebugManager;
@@ -131,8 +132,17 @@ namespace Microsoft.ClearScript.Windows
                 {
                     processDebugManager.CreateApplication(out debugApplication);
                     debugApplication.SetName(Name);
-                    processDebugManager.AddApplication(debugApplication, out debugApplicationCookie);
-                    sourceManagement = !flags.HasFlag(WindowsScriptEngineFlags.DisableSourceManagement);
+
+                    if (processDebugManager.TryAddApplication(debugApplication, out debugApplicationCookie))
+                    {
+                        sourceManagement = !flags.HasFlag(WindowsScriptEngineFlags.DisableSourceManagement);
+                    }
+                    else
+                    {
+                        debugApplication.Close();
+                        debugApplication = null;
+                        processDebugManager = null;
+                    }
                 }
 
                 activeScript.SetScriptSite(new ScriptSite(this));
@@ -177,11 +187,18 @@ namespace Microsoft.ClearScript.Windows
             dispatcher.VerifyAccess();
         }
 
+        /// <summary>
+        /// Gets or sets an interface that supports the display of dialogs on behalf of script code.
+        /// </summary>
+        public IHostWindow HostWindow { get; set; }
+
         #endregion
 
         #region internal members
 
         internal abstract IDictionary<int, string> RuntimeErrorMap { get; }
+
+        internal abstract IDictionary<int, string> SyntaxErrorMap { get; }
 
         private object GetScriptDispatch()
         {
@@ -424,9 +441,9 @@ namespace Microsoft.ClearScript.Windows
             });
         }
 
-        internal override object PrepareResult(object result, Type type, bool isRestricted)
+        internal override object PrepareResult(object result, Type type, ScriptMemberFlags flags)
         {
-            var tempResult = base.PrepareResult(result, type, isRestricted);
+            var tempResult = base.PrepareResult(result, type, flags);
             if ((tempResult != null) || !engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
             {
                 return tempResult;
@@ -622,6 +639,11 @@ namespace Microsoft.ClearScript.Windows
             });
         }
 
+        internal override HostItemCollateral HostItemCollateral
+        {
+            get { return hostItemCollateral; }
+        }
+
         #endregion
 
         #region ScriptEngine overrides (host-side invocation)
@@ -745,7 +767,7 @@ namespace Microsoft.ClearScript.Windows
 
         #endregion
 
-        #region ScriptEngine overrides (disposition / finalization)
+        #region ScriptEngine overrides (disposal / finalization)
 
         /// <summary>
         /// Releases the unmanaged resources used by the script engine and optionally releases the managed resources.

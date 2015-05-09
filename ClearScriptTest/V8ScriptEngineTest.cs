@@ -62,6 +62,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Globalization;
@@ -267,6 +268,25 @@ namespace Microsoft.ClearScript.Test
             engine.AddHostObject("host", new HostFunctions());
             engine.AddHostType("Dictionary", "System.Collections.Generic.Dictionary", typeof(string), typeof(int));
             Assert.IsInstanceOfType(engine.Evaluate("host.newObj(Dictionary)"), typeof(Dictionary<string, int>));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AddHostType_DefaultName()
+        {
+            engine.AddHostType(typeof(Random));
+            Assert.IsInstanceOfType(engine.Evaluate("new Random()"), typeof(Random));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AddHostType_DefaultNameGeneric()
+        {
+            engine.AddHostType(typeof(List<int>));
+            Assert.IsInstanceOfType(engine.Evaluate("new List()"), typeof(List<int>));
+
+            engine.AddHostType(typeof(Dictionary<,>));
+            engine.AddHostType(typeof(int));
+            engine.AddHostType(typeof(double));
+            Assert.IsInstanceOfType(engine.Evaluate("new Dictionary(Int32, Double, 100)"), typeof(Dictionary<int, double>));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -717,7 +737,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_new_GenericInner()
+        public void V8ScriptEngine_new_GenericNested()
         {
             engine.AddHostObject("clr", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System.Core"));
             engine.AddHostObject("dict", new Dictionary<int, string> { { 12345, "foo" }, { 54321, "bar" } });
@@ -1942,6 +1962,262 @@ namespace Microsoft.ClearScript.Test
             // ReSharper restore AccessToDisposedClosure
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EnableNullResultWrapping()
+        {
+            var testValue = new[] { 1, 2, 3, 4, 5 };
+            engine.Script.host = new HostFunctions();
+            engine.Script.foo = new NullResultWrappingTestObject<int[]>(testValue);
+
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.Value === null")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.Value)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo.NullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.NullValue)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.WrappedNullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.WrappedNullValue)")));
+
+            Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = true;
+            Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = false;
+            Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EnableNullResultWrapping_String()
+        {
+            const string testValue = "bar";
+            engine.Script.host = new HostFunctions();
+            engine.Script.foo = new NullResultWrappingTestObject<string>(testValue);
+
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.Value === null")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.Value)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo.NullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.NullValue)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.WrappedNullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.WrappedNullValue)")));
+
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = true;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = false;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EnableNullResultWrapping_Nullable()
+        {
+            int? testValue = 12345;
+            engine.Script.host = new HostFunctions();
+            engine.Script.foo = new NullResultWrappingTestObject<int?>(testValue);
+
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.Value === null")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.Value)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo.NullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.NullValue)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("foo.WrappedNullValue === null")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.WrappedNullValue)")));
+
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = true;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = false;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DefaultProperty()
+        {
+            engine.Script.foo = new DefaultPropertyTestObject();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Item.set('ghi', 321)");
+            Assert.AreEqual(321, engine.Evaluate("foo('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Item('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Item.get('ghi')"));
+            Assert.IsNull(engine.Evaluate("foo('jkl')"));
+
+            engine.Execute("foo.Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("foo(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Item(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Item.get(DayOfWeek.Saturday)"));
+            Assert.IsNull(engine.Evaluate("foo(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DefaultProperty_FieldTunneling()
+        {
+            engine.Script.foo = new DefaultPropertyTestContainer();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Field.Item.set('ghi', 321)");
+            Assert.AreEqual(321, engine.Evaluate("foo.Field('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Field.Item('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Field.Item.get('ghi')"));
+            Assert.IsNull(engine.Evaluate("foo.Field('jkl')"));
+
+            engine.Execute("foo.Field.Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("foo.Field(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Field.Item(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Field.Item.get(DayOfWeek.Saturday)"));
+            Assert.IsNull(engine.Evaluate("foo.Field(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DefaultProperty_PropertyTunneling()
+        {
+            engine.Script.foo = new DefaultPropertyTestContainer();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Property.Item.set('ghi', 321)");
+            Assert.AreEqual(321, engine.Evaluate("foo.Property('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Property.Item('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Property.Item.get('ghi')"));
+            Assert.IsNull(engine.Evaluate("foo.Property('jkl')"));
+
+            engine.Execute("foo.Property.Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("foo.Property(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Property.Item(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Property.Item.get(DayOfWeek.Saturday)"));
+            Assert.IsNull(engine.Evaluate("foo.Property(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DefaultProperty_MethodTunneling()
+        {
+            engine.Script.foo = new DefaultPropertyTestContainer();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Method().Item.set('ghi', 321)");
+            Assert.AreEqual(321, engine.Evaluate("foo.Method()('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Method().Item('ghi')"));
+            Assert.AreEqual(321, engine.Evaluate("foo.Method().Item.get('ghi')"));
+            Assert.IsNull(engine.Evaluate("foo.Method()('jkl')"));
+
+            engine.Execute("foo.Method().Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("foo.Method()(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Method().Item(DayOfWeek.Saturday)"));
+            Assert.AreEqual(-123, engine.Evaluate("foo.Method().Item.get(DayOfWeek.Saturday)"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DefaultProperty_Indexer()
+        {
+            engine.Script.dict = new Dictionary<string, object> { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
+            engine.Execute("item = dict.Item");
+
+            Assert.AreEqual(123, engine.Evaluate("item('abc')"));
+            Assert.AreEqual(456, engine.Evaluate("item('def')"));
+            Assert.AreEqual(789, engine.Evaluate("item('ghi')"));
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("item('jkl')"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_PropertyAndMethodWithSameName()
+        {
+            engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System", "System.Core"));
+
+            engine.Script.dict = new Dictionary<string, object> { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
+            Assert.AreEqual(3, engine.Evaluate("dict.Count"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("dict.Count()"));
+
+            engine.Script.listDict = new ListDictionary { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
+            Assert.AreEqual(3, engine.Evaluate("listDict.Count"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("listDict.Count()"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_toFunction_Delegate()
+        {
+            engine.Script.foo = new Func<int, double>(arg => arg * Math.PI);
+            Assert.AreEqual(123 * Math.PI, engine.Evaluate("foo(123)"));
+            Assert.AreEqual("function", engine.Evaluate("typeof foo.toFunction"));
+            Assert.AreEqual("function", engine.Evaluate("typeof foo.toFunction()"));
+            Assert.AreEqual(456 * Math.PI, engine.Evaluate("foo.toFunction()(456)"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new foo()"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new (foo.toFunction())()"));
+
+            engine.Script.bar = new VarArgDelegate((pre, args) => args.Aggregate((int)pre, (value, arg) => value + (int)arg));
+            Assert.AreEqual(3330, engine.Evaluate("bar(123, 456, 789, 987, 654, 321)"));
+            Assert.AreEqual("function", engine.Evaluate("typeof bar.toFunction"));
+            Assert.AreEqual("function", engine.Evaluate("typeof bar.toFunction()"));
+            Assert.AreEqual(2934, engine.Evaluate("bar.toFunction()(135, 579, 975, 531, 135, 579)"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new bar()"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new (bar.toFunction())()"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_toFunction_Method()
+        {
+            engine.Script.host = new HostFunctions();
+            Assert.AreEqual("function", engine.Evaluate("typeof host.newObj.toFunction"));
+            Assert.AreEqual("function", engine.Evaluate("typeof host.newObj.toFunction()"));
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj()"), typeof(PropertyBag));
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj.toFunction()()"), typeof(PropertyBag));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new host.newObj()"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new (host.newObj.toFunction())()"));
+
+            engine.AddHostType(typeof(Random));
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj(Random, 100)"), typeof(Random));
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj.toFunction()(Random, 100)"), typeof(Random));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_toFunction_Type()
+        {
+            engine.AddHostType(typeof(Random));
+            Assert.AreEqual("function", engine.Evaluate("typeof Random.toFunction"));
+            Assert.AreEqual("function", engine.Evaluate("typeof Random.toFunction()"));
+            Assert.IsInstanceOfType(engine.Evaluate("new Random()"), typeof(Random));
+            Assert.IsInstanceOfType(engine.Evaluate("new Random(100)"), typeof(Random));
+            Assert.IsInstanceOfType(engine.Evaluate("new (Random.toFunction())()"), typeof(Random));
+            Assert.IsInstanceOfType(engine.Evaluate("new (Random.toFunction())(100)"), typeof(Random));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("Random(100)"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("(Random.toFunction())(100)"));
+
+            engine.AddHostType(typeof(Dictionary<,>));
+            engine.AddHostType(typeof(int));
+            Assert.AreEqual("function", engine.Evaluate("typeof Dictionary.toFunction"));
+            Assert.AreEqual("function", engine.Evaluate("typeof Dictionary.toFunction()"));
+            Assert.IsInstanceOfType(engine.Evaluate("Dictionary(Int32, Int32)"), typeof(HostType));
+            Assert.IsInstanceOfType(engine.Evaluate("Dictionary.toFunction()(Int32, Int32)"), typeof(HostType));
+            Assert.IsInstanceOfType(engine.Evaluate("new Dictionary(Int32, Int32, 100)"), typeof(Dictionary<int, int>));
+            Assert.IsInstanceOfType(engine.Evaluate("new (Dictionary.toFunction())(Int32, Int32, 100)"), typeof(Dictionary<int, int>));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_toFunction_None()
+        {
+            engine.Script.foo = new Random();
+            Assert.IsInstanceOfType(engine.Evaluate("foo"), typeof(Random));
+            Assert.IsInstanceOfType(engine.Evaluate("foo.toFunction"), typeof(Undefined));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2025,6 +2301,8 @@ namespace Microsoft.ClearScript.Test
         }
 
         private delegate string TestDelegate(string pre, ref string value, int post);
+
+        public delegate object VarArgDelegate(object pre, params object[] args);
 
         // ReSharper restore UnusedMember.Local
 

@@ -407,7 +407,7 @@ namespace Microsoft.ClearScript.Windows
 
         public abstract void CreateApplication(out DebugApplicationWrapper applicationWrapper);
 
-        public abstract void AddApplication(DebugApplicationWrapper applicationWrapper, out uint cookie);
+        public abstract bool TryAddApplication(DebugApplicationWrapper applicationWrapper, out uint cookie);
 
         public abstract void RemoveApplication(uint cookie);
     }
@@ -441,9 +441,9 @@ namespace Microsoft.ClearScript.Windows
             applicationWrapper = DebugApplicationWrapper.Create(debugApplication);
         }
 
-        public override void AddApplication(DebugApplicationWrapper applicationWrapper, out uint cookie)
+        public override bool TryAddApplication(DebugApplicationWrapper applicationWrapper, out uint cookie)
         {
-            processDebugManager.AddApplication(DebugApplicationWrapper32.Unwrap(applicationWrapper), out cookie);
+            return RawCOMHelpers.HResult.Succeeded(processDebugManager.AddApplication(DebugApplicationWrapper32.Unwrap(applicationWrapper), out cookie));
         }
 
         public override void RemoveApplication(uint cookie)
@@ -481,9 +481,9 @@ namespace Microsoft.ClearScript.Windows
             applicationWrapper = DebugApplicationWrapper.Create(debugApplication);
         }
 
-        public override void AddApplication(DebugApplicationWrapper applicationWrapper, out uint cookie)
+        public override bool TryAddApplication(DebugApplicationWrapper applicationWrapper, out uint cookie)
         {
-            processDebugManager.AddApplication(DebugApplicationWrapper64.Unwrap(applicationWrapper), out cookie);
+            return RawCOMHelpers.HResult.Succeeded(processDebugManager.AddApplication(DebugApplicationWrapper64.Unwrap(applicationWrapper), out cookie));
         }
 
         public override void RemoveApplication(uint cookie)

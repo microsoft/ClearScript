@@ -93,6 +93,7 @@ public:
     virtual void Interrupt() = 0;
     virtual void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo) = 0;
     virtual void CollectGarbage(bool exhaustive) = 0;
+    virtual void OnAccessSettingsChanged() = 0;
 
     virtual ~V8Context() {}
 };

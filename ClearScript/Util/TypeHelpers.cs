@@ -277,90 +277,92 @@ namespace Microsoft.ClearScript.Util
             return type.GetGenericArguments().Count(typeArg => typeArg.IsGenericParameter);
         }
 
-        public static IEnumerable<EventInfo> GetScriptableEvents(this Type type, BindingFlags bindFlags)
+        public static IEnumerable<EventInfo> GetScriptableEvents(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
             var events = type.GetEvents(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                events = events.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableEvents(bindFlags)));
+                events = events.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableEvents(bindFlags, defaultAccess)));
             }
 
-            return events.Where(eventInfo => eventInfo.IsScriptable());
+            return events.Where(eventInfo => eventInfo.IsScriptable(defaultAccess));
         }
 
-        public static EventInfo GetScriptableEvent(this Type type, string name, BindingFlags bindFlags)
+        public static EventInfo GetScriptableEvent(this Type type, string name, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableEvents(bindFlags).FirstOrDefault(eventInfo => eventInfo.GetScriptName() == name);
+            return type.GetScriptableEvents(bindFlags, defaultAccess).FirstOrDefault(eventInfo => eventInfo.GetScriptName() == name);
         }
 
-        public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, BindingFlags bindFlags)
+        public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
-            return type.GetFields(bindFlags).Where(field => field.IsScriptable());
+            return type.GetFields(bindFlags).Where(field => field.IsScriptable(defaultAccess));
         }
 
-        public static FieldInfo GetScriptableField(this Type type, string name, BindingFlags bindFlags)
+        public static FieldInfo GetScriptableField(this Type type, string name, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableFields(bindFlags).FirstOrDefault(field => field.GetScriptName() == name);
+            return type.GetScriptableFields(bindFlags, defaultAccess).FirstOrDefault(field => field.GetScriptName() == name);
         }
 
-        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, BindingFlags bindFlags)
+        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
             var methods = type.GetMethods(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                methods = methods.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableMethods(bindFlags)));
-                methods = methods.Concat(typeof(object).GetScriptableMethods(bindFlags));
+                methods = methods.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableMethods(bindFlags, defaultAccess)));
+                methods = methods.Concat(typeof(object).GetScriptableMethods(bindFlags, defaultAccess));
             }
 
-            return methods.Where(method => method.IsScriptable());
+            return methods.Where(method => method.IsScriptable(defaultAccess));
         }
 
-        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, string name, BindingFlags bindFlags)
+        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, string name, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableMethods(bindFlags).Where(method => method.GetScriptName() == name);
+            return type.GetScriptableMethods(bindFlags, defaultAccess).Where(method => method.GetScriptName() == name);
         }
 
-        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, BindingFlags bindFlags)
+        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
             var properties = type.GetProperties(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags)));
+                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags, defaultAccess)));
             }
 
-            return properties.Where(property => property.IsScriptable());
+            return properties.Where(property => property.IsScriptable(defaultAccess));
         }
 
-        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, string name, BindingFlags bindFlags)
+        public static IEnumerable<PropertyInfo> GetScriptableDefaultProperties(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableProperties(bindFlags).Where(property => property.GetScriptName() == name);
+            var properties = type.GetProperties(bindFlags).AsEnumerable();
+            if (type.IsInterface)
+            {
+                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags, defaultAccess)));
+            }
+
+            var defaultMembers = type.GetDefaultMembers();
+            return properties.Where(property => property.IsScriptable(defaultAccess) && (defaultMembers.Contains(property) || property.IsDispID(SpecialDispIDs.Default)));
         }
 
-        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] bindArgs)
+        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, string name, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
-            var properties = type.GetScriptableProperties(name, bindFlags).Distinct(PropertySignatureComparer.Instance).ToArray();
-            if (properties.Length < 1)
-            {
-                return null;
-            }
+            return type.GetScriptableProperties(bindFlags, defaultAccess).Where(property => property.GetScriptName() == name);
+        }
 
-            var result = Type.DefaultBinder.SelectProperty(bindFlags, properties, null, bindArgs.Select(GetPropertyIndexType).ToArray(), null);
-            if (result != null)
-            {
-                return result;
-            }
+        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] bindArgs, ScriptAccess defaultAccess)
+        {
+            var candidates = type.GetScriptableProperties(name, bindFlags, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
+            return SelectProperty(candidates, bindFlags, bindArgs);
+        }
 
-            // the default binder fails to bind to some COM properties because of by-ref parameter types
-            if (properties.Length == 1)
-            {
-                var parameters = properties[0].GetIndexParameters();
-                if ((bindArgs.Length == parameters.Length) || ((bindArgs.Length > 0) && (parameters.Length >= bindArgs.Length)))
-                {
-                    return properties[0];
-                }
-            }
+        public static PropertyInfo GetScriptableDefaultProperty(this Type type, BindingFlags bindFlags, object[] bindArgs, ScriptAccess defaultAccess)
+        {
+            var candidates = type.GetScriptableDefaultProperties(bindFlags, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
+            return SelectProperty(candidates, bindFlags, bindArgs);
+        }
 
-            return null;
+        public static IEnumerable<Type> GetScriptableNestedTypes(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        {
+            return type.GetNestedTypes(bindFlags).Where(nestedType => nestedType.IsScriptable(defaultAccess));
         }
 
         public static object CreateInstance(this Type type, params object[] args)
@@ -551,6 +553,32 @@ namespace Microsoft.ClearScript.Util
             }
 
             throw new InvalidOperationException("Property index value must not be null");
+        }
+
+        private static PropertyInfo SelectProperty(PropertyInfo[] candidates, BindingFlags bindFlags, object[] bindArgs)
+        {
+            if (candidates.Length < 1)
+            {
+                return null;
+            }
+
+            var result = Type.DefaultBinder.SelectProperty(bindFlags, candidates, null, bindArgs.Select(GetPropertyIndexType).ToArray(), null);
+            if (result != null)
+            {
+                return result;
+            }
+
+            // the default binder fails to bind to some COM properties because of by-ref parameter types
+            if (candidates.Length == 1)
+            {
+                var parameters = candidates[0].GetIndexParameters();
+                if ((bindArgs.Length == parameters.Length) || ((bindArgs.Length > 0) && (parameters.Length >= bindArgs.Length)))
+                {
+                    return candidates[0];
+                }
+            }
+
+            return null;
         }
 
         #region Nested type: PropertySignatureComparer

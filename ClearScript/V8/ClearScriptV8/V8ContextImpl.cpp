@@ -166,7 +166,8 @@ static void* UnwrapHostObject(const FunctionCallbackInfo<T>& args)
 V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort):
     m_Name(name),
     m_spIsolateImpl(pIsolateImpl),
-    m_AllowHostObjectFunctionCall(false)
+    m_AllowHostObjectConstructorCall(false),
+    m_DisableHostObjectInterception(false)
 {
     VerifyNotOutOfMemory();
 
@@ -195,15 +196,29 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
 
         m_hHostObjectCookieName = CreatePersistent(CreateString(StdString(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}")));
         m_hHostExceptionName = CreatePersistent(CreateString(StdString(L"hostException")));
+        m_hAccessTokenName = CreatePersistent(CreateString(StdString(L"{cdc19e6e-5d80-4627-a605-bb4805f15086}")));
 
         m_hHostObjectTemplate = CreatePersistent(CreateFunctionTemplate());
         m_hHostObjectTemplate->SetClassName(CreateString(StdString(L"HostObject")));
-        m_hHostObjectTemplate->SetCallHandler(HostObjectFunctionCallHandler, Wrap());
-
+        m_hHostObjectTemplate->SetCallHandler(HostObjectConstructorCallHandler, Wrap());
         m_hHostObjectTemplate->InstanceTemplate()->SetInternalFieldCount(1);
         m_hHostObjectTemplate->InstanceTemplate()->SetNamedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap());
         m_hHostObjectTemplate->InstanceTemplate()->SetIndexedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, Wrap());
         m_hHostObjectTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, Wrap());
+
+        Local<Function> hToFunction;
+        BEGIN_CONTEXT_SCOPE
+            hToFunction = CreateFunction(CreateFunctionForHostDelegate, Wrap());
+        END_CONTEXT_SCOPE
+
+        m_hHostDelegateTemplate = CreatePersistent(CreateFunctionTemplate());
+        m_hHostDelegateTemplate->SetClassName(CreateString(StdString(L"HostDelegate")));
+        m_hHostDelegateTemplate->SetCallHandler(HostObjectConstructorCallHandler, Wrap());
+        m_hHostDelegateTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+        m_hHostDelegateTemplate->InstanceTemplate()->SetNamedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap());
+        m_hHostDelegateTemplate->InstanceTemplate()->SetIndexedPropertyHandler(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, Wrap());
+        m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, Wrap());
+        m_hHostDelegateTemplate->PrototypeTemplate()->Set(CreateString(StdString(L"toFunction")), hToFunction);
 
         m_spIsolateImpl->AddContext(this, enableDebugging, debugPort);
         m_pvV8ObjectCache = HostObjectHelpers::CreateV8ObjectCache();
@@ -301,7 +316,7 @@ void V8ContextImpl::SetGlobalProperty(const StdString& name, const V8Value& valu
                 {
                     if (it->first == name)
                     {
-                        it->second.Dispose();
+                        Dispose(it->second);
                         m_GlobalMembersStack.erase(it);
                         break;
                     }
@@ -396,6 +411,20 @@ void V8ContextImpl::GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo)
 void V8ContextImpl::CollectGarbage(bool exhaustive)
 {
     m_spIsolateImpl->CollectGarbage(exhaustive);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::OnAccessSettingsChanged()
+{
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_EXECUTION_SCOPE
+
+        Dispose(m_hAccessToken);
+        m_hAccessToken = CreatePersistent(CreateObject());
+
+    END_EXECUTION_SCOPE
+    END_CONTEXT_SCOPE
 }
 
 //-----------------------------------------------------------------------------
@@ -584,7 +613,10 @@ V8ContextImpl::~V8ContextImpl()
             Dispose(it->second);
         }
 
+        Dispose(m_hHostDelegateTemplate);
         Dispose(m_hHostObjectTemplate);
+        Dispose(m_hAccessToken);
+        Dispose(m_hAccessTokenName);
         Dispose(m_hHostExceptionName);
         Dispose(m_hHostObjectCookieName);
 
@@ -1000,11 +1032,52 @@ void V8ContextImpl::GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& 
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::HostObjectFunctionCallHandler(const FunctionCallbackInfo<Value>& info)
+void V8ContextImpl::HostObjectConstructorCallHandler(const FunctionCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-    if (!pContextImpl->m_AllowHostObjectFunctionCall)
+    if (!pContextImpl->m_AllowHostObjectConstructorCall)
         pContextImpl->ThrowException(Exception::Error(pContextImpl->CreateString(StdString(L"This function is for ClearScript internal use only"))));
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::CreateFunctionForHostDelegate(const FunctionCallbackInfo<Value>& info)
+{
+    auto pContextImpl = ::UnwrapContextImpl(info);
+    CALLBACK_RETURN(pContextImpl->CreateFunction(InvokeHostDelegate, info.This()));
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::InvokeHostDelegate(const FunctionCallbackInfo<Value>& info)
+{
+    auto hTarget = info.Data();
+
+    auto argCount = info.Length();
+    if (argCount < 1)
+    {
+        if (info.IsConstructCall())
+        {
+            CALLBACK_RETURN(hTarget->ToObject()->CallAsConstructor(0, nullptr));
+        }
+
+        CALLBACK_RETURN(hTarget->ToObject()->CallAsFunction(hTarget, 0, nullptr));
+    }
+
+    std::vector<Handle<Value>> args;
+    args.reserve(argCount);
+
+    for (auto index = 0; index < argCount; index++)
+    {
+        args.push_back(info[index]);
+    }
+
+    if (info.IsConstructCall())
+    {
+        CALLBACK_RETURN(hTarget->ToObject()->CallAsConstructor(argCount, &args[0]));
+    }
+
+    CALLBACK_RETURN(hTarget->ToObject()->CallAsFunction(hTarget, argCount, &args[0]));
 }
 
 //-----------------------------------------------------------------------------
@@ -1012,32 +1085,50 @@ void V8ContextImpl::HostObjectFunctionCallHandler(const FunctionCallbackInfo<Val
 void V8ContextImpl::GetHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
+        try
         {
-            CALLBACK_RETURN(true);
-        }
-
-        auto hHolder = info.Holder();
-
-        auto hResult = hHolder->GetRealNamedProperty(hName);
-        if (hResult.IsEmpty())
-        {
-            bool isCacheable;
-            hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), StdString(hName), isCacheable));
-            if (isCacheable)
+            if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
             {
-                hHolder->ForceSet(hName, hResult);
+                CALLBACK_RETURN(true);
             }
-        }
 
-        CALLBACK_RETURN(hResult);
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+            auto hHolder = info.Holder();
+
+            auto hAccessToken = hHolder->GetHiddenValue(pContextImpl->m_hAccessTokenName);
+            if (pContextImpl->m_hAccessToken != hAccessToken)
+            {
+                BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
+
+                    auto hNames = hHolder->GetOwnPropertyNames();
+                    for (auto index = hNames->Length(); index > 0; index--)
+                    {
+                        hHolder->Delete(hNames->Get(index - 1));
+                    }
+
+                    hHolder->SetHiddenValue(pContextImpl->m_hAccessTokenName, pContextImpl->m_hAccessToken);
+
+                END_PULSE_VALUE_SCOPE
+            }
+
+            auto hResult = hHolder->GetHiddenValue(hName);
+            if (hResult.IsEmpty())
+            {
+                bool isCacheable;
+                hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), StdString(hName), isCacheable));
+                if (isCacheable)
+                {
+                    hHolder->ForceSet(hName, hResult);
+                }
+            }
+
+            CALLBACK_RETURN(hResult);
+        }
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1046,15 +1137,17 @@ void V8ContextImpl::GetHostObjectProperty(Local<String> hName, const PropertyCal
 void V8ContextImpl::SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const PropertyCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        HostObjectHelpers::SetProperty(::UnwrapHostObject(info), StdString(hName), pContextImpl->ExportValue(hValue));
-        CALLBACK_RETURN(hValue);
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+        try
+        {
+            HostObjectHelpers::SetProperty(::UnwrapHostObject(info), StdString(hName), pContextImpl->ExportValue(hValue));
+            CALLBACK_RETURN(hValue);
+        }
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1063,29 +1156,31 @@ void V8ContextImpl::SetHostObjectProperty(Local<String> hName, Local<Value> hVal
 void V8ContextImpl::QueryHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Integer>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
+        try
         {
-            CALLBACK_RETURN(ReadOnly | DontEnum | DontDelete);
-        }
-
-        std::vector<StdString> names;
-        HostObjectHelpers::GetPropertyNames(::UnwrapHostObject(info), names);
-
-        StdString name(hName);
-        for (auto it = names.begin(); it != names.end(); it++)
-        {
-            if (it->Compare(name) == 0)
+            if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
             {
-                CALLBACK_RETURN(None);
+                CALLBACK_RETURN(ReadOnly | DontEnum | DontDelete);
+            }
+
+            std::vector<StdString> names;
+            HostObjectHelpers::GetPropertyNames(::UnwrapHostObject(info), names);
+
+            StdString name(hName);
+            for (auto it = names.begin(); it != names.end(); it++)
+            {
+                if (it->Compare(name) == 0)
+                {
+                    CALLBACK_RETURN(None);
+                }
             }
         }
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1094,14 +1189,16 @@ void V8ContextImpl::QueryHostObjectProperty(Local<String> hName, const PropertyC
 void V8ContextImpl::DeleteHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Boolean>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), StdString(hName)));
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+        try
+        {
+            CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), StdString(hName)));
+        }
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1110,24 +1207,26 @@ void V8ContextImpl::DeleteHostObjectProperty(Local<String> hName, const Property
 void V8ContextImpl::GetHostObjectPropertyNames(const PropertyCallbackInfo<Array>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        std::vector<StdString> names;
-        HostObjectHelpers::GetPropertyNames(::UnwrapHostObject(info), names);
-        auto nameCount = static_cast<int>(names.size());
-
-        auto hImportedNames = pContextImpl->CreateArray(nameCount);
-        for (auto index = 0; index < nameCount; index++)
+        try
         {
-            hImportedNames->Set(index, pContextImpl->CreateString(names[index]));
-        }
+            std::vector<StdString> names;
+            HostObjectHelpers::GetPropertyNames(::UnwrapHostObject(info), names);
+            auto nameCount = static_cast<int>(names.size());
 
-        CALLBACK_RETURN(hImportedNames);
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+            auto hImportedNames = pContextImpl->CreateArray(nameCount);
+            for (auto index = 0; index < nameCount; index++)
+            {
+                hImportedNames->Set(index, pContextImpl->CreateString(names[index]));
+            }
+
+            CALLBACK_RETURN(hImportedNames);
+        }
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1136,14 +1235,16 @@ void V8ContextImpl::GetHostObjectPropertyNames(const PropertyCallbackInfo<Array>
 void V8ContextImpl::GetHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), index)));
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+        try
+        {
+            CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::UnwrapHostObject(info), index)));
+        }
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1152,15 +1253,17 @@ void V8ContextImpl::GetHostObjectProperty(unsigned __int32 index, const Property
 void V8ContextImpl::SetHostObjectProperty(unsigned __int32 index, Local<Value> hValue, const PropertyCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        HostObjectHelpers::SetProperty(::UnwrapHostObject(info), index, pContextImpl->ExportValue(hValue));
-        CALLBACK_RETURN(hValue);
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+        try
+        {
+            HostObjectHelpers::SetProperty(::UnwrapHostObject(info), index, pContextImpl->ExportValue(hValue));
+            CALLBACK_RETURN(hValue);
+        }
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1169,23 +1272,25 @@ void V8ContextImpl::SetHostObjectProperty(unsigned __int32 index, Local<Value> h
 void V8ContextImpl::QueryHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Integer>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        std::vector<int> indices;
-        HostObjectHelpers::GetPropertyIndices(::UnwrapHostObject(info), indices);
-
-        for (auto it = indices.begin(); it < indices.end(); it++)
+        try
         {
-            if (*it == static_cast<int>(index))
+            std::vector<int> indices;
+            HostObjectHelpers::GetPropertyIndices(::UnwrapHostObject(info), indices);
+
+            for (auto it = indices.begin(); it < indices.end(); it++)
             {
-                CALLBACK_RETURN(None);
+                if (*it == static_cast<int>(index))
+                {
+                    CALLBACK_RETURN(None);
+                }
             }
         }
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1194,14 +1299,16 @@ void V8ContextImpl::QueryHostObjectProperty(unsigned __int32 index, const Proper
 void V8ContextImpl::DeleteHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Boolean>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), index));
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+        try
+        {
+            CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::UnwrapHostObject(info), index));
+        }
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1210,24 +1317,26 @@ void V8ContextImpl::DeleteHostObjectProperty(unsigned __int32 index, const Prope
 void V8ContextImpl::GetHostObjectPropertyIndices(const PropertyCallbackInfo<Array>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        std::vector<int> indices;
-        HostObjectHelpers::GetPropertyIndices(::UnwrapHostObject(info), indices);
-        auto indexCount = static_cast<int>(indices.size());
-
-        auto hImportedIndices = pContextImpl->CreateArray(indexCount);
-        for (auto index = 0; index < indexCount; index++)
+        try
         {
-            hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
-        }
+            std::vector<int> indices;
+            HostObjectHelpers::GetPropertyIndices(::UnwrapHostObject(info), indices);
+            auto indexCount = static_cast<int>(indices.size());
 
-        CALLBACK_RETURN(hImportedIndices);
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+            auto hImportedIndices = pContextImpl->CreateArray(indexCount);
+            for (auto index = 0; index < indexCount; index++)
+            {
+                hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
+            }
+
+            CALLBACK_RETURN(hImportedIndices);
+        }
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1236,24 +1345,26 @@ void V8ContextImpl::GetHostObjectPropertyIndices(const PropertyCallbackInfo<Arra
 void V8ContextImpl::InvokeHostObject(const FunctionCallbackInfo<Value>& info)
 {
     auto pContextImpl = ::UnwrapContextImpl(info);
-
-    try
+    if (!pContextImpl->m_DisableHostObjectInterception)
     {
-        auto argCount = info.Length();
-
-        std::vector<V8Value> exportedArgs;
-        exportedArgs.reserve(argCount);
-
-        for (auto index = 0; index < argCount; index++)
+        try
         {
-            exportedArgs.push_back(pContextImpl->ExportValue(info[index]));
-        }
+            auto argCount = info.Length();
 
-        CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::Invoke(::UnwrapHostObject(info), exportedArgs, info.IsConstructCall())));
-    }
-    catch (const HostException& exception)
-    {
-        pContextImpl->ThrowScriptException(exception);
+            std::vector<V8Value> exportedArgs;
+            exportedArgs.reserve(argCount);
+
+            for (auto index = 0; index < argCount; index++)
+            {
+                exportedArgs.push_back(pContextImpl->ExportValue(info[index]));
+            }
+
+            CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::Invoke(::UnwrapHostObject(info), exportedArgs, info.IsConstructCall())));
+        }
+        catch (const HostException& exception)
+        {
+            pContextImpl->ThrowScriptException(exception);
+        }
     }
 }
 
@@ -1340,9 +1451,18 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
             }
 
             Local<Object> hObject;
-            BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectFunctionCall, true)
-                hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
-            END_PULSE_VALUE_SCOPE
+            if (HostObjectHelpers::IsDelegate(pHolder->GetObject()))
+            {
+                BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectConstructorCall, true)
+                    hObject = m_hHostDelegateTemplate->InstanceTemplate()->NewInstance();
+                END_PULSE_VALUE_SCOPE
+            }
+            else
+            {
+                BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectConstructorCall, true)
+                    hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
+                END_PULSE_VALUE_SCOPE
+            }
 
             // WARNING: Instantiation may fail during script interruption. Check NewInstance()
             // result to avoid access violations and V8 fatal errors in ::SetObjectHolder().
@@ -1350,6 +1470,7 @@ Handle<Value> V8ContextImpl::ImportValue(const V8Value& value)
             if (!hObject.IsEmpty())
             {
                 ::SetHostObjectHolder(hObject, pHolder = pHolder->Clone());
+                hObject->SetHiddenValue(m_hAccessTokenName, m_hAccessToken);
                 pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), m_pvV8ObjectCache, DisposeWeakHandle));
                 HostObjectHelpers::CacheV8Object(m_pvV8ObjectCache, pHolder->GetObject(), pvV8Object);
             }

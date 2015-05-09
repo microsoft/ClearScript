@@ -59,66 +59,55 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+using System.Dynamic;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class ExtensionMethodTable
+    internal class HostItemCollateral
     {
-        private readonly Dictionary<Type, MethodInfo[]> table = new Dictionary<Type, MethodInfo[]>();
-        private ExtensionMethodSummary summary = new ExtensionMethodSummary();
+        #region special targets
 
-        public ExtensionMethodSummary Summary
+        public readonly CollateralObject<IDynamic> TargetDynamic = new CollateralObject<IDynamic>();
+        public readonly CollateralObject<IPropertyBag> TargetPropertyBag = new CollateralObject<IPropertyBag>();
+        public readonly CollateralObject<IList> TargetList = new CollateralObject<IList>();
+        public readonly CollateralObject<DynamicMetaObject> TargetDynamicMetaObject = new CollateralObject<DynamicMetaObject>();
+        public readonly CollateralObject<IEnumerator> TargetEnumerator = new CollateralObject<IEnumerator>();
+
+        #endregion
+
+        #region dynamic collateral
+
+        public readonly CollateralObject<HashSet<string>> ExpandoMemberNames = new CollateralObject<HashSet<string>>();
+        public readonly CollateralObject<ListDataFields> ListData = new CollateralObject<ListDataFields>();
+
+        #endregion
+
+        #region  tear-off member cache
+
+        public readonly CollateralObject<Dictionary<string, HostMethod>> HostMethodMap = new CollateralObject<Dictionary<string, HostMethod>>();
+        public readonly CollateralObject<Dictionary<string, HostIndexedProperty>> HostIndexedPropertyMap = new CollateralObject<Dictionary<string, HostIndexedProperty>>();
+
+        #endregion
+
+        #region Nested type : CollateralObject
+
+        public class CollateralObject<T> : CollateralObject<HostItem, T> where T : class
         {
-            get { return summary; }
         }
 
-        public bool ProcessType(Type type, ScriptAccess defaultAccess)
-        {
-            Debug.Assert(type.IsSpecific());
-            if (!table.ContainsKey(type) && type.HasExtensionMethods())
-            {
-                const BindingFlags bindFlags = BindingFlags.Public | BindingFlags.Static;
-                table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(method, defaultAccess)).ToArray();
-                summary = new ExtensionMethodSummary(table);
-                return true;
-            }
+        #endregion
 
-            return false;
+        #region Nested type : ListDataFields
+
+        public class ListDataFields
+        {
+            public int[] PropertyIndices;
+            public int CachedCount;
         }
 
-        private static bool IsScriptableExtensionMethod(MethodInfo method, ScriptAccess defaultAccess)
-        {
-            return method.IsScriptable(defaultAccess) && method.IsDefined(typeof(ExtensionAttribute), false);
-        }
-    }
-
-    internal class ExtensionMethodSummary
-    {
-        public ExtensionMethodSummary()
-        {
-            Types = MiscHelpers.GetEmptyArray<Type>();
-            Methods = MiscHelpers.GetEmptyArray<MethodInfo>();
-            MethodNames = MiscHelpers.GetEmptyArray<string>();
-        }
-
-        public ExtensionMethodSummary(Dictionary<Type, MethodInfo[]> table)
-        {
-            Types = table.Keys.ToArray();
-            Methods = table.SelectMany(pair => pair.Value).ToArray();
-            MethodNames = Methods.Select(method => method.GetScriptName()).ToArray();
-        }
-
-        public Type[] Types { get; private set; }
-
-        public MethodInfo[] Methods { get; private set; }
-
-        public string[] MethodNames { get; private set; }
+        #endregion 
     }
 }

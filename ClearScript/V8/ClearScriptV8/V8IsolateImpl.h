@@ -149,6 +149,11 @@ public:
         return False(m_pIsolate);
     }
 
+    Local<Object> CreateObject()
+    {
+        return Object::New(m_pIsolate);
+    }
+
     Local<Number> CreateNumber(double value)
     {
         return Number::New(m_pIsolate, value);
@@ -187,6 +192,11 @@ public:
     Local<FunctionTemplate> CreateFunctionTemplate()
     {
         return FunctionTemplate::New(m_pIsolate);
+    }
+
+    Local<Function> CreateFunction(FunctionCallback callback, Local<Value> data = Local<Value>(), int length = 0)
+    {
+        return Function::New(m_pIsolate, callback, data, length);
     }
 
     Local<Script> CreateScript(ScriptCompiler::Source* pSource, ScriptCompiler::CompileOptions options = ScriptCompiler::kNoCompileOptions)

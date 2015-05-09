@@ -85,6 +85,8 @@ namespace Microsoft.ClearScript.Test
         private ScriptEngine engine;
         private TestObject testObject;
         private ITestInterface testInterface;
+        private BlockedTestObject blockedTestObject;
+        private UnblockedTestObject unblockedTestObject;
 
         // ReSharper restore NotAccessedField.Local
 
@@ -100,12 +102,19 @@ namespace Microsoft.ClearScript.Test
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
             engine.AddHostObject("testObject", testInterface = testObject = new TestObject());
             engine.AddHostObject("testInterface", HostItem.Wrap(engine, testObject, typeof(ITestInterface)));
+            engine.AddHostObject("blockedTestObject", blockedTestObject = new BlockedTestObject());
+            engine.AddHostObject("unblockedTestObject", unblockedTestObject = new UnblockedTestObject());
+            engine.AddHostType(typeof(BlockedTestObject));
+            engine.AddHostType(typeof(UnblockedTestObject));
             engine.AddHostType("Guid", typeof(Guid));
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
+            unblockedTestObject = null;
+            blockedTestObject = null;
+            testInterface = null;
             testObject = null;
             engine.Dispose();
         }
@@ -399,6 +408,42 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.renamedReadOnlyProperty = Guid.NewGuid()"));
         }
 
+        [TestMethod, TestCategory("ScriptAccess")]
+        public void ScriptAccess_ClassLevelBlocking()
+        {
+            AssertBlockedMember("blockedTestObject", "BlockedMethod");
+            AssertMember("blockedTestObject", "UnblockedMethod");
+            AssertMember("blockedTestObject", "ToString");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new BlockedTestObject.BlockedNestedType()"));
+            Assert.IsInstanceOfType(engine.Evaluate("new BlockedTestObject.UnblockedNestedType()"), typeof(BlockedTestObject.UnblockedNestedType));
+        }
+
+        [TestMethod, TestCategory("ScriptAccess")]
+        public void ScriptAccess_EngineLevelBlocking()
+        {
+            AssertBlockedMember("unblockedTestObject", "BlockedMethod");
+            AssertMember("unblockedTestObject", "UnblockedMethod");
+            AssertMember("unblockedTestObject", "ToString");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new UnblockedTestObject.BlockedNestedType()"));
+            Assert.IsInstanceOfType(engine.Evaluate("new UnblockedTestObject.UnblockedNestedType()"), typeof(UnblockedTestObject.UnblockedNestedType));
+
+            engine.DefaultAccess = ScriptAccess.None;
+
+            AssertBlockedMember("unblockedTestObject", "BlockedMethod");
+            AssertBlockedMember("unblockedTestObject", "UnblockedMethod");
+            AssertBlockedMember("unblockedTestObject", "ToString");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new UnblockedTestObject.BlockedNestedType()"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new UnblockedTestObject.UnblockedNestedType()"));
+
+            engine.DefaultAccess = ScriptAccess.Full;
+
+            AssertBlockedMember("unblockedTestObject", "BlockedMethod");
+            AssertMember("unblockedTestObject", "UnblockedMethod");
+            AssertMember("unblockedTestObject", "ToString");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("new UnblockedTestObject.BlockedNestedType()"));
+            Assert.IsInstanceOfType(engine.Evaluate("new UnblockedTestObject.UnblockedNestedType()"), typeof(UnblockedTestObject.UnblockedNestedType));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -498,6 +543,23 @@ namespace Microsoft.ClearScript.Test
             [ScriptMember("renamedOverloadedMethod")] public double RenamedOverloadedMethod<T>(T arg) { return TestUtil.CalcTestValue(new Guid("8b79b6b1-8e54-4fff-9054-bfba76e092b7"), "RenamedOverloadedMethod 2", arg); }
         }
 
+        [NoDefaultScriptAccess]
+        public class BlockedTestObject
+        {
+            public double BlockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("de3d88bf-a148-4bf2-ab67-b27a7ff6cf21"), "BlockedMethod", arg); }
+            [ScriptMember(ScriptAccess.Full)] public double UnblockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("ab0e94e7-445e-4fcf-8fe1-94a2c0724915"), "UnblockedMethod", arg); }
+            public class BlockedNestedType { }
+            [ScriptUsage(ScriptAccess.Full)] public class UnblockedNestedType { }
+        }
+
+        public class UnblockedTestObject
+        {
+            [NoScriptAccess] public double BlockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("de3d88bf-a148-4bf2-ab67-b27a7ff6cf21"), "BlockedMethod", arg); }
+            public double UnblockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("ab0e94e7-445e-4fcf-8fe1-94a2c0724915"), "UnblockedMethod", arg); }
+            [NoScriptAccess] public class BlockedNestedType { }
+            public class UnblockedNestedType { }
+        }
+
         private void AssertBlockedMember(string objectName, string memberName)
         {
             var field = GetType().GetField(objectName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -561,7 +623,21 @@ namespace Microsoft.ClearScript.Test
             var method = member as MethodInfo;
             if (method != null)
             {
-                Assert.AreEqual(method.Invoke(target, new object[] { 98765 }), engine.Evaluate(objectName + "." + scriptMemberName + "(98765)"));
+                switch (method.GetParameters().Length)
+                {
+                    case 0:
+                        Assert.AreEqual(method.Invoke(target, MiscHelpers.GetEmptyArray<object>()), engine.Evaluate(objectName + "." + scriptMemberName + "()"));
+                        break;
+
+                    case 1:
+                        Assert.AreEqual(method.Invoke(target, new object[] { 98765 }), engine.Evaluate(objectName + "." + scriptMemberName + "(98765)"));
+                        break;
+
+                    default:
+                        Assert.Fail("Unsupported method signature");
+                        break;
+                }
+
                 return;
             }
 

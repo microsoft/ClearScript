@@ -77,7 +77,7 @@ namespace V8 {
         V8IsolateConstraints constraints;
         if (gcConstraints != nullptr)
         {
-            constraints.Set(gcConstraints->MaxNewSpaceSize, gcConstraints->MaxOldSpaceSize, gcConstraints->MaxExecutableSize);
+            constraints.Set(AdjustConstraint(gcConstraints->MaxNewSpaceSize), AdjustConstraint(gcConstraints->MaxOldSpaceSize), AdjustConstraint(gcConstraints->MaxExecutableSize));
             pConstraints = &constraints;
         }
 
@@ -214,6 +214,20 @@ namespace V8 {
             delete m_pspIsolate;
             m_pspIsolate = nullptr;
         }
+    }
+
+    //-------------------------------------------------------------------------
+
+    int V8IsolateProxyImpl::AdjustConstraint(int value)
+    {
+        const int maxValueInMiB = 1024 * 1024;
+        if (value > maxValueInMiB)
+        {
+            const double bytesPerMiB = 1024 * 1024;
+            return Convert::ToInt32(Math::Ceiling(Convert::ToDouble(value) / bytesPerMiB));
+        }
+
+        return value;
     }
 
 }}}

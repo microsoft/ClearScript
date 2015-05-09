@@ -87,6 +87,7 @@ public:
 
     static V8Value Invoke(void* pvObject, const std::vector<V8Value>& args, bool asConstructor);
     static V8Value InvokeMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
+    static bool IsDelegate(void* pvObject);
 
     static void* CreateV8ObjectCache();
     static void CacheV8Object(void* pvCache, void* pvObject, void* pvV8Object);
@@ -94,7 +95,8 @@ public:
     static void GetAllCachedV8Objects(void* pvCache, std::vector<void*>& v8ObjectPtrs);
     static bool RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject);
 
-    typedef std::function<void(const StdString& command)> DebugCallback;
+    enum class DebugDirective { SendDebugCommand, DispatchDebugMessages };
+    typedef std::function<void(DebugDirective directive, const StdString* pCommand)> DebugCallback;
     static void* CreateDebugAgent(const StdString& name, const StdString& version, int port, DebugCallback&& callback);
     static void SendDebugMessage(void* pvAgent, const StdString& content);
     static void DestroyDebugAgent(void* pvAgent);

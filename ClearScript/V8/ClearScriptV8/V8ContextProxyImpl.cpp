@@ -263,6 +263,13 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    void V8ContextProxyImpl::OnAccessSettingsChanged()
+    {
+        GetContext()->OnAccessSettingsChanged();
+    }
+
+    //-------------------------------------------------------------------------
+
     V8ContextProxyImpl::~V8ContextProxyImpl()
     {
         SharedPtr<V8Context> spContext;

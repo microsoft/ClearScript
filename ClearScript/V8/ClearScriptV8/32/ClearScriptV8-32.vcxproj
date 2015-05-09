@@ -59,7 +59,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\V8\include;..\..\..\Exports</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\V8\include;..\..\..\Exports;$(IncludePath)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>
@@ -83,7 +83,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\V8\include;..\..\..\Exports</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\V8\include;..\..\..\Exports;$(IncludePath)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>

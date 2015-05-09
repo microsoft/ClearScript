@@ -183,19 +183,19 @@ namespace Microsoft.ClearScript.Util
 
         #region DynamicMetaObject extensions
 
-        public static bool TryCreateInstance(this DynamicMetaObject target, ScriptEngine engine, object[] args, out object result)
+        public static bool TryCreateInstance(this DynamicMetaObject target, object[] args, out object result)
         {
             return TryDynamicOperation(() => target.CreateInstance(args), out result);
         }
 
-        public static bool TryInvoke(this DynamicMetaObject target, ScriptEngine engine, object[] args, out object result)
+        public static bool TryInvoke(this DynamicMetaObject target, IHostInvokeContext context, object[] args, out object result)
         {
             return TryDynamicOperation(() => target.Invoke(args), out result);
         }
 
-        public static bool TryInvokeMember(this DynamicMetaObject target, ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args, out object result)
+        public static bool TryInvokeMember(this DynamicMetaObject target, IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, out object result)
         {
-            return TryDynamicOperation(() => target.InvokeMember(engine, name, invokeFlags, args), out result);
+            return TryDynamicOperation(() => target.InvokeMember(context, name, invokeFlags, args), out result);
         }
 
         public static bool TryGetMember(this DynamicMetaObject target, string name, out object result)
@@ -408,12 +408,12 @@ namespace Microsoft.ClearScript.Util
             return Invoke(block, paramExprs, args);
         }
 
-        private static object InvokeMember(this DynamicMetaObject target, ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args)
+        private static object InvokeMember(this DynamicMetaObject target, IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args)
         {
             var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
             var paramExprs = paramNames.Select((paramName, index) => Expression.Parameter(GetParamTypeForArg(args[index]), paramName)).ToArray();
             var parameters = paramExprs.Select(paramExpr => new DynamicMetaObject(paramExpr, BindingRestrictions.Empty)).ToArray();
-            var bindResult = target.BindInvokeMember(new DynamicInvokeMemberBinder(engine, name, invokeFlags, paramNames), parameters);
+            var bindResult = target.BindInvokeMember(new DynamicInvokeMemberBinder(context, name, invokeFlags, paramNames), parameters);
             var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
             return Invoke(block, paramExprs, args);
         }
@@ -699,13 +699,13 @@ namespace Microsoft.ClearScript.Util
         private class DynamicInvokeMemberBinder : InvokeMemberBinder
         {
             private static readonly MethodInfo invokeMemberValueMethod = typeof(DynamicInvokeMemberBinder).GetMethod("InvokeMemberValue", BindingFlags.NonPublic | BindingFlags.Static);
-            private readonly ScriptEngine engine;
+            private readonly IHostInvokeContext context;
             private readonly BindingFlags invokeFlags;
 
-            public DynamicInvokeMemberBinder(ScriptEngine engine, string name, BindingFlags invokeFlags, string[] paramNames)
+            public DynamicInvokeMemberBinder(IHostInvokeContext context, string name, BindingFlags invokeFlags, string[] paramNames)
                 : base(name, false, new CallInfo(paramNames.Length, paramNames))
             {
-                this.engine = engine;
+                this.context = context;
                 this.invokeFlags = invokeFlags;
             }
 
@@ -731,16 +731,16 @@ namespace Microsoft.ClearScript.Util
                 }
 
                 // construct an algorithm for invoking a member value
-                var argExprs = new[] { Expression.Constant(engine), target.Expression, Expression.Constant(invokeFlags), Expression.NewArrayInit(typeof(object), args.Select(arg => arg.Expression)) };
+                var argExprs = new[] { Expression.Constant(context), target.Expression, Expression.Constant(invokeFlags), Expression.NewArrayInit(typeof(object), args.Select(arg => arg.Expression)) };
                 return new DynamicMetaObject(Expression.Call(invokeMemberValueMethod, argExprs), BindingRestrictions.Empty);
             }
 
             // ReSharper disable UnusedMember.Local
 
-            private static object InvokeMemberValue(ScriptEngine engine, object target, BindingFlags invokeFlags, object[] args)
+            private static object InvokeMemberValue(IHostInvokeContext context, object target, BindingFlags invokeFlags, object[] args)
             {
                 object result;
-                if (InvokeHelpers.TryInvokeObject(engine, target, BindingFlags.InvokeMethod, args, args, true, out result))
+                if (InvokeHelpers.TryInvokeObject(context, target, BindingFlags.InvokeMethod, args, args, true, out result))
                 {
                     return result;
                 }

@@ -62,6 +62,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using Microsoft.Win32;
@@ -86,6 +87,11 @@ namespace Microsoft.ClearScript.Util
         {
             string fullName;
             return ((table != null) && table.TryGetValue(name, out fullName)) ? fullName : name;
+        }
+
+        public static T GetAttribute<T>(this Assembly assembly, bool inherit) where T : Attribute
+        {
+            return Attribute.GetCustomAttributes(assembly, typeof(T), inherit).SingleOrDefault() as T;
         }
 
         private static void LoadAssemblyTable()

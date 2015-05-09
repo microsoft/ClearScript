@@ -114,24 +114,24 @@ namespace Microsoft.ClearScript
             get { return HostTargetFlags.None; }
         }
 
-        public override string[] GetAuxMethodNames(BindingFlags bindFlags)
+        public override string[] GetAuxMethodNames(IHostInvokeContext context, BindingFlags bindFlags)
         {
             return auxMethodNames;
         }
 
-        public override bool TryInvokeAuxMember(ScriptEngine engine, string memberName, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(IHostInvokeContext context, string memberName, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
                 if (memberName == "get")
                 {
-                    result = target.InvokeMember(name, BindingFlags.GetProperty, args, bindArgs, null);
+                    result = target.InvokeMember(name, BindingFlags.GetProperty, args, bindArgs, null, true);
                     return true;
                 }
 
                 if (memberName == "set")
                 {
-                    result = target.InvokeMember(name, BindingFlags.SetProperty, args, bindArgs, null);
+                    result = target.InvokeMember(name, BindingFlags.SetProperty, args, bindArgs, null, true);
                     return true;
                 }
             }
@@ -140,9 +140,9 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public override bool TryInvoke(ScriptEngine engine, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            result = target.InvokeMember(name, invokeFlags.HasFlag(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty, args, bindArgs, null);
+            result = target.InvokeMember(name, invokeFlags.HasFlag(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty, args, bindArgs, null, true);
             return true;
         }
 

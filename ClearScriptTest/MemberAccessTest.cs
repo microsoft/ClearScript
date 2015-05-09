@@ -273,7 +273,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("MemberAccess")]
         public void MemberAccess_ReadOnlyProperty_Write()
         {
-            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.ReadOnlyProperty = 2"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.ReadOnlyProperty = 2"));
         }
 
         [TestMethod, TestCategory("MemberAccess")]

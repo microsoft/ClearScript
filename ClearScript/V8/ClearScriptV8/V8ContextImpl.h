@@ -98,6 +98,7 @@ public:
     void Interrupt();
     void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo);
     void CollectGarbage(bool exhaustive);
+    void OnAccessSettingsChanged();
 
     V8Value GetV8ObjectProperty(void* pvObject, const StdString& name);
     void SetV8ObjectProperty(void* pvObject, const StdString& name, const V8Value& value);
@@ -161,6 +162,11 @@ private:
         return m_spIsolateImpl->GetFalse();
     }
 
+    Local<Object> CreateObject()
+    {
+        return m_spIsolateImpl->CreateObject();
+    }
+
     Local<Number> CreateNumber(double value)
     {
         return m_spIsolateImpl->CreateNumber(value);
@@ -199,6 +205,11 @@ private:
     Local<FunctionTemplate> CreateFunctionTemplate()
     {
         return m_spIsolateImpl->CreateFunctionTemplate();
+    }
+
+    Local<Function> CreateFunction(FunctionCallback callback, Local<Value> data = Local<Value>(), int length = 0)
+    {
+        return m_spIsolateImpl->CreateFunction(callback, data, length);
     }
 
     Local<Script> CreateScript(ScriptCompiler::Source* pSource, ScriptCompiler::CompileOptions options = ScriptCompiler::kNoCompileOptions)
@@ -297,7 +308,9 @@ private:
     static void DeleteGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Boolean>& info);
     static void GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& info);
 
-    static void HostObjectFunctionCallHandler(const FunctionCallbackInfo<Value>& info);
+    static void HostObjectConstructorCallHandler(const FunctionCallbackInfo<Value>& info);
+    static void CreateFunctionForHostDelegate(const FunctionCallbackInfo<Value>& info);
+    static void InvokeHostDelegate(const FunctionCallbackInfo<Value>& info);
 
     static void GetHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info);
     static void SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
@@ -329,8 +342,12 @@ private:
     std::vector<std::pair<StdString, Persistent<Object>>> m_GlobalMembersStack;
     Persistent<String> m_hHostObjectCookieName;
     Persistent<String> m_hHostExceptionName;
+    Persistent<String> m_hAccessTokenName;
+    Persistent<Object> m_hAccessToken;
     Persistent<FunctionTemplate> m_hHostObjectTemplate;
+    Persistent<FunctionTemplate> m_hHostDelegateTemplate;
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     void* m_pvV8ObjectCache;
-    bool m_AllowHostObjectFunctionCall;
+    bool m_AllowHostObjectConstructorCall;
+    bool m_DisableHostObjectInterception;
 };

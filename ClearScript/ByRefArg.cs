@@ -91,7 +91,6 @@ namespace Microsoft.ClearScript
         public T Value
         {
             get { return target.Value; }
-
             set { target.Value = value; }
         }
 
@@ -122,24 +121,24 @@ namespace Microsoft.ClearScript
             get { return target.Flags; }
         }
 
-        public override string[] GetAuxMethodNames(BindingFlags bindFlags)
+        public override string[] GetAuxMethodNames(IHostInvokeContext context, BindingFlags bindFlags)
         {
-            return target.GetAuxMethodNames(bindFlags);
+            return target.GetAuxMethodNames(context, bindFlags);
         }
 
-        public override string[] GetAuxPropertyNames(BindingFlags bindFlags)
+        public override string[] GetAuxPropertyNames(IHostInvokeContext context, BindingFlags bindFlags)
         {
-            return target.GetAuxPropertyNames(bindFlags);
+            return target.GetAuxPropertyNames(context, bindFlags);
         }
 
-        public override bool TryInvokeAuxMember(ScriptEngine engine, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            return target.TryInvokeAuxMember(engine, name, invokeFlags, args, bindArgs, out result);
+            return target.TryInvokeAuxMember(context, name, invokeFlags, args, bindArgs, out result);
         }
 
-        public override bool TryInvoke(ScriptEngine engine, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            return target.TryInvoke(engine, invokeFlags, args, bindArgs, out result);
+            return target.TryInvoke(context, invokeFlags, args, bindArgs, out result);
         }
 
         #endregion
@@ -149,7 +148,6 @@ namespace Microsoft.ClearScript
         object IByRefArg.Value
         {
             get { return target.Value; }
-
             set { ((IHostVariable)target).Value = value; }
         }
 

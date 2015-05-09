@@ -70,7 +70,7 @@ namespace Microsoft.ClearScript.Test
 {
     internal static class SunSpider
     {
-        private const string version = "sunspider-0.9.1";
+        private const string version = "sunspider-1.0.2";
         private const string baseUrl = "http://www.webkit.org/perf/" + version + "/" + version + "/";
 
         private const int repeatCount = 10;
@@ -103,6 +103,15 @@ namespace Microsoft.ClearScript.Test
             // load raw test code
             engine.Execute(testPrefix);
             engine.Execute(testContents);
+            engine.Execute(@"
+                function ClearScriptCleanup() {
+                    delete Array.prototype.toJSONString;
+                    delete Boolean.prototype.toJSONString;
+                    delete Date.prototype.toJSONString;
+                    delete Number.prototype.toJSONString;
+                    delete Object.prototype.toJSONString;
+                }
+            ");
 
             // initialize
             var testCount = (int)engine.Script.tests.length;
@@ -153,6 +162,7 @@ namespace Microsoft.ClearScript.Test
             var result = int.MinValue;
             mockDOM.RecordAction = value => result = value;
             engine.Execute(name, script);
+            engine.Script.ClearScriptCleanup();
             return result;
         }
 
@@ -188,6 +198,8 @@ namespace Microsoft.ClearScript.Test
             {
                 RecordAction(time);
             }
+
+            public object onerror { get; set; }
         }
 
         // ReSharper restore UnusedParameter.Local

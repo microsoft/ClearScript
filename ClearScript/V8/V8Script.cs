@@ -95,7 +95,7 @@ namespace Microsoft.ClearScript.V8
         /// must release all references to the compiled script so the garbage collector can reclaim
         /// the memory that the compiled script was occupying.
         /// </remarks>
-        [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "This class is almost purely abstract; the implementation class uses the C++/CLI disposition pattern.")]
+        [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "This class is almost purely abstract; the implementation class uses the C++/CLI disposal pattern.")]
         public abstract void Dispose();
 
         #endregion

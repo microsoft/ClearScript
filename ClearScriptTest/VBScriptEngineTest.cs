@@ -62,6 +62,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Globalization;
@@ -252,6 +253,27 @@ namespace Microsoft.ClearScript.Test
             engine.AddHostObject("host", new HostFunctions());
             engine.AddHostType("Dictionary", "System.Collections.Generic.Dictionary", typeof(string), typeof(int));
             Assert.IsInstanceOfType(engine.Evaluate("host.newObj(Dictionary)"), typeof(Dictionary<string, int>));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddHostType_DefaultName()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+            engine.AddHostType(typeof(Random));
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj(Random)"), typeof(Random));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddHostType_DefaultNameGeneric()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+            engine.AddHostType(typeof(List<int>));
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj(List)"), typeof(List<int>));
+
+            engine.AddHostType(typeof(Dictionary<,>));
+            engine.AddHostType(typeof(int));
+            engine.AddHostType(typeof(decimal));
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj(Dictionary(Int32, Decimal), 100)"), typeof(Dictionary<int, decimal>));
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
@@ -1870,6 +1892,313 @@ namespace Microsoft.ClearScript.Test
             }
 
             // ReSharper restore AccessToDisposedClosure
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_EnableNullResultWrapping()
+        {
+            var testValue = new[] { 1, 2, 3, 4, 5 };
+            engine.Script.host = new HostFunctions();
+            engine.Script.foo = new NullResultWrappingTestObject<int[]>(testValue);
+
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("IsNull(foo.Value)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.Value)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("IsNull(foo.NullValue)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.NullValue)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("IsNull(foo.WrappedNullValue)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.WrappedNullValue)")));
+
+            Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = true;
+            Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = false;
+            Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_EnableNullResultWrapping_String()
+        {
+            const string testValue = "bar";
+            engine.Script.host = new HostFunctions();
+            engine.Script.foo = new NullResultWrappingTestObject<string>(testValue);
+
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("IsNull(foo.Value)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.Value)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("IsNull(foo.NullValue)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.NullValue)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("IsNull(foo.WrappedNullValue)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.WrappedNullValue)")));
+
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = true;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = false;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_EnableNullResultWrapping_Nullable()
+        {
+            int? testValue = 12345;
+            engine.Script.host = new HostFunctions();
+            engine.Script.foo = new NullResultWrappingTestObject<int?>(testValue);
+
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("IsNull(foo.Value)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.Value)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("IsNull(foo.NullValue)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.NullValue)")));
+            Assert.IsFalse(Convert.ToBoolean(engine.Evaluate("IsNull(foo.WrappedNullValue)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("host.isNull(foo.WrappedNullValue)")));
+
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = true;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.NullValue)"));
+
+            engine.EnableNullResultWrapping = false;
+            Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
+            Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DefaultProperty()
+        {
+            engine.Script.foo = new DefaultPropertyTestObject();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo(\"abc\") = 123");
+            Assert.AreEqual(123, engine.Evaluate("clng(foo(\"abc\"))"));
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Item(\"abc\"))"));
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Item.get(\"abc\"))"));
+            Assert.IsNull(engine.Evaluate("foo(\"def\")"));
+
+            engine.Execute("foo(DayOfWeek.Thursday) = 456");
+            Assert.AreEqual(456, engine.Evaluate("clng(foo(DayOfWeek.Thursday))"));
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Item(DayOfWeek.Thursday))"));
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Item.get(DayOfWeek.Thursday))"));
+            Assert.IsNull(engine.Evaluate("foo(DayOfWeek.Friday)"));
+
+            engine.Execute("foo.Value = 789");
+            Assert.AreEqual(789, engine.Evaluate("clng(foo)"));
+            Assert.AreEqual(789, engine.Evaluate("clng(foo.Value)"));
+
+            engine.Execute("foo.Item(\"def\") = 987");
+            Assert.AreEqual(987, engine.Evaluate("clng(foo(\"def\"))"));
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Item(\"def\"))"));
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Item.get(\"def\"))"));
+            Assert.IsNull(engine.Evaluate("foo(\"ghi\")"));
+
+            engine.Execute("foo.Item(DayOfWeek.Friday) = 654");
+            Assert.AreEqual(654, engine.Evaluate("clng(foo(DayOfWeek.Friday))"));
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Item(DayOfWeek.Friday))"));
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Item.get(DayOfWeek.Friday))"));
+            Assert.IsNull(engine.Evaluate("foo(DayOfWeek.Saturday)"));
+
+            engine.Execute("call foo.Item.set(\"ghi\", 321)");
+            Assert.AreEqual(321, engine.Evaluate("clng(foo(\"ghi\"))"));
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Item(\"ghi\"))"));
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Item.get(\"ghi\"))"));
+            Assert.IsNull(engine.Evaluate("foo(\"jkl\")"));
+
+            engine.Execute("call foo.Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo(DayOfWeek.Saturday))"));
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Item(DayOfWeek.Saturday))"));
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Item.get(DayOfWeek.Saturday))"));
+            Assert.IsNull(engine.Evaluate("foo(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DefaultProperty_FieldTunneling()
+        {
+            engine.Script.foo = new DefaultPropertyTestContainer();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Field(\"abc\") = 123");
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Field(\"abc\"))"));
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Field.Item(\"abc\"))"));
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Field.Item.get(\"abc\"))"));
+            Assert.IsNull(engine.Evaluate("foo.Field(\"def\")"));
+
+            engine.Execute("foo.Field(DayOfWeek.Thursday) = 456");
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Field(DayOfWeek.Thursday))"));
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Field.Item(DayOfWeek.Thursday))"));
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Field.Item.get(DayOfWeek.Thursday))"));
+            Assert.IsNull(engine.Evaluate("foo.Field(DayOfWeek.Friday)"));
+
+            engine.Execute("foo.Field.Value = 789");
+            Assert.AreEqual(789, engine.Evaluate("clng(foo.Field)"));
+            Assert.AreEqual(789, engine.Evaluate("clng(foo.Field.Value)"));
+
+            engine.Execute("foo.Field.Item(\"def\") = 987");
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Field(\"def\"))"));
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Field.Item(\"def\"))"));
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Field.Item.get(\"def\"))"));
+            Assert.IsNull(engine.Evaluate("foo.Field(\"ghi\")"));
+
+            engine.Execute("foo.Field.Item(DayOfWeek.Friday) = 654");
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Field(DayOfWeek.Friday))"));
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Field.Item(DayOfWeek.Friday))"));
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Field.Item.get(DayOfWeek.Friday))"));
+            Assert.IsNull(engine.Evaluate("foo.Field(DayOfWeek.Saturday)"));
+
+            engine.Execute("call foo.Field.Item.set(\"ghi\", 321)");
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Field(\"ghi\"))"));
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Field.Item(\"ghi\"))"));
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Field.Item.get(\"ghi\"))"));
+            Assert.IsNull(engine.Evaluate("foo.Field(\"jkl\")"));
+
+            engine.Execute("call foo.Field.Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Field(DayOfWeek.Saturday))"));
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Field.Item(DayOfWeek.Saturday))"));
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Field.Item.get(DayOfWeek.Saturday))"));
+            Assert.IsNull(engine.Evaluate("foo.Field(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DefaultProperty_PropertyTunneling()
+        {
+            engine.Script.foo = new DefaultPropertyTestContainer();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Property(\"abc\") = 123");
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Property(\"abc\"))"));
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Property.Item(\"abc\"))"));
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Property.Item.get(\"abc\"))"));
+            Assert.IsNull(engine.Evaluate("foo.Property(\"def\")"));
+
+            engine.Execute("foo.Property(DayOfWeek.Thursday) = 456");
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Property(DayOfWeek.Thursday))"));
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Property.Item(DayOfWeek.Thursday))"));
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Property.Item.get(DayOfWeek.Thursday))"));
+            Assert.IsNull(engine.Evaluate("foo.Property(DayOfWeek.Friday)"));
+
+            engine.Execute("foo.Property.Value = 789");
+            Assert.AreEqual(789, engine.Evaluate("clng(foo.Property)"));
+            Assert.AreEqual(789, engine.Evaluate("clng(foo.Property.Value)"));
+
+            engine.Execute("foo.Property.Item(\"def\") = 987");
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Property(\"def\"))"));
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Property.Item(\"def\"))"));
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Property.Item.get(\"def\"))"));
+            Assert.IsNull(engine.Evaluate("foo.Property(\"ghi\")"));
+
+            engine.Execute("foo.Property.Item(DayOfWeek.Friday) = 654");
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Property(DayOfWeek.Friday))"));
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Property.Item(DayOfWeek.Friday))"));
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Property.Item.get(DayOfWeek.Friday))"));
+            Assert.IsNull(engine.Evaluate("foo.Property(DayOfWeek.Saturday)"));
+
+            engine.Execute("call foo.Property.Item.set(\"ghi\", 321)");
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Property(\"ghi\"))"));
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Property.Item(\"ghi\"))"));
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Property.Item.get(\"ghi\"))"));
+            Assert.IsNull(engine.Evaluate("foo.Property(\"jkl\")"));
+
+            engine.Execute("call foo.Property.Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Property(DayOfWeek.Saturday))"));
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Property.Item(DayOfWeek.Saturday))"));
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Property.Item.get(DayOfWeek.Saturday))"));
+            Assert.IsNull(engine.Evaluate("foo.Property(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DefaultProperty_MethodTunneling()
+        {
+            engine.Script.foo = new DefaultPropertyTestContainer();
+            engine.AddHostType("DayOfWeek", typeof(DayOfWeek));
+
+            engine.Execute("foo.Method()(\"abc\") = 123");
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Method()(\"abc\"))"));
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Method().Item(\"abc\"))"));
+            Assert.AreEqual(123, engine.Evaluate("clng(foo.Method().Item.get(\"abc\"))"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(\"def\")"));
+
+            engine.Execute("foo.Method()(DayOfWeek.Thursday) = 456");
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Method()(DayOfWeek.Thursday))"));
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Method().Item(DayOfWeek.Thursday))"));
+            Assert.AreEqual(456, engine.Evaluate("clng(foo.Method().Item.get(DayOfWeek.Thursday))"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(DayOfWeek.Friday)"));
+
+            engine.Execute("foo.Method().Value = 789");
+            Assert.AreEqual(789, engine.Evaluate("clng(foo.Method())"));
+            Assert.AreEqual(789, engine.Evaluate("clng(foo.Method().Value)"));
+
+            engine.Execute("foo.Method().Item(\"def\") = 987");
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Method()(\"def\"))"));
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Method().Item(\"def\"))"));
+            Assert.AreEqual(987, engine.Evaluate("clng(foo.Method().Item.get(\"def\"))"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(\"ghi\")"));
+
+            engine.Execute("foo.Method().Item(DayOfWeek.Friday) = 654");
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Method()(DayOfWeek.Friday))"));
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Method().Item(DayOfWeek.Friday))"));
+            Assert.AreEqual(654, engine.Evaluate("clng(foo.Method().Item.get(DayOfWeek.Friday))"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(DayOfWeek.Saturday)"));
+
+            engine.Execute("call foo.Method().Item.set(\"ghi\", 321)");
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Method()(\"ghi\"))"));
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Method().Item(\"ghi\"))"));
+            Assert.AreEqual(321, engine.Evaluate("clng(foo.Method().Item.get(\"ghi\"))"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(\"jkl\")"));
+
+            engine.Execute("call foo.Method().Item.set(DayOfWeek.Saturday, -123)");
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Method()(DayOfWeek.Saturday))"));
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Method().Item(DayOfWeek.Saturday))"));
+            Assert.AreEqual(-123, engine.Evaluate("clng(foo.Method().Item.get(DayOfWeek.Saturday))"));
+            Assert.IsNull(engine.Evaluate("foo.Method()(DayOfWeek.Sunday)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DefaultProperty_Indexer()
+        {
+            engine.Script.dict = new Dictionary<string, object> { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
+            engine.Execute("item = dict.Item");
+
+            Assert.AreEqual(123, engine.Evaluate("item(\"abc\")"));
+            Assert.AreEqual(456, engine.Evaluate("item(\"def\")"));
+            Assert.AreEqual(789, engine.Evaluate("item(\"ghi\")"));
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("item(\"jkl\")"));
+
+            engine.Execute("item(\"abc\") = \"foo\"");
+            Assert.AreEqual("foo", engine.Evaluate("item(\"abc\")"));
+            Assert.AreEqual(456, engine.Evaluate("item(\"def\")"));
+            Assert.AreEqual(789, engine.Evaluate("item(\"ghi\")"));
+            TestUtil.AssertException<KeyNotFoundException>(() => engine.Evaluate("item(\"jkl\")"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_PropertyAndMethodWithSameName()
+        {
+            engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System", "System.Core"));
+
+            engine.Script.dict = new Dictionary<string, object> { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
+            Assert.AreEqual(3, engine.Evaluate("dict.Count"));
+            Assert.AreEqual(3, engine.Evaluate("dict.Count()"));
+
+            engine.Script.listDict = new ListDictionary { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
+            Assert.AreEqual(3, engine.Evaluate("listDict.Count"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("listDict.Count()"));
         }
 
         // ReSharper restore InconsistentNaming

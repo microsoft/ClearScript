@@ -5,11 +5,11 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=3.30.33.16
+set v8testedrev=4.2.77.18
 
-set gyprev=a3e2a5caf24a1e0a45401e09ad131210bf16b852
-set pythonrev=67d19f904470effe3122d27101cc5a8195abd157
-set cygwinrev=06a117a90c15174436bfa20ceebbfdf43b7eb820
+set gyprev=34640080d08ab2a37665512e52142947def3056d
+set pythonrev=5bb4080c33f369a81017c2767142fb34981f2a54
+set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df
 
 :ProcessArgs
 
@@ -148,7 +148,7 @@ cd v8
 
 :PatchV8
 echo Patching V8 ...
-git apply --ignore-whitespace ..\..\V8Patch.txt
+git apply --ignore-whitespace ..\..\V8Patch.txt 2>applyPatch.log
 if errorlevel 1 goto Error
 :PatchV8Done
 
@@ -194,11 +194,12 @@ cd ..
 
 set PYTHONHOME=
 set PYTHONPATH=
+set basepath=%PATH%
 
 :CreatePatchFile
 echo Creating patch file ...
 cd v8
-git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt
+git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createPatch.log
 if errorlevel 1 goto Error
 cd ..
 :CreatePatchFileDone
@@ -214,10 +215,12 @@ if errorlevel 1 goto Error
 
 :Build32Bit
 cd v8-ia32
-third_party\python_26\python build\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
+path %CD%\third_party\python_26;%basepath%
+python build\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error
 msbuild /p:Configuration=%mode% /p:Platform=Win32 /t:v8 tools\gyp\v8.sln >build.log
 if errorlevel 1 goto Error
+path %basepath%
 cd ..
 :Build32BitDone
 
@@ -232,10 +235,12 @@ if errorlevel 1 goto Error
 
 :Build64Bit
 cd v8-x64
-third_party\python_26\python build\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
+path %CD%\third_party\python_26;%basepath%
+python build\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error
 msbuild /p:Configuration=%mode% /p:Platform=x64 /t:v8 tools\gyp\v8.sln >build.log
 if errorlevel 1 goto Error
+path %basepath%
 cd ..
 :Build64BitDone
 

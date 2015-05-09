@@ -74,7 +74,7 @@ namespace Microsoft.ClearScript.Windows
 
         private static readonly Dictionary<int, string> runtimeErrorMap = new Dictionary<int, string>
         {
-            // http://msdn.microsoft.com/en-us/library/xe43cc8d(VS.84).aspx
+            // https://msdn.microsoft.com/en-us/library/xe43cc8d(v=vs.84).aspx
             { 429, "ActiveX component can't create object" },
             { 507, "An exception occurred" },
             { 449, "Argument not optional" },
@@ -119,6 +119,11 @@ namespace Microsoft.ClearScript.Windows
             { 458, "Variable uses an Automation type not supported in VBScript" },
             { 450, "Wrong number of arguments or invalid property assignment" }
         };
+
+        private static readonly Dictionary<int, string> syntaxErrorMap = new Dictionary<int, string>
+        {
+            // https://msdn.microsoft.com/en-us/library/2z84dwk8(v=vs.84).aspx
+            { 1052, "Cannot have multiple default property/method in a Class" },            { 1044, "Cannot use parentheses when calling a Sub" },            { 1053, "Class initialize or terminate do not have arguments" },            { 1058, "'Default' specification can only be on Property Get" },            { 1057, "'Default' specification must also specify 'Public'" },            { 1005, "Expected '('" },            { 1006, "Expected ')'" },            { 1011, "Expected '='" },            { 1021, "Expected 'Case'" },            { 1047, "Expected 'Class'" },            { 1025, "Expected end of statement" },            { 1014, "Expected 'End'" },            { 1023, "Expected expression" },            { 1015, "Expected 'Function'" },            { 1010, "Expected identifier" },            { 1012, "Expected 'If'" },            { 1046, "Expected 'In'" },            { 1026, "Expected integer constant" },            { 1049, "Expected Let or Set or Get in property declaration" },            { 1045, "Expected literal constant" },            { 1019, "Expected 'Loop'" },            { 1020, "Expected 'Next'" },            { 1050, "Expected 'Property'" },            { 1022, "Expected 'Select'" },            { 1024, "Expected statement" },            { 1016, "Expected 'Sub'" },            { 1017, "Expected 'Then'" },            { 1013, "Expected 'To'" },            { 1018, "Expected 'Wend'" },            { 1027, "Expected 'While' or 'Until'" },            { 1028, "Expected 'While,' 'Until,' or end of statement" },            { 1029, "Expected 'With'" },            { 1030, "Identifier too long" },            { 1032, "Invalid character" },              // incorrectly listed as 1014 in the online documentation            { 1039, "Invalid 'exit' statement" },            { 1040, "Invalid 'for' loop control variable" },            { 1031, "Invalid number" },                 // incorrectly listed as 1013 in the online documentation            { 1037, "Invalid use of 'Me' keyword" },            { 1038, "'loop' without 'do'" },            { 1048, "Must be defined inside a Class" },            { 1042, "Must be first statement on the line" },            { 1041, "Name redefined" },            { 1051, "Number of arguments must be consistent across properties specification" },            { 1001, "Out of Memory" },            { 1054, "Property Set or Let must have at least one argument" },            { 1002, "Syntax error" },            { 1055, "Unexpected 'Next'" },            { 1033, "Unterminated string constant" }    // incorrectly listed as 1015 in the online documentation        };
 
         #endregion
 
@@ -352,6 +357,11 @@ namespace Microsoft.ClearScript.Windows
         internal override IDictionary<int, string> RuntimeErrorMap
         {
             get { return runtimeErrorMap; }
+        }
+
+        internal override IDictionary<int, string> SyntaxErrorMap
+        {
+            get { return syntaxErrorMap; }
         }
 
         #endregion

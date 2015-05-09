@@ -62,21 +62,33 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
     internal class HostObject : HostTarget
     {
+        #region data
+
         private readonly object target;
         private readonly Type type;
+        private static readonly MethodInfo getNullWrapperGenericMethod = typeof(HostObject).GetMethod("GetNullWrapperGeneric", BindingFlags.NonPublic | BindingFlags.Static);
         private static readonly CanonicalRefMap canonicalRefMap = new CanonicalRefMap();
+
+        #endregion
+
+        #region constructors
 
         private HostObject(object target, Type type)
         {
             this.target = canonicalRefMap.GetCanonicalRef(target);
             this.type = type ?? target.GetType();
         }
+
+        #endregion
+
+        #region wrappers
 
         public static HostObject Wrap(object target)
         {
@@ -88,16 +100,16 @@ namespace Microsoft.ClearScript
             return (target != null) ? new HostObject(target, type) : null;
         }
 
-        public static object WrapResult(object result, Type type)
+        public static object WrapResult(object result, Type type, bool wrapNull)
         {
-            if (result == null)
-            {
-                return null;
-            }
-
             if ((result is HostItem) || (result is HostTarget))
             {
                 return result;
+            }
+
+            if (result == null)
+            {
+                return wrapNull ? GetNullWrapper(type) : null;
             }
 
             if ((type == typeof(void)) || (type == typeof(object)) || type.IsNullable())
@@ -112,6 +124,26 @@ namespace Microsoft.ClearScript
 
             return Wrap(result, type);
         }
+
+        #endregion
+
+        #region internal members
+
+        private static HostObject GetNullWrapper(Type type)
+        {
+            return (HostObject)getNullWrapperGenericMethod.MakeGenericMethod(type).Invoke(null, MiscHelpers.GetEmptyArray<object>());
+        }
+
+        // ReSharper disable UnusedMember.Local
+
+        private static HostObject GetNullWrapperGeneric<T>()
+        {
+            return NullWrapper<T>.Value;
+        }
+
+        // ReSharper restore UnusedMember.Local
+
+        #endregion
 
         #region Object overrides
 
@@ -154,6 +186,24 @@ namespace Microsoft.ClearScript
         {
             get { return HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods; }
         }
+
+        #endregion
+
+        #region Nested type: NullWrapper
+
+        // ReSharper disable UnusedMember.Local
+
+        private static class NullWrapper<T>
+        {
+            private static readonly HostObject value = new HostObject(null, typeof(T));
+
+            public static HostObject Value
+            {
+                get { return value; }
+            }
+        }
+
+        // ReSharper restore UnusedMember.Local
 
         #endregion
 

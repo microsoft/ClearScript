@@ -320,7 +320,8 @@ namespace Microsoft.ClearScript.Windows
             [Out] [MarshalAs(UnmanagedType.Interface)] out IDebugApplication32 application
         );
 
-        void AddApplication(
+        [PreserveSig]
+        uint AddApplication(
             [In] [MarshalAs(UnmanagedType.Interface)] IDebugApplication32 application,
             [Out] out uint appCookie);
 
@@ -347,7 +348,8 @@ namespace Microsoft.ClearScript.Windows
             [Out] [MarshalAs(UnmanagedType.Interface)] out IDebugApplication64 application
         );
 
-        void AddApplication(
+        [PreserveSig]
+        uint AddApplication(
             [In] [MarshalAs(UnmanagedType.Interface)] IDebugApplication64 application,
             [Out] out uint appCookie
         );

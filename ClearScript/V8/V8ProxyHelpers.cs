@@ -219,6 +219,28 @@ namespace Microsoft.ClearScript.V8
             return ((IDynamic)obj).InvokeMethod(name, args);
         }
 
+        public static unsafe bool HostObjectIsDelegate(void* pObject)
+        {
+            return HostObjectIsDelegate(GetHostObject(pObject));
+        }
+
+        public static bool HostObjectIsDelegate(object obj)
+        {
+            var hostItem = obj as HostItem;
+            if (hostItem == null)
+            {
+                return false;
+            }
+
+            var hostTarget = hostItem.Target;
+            if ((hostTarget is HostType) || (hostTarget is HostMethod))
+            {
+                return true;
+            }
+
+            return hostTarget.Flags.HasFlag(HostTargetFlags.AllowInstanceMembers) && typeof(Delegate).IsAssignableFrom(hostTarget.Type);
+        }
+
         #endregion
 
         #region exception marshaling

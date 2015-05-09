@@ -309,13 +309,20 @@ void V8IsolateImpl::EnableDebugging(int debugPort)
         }
 
         auto wrIsolate = CreateWeakRef();
-        m_pvDebugAgent = HostObjectHelpers::CreateDebugAgent(m_Name, version, debugPort, [wrIsolate] (const StdString& command)
+        m_pvDebugAgent = HostObjectHelpers::CreateDebugAgent(m_Name, version, debugPort, [wrIsolate] (HostObjectHelpers::DebugDirective directive, const StdString* pCommand)
         {
             auto spIsolate = wrIsolate.GetTarget();
             if (!spIsolate.IsEmpty())
             {
                 auto pIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
-                pIsolateImpl->SendDebugCommand(command);
+                if ((directive == HostObjectHelpers::DebugDirective::SendDebugCommand) && pCommand)
+                {
+                    pIsolateImpl->SendDebugCommand(*pCommand);
+                }
+                else if (directive == HostObjectHelpers::DebugDirective::DispatchDebugMessages)
+                {
+                    pIsolateImpl->DispatchDebugMessages();
+                }
             }
         });
 
@@ -531,17 +538,6 @@ void V8IsolateImpl::OnInterrupt()
 void V8IsolateImpl::SendDebugCommand(const StdString& command)
 {
     Debug::SendCommand(m_pIsolate, command.ToCString(), command.GetLength());
-
-    auto wrIsolate = CreateWeakRef();
-    Concurrency::create_task([wrIsolate]
-    {
-        auto spIsolate = wrIsolate.GetTarget();
-        if (!spIsolate.IsEmpty())
-        {
-            auto pIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
-            pIsolateImpl->DispatchDebugMessages();
-        }
-    });
 }
 
 //-----------------------------------------------------------------------------
@@ -575,10 +571,9 @@ void V8IsolateImpl::DispatchDebugMessages()
 
 void V8IsolateImpl::ProcessDebugMessages()
 {
-    m_DebugMessageDispatchCount = 0;
-
     BEGIN_ISOLATE_SCOPE
 
+        m_DebugMessageDispatchCount = 0;
         if (m_ContextPtrs.size() > 0)
         {
             m_ContextPtrs.front()->ProcessDebugMessages();

@@ -274,6 +274,20 @@ V8Value HostObjectHelpers::InvokeMethod(void* pvObject, const StdString& name, c
 
 //-----------------------------------------------------------------------------
 
+bool HostObjectHelpers::IsDelegate(void* pvObject)
+{
+    try
+    {
+        return V8ProxyHelpers::HostObjectIsDelegate(pvObject);
+    }
+    catch (Exception^ gcException)
+    {
+        ThrowHostException(pvObject, gcException);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void* HostObjectHelpers::CreateV8ObjectCache()
 {
     return V8ProxyHelpers::CreateV8ObjectCache();

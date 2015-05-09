@@ -197,7 +197,7 @@ namespace Microsoft.ClearScript
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
             object result;
-            if (target.GetMetaObject(Expression.Constant(target)).TryCreateInstance(GetEngine(), args, out result))
+            if (target.GetMetaObject(Expression.Constant(target)).TryCreateInstance(args, out result))
             {
                 return result;
             }
@@ -641,6 +641,24 @@ namespace Microsoft.ClearScript
         }
 
         // ReSharper restore UnusedTypeParameter
+
+        /// <summary>
+        /// Determines whether the specified value is <c>null</c>.
+        /// </summary>
+        /// <param name="value">The value to test.</param>
+        /// <returns><c>True</c> if <paramref name="value"/> is <c>null</c>, <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// Use this function to test field, property, and method return values when <c>null</c>
+        /// result wrapping is in effect (see 
+        /// <see cref="ScriptMemberFlags.WrapNullResult"/> and
+        /// <see cref="ScriptEngine.EnableNullResultWrapping"/>).
+        /// </remarks>
+        /// <seealso cref="ScriptMemberFlags.WrapNullResult"/>
+        /// <seealso cref="ScriptEngine.EnableNullResultWrapping"/>
+        public bool isNull(object value)
+        {
+            return value == null;
+        }
 
         /// <summary>
         /// Creates a strongly typed flag set.

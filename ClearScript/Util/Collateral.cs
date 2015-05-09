@@ -59,66 +59,58 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using Microsoft.ClearScript.Util;
 
-namespace Microsoft.ClearScript
+namespace Microsoft.ClearScript.Util
 {
-    internal class ExtensionMethodTable
+    internal class CollateralObject<THolder, TValue>
+        where THolder : class
+        where TValue : class
     {
-        private readonly Dictionary<Type, MethodInfo[]> table = new Dictionary<Type, MethodInfo[]>();
-        private ExtensionMethodSummary summary = new ExtensionMethodSummary();
-
-        public ExtensionMethodSummary Summary
+        public TValue Get(THolder holder)
         {
-            get { return summary; }
+            TValue value;
+            return table.TryGetValue(holder, out value) ? value : null;
         }
 
-        public bool ProcessType(Type type, ScriptAccess defaultAccess)
+        public TValue GetOrCreate(THolder holder)
         {
-            Debug.Assert(type.IsSpecific());
-            if (!table.ContainsKey(type) && type.HasExtensionMethods())
+            return table.GetOrCreateValue(holder);
+        }
+
+        public virtual void Set(THolder holder, TValue value)
+        {
+            Clear(holder);
+            if (value != null)
             {
-                const BindingFlags bindFlags = BindingFlags.Public | BindingFlags.Static;
-                table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(method, defaultAccess)).ToArray();
-                summary = new ExtensionMethodSummary(table);
-                return true;
+                table.Add(holder, value);
             }
-
-            return false;
         }
 
-        private static bool IsScriptableExtensionMethod(MethodInfo method, ScriptAccess defaultAccess)
+        public void Clear(THolder holder)
         {
-            return method.IsScriptable(defaultAccess) && method.IsDefined(typeof(ExtensionAttribute), false);
+            table.Remove(holder);
         }
+
+        private readonly ConditionalWeakTable<THolder, TValue> table = new ConditionalWeakTable<THolder, TValue>();
     }
 
-    internal class ExtensionMethodSummary
+    internal sealed class CollateralArray<THolder, TElement> : CollateralObject<THolder, TElement[]> where THolder : class
     {
-        public ExtensionMethodSummary()
+        public override void Set(THolder holder, TElement[] value)
         {
-            Types = MiscHelpers.GetEmptyArray<Type>();
-            Methods = MiscHelpers.GetEmptyArray<MethodInfo>();
-            MethodNames = MiscHelpers.GetEmptyArray<string>();
+            if (value == null)
+            {
+                Clear(holder);
+            }
+            else if (value.Length > 0)
+            {
+                base.Set(holder, value);
+            }
+            else
+            {
+                base.Set(holder, MiscHelpers.GetEmptyArray<TElement>());
+            }
         }
-
-        public ExtensionMethodSummary(Dictionary<Type, MethodInfo[]> table)
-        {
-            Types = table.Keys.ToArray();
-            Methods = table.SelectMany(pair => pair.Value).ToArray();
-            MethodNames = Methods.Select(method => method.GetScriptName()).ToArray();
-        }
-
-        public Type[] Types { get; private set; }
-
-        public MethodInfo[] Methods { get; private set; }
-
-        public string[] MethodNames { get; private set; }
     }
 }

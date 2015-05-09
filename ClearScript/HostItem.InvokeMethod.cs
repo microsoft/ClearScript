@@ -119,13 +119,13 @@ namespace Microsoft.ClearScript
                 var targetBindArg = new object[] { target };
                 var extensionBindArgs = targetBindArg.Concat(bindArgs).ToArray();
 
-                foreach (var type in cachedExtensionMethodSummary.Types)
+                foreach (var type in ExtensionMethodSummary.Types)
                 {
                     var extensionHostItem = (HostItem)Wrap(engine, HostType.Wrap(type));
                     var extensionBindResult = extensionHostItem.BindMethod(name, typeArgs, extensionArgs, extensionBindArgs);
                     if (extensionBindResult is MethodBindSuccess)
                     {
-                        var result = extensionBindResult.Invoke(engine);
+                        var result = extensionBindResult.Invoke(extensionHostItem);
                         for (var index = 1; index < extensionArgs.Length; index++)
                         {
                             args[index - 1] = extensionArgs[index];
@@ -136,7 +136,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            return bindResult.Invoke(engine);
+            return bindResult.Invoke(this);
         }
 
         private static IEnumerable<Type> GetTypeArgs(object[] args)
@@ -161,13 +161,12 @@ namespace Microsoft.ClearScript
 
         private MethodBindResult BindMethod(string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
-            var bindContext = GetEffectiveAccessContext();
             var bindFlags = GetMethodBindFlags();
 
             // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
             // will result in bugs that are difficult to diagnose. Create a copy if necessary.
 
-            var signature = new BindSignature(bindContext, bindFlags, target, name, typeArgs, bindArgs);
+            var signature = new BindSignature(accessContext, bindFlags, target, name, typeArgs, bindArgs);
             MethodBindResult result;
 
             object rawResult;
@@ -177,8 +176,8 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                result = BindMethodInternal(bindContext, bindFlags, target, name, typeArgs, args, bindArgs);
-                if (!result.IsPreferredMethod(name))
+                result = BindMethodInternal(accessContext, bindFlags, target, name, typeArgs, args, bindArgs);
+                if (!result.IsPreferredMethod(this, name))
                 {
                     if (result is MethodBindSuccess)
                     {
@@ -187,8 +186,8 @@ namespace Microsoft.ClearScript
 
                     foreach (var altName in GetAltMethodNames(name, bindFlags))
                     {
-                        var altResult = BindMethodInternal(bindContext, bindFlags, target, altName, typeArgs, args, bindArgs);
-                        if (altResult.IsUnblockedMethod())
+                        var altResult = BindMethodInternal(accessContext, bindFlags, target, altName, typeArgs, args, bindArgs);
+                        if (altResult.IsUnblockedMethod(this))
                         {
                             result = altResult;
                             break;
@@ -311,7 +310,7 @@ namespace Microsoft.ClearScript
 
         private IEnumerable<string> GetAltMethodNamesInternal(string name, BindingFlags bindFlags)
         {
-            foreach (var method in target.Type.GetScriptableMethods(name, bindFlags))
+            foreach (var method in target.Type.GetScriptableMethods(name, bindFlags, defaultAccess))
             {
                 var methodName = method.GetShortName();
                 if (methodName != name)
@@ -362,18 +361,18 @@ namespace Microsoft.ClearScript
             return CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.IsStaticType, null);
         }
 
-        private static MethodBindResult BindMethodUsingReflection(BindingFlags bindFlags, HostTarget target, string name, Type[] typeArgs, object[] args)
+        private MethodBindResult BindMethodUsingReflection(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs, object[] args)
         {
             // ReSharper disable CoVariantArrayConversion
 
-            var candidates = GetReflectionCandidates(bindFlags, target, name, typeArgs).Distinct().ToArray();
+            var candidates = GetReflectionCandidates(bindFlags, hostTarget, name, typeArgs).Distinct().ToArray();
             if (candidates.Length > 0)
             {
                 try
                 {
                     object state;
                     var rawResult = Type.DefaultBinder.BindToMethod(bindFlags, candidates, ref args, null, null, null, out state);
-                    return MethodBindResult.Create(name, rawResult, target, args);
+                    return MethodBindResult.Create(name, rawResult, hostTarget, args);
                 }
                 catch (MissingMethodException)
                 {
@@ -388,16 +387,16 @@ namespace Microsoft.ClearScript
             // ReSharper restore CoVariantArrayConversion
         }
 
-        private static IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, HostTarget target, string name, Type[] typeArgs)
+        private IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs)
         {
-            foreach (var method in GetReflectionCandidates(bindFlags, target.Type, name, typeArgs))
+            foreach (var method in GetReflectionCandidates(bindFlags, hostTarget.Type, name, typeArgs))
             {
                 yield return method;
             }
 
-            if (!(target is HostType) && target.Type.IsInterface)
+            if (!(hostTarget is HostType) && hostTarget.Type.IsInterface)
             {
-                foreach (var interfaceType in target.Type.GetInterfaces())
+                foreach (var interfaceType in hostTarget.Type.GetInterfaces())
                 {
                     foreach (var method in GetReflectionCandidates(bindFlags, interfaceType, name, typeArgs))
                     {
@@ -412,9 +411,9 @@ namespace Microsoft.ClearScript
             }
         }
 
-        private static IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, Type type, string name, Type[] typeArgs)
+        private IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, Type type, string name, Type[] typeArgs)
         {
-            foreach (var method in type.GetScriptableMethods(name, bindFlags))
+            foreach (var method in type.GetScriptableMethods(name, bindFlags, defaultAccess))
             {
                 MethodInfo tempMethod = null;
 
@@ -484,11 +483,11 @@ namespace Microsoft.ClearScript
 
             public abstract object RawResult { get; }
 
-            public abstract bool IsPreferredMethod(string name);
+            public abstract bool IsPreferredMethod(HostItem hostItem, string name);
 
-            public abstract bool IsUnblockedMethod();
+            public abstract bool IsUnblockedMethod(HostItem hostItem);
 
-            public abstract object Invoke(ScriptEngine engine);
+            public abstract object Invoke(HostItem hostItem);
         }
 
         #endregion
@@ -517,24 +516,24 @@ namespace Microsoft.ClearScript
                 get { return method; }
             }
 
-            public override bool IsPreferredMethod(string name)
+            public override bool IsPreferredMethod(HostItem hostItem, string name)
             {
-                return !method.IsBlockedFromScript() && (method.GetScriptName() == name);
+                return !method.IsBlockedFromScript(hostItem.DefaultAccess) && (method.GetScriptName() == name);
             }
 
-            public override bool IsUnblockedMethod()
+            public override bool IsUnblockedMethod(HostItem hostItem)
             {
-                return !method.IsBlockedFromScript();
+                return !method.IsBlockedFromScript(hostItem.DefaultAccess);
             }
 
-            public override object Invoke(ScriptEngine engine)
+            public override object Invoke(HostItem hostItem)
             {
                 if (method == getTypeMethod)
                 {
-                    engine.CheckReflection();
+                    hostItem.Engine.CheckReflection();
                 }
 
-                return InvokeHelpers.InvokeMethod(engine, hostTarget.InvokeTarget, method, args);
+                return InvokeHelpers.InvokeMethod(hostItem, hostTarget.InvokeTarget, method, args);
             }
 
             #endregion
@@ -560,17 +559,17 @@ namespace Microsoft.ClearScript
                 get { return exceptionFactory; }
             }
 
-            public override bool IsPreferredMethod(string name)
+            public override bool IsPreferredMethod(HostItem hostItem, string name)
             {
                 return false;
             }
 
-            public override bool IsUnblockedMethod()
+            public override bool IsUnblockedMethod(HostItem hostItem)
             {
                 return false;
             }
 
-            public override object Invoke(ScriptEngine engine)
+            public override object Invoke(HostItem hostItem)
             {
                 throw exceptionFactory();
             }
