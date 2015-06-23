@@ -83,6 +83,7 @@
     <Compile Include="ScriptMethod.cs" />
     <Compile Include="ScriptMemberAttribute.cs" />
     <Compile Include="ScriptUsageAttribute.cs" />
+    <Compile Include="Util\AssemblyHelpers.cs" />
     <Compile Include="Util\Collateral.cs" />
     <Compile Include="Util\COMDispatchHelpers.cs" />
     <Compile Include="Util\CoTaskMemBlock.cs" />
@@ -123,7 +124,7 @@
     </Compile>
     <Compile Include="HostTypeCollection.cs" />
     <Compile Include="Util\ArrayHelpers.cs" />
-    <Compile Include="Util\AssemblyHelpers.cs" />
+    <Compile Include="Util\AssemblyTable.cs" />
     <Compile Include="Util\DynamicHelpers.cs" />
     <Compile Include="Util\EnumerableHelpers.cs" />
     <Compile Include="Util\InvokeHelpers.cs" />

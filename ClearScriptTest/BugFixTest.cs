@@ -1208,6 +1208,24 @@ namespace Microsoft.ClearScript.Test
             Array.ForEach(engines, tempEngine => tempEngine.Dispose());
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AssemblyTableClass()
+        {
+            Assert.IsTrue(typeof(AssemblyTable).IsStatic());
+            Assert.IsNotNull(typeof(AssemblyTable).TypeInitializer);
+
+            var methods = typeof(AssemblyTable).GetMethods(BindingFlags.Static | BindingFlags.Public);
+            Assert.AreEqual(1, methods.Length);
+            Assert.AreEqual("GetFullAssemblyName", methods[0].Name);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AssemblyHelpersClass()
+        {
+            Assert.IsTrue(typeof(AssemblyHelpers).IsStatic());
+            Assert.IsNull(typeof(AssemblyHelpers).TypeInitializer);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

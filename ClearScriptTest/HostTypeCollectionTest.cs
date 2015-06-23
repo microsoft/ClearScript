@@ -142,7 +142,7 @@ namespace Microsoft.ClearScript.Test
 
         private static IEnumerable<Type> GetImportableTypes(string[] assemblyNames, Predicate<Type> filter)
         {
-            var assemblies = assemblyNames.Select(assemblyName => Assembly.Load(AssemblyHelpers.GetFullAssemblyName(assemblyName)));
+            var assemblies = assemblyNames.Select(assemblyName => Assembly.Load(AssemblyTable.GetFullAssemblyName(assemblyName)));
             var activeFilter = filter ?? defaultFilter;
             return assemblies.SelectMany(assembly => assembly.GetTypes().Where(type => type.IsImportable() && activeFilter(type)));
         }

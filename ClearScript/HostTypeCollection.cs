@@ -158,7 +158,7 @@ namespace Microsoft.ClearScript
         public void AddAssembly(string assemblyName)
         {
             MiscHelpers.VerifyNonBlankArgument(assemblyName, "assemblyName", "Invalid assembly name");
-            AddAssembly(Assembly.Load(AssemblyHelpers.GetFullAssemblyName(assemblyName)));
+            AddAssembly(Assembly.Load(AssemblyTable.GetFullAssemblyName(assemblyName)));
         }
 
         /// <summary>
@@ -186,7 +186,7 @@ namespace Microsoft.ClearScript
         public void AddAssembly(string assemblyName, Predicate<Type> filter)
         {
             MiscHelpers.VerifyNonBlankArgument(assemblyName, "assemblyName", "Invalid assembly name");
-            AddAssembly(Assembly.Load(AssemblyHelpers.GetFullAssemblyName(assemblyName)), filter);
+            AddAssembly(Assembly.Load(AssemblyTable.GetFullAssemblyName(assemblyName)), filter);
         }
 
         /// <summary>

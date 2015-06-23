@@ -521,7 +521,7 @@ namespace Microsoft.ClearScript.Util
 
             if (useAssemblyName)
             {
-                fullTypeName += MiscHelpers.FormatInvariant(", {0}", AssemblyHelpers.GetFullAssemblyName(assemblyName));
+                fullTypeName += MiscHelpers.FormatInvariant(", {0}", AssemblyTable.GetFullAssemblyName(assemblyName));
             }
 
             return fullTypeName;
