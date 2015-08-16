@@ -65,6 +65,21 @@ namespace Microsoft.ClearScript.Util
 {
     internal struct DisposedFlag
     {
+        private bool disposed;
+
+        public bool IsSet()
+        {
+            return disposed;
+        }
+
+        public bool Set()
+        {
+            return MiscHelpers.Exchange(ref disposed, true) == false;
+        }
+    }
+
+    internal struct InterlockedDisposedFlag
+    {
         private int disposed;
 
         public bool IsSet()

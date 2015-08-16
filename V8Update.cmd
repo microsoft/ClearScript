@@ -5,10 +5,9 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=4.2.77.18
+set v8testedrev=4.4.63.29
 
-set gyprev=34640080d08ab2a37665512e52142947def3056d
-set pythonrev=5bb4080c33f369a81017c2767142fb34981f2a54
+set gyprev=0bb67471bca068996e15b56738fa4824dfa19de0
 set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df
 
 :ProcessArgs
@@ -65,11 +64,15 @@ goto ProcessArg
 
 :CheckMSVS
 if "%VisualStudioVersion%"=="12.0" goto UseMSVS2013
-echo Error: This script requires a Visual Studio 2013 Developer Command Prompt.
-echo Browse to http://www.visualstudio.com for more information.
+if "%VisualStudioVersion%"=="14.0" goto UseMSVS2015
+echo Error: This script requires a Visual Studio 2013 or 2015 Developer Command
+echo Prompt. Browse to http://www.visualstudio.com for more information.
 goto Exit
 :UseMSVS2013
 set GYP_MSVS_VERSION=2013
+goto CheckMSVSDone
+:UseMSVS2015
+set GYP_MSVS_VERSION=2015
 :CheckMSVSDone
 
 ::-----------------------------------------------------------------------------
@@ -162,16 +165,6 @@ if errorlevel 1 goto Error
 cd ..\..
 :DownloadGYPDone
 
-:DownloadPython
-echo Downloading Python ...
-git clone -n -q https://chromium.googlesource.com/chromium/deps/python_26.git third_party/python_26
-if errorlevel 1 goto Error
-cd third_party/python_26
-git checkout -q "%pythonrev%"
-if errorlevel 1 goto Error
-cd ..\..
-:DownloadPythonDone
-
 :DownloadCygwin
 echo Downloading Cygwin ...
 git clone -n -q https://chromium.googlesource.com/chromium/deps/cygwin.git third_party/cygwin
@@ -192,10 +185,6 @@ cd ..
 
 :Build
 
-set PYTHONHOME=
-set PYTHONPATH=
-set basepath=%PATH%
-
 :CreatePatchFile
 echo Creating patch file ...
 cd v8
@@ -215,12 +204,10 @@ if errorlevel 1 goto Error
 
 :Build32Bit
 cd v8-ia32
-path %CD%\third_party\python_26;%basepath%
 python build\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error
 msbuild /p:Configuration=%mode% /p:Platform=Win32 /t:v8 tools\gyp\v8.sln >build.log
 if errorlevel 1 goto Error
-path %basepath%
 cd ..
 :Build32BitDone
 
@@ -235,12 +222,10 @@ if errorlevel 1 goto Error
 
 :Build64Bit
 cd v8-x64
-path %CD%\third_party\python_26;%basepath%
 python build\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error
 msbuild /p:Configuration=%mode% /p:Platform=x64 /t:v8 tools\gyp\v8.sln >build.log
 if errorlevel 1 goto Error
-path %basepath%
 cd ..
 :Build64BitDone
 

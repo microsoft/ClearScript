@@ -98,6 +98,7 @@ namespace Microsoft.ClearScript.Test
         public void TestCleanup()
         {
             engine.Dispose();
+            BaseTestCleanup();
         }
 
         #endregion
@@ -708,76 +709,82 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_ErrorHandling_NestedScriptError()
         {
-            var innerEngine = new JScriptEngine("inner", WindowsScriptEngineFlags.EnableDebugging);
-            engine.AddHostObject("engine", innerEngine);
-
-            TestUtil.AssertException<ScriptEngineException>(() =>
+            using (var innerEngine = new JScriptEngine("inner", WindowsScriptEngineFlags.EnableDebugging))
             {
-                try
+                engine.AddHostObject("engine", innerEngine);
+
+                TestUtil.AssertException<ScriptEngineException>(() =>
                 {
-                    engine.Execute("engine.Execute(\"foo = {}; foo();\")");
-                }
-                catch (ScriptEngineException exception)
-                {
-                    TestUtil.AssertValidException(engine, exception);
-                    Assert.IsNotNull(exception.InnerException);
+                    try
+                    {
+                        engine.Execute("engine.Execute(\"foo = {}; foo();\")");
+                    }
+                    catch (ScriptEngineException exception)
+                    {
+                        TestUtil.AssertValidException(engine, exception);
+                        Assert.IsNotNull(exception.InnerException);
 
-                    var hostException = exception.InnerException;
-                    Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
-                    TestUtil.AssertValidException(hostException);
-                    Assert.IsNotNull(hostException.InnerException);
+                        var hostException = exception.InnerException;
+                        Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
+                        TestUtil.AssertValidException(hostException);
+                        Assert.IsNotNull(hostException.InnerException);
 
-                    var nestedException = hostException.InnerException as ScriptEngineException;
-                    Assert.IsNotNull(nestedException);
-                    TestUtil.AssertValidException(innerEngine, nestedException);
-                    // ReSharper disable once PossibleNullReferenceException
-                    Assert.IsNull(nestedException.InnerException);
+                        var nestedException = hostException.InnerException as ScriptEngineException;
+                        Assert.IsNotNull(nestedException);
+                        // ReSharper disable once AccessToDisposedClosure
+                        TestUtil.AssertValidException(innerEngine, nestedException);
+                        // ReSharper disable once PossibleNullReferenceException
+                        Assert.IsNull(nestedException.InnerException);
 
-                    Assert.AreEqual(hostException.Message, exception.Message);
-                    throw;
-                }
-            });
+                        Assert.AreEqual(hostException.Message, exception.Message);
+                        throw;
+                    }
+                });
+            }
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_ErrorHandling_NestedHostException()
         {
-            var innerEngine = new JScriptEngine("inner", WindowsScriptEngineFlags.EnableDebugging);
-            innerEngine.AddHostObject("host", new HostFunctions());
-            engine.AddHostObject("engine", innerEngine);
-
-            TestUtil.AssertException<ScriptEngineException>(() =>
+            using (var innerEngine = new JScriptEngine("inner", WindowsScriptEngineFlags.EnableDebugging))
             {
-                try
+                innerEngine.AddHostObject("host", new HostFunctions());
+                engine.AddHostObject("engine", innerEngine);
+
+                TestUtil.AssertException<ScriptEngineException>(() =>
                 {
-                    engine.Execute("engine.Evaluate(\"host.proc(0)\")");
-                }
-                catch (ScriptEngineException exception)
-                {
-                    TestUtil.AssertValidException(engine, exception);
-                    Assert.IsNotNull(exception.InnerException);
+                    try
+                    {
+                        engine.Execute("engine.Evaluate(\"host.proc(0)\")");
+                    }
+                    catch (ScriptEngineException exception)
+                    {
+                        TestUtil.AssertValidException(engine, exception);
+                        Assert.IsNotNull(exception.InnerException);
 
-                    var hostException = exception.InnerException;
-                    Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
-                    TestUtil.AssertValidException(hostException);
-                    Assert.IsNotNull(hostException.InnerException);
+                        var hostException = exception.InnerException;
+                        Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
+                        TestUtil.AssertValidException(hostException);
+                        Assert.IsNotNull(hostException.InnerException);
 
-                    var nestedException = hostException.InnerException as ScriptEngineException;
-                    Assert.IsNotNull(nestedException);
-                    TestUtil.AssertValidException(innerEngine, nestedException);
-                    // ReSharper disable once PossibleNullReferenceException
-                    Assert.IsNotNull(nestedException.InnerException);
+                        var nestedException = hostException.InnerException as ScriptEngineException;
+                        Assert.IsNotNull(nestedException);
+                        // ReSharper disable once AccessToDisposedClosure
+                        TestUtil.AssertValidException(innerEngine, nestedException);
+                        // ReSharper disable once PossibleNullReferenceException
+                        Assert.IsNotNull(nestedException.InnerException);
 
-                    var nestedHostException = nestedException.InnerException;
-                    Assert.IsInstanceOfType(nestedHostException, typeof(RuntimeBinderException));
-                    TestUtil.AssertValidException(nestedHostException);
-                    Assert.IsNull(nestedHostException.InnerException);
+                        var nestedHostException = nestedException.InnerException;
+                        Assert.IsInstanceOfType(nestedHostException, typeof(RuntimeBinderException));
+                        TestUtil.AssertValidException(nestedHostException);
+                        Assert.IsNull(nestedHostException.InnerException);
 
-                    Assert.AreEqual(nestedHostException.Message, nestedException.Message);
-                    Assert.AreEqual(hostException.Message, exception.Message);
-                    throw;
-                }
-            });
+                        Assert.AreEqual(nestedHostException.Message, nestedException.Message);
+                        Assert.AreEqual(hostException.Message, exception.Message);
+                        throw;
+                    }
+                });
+            }
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]

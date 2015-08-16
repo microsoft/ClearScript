@@ -100,6 +100,7 @@ namespace Microsoft.ClearScript.Test
         public void TestCleanup()
         {
             engine.Dispose();
+            BaseTestCleanup();
         }
 
         #endregion
@@ -1000,76 +1001,82 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_ErrorHandling_NestedScriptError()
         {
-            var innerEngine = new V8ScriptEngine("inner", V8ScriptEngineFlags.EnableDebugging);
-            engine.AddHostObject("engine", innerEngine);
-
-            TestUtil.AssertException<ScriptEngineException>(() =>
+            using (var innerEngine = new V8ScriptEngine("inner", V8ScriptEngineFlags.EnableDebugging))
             {
-                try
+                engine.AddHostObject("engine", innerEngine);
+
+                TestUtil.AssertException<ScriptEngineException>(() =>
                 {
-                    engine.Execute("engine.Execute('foo = {}; foo();')");
-                }
-                catch (ScriptEngineException exception)
-                {
-                    TestUtil.AssertValidException(engine, exception);
-                    Assert.IsNotNull(exception.InnerException);
+                    try
+                    {
+                        engine.Execute("engine.Execute('foo = {}; foo();')");
+                    }
+                    catch (ScriptEngineException exception)
+                    {
+                        TestUtil.AssertValidException(engine, exception);
+                        Assert.IsNotNull(exception.InnerException);
 
-                    var hostException = exception.InnerException;
-                    Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
-                    TestUtil.AssertValidException(hostException);
-                    Assert.IsNotNull(hostException.InnerException);
+                        var hostException = exception.InnerException;
+                        Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
+                        TestUtil.AssertValidException(hostException);
+                        Assert.IsNotNull(hostException.InnerException);
 
-                    var nestedException = hostException.InnerException as ScriptEngineException;
-                    Assert.IsNotNull(nestedException);
-                    TestUtil.AssertValidException(innerEngine, nestedException);
-                    // ReSharper disable once PossibleNullReferenceException
-                    Assert.IsNull(nestedException.InnerException);
+                        var nestedException = hostException.InnerException as ScriptEngineException;
+                        Assert.IsNotNull(nestedException);
+                        // ReSharper disable once AccessToDisposedClosure
+                        TestUtil.AssertValidException(innerEngine, nestedException);
+                        // ReSharper disable once PossibleNullReferenceException
+                        Assert.IsNull(nestedException.InnerException);
 
-                    Assert.AreEqual("Error: " + hostException.GetBaseException().Message, exception.Message);
-                    throw;
-                }
-            });
+                        Assert.AreEqual("Error: " + hostException.GetBaseException().Message, exception.Message);
+                        throw;
+                    }
+                });
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_ErrorHandling_NestedHostException()
         {
-            var innerEngine = new V8ScriptEngine("inner", V8ScriptEngineFlags.EnableDebugging);
-            innerEngine.AddHostObject("host", new HostFunctions());
-            engine.AddHostObject("engine", innerEngine);
-
-            TestUtil.AssertException<ScriptEngineException>(() =>
+            using (var innerEngine = new V8ScriptEngine("inner", V8ScriptEngineFlags.EnableDebugging))
             {
-                try
+                innerEngine.AddHostObject("host", new HostFunctions());
+                engine.AddHostObject("engine", innerEngine);
+
+                TestUtil.AssertException<ScriptEngineException>(() =>
                 {
-                    engine.Execute("engine.Evaluate('host.proc(0)')");
-                }
-                catch (ScriptEngineException exception)
-                {
-                    TestUtil.AssertValidException(engine, exception);
-                    Assert.IsNotNull(exception.InnerException);
+                    try
+                    {
+                        engine.Execute("engine.Evaluate('host.proc(0)')");
+                    }
+                    catch (ScriptEngineException exception)
+                    {
+                        TestUtil.AssertValidException(engine, exception);
+                        Assert.IsNotNull(exception.InnerException);
 
-                    var hostException = exception.InnerException;
-                    Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
-                    TestUtil.AssertValidException(hostException);
-                    Assert.IsNotNull(hostException.InnerException);
+                        var hostException = exception.InnerException;
+                        Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
+                        TestUtil.AssertValidException(hostException);
+                        Assert.IsNotNull(hostException.InnerException);
 
-                    var nestedException = hostException.InnerException as ScriptEngineException;
-                    Assert.IsNotNull(nestedException);
-                    TestUtil.AssertValidException(innerEngine, nestedException);
-                    // ReSharper disable once PossibleNullReferenceException
-                    Assert.IsNotNull(nestedException.InnerException);
+                        var nestedException = hostException.InnerException as ScriptEngineException;
+                        Assert.IsNotNull(nestedException);
+                        // ReSharper disable once AccessToDisposedClosure
+                        TestUtil.AssertValidException(innerEngine, nestedException);
+                        // ReSharper disable once PossibleNullReferenceException
+                        Assert.IsNotNull(nestedException.InnerException);
 
-                    var nestedHostException = nestedException.InnerException;
-                    Assert.IsInstanceOfType(nestedHostException, typeof(RuntimeBinderException));
-                    TestUtil.AssertValidException(nestedHostException);
-                    Assert.IsNull(nestedHostException.InnerException);
+                        var nestedHostException = nestedException.InnerException;
+                        Assert.IsInstanceOfType(nestedHostException, typeof(RuntimeBinderException));
+                        TestUtil.AssertValidException(nestedHostException);
+                        Assert.IsNull(nestedHostException.InnerException);
 
-                    Assert.AreEqual("Error: " + nestedHostException.Message, nestedException.Message);
-                    Assert.AreEqual("Error: " + hostException.GetBaseException().Message, exception.Message);
-                    throw;
-                }
-            });
+                        Assert.AreEqual("Error: " + nestedHostException.Message, nestedException.Message);
+                        Assert.AreEqual("Error: " + hostException.GetBaseException().Message, exception.Message);
+                        throw;
+                    }
+                });
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -1137,7 +1144,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize_Dual()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"x = []; for (i = 0; i < 4 * 1024 * 1024; i++) { x.push(x); }";
+            const string code = @"x = []; for (i = 0; i < 8 * 1024 * 1024; i++) { x.push(x); }";
 
             engine.Execute(code);
             engine.CollectGarbage(true);

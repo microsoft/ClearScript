@@ -353,7 +353,14 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
-        #region Nested type: EmptyArray
+        public static T Exchange<T>(ref T target, T value)
+        {
+            T oldValue = target;
+            target = value;
+            return oldValue;
+        }
+
+        #region Nested type: EmptyArray<T>
 
         private static class EmptyArray<T>
         {

@@ -731,8 +731,14 @@ namespace Microsoft.ClearScript.Util
                 }
 
                 // construct an algorithm for invoking a member value
-                var argExprs = new[] { Expression.Constant(context), target.Expression, Expression.Constant(invokeFlags), Expression.NewArrayInit(typeof(object), args.Select(arg => arg.Expression)) };
+                var argExprs = new[] { Expression.Constant(context), target.Expression, Expression.Constant(invokeFlags), Expression.NewArrayInit(typeof(object), args.Select(GetArgRefExpr)) };
                 return new DynamicMetaObject(Expression.Call(invokeMemberValueMethod, argExprs), BindingRestrictions.Empty);
+            }
+
+            private static Expression GetArgRefExpr(DynamicMetaObject arg)
+            {
+                var argExpr = arg.Expression;
+                return argExpr.Type.IsValueType ? Expression.Convert(argExpr, typeof(object)) : argExpr;
             }
 
             // ReSharper disable UnusedMember.Local

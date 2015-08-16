@@ -268,21 +268,21 @@ public:
 
 public:
 
-    explicit StdString(Handle<Value> hValue):
+    explicit StdString(v8::Local<v8::Value> hValue):
         m_Value(GetValue(hValue))
     {
     }
 
-    Local<String> ToV8String(Isolate* pIsolate) const
+    v8::Local<v8::String> ToV8String(v8::Isolate* pIsolate) const
     {
-        return String::NewFromTwoByte(pIsolate, reinterpret_cast<const uint16_t*>(ToCString()), String::kNormalString, GetLength());
+        return v8::String::NewFromTwoByte(pIsolate, reinterpret_cast<const uint16_t*>(ToCString()), v8::String::kNormalString, GetLength());
     }
 
 private:
 
-    static std::wstring GetValue(Handle<Value> hValue)
+    static std::wstring GetValue(v8::Local<v8::Value> hValue)
     {
-        String::Value value(hValue);
+        v8::String::Value value(hValue);
         return std::wstring(*value, value.length());
     }
 

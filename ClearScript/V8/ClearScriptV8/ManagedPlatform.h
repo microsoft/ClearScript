@@ -100,3 +100,12 @@ using namespace Microsoft::ClearScript::Util;
 #define END_LOCK_SCOPE \
         IGNORE_UNUSED(t_Lock); \
     }
+
+//-----------------------------------------------------------------------------
+
+#define ENSURE_INTERNAL_CLASS(NAME) \
+    public ref class NAME##Hook \
+    { \
+    private: \
+        static String^ m_gcName = NAME::typeid->Name; \
+    };

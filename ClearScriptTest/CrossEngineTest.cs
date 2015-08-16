@@ -100,6 +100,7 @@ namespace Microsoft.ClearScript.Test
         {
             Iterate((engine, type) => engine.Execute(type.Name + ".Dispose()"));
             engines.ForEach(engine => engine.Dispose());
+            BaseTestCleanup();
         }
 
         #endregion

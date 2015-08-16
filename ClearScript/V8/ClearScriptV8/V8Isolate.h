@@ -70,6 +70,7 @@ class V8Isolate: public WeakRefTarget<V8Isolate>
 public:
 
     static V8Isolate* Create(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort);
+    static size_t GetInstanceCount();
 
     virtual size_t GetMaxHeapSize() = 0;
     virtual void SetMaxHeapSize(size_t value) = 0;

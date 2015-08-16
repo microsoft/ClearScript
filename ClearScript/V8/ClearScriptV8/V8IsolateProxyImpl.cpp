@@ -230,4 +230,8 @@ namespace V8 {
         return value;
     }
 
+    //-------------------------------------------------------------------------
+
+    ENSURE_INTERNAL_CLASS(V8IsolateProxyImpl)
+
 }}}

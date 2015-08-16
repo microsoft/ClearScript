@@ -86,7 +86,7 @@ namespace Microsoft.ClearScript.V8
         private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
         private readonly object script;
-        private DisposedFlag disposedFlag = new DisposedFlag();
+        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
 
         private const int continuationInterval = 2000;
         private bool inContinuationTimerScope;

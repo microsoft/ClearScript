@@ -93,6 +93,7 @@ namespace Microsoft.ClearScript.Test
         public void TestCleanup()
         {
             engine.Dispose();
+            BaseTestCleanup();
         }
 
         #endregion

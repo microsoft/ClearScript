@@ -69,3 +69,10 @@ V8Isolate* V8Isolate::Create(const StdString& name, const V8IsolateConstraints* 
 {
     return new V8IsolateImpl(name, pConstraints, enableDebugging, debugPort);
 }
+
+//-----------------------------------------------------------------------------
+
+size_t V8Isolate::GetInstanceCount()
+{
+    return V8IsolateImpl::GetInstanceCount();
+}

@@ -78,6 +78,8 @@ class V8ContextImpl: public V8Context
 public:
 
     V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort);
+    static size_t GetInstanceCount();
+
     const StdString& GetName() const { return m_Name; }
 
     size_t GetMaxIsolateHeapSize();
@@ -89,16 +91,21 @@ public:
     void SetMaxIsolateStackUsage(size_t value);
 
     void CallWithLock(LockCallbackT* pCallback, void* pvArg);
+
     V8Value GetRootObject();
     void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers);
     V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard);
+
     V8ScriptHolder* Compile(const StdString& documentName, const StdString& code);
     bool CanExecute(V8ScriptHolder* pHolder);
     V8Value Execute(V8ScriptHolder* pHolder, bool evaluate);
+
     void Interrupt();
     void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo);
     void CollectGarbage(bool exhaustive);
     void OnAccessSettingsChanged();
+
+    void Destroy();
 
     V8Value GetV8ObjectProperty(void* pvObject, const StdString& name);
     void SetV8ObjectProperty(void* pvObject, const StdString& name, const V8Value& value);
@@ -114,7 +121,6 @@ public:
     V8Value InvokeV8ObjectMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
 
     void ProcessDebugMessages();
-    ~V8ContextImpl();
 
 private:
 
@@ -134,108 +140,108 @@ private:
     private:
 
         V8ContextImpl* m_pContextImpl;
-        Context::Scope m_ContextScope;
+        v8::Context::Scope m_ContextScope;
     };
 
-    Local<Context> CreateContext(ExtensionConfiguration* pExtensionConfiguation = nullptr, Handle<ObjectTemplate> hGlobalTemplate = Handle<ObjectTemplate>(), Handle<Value> hGlobalObject = Handle<Value>())
+    v8::Local<v8::Context> CreateContext(v8::ExtensionConfiguration* pExtensionConfiguation = nullptr, v8::Local<v8::ObjectTemplate> hGlobalTemplate = v8::Local<v8::ObjectTemplate>(), v8::Local<v8::Value> hGlobalObject = v8::Local<v8::Value>())
     {
         return m_spIsolateImpl->CreateContext(pExtensionConfiguation, hGlobalTemplate, hGlobalObject);
     }
 
-    Handle<Primitive> GetUndefined()
+    v8::Local<v8::Primitive> GetUndefined()
     {
         return m_spIsolateImpl->GetUndefined();
     }
 
-    Handle<Primitive> GetNull()
+    v8::Local<v8::Primitive> GetNull()
     {
         return m_spIsolateImpl->GetNull();
     }
 
-    Handle<Boolean> GetTrue()
+    v8::Local<v8::Boolean> GetTrue()
     {
         return m_spIsolateImpl->GetTrue();
     }
 
-    Handle<Boolean> GetFalse()
+    v8::Local<v8::Boolean> GetFalse()
     {
         return m_spIsolateImpl->GetFalse();
     }
 
-    Local<Object> CreateObject()
+    v8::Local<v8::Object> CreateObject()
     {
         return m_spIsolateImpl->CreateObject();
     }
 
-    Local<Number> CreateNumber(double value)
+    v8::Local<v8::Number> CreateNumber(double value)
     {
         return m_spIsolateImpl->CreateNumber(value);
     }
 
-    Local<Integer> CreateInteger(__int32 value)
+    v8::Local<v8::Integer> CreateInteger(__int32 value)
     {
         return m_spIsolateImpl->CreateInteger(value);
     }
 
-    Local<Integer> CreateInteger(unsigned __int32 value)
+    v8::Local<v8::Integer> CreateInteger(unsigned __int32 value)
     {
         return m_spIsolateImpl->CreateInteger(value);
     }
 
-    Local<String> CreateString(const StdString& value)
+    v8::Local<v8::String> CreateString(const StdString& value)
     {
         return m_spIsolateImpl->CreateString(value);
     }
 
-    Local<Array> CreateArray(int length = 0)
+    v8::Local<v8::Array> CreateArray(int length = 0)
     {
         return m_spIsolateImpl->CreateArray(length);
     }
 
-    Local<External> CreateExternal(void* pvValue)
+    v8::Local<v8::External> CreateExternal(void* pvValue)
     {
         return m_spIsolateImpl->CreateExternal(pvValue);
     }
 
-    Local<ObjectTemplate> CreateObjectTemplate()
+    v8::Local<v8::ObjectTemplate> CreateObjectTemplate()
     {
         return m_spIsolateImpl->CreateObjectTemplate();
     }
 
-    Local<FunctionTemplate> CreateFunctionTemplate()
+    v8::Local<v8::FunctionTemplate> CreateFunctionTemplate()
     {
         return m_spIsolateImpl->CreateFunctionTemplate();
     }
 
-    Local<Function> CreateFunction(FunctionCallback callback, Local<Value> data = Local<Value>(), int length = 0)
+    v8::Local<v8::Function> CreateFunction(v8::FunctionCallback callback, v8::Local<v8::Value> data = v8::Local<v8::Value>(), int length = 0)
     {
         return m_spIsolateImpl->CreateFunction(callback, data, length);
     }
 
-    Local<Script> CreateScript(ScriptCompiler::Source* pSource, ScriptCompiler::CompileOptions options = ScriptCompiler::kNoCompileOptions)
+    v8::Local<v8::Script> CreateScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
     {
         return m_spIsolateImpl->CreateScript(pSource, options);
     }
 
-    Local<UnboundScript> CreateUnboundScript(ScriptCompiler::Source* pSource, ScriptCompiler::CompileOptions options = ScriptCompiler::kNoCompileOptions)
+    v8::Local<v8::UnboundScript> CreateUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
     {
         return m_spIsolateImpl->CreateUnboundScript(pSource, options);
     }
 
     template <typename T>
-    Local<T> CreateLocal(Handle<T> hTarget)
+    v8::Local<T> CreateLocal(v8::Local<T> hTarget)
     {
         return m_spIsolateImpl->CreateLocal(hTarget);
     }
 
     template <typename T>
-    Local<T> CreateLocal(Persistent<T> hTarget)
+    v8::Local<T> CreateLocal(Persistent<T> hTarget)
     {
         return m_spIsolateImpl->CreateLocal(hTarget);
     }
 
     template <typename T>
-    Persistent<T> CreatePersistent(Handle<T> hTarget)
+    Persistent<T> CreatePersistent(v8::Local<T> hTarget)
     {
         return m_spIsolateImpl->CreatePersistent(hTarget);
     }
@@ -247,9 +253,15 @@ private:
     }
 
     template <typename T, typename TArg>
-    Persistent<T> MakeWeak(Persistent<T> hTarget, TArg* pArg, void (*pCallback)(Isolate*, Persistent<T>*, TArg*))
+    Persistent<T> MakeWeak(Persistent<T> hTarget, TArg* pArg, void (*pCallback)(v8::Isolate*, Persistent<T>*, TArg*))
     {
         return m_spIsolateImpl->MakeWeak(hTarget, pArg, pCallback);
+    }
+
+    template<typename T>
+    void ClearWeak(Persistent<T> hTarget)
+    {
+        return m_spIsolateImpl->ClearWeak(hTarget);
     }
 
     template <typename T>
@@ -258,7 +270,7 @@ private:
         return m_spIsolateImpl->Dispose(hTarget);
     }
 
-    Local<Value> ThrowException(Local<Value> hException)
+    v8::Local<v8::Value> ThrowException(v8::Local<v8::Value> hException)
     {
         return m_spIsolateImpl->ThrowException(hException);
     }
@@ -266,6 +278,11 @@ private:
     void TerminateExecution()
     {
         return m_spIsolateImpl->TerminateExecution();
+    }
+
+    bool IsExecutionTerminating()
+    {
+        return m_spIsolateImpl->IsExecutionTerminating();
     }
 
     int ContextDisposedNotification()
@@ -284,70 +301,93 @@ private:
     }
 
     template <typename T>
-    T Verify(const TryCatch& tryCatch, T result)
+    T Verify(const v8::TryCatch& tryCatch, T result)
     {
         Verify(tryCatch);
         return result;
     }
 
-    Handle<Value> Wrap();
+    ~V8ContextImpl();
+
+    v8::Local<v8::Value> Wrap();
     SharedPtr<V8WeakContextBinding> GetWeakBinding();
 
-    void GetV8ObjectPropertyNames(Handle<Object> hObject, std::vector<StdString>& names);
-    void GetV8ObjectPropertyIndices(Handle<Object> hObject, std::vector<int>& indices);
+    static bool CheckContextImplForGlobalObjectCallback(V8ContextImpl* pContextImpl);
+    static bool CheckContextImplForHostObjectCallback(V8ContextImpl* pContextImpl);
 
-    static void GetGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info);
-    static void SetGlobalProperty(Local<String> hName, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
-    static void QueryGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Integer>& info);
-    static void DeleteGlobalProperty(Local<String> hName, const PropertyCallbackInfo<Boolean>& info);
-    static void GetGlobalPropertyNames(const PropertyCallbackInfo<Array>& info);
+    void GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std::vector<StdString>& names);
+    void GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, std::vector<int>& indices);
 
-    static void GetGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Value>& info);
-    static void SetGlobalProperty(unsigned __int32 index, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
-    static void QueryGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Integer>& info);
-    static void DeleteGlobalProperty(unsigned __int32 index, const PropertyCallbackInfo<Boolean>& info);
-    static void GetGlobalPropertyIndices(const PropertyCallbackInfo<Array>& info);
+    static void GetGlobalProperty(v8::Local<v8::Name> hName, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void SetGlobalProperty(v8::Local<v8::Name> hName, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void QueryGlobalProperty(v8::Local<v8::Name> hName, const v8::PropertyCallbackInfo<v8::Integer>& info);
+    static void DeleteGlobalProperty(v8::Local<v8::Name> hName, const v8::PropertyCallbackInfo<v8::Boolean>& info);
+    static void GetGlobalPropertyNames(const v8::PropertyCallbackInfo<v8::Array>& info);
 
-    static void HostObjectConstructorCallHandler(const FunctionCallbackInfo<Value>& info);
-    static void CreateFunctionForHostDelegate(const FunctionCallbackInfo<Value>& info);
-    static void InvokeHostDelegate(const FunctionCallbackInfo<Value>& info);
+    static void GetGlobalProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void SetGlobalProperty(unsigned __int32 index, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void QueryGlobalProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Integer>& info);
+    static void DeleteGlobalProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Boolean>& info);
+    static void GetGlobalPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info);
 
-    static void GetHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Value>& info);
-    static void SetHostObjectProperty(Local<String> hName, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
-    static void QueryHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Integer>& info);
-    static void DeleteHostObjectProperty(Local<String> hName, const PropertyCallbackInfo<Boolean>& info);
-    static void GetHostObjectPropertyNames(const PropertyCallbackInfo<Array>& info);
+    static void HostObjectConstructorCallHandler(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void CreateFunctionForHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void InvokeHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
 
-    static void GetHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Value>& info);
-    static void SetHostObjectProperty(unsigned __int32 index, Local<Value> hValue, const PropertyCallbackInfo<Value>& info);
-    static void QueryHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Integer>& info);
-    static void DeleteHostObjectProperty(unsigned __int32 index, const PropertyCallbackInfo<Boolean>& info);
-    static void GetHostObjectPropertyIndices(const PropertyCallbackInfo<Array>& info);
+    static void GetHostObjectProperty(v8::Local<v8::String> hName, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void SetHostObjectProperty(v8::Local<v8::String> hName, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void QueryHostObjectProperty(v8::Local<v8::String> hName, const v8::PropertyCallbackInfo<v8::Integer>& info);
+    static void DeleteHostObjectProperty(v8::Local<v8::String> hName, const v8::PropertyCallbackInfo<v8::Boolean>& info);
+    static void GetHostObjectPropertyNames(const v8::PropertyCallbackInfo<v8::Array>& info);
 
-    static void InvokeHostObject(const FunctionCallbackInfo<Value>& info);
-    static void DisposeWeakHandle(Isolate* pIsolate, Persistent<Object>* phObject, void* pvV8ObjectCache);
+    static void GetHostObjectProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void SetHostObjectProperty(unsigned __int32 index, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void QueryHostObjectProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Integer>& info);
+    static void DeleteHostObjectProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Boolean>& info);
+    static void GetHostObjectPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info);
 
-    Handle<Value> ImportValue(const V8Value& value);
-    V8Value ExportValue(Handle<Value> hValue);
-    void ImportValues(const std::vector<V8Value>& values, std::vector<Handle<Value>>& importedValues);
+    static void InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, void* pvV8ObjectCache);
 
-    void Verify(const TryCatch& tryCatch);
+    v8::Local<v8::Value> ImportValue(const V8Value& value);
+    V8Value ExportValue(v8::Local<v8::Value> hValue);
+    void ImportValues(const std::vector<V8Value>& values, std::vector<v8::Local<v8::Value>>& importedValues);
+
+    void Verify(const v8::TryCatch& tryCatch);
     void VerifyNotOutOfMemory();
     void ThrowScriptException(const HostException& exception);
 
     StdString m_Name;
     SharedPtr<V8IsolateImpl> m_spIsolateImpl;
-    Persistent<Context> m_hContext;
-    Persistent<Object> m_hGlobal;
-    std::vector<std::pair<StdString, Persistent<Object>>> m_GlobalMembersStack;
-    Persistent<String> m_hHostObjectCookieName;
-    Persistent<String> m_hHostExceptionName;
-    Persistent<String> m_hAccessTokenName;
-    Persistent<Object> m_hAccessToken;
-    Persistent<FunctionTemplate> m_hHostObjectTemplate;
-    Persistent<FunctionTemplate> m_hHostDelegateTemplate;
+    Persistent<v8::Context> m_hContext;
+    Persistent<v8::Object> m_hGlobal;
+    std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
+    Persistent<v8::String> m_hHostObjectCookieName;
+    Persistent<v8::String> m_hHostExceptionName;
+    Persistent<v8::String> m_hAccessTokenName;
+    Persistent<v8::Object> m_hAccessToken;
+    Persistent<v8::FunctionTemplate> m_hHostObjectTemplate;
+    Persistent<v8::FunctionTemplate> m_hHostDelegateTemplate;
+    Persistent<v8::Value> m_hTerminationException;
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     void* m_pvV8ObjectCache;
     bool m_AllowHostObjectConstructorCall;
     bool m_DisableHostObjectInterception;
+};
+
+//-----------------------------------------------------------------------------
+// SharedPtrTraits<V8ContextImpl>
+//-----------------------------------------------------------------------------
+
+template<>
+class SharedPtrTraits<V8ContextImpl>
+{
+    PROHIBIT_CONSTRUCT(SharedPtrTraits)
+
+public:
+
+    static void Destroy(V8ContextImpl* pTarget)
+    {
+        pTarget->Destroy();
+    }
 };

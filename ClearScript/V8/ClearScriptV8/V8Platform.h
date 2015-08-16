@@ -70,7 +70,6 @@
 #include "v8.h"
 #include "v8-platform.h"
 #include "v8-debug.h"
-using namespace v8;
 
 #pragma warning(pop)
 
@@ -95,21 +94,21 @@ public:
     }
 
     template <typename TOther>
-    static V8FastPersistent<T> New(Isolate* pIsolate, const Handle<TOther>& hValue)
+    static V8FastPersistent<T> New(v8::Isolate* pIsolate, const v8::Local<TOther>& hValue)
     {
-        Persistent<T> hTemp(pIsolate, hValue);
+        v8::Persistent<T> hTemp(pIsolate, hValue);
         return V8FastPersistent<T>(GetPtrAndClear(hTemp));
     }
 
     template <typename TOther>
-    static V8FastPersistent<T> New(Isolate* pIsolate, const V8FastPersistent<TOther>& hValue)
+    static V8FastPersistent<T> New(v8::Isolate* pIsolate, const V8FastPersistent<TOther>& hValue)
     {
-        Persistent<T> hTemp(pIsolate, hValue.AsPersistent());
+        v8::Persistent<T> hTemp(pIsolate, hValue.AsPersistent());
         return V8FastPersistent<T>(GetPtrAndClear(hTemp));
     }
 
     template <typename TOther>
-    bool operator==(const Handle<TOther>& hValue)
+    bool operator==(const v8::Local<TOther>& hValue)
     {
         return AsPersistent() == hValue;
     }
@@ -121,7 +120,7 @@ public:
     }
 
     template <typename TOther>
-    bool operator!=(const Handle<TOther>& hValue)
+    bool operator!=(const v8::Local<TOther>& hValue)
     {
         return AsPersistent() != hValue;
     }
@@ -147,34 +146,42 @@ public:
         return V8FastPersistent<T>(static_cast<T*>(pvValue));
     }
 
-    Local<T> operator->() const
+    v8::Local<T> operator->() const
     {
         return CreateLocal();
     }
 
     template <typename TOther>
-    operator Handle<TOther>() const
+    operator v8::Local<TOther>() const
     {
         return CreateLocal();
     }
 
-    template <typename TOther>
-    operator Local<TOther>() const
+    v8::Local<T> CreateLocal(v8::Isolate* pIsolate) const
     {
-        return CreateLocal();
+        return v8::Local<T>::New(pIsolate, AsPersistent());
     }
 
-    Local<T> CreateLocal(Isolate* pIsolate) const
+    bool IsWeak() const
     {
-        return Local<T>::New(pIsolate, AsPersistent());
+        return AsPersistent().IsWeak();
     }
 
     template <typename TArg>
-    V8FastPersistent<T> MakeWeak(Isolate* pIsolate, TArg* pArg, void (*pCallback)(Isolate*, V8FastPersistent<T>*, TArg*))
+    V8FastPersistent<T> MakeWeak(v8::Isolate* pIsolate, TArg* pArg, void (*pCallback)(v8::Isolate*, V8FastPersistent<T>*, TArg*))
     {
         IGNORE_UNUSED(pIsolate);
+        _ASSERTE(!IsWeak() && !IsEmpty());
         AsPersistent().SetWeak(new WeakCallbackContext<TArg>(m_pValue, pArg, pCallback), WeakCallback);
         return *this;
+    }
+
+    void ClearWeak()
+    {
+        _ASSERTE(IsWeak());
+        auto pContext = AsPersistent().ClearWeak<WeakCallbackContextBase>();
+        _ASSERTE(pContext);
+        delete pContext;
     }
 
     void Dispose()
@@ -189,22 +196,22 @@ private:
     {
     }
 
-    Local<T> CreateLocal() const
+    v8::Local<T> CreateLocal() const
     {
-        return Local<T>::New(Isolate::GetCurrent(), AsPersistent());
+        return v8::Local<T>::New(v8::Isolate::GetCurrent(), AsPersistent());
     }
 
-    const Persistent<T>& AsPersistent() const
+    const v8::Persistent<T>& AsPersistent() const
     {
-        return *(reinterpret_cast<const Persistent<T>*>(&m_pValue));
+        return *(reinterpret_cast<const v8::Persistent<T>*>(&m_pValue));
     }
 
-    Persistent<T>& AsPersistent()
+    v8::Persistent<T>& AsPersistent()
     {
-        return *(reinterpret_cast<Persistent<T>*>(&m_pValue));
+        return *(reinterpret_cast<v8::Persistent<T>*>(&m_pValue));
     }
 
-    static T* GetPtrAndClear(Persistent<T>& hValue)
+    static T* GetPtrAndClear(v8::Persistent<T>& hValue)
     {
         auto ppValue = reinterpret_cast<T**>(&hValue);
         auto pValue = *ppValue;
@@ -213,19 +220,26 @@ private:
         return pValue;
     }
 
-    template <typename TArg>
-    class WeakCallbackContext
+    class WeakCallbackContextBase
     {
     public:
 
-        WeakCallbackContext(T* pValue, TArg* pArg, void (*pCallback)(Isolate*, V8FastPersistent<T>*, TArg*)):
+        virtual ~WeakCallbackContextBase() {}
+    };
+
+    template <typename TArg>
+    class WeakCallbackContext: public WeakCallbackContextBase
+    {
+    public:
+
+        WeakCallbackContext(T* pValue, TArg* pArg, void (*pCallback)(v8::Isolate*, V8FastPersistent<T>*, TArg*)):
             m_pValue(pValue),
             m_pArg(pArg),
             m_pCallback(pCallback)
         {
         }
 
-        void InvokeCallback(Isolate* pIsolate) const
+        void InvokeCallback(v8::Isolate* pIsolate) const
         {
             V8FastPersistent<T> hTarget(m_pValue);
             m_pCallback(pIsolate, &hTarget, m_pArg);
@@ -235,11 +249,11 @@ private:
 
         T* m_pValue;
         TArg* m_pArg;
-        void (*m_pCallback)(Isolate*, V8FastPersistent<T>*, TArg*);
+        void (*m_pCallback)(v8::Isolate*, V8FastPersistent<T>*, TArg*);
     };
 
     template <typename TArg>
-    static void WeakCallback(const WeakCallbackData<T, TArg>& data)
+    static void WeakCallback(const v8::WeakCallbackData<T, TArg>& data)
     {
         auto pContext = data.GetParameter();
         _ASSERTE(pContext);
@@ -268,19 +282,19 @@ public:
     }
 
     template <typename TOther>
-    static V8SafePersistent<T> New(Isolate* pIsolate, const Handle<TOther>& hValue)
+    static V8SafePersistent<T> New(v8::Isolate* pIsolate, const v8::Local<TOther>& hValue)
     {
-        return V8SafePersistent<T>(new Persistent<T>(pIsolate, hValue));
+        return V8SafePersistent<T>(new v8::Persistent<T>(pIsolate, hValue));
     }
 
     template <typename TOther>
-    static V8SafePersistent<T> New(Isolate* pIsolate, const V8SafePersistent<TOther>& hValue)
+    static V8SafePersistent<T> New(v8::Isolate* pIsolate, const V8SafePersistent<TOther>& hValue)
     {
-        return V8SafePersistent<T>(new Persistent<T>(pIsolate, hValue.GetImpl()));
+        return V8SafePersistent<T>(new v8::Persistent<T>(pIsolate, hValue.GetImpl()));
     }
 
     template <typename TOther>
-    bool operator==(const Handle<TOther>& hValue)
+    bool operator==(const v8::Local<TOther>& hValue)
     {
         return GetImpl() == hValue;
     }
@@ -292,7 +306,7 @@ public:
     }
 
     template <typename TOther>
-    bool operator!=(const Handle<TOther>& hValue)
+    bool operator!=(const v8::Local<TOther>& hValue)
     {
         return GetImpl() != hValue;
     }
@@ -315,38 +329,45 @@ public:
 
     static V8SafePersistent<T> FromPtr(void* pvImpl)
     {
-        return V8SafePersistent<T>(static_cast<Persistent<T>*>(pvImpl));
+        return V8SafePersistent<T>(static_cast<v8::Persistent<T>*>(pvImpl));
     }
 
-    Local<T> operator->() const
+    v8::Local<T> operator->() const
     {
         return CreateLocal();
     }
 
     template <typename TOther>
-    operator Handle<TOther>() const
+    operator v8::Local<TOther>() const
     {
         return CreateLocal();
     }
 
-    template <typename TOther>
-    operator Local<TOther>() const
+    v8::Local<T> CreateLocal(v8::Isolate* pIsolate) const
     {
-        return CreateLocal();
+        return v8::Local<T>::New(pIsolate, GetImpl());
     }
 
-    Local<T> CreateLocal(Isolate* pIsolate) const
+    bool IsWeak() const
     {
-        return Local<T>::New(pIsolate, GetImpl());
+        return (m_pImpl != nullptr) && m_pImpl->IsWeak();
     }
 
     template <typename TArg>
-    V8SafePersistent<T> MakeWeak(Isolate* pIsolate, TArg* pArg, void (*pCallback)(Isolate*, V8SafePersistent<T>*, TArg*))
+    V8SafePersistent<T> MakeWeak(v8::Isolate* pIsolate, TArg* pArg, void (*pCallback)(v8::Isolate*, V8SafePersistent<T>*, TArg*))
     {
         IGNORE_UNUSED(pIsolate);
-        _ASSERTE(m_pImpl != nullptr);
+        _ASSERTE(!IsWeak() && !IsEmpty());
         m_pImpl->SetWeak(new WeakCallbackContext<TArg>(m_pImpl, pArg, pCallback), WeakCallback);
         return *this;
+    }
+
+    void ClearWeak()
+    {
+        _ASSERTE(IsWeak());
+        auto pContext = m_pImpl->ClearWeak<WeakCallbackContextBase>();
+        _ASSERTE(pContext);
+        delete pContext;
     }
 
     void Dispose()
@@ -361,34 +382,41 @@ public:
 
 private:
 
-    explicit V8SafePersistent<T>(Persistent<T>* pImpl):
+    explicit V8SafePersistent<T>(v8::Persistent<T>* pImpl):
         m_pImpl(pImpl)
     {
     }
 
-    Local<T> CreateLocal() const
+    v8::Local<T> CreateLocal() const
     {
-        return Local<T>::New(Isolate::GetCurrent(), GetImpl());
+        return v8::Local<T>::New(v8::Isolate::GetCurrent(), GetImpl());
     }
 
-    const Persistent<T>& GetImpl() const
+    const v8::Persistent<T>& GetImpl() const
     {
         return (m_pImpl != nullptr) ? *m_pImpl : ms_EmptyImpl;
     }
 
-    template <typename TArg>
-    class WeakCallbackContext
+    class WeakCallbackContextBase
     {
     public:
 
-        WeakCallbackContext(Persistent<T>* pImpl, TArg* pArg, void (*pCallback)(Isolate*, V8SafePersistent<T>*, TArg*)):
+        virtual ~WeakCallbackContextBase() {}
+    };
+
+    template <typename TArg>
+    class WeakCallbackContext: public WeakCallbackContextBase
+    {
+    public:
+
+        WeakCallbackContext(v8::Persistent<T>* pImpl, TArg* pArg, void (*pCallback)(v8::Isolate*, V8SafePersistent<T>*, TArg*)):
             m_pImpl(pImpl),
             m_pArg(pArg),
             m_pCallback(pCallback)
         {
         }
 
-        void InvokeCallback(Isolate* pIsolate) const
+        void InvokeCallback(v8::Isolate* pIsolate) const
         {
             V8SafePersistent<T> hTarget(m_pImpl);
             m_pCallback(pIsolate, &hTarget, m_pArg);
@@ -396,13 +424,13 @@ private:
 
     private:
 
-        Persistent<T>* m_pImpl;
+        v8::Persistent<T>* m_pImpl;
         TArg* m_pArg;
-        void (*m_pCallback)(Isolate*, V8SafePersistent<T>*, TArg*);
+        void (*m_pCallback)(v8::Isolate*, V8SafePersistent<T>*, TArg*);
     };
 
     template <typename TArg>
-    static void WeakCallback(const WeakCallbackData<T, TArg>& data)
+    static void WeakCallback(const v8::WeakCallbackData<T, TArg>& data)
     {
         auto pContext = data.GetParameter();
         _ASSERTE(pContext);
@@ -410,45 +438,46 @@ private:
         delete pContext;
     }
 
-    Persistent<T>* m_pImpl;
-    static const Persistent<T> ms_EmptyImpl;
+    v8::Persistent<T>* m_pImpl;
+    static const v8::Persistent<T> ms_EmptyImpl;
 };
 
 template <typename T>
-const Persistent<T> V8SafePersistent<T>::ms_EmptyImpl;
+const v8::Persistent<T> V8SafePersistent<T>::ms_EmptyImpl;
 
 //-----------------------------------------------------------------------------
 // define classic v8::Persistent replacement
 //-----------------------------------------------------------------------------
 
-#define Persistent V8FastPersistent
+template <typename T>
+using Persistent = V8FastPersistent<T>;
 
 //-----------------------------------------------------------------------------
 // helper functions
 //-----------------------------------------------------------------------------
 
-inline void* PtrFromObjectHandle(Persistent<Object> hObject)
+inline void* PtrFromObjectHandle(Persistent<v8::Object> hObject)
 {
     return hObject.ToPtr();
 }
 
 //-----------------------------------------------------------------------------
 
-inline Persistent<Object> ObjectHandleFromPtr(void* pvObject)
+inline Persistent<v8::Object> ObjectHandleFromPtr(void* pvObject)
 {
-    return Persistent<Object>::FromPtr(pvObject);
+    return Persistent<v8::Object>::FromPtr(pvObject);
 }
 
 //-----------------------------------------------------------------------------
 
-inline void* PtrFromScriptHandle(Persistent<UnboundScript> hScript)
+inline void* PtrFromScriptHandle(Persistent<v8::UnboundScript> hScript)
 {
     return hScript.ToPtr();
 }
 
 //-----------------------------------------------------------------------------
 
-inline Persistent<UnboundScript> ScriptHandleFromPtr(void* pvScript)
+inline Persistent<v8::UnboundScript> ScriptHandleFromPtr(void* pvScript)
 {
-    return Persistent<UnboundScript>::FromPtr(pvScript);
+    return Persistent<v8::UnboundScript>::FromPtr(pvScript);
 }

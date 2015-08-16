@@ -74,6 +74,7 @@ public:
     SimpleMutex();
 
     void Lock();
+    bool TryLock();
     void Unlock();
 
     ~SimpleMutex();
@@ -96,6 +97,7 @@ public:
     RecursiveMutex();
 
     void Lock();
+    bool TryLock();
     void Unlock();
 
     ~RecursiveMutex();
@@ -118,6 +120,7 @@ public:
     NullMutex() {}
 
     void Lock() {}
+    bool TryLock() { return true; }
     void Unlock() {}
 };
 
@@ -136,6 +139,15 @@ public:
         m_Mutex(mutex)
     {
         m_Mutex.Lock();
+    }
+
+    MutexLock(TMutex& mutex, bool doLock):
+        m_Mutex(mutex)
+    {
+        if (doLock)
+        {
+            m_Mutex.Lock();
+        }
     }
 
     ~MutexLock()

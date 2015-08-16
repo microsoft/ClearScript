@@ -168,7 +168,7 @@ namespace Microsoft.ClearScript.Test
             options.ReferencedAssemblies.Add("ClearScriptTest.dll");
             options.ReferencedAssemblies.Add(typeof(Enumerable).Assembly.Location);
             options.ReferencedAssemblies.Add(typeof(Assert).Assembly.Location);
-            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { MiscHelpers.FormatInvariant(@"
+            var results = new VBCodeProvider().CompileAssemblyFromSource(options, MiscHelpers.FormatInvariant(@"
                 Imports System
                 Imports System.Linq
                 Imports System.Runtime.InteropServices
@@ -183,7 +183,7 @@ namespace Microsoft.ClearScript.Test
                         {0}
                     End Sub
                 End Module
-            ", code, extraDefinitions ?? string.Empty)});
+            ", code, extraDefinitions ?? string.Empty));
 
             if (results.Errors.HasErrors)
             {
@@ -207,7 +207,7 @@ namespace Microsoft.ClearScript.Test
             options.ReferencedAssemblies.Add("ClearScriptTest.dll");
             options.ReferencedAssemblies.Add(typeof(Enumerable).Assembly.Location);
             options.ReferencedAssemblies.Add(typeof(Assert).Assembly.Location);
-            var results = new VBCodeProvider().CompileAssemblyFromSource(options, new[] { MiscHelpers.FormatInvariant(@"
+            var results = new VBCodeProvider().CompileAssemblyFromSource(options, MiscHelpers.FormatInvariant(@"
                 Imports System
                 Imports System.Linq
                 Imports System.Runtime.InteropServices
@@ -222,7 +222,7 @@ namespace Microsoft.ClearScript.Test
                         {0}
                     End Function
                 End Module
-            ", code, extraDefinitions ?? string.Empty)});
+            ", code, extraDefinitions ?? string.Empty));
 
             if (results.Errors.HasErrors)
             {

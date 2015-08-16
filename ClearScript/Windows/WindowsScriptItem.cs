@@ -76,7 +76,7 @@ namespace Microsoft.ClearScript.Windows
         private readonly WindowsScriptEngine engine;
         private readonly IExpando target;
         private WindowsScriptItem holder;
-        private DisposedFlag disposedFlag = new DisposedFlag();
+        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
 
         private WindowsScriptItem(WindowsScriptEngine engine, IExpando target)
         {

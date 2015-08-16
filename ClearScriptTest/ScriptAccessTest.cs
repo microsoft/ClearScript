@@ -117,6 +117,7 @@ namespace Microsoft.ClearScript.Test
             testInterface = null;
             testObject = null;
             engine.Dispose();
+            BaseTestCleanup();
         }
 
         #endregion
@@ -548,16 +549,16 @@ namespace Microsoft.ClearScript.Test
         {
             public double BlockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("de3d88bf-a148-4bf2-ab67-b27a7ff6cf21"), "BlockedMethod", arg); }
             [ScriptMember(ScriptAccess.Full)] public double UnblockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("ab0e94e7-445e-4fcf-8fe1-94a2c0724915"), "UnblockedMethod", arg); }
-            public class BlockedNestedType { }
-            [ScriptUsage(ScriptAccess.Full)] public class UnblockedNestedType { }
+            public class BlockedNestedType {}
+            [ScriptUsage(ScriptAccess.Full)] public class UnblockedNestedType {}
         }
 
         public class UnblockedTestObject
         {
             [NoScriptAccess] public double BlockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("de3d88bf-a148-4bf2-ab67-b27a7ff6cf21"), "BlockedMethod", arg); }
             public double UnblockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("ab0e94e7-445e-4fcf-8fe1-94a2c0724915"), "UnblockedMethod", arg); }
-            [NoScriptAccess] public class BlockedNestedType { }
-            public class UnblockedNestedType { }
+            [NoScriptAccess] public class BlockedNestedType {}
+            public class UnblockedNestedType {}
         }
 
         private void AssertBlockedMember(string objectName, string memberName)

@@ -30,7 +30,10 @@
     <CLRSupport>true</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(VisualStudioVersion)'=='14.0'">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(VisualStudioVersion)'=='12.0'">
     <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -165,6 +168,7 @@
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
     </ClCompile>
     <ClCompile Include="..\V8ScriptImpl.cpp" />
+    <ClCompile Include="..\V8TestProxyImpl.cpp" />
     <ClCompile Include="AssemblyInfo.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -237,6 +241,7 @@
     <ClInclude Include="..\V8ScriptHolder.h" />
     <ClInclude Include="..\V8ScriptHolderImpl.h" />
     <ClInclude Include="..\V8ScriptImpl.h" />
+    <ClInclude Include="..\V8TestProxyImpl.h" />
     <ClInclude Include="..\V8Value.h" />
     <ClInclude Include="..\V8WeakContextBinding.h" />
     <ClInclude Include="..\WeakRef.h" />

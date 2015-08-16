@@ -78,7 +78,7 @@ namespace Microsoft.ClearScript.V8
         private readonly HostItemCollateral hostItemCollateral = new HostItemCollateral();
 
         private readonly V8IsolateProxy proxy;
-        private DisposedFlag disposedFlag = new DisposedFlag();
+        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
 
         #endregion
 

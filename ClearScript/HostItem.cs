@@ -246,7 +246,9 @@ namespace Microsoft.ClearScript
                     {
                         var hostItem = engine.MarshalToScript(value) as HostItem;
                         if (hostItem != null)
+                        {
                             return hostItem.InvokeMember(SpecialMemberNames.Default, invokeFlags, args, bindArgs, culture, true, out isCacheable);
+                        }
                     }
                 }
             }

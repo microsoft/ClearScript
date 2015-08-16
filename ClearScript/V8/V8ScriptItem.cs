@@ -71,7 +71,7 @@ namespace Microsoft.ClearScript.V8
         private readonly V8ScriptEngine engine;
         private readonly IV8Object target;
         private V8ScriptItem holder;
-        private DisposedFlag disposedFlag = new DisposedFlag();
+        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
 
         private V8ScriptItem(V8ScriptEngine engine, IV8Object target)
         {

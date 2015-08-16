@@ -87,7 +87,7 @@ namespace Microsoft.ClearScript.V8
         private readonly AutoResetEvent queueEvent = new AutoResetEvent(false);
         private RegisteredWaitHandle queueWaitHandle;
 
-        private DisposedFlag disposedFlag = new DisposedFlag();
+        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
 
         #endregion
 

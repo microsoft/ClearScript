@@ -94,6 +94,7 @@
     <Compile Include="Util\IScriptMarshalWrapper.cs" />
     <Compile Include="Util\MemberHelpers.cs" />
     <Compile Include="Util\MemberMap.cs" />
+    <Compile Include="Util\Scope.cs" />
     <Compile Include="Util\SocketHelpers.cs" />
     <Compile Include="Util\SpecialDispIDs.cs" />
     <Compile Include="V8\IV8DebugListener.cs" />
@@ -105,6 +106,7 @@
     <Compile Include="V8\V8RuntimeConstraints.cs" />
     <Compile Include="V8\V8Runtime.cs" />
     <Compile Include="V8\V8RuntimeFlags.cs" />
+    <Compile Include="V8\V8TestProxy.cs" />
     <Compile Include="Windows\IHostWindow.cs" />
     <Compile Include="Windows\WindowsScriptEngineFlags.cs" />
     <Compile Include="Util\IDynamic.cs" />

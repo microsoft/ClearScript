@@ -100,6 +100,7 @@ namespace Microsoft.ClearScript.Test
         public void TestCleanup()
         {
             engine.Dispose();
+            BaseTestCleanup();
         }
 
         #endregion
@@ -1226,6 +1227,71 @@ namespace Microsoft.ClearScript.Test
             Assert.IsNull(typeof(AssemblyHelpers).TypeInitializer);
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_FinalizerHang_V8ScriptItem()
+        {
+            engine.Script.foo = new Action<object>(arg => {});
+            engine.Script.bar = new Action(() =>
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            });
+
+            engine.Execute(@"
+                for (var i = 0; i < 100; i++) {
+                    foo({ index: i });
+                }
+                bar();
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_FinalizerHang_V8Script()
+        {
+            engine.Script.bar = new Action(() =>
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            });
+
+            for (var index = 0; index < 100; index++)
+            {
+                ((V8ScriptEngine)engine).Compile("function foo() { return " + index + "; }");
+            }
+
+            engine.Execute("bar()");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_FinalizerHang_V8ScriptEngine()
+        {
+            engine.Dispose();
+
+            using (var runtime = new V8Runtime(V8RuntimeFlags.EnableDebugging))
+            {
+                engine = runtime.CreateScriptEngine();
+                engine.Script.bar = new Action(() =>
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                });
+
+                for (var index = 0; index < 100; index++)
+                {
+                    runtime.CreateScriptEngine();
+                }
+
+                engine.Execute("bar()");
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DynamicMethodArgs()
+        {
+            engine.Script.foo = new DynamicMethodArgTest();
+            Assert.AreEqual("123 456.789 hello", engine.Evaluate("foo.RunTest(123, 456.789, 'hello')"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1249,12 +1315,12 @@ namespace Microsoft.ClearScript.Test
 
             public object Method(int? value)
             {
-                return value.HasValue ? (value + 1) : null;
+                return value + 1;
             }
 
             public object Method(double? value)
             {
-                return value.HasValue ? (value * 2.0) : null;
+                return value * 2.0;
             }
         }
 
@@ -1271,7 +1337,7 @@ namespace Microsoft.ClearScript.Test
 
             public override object this[string key] { get { return null; } }
 
-            public void Foo() { }
+            public void Foo() {}
         }
 
         public class ResurrectionTestWrapper
@@ -1383,6 +1449,35 @@ namespace Microsoft.ClearScript.Test
             }
 
             // ReSharper restore UnusedMember.Local
+        }
+
+        public class DynamicMethodArgTest : DynamicObject
+        {
+            public override IEnumerable<string> GetDynamicMemberNames()
+            {
+                yield return "RunTest";
+            }
+
+            // ReSharper disable RedundantOverridenMember
+
+            public override bool TryGetMember(GetMemberBinder binder, out object result)
+            {
+                // this override is redundant, but required for the test
+                return base.TryGetMember(binder, out result);
+            }
+
+            // ReSharper restore RedundantOverridenMember
+
+            public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
+            {
+                if (binder.Name == "RunTest")
+                {
+                    result = string.Join(" ", args);
+                    return true;
+                }
+
+                return base.TryInvokeMember(binder, args, out result);
+            }
         }
 
         #endregion

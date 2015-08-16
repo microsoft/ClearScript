@@ -103,7 +103,7 @@ namespace Microsoft.ClearScript.Windows
         private uint nextSourceContext = 1;
 
         private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
-        private DisposedFlag disposedFlag = new DisposedFlag();
+        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
 
         #endregion
 

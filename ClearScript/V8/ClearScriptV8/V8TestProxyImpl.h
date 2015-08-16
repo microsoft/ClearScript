@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -59,55 +59,23 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-using System.Collections;
-using System.Collections.Generic;
-using System.Dynamic;
-using Microsoft.ClearScript.Util;
+#pragma once
 
-namespace Microsoft.ClearScript
-{
-    internal class HostItemCollateral
+namespace Microsoft {
+namespace ClearScript {
+namespace V8 {
+
+    //-------------------------------------------------------------------------
+    // V8TestProxyImpl
+    //-------------------------------------------------------------------------
+
+    private ref class V8TestProxyImpl : V8TestProxy
     {
-        #region special targets
+    public:
 
-        public readonly CollateralObject<IDynamic> TargetDynamic = new CollateralObject<IDynamic>();
-        public readonly CollateralObject<IPropertyBag> TargetPropertyBag = new CollateralObject<IPropertyBag>();
-        public readonly CollateralObject<IList> TargetList = new CollateralObject<IList>();
-        public readonly CollateralObject<DynamicMetaObject> TargetDynamicMetaObject = new CollateralObject<DynamicMetaObject>();
-        public readonly CollateralObject<IEnumerator> TargetEnumerator = new CollateralObject<IEnumerator>();
+        virtual V8ProxyCounters^ GetCounters() override;
 
-        #endregion
+        ~V8TestProxyImpl() {}
+    };
 
-        #region dynamic collateral
-
-        public readonly CollateralObject<HashSet<string>> ExpandoMemberNames = new CollateralObject<HashSet<string>>();
-        public readonly CollateralObject<ListDataFields> ListData = new CollateralObject<ListDataFields>();
-
-        #endregion
-
-        #region  tear-off member cache
-
-        public readonly CollateralObject<Dictionary<string, HostMethod>> HostMethodMap = new CollateralObject<Dictionary<string, HostMethod>>();
-        public readonly CollateralObject<Dictionary<string, HostIndexedProperty>> HostIndexedPropertyMap = new CollateralObject<Dictionary<string, HostIndexedProperty>>();
-
-        #endregion
-
-        #region Nested type : CollateralObject<T>
-
-        public class CollateralObject<T> : CollateralObject<HostItem, T> where T : class
-        {
-        }
-
-        #endregion
-
-        #region Nested type : ListDataFields
-
-        public class ListDataFields
-        {
-            public int[] PropertyIndices;
-            public int CachedCount;
-        }
-
-        #endregion 
-    }
-}
+}}}

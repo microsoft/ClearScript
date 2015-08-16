@@ -140,6 +140,8 @@ namespace Microsoft.ClearScript.Windows
 
         public ActiveScriptWrapper32(string progID, WindowsScriptEngineFlags flags)
         {
+            // ReSharper disable SuspiciousTypeConversion.Global
+
             pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
             pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse32>(pActiveScript);
             pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug32>(pActiveScript);
@@ -166,6 +168,8 @@ namespace Microsoft.ClearScript.Windows
                     }
                 }
             }
+
+            // ReSharper restore SuspiciousTypeConversion.Global
         }
 
         public override void SetScriptSite(IActiveScriptSite site)
@@ -282,6 +286,8 @@ namespace Microsoft.ClearScript.Windows
 
         public ActiveScriptWrapper64(string progID, WindowsScriptEngineFlags flags)
         {
+            // ReSharper disable SuspiciousTypeConversion.Global
+
             pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
             pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse64>(pActiveScript);
             pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug64>(pActiveScript);
@@ -308,6 +314,8 @@ namespace Microsoft.ClearScript.Windows
                     }
                 }
             }
+
+            // ReSharper restore SuspiciousTypeConversion.Global
         }
 
         public override void SetScriptSite(IActiveScriptSite site)

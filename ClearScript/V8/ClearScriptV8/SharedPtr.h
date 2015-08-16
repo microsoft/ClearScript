@@ -128,6 +128,23 @@ private:
     }
 
 //-----------------------------------------------------------------------------
+// SharedPtrTraits
+//-----------------------------------------------------------------------------
+
+template <typename T>
+class SharedPtrTraits
+{
+    PROHIBIT_CONSTRUCT(SharedPtrTraits)
+
+public:
+
+    static void Destroy(T* pTarget)
+    {
+        delete pTarget;
+    }
+};
+
+//-----------------------------------------------------------------------------
 // SharedPtr
 //-----------------------------------------------------------------------------
 
@@ -318,7 +335,7 @@ private:
             if (pRefCount->Decrement() == 0)
             {
                 DetachRefCount(pTarget, pRefCount);
-                delete pTarget;
+                SharedPtrTraits<T>::Destroy(pTarget);
             }
         }
     }

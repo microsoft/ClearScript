@@ -1222,6 +1222,9 @@ namespace Microsoft.ClearScript
 
         internal void RequestInterrupt()
         {
+            // Some script engines don't support IActiveScript::InterruptScriptThread(). This
+            // method provides an alternate mechanism based on IActiveScriptSiteInterruptPoll.
+
             var tempScriptFrame = CurrentScriptFrame;
             if (tempScriptFrame != null)
             {

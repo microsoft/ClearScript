@@ -418,7 +418,7 @@ namespace Microsoft.ClearScript.Util
 
         #endregion
 
-        #region Nested type: MemberMapImpl
+        #region Nested type: MemberMapImpl<T>
 
         private class MemberMapImpl<T> : MemberMapBase where T : MemberInfo
         {

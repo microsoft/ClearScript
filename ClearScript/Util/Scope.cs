@@ -59,55 +59,87 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-using System.Collections;
-using System.Collections.Generic;
-using System.Dynamic;
-using Microsoft.ClearScript.Util;
+using System;
 
-namespace Microsoft.ClearScript
+namespace Microsoft.ClearScript.Util
 {
-    internal class HostItemCollateral
+    internal interface IScope<out T>: IDisposable
     {
-        #region special targets
+        T Value { get; }
+    }
 
-        public readonly CollateralObject<IDynamic> TargetDynamic = new CollateralObject<IDynamic>();
-        public readonly CollateralObject<IPropertyBag> TargetPropertyBag = new CollateralObject<IPropertyBag>();
-        public readonly CollateralObject<IList> TargetList = new CollateralObject<IList>();
-        public readonly CollateralObject<DynamicMetaObject> TargetDynamicMetaObject = new CollateralObject<DynamicMetaObject>();
-        public readonly CollateralObject<IEnumerator> TargetEnumerator = new CollateralObject<IEnumerator>();
-
-        #endregion
-
-        #region dynamic collateral
-
-        public readonly CollateralObject<HashSet<string>> ExpandoMemberNames = new CollateralObject<HashSet<string>>();
-        public readonly CollateralObject<ListDataFields> ListData = new CollateralObject<ListDataFields>();
-
-        #endregion
-
-        #region  tear-off member cache
-
-        public readonly CollateralObject<Dictionary<string, HostMethod>> HostMethodMap = new CollateralObject<Dictionary<string, HostMethod>>();
-        public readonly CollateralObject<Dictionary<string, HostIndexedProperty>> HostIndexedPropertyMap = new CollateralObject<Dictionary<string, HostIndexedProperty>>();
-
-        #endregion
-
-        #region Nested type : CollateralObject<T>
-
-        public class CollateralObject<T> : CollateralObject<HostItem, T> where T : class
+    internal static class Scope
+    {
+        public static IDisposable Create(Action enterAction, Action exitAction)
         {
+            return new ScopeImpl(enterAction, exitAction);
+        }
+
+        public static IScope<T> Create<T>(Func<T> enterFunc, Action<T> exitAction)
+        {
+            return new ScopeImpl<T>(enterFunc, exitAction);
+        }
+
+        #region Nested type: ScopeImpl
+
+        private class ScopeImpl : IDisposable
+        {
+            private readonly Action exitAction;
+            private DisposedFlag disposedFlag = new DisposedFlag();
+
+            public ScopeImpl(Action enterAction, Action exitAction)
+            {
+                this.exitAction = exitAction;
+                enterAction();
+            }
+
+            #region IDisposable implementation
+
+            public void Dispose()
+            {
+                if (disposedFlag.Set() && (exitAction != null))
+                {
+                    exitAction();
+                }
+            }
+
+            #endregion
         }
 
         #endregion
 
-        #region Nested type : ListDataFields
+        #region Nested type: ScopeImpl<T>
 
-        public class ListDataFields
+        private class ScopeImpl<T> : IScope<T>
         {
-            public int[] PropertyIndices;
-            public int CachedCount;
+            private readonly T value;
+            private readonly Action<T> exitAction;
+            private DisposedFlag disposedFlag = new DisposedFlag();
+
+            public ScopeImpl(Func<T> enterFunc, Action<T> exitAction)
+            {
+                this.exitAction = exitAction;
+                value = enterFunc();
+            }
+
+            #region IScope<T> implementation
+
+            public T Value
+            {
+                get { return value; }
+            }
+
+            public void Dispose()
+            {
+                if (disposedFlag.Set() && (exitAction != null))
+                {
+                    exitAction(value);
+                }
+            }
+
+            #endregion
         }
 
-        #endregion 
+        #endregion
     }
 }

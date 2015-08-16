@@ -70,14 +70,15 @@ class V8Context: public WeakRefTarget<V8Context>
 public:
 
     static V8Context* Create(const SharedPtr<V8Isolate>& spIsolate, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort);
+    static size_t GetInstanceCount();
 
     virtual size_t GetMaxIsolateHeapSize() = 0;
     virtual void SetMaxIsolateHeapSize(size_t value) = 0;
+    virtual double GetIsolateHeapSizeSampleInterval() = 0;
+    virtual void SetIsolateHeapSizeSampleInterval(double value) = 0;
 
     virtual size_t GetMaxIsolateStackUsage() = 0;
     virtual void SetMaxIsolateStackUsage(size_t value) = 0;
-    virtual double GetIsolateHeapSizeSampleInterval() = 0;
-    virtual void SetIsolateHeapSizeSampleInterval(double value) = 0;
 
     typedef void LockCallbackT(void* pvArg);
     virtual void CallWithLock(LockCallbackT* pCallback, void* pvArg) = 0;
@@ -95,5 +96,26 @@ public:
     virtual void CollectGarbage(bool exhaustive) = 0;
     virtual void OnAccessSettingsChanged() = 0;
 
-    virtual ~V8Context() {}
+    virtual void Destroy() = 0;
+
+protected:
+
+    virtual ~V8Context() {};
+};
+
+//-----------------------------------------------------------------------------
+// SharedPtrTraits<V8Context>
+//-----------------------------------------------------------------------------
+
+template<>
+class SharedPtrTraits<V8Context>
+{
+    PROHIBIT_CONSTRUCT(SharedPtrTraits)
+
+public:
+
+    static void Destroy(V8Context* pTarget)
+    {
+        pTarget->Destroy();
+    }
 };

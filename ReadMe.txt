@@ -20,9 +20,9 @@ See ClearScript\doc for information about using ClearScript.
 II. Building ClearScript
 ------------------------
 
-The provided project and solution files support Visual Studio 2013. They
-produce architecture-neutral managed libraries that target .NET Framework 4.0.
-ClearScript has been tested with .NET Framework 4.5 as well. It does not
+The provided project and solution files support Visual Studio 2013 and 2015.
+They produce architecture-neutral managed libraries that target .NET Framework
+4.0. ClearScript has been tested with .NET Framework 4.5 as well. It does not
 support older environments. The output directory is bin\[Debug|Release].
 
 There are two ways to build ClearScript - with and without V8 support.
@@ -38,15 +38,22 @@ build, and import V8:
    with any third-party software required to download and build V8. Rights to
    V8 and its prerequisites are provided by their rights holders.
    
-2. Install Git (http://www.git-scm.com/download/win). IMPORTANT: Ensure that
-   Git is added to your executable path by selecting the option "Use Git from
-   the Windows Command Prompt".
+2. Install Git (http://www.git-scm.com/download/win). Ensure that Git is added
+   to your executable path by selecting the option "Use Git from the Windows
+   Command Prompt".
 
-3. IMPORTANT: Ensure that the path to your ClearScript root directory does not
+3. Install the latest Python 2.x (http://www.python.org/downloads/) and add it
+   to your executable path. V8's build process requires at least Python 2.7 and
+   does not support Python 3.x.
+
+4. Unzip or clone the ClearScript source code into a convenient directory.
+   IMPORTANT: Ensure that the path to your ClearScript root directory does not
    contain any non-ASCII characters.
+   
+5. Ensure that your Visual Studio installation includes C++ support.
 
-4. Open a Visual Studio 2013 developer command prompt and run the V8Update
-   script from your ClearScript root directory:
+6. Open a Visual Studio developer command prompt and run the V8Update script
+   from your ClearScript root directory:
 
       C:\ClearScript> V8Update [/N] [Debug|Release] [Latest|Tested|<Revision>]
 
@@ -128,7 +135,11 @@ Once you've built ClearScript, here's how to add it to your application:
 4. IMPORTANT: If Visual Studio is not installed on your deployment machine,
    you must install 32-bit and 64-bit Visual C++ Redistributable packages:
 
+      Visual Studio 2013
       http://www.microsoft.com/en-us/download/details.aspx?id=40784
+      
+      Visual Studio 2015
+      http://www.microsoft.com/en-us/download/details.aspx?id=48145
 
 ------------------------------------
 V. Debugging with ClearScript and V8

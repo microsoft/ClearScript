@@ -80,6 +80,11 @@ public:
         m_Mutex.lock();
     }
 
+    bool TryLock()
+    {
+        return m_Mutex.try_lock();
+    }
+
     void Unlock()
     {
         m_Mutex.unlock();
@@ -104,6 +109,13 @@ SimpleMutex::SimpleMutex():
 void SimpleMutex::Lock()
 {
     m_pImpl->Lock();
+}
+
+//-----------------------------------------------------------------------------
+
+bool SimpleMutex::TryLock()
+{
+    return m_pImpl->TryLock();
 }
 
 //-----------------------------------------------------------------------------
@@ -139,6 +151,11 @@ public:
         m_Mutex.lock();
     }
 
+    bool TryLock()
+    {
+        return m_Mutex.try_lock();
+    }
+
     void Unlock()
     {
         m_Mutex.unlock();
@@ -163,6 +180,13 @@ RecursiveMutex::RecursiveMutex():
 void RecursiveMutex::Lock()
 {
     m_pImpl->Lock();
+}
+
+//-----------------------------------------------------------------------------
+
+bool RecursiveMutex::TryLock()
+{
+    return m_pImpl->TryLock();
 }
 
 //-----------------------------------------------------------------------------

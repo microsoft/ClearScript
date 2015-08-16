@@ -189,7 +189,7 @@ namespace Microsoft.ClearScript
 
         #endregion
 
-        #region Nested type: NullWrapper
+        #region Nested type: NullWrapper<T>
 
         // ReSharper disable UnusedMember.Local
 

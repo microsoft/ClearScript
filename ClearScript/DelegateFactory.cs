@@ -195,7 +195,7 @@ namespace Microsoft.ClearScript
                     // ReSharper disable AssignNullToNotNullAttribute
 
                     var constructor = innerParamTypes[index].GetConstructor(new[] { paramTypes[index].GetElementType() });
-                    topExprs.Add(Expression.Assign(varExprs[index], Expression.New(constructor, new[] { paramExprs[index] })));
+                    topExprs.Add(Expression.Assign(varExprs[index], Expression.New(constructor, paramExprs[index])));
 
                     // ReSharper restore AssignNullToNotNullAttribute
                 }

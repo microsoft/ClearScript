@@ -59,55 +59,22 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-using System.Collections;
-using System.Collections.Generic;
-using System.Dynamic;
-using Microsoft.ClearScript.Util;
-
-namespace Microsoft.ClearScript
+namespace Microsoft.ClearScript.V8
 {
-    internal class HostItemCollateral
+    internal class V8ProxyCounters
     {
-        #region special targets
+        public ulong IsolateCount { get; set; }
 
-        public readonly CollateralObject<IDynamic> TargetDynamic = new CollateralObject<IDynamic>();
-        public readonly CollateralObject<IPropertyBag> TargetPropertyBag = new CollateralObject<IPropertyBag>();
-        public readonly CollateralObject<IList> TargetList = new CollateralObject<IList>();
-        public readonly CollateralObject<DynamicMetaObject> TargetDynamicMetaObject = new CollateralObject<DynamicMetaObject>();
-        public readonly CollateralObject<IEnumerator> TargetEnumerator = new CollateralObject<IEnumerator>();
+        public ulong ContextCount { get; set; }
+    }
 
-        #endregion
-
-        #region dynamic collateral
-
-        public readonly CollateralObject<HashSet<string>> ExpandoMemberNames = new CollateralObject<HashSet<string>>();
-        public readonly CollateralObject<ListDataFields> ListData = new CollateralObject<ListDataFields>();
-
-        #endregion
-
-        #region  tear-off member cache
-
-        public readonly CollateralObject<Dictionary<string, HostMethod>> HostMethodMap = new CollateralObject<Dictionary<string, HostMethod>>();
-        public readonly CollateralObject<Dictionary<string, HostIndexedProperty>> HostIndexedPropertyMap = new CollateralObject<Dictionary<string, HostIndexedProperty>>();
-
-        #endregion
-
-        #region Nested type : CollateralObject<T>
-
-        public class CollateralObject<T> : CollateralObject<HostItem, T> where T : class
+    internal abstract class V8TestProxy : V8Proxy
+    {
+        public static V8TestProxy Create()
         {
+            return CreateImpl<V8TestProxy>();
         }
 
-        #endregion
-
-        #region Nested type : ListDataFields
-
-        public class ListDataFields
-        {
-            public int[] PropertyIndices;
-            public int CachedCount;
-        }
-
-        #endregion 
+        public abstract V8ProxyCounters GetCounters();
     }
 }

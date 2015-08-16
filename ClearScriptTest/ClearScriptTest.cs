@@ -59,13 +59,24 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
+using System;
+using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
 {
-    [TestClass]
     public class ClearScriptTest
     {
         public TestContext TestContext { get; set; }
+
+        public void BaseTestCleanup()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            var counters = V8TestProxy.Create().GetCounters();
+            Assert.AreEqual(0UL, counters.ContextCount, "Not all V8 contexts were destroyed.");
+            Assert.AreEqual(0UL, counters.IsolateCount, "Not all V8 isolates were destroyed.");
+        }
     }
 }
