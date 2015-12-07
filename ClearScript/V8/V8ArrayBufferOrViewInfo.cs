@@ -59,54 +59,27 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
+namespace Microsoft.ClearScript.V8
+{
+    internal class V8ArrayBufferOrViewInfo
+    {
+        public V8ArrayBufferOrViewInfo(V8ArrayBufferOrViewKind kind, IV8Object arrayBuffer, ulong offset, ulong size, ulong length)
+        {
+            Kind = kind;
+            ArrayBuffer = arrayBuffer;
+            Offset = offset;
+            Size = size;
+            Length = length;
+        }
 
-//-----------------------------------------------------------------------------
-// common platform headers
-//-----------------------------------------------------------------------------
+        public V8ArrayBufferOrViewKind Kind { get; private set; }
 
-#include "CommonPlatform.h"
+        public IV8Object ArrayBuffer { get; private set; }
 
-//-----------------------------------------------------------------------------
-// C++ support library headers
-//-----------------------------------------------------------------------------
+        public ulong Offset { get; private set; }
 
-#include <msclr\all.h>
+        public ulong Size { get; private set; }
 
-//-----------------------------------------------------------------------------
-// assembly references
-//-----------------------------------------------------------------------------
-
-#using "ClearScript.dll" as_friend
-
-//-----------------------------------------------------------------------------
-// namespace references
-//-----------------------------------------------------------------------------
-
-using namespace System;
-using namespace System::Globalization;
-using namespace System::Runtime::InteropServices;
-using namespace System::Threading;
-using namespace Microsoft::ClearScript::JavaScript;
-using namespace Microsoft::ClearScript::Util;
-
-//-----------------------------------------------------------------------------
-// global macros
-//-----------------------------------------------------------------------------
-
-#define BEGIN_LOCK_SCOPE(OBJECT) \
-    { \
-        msclr::lock t_Lock(OBJECT);
-
-#define END_LOCK_SCOPE \
-        IGNORE_UNUSED(t_Lock); \
+        public ulong Length { get; private set; }
     }
-
-//-----------------------------------------------------------------------------
-
-#define ENSURE_INTERNAL_CLASS(NAME) \
-    public ref class NAME##Anchor \
-    { \
-    private: \
-        static String^ m_gcName = NAME::typeid->Name; \
-    };
+}

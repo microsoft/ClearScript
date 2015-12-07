@@ -69,6 +69,10 @@
     <Compile Include="BindSignature.cs" />
     <Compile Include="IScriptEngineException.cs" />
     <Compile Include="DefaultScriptUsageAttribute.cs" />
+    <Compile Include="JavaScript\IArrayBuffer.cs" />
+    <Compile Include="JavaScript\IArrayBufferView.cs" />
+    <Compile Include="JavaScript\IDataView.cs" />
+    <Compile Include="JavaScript\ITypedArray.cs" />
     <Compile Include="NoDefaultScriptAccessAttribute.cs" />
     <Compile Include="NoScriptAccessAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -97,7 +101,11 @@
     <Compile Include="Util\Scope.cs" />
     <Compile Include="Util\SocketHelpers.cs" />
     <Compile Include="Util\SpecialDispIDs.cs" />
+    <Compile Include="Util\UnmanagedMemoryHelpers.cs" />
+    <Compile Include="Util\VTablePatcher.cs" />
     <Compile Include="V8\IV8DebugListener.cs" />
+    <Compile Include="V8\V8ArrayBufferOrViewInfo.cs" />
+    <Compile Include="V8\V8ArrayBufferOrViewKind.cs" />
     <Compile Include="V8\V8DebugAgent.cs" />
     <Compile Include="V8\V8RuntimeHeapInfo.cs" />
     <Compile Include="V8\V8Script.cs" />

@@ -73,7 +73,7 @@ namespace V8 {
     {
     public:
 
-        V8ObjectImpl(V8ObjectHolder* pHolder);
+        V8ObjectImpl(V8ObjectHolder* pHolder, V8Value::Subtype subtype);
 
         virtual Object^ GetProperty(String^ gcName);
         virtual Object^ GetProperty(String^ gcName, [Out] Boolean% isCacheable);
@@ -89,7 +89,13 @@ namespace V8 {
         virtual Object^ Invoke(array<Object^>^ gcArgs, bool asConstructor);
         virtual Object^ InvokeMethod(String^ gcName, array<Object^>^ gcArgs);
 
+        virtual bool IsArrayBufferOrView();
+        virtual V8ArrayBufferOrViewKind GetArrayBufferOrViewKind();
+        virtual V8ArrayBufferOrViewInfo^ GetArrayBufferOrViewInfo();
+        virtual void InvokeWithArrayBufferOrViewData(Action<IntPtr>^ gcAction);
+
         SharedPtr<V8ObjectHolder> GetHolder();
+        V8Value::Subtype GetSubtype();
 
         ~V8ObjectImpl();
         !V8ObjectImpl();
@@ -100,6 +106,7 @@ namespace V8 {
 
         Object^ m_gcLock;
         SharedPtr<V8ObjectHolder>* m_pspHolder;
+        V8Value::Subtype m_Subtype;
     };
 
 }}}

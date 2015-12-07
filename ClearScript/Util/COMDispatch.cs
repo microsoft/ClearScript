@@ -218,7 +218,8 @@ namespace Microsoft.ClearScript.Util
             [In] [Optional] [MarshalAs(UnmanagedType.Interface)] IServiceProvider svpCaller
         );
 
-        void DeleteMemberByName(
+        [PreserveSig]
+        int DeleteMemberByName(
             [In] [MarshalAs(UnmanagedType.BStr)] string name,
             [In] DispatchNameFlags flags
         );
@@ -233,12 +234,14 @@ namespace Microsoft.ClearScript.Util
             [Out] out DispatchPropFlags flags
         );
 
-        void GetMemberName(
+        [PreserveSig]
+        int GetMemberName(
             [In] int dispid,
             [Out] [MarshalAs(UnmanagedType.BStr)] out string name
         );
 
-        void GetNextDispID(
+        [PreserveSig]
+        int GetNextDispID(
             [In] DispatchEnumFlags flags,
             [In] int dispidCurrent,
             [Out] out int dispidNext

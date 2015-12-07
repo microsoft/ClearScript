@@ -355,9 +355,26 @@ namespace Microsoft.ClearScript.Util
 
         public static T Exchange<T>(ref T target, T value)
         {
-            T oldValue = target;
+            var oldValue = target;
             target = value;
             return oldValue;
+        }
+
+        public static bool IsX86InstructionSet()
+        {
+            SystemInfo info;
+            try
+            {
+                NativeMethods.GetNativeSystemInfo(out info);
+            }
+            catch (EntryPointNotFoundException)
+            {
+                NativeMethods.GetSystemInfo(out info);
+            }
+
+            return
+                ((info.ProcessorArchitecture == 0 /*PROCESSOR_ARCHITECTURE_INTEL*/) ||
+                 (info.ProcessorArchitecture == 9 /*PROCESSOR_ARCHITECTURE_AMD64*/));
         }
 
         #region Nested type: EmptyArray<T>

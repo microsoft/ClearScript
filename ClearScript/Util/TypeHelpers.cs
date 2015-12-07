@@ -81,20 +81,6 @@ namespace Microsoft.ClearScript.Util
             "__DynamicallyInvokableAttribute"
         };
 
-        private static readonly Dictionary<TypeCode, TypeCode[]> implicitNumericConversions = new Dictionary<TypeCode, TypeCode[]>
-        {
-            { TypeCode.SByte, new[] { TypeCode.Int16, TypeCode.Int32, TypeCode.Int64, TypeCode.Single, TypeCode.Double, TypeCode.Decimal } },
-            { TypeCode.Byte, new[] { TypeCode.Int16, TypeCode.UInt16, TypeCode.Int32, TypeCode.UInt32, TypeCode.Int64, TypeCode.UInt64, TypeCode.Single, TypeCode.Double, TypeCode.Decimal } },
-            { TypeCode.Int16, new[] { TypeCode.Int32, TypeCode.Int64, TypeCode.Single, TypeCode.Double, TypeCode.Decimal } },
-            { TypeCode.UInt16, new[] { TypeCode.Int32, TypeCode.UInt32, TypeCode.Int64, TypeCode.UInt64, TypeCode.Single, TypeCode.Double, TypeCode.Decimal } },
-            { TypeCode.Int32, new[] { TypeCode.SByte, TypeCode.Byte, TypeCode.Int16, TypeCode.UInt16, TypeCode.UInt32, TypeCode.Int64, TypeCode.UInt64, TypeCode.Single, TypeCode.Double, TypeCode.Decimal } },
-            { TypeCode.UInt32, new[] { TypeCode.Int64, TypeCode.UInt64, TypeCode.Single, TypeCode.Double, TypeCode.Decimal } },
-            { TypeCode.Int64, new[] { TypeCode.Single, TypeCode.Double, TypeCode.Decimal } },
-            { TypeCode.UInt64, new[] { TypeCode.Single, TypeCode.Double, TypeCode.Decimal } },
-            { TypeCode.Char, new[] { TypeCode.UInt16, TypeCode.Int32, TypeCode.UInt32, TypeCode.Int64, TypeCode.UInt64, TypeCode.Single, TypeCode.Double, TypeCode.Decimal } },
-            { TypeCode.Single, new[] { TypeCode.Double } },
-        };
-
         private static readonly HashSet<Type> nullableNumericTypes = new HashSet<Type>
         {
             typeof(char?),
@@ -142,31 +128,40 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
+        public static bool IsIntegral(this Type type)
+        {
+            return
+                (type == typeof(sbyte)) ||
+                (type == typeof(byte)) ||
+                (type == typeof(short)) ||
+                (type == typeof(ushort)) ||
+                (type == typeof(char)) ||
+                (type == typeof(int)) ||
+                (type == typeof(uint)) ||
+                (type == typeof(long)) ||
+                (type == typeof(ulong));
+        }
+
+        public static bool IsFloatingPoint(this Type type)
+        {
+            return
+                (type == typeof(float)) ||
+                (type == typeof(double));
+        }
+
+        public static bool IsNumeric(this Type type, out bool isIntegral)
+        {
+            isIntegral = type.IsIntegral();
+            return
+                isIntegral ||
+                type.IsFloatingPoint() ||
+                type == typeof(decimal);
+        }
+
         public static bool IsNumeric(this Type type)
         {
-            if (type.IsEnum)
-            {
-                return false;
-            }
-
-            switch (Type.GetTypeCode(type))
-            {
-                case TypeCode.Char:
-                case TypeCode.SByte:
-                case TypeCode.Byte:
-                case TypeCode.Int16:
-                case TypeCode.UInt16:
-                case TypeCode.Int32:
-                case TypeCode.UInt32:
-                case TypeCode.Int64:
-                case TypeCode.UInt64:
-                case TypeCode.Single:
-                case TypeCode.Double:
-                case TypeCode.Decimal:
-                    return true;
-            }
-
-            return false;
+            bool isIntegral;
+            return type.IsNumeric(out isIntegral);
         }
 
         public static bool IsNullable(this Type type)
@@ -227,15 +222,23 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
 
-            TypeCode[] typeCodes;
-            if (implicitNumericConversions.TryGetValue(Type.GetTypeCode(valueType), out typeCodes))
+            bool typeIsIntegral;
+            if (type.IsNumeric(out typeIsIntegral))
             {
-                var typeCode = Type.GetTypeCode(type);
-                if (typeCodes.Contains(Type.GetTypeCode(type)))
+                if (typeIsIntegral)
                 {
-                    value = Convert.ChangeType(value, typeCode);
-                    return true;
+                    if (!valueType.IsIntegral())
+                    {
+                        return false;
+                    }
                 }
+                else if (!valueType.IsNumeric())
+                {
+                    return false;
+                }
+
+                value = Convert.ChangeType(value, type);
+                return true;
             }
 
             return false;
@@ -451,7 +454,7 @@ namespace Microsoft.ClearScript.Util
 
             // ReSharper disable RedundantEnumerableCastCall
 
-            // the OfType<>() call is not redundant; it filters out null elements
+            // the OfType<Type>() call is not redundant; it filters out null elements
             var counts = Enumerable.Range(1, maxTypeArgCount);
             var templates = counts.Select(count => ImportType(typeName, assemblyName, useAssemblyName, count)).OfType<Type>().ToArray();
 

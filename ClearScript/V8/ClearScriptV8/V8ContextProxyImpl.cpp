@@ -69,9 +69,9 @@ namespace V8 {
     // local helper functions
     //-------------------------------------------------------------------------
 
-    static void InvokeAction(void* pvActionRef)
+    static void LockCallback(void* pvArg)
     {
-        (*static_cast<Action^*>(pvActionRef))();
+        (*static_cast<Action^*>(pvArg))();
     }
 
     //-------------------------------------------------------------------------
@@ -140,7 +140,7 @@ namespace V8 {
     {
         try
         {
-            GetContext()->CallWithLock(InvokeAction, &gcAction);
+            GetContext()->CallWithLock(LockCallback, &gcAction);
         }
         catch (const V8Exception& exception)
         {
@@ -433,7 +433,7 @@ namespace V8 {
             auto gcValue = dynamic_cast<V8ObjectImpl^>(gcObject);
             if (gcValue != nullptr)
             {
-                return V8Value(gcValue->GetHolder()->Clone());
+                return V8Value(gcValue->GetHolder()->Clone(), gcValue->GetSubtype());
             }
         }
 
@@ -476,7 +476,7 @@ namespace V8 {
         }
 
         {
-            __int32 result;
+            std::int32_t result;
             if (value.AsInt32(result))
             {
                 return result;
@@ -484,7 +484,7 @@ namespace V8 {
         }
 
         {
-            unsigned __int32 result;
+            std::uint32_t result;
             if (value.AsUInt32(result))
             {
                 return result;
@@ -501,9 +501,10 @@ namespace V8 {
 
         {
             V8ObjectHolder* pHolder;
-            if (value.AsV8Object(pHolder))
+            V8Value::Subtype subtype;
+            if (value.AsV8Object(pHolder, subtype))
             {
-                return gcnew V8ObjectImpl(pHolder->Clone());
+                return gcnew V8ObjectImpl(pHolder->Clone(), subtype);
             }
         }
 

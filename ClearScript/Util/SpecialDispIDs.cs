@@ -65,6 +65,7 @@ namespace Microsoft.ClearScript.Util
     {
         public const int Default = 0;
         public const int Unknown = -1;
+        public const int StartEnum = Unknown;
         public const int PropertyPut = -3;
         public const int NewEnum = -4;
         public const int This = -613;

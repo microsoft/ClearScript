@@ -2208,6 +2208,74 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("listDict.Count()"));
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_NativeEnumerator()
+        {
+            var array = Enumerable.Range(0, 10).ToArray();
+            engine.Execute(@"
+                function sum(array)
+                    dim result
+                    result = 0
+                    for each item in array
+                        result = result + item
+                    next
+                    sum = result
+                end function
+            ");
+            Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(array));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_NativeEnumerator_Generic()
+        {
+            var array = Enumerable.Range(0, 10).Select(value => (IConvertible)value).ToArray();
+            engine.Script.culture = CultureInfo.InvariantCulture;
+            engine.Execute(@"
+                function sum(array)
+                    dim result
+                    result = 0
+                    for each item in array
+                        result = result + item.ToInt32(culture)
+                    next
+                    sum = result
+                end function
+            ");
+            Assert.AreEqual(array.Aggregate((current, next) => Convert.ToInt32(current) + Convert.ToInt32(next)), engine.Script.sum(array));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_NativeEnumerator_NonGeneric()
+        {
+            var array = Enumerable.Range(0, 10).ToArray();
+            engine.Execute(@"
+                function sum(array)
+                    dim result
+                    result = 0
+                    for each item in array
+                        result = result + item
+                    next
+                    sum = result
+                end function
+            ");
+            Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(HostObject.Wrap(array, typeof(IEnumerable))));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_NativeEnumerator_NonEnumerable()
+        {
+            engine.Execute(@"
+                function sum(array)
+                    dim result
+                    result = 0
+                    for each item in array
+                        result = result + item
+                    next
+                    sum = result
+                end function
+            ");
+            TestUtil.AssertException<NotSupportedException>(() => engine.Script.sum(DayOfWeek.Monday));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

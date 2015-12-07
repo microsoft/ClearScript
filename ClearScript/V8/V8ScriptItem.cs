@@ -62,6 +62,7 @@
 using System;
 using System.Diagnostics;
 using System.Dynamic;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8
@@ -91,7 +92,37 @@ namespace Microsoft.ClearScript.V8
             var target = obj as IV8Object;
             if (target != null)
             {
-                return new V8ScriptItem(engine, target);
+                if (!target.IsArrayBufferOrView())
+                {
+                    return new V8ScriptItem(engine, target);
+                }
+
+                switch (target.GetArrayBufferOrViewKind())
+                {
+                    case V8ArrayBufferOrViewKind.ArrayBuffer:
+                        return new V8ArrayBuffer(engine, target);
+                    case V8ArrayBufferOrViewKind.DataView:
+                        return new V8DataView(engine, target);
+                    case V8ArrayBufferOrViewKind.Uint8Array:
+                    case V8ArrayBufferOrViewKind.Uint8ClampedArray:
+                        return new V8TypedArray<byte>(engine, target);
+                    case V8ArrayBufferOrViewKind.Int8Array:
+                        return new V8TypedArray<sbyte>(engine, target);
+                    case V8ArrayBufferOrViewKind.Uint16Array:
+                        return new V8UInt16Array(engine, target);
+                    case V8ArrayBufferOrViewKind.Int16Array:
+                        return new V8TypedArray<short>(engine, target);
+                    case V8ArrayBufferOrViewKind.Uint32Array:
+                        return new V8TypedArray<uint>(engine, target);
+                    case V8ArrayBufferOrViewKind.Int32Array:
+                        return new V8TypedArray<int>(engine, target);
+                    case V8ArrayBufferOrViewKind.Float32Array:
+                        return new V8TypedArray<float>(engine, target);
+                    case V8ArrayBufferOrViewKind.Float64Array:
+                        return new V8TypedArray<double>(engine, target);
+                    default:
+                        return new V8ScriptItem(engine, target);
+                }
             }
 
             return obj;
@@ -209,9 +240,13 @@ namespace Microsoft.ClearScript.V8
 
         #region IDynamic implementation
 
-        public override object GetProperty(string name)
+        public override object GetProperty(string name, object[] args)
         {
             VerifyNotDisposed();
+            if ((args != null) && (args.Length != 0))
+            {
+                throw new InvalidOperationException("Invalid argument or index count");
+            }
 
             var result = engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(name)), false);
 
@@ -224,10 +259,15 @@ namespace Microsoft.ClearScript.V8
             return result;
         }
 
-        public override void SetProperty(string name, object value)
+        public override void SetProperty(string name, object[] args)
         {
             VerifyNotDisposed();
-            engine.ScriptInvoke(() => target.SetProperty(name, engine.MarshalToScript(value)));
+            if ((args == null) || (args.Length != 1))
+            {
+                throw new InvalidOperationException("Invalid argument or index count");
+            }
+
+            engine.ScriptInvoke(() => target.SetProperty(name, engine.MarshalToScript(args[0])));
         }
 
         public override bool DeleteProperty(string name)
@@ -308,6 +348,392 @@ namespace Microsoft.ClearScript.V8
             {
                 target.Dispose();
             }
+        }
+
+        #endregion
+
+        #region Nested type: V8ArrayBufferOrView
+
+        private class V8ArrayBufferOrView : V8ScriptItem
+        {
+            private V8ArrayBufferOrViewInfo info;
+            private IArrayBuffer arrayBuffer;
+
+            protected V8ArrayBufferOrView(V8ScriptEngine engine, IV8Object target)
+                : base(engine, target)
+            {
+            }
+
+            protected IArrayBuffer ArrayBuffer
+            {
+                get { return GetArrayBuffer(); }
+            }
+
+            protected ulong Offset
+            {
+                get { return GetInfo().Offset; }
+            }
+
+            protected ulong Size
+            {
+                get { return GetInfo().Size; }
+            }
+
+            protected ulong Length
+            {
+                get { return GetInfo().Length; }
+            }
+
+            protected byte[] GetBytes()
+            {
+                return engine.ScriptInvoke(() =>
+                {
+                    var result = new byte[Size];
+                    target.InvokeWithArrayBufferOrViewData(pData =>
+                    {
+                        UnmanagedMemoryHelpers.Copy(pData, Size, result, 0);
+                    });
+
+                    return result;
+                });
+            }
+
+            protected ulong ReadBytes(ulong offset, ulong count, byte[] destination, ulong destinationIndex)
+            {
+                var size = Size;
+                if (offset >= size)
+                {
+                    throw new ArgumentOutOfRangeException("offset");
+                }
+
+                count = Math.Min(count, size - offset);
+                return engine.ScriptInvoke(() =>
+                {
+                    target.InvokeWithArrayBufferOrViewData(pData =>
+                    {
+                        count = UnmanagedMemoryHelpers.Copy(GetPtrWithOffset(pData, offset), count, destination, destinationIndex);
+                    });
+
+                    return count;
+                });
+            }
+
+            protected ulong WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
+            {
+                var size = Size;
+                if (offset >= size)
+                {
+                    throw new ArgumentOutOfRangeException("offset");
+                }
+
+                count = Math.Min(count, size - offset);
+                return engine.ScriptInvoke(() =>
+                {
+                    target.InvokeWithArrayBufferOrViewData(pData =>
+                    {
+                        count = UnmanagedMemoryHelpers.Copy(source, sourceIndex, count, GetPtrWithOffset(pData, offset));
+                    });
+
+                    return count;
+                });
+            }
+
+            private V8ArrayBufferOrViewInfo GetInfo()
+            {
+                VerifyNotDisposed();
+
+                if (info == null)
+                {
+                    engine.ScriptInvoke(() =>
+                    {
+                        if (info == null)
+                        {
+                            info = target.GetArrayBufferOrViewInfo();
+                        }
+                    });
+                }
+
+                return info;
+            }
+
+            private IArrayBuffer GetArrayBuffer()
+            {
+                if (arrayBuffer == null)
+                {
+                    arrayBuffer = (IArrayBuffer)engine.MarshalToHost(GetInfo().ArrayBuffer, false);
+                }
+
+                return arrayBuffer;
+            }
+
+            private static IntPtr GetPtrWithOffset(IntPtr pData, ulong offset)
+            {
+                var baseAddr = unchecked((ulong)pData.ToInt64());
+                return new IntPtr(unchecked((long)checked(baseAddr + offset)));
+            }
+        }
+
+        #endregion
+
+        #region Nested type: V8ArrayBuffer
+
+        private class V8ArrayBuffer : V8ArrayBufferOrView, IArrayBuffer
+        {
+            public V8ArrayBuffer(V8ScriptEngine engine, IV8Object target)
+                : base(engine, target)
+            {
+            }
+
+            #region IArrayBuffer implementation
+
+            ulong IArrayBuffer.Size
+            {
+                get { return Size; }
+            }
+
+            byte[] IArrayBuffer.GetBytes()
+            {
+                return GetBytes();
+            }
+
+            ulong IArrayBuffer.ReadBytes(ulong offset, ulong count, byte[] destination, ulong destinationIndex)
+            {
+                return ReadBytes(offset, count, destination, destinationIndex);
+            }
+
+            ulong IArrayBuffer.WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
+            {
+                return WriteBytes(source, sourceIndex, count, offset);
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Nested type: V8ArrayBufferView
+
+        private class V8ArrayBufferView : V8ArrayBufferOrView, IArrayBufferView
+        {
+            protected V8ArrayBufferView(V8ScriptEngine engine, IV8Object target)
+                : base(engine, target)
+            {
+            }
+
+            #region IArrayBufferView implementation
+
+            IArrayBuffer IArrayBufferView.ArrayBuffer
+            {
+                get { return ArrayBuffer; }
+            }
+
+            ulong IArrayBufferView.Offset
+            {
+                get { return Offset; }
+            }
+
+            ulong IArrayBufferView.Size
+            {
+                get { return Size; }
+            }
+
+            byte[] IArrayBufferView.GetBytes()
+            {
+                return GetBytes();
+            }
+
+            ulong IArrayBufferView.ReadBytes(ulong offset, ulong count, byte[] destination, ulong destinationIndex)
+            {
+                return ReadBytes(offset, count, destination, destinationIndex);
+            }
+
+            ulong IArrayBufferView.WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
+            {
+                return WriteBytes(source, sourceIndex, count, offset);
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Nested type: V8DataView
+
+        private class V8DataView : V8ArrayBufferView, IDataView
+        {
+            public V8DataView(V8ScriptEngine engine, IV8Object target)
+                : base(engine, target)
+            {
+            }
+        }
+
+        #endregion
+
+        #region Nested type: V8TypedArray
+
+        private class V8TypedArray : V8ArrayBufferView, ITypedArray
+        {
+            protected V8TypedArray(V8ScriptEngine engine, IV8Object target)
+                : base(engine, target)
+            {
+            }
+
+            protected IntPtr GetPtrWithIndex(IntPtr pData, ulong index)
+            {
+                var baseAddr = unchecked((ulong)pData.ToInt64());
+                return new IntPtr(unchecked((long)checked(baseAddr + (index * (Size / Length)))));
+            }
+
+            #region ITypedArray implementation
+
+            ulong ITypedArray.Length
+            {
+                get { return Length; }
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Nested type: V8TypedArray<T>
+
+        private class V8TypedArray<T> : V8TypedArray, ITypedArray<T>
+        {
+            public V8TypedArray(V8ScriptEngine engine, IV8Object target)
+                : base(engine, target)
+            {
+            }
+
+            #region ITypedArray<T> implementation
+
+            T[] ITypedArray<T>.ToArray()
+            {
+                return engine.ScriptInvoke(() =>
+                {
+                    var result = new T[Length];
+                    target.InvokeWithArrayBufferOrViewData(pData =>
+                    {
+                        UnmanagedMemoryHelpers.Copy(pData, Length, result, 0);
+                    });
+
+                    return result;
+                });
+            }
+
+            ulong ITypedArray<T>.Read(ulong index, ulong length, T[] destination, ulong destinationIndex)
+            {
+                var totalLength = Length;
+                if (index >= totalLength)
+                {
+                    throw new ArgumentOutOfRangeException("index");
+                }
+
+                length = Math.Min(length, totalLength - index);
+                return engine.ScriptInvoke(() =>
+                {
+                    target.InvokeWithArrayBufferOrViewData(pData =>
+                    {
+                        length = UnmanagedMemoryHelpers.Copy(GetPtrWithIndex(pData, index), length, destination, destinationIndex);
+                    });
+
+                    return length;
+                });
+            }
+
+            ulong ITypedArray<T>.Write(T[] source, ulong sourceIndex, ulong length, ulong index)
+            {
+                var totalLength = Length;
+                if (index >= totalLength)
+                {
+                    throw new ArgumentOutOfRangeException("index");
+                }
+
+                length = Math.Min(length, totalLength - index);
+                return engine.ScriptInvoke(() =>
+                {
+                    target.InvokeWithArrayBufferOrViewData(pData =>
+                    {
+                        length = UnmanagedMemoryHelpers.Copy(source, sourceIndex, length, GetPtrWithIndex(pData, index));
+                    });
+
+                    return length;
+                });
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Nested type: V8UInt16Array
+
+        // special case to support both ITypedArray<ushort> and ITypedArray<char>
+
+        private class V8UInt16Array : V8TypedArray<ushort>, ITypedArray<char>
+        {
+            public V8UInt16Array(V8ScriptEngine engine, IV8Object target)
+                : base(engine, target)
+            {
+            }
+
+            #region ITypedArray<char> implementation
+
+            char[] ITypedArray<char>.ToArray()
+            {
+                return engine.ScriptInvoke(() =>
+                {
+                    var result = new char[Length];
+                    target.InvokeWithArrayBufferOrViewData(pData =>
+                    {
+                        UnmanagedMemoryHelpers.Copy(pData, Length, result, 0);
+                    });
+
+                    return result;
+                });
+            }
+
+            ulong ITypedArray<char>.Read(ulong index, ulong length, char[] destination, ulong destinationIndex)
+            {
+                var totalLength = Length;
+                if (index >= totalLength)
+                {
+                    throw new ArgumentOutOfRangeException("index");
+                }
+
+                length = Math.Min(length, totalLength - index);
+                return engine.ScriptInvoke(() =>
+                {
+                    target.InvokeWithArrayBufferOrViewData(pData =>
+                    {
+                        length = UnmanagedMemoryHelpers.Copy(GetPtrWithIndex(pData, index), length, destination, destinationIndex);
+                    });
+
+                    return length;
+                });
+            }
+
+            ulong ITypedArray<char>.Write(char[] source, ulong sourceIndex, ulong length, ulong index)
+            {
+                var totalLength = Length;
+                if (index >= totalLength)
+                {
+                    throw new ArgumentOutOfRangeException("index");
+                }
+
+                length = Math.Min(length, totalLength - index);
+                return engine.ScriptInvoke(() =>
+                {
+                    target.InvokeWithArrayBufferOrViewData(pData =>
+                    {
+                        length = UnmanagedMemoryHelpers.Copy(source, sourceIndex, length, GetPtrWithIndex(pData, index));
+                    });
+
+                    return length;
+                });
+            }
+
+            #endregion
         }
 
         #endregion

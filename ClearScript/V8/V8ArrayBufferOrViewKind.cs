@@ -59,54 +59,21 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
-
-//-----------------------------------------------------------------------------
-// common platform headers
-//-----------------------------------------------------------------------------
-
-#include "CommonPlatform.h"
-
-//-----------------------------------------------------------------------------
-// C++ support library headers
-//-----------------------------------------------------------------------------
-
-#include <msclr\all.h>
-
-//-----------------------------------------------------------------------------
-// assembly references
-//-----------------------------------------------------------------------------
-
-#using "ClearScript.dll" as_friend
-
-//-----------------------------------------------------------------------------
-// namespace references
-//-----------------------------------------------------------------------------
-
-using namespace System;
-using namespace System::Globalization;
-using namespace System::Runtime::InteropServices;
-using namespace System::Threading;
-using namespace Microsoft::ClearScript::JavaScript;
-using namespace Microsoft::ClearScript::Util;
-
-//-----------------------------------------------------------------------------
-// global macros
-//-----------------------------------------------------------------------------
-
-#define BEGIN_LOCK_SCOPE(OBJECT) \
-    { \
-        msclr::lock t_Lock(OBJECT);
-
-#define END_LOCK_SCOPE \
-        IGNORE_UNUSED(t_Lock); \
+namespace Microsoft.ClearScript.V8
+{
+    internal enum V8ArrayBufferOrViewKind
+    {
+        None,
+        ArrayBuffer,
+        DataView,
+        Uint8Array,
+        Uint8ClampedArray,
+        Int8Array,
+        Uint16Array,
+        Int16Array,
+        Uint32Array,
+        Int32Array,
+        Float32Array,
+        Float64Array
     }
-
-//-----------------------------------------------------------------------------
-
-#define ENSURE_INTERNAL_CLASS(NAME) \
-    public ref class NAME##Anchor \
-    { \
-    private: \
-        static String^ m_gcName = NAME::typeid->Name; \
-    };
+}

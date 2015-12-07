@@ -5,9 +5,9 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=4.4.63.29
+set v8testedrev=4.7.80.25
 
-set gyprev=0bb67471bca068996e15b56738fa4824dfa19de0
+set gyprev=01528c7244837168a1c80f06ff60fa5a9793c824
 set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df
 
 :ProcessArgs
@@ -167,7 +167,7 @@ cd ..\..
 
 :DownloadCygwin
 echo Downloading Cygwin ...
-git clone -n -q https://chromium.googlesource.com/chromium/deps/cygwin.git third_party/cygwin
+git clone -n -q https://chromium.googlesource.com/chromium/deps/cygwin.git third_party\cygwin
 if errorlevel 1 goto Error
 cd third_party/cygwin
 git checkout -q "%cygwinrev%"
@@ -184,6 +184,8 @@ cd ..
 ::-----------------------------------------------------------------------------
 
 :Build
+
+set DEPOT_TOOLS_WIN_TOOLCHAIN=0
 
 :CreatePatchFile
 echo Creating patch file ...

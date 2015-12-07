@@ -65,6 +65,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using TYPEATTR = System.Runtime.InteropServices.ComTypes.TYPEATTR;
+using TYPEFLAGS = System.Runtime.InteropServices.ComTypes.TYPEFLAGS;
+using TYPEKIND = System.Runtime.InteropServices.ComTypes.TYPEKIND;
 using TYPELIBATTR = System.Runtime.InteropServices.ComTypes.TYPELIBATTR;
 
 namespace Microsoft.ClearScript.Util
@@ -77,14 +79,18 @@ namespace Microsoft.ClearScript.Util
         public static Type GetTypeOrTypeInfo(this object value)
         {
             var type = value.GetType();
+            IDispatch dispatch = null;
 
             Type typeInfo = null;
+            TYPEKIND typeInfoKind = 0;
+            TYPEFLAGS typeInfoFlags = 0;
+
             if (type.IsUnknownCOMObject())
             {
                 // This appears to be a generic COM object with no specific type information.
                 // Attempt to acquire COM type information via IDispatch or IProvideClassInfo.
 
-                var dispatch = value as IDispatch;
+                dispatch = value as IDispatch;
                 if (dispatch != null)
                 {
                     uint count;
@@ -94,6 +100,8 @@ namespace Microsoft.ClearScript.Util
                         if (RawCOMHelpers.HResult.Succeeded(dispatch.GetTypeInfo(0, 0, out tempTypeInfo)))
                         {
                             typeInfo = GetTypeForTypeInfo(tempTypeInfo);
+                            typeInfoKind = GetTypeInfoKind(tempTypeInfo);
+                            typeInfoFlags = GetTypeInfoFlags(tempTypeInfo);
                         }
                     }
                 }
@@ -107,6 +115,8 @@ namespace Microsoft.ClearScript.Util
                         if (RawCOMHelpers.HResult.Succeeded(provideClassInfo.GetClassInfo(out tempTypeInfo)))
                         {
                             typeInfo = GetTypeForTypeInfo(tempTypeInfo);
+                            typeInfoKind = GetTypeInfoKind(tempTypeInfo);
+                            typeInfoFlags = GetTypeInfoFlags(tempTypeInfo);
                         }
                     }
                 }
@@ -114,6 +124,14 @@ namespace Microsoft.ClearScript.Util
 
             if (typeInfo != null)
             {
+                // If the COM type is a dispatch-only interface, use it. Such interfaces typically
+                // aren't exposed via QueryInterface(), so there's no way to validate them anyway.
+
+                if ((dispatch != null) && (typeInfoKind == TYPEKIND.TKIND_DISPATCH) && typeInfoFlags.HasFlag(TYPEFLAGS.TYPEFLAG_FDISPATCHABLE) && !typeInfoFlags.HasFlag(TYPEFLAGS.TYPEFLAG_FDUAL))
+                {
+                    return typeInfo;
+                }
+
                 // COM type information acquired in this manner may not actually be valid for the
                 // original object. In some cases the original object implements a base interface.
 
@@ -209,7 +227,7 @@ namespace Microsoft.ClearScript.Util
                     var name = GetManagedTypeInfoName(typeInfo, typeLib);
                     var guid = GetTypeInfoGuid(typeInfo);
 
-                    var type = assembly.GetType(name, false /*throwOnError*/);
+                    var type = assembly.GetType(name, false /*throwOnError*/, true /*ignoreCase*/);
                     if ((type != null) && (type.GUID == guid))
                     {
                         return type;
@@ -225,14 +243,14 @@ namespace Microsoft.ClearScript.Util
                         }
                     }
 
-                    type = types.FirstOrDefault(testType => (testType.GUID == guid) && (testType.FullName == name));
+                    type = types.FirstOrDefault(testType => (testType.GUID == guid) && (testType.FullName.Equals(name, StringComparison.OrdinalIgnoreCase)));
                     if (type != null)
                     {
                         return type;
                     }
                 }
 
-                var pTypeInfo = RawCOMHelpers.QueryInterface<ITypeInfo>(Marshal.GetIUnknownForObject(typeInfo));
+                var pTypeInfo = Marshal.GetComInterfaceForObject(typeInfo, typeof(ITypeInfo));
                 try
                 {
                     return Marshal.GetTypeForITypeInfo(pTypeInfo);
@@ -356,6 +374,36 @@ namespace Microsoft.ClearScript.Util
             {
                 var attr = (TYPEATTR)Marshal.PtrToStructure(pAttr, typeof(TYPEATTR));
                 return attr.guid;
+            }
+            finally
+            {
+                typeInfo.ReleaseTypeAttr(pAttr);
+            }
+        }
+
+        private static TYPEKIND GetTypeInfoKind(ITypeInfo typeInfo)
+        {
+            IntPtr pAttr;
+            typeInfo.GetTypeAttr(out pAttr);
+            try
+            {
+                var attr = (TYPEATTR)Marshal.PtrToStructure(pAttr, typeof(TYPEATTR));
+                return attr.typekind;
+            }
+            finally
+            {
+                typeInfo.ReleaseTypeAttr(pAttr);
+            }
+        }
+
+        private static TYPEFLAGS GetTypeInfoFlags(ITypeInfo typeInfo)
+        {
+            IntPtr pAttr;
+            typeInfo.GetTypeAttr(out pAttr);
+            try
+            {
+                var attr = (TYPEATTR)Marshal.PtrToStructure(pAttr, typeof(TYPEATTR));
+                return attr.wTypeFlags;
             }
             finally
             {

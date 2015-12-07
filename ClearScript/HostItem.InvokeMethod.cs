@@ -343,7 +343,11 @@ namespace Microsoft.ClearScript
             if (arg != null)
             {
                 flags |= CSharpArgumentInfoFlags.UseCompileTimeType;
-                if (arg is IOutArg)
+                if (arg is int)
+                {
+                    flags |= CSharpArgumentInfoFlags.Constant;
+                }
+                else if (arg is IOutArg)
                 {
                     flags |= CSharpArgumentInfoFlags.IsOut;
                 }

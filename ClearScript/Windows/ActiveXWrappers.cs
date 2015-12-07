@@ -167,6 +167,11 @@ namespace Microsoft.ClearScript.Windows
                         activeScriptProperty.SetProperty(ScriptProp.InvokeVersioning, IntPtr.Zero, ref value);
                     }
                 }
+
+                if (!flags.HasFlag(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.IsX86InstructionSet())
+                {
+                    HostItem.EnableVTablePatching = true;
+                }
             }
 
             // ReSharper restore SuspiciousTypeConversion.Global
@@ -312,6 +317,11 @@ namespace Microsoft.ClearScript.Windows
                         object value = ScriptLanguageVersion.Standards;
                         activeScriptProperty.SetProperty(ScriptProp.InvokeVersioning, IntPtr.Zero, ref value);
                     }
+                }
+
+                if (!flags.HasFlag(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.IsX86InstructionSet())
+                {
+                    HostItem.EnableVTablePatching = true;
                 }
             }
 

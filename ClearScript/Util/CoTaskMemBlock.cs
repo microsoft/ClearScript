@@ -223,7 +223,7 @@ namespace Microsoft.ClearScript.Util
 
                 var pArgRef = GetAddrInternal(args.Length - 1 - index);
                 NativeMethods.VariantInit(pArgRef);
-                Marshal.WriteInt16(pArgRef, 0, 0x400C /*VT_BYREF | VT_VARIANT*/);
+                Marshal.WriteInt16(pArgRef, 0, 0x400C /*VT_BYREF|VT_VARIANT*/);
                 Marshal.WriteIntPtr(pArgRef, sizeof(ushort) * 4, pArg);
             }
         }

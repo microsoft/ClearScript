@@ -83,17 +83,18 @@ namespace Microsoft.ClearScript.Util
                 {
                     if ((index != (args.Length - 1)) || !param.ParameterType.IsInstanceOfType(args[index]))
                     {
-                        var tailArgs = Array.CreateInstance(param.ParameterType.GetElementType(), args.Length - index);
+                        var tailArgType = param.ParameterType.GetElementType();
+                        var tailArgs = Array.CreateInstance(tailArgType, args.Length - index);
                         for (var innerIndex = index; innerIndex < args.Length; innerIndex++)
                         {
                             var byRefArg = args[innerIndex] as IByRefArg;
                             if (byRefArg == null)
                             {
-                                tailArgs.SetValue(args[innerIndex], innerIndex - index);
+                                tailArgs.SetValue(GetCompatibleArg(param.Name, tailArgType, args[innerIndex]), innerIndex - index);
                             }
                             else
                             {
-                                tailArgs.SetValue(byRefArg.Value, innerIndex - index);
+                                tailArgs.SetValue(GetCompatibleArg(param.Name, tailArgType, byRefArg.Value), innerIndex - index);
                                 byRefArgInfo.Add(new ByRefArgItem(byRefArg, tailArgs, innerIndex - index));
                             }
                         }
@@ -109,11 +110,11 @@ namespace Microsoft.ClearScript.Util
                     var byRefArg = args[index] as IByRefArg;
                     if (byRefArg == null)
                     {
-                        argList.Add(args[index]);
+                        argList.Add(GetCompatibleArg(param, args[index]));
                     }
                     else
                     {
-                        argList.Add(byRefArg.Value);
+                        argList.Add(GetCompatibleArg(param, byRefArg.Value));
                         byRefArgInfo.Add(new ByRefArgItem(byRefArg, null, index));
                     }
                 }
@@ -230,6 +231,21 @@ namespace Microsoft.ClearScript.Util
 
             result = null;
             return false;
+        }
+
+        private static object GetCompatibleArg(ParameterInfo param, object value)
+        {
+            return GetCompatibleArg(param.Name, param.ParameterType, value);
+        }
+
+        private static object GetCompatibleArg(string paramName, Type type, object value)
+        {
+            if (!type.IsAssignableFrom(ref value))
+            {
+                throw new ArgumentException(MiscHelpers.FormatInvariant("Invalid argument specified for parameter '{0}'", paramName));
+            }
+
+            return value;
         }
 
         #region Nested type: ByRefArgItem

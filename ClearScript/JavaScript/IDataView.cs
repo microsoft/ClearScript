@@ -59,54 +59,13 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
-
-//-----------------------------------------------------------------------------
-// common platform headers
-//-----------------------------------------------------------------------------
-
-#include "CommonPlatform.h"
-
-//-----------------------------------------------------------------------------
-// C++ support library headers
-//-----------------------------------------------------------------------------
-
-#include <msclr\all.h>
-
-//-----------------------------------------------------------------------------
-// assembly references
-//-----------------------------------------------------------------------------
-
-#using "ClearScript.dll" as_friend
-
-//-----------------------------------------------------------------------------
-// namespace references
-//-----------------------------------------------------------------------------
-
-using namespace System;
-using namespace System::Globalization;
-using namespace System::Runtime::InteropServices;
-using namespace System::Threading;
-using namespace Microsoft::ClearScript::JavaScript;
-using namespace Microsoft::ClearScript::Util;
-
-//-----------------------------------------------------------------------------
-// global macros
-//-----------------------------------------------------------------------------
-
-#define BEGIN_LOCK_SCOPE(OBJECT) \
-    { \
-        msclr::lock t_Lock(OBJECT);
-
-#define END_LOCK_SCOPE \
-        IGNORE_UNUSED(t_Lock); \
+namespace Microsoft.ClearScript.JavaScript
+{
+    /// <summary>
+    /// Represents a JavaScript
+    /// <see href="https://msdn.microsoft.com/en-us/library/br212463(v=vs.94).aspx">DataView</see>.
+    /// </summary>
+    public interface IDataView : IArrayBufferView
+    {
     }
-
-//-----------------------------------------------------------------------------
-
-#define ENSURE_INTERNAL_CLASS(NAME) \
-    public ref class NAME##Anchor \
-    { \
-    private: \
-        static String^ m_gcName = NAME::typeid->Name; \
-    };
+}

@@ -288,6 +288,41 @@ bool HostObjectHelpers::IsDelegate(void* pvObject)
 
 //-----------------------------------------------------------------------------
 
+V8Value HostObjectHelpers::GetEnumerator(void* pvObject)
+{
+    try
+    {
+        return V8ContextProxyImpl::ImportValue(V8ProxyHelpers::GetEnumeratorForHostObject(pvObject));
+    }
+    catch (Exception^ gcException)
+    {
+        ThrowHostException(pvObject, gcException);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+bool HostObjectHelpers::AdvanceEnumerator(void* pvEnumerator, V8Value& value)
+{
+    try
+    {
+        Object^ gcValue;
+        if (V8ProxyHelpers::AdvanceEnumerator(pvEnumerator, gcValue))
+        {
+            value = V8ContextProxyImpl::ImportValue(gcValue);
+            return true;
+        }
+
+        return false;
+    }
+    catch (Exception^ gcException)
+    {
+        ThrowHostException(pvEnumerator, gcException);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void* HostObjectHelpers::CreateV8ObjectCache()
 {
     return V8ProxyHelpers::CreateV8ObjectCache();

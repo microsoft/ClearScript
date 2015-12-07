@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -116,7 +117,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object GetHostObjectProperty(object obj, string name)
         {
-            return ((IDynamic)obj).GetProperty(name);
+            return ((IDynamic)obj).GetProperty(name, MiscHelpers.GetEmptyArray<object>());
         }
 
         public static unsafe object GetHostObjectProperty(void* pObject, string name, out bool isCacheable)
@@ -126,7 +127,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object GetHostObjectProperty(object obj, string name, out bool isCacheable)
         {
-            return ((IDynamic)obj).GetProperty(name, out isCacheable);
+            return ((IDynamic)obj).GetProperty(name, MiscHelpers.GetEmptyArray<object>(), out isCacheable);
         }
 
         public static unsafe void SetHostObjectProperty(void* pObject, string name, object value)
@@ -136,7 +137,7 @@ namespace Microsoft.ClearScript.V8
 
         public static void SetHostObjectProperty(object obj, string name, object value)
         {
-            ((IDynamic)obj).SetProperty(name, value);
+            ((IDynamic)obj).SetProperty(name, new[] { value });
         }
 
         public static unsafe bool DeleteHostObjectProperty(void* pObject, string name)
@@ -239,6 +240,34 @@ namespace Microsoft.ClearScript.V8
             }
 
             return hostTarget.Flags.HasFlag(HostTargetFlags.AllowInstanceMembers) && typeof(Delegate).IsAssignableFrom(hostTarget.Type);
+        }
+
+        public static unsafe object GetEnumeratorForHostObject(void* pObject)
+        {
+            return GetEnumeratorForHostObject(GetHostObject(pObject));
+        }
+
+        public static object GetEnumeratorForHostObject(object obj)
+        {
+            return ((IDynamic)obj).InvokeMethod(SpecialMemberNames.NewEnum, MiscHelpers.GetEmptyArray<object>());
+        }
+
+        public static unsafe bool AdvanceEnumerator(void* pEnumerator, out object value)
+        {
+            return AdvanceEnumerator(GetHostObject(pEnumerator), out value);
+        }
+
+        public static bool AdvanceEnumerator(object enumerator, out object value)
+        {
+            var wrapper = (IScriptMarshalWrapper)enumerator;
+            if (((IEnumerator)wrapper.Unwrap()).MoveNext())
+            {
+                value = ((IDynamic)enumerator).GetProperty("Current", MiscHelpers.GetEmptyArray<object>());
+                return true;
+            }
+
+            value = null;
+            return false;
         }
 
         #endregion

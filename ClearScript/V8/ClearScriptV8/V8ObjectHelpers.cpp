@@ -141,3 +141,17 @@ V8Value V8ObjectHelpers::InvokeMethod(V8ObjectHolder* pHolder, const StdString& 
 {
     return GetHolderImpl(pHolder)->InvokeMethod(name, args);
 }
+
+//-----------------------------------------------------------------------------
+
+void V8ObjectHelpers::GetArrayBufferOrViewInfo(V8ObjectHolder* pHolder, V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length)
+{
+    return GetHolderImpl(pHolder)->GetArrayBufferOrViewInfo(arrayBuffer, offset, size, length);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ObjectHelpers::InvokeWithArrayBufferOrViewData(V8ObjectHolder* pHolder, ArrayBufferOrViewDataCallbackT* pCallback, void* pvArg)
+{
+    return GetHolderImpl(pHolder)->InvokeWithArrayBufferOrViewData(pCallback, pvArg);
+}

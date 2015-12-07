@@ -71,7 +71,7 @@ namespace Microsoft.ClearScript.Test
     internal static class SunSpider
     {
         private const string version = "sunspider-1.0.2";
-        private const string baseUrl = "http://www.webkit.org/perf/" + version + "/" + version + "/";
+        private const string baseUrl = "https://webkit.org/perf/" + version + "/" + version + "/";
 
         private const int repeatCount = 10;
         private const string scriptBegin = "<script>";

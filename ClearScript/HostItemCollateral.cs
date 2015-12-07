@@ -92,7 +92,7 @@ namespace Microsoft.ClearScript
 
         #endregion
 
-        #region Nested type : CollateralObject<T>
+        #region Nested type: CollateralObject<T>
 
         public class CollateralObject<T> : CollateralObject<HostItem, T> where T : class
         {
@@ -100,7 +100,7 @@ namespace Microsoft.ClearScript
 
         #endregion
 
-        #region Nested type : ListDataFields
+        #region Nested type: ListDataFields
 
         public class ListDataFields
         {

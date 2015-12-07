@@ -70,11 +70,11 @@ class Timer: public WeakRefTarget<Timer>
 public:
 
     Timer(unsigned int delay, bool repeating, std::function<void(Timer*)>&& func):
-        m_spTimer(std::make_shared<Concurrency::timer<int>>(delay, 0, nullptr, repeating)),
+        m_spTimer(new Concurrency::timer<int>(delay, 0, nullptr, repeating)),
         m_Func(std::move(func))
     {
         auto wrTimer = CreateWeakRef();
-        m_spCall = std::make_shared<Concurrency::call<int>>([wrTimer] (int)
+        m_spCall = new Concurrency::call<int>([wrTimer] (int)
         {
             Concurrency::create_task([wrTimer]
             {
@@ -86,7 +86,7 @@ public:
             });
         });
 
-        m_spTimer->link_target(m_spCall.get());
+        m_spTimer->link_target(m_spCall);
     }
 
     void Start()
@@ -111,7 +111,7 @@ private:
         m_Func(this);
     }
 
-    std::shared_ptr<Concurrency::timer<int>> m_spTimer;
-    std::shared_ptr<Concurrency::call<int>> m_spCall;
+    SharedPtr<Concurrency::timer<int>> m_spTimer;
+    SharedPtr<Concurrency::call<int>> m_spCall;
     std::function<void(Timer*)> m_Func;
 };

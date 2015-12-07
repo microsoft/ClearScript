@@ -84,59 +84,85 @@ public:
         Null
     };
 
+    enum class Subtype: std::uint16_t
+    {
+        None,
+        ArrayBuffer,
+        DataView,
+        Uint8Array,
+        Uint8ClampedArray,
+        Int8Array,
+        Uint16Array,
+        Int16Array,
+        Uint32Array,
+        Int32Array,
+        Float32Array,
+        Float64Array
+    };
+
     explicit V8Value(NonexistentInitializer):
-        m_Type(Type_Nonexistent)
+        m_Type(Type::Nonexistent),
+        m_Subtype(Subtype::None)
     {
     }
 
     explicit V8Value(UndefinedInitializer):
-        m_Type(Type_Undefined)
+        m_Type(Type::Undefined),
+        m_Subtype(Subtype::None)
     {
     }
 
     explicit V8Value(NullInitializer):
-        m_Type(Type_Null)
+        m_Type(Type::Null),
+        m_Subtype(Subtype::None)
     {
     }
 
     explicit V8Value(bool value):
-        m_Type(Type_Boolean)
+        m_Type(Type::Boolean),
+        m_Subtype(Subtype::None)
     {
         m_Data.BooleanValue = value;
     }
 
     explicit V8Value(double value):
-        m_Type(Type_Number)
+        m_Type(Type::Number),
+        m_Subtype(Subtype::None)
     {
         m_Data.DoubleValue = value;
     }
 
-    explicit V8Value(__int32 value):
-        m_Type(Type_Int32)
+    explicit V8Value(std::int32_t value):
+        m_Type(Type::Int32),
+        m_Subtype(Subtype::None)
     {
         m_Data.Int32Value = value;
     }
 
-    explicit V8Value(unsigned __int32 value):
-        m_Type(Type_UInt32)
+    explicit V8Value(std::uint32_t value):
+        m_Type(Type::UInt32),
+        m_Subtype(Subtype::None)
     {
         m_Data.UInt32Value = value;
     }
 
     explicit V8Value(const StdString* pString):
-        m_Type(Type_String)
+        m_Type(Type::String),
+        m_Subtype(Subtype::None)
     {
         m_Data.pString = pString;
     }
 
-    explicit V8Value(V8ObjectHolder* pV8ObjectHolder):
-        m_Type(Type_V8Object)
+    V8Value(V8ObjectHolder* pV8ObjectHolder, Subtype subtype):
+        m_Type(Type::V8Object),
+        m_Subtype(subtype)
     {
         m_Data.pV8ObjectHolder = pV8ObjectHolder;
     }
 
     explicit V8Value(HostObjectHolder* pHostObjectHolder):
-        m_Type(Type_HostObject)
+        m_Type(Type::HostObject),
+        m_Subtype(Subtype::None)
     {
         m_Data.pHostObjectHolder = pHostObjectHolder;
     }
@@ -167,22 +193,22 @@ public:
 
     bool IsNonexistent() const
     {
-        return m_Type == Type_Nonexistent;
+        return m_Type == Type::Nonexistent;
     }
 
     bool IsUndefined() const
     {
-        return m_Type == Type_Undefined;
+        return m_Type == Type::Undefined;
     }
 
     bool IsNull() const
     {
-        return m_Type == Type_Null;
+        return m_Type == Type::Null;
     }
 
     bool AsBoolean(bool& result) const
     {
-        if (m_Type == Type_Boolean)
+        if (m_Type == Type::Boolean)
         {
             result = m_Data.BooleanValue;
             return true;
@@ -193,7 +219,7 @@ public:
 
     bool AsNumber(double& result) const
     {
-        if (m_Type == Type_Number)
+        if (m_Type == Type::Number)
         {
             result = m_Data.DoubleValue;
             return true;
@@ -202,9 +228,9 @@ public:
         return false;
     }
 
-    bool AsInt32(__int32& result) const
+    bool AsInt32(std::int32_t& result) const
     {
-        if (m_Type == Type_Int32)
+        if (m_Type == Type::Int32)
         {
             result = m_Data.Int32Value;
             return true;
@@ -213,9 +239,9 @@ public:
         return false;
     }
 
-    bool AsUInt32(unsigned __int32& result) const
+    bool AsUInt32(std::uint32_t& result) const
     {
-        if (m_Type == Type_UInt32)
+        if (m_Type == Type::UInt32)
         {
             result = m_Data.UInt32Value;
             return true;
@@ -226,7 +252,7 @@ public:
 
     bool AsString(const StdString*& pString) const
     {
-        if (m_Type == Type_String)
+        if (m_Type == Type::String)
         {
             pString = m_Data.pString;
             return true;
@@ -235,11 +261,12 @@ public:
         return false;
     }
 
-    bool AsV8Object(V8ObjectHolder*& pV8ObjectHolder) const
+    bool AsV8Object(V8ObjectHolder*& pV8ObjectHolder, Subtype& subtype) const
     {
-        if (m_Type == Type_V8Object)
+        if (m_Type == Type::V8Object)
         {
             pV8ObjectHolder = m_Data.pV8ObjectHolder;
+            subtype = m_Subtype;
             return true;
         }
 
@@ -248,7 +275,7 @@ public:
 
     bool AsHostObject(HostObjectHolder*& pHostObjectHolder) const
     {
-        if (m_Type == Type_HostObject)
+        if (m_Type == Type::HostObject)
         {
             pHostObjectHolder = m_Data.pHostObjectHolder;
             return true;
@@ -264,26 +291,26 @@ public:
 
 private:
 
-    enum Type
+    enum class Type: std::uint16_t
     {
-        Type_Nonexistent,
-        Type_Undefined,
-        Type_Null,
-        Type_Boolean,
-        Type_Number,
-        Type_Int32,
-        Type_UInt32,
-        Type_String,
-        Type_V8Object,
-        Type_HostObject
+        Nonexistent,
+        Undefined,
+        Null,
+        Boolean,
+        Number,
+        Int32,
+        UInt32,
+        String,
+        V8Object,
+        HostObject
     };
 
     union Data
     {
         bool BooleanValue;
         double DoubleValue;
-        __int32 Int32Value;
-        unsigned __int32 UInt32Value;
+        std::int32_t Int32Value;
+        std::uint32_t UInt32Value;
         const StdString* pString;
         V8ObjectHolder* pV8ObjectHolder;
         HostObjectHolder* pHostObjectHolder;
@@ -292,32 +319,33 @@ private:
     void Copy(const V8Value& that)
     {
         m_Type = that.m_Type;
+        m_Subtype = that.m_Subtype;
 
-        if (m_Type == Type_Boolean)
+        if (m_Type == Type::Boolean)
         {
             m_Data.BooleanValue = that.m_Data.BooleanValue;
         }
-        else if (m_Type == Type_Number)
+        else if (m_Type == Type::Number)
         {
             m_Data.DoubleValue = that.m_Data.DoubleValue;
         }
-        else if (m_Type == Type_Int32)
+        else if (m_Type == Type::Int32)
         {
             m_Data.Int32Value = that.m_Data.Int32Value;
         }
-        else if (m_Type == Type_UInt32)
+        else if (m_Type == Type::UInt32)
         {
             m_Data.UInt32Value = that.m_Data.UInt32Value;
         }
-        else if (m_Type == Type_String)
+        else if (m_Type == Type::String)
         {
             m_Data.pString = new StdString(*that.m_Data.pString);
         }
-        else if (m_Type == Type_V8Object)
+        else if (m_Type == Type::V8Object)
         {
             m_Data.pV8ObjectHolder = that.m_Data.pV8ObjectHolder->Clone();
         }
-        else if (m_Type == Type_HostObject)
+        else if (m_Type == Type::HostObject)
         {
             m_Data.pHostObjectHolder = that.m_Data.pHostObjectHolder->Clone();
         }
@@ -326,26 +354,28 @@ private:
     void Move(V8Value& that)
     {
         m_Type = that.m_Type;
+        m_Subtype = that.m_Subtype;
         m_Data = that.m_Data;
-        that.m_Type = Type_Undefined;
+        that.m_Type = Type::Undefined;
     }
 
     void Dispose()
     {
-        if (m_Type == Type_String)
+        if (m_Type == Type::String)
         {
             delete m_Data.pString;
         }
-        else if (m_Type == Type_V8Object)
+        else if (m_Type == Type::V8Object)
         {
             delete m_Data.pV8ObjectHolder;
         }
-        else if (m_Type == Type_HostObject)
+        else if (m_Type == Type::HostObject)
         {
             delete m_Data.pHostObjectHolder;
         }
     }
 
     Type m_Type;
+    Subtype m_Subtype;
     Data m_Data;
 };

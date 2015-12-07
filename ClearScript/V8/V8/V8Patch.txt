@@ -1,8 +1,8 @@
 diff --git a/build/standalone.gypi b/build/standalone.gypi
-index 7c96720..0b046cd 100644
+index 7250579..86c6334 100644
 --- a/build/standalone.gypi
 +++ b/build/standalone.gypi
-@@ -464,7 +464,7 @@
+@@ -821,7 +821,7 @@
              'EnableFunctionLevelLinking': 'true',
              'RuntimeTypeInfo': 'false',
              'WarningLevel': '3',
@@ -11,39 +11,11 @@ index 7c96720..0b046cd 100644
              'DebugInformationFormat': '3',
              'Detect64BitPortabilityProblems': 'false',
              'conditions': [
-diff --git a/src/api.cc b/src/api.cc
-index 4f06873..546f1f5 100644
---- a/src/api.cc
-+++ b/src/api.cc
-@@ -5319,10 +5319,6 @@ void v8::V8::SetReturnAddressLocationResolver(
- 
- void v8::V8::SetArrayBufferAllocator(
-     ArrayBuffer::Allocator* allocator) {
--  if (!Utils::ApiCheck(i::V8::ArrayBufferAllocator() == NULL,
--                       "v8::V8::SetArrayBufferAllocator",
--                       "ArrayBufferAllocator might only be set once"))
--    return;
-   i::V8::SetArrayBufferAllocator(allocator);
- }
- 
-diff --git a/src/objects.cc b/src/objects.cc
-index f0dcaab..4cc1d99 100644
---- a/src/objects.cc
-+++ b/src/objects.cc
-@@ -6690,7 +6690,7 @@ MaybeHandle<Object> JSObject::DefineAccessor(Handle<JSObject> object,
-   if (is_observed) {
-     if (is_element) {
-       Maybe<bool> maybe = HasOwnElement(object, index);
--      // Workaround for a GCC 4.4.3 bug which leads to "‘preexists’ may be used
-+      // Workaround for a GCC 4.4.3 bug which leads to "'preexists' may be used
-       // uninitialized in this function".
-       if (!maybe.IsJust()) {
-         DCHECK(false);
 diff --git a/src/parser.cc b/src/parser.cc
-index 3b537d2..17d8c97 100644
+index 1bd163c..71fbe15 100644
 --- a/src/parser.cc
 +++ b/src/parser.cc
-@@ -2642,7 +2642,7 @@ Statement* Parser::ParseExpressionOrLabelledStatement(
+@@ -2623,7 +2623,7 @@ Statement* Parser::ParseExpressionOrLabelledStatement(
    //   Identifier ':' Statement
    //
    // ExpressionStatement[Yield] :
@@ -53,10 +25,10 @@ index 3b537d2..17d8c97 100644
    int pos = peek_position();
  
 diff --git a/src/v8.cc b/src/v8.cc
-index 49a104f..08fd6f3 100644
+index 760a9b5..2618312 100644
 --- a/src/v8.cc
 +++ b/src/v8.cc
-@@ -109,7 +109,6 @@ void V8::InitializeOncePerProcess() {
+@@ -101,7 +101,6 @@ void V8::InitializeOncePerProcess() {
  
  
  void V8::InitializePlatform(v8::Platform* platform) {
@@ -64,23 +36,11 @@ index 49a104f..08fd6f3 100644
    CHECK(platform);
    platform_ = platform;
  }
-diff --git a/src/v8.h b/src/v8.h
-index 211f3c6..7e29fc2 100644
---- a/src/v8.h
-+++ b/src/v8.h
-@@ -74,7 +74,6 @@ class V8 : public AllStatic {
-   }
- 
-   static void SetArrayBufferAllocator(v8::ArrayBuffer::Allocator *allocator) {
--    CHECK_NULL(array_buffer_allocator_);
-     array_buffer_allocator_ = allocator;
-   }
- 
 diff --git a/tools/gyp/v8.gyp b/tools/gyp/v8.gyp
-index 70d4dee..7fd3018 100644
+index bcb5801..efc51ba 100644
 --- a/tools/gyp/v8.gyp
 +++ b/tools/gyp/v8.gyp
-@@ -38,6 +38,7 @@
+@@ -40,6 +40,7 @@
    'targets': [
      {
        'target_name': 'v8',

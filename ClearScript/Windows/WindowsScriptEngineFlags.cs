@@ -118,6 +118,17 @@ namespace Microsoft.ClearScript.Windows
         /// <see href="http://msdn.microsoft.com/en-us/library/y39d47w8(v=vs.84).aspx">VBArray</see>
         /// object to to access them.
         /// </summary>
-        MarshalArraysByValue = 0x00000040
+        MarshalArraysByValue = 0x00000040,
+
+        /// <summary>
+        /// When <see cref="EnableStandardsMode"/> is specified, the ClearScript library uses
+        /// virtual method table patching to support JScript-specific
+        /// <see href="https://msdn.microsoft.com/en-us/library/sky96ah7(VS.94).aspx">IDispatchEx</see>
+        /// extensions that otherwise interfere with some host object functionality. Virtual method
+        /// table patching is a very low-level mechanism with global effect. This option specifies
+        /// that virtual method table patching is not to be enabled on behalf of the current
+        /// <see cref="JScriptEngine"/> instance.
+        /// </summary>
+        DoNotEnableVTablePatching = 0x00000080,
     }
 }

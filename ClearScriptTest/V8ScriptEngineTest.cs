@@ -1144,7 +1144,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize_Dual()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"x = []; for (i = 0; i < 8 * 1024 * 1024; i++) { x.push(x); }";
+            const string code = @"x = []; for (i = 0; i < 16 * 1024 * 1024; i++) { x.push(x); }";
 
             engine.Execute(code);
             engine.CollectGarbage(true);
@@ -2223,6 +2223,70 @@ namespace Microsoft.ClearScript.Test
             engine.Script.foo = new Random();
             Assert.IsInstanceOfType(engine.Evaluate("foo"), typeof(Random));
             Assert.IsInstanceOfType(engine.Evaluate("foo.toFunction"), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_NativeEnumerator()
+        {
+            var array = Enumerable.Range(0, 10).ToArray();
+            engine.Execute(@"
+                function sum(array) {
+                    var result = 0;
+                    for (var item of array) {
+                        result += item;
+                    }
+                    return result;
+                }
+            ");
+            Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(array));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_NativeEnumerator_Generic()
+        {
+            var array = Enumerable.Range(0, 10).Select(value => (IConvertible)value).ToArray();
+            engine.Script.culture = CultureInfo.InvariantCulture;
+            engine.Execute(@"
+                function sum(array) {
+                    var result = 0;
+                    for (var item of array) {
+                        result += item.ToInt32(culture);
+                    }
+                    return result;
+                }
+            ");
+            Assert.AreEqual(array.Aggregate((current, next) => Convert.ToInt32(current) + Convert.ToInt32(next)), engine.Script.sum(array));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_NativeEnumerator_NonGeneric()
+        {
+            var array = Enumerable.Range(0, 10).ToArray();
+            engine.Execute(@"
+                function sum(array) {
+                    var result = 0;
+                    for (var item of array) {
+                        result += item;
+                    }
+                    return result;
+                }
+            ");
+            Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(HostObject.Wrap(array, typeof(IEnumerable))));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_NativeEnumerator_NonEnumerable()
+        {
+            engine.Execute(@"
+                function sum(array) {
+                    var result = 0;
+                    for (var item of array) {
+                        result += item;
+                    }
+                    return result;
+                }
+            ");
+            TestUtil.AssertException<NotSupportedException>(() => engine.Script.sum(DayOfWeek.Monday));
         }
 
         // ReSharper restore InconsistentNaming

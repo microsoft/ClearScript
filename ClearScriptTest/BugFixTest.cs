@@ -1292,6 +1292,516 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("123 456.789 hello", engine.Evaluate("foo.RunTest(123, 456.789, 'hello')"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NestedInterrupt()
+        {
+            var context = new PropertyBag();
+            engine.AddHostObject("context", context);
+
+            using (var startEvent = new ManualResetEventSlim(false))
+            {
+                object result = null;
+                var interruptedInner = false;
+                var interruptedOuter = false;
+
+                context["startEvent"] = startEvent;
+                context["foo"] = new Action(() =>
+                {
+                    try
+                    {
+                        engine.Execute("while (true) { context.startEvent.Set(); }");
+                    }
+                    catch (ScriptInterruptedException)
+                    {
+                        interruptedInner = true;
+                    }
+                });
+
+                var thread = new Thread(() =>
+                {
+                    try
+                    {
+                        result = engine.Evaluate("context.foo(); 123");
+                    }
+                    catch (ScriptInterruptedException)
+                    {
+                        interruptedOuter = true;
+                    }
+                });
+
+                thread.Start();
+                startEvent.Wait();
+                engine.Interrupt();
+                thread.Join();
+
+                Assert.IsTrue(interruptedInner);
+                Assert.IsFalse(interruptedOuter);
+                Assert.AreEqual(123, result);
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NestedInterrupt_JScript()
+        {
+            engine.Dispose();
+            try
+            {
+                using (var startEvent = new ManualResetEventSlim(false))
+                {
+                    object result = null;
+                    var interruptedInner = false;
+                    var interruptedOuter = false;
+
+                    var thread = new Thread(() =>
+                    {
+                        using (engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging))
+                        {
+                            var context = new PropertyBag();
+                            engine.AddHostObject("context", context);
+
+                            // ReSharper disable once AccessToDisposedClosure
+                            context["startEvent"] = startEvent;
+                            context["foo"] = new Action(() =>
+                            {
+                                try
+                                {
+                                    engine.Execute("while (true) { context.startEvent.Set(); }");
+                                }
+                                catch (ScriptInterruptedException)
+                                {
+                                    interruptedInner = true;
+                                }
+                            });
+
+                            try
+                            {
+                                result = engine.Evaluate("context.foo(); 123");
+                            }
+                            catch (ScriptInterruptedException)
+                            {
+                                interruptedOuter = true;
+                            }
+                        }
+                    });
+
+                    thread.Start();
+                    startEvent.Wait();
+                    engine.Interrupt();
+                    thread.Join();
+
+                    Assert.IsTrue(interruptedInner);
+                    Assert.IsFalse(interruptedOuter);
+                    Assert.AreEqual(123, result);
+                }
+            }
+            finally
+            {
+                engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_PropertyBag_NativeEnumerator_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+
+            var x = new PropertyBag();
+            x["foo"] = 123;
+            x["bar"] = "blah";
+            engine.Script.x = x;
+
+            var result = (string)engine.Evaluate(@"
+                var result = '';
+                for (var e = new Enumerator(x); !e.atEnd(); e.moveNext()) {
+                    result += e.item().Value;
+                }
+                result
+            ");
+
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_PropertyBag_NativeEnumerator_VBScript()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            var x = new PropertyBag();
+            x["foo"] = 123;
+            x["bar"] = "blah";
+            engine.Script.x = x;
+
+            engine.Execute(@"
+                function getResult(arg)
+                    dim result
+                    result = """"
+                    for each item in arg
+                        result = result & item.Value
+                    next
+                    getResult = result
+                end function
+            ");
+
+            var result = (string)engine.Evaluate("getResult(x)");
+
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_JScriptStandardsMode_PropertyAccess()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode);
+            engine.Script.x = new { foo = 123 };
+            Assert.AreEqual(123, engine.Evaluate("x.foo"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_JScriptStandardsMode_MemberEnumeration()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode);
+
+            engine.Script.x = new { foo = 123, bar = "blah" };
+            var result = (string)engine.Evaluate(@"
+                var result = '';
+                for (var i in x) {
+                    if ((i == 'foo') || (i == 'bar')) {
+                        result += x[i];
+                    }
+                }
+                result
+            ");
+
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_JScriptStandardsMode_MemberEnumeration_PropertyBag()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode);
+
+            var x = new PropertyBag();
+            x["foo"] = 123;
+            x["bar"] = "blah";
+            engine.Script.x = x;
+
+            var result = (string)engine.Evaluate(@"
+                var result = '';
+                for (var i in x) {
+                    result += x[i];
+                }
+                result
+            ");
+
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_JScriptStandardsMode_MemberEnumeration_Dynamic()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode);
+
+            dynamic x = new ExpandoObject();
+            x.foo = 123;
+            x.bar = "blah";
+            engine.Script.x = x;
+
+            var result = (string)engine.Evaluate(@"
+                var result = '';
+                for (var i in x) {
+                    if ((i == 'foo') || (i == 'bar')) {
+                        result += x[i];
+                    }
+                }
+                result
+            ");
+
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_JScriptStandardsMode_MemberDeletion_PropertyBag()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode);
+
+            var x = new PropertyBag();
+            x["foo"] = 123;
+            x["bar"] = "blah";
+            engine.Script.x = x;
+
+            Assert.AreEqual(123, engine.Evaluate("x.foo"));
+            Assert.AreEqual("blah", engine.Evaluate("x.bar"));
+            Assert.AreEqual(true, engine.Evaluate("delete x.foo"));
+            Assert.IsInstanceOfType(engine.Evaluate("x.foo"), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_JScriptStandardsMode_MemberDeletion_Dynamic()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode);
+
+            dynamic x = new ExpandoObject();
+            x.foo = 123;
+            x.bar = "blah";
+            engine.Script.x = x;
+
+            Assert.AreEqual(123, engine.Evaluate("x.foo"));
+            Assert.AreEqual("blah", engine.Evaluate("x.bar"));
+            Assert.AreEqual(true, engine.Evaluate("delete x.foo"));
+            Assert.IsInstanceOfType(engine.Evaluate("x.foo"), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NumericArgConversion_Delegate()
+        {
+            engine.Script.host = new HostFunctions();
+            engine.Script.sbyteFunc = new Func<sbyte, sbyte>(arg => arg);
+            engine.Script.nullableSByteFunc = new Func<sbyte?, sbyte?>(arg => arg);
+            engine.Script.floatFunc = new Func<float, float>(arg => arg);
+            engine.Script.nullableFloatFunc = new Func<float?, float?>(arg => arg);
+            engine.Script.doubleFunc = new Func<double, double>(arg => arg);
+            engine.Script.nullableDoubleFunc = new Func<double?, double?>(arg => arg);
+            engine.Script.decimalFunc = new Func<decimal, decimal>(arg => arg);
+            engine.Script.nullableDecimalFunc = new Func<decimal?, decimal?>(arg => arg);
+
+            Assert.AreEqual(123, engine.Evaluate("sbyteFunc(123)"));
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("sbyteFunc(234)"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("sbyteFunc(123.5)"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("sbyteFunc(Math.PI)"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("sbyteFunc(host.toDecimal(Math.PI))"));
+
+            Assert.AreEqual(123, engine.Evaluate("nullableSByteFunc(123)"));
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("nullableSByteFunc(234)"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("nullableSByteFunc(123.5)"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("nullableSByteFunc(Math.PI)"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("nullableSByteFunc(host.toDecimal(Math.PI))"));
+            Assert.IsNull(engine.Evaluate("nullableSByteFunc(null)"));
+
+            Assert.AreEqual(123, engine.Evaluate("floatFunc(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("floatFunc(123.5)"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("floatFunc(Math.PI)"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("floatFunc(host.toDecimal(Math.PI))"));
+
+            Assert.AreEqual(123, engine.Evaluate("nullableFloatFunc(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("nullableFloatFunc(123.5)"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("nullableFloatFunc(Math.PI)"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("nullableFloatFunc(host.toDecimal(Math.PI))"));
+            Assert.IsNull(engine.Evaluate("nullableFloatFunc(null)"));
+
+            Assert.AreEqual(123, engine.Evaluate("doubleFunc(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("doubleFunc(123.5)"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("doubleFunc(Math.PI)"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("doubleFunc(host.toDecimal(Math.PI))"));
+
+            Assert.AreEqual(123, engine.Evaluate("nullableDoubleFunc(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("nullableDoubleFunc(123.5)"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("nullableDoubleFunc(Math.PI)"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("nullableDoubleFunc(host.toDecimal(Math.PI))"));
+            Assert.IsNull(engine.Evaluate("nullableDoubleFunc(null)"));
+
+            Assert.AreEqual(123, engine.Evaluate("decimalFunc(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("decimalFunc(123.5)"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("decimalFunc(Math.PI)"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("decimalFunc(host.toDecimal(Math.PI))"));
+
+            Assert.AreEqual(123, engine.Evaluate("nullableDecimalFunc(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("nullableDecimalFunc(123.5)"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("nullableDecimalFunc(Math.PI)"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("nullableDecimalFunc(host.toDecimal(Math.PI))"));
+            Assert.IsNull(engine.Evaluate("nullableDecimalFunc(null)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NumericArgConversion_Field()
+        {
+            engine.Script.host = new HostFunctions();
+            engine.Script.test = new NumericArgConversionTest();
+
+            Assert.AreEqual(123, engine.Evaluate("test.SByteField = 123; test.SByteField"));
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.SByteField = 234"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteField = 123.5"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteField = Math.PI"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteField = host.toDecimal(Math.PI)"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableSByteField = 123; test.NullableSByteField"));
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.NullableSByteField = 234"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteField = 123.5"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteField = Math.PI"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteField = host.toDecimal(Math.PI)"));
+            Assert.IsNull(engine.Evaluate("test.NullableSByteField = null; test.NullableSByteField"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.FloatField = 123; test.FloatField"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.FloatField = 123.5; test.FloatField"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("test.FloatField = Math.PI; test.FloatField"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("test.FloatField = host.toDecimal(Math.PI); test.FloatField"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableFloatField = 123; test.NullableFloatField"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.NullableFloatField = 123.5; test.NullableFloatField"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("test.NullableFloatField = Math.PI; test.NullableFloatField"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("test.NullableFloatField = host.toDecimal(Math.PI); test.NullableFloatField"));
+            Assert.IsNull(engine.Evaluate("test.NullableFloatField = null; test.NullableFloatField"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.DoubleField = 123; test.DoubleField"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.DoubleField = 123.5; test.DoubleField"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.DoubleField = Math.PI; test.DoubleField"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.DoubleField = host.toDecimal(Math.PI); test.DoubleField"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableDoubleField = 123; test.NullableDoubleField"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.NullableDoubleField = 123.5; test.NullableDoubleField"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.NullableDoubleField = Math.PI; test.NullableDoubleField"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.NullableDoubleField = host.toDecimal(Math.PI); test.NullableDoubleField"));
+            Assert.IsNull(engine.Evaluate("test.NullableDoubleField = null; test.NullableDoubleField"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.DecimalField = 123; test.DecimalField"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.DecimalField = 123.5; test.DecimalField"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.DecimalField = Math.PI; test.DecimalField"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.DecimalField = host.toDecimal(Math.PI); test.DecimalField"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableDecimalField = 123; test.NullableDecimalField"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.NullableDecimalField = 123.5; test.NullableDecimalField"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.NullableDecimalField = Math.PI; test.NullableDecimalField"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.NullableDecimalField = host.toDecimal(Math.PI); test.NullableDecimalField"));
+            Assert.IsNull(engine.Evaluate("test.NullableDecimalField = null; test.NullableDecimalField"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NumericArgConversion_Method()
+        {
+            engine.Script.host = new HostFunctions();
+            engine.Script.test = new NumericArgConversionTest();
+
+            Assert.AreEqual(123, engine.Evaluate("test.SByteMethod(123)"));
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.SByteMethod(234)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.SByteMethod(123.5)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.SByteMethod(Math.PI)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.SByteMethod(host.toDecimal(Math.PI))"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableSByteMethod(123)"));
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.NullableSByteMethod(234)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableSByteMethod(123.5)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableSByteMethod(Math.PI)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableSByteMethod(host.toDecimal(Math.PI))"));
+            Assert.IsNull(engine.Evaluate("test.NullableSByteMethod(null)"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.FloatMethod(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.FloatMethod(123.5)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.FloatMethod(Math.PI)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.FloatMethod(host.toDecimal(Math.PI))"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableFloatMethod(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.NullableFloatMethod(123.5)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableFloatMethod(Math.PI)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableFloatMethod(host.toDecimal(Math.PI))"));
+            Assert.IsNull(engine.Evaluate("test.NullableFloatMethod(null)"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.DoubleMethod(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.DoubleMethod(123.5)"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.DoubleMethod(Math.PI)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.DoubleMethod(host.toDecimal(Math.PI))"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableDoubleMethod(123)"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.NullableDoubleMethod(123.5)"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.NullableDoubleMethod(Math.PI)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableDoubleMethod(host.toDecimal(Math.PI))"));
+            Assert.IsNull(engine.Evaluate("test.NullableDoubleMethod(null)"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.DecimalMethod(123)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.DecimalMethod(123.5)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.DecimalMethod(Math.PI)"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.DecimalMethod(host.toDecimal(Math.PI))"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableDecimalMethod(123)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableDecimalMethod(123.5)"));
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableDecimalMethod(Math.PI)"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.NullableDecimalMethod(host.toDecimal(Math.PI))"));
+            Assert.IsNull(engine.Evaluate("test.NullableDecimalMethod(null)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NumericArgConversion_Property()
+        {
+            engine.Script.host = new HostFunctions();
+            engine.Script.test = new NumericArgConversionTest();
+
+            Assert.AreEqual(123, engine.Evaluate("test.SByteProperty = 123; test.SByteProperty"));
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.SByteProperty = 234"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteProperty = 123.5"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteProperty = Math.PI"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteProperty = host.toDecimal(Math.PI)"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableSByteProperty = 123; test.NullableSByteProperty"));
+            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.NullableSByteProperty = 234"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteProperty = 123.5"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteProperty = Math.PI"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteProperty = host.toDecimal(Math.PI)"));
+            Assert.IsNull(engine.Evaluate("test.NullableSByteProperty = null; test.NullableSByteProperty"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.FloatProperty = 123; test.FloatProperty"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.FloatProperty = 123.5; test.FloatProperty"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("test.FloatProperty = Math.PI; test.FloatProperty"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("test.FloatProperty = host.toDecimal(Math.PI); test.FloatProperty"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableFloatProperty = 123; test.NullableFloatProperty"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.NullableFloatProperty = 123.5; test.NullableFloatProperty"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("test.NullableFloatProperty = Math.PI; test.NullableFloatProperty"));
+            Assert.AreEqual((float)Math.PI, engine.Evaluate("test.NullableFloatProperty = host.toDecimal(Math.PI); test.NullableFloatProperty"));
+            Assert.IsNull(engine.Evaluate("test.NullableFloatProperty = null; test.NullableFloatProperty"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.DoubleProperty = 123; test.DoubleProperty"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.DoubleProperty = 123.5; test.DoubleProperty"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.DoubleProperty = Math.PI; test.DoubleProperty"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.DoubleProperty = host.toDecimal(Math.PI); test.DoubleProperty"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableDoubleProperty = 123; test.NullableDoubleProperty"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.NullableDoubleProperty = 123.5; test.NullableDoubleProperty"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.NullableDoubleProperty = Math.PI; test.NullableDoubleProperty"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.NullableDoubleProperty = host.toDecimal(Math.PI); test.NullableDoubleProperty"));
+            Assert.IsNull(engine.Evaluate("test.NullableDoubleProperty = null; test.NullableDoubleProperty"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.DecimalProperty = 123; test.DecimalProperty"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.DecimalProperty = 123.5; test.DecimalProperty"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.DecimalProperty = Math.PI; test.DecimalProperty"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.DecimalProperty = host.toDecimal(Math.PI); test.DecimalProperty"));
+
+            Assert.AreEqual(123, engine.Evaluate("test.NullableDecimalProperty = 123; test.NullableDecimalProperty"));
+            Assert.AreEqual(123.5f, engine.Evaluate("test.NullableDecimalProperty = 123.5; test.NullableDecimalProperty"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.NullableDecimalProperty = Math.PI; test.NullableDecimalProperty"));
+            Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.NullableDecimalProperty = host.toDecimal(Math.PI); test.NullableDecimalProperty"));
+            Assert.IsNull(engine.Evaluate("test.NullableDecimalProperty = null; test.NullableDecimalProperty"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_ScriptObjectInHostVariable()
+        {
+            engine.Script.host = new HostFunctions();
+            Assert.IsTrue(engine.Evaluate(null, true, "host.newVar({})", false).ToString().StartsWith("[HostVariable:", StringComparison.Ordinal));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_ScriptObjectInHostVariable_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+            BugFix_ScriptObjectInHostVariable();
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1478,6 +1988,36 @@ namespace Microsoft.ClearScript.Test
 
                 return base.TryInvokeMember(binder, args, out result);
             }
+        }
+
+        public class NumericArgConversionTest
+        {
+            public sbyte SByteField;
+            public sbyte? NullableSByteField;
+            public float FloatField;
+            public float? NullableFloatField;
+            public double DoubleField;
+            public double? NullableDoubleField;
+            public decimal DecimalField;
+            public decimal? NullableDecimalField;
+
+            public sbyte SByteMethod(sbyte arg) { return arg; }
+            public sbyte? NullableSByteMethod(sbyte? arg) { return arg; }
+            public float FloatMethod(float arg) { return arg; }
+            public float? NullableFloatMethod(float? arg) { return arg; }
+            public double DoubleMethod(double arg) { return arg; }
+            public double? NullableDoubleMethod(double? arg) { return arg; }
+            public decimal DecimalMethod(decimal arg) { return arg; }
+            public decimal? NullableDecimalMethod(decimal? arg) { return arg; }
+
+            public sbyte SByteProperty { get; set; }
+            public sbyte? NullableSByteProperty { get; set; }
+            public float FloatProperty { get; set; }
+            public float? NullableFloatProperty { get; set; }
+            public double DoubleProperty { get; set; }
+            public double? NullableDoubleProperty { get; set; }
+            public decimal DecimalProperty { get; set; }
+            public decimal? NullableDecimalProperty { get; set; }
         }
 
         #endregion

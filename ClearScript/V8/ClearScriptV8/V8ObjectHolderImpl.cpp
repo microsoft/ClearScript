@@ -157,6 +157,20 @@ V8Value V8ObjectHolderImpl::InvokeMethod(const StdString& name, const std::vecto
 
 //-----------------------------------------------------------------------------
 
+void V8ObjectHolderImpl::GetArrayBufferOrViewInfo(V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length) const
+{
+    m_spBinding->GetContextImpl()->GetV8ObjectArrayBufferOrViewInfo(m_pvObject, arrayBuffer, offset, size, length);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ObjectHolderImpl::InvokeWithArrayBufferOrViewData(V8ObjectHelpers::ArrayBufferOrViewDataCallbackT* pCallback, void* pvArg) const
+{
+    m_spBinding->GetContextImpl()->InvokeWithV8ObjectArrayBufferOrViewData(m_pvObject, pCallback, pvArg);
+}
+
+//-----------------------------------------------------------------------------
+
 V8ObjectHolderImpl::~V8ObjectHolderImpl()
 {
     SharedPtr<V8IsolateImpl> spIsolateImpl;

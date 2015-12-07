@@ -89,6 +89,9 @@ public:
     static V8Value InvokeMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
     static bool IsDelegate(void* pvObject);
 
+    static V8Value GetEnumerator(void* pvObject);
+    static bool AdvanceEnumerator(void* pvEnumerator, V8Value& value);
+
     static void* CreateV8ObjectCache();
     static void CacheV8Object(void* pvCache, void* pvObject, void* pvV8Object);
     static void* GetCachedV8Object(void* pvCache, void* pvObject);

@@ -65,7 +65,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.ClearScript.Util;
 
@@ -170,7 +169,7 @@ namespace Microsoft.ClearScript.V8
                     return hLibrary;
                 }
 
-                var exception = new Win32Exception(Marshal.GetLastWin32Error());
+                var exception = new Win32Exception();
                 messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
             }
 

@@ -289,8 +289,8 @@ namespace Microsoft.ClearScript.V8
                             return {
 
                                 getCommandResult: function (value) {
-                                    if (value != null) {
-                                        if (((typeof(value) == 'object') && !value.hasOwnProperty('{c2cf47d3-916b-4a3f-be2a-6ff567425808}')) || (typeof(value) == 'function')) {
+                                    if ((value != null) && !value.hasOwnProperty('{c2cf47d3-916b-4a3f-be2a-6ff567425808}')) {
+                                        if ((typeof(value) == 'object') || (typeof(value) == 'function')) {
                                             if (typeof(value.toString) == 'function') {
                                                 return value.toString();
                                             }
@@ -719,7 +719,7 @@ namespace Microsoft.ClearScript.V8
             }
 
             var hostTarget = obj as HostTarget;
-            if (hostTarget != null)
+            if ((hostTarget != null) && !(hostTarget is IHostVariable))
             {
                 obj = hostTarget.Target;
             }

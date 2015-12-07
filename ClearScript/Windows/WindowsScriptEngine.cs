@@ -501,7 +501,7 @@ namespace Microsoft.ClearScript.Windows
             }
 
             var hostTarget = obj as HostTarget;
-            if (hostTarget != null)
+            if ((hostTarget != null) && !(hostTarget is IHostVariable))
             {
                 obj = hostTarget.Target;
             }

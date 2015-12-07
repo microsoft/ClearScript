@@ -120,6 +120,9 @@ public:
     V8Value InvokeV8Object(void* pvObject, const std::vector<V8Value>& args, bool asConstructor);
     V8Value InvokeV8ObjectMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
 
+    void GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length);
+    void InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8ObjectHelpers::ArrayBufferOrViewDataCallbackT* pCallback, void* pvArg);
+
     void ProcessDebugMessages();
 
 private:
@@ -168,6 +171,11 @@ private:
         return m_spIsolateImpl->GetFalse();
     }
 
+    v8::Local<v8::Symbol> GetIteratorSymbol()
+    {
+        return m_spIsolateImpl->GetIteratorSymbol();
+    }
+
     v8::Local<v8::Object> CreateObject()
     {
         return m_spIsolateImpl->CreateObject();
@@ -178,12 +186,12 @@ private:
         return m_spIsolateImpl->CreateNumber(value);
     }
 
-    v8::Local<v8::Integer> CreateInteger(__int32 value)
+    v8::Local<v8::Integer> CreateInteger(std::int32_t value)
     {
         return m_spIsolateImpl->CreateInteger(value);
     }
 
-    v8::Local<v8::Integer> CreateInteger(unsigned __int32 value)
+    v8::Local<v8::Integer> CreateInteger(std::uint32_t value)
     {
         return m_spIsolateImpl->CreateInteger(value);
     }
@@ -285,6 +293,11 @@ private:
         return m_spIsolateImpl->IsExecutionTerminating();
     }
 
+    void CancelTerminateExecution()
+    {
+        m_spIsolateImpl->CancelTerminateExecution();
+    }
+
     int ContextDisposedNotification()
     {
         return m_spIsolateImpl->ContextDisposedNotification();
@@ -318,32 +331,34 @@ private:
     void GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std::vector<StdString>& names);
     void GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, std::vector<int>& indices);
 
-    static void GetGlobalProperty(v8::Local<v8::Name> hName, const v8::PropertyCallbackInfo<v8::Value>& info);
-    static void SetGlobalProperty(v8::Local<v8::Name> hName, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
-    static void QueryGlobalProperty(v8::Local<v8::Name> hName, const v8::PropertyCallbackInfo<v8::Integer>& info);
-    static void DeleteGlobalProperty(v8::Local<v8::Name> hName, const v8::PropertyCallbackInfo<v8::Boolean>& info);
+    static void GetGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void SetGlobalProperty(v8::Local<v8::Name> hKey, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void QueryGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Integer>& info);
+    static void DeleteGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Boolean>& info);
     static void GetGlobalPropertyNames(const v8::PropertyCallbackInfo<v8::Array>& info);
 
-    static void GetGlobalProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Value>& info);
-    static void SetGlobalProperty(unsigned __int32 index, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
-    static void QueryGlobalProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Integer>& info);
-    static void DeleteGlobalProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Boolean>& info);
+    static void GetGlobalProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void SetGlobalProperty(std::uint32_t index, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void QueryGlobalProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Integer>& info);
+    static void DeleteGlobalProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Boolean>& info);
     static void GetGlobalPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info);
 
     static void HostObjectConstructorCallHandler(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void GetIteratorForHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void AdvanceHostObjectIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void CreateFunctionForHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void InvokeHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
 
-    static void GetHostObjectProperty(v8::Local<v8::String> hName, const v8::PropertyCallbackInfo<v8::Value>& info);
-    static void SetHostObjectProperty(v8::Local<v8::String> hName, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
-    static void QueryHostObjectProperty(v8::Local<v8::String> hName, const v8::PropertyCallbackInfo<v8::Integer>& info);
-    static void DeleteHostObjectProperty(v8::Local<v8::String> hName, const v8::PropertyCallbackInfo<v8::Boolean>& info);
+    static void GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void SetHostObjectProperty(v8::Local<v8::Name> hKey, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void QueryHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Integer>& info);
+    static void DeleteHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Boolean>& info);
     static void GetHostObjectPropertyNames(const v8::PropertyCallbackInfo<v8::Array>& info);
 
-    static void GetHostObjectProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Value>& info);
-    static void SetHostObjectProperty(unsigned __int32 index, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
-    static void QueryHostObjectProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Integer>& info);
-    static void DeleteHostObjectProperty(unsigned __int32 index, const v8::PropertyCallbackInfo<v8::Boolean>& info);
+    static void GetHostObjectProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void SetHostObjectProperty(std::uint32_t index, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
+    static void QueryHostObjectProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Integer>& info);
+    static void DeleteHostObjectProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Boolean>& info);
     static void GetHostObjectPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info);
 
     static void InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
@@ -364,10 +379,14 @@ private:
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
     Persistent<v8::String> m_hHostObjectCookieName;
     Persistent<v8::String> m_hHostExceptionName;
+    Persistent<v8::String> m_hEnumeratorPropertyName;
+    Persistent<v8::String> m_hDonePropertyName;
+    Persistent<v8::String> m_hValuePropertyName;
     Persistent<v8::String> m_hAccessTokenName;
     Persistent<v8::Object> m_hAccessToken;
     Persistent<v8::FunctionTemplate> m_hHostObjectTemplate;
     Persistent<v8::FunctionTemplate> m_hHostDelegateTemplate;
+    Persistent<v8::FunctionTemplate> m_hHostIteratorTemplate;
     Persistent<v8::Value> m_hTerminationException;
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     void* m_pvV8ObjectCache;

@@ -83,4 +83,8 @@ public:
 
     static V8Value Invoke(V8ObjectHolder* pHolder, const std::vector<V8Value>& args, bool asConstructor);
     static V8Value InvokeMethod(V8ObjectHolder* pHolder, const StdString& name, const std::vector<V8Value>& args);
+
+    typedef void ArrayBufferOrViewDataCallbackT(void* pvData, void* pvArg);
+    static void GetArrayBufferOrViewInfo(V8ObjectHolder* pHolder, V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length);
+    static void InvokeWithArrayBufferOrViewData(V8ObjectHolder* pHolder, ArrayBufferOrViewDataCallbackT* pCallback, void* pvArg);
 };

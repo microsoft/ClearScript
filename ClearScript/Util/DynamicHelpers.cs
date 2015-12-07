@@ -123,42 +123,53 @@ namespace Microsoft.ClearScript.Util
                         }
                         else
                         {
-                            var invokeBinder = binder as InvokeBinder;
-                            if (invokeBinder != null)
+                            var createInstanceBinder = binder as CreateInstanceBinder;
+                            if (createInstanceBinder != null)
                             {
-                                if (TryInvoke(reflect, args, out result))
+                                if (TryCreateInstance(reflect, args, out result))
                                 {
                                     return true;
                                 }
                             }
                             else
                             {
-                                var invokeMemberBinder = binder as InvokeMemberBinder;
-                                if (invokeMemberBinder != null)
+                                var invokeBinder = binder as InvokeBinder;
+                                if (invokeBinder != null)
                                 {
-                                    if (TryInvokeMethod(reflect, invokeMemberBinder.Name, invokeMemberBinder.IgnoreCase, args, out result))
+                                    if (TryInvoke(reflect, args, out result))
                                     {
                                         return true;
                                     }
                                 }
-                                else if ((args != null) && (args.Length > 0))
+                                else
                                 {
-                                    var getIndexBinder = binder as GetIndexBinder;
-                                    if (getIndexBinder != null)
+                                    var invokeMemberBinder = binder as InvokeMemberBinder;
+                                    if (invokeMemberBinder != null)
                                     {
-                                        if (TryGetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
+                                        if (TryInvokeMethod(reflect, invokeMemberBinder.Name, invokeMemberBinder.IgnoreCase, args, out result))
                                         {
                                             return true;
                                         }
                                     }
-                                    else
+                                    else if ((args != null) && (args.Length > 0))
                                     {
-                                        var setIndexBinder = binder as SetIndexBinder;
-                                        if (setIndexBinder != null)
+                                        var getIndexBinder = binder as GetIndexBinder;
+                                        if (getIndexBinder != null)
                                         {
-                                            if (TrySetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
+                                            if (TryGetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
                                             {
                                                 return true;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            var setIndexBinder = binder as SetIndexBinder;
+                                            if (setIndexBinder != null)
+                                            {
+                                                if (TrySetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
+                                                {
+                                                    return true;
+                                                }
                                             }
                                         }
                                     }
@@ -314,6 +325,39 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
+        private static bool TryCreateInstance(IReflect target, object[] args, out object result)
+        {
+            // ReSharper disable SuspiciousTypeConversion.Global
+
+            var dispatchEx = target as IDispatchEx;
+            if (dispatchEx != null)
+            {
+                // Standard IExpando-over-IDispatchEx support appears to leak the variants it
+                // creates for the invocation arguments. This issue has been reported. In the
+                // meantime we'll bypass this facility and interface with IDispatchEx directly.
+
+                result = dispatchEx.Invoke(args, true);
+                return true;
+            }
+
+            // ReSharper restore SuspiciousTypeConversion.Global
+
+            try
+            {
+                result = target.InvokeMember(SpecialMemberNames.Default, BindingFlags.CreateInstance, null, target, args, null, CultureInfo.InvariantCulture, null);
+                return true;
+            }
+            catch (TargetInvocationException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                result = null;
+                return false;
+            }
+        }
+
         private static bool TryInvoke(IReflect target, object[] args, out object result)
         {
             // ReSharper disable SuspiciousTypeConversion.Global
@@ -325,14 +369,26 @@ namespace Microsoft.ClearScript.Util
                 // creates for the invocation arguments. This issue has been reported. In the
                 // meantime we'll bypass this facility and interface with IDispatchEx directly.
 
-                result = dispatchEx.Invoke(args);
+                result = dispatchEx.Invoke(args, false);
                 return true;
             }
 
             // ReSharper restore SuspiciousTypeConversion.Global
 
-            result = null;
-            return false;
+            try
+            {
+                result = target.InvokeMember(SpecialMemberNames.Default, BindingFlags.InvokeMethod, null, target, args, null, CultureInfo.InvariantCulture, null);
+                return true;
+            }
+            catch (TargetInvocationException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                result = null;
+                return false;
+            }
         }
 
         private static bool TryInvokeMethod(IReflect target, string name, bool ignoreCase, object[] args, out object result)

@@ -89,6 +89,9 @@ public:
     V8Value Invoke(const std::vector<V8Value>& args, bool asConstructor) const;
     V8Value InvokeMethod(const StdString& name, const std::vector<V8Value>& args) const;
 
+    void GetArrayBufferOrViewInfo(V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length) const;
+    void InvokeWithArrayBufferOrViewData(V8ObjectHelpers::ArrayBufferOrViewDataCallbackT* pCallback, void* pvArg) const;
+
     ~V8ObjectHolderImpl();
 
 private:

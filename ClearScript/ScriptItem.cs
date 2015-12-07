@@ -335,7 +335,7 @@ namespace Microsoft.ClearScript
                     return GetProperty(index);
                 }
 
-                return GetProperty(name);
+                return GetProperty(name, args);
             }
 
             if (invokeFlags.HasFlag(BindingFlags.SetField))
@@ -354,7 +354,7 @@ namespace Microsoft.ClearScript
                     return value;
                 }
 
-                SetProperty(name, value);
+                SetProperty(name, args);
                 return value;
             }
 
@@ -394,18 +394,18 @@ namespace Microsoft.ClearScript
 
         #region IDynamic implementation
 
-        public object GetProperty(string name, out bool isCacheable)
+        public object GetProperty(string name, object[] args, out bool isCacheable)
         {
             isCacheable = false;
-            return GetProperty(name);
+            return GetProperty(name, args);
         }
 
         #endregion
 
         #region IDynamic implementation (abstract)
 
-        public abstract object GetProperty(string name);
-        public abstract void SetProperty(string name, object value);
+        public abstract object GetProperty(string name, object[] args);
+        public abstract void SetProperty(string name, object[] args);
         public abstract bool DeleteProperty(string name);
         public abstract string[] GetPropertyNames();
         public abstract object GetProperty(int index);

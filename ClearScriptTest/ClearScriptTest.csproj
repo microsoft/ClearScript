@@ -96,6 +96,7 @@
     <Compile Include="StaticTestClass.cs" />
     <Compile Include="TestObject.cs" />
     <Compile Include="TypeRestrictionTest.cs" />
+    <Compile Include="V8ArrayBufferOrViewTest.cs" />
     <Compile Include="V8ScriptEngineTest.cs" />
     <Compile Include="VBScriptEngineTest.cs" />
   </ItemGroup>

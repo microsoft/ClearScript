@@ -178,6 +178,11 @@ public:
         return v8::False(m_pIsolate);
     }
 
+    v8::Local<v8::Symbol> GetIteratorSymbol()
+    {
+        return v8::Symbol::GetIterator(m_pIsolate);
+    }
+
     v8::Local<v8::Object> CreateObject()
     {
         return v8::Object::New(m_pIsolate);
@@ -188,12 +193,12 @@ public:
         return v8::Number::New(m_pIsolate, value);
     }
 
-    v8::Local<v8::Integer> CreateInteger(__int32 value)
+    v8::Local<v8::Integer> CreateInteger(std::int32_t value)
     {
         return v8::Int32::New(m_pIsolate, value);
     }
 
-    v8::Local<v8::Integer> CreateInteger(unsigned __int32 value)
+    v8::Local<v8::Integer> CreateInteger(std::uint32_t value)
     {
         return v8::Uint32::NewFromUnsigned(m_pIsolate, value);
     }
@@ -296,6 +301,12 @@ public:
         return m_pIsolate->IsExecutionTerminating() || m_IsExecutionTerminating;
     }
 
+    void CancelTerminateExecution()
+    {
+        m_pIsolate->CancelTerminateExecution();
+        m_IsExecutionTerminating = false;
+    }
+
     int ContextDisposedNotification()
     {
         return m_pIsolate->ContextDisposedNotification();
@@ -355,6 +366,9 @@ public:
     void* AddRefV8Script(void* pvScript);
     void ReleaseV8Script(void* pvScript);
 
+    void RunTaskWithLock(v8::Task* pTask);
+    void RunDelayedTaskWithLock(v8::Task* pTask, double delayInSeconds);
+
     void CallWithLockNoWait(std::function<void(V8IsolateImpl*)>&& callback);
     void DECLSPEC_NORETURN ThrowOutOfMemoryException();
 
@@ -382,8 +396,9 @@ private:
     v8::Isolate* m_pIsolate;
     RecursiveMutex m_Mutex;
     std::list<V8ContextImpl*> m_ContextPtrs;
-    SimpleMutex m_CallWithLockQueueMutex;
+    SimpleMutex m_DataMutex;
     std::queue<std::function<void(V8IsolateImpl*)>> m_CallWithLockQueue;
+    std::vector<SharedPtr<Timer>> m_TaskTimers;
     bool m_DebuggingEnabled;
     int m_DebugPort;
     void* m_pvDebugAgent;

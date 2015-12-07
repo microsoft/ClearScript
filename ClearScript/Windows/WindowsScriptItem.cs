@@ -229,7 +229,7 @@ namespace Microsoft.ClearScript.Windows
 
         #region IDynamic implementation
 
-        public override object GetProperty(string name)
+        public override object GetProperty(string name, object[] args)
         {
             VerifyNotDisposed();
 
@@ -237,7 +237,7 @@ namespace Microsoft.ClearScript.Windows
             {
                 try
                 {
-                    return target.InvokeMember(name, BindingFlags.GetProperty, null, target, MiscHelpers.GetEmptyArray<object>(), null, CultureInfo.InvariantCulture, null);
+                    return target.InvokeMember(name, BindingFlags.GetProperty, null, target, engine.MarshalToScript(args), null, CultureInfo.InvariantCulture, null);
                 }
                 catch (Exception)
                 {
@@ -262,13 +262,13 @@ namespace Microsoft.ClearScript.Windows
             return result;
         }
 
-        public override void SetProperty(string name, object value)
+        public override void SetProperty(string name, object[] args)
         {
             VerifyNotDisposed();
 
             engine.ScriptInvoke(() =>
             {
-                var marshaledArgs = new[] { engine.MarshalToScript(value) };
+                var marshaledArgs = engine.MarshalToScript(args);
                 try
                 {
                     target.InvokeMember(name, BindingFlags.SetProperty, null, target, marshaledArgs, null, CultureInfo.InvariantCulture, null);
@@ -314,13 +314,13 @@ namespace Microsoft.ClearScript.Windows
         public override object GetProperty(int index)
         {
             VerifyNotDisposed();
-            return GetProperty(index.ToString(CultureInfo.InvariantCulture));
+            return GetProperty(index.ToString(CultureInfo.InvariantCulture), MiscHelpers.GetEmptyArray<object>());
         }
 
         public override void SetProperty(int index, object value)
         {
             VerifyNotDisposed();
-            SetProperty(index.ToString(CultureInfo.InvariantCulture), value);
+            SetProperty(index.ToString(CultureInfo.InvariantCulture), new[] { value });
         }
 
         public override bool DeleteProperty(int index)
