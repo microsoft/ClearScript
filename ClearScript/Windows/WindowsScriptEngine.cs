@@ -406,10 +406,18 @@ namespace Microsoft.ClearScript.Windows
 
             ScriptInvoke(() =>
             {
-                var marshaledItem = MarshalToScript(item, flags);
-                if (!(marshaledItem is HostItem))
+                object marshaledItem;
+                if (flags.HasFlag(HostItemFlags.DirectAccess) && item.GetType().IsCOMObject)
                 {
-                    throw new InvalidOperationException("Invalid host item");
+                    marshaledItem = item;
+                }
+                else
+                {
+                    marshaledItem = MarshalToScript(item, flags);
+                    if (!(marshaledItem is HostItem))
+                    {
+                        throw new InvalidOperationException("Invalid host item");
+                    }
                 }
 
                 var oldItem = ((IDictionary)hostItemMap)[itemName];
