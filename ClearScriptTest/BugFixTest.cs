@@ -1802,6 +1802,15 @@ namespace Microsoft.ClearScript.Test
             BugFix_ScriptObjectInHostVariable();
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8HostMethodClobbering()
+        {
+            engine.Script.host = new HostFunctions();
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj()"), typeof(PropertyBag));
+            TestUtil.AssertException<MissingMemberException>(() => engine.Execute("host.newObj = 123"));
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj()"), typeof(PropertyBag));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

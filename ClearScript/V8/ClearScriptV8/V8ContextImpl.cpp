@@ -179,8 +179,6 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
 
     BEGIN_ISOLATE_SCOPE
 
-        auto propertyHandlerFlags = ::CombineFlags(v8::PropertyHandlerFlags::kNonMasking, v8::PropertyHandlerFlags::kOnlyInterceptStrings);
-
         if (disableGlobalMembers)
         {
             m_hContext = CreatePersistent(CreateContext());
@@ -189,7 +187,7 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
         {
             auto hGlobalTemplate = CreateObjectTemplate();
             hGlobalTemplate->SetInternalFieldCount(1);
-            hGlobalTemplate->SetHandler(v8::NamedPropertyHandlerConfiguration(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyNames, v8::Local<v8::Value>(), propertyHandlerFlags));
+            hGlobalTemplate->SetHandler(v8::NamedPropertyHandlerConfiguration(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyNames, v8::Local<v8::Value>(), ::CombineFlags(v8::PropertyHandlerFlags::kNonMasking, v8::PropertyHandlerFlags::kOnlyInterceptStrings)));
             hGlobalTemplate->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyIndices));
 
             m_hContext = CreatePersistent(CreateContext(nullptr, hGlobalTemplate));
@@ -223,7 +221,7 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
         m_hHostObjectTemplate->SetClassName(CreateString(StdString(L"HostObject")));
         m_hHostObjectTemplate->SetCallHandler(HostObjectConstructorCallHandler, Wrap());
         m_hHostObjectTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-        m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap(), propertyHandlerFlags));
+        m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap(), v8::PropertyHandlerFlags::kOnlyInterceptStrings));
         m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, Wrap()));
         m_hHostObjectTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, Wrap());
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
@@ -232,7 +230,7 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
         m_hHostDelegateTemplate->SetClassName(CreateString(StdString(L"HostDelegate")));
         m_hHostDelegateTemplate->SetCallHandler(HostObjectConstructorCallHandler, Wrap());
         m_hHostDelegateTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-        m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap(), propertyHandlerFlags));
+        m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap(), v8::PropertyHandlerFlags::kOnlyInterceptStrings));
         m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, Wrap()));
         m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, Wrap());
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
