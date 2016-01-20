@@ -1305,6 +1305,7 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
             }
 
             auto hHolder = info.Holder();
+            auto cacheCleared = false;
 
             auto hAccessToken = hHolder->GetHiddenValue(pContextImpl->m_hAccessTokenName);
             if (pContextImpl->m_hAccessToken != hAccessToken)
@@ -1318,19 +1319,29 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
                     }
 
                     hHolder->SetHiddenValue(pContextImpl->m_hAccessTokenName, pContextImpl->m_hAccessToken);
+                    cacheCleared = true;
 
                 END_PULSE_VALUE_SCOPE
             }
 
-            auto hResult = hHolder->GetRealNamedProperty(hName);
-            if (hResult.IsEmpty())
+            v8::Local<v8::Value> hResult;
+            if (!cacheCleared)
             {
-                bool isCacheable;
-                hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::GetHostObject(info.Holder()), StdString(hName), isCacheable));
-                if (isCacheable)
-                {
-                    hHolder->ForceSet(hName, hResult);
-                }
+                BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
+
+                    if (hHolder->HasOwnProperty(hName))
+                    {
+                        CALLBACK_RETURN(hResult);
+                    }
+
+                END_PULSE_VALUE_SCOPE
+            }
+
+            bool isCacheable;
+            hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::GetHostObject(info.Holder()), StdString(hName), isCacheable));
+            if (isCacheable)
+            {
+                hHolder->ForceSet(hName, hResult);
             }
 
             CALLBACK_RETURN(hResult);

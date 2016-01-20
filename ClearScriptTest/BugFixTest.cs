@@ -1811,6 +1811,22 @@ namespace Microsoft.ClearScript.Test
             Assert.IsInstanceOfType(engine.Evaluate("host.newObj()"), typeof(PropertyBag));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8NativePropertyHiding()
+        {
+            var foo = new { toString = new Func<string>(() => "testValue") };
+            engine.Script.foo = foo;
+            Assert.AreEqual(foo.toString(), engine.Evaluate("foo.toString()"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8NativePropertyHiding_Method()
+        {
+            var foo = new HideNativeJavaScriptMethod();
+            engine.Script.foo = foo;
+            Assert.AreEqual(foo.toString(), engine.Evaluate("foo.toString()"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2027,6 +2043,18 @@ namespace Microsoft.ClearScript.Test
             public double? NullableDoubleProperty { get; set; }
             public decimal DecimalProperty { get; set; }
             public decimal? NullableDecimalProperty { get; set; }
+        }
+
+        public class HideNativeJavaScriptMethod
+        {
+            // ReSharper disable InconsistentNaming
+
+            public string toString()
+            {
+                return ToString();
+            }
+
+            // ReSharper restore InconsistentNaming
         }
 
         #endregion
