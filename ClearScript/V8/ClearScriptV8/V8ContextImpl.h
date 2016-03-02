@@ -382,6 +382,7 @@ private:
     Persistent<v8::String> m_hEnumeratorPropertyName;
     Persistent<v8::String> m_hDonePropertyName;
     Persistent<v8::String> m_hValuePropertyName;
+    Persistent<v8::String> m_hCachePropertyName;
     Persistent<v8::String> m_hAccessTokenName;
     Persistent<v8::Object> m_hAccessToken;
     Persistent<v8::FunctionTemplate> m_hHostObjectTemplate;

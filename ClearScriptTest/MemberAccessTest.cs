@@ -280,7 +280,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("MemberAccess")]
         public void MemberAccess_Event()
         {
-            engine.Execute("var connection = testObject.Event.connect(function(sender, args) { sender.ScalarProperty = args.Arg; })");
+            engine.Execute("var connection = testObject.Event.connect(function (sender, args) { sender.ScalarProperty = args.Arg; })");
             testObject.FireEvent(5432);
             Assert.AreEqual(5432, testObject.ScalarProperty);
             engine.Execute("connection.disconnect()");

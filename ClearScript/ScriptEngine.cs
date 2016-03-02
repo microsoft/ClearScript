@@ -1133,6 +1133,11 @@ namespace Microsoft.ClearScript
 
         #region internal members
 
+        internal virtual bool EnumerateExtensionMethods
+        {
+            get { return true; }
+        }
+
         internal abstract void AddHostItem(string itemName, HostItemFlags flags, object item);
 
         internal object PrepareResult<T>(T result, ScriptMemberFlags flags)
@@ -1366,6 +1371,11 @@ namespace Microsoft.ClearScript
         internal ExtensionMethodSummary ExtensionMethodSummary
         {
             get { return extensionMethodTable.Summary; }
+        }
+
+        internal void RebuildExtensionMethodSummary()
+        {
+            extensionMethodTable.RebuildSummary();
         }
 
         #endregion

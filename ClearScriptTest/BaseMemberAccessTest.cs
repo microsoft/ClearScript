@@ -280,7 +280,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_Event()
         {
-            engine.Execute("var connection = testObject.BaseEvent.connect(function(sender, args) { sender.BaseScalarProperty = args.Arg; })");
+            engine.Execute("var connection = testObject.BaseEvent.connect(function (sender, args) { sender.BaseScalarProperty = args.Arg; })");
             testObject.BaseFireEvent(5432);
             Assert.AreEqual(5432, testObject.BaseScalarProperty);
             engine.Execute("connection.disconnect()");

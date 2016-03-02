@@ -196,7 +196,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("InterfaceMemberAccess")]
         public void InterfaceMemberAccess_Event()
         {
-            engine.Execute("var connection = testObject.InterfaceEvent.connect(function(sender, args) { sender.InterfaceScalarProperty = args.Arg; })");
+            engine.Execute("var connection = testObject.InterfaceEvent.connect(function (sender, args) { sender.InterfaceScalarProperty = args.Arg; })");
             testObject.InterfaceFireEvent(5432);
             Assert.AreEqual(5432, testObject.InterfaceScalarProperty);
             engine.Execute("connection.disconnect()");

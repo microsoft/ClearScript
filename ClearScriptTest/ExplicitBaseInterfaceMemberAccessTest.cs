@@ -202,7 +202,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("ExplicitBaseInterfaceMemberAccess")]
         public void ExplicitBaseInterfaceMemberAccess_Event()
         {
-            engine.Execute("var connection = testInterface.ExplicitBaseInterfaceEvent.connect(function(sender, args) { host.cast(IExplicitBaseTestInterface, sender).ExplicitBaseInterfaceScalarProperty = args.Arg; })");
+            engine.Execute("var connection = testInterface.ExplicitBaseInterfaceEvent.connect(function (sender, args) { host.cast(IExplicitBaseTestInterface, sender).ExplicitBaseInterfaceScalarProperty = args.Arg; })");
             testInterface.ExplicitBaseInterfaceFireEvent(5432);
             Assert.AreEqual(5432, testInterface.ExplicitBaseInterfaceScalarProperty);
             engine.Execute("connection.disconnect()");

@@ -198,7 +198,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("ExplicitInterfaceMemberAccess")]
         public void ExplicitInterfaceMemberAccess_Event()
         {
-            engine.Execute("var connection = testInterface.ExplicitInterfaceEvent.connect(function(sender, args) { host.cast(IExplicitTestInterface, sender).ExplicitInterfaceScalarProperty = args.Arg; })");
+            engine.Execute("var connection = testInterface.ExplicitInterfaceEvent.connect(function (sender, args) { host.cast(IExplicitTestInterface, sender).ExplicitInterfaceScalarProperty = args.Arg; })");
             testInterface.ExplicitInterfaceFireEvent(5432);
             Assert.AreEqual(5432, testInterface.ExplicitInterfaceScalarProperty);
             engine.Execute("connection.disconnect()");

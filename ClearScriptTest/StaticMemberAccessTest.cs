@@ -277,7 +277,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("StaticMemberAccess")]
         public void StaticMemberAccess_Event()
         {
-            engine.Execute("var connection = StaticTestClass.StaticEvent.connect(function(sender, args) { host.type(sender).StaticScalarProperty = args.Arg; })");
+            engine.Execute("var connection = StaticTestClass.StaticEvent.connect(function (sender, args) { host.type(sender).StaticScalarProperty = args.Arg; })");
             StaticTestClass.StaticFireEvent(5432);
             Assert.AreEqual(5432, StaticTestClass.StaticScalarProperty);
             engine.Execute("connection.disconnect()");

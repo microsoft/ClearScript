@@ -86,11 +86,16 @@ namespace Microsoft.ClearScript
             {
                 const BindingFlags bindFlags = BindingFlags.Public | BindingFlags.Static;
                 table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(method, defaultAccess)).ToArray();
-                summary = new ExtensionMethodSummary(table);
+                RebuildSummary();
                 return true;
             }
 
             return false;
+        }
+
+        public void RebuildSummary()
+        {
+            summary = new ExtensionMethodSummary(table);
         }
 
         private static bool IsScriptableExtensionMethod(MethodInfo method, ScriptAccess defaultAccess)

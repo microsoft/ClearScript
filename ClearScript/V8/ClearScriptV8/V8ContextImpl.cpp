@@ -205,6 +205,7 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
         m_hEnumeratorPropertyName = CreatePersistent(CreateString(StdString(L"enumerator")));
         m_hDonePropertyName = CreatePersistent(CreateString(StdString(L"done")));
         m_hValuePropertyName = CreatePersistent(CreateString(StdString(L"value")));
+        m_hCachePropertyName = CreatePersistent(CreateString(StdString(L"{545a4a94-f37d-44bb-9e1e-bf3ce730c7e4}")));
         m_hAccessTokenName = CreatePersistent(CreateString(StdString(L"{cdc19e6e-5d80-4627-a605-bb4805f15086}")));
 
         v8::Local<v8::Function> hGetIteratorFunction;
@@ -738,6 +739,7 @@ V8ContextImpl::~V8ContextImpl()
     Dispose(m_hHostObjectTemplate);
     Dispose(m_hAccessToken);
     Dispose(m_hAccessTokenName);
+    Dispose(m_hCachePropertyName);
     Dispose(m_hValuePropertyName);
     Dispose(m_hDonePropertyName);
     Dispose(m_hEnumeratorPropertyName);
@@ -1312,10 +1314,19 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
             {
                 BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
 
-                    auto hNames = hHolder->GetOwnPropertyNames();
-                    for (auto index = hNames->Length(); index > 0; index--)
+                    auto hCache = hHolder->GetHiddenValue(pContextImpl->m_hCachePropertyName);
+                    if (!hCache.IsEmpty())
                     {
-                        hHolder->Delete(hNames->Get(index - 1));
+                        if (hCache->IsObject())
+                        {
+                            auto hNames = hCache->ToObject()->GetOwnPropertyNames();
+                            for (auto index = hNames->Length(); index > 0; index--)
+                            {
+                                hHolder->Delete(hNames->Get(index - 1));
+                            }
+                        }
+
+                        hHolder->DeleteHiddenValue(pContextImpl->m_hCachePropertyName);
                     }
 
                     hHolder->SetHiddenValue(pContextImpl->m_hAccessTokenName, pContextImpl->m_hAccessToken);
@@ -1341,7 +1352,15 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
             hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::GetHostObject(info.Holder()), StdString(hName), isCacheable));
             if (isCacheable)
             {
-                hHolder->ForceSet(hName, hResult);
+                auto hCache = hHolder->GetHiddenValue(pContextImpl->m_hCachePropertyName);
+                if (hCache.IsEmpty() || !hCache->IsObject())
+                {
+                    hCache = pContextImpl->CreateObject();
+                    hHolder->SetHiddenValue(pContextImpl->m_hCachePropertyName, hCache);
+                }
+
+                hCache->ToObject()->ForceSet(hName, hResult);
+                hHolder->ForceSet(hName, hResult, v8::DontEnum);
             }
 
             CALLBACK_RETURN(hResult);

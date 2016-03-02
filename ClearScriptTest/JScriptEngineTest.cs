@@ -1017,7 +1017,7 @@ namespace Microsoft.ClearScript.Test
         {
             engine.Script.testObject = new DynamicTestObject();
             Assert.IsInstanceOfType(engine.Evaluate("testObject.foo"), typeof(Undefined));
-            Assert.IsInstanceOfType(engine.Evaluate("testObject.foo = function(x) { return x.length; }"), typeof(DynamicObject));
+            Assert.IsInstanceOfType(engine.Evaluate("testObject.foo = function (x) { return x.length; }"), typeof(DynamicObject));
             Assert.AreEqual("floccinaucinihilipilification".Length, engine.Evaluate("testObject.foo('floccinaucinihilipilification')"));
         }
 
@@ -1675,7 +1675,7 @@ namespace Microsoft.ClearScript.Test
                         testEngine.Execute(@"
                             xhr = new XMLHttpRequest();
                             xhr.open('POST', 'http://httpbin.org/post', true);
-                            xhr.onreadystatechange = function() {
+                            xhr.onreadystatechange = function () {
                                 if (xhr.readyState == 4) {
                                     onComplete(xhr.status, JSON.parse(xhr.responseText).data);
                                 }

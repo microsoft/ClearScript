@@ -73,6 +73,7 @@ namespace Microsoft.ClearScript
 
         public string[] AllFieldNames;
         public string[] AllMethodNames;
+        public string[] OwnMethodNames;
         public string[] AllPropertyNames;
         public string[] AllMemberNames;
 

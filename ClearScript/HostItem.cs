@@ -378,6 +378,17 @@ namespace Microsoft.ClearScript
             set { targetMemberData.AllMethodNames = value; }
         }
 
+        private string[] OwnMethodNames
+        {
+            get { return targetMemberData.OwnMethodNames; }
+            set { targetMemberData.OwnMethodNames = value; }
+        }
+
+        private string[] EnumeratedMethodNames
+        {
+            get { return engine.EnumerateExtensionMethods ? AllMethodNames : OwnMethodNames; }
+        }
+
         private string[] AllPropertyNames
         {
             get { return targetMemberData.AllPropertyNames; }
@@ -654,20 +665,35 @@ namespace Microsoft.ClearScript
             return MiscHelpers.GetEmptyArray<string>();
         }
 
-        private string[] GetAllMethodNames()
+        private string[] GetAllMethodNames(out string[] ownMethodNames)
         {
+            ownMethodNames = null;
+
             var names = target.GetAuxMethodNames(this, GetMethodBindFlags()).AsEnumerable();
             if ((TargetDynamic == null) && (TargetPropertyBag == null))
             {
                 names = names.Concat(GetLocalMethodNames());
                 if (target.Flags.HasFlag(HostTargetFlags.AllowExtensionMethods))
                 {
-                    ExtensionMethodSummary = engine.ExtensionMethodSummary;
-                    names = names.Concat(ExtensionMethodSummary.MethodNames);
+                    var extensionMethodSummary = engine.ExtensionMethodSummary;
+                    ExtensionMethodSummary = extensionMethodSummary;
+
+                    var extensionMethodNames = extensionMethodSummary.MethodNames;
+                    if (extensionMethodNames.Length > 0)
+                    {
+                        ownMethodNames = names.Distinct().ToArray();
+                        names = ownMethodNames.Concat(extensionMethodNames);
+                    }
                 }
             }
 
-            return names.Distinct().ToArray();
+            var result = names.Distinct().ToArray();
+            if (ownMethodNames == null)
+            {
+                ownMethodNames = result;
+            }
+
+            return result;
         }
 
         private string[] GetAllPropertyNames()
@@ -727,7 +753,9 @@ namespace Microsoft.ClearScript
             if ((AllMethodNames == null) ||
                 (target.Flags.HasFlag(HostTargetFlags.AllowExtensionMethods) && (ExtensionMethodSummary != engine.ExtensionMethodSummary)))
             {
-                AllMethodNames = GetAllMethodNames();
+                string[] ownMethodNames;
+                AllMethodNames = GetAllMethodNames(out ownMethodNames);
+                OwnMethodNames = ownMethodNames;
                 updated = true;
             }
             else
@@ -1805,7 +1833,7 @@ namespace Microsoft.ClearScript
 
                 if (updatedFieldNames || updatedMethodNames || updatedPropertyNames || (AllMemberNames == null))
                 {
-                    AllMemberNames = AllFieldNames.Concat(AllMethodNames).Concat(AllPropertyNames).ExcludeIndices().Distinct().ToArray();
+                    AllMemberNames = AllFieldNames.Concat(EnumeratedMethodNames).Concat(AllPropertyNames).ExcludeIndices().Distinct().ToArray();
                 }
 
                 return AllMemberNames;

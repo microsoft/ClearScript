@@ -94,6 +94,7 @@ namespace Microsoft.ClearScript.V8
         private readonly HostItemCollateral hostItemCollateral;
         private readonly IUniqueNameManager documentNameManager = new UniqueFileNameManager();
         private List<string> documentNames;
+        private bool suppressExtensionMethodEnumeration;
 
         #endregion
 
@@ -420,6 +421,26 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
+        /// Gets or sets a value that controls extension method enumeration.
+        /// </summary>
+        /// <remarks>
+        /// By default, all exposed extension methods appear as enumerable properties of all host
+        /// objects, regardless of type. Setting this property to <c>true</c> excludes all
+        /// extension methods from the list of enumerable properties of all host objects. Note that
+        /// doing so affects only property enumeration; extension methods remain both retrievable
+        /// and invocable regardless of this property's value.
+        /// </remarks>
+        public bool SuppressExtensionMethodEnumeration
+        {
+            get { return suppressExtensionMethodEnumeration; }
+            set
+            {
+                suppressExtensionMethodEnumeration = value;
+                RebuildExtensionMethodSummary();
+            }
+        }
+
+        /// <summary>
         /// Creates a compiled script.
         /// </summary>
         /// <param name="code">The script code to compile.</param>
@@ -664,6 +685,11 @@ namespace Microsoft.ClearScript.V8
         #endregion
 
         #region ScriptEngine overrides (internal members)
+
+        internal override bool EnumerateExtensionMethods
+        {
+            get { return base.EnumerateExtensionMethods && !SuppressExtensionMethodEnumeration; }
+        }
 
         internal override void AddHostItem(string itemName, HostItemFlags flags, object item)
         {

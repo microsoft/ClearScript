@@ -1342,7 +1342,7 @@ namespace Microsoft.ClearScript.Test
         {
             engine.Script.testObject = new DynamicTestObject();
             Assert.IsInstanceOfType(engine.Evaluate("testObject.foo"), typeof(Undefined));
-            Assert.IsInstanceOfType(engine.Evaluate("testObject.foo = function(x) { return x.length; }"), typeof(DynamicObject));
+            Assert.IsInstanceOfType(engine.Evaluate("testObject.foo = function (x) { return x.length; }"), typeof(DynamicObject));
             Assert.AreEqual("floccinaucinihilipilification".Length, engine.Evaluate("testObject.foo('floccinaucinihilipilification')"));
         }
 
@@ -1862,7 +1862,7 @@ namespace Microsoft.ClearScript.Test
                         testEngine.Execute(@"
                             xhr = new XMLHttpRequest();
                             xhr.open('POST', 'http://httpbin.org/post', true);
-                            xhr.onreadystatechange = function() {
+                            xhr.onreadystatechange = function () {
                                 if (xhr.readyState == 4) {
                                     onComplete(xhr.status, JSON.parse(xhr.responseText).data);
                                 }
@@ -2287,6 +2287,26 @@ namespace Microsoft.ClearScript.Test
                 }
             ");
             TestUtil.AssertException<NotSupportedException>(() => engine.Script.sum(DayOfWeek.Monday));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_SuppressExtensionMethodEnumeration()
+        {
+            engine.AddHostType(typeof(Enumerable));
+            engine.Script.foo = Enumerable.Range(0, 25).ToArray();
+            Assert.AreEqual("Count", engine.Evaluate("Object.keys(foo).find(function (key) { return key == 'Count' })"));
+            Assert.IsInstanceOfType(engine.Evaluate("foo.Count"), typeof(HostMethod));
+            Assert.AreEqual(25, engine.Evaluate("foo.Count()"));
+
+            engine.SuppressExtensionMethodEnumeration = true;
+            Assert.IsInstanceOfType(engine.Evaluate("Object.keys(foo).find(function (key) { return key == 'Count' })"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("foo.Count"), typeof(HostMethod));
+            Assert.AreEqual(25, engine.Evaluate("foo.Count()"));
+
+            engine.SuppressExtensionMethodEnumeration = false;
+            Assert.AreEqual("Count", engine.Evaluate("Object.keys(foo).find(function (key) { return key == 'Count' })"));
+            Assert.IsInstanceOfType(engine.Evaluate("foo.Count"), typeof(HostMethod));
+            Assert.AreEqual(25, engine.Evaluate("foo.Count()"));
         }
 
         // ReSharper restore InconsistentNaming
