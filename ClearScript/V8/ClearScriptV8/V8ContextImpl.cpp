@@ -1854,41 +1854,45 @@ void V8ContextImpl::Verify(const v8::TryCatch& tryCatch)
 
         StdString message;
         bool stackOverflow;
-        bool allowGenericError;
 
         StdString value(hException);
         if (value.GetLength() > 0)
         {
             message = std::move(value);
             stackOverflow = (_wcsicmp(message.ToCString(), L"RangeError: Maximum call stack size exceeded") == 0);
-            allowGenericError = false;
+        }
+        else if (!hException->IsObject())
+        {
+            message = L"Unknown error; an unrecognized value was thrown and not caught";
+            stackOverflow = false;
         }
         else
         {
-            // It is unclear why V8 sometimes generates blank exceptions, although it probably has
-            // to do with memory pressure. It seems to happen only during stack overflow recovery.
-
-            message = L"Unknown error; potential stack overflow detected";
-            stackOverflow = true;
-            allowGenericError = true;
-        }
-
-    #ifdef _DEBUG
-
-        if (stackOverflow)
-        {
-            // Stack overflow conditions require extreme care, as V8's behavior can be erratic
-            // until the stack is unwound a bit. Much of the code below can trigger unexpected
-            // fatal errors in this context, so it makes sense to bypass it. On the other hand,
-            // losing error information is also undesirable, and the detection code above is far
-            // from robust. These sanity checks are intended to mitigate this fragility.
-
-            _ASSERTE(hException->IsObject());
             StdString constructorName(hException->ToObject()->GetConstructorName());
-            _ASSERTE((constructorName == L"RangeError") || (allowGenericError && (constructorName == L"Error")));
-        }
+            if ((constructorName == L"Error") || (constructorName == L"RangeError"))
+            {
+                // It is unclear why V8 sometimes throws Error or RangeError objects that convert
+                // to empty strings, but it probably has to do with memory pressure. It seems to
+                // happen only during stack overflow recovery.
 
-    #endif // _DEBUG
+                message = L"Unknown error (";
+                message += constructorName;
+                message += L"); potential stack overflow detected";
+                stackOverflow = true;
+            }
+            else if (constructorName.GetLength() > 0)
+            {
+                message = L"Unknown error (";
+                message += constructorName;
+                message += L")";
+                stackOverflow = false;
+            }
+            else
+            {
+                message = L"Unknown error; an unrecognized object was thrown and not caught";
+                stackOverflow = false;
+            }
+        }
 
         StdString stackTrace;
         V8Value hostException(V8Value::Undefined);

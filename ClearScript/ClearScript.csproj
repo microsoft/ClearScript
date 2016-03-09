@@ -92,6 +92,7 @@
     <Compile Include="Util\COMDispatchHelpers.cs" />
     <Compile Include="Util\CoTaskMemBlock.cs" />
     <Compile Include="Util\DisposedFlag.cs" />
+    <Compile Include="HostList.cs" />
     <Compile Include="Util\IHostInvokeContext.cs" />
     <Compile Include="Util\NativeMethods.cs" />
     <Compile Include="Util\COMDispatch.cs" />

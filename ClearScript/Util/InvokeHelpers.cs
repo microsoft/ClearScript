@@ -174,7 +174,7 @@ namespace Microsoft.ClearScript.Util
                 return VoidResult.Value;
             }
 
-            return context.Engine.PrepareResult(result, type, method.GetScriptMemberFlags());
+            return context.Engine.PrepareResult(result, type, method.GetScriptMemberFlags(), false);
         }
 
         public static object InvokeDelegate(IHostInvokeContext context, Delegate del, object[] args)

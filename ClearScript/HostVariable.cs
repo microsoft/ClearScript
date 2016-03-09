@@ -190,7 +190,7 @@ namespace Microsoft.ClearScript
 
                     if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                     {
-                        result = context.Engine.PrepareResult(value, ScriptMemberFlags.None);
+                        result = context.Engine.PrepareResult(value, ScriptMemberFlags.None, false);
                         return true;
                     }
 
@@ -200,7 +200,7 @@ namespace Microsoft.ClearScript
 
                 if ((invokeFlags & getPropertyFlags) != 0)
                 {
-                    result = context.Engine.PrepareResult(value, ScriptMemberFlags.None);
+                    result = context.Engine.PrepareResult(value, ScriptMemberFlags.None, false);
                     return true;
                 }
 
@@ -208,7 +208,7 @@ namespace Microsoft.ClearScript
                 {
                     if (args.Length == 1)
                     {
-                        result = context.Engine.PrepareResult(((IHostVariable)this).Value = args[0], typeof(T), ScriptMemberFlags.None);
+                        result = context.Engine.PrepareResult(((IHostVariable)this).Value = args[0], typeof(T), ScriptMemberFlags.None, false);
                         return true;
                     }
                 }
@@ -228,43 +228,17 @@ namespace Microsoft.ClearScript
 
             set
             {
-                var tempValue = default(T);
-                var succeeded = false;
-
-                try
-                {
-                    tempValue = (T)value;
-                    succeeded = true;
-                }
-                catch (InvalidCastException)
-                {
-                    try
-                    {
-                        tempValue = (T)Convert.ChangeType(value, typeof(T));
-                        succeeded = true;
-                    }
-                    catch (InvalidCastException)
-                    {
-                    }
-                    catch (FormatException)
-                    {
-                    }
-                    catch (OverflowException)
-                    {
-                    }
-                }
-
-                if (!succeeded)
+                if (!typeof(T).IsAssignableFrom(ref value))
                 {
                     throw new InvalidOperationException("Assignment invalid due to type mismatch");
                 }
 
-                if ((tempValue is HostItem) || (tempValue is HostTarget))
+                if ((value is HostItem) || (value is HostTarget))
                 {
                     throw new NotSupportedException("Unsupported value type");
                 }
 
-                this.value = tempValue;
+                this.value = (T)value;
             }
         }
 

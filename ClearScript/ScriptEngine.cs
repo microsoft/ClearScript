@@ -203,6 +203,18 @@ namespace Microsoft.ClearScript
         public bool DisableTypeRestriction { get; set; }
 
         /// <summary>
+        /// Enables or disables type restriction for array and list elements retrieved by index.
+        /// </summary>
+        /// <remarks>
+        /// In ClearScript 5.4.4 and earlier, indexed array and list elements were exempt from type
+        /// restriction. ClearScript 5.4.5 introduced a breaking change to correct this, but you can
+        /// set this property to <c>true</c> to restore the exemption if you have older script code
+        /// that depends on it.
+        /// </remarks>
+        /// <seealso cref="DisableTypeRestriction"/>
+        public bool DisableListIndexTypeRestriction { get; set; }
+
+        /// <summary>
         /// Enables or disables <c>null</c> wrapping for field, property, and method return values.
         /// </summary>
         /// <remarks>
@@ -282,9 +294,11 @@ namespace Microsoft.ClearScript
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="target">The object to expose.</param>
         /// <remarks>
+        /// <para>
         /// Once a host object is exposed to script code, its members are accessible via the script
         /// language's native syntax for member access. The following table provides details about
         /// the mapping between host members and script-accessible properties and methods.
+        /// </para>
         /// <para>
         /// <list type="table">
         ///     <listheader>
@@ -371,8 +385,10 @@ namespace Microsoft.ClearScript
         /// <param name="itemName">A name for the new global script item that will represent the object.</param>
         /// <param name="target">The object to expose.</param>
         /// <remarks>
+        /// <para>
         /// This method can be used to restrict script access to the members of a particular
         /// interface or base class.
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -391,8 +407,10 @@ namespace Microsoft.ClearScript
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="target">The object to expose.</param>
         /// <remarks>
+        /// <para>
         /// This method can be used to restrict script access to the members of a particular
         /// interface or base class.
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -410,8 +428,10 @@ namespace Microsoft.ClearScript
         /// <param name="itemName">A name for the new global script item that will represent the object.</param>
         /// <param name="progID">The programmatic identifier (ProgID) of the registered class to instantiate.</param>
         /// <remarks>
+        /// <para>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -430,8 +450,10 @@ namespace Microsoft.ClearScript
         /// <param name="progID">The programmatic identifier (ProgID) of the registered class to instantiate.</param>
         /// <param name="serverName">The name of the server on which to create the object.</param>
         /// <remarks>
+        /// <para>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -450,8 +472,10 @@ namespace Microsoft.ClearScript
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="progID">The programmatic identifier (ProgID) of the registered class to instantiate.</param>
         /// <remarks>
+        /// <para>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -471,8 +495,10 @@ namespace Microsoft.ClearScript
         /// <param name="progID">The programmatic identifier (ProgID) of the registered class to instantiate.</param>
         /// <param name="serverName">The name of the server on which to create the object.</param>
         /// <remarks>
+        /// <para>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -552,8 +578,10 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <param name="type">The type to expose.</param>
         /// <remarks>
+        /// <para>
         /// This method uses <paramref name="type"/>'s name for the new global script item that
         /// will represent it.
+        /// </para>
         /// <para>
         /// Host types are exposed to script code in the form of objects whose properties and
         /// methods are bound to the type's static members and nested types. If the type has
@@ -576,8 +604,10 @@ namespace Microsoft.ClearScript
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="type">The type to expose.</param>
         /// <remarks>
+        /// <para>
         /// This method uses <paramref name="type"/>'s name for the new global script item that
         /// will represent it.
+        /// </para>
         /// <para>
         /// Host types are exposed to script code in the form of objects whose properties and
         /// methods are bound to the type's static members and nested types. If the type has
@@ -600,10 +630,12 @@ namespace Microsoft.ClearScript
         /// <param name="itemName">A name for the new global script item that will represent the type.</param>
         /// <param name="type">The type to expose.</param>
         /// <remarks>
+        /// <para>
         /// Host types are exposed to script code in the form of objects whose properties and
         /// methods are bound to the type's static members and nested types. If the type has
         /// generic parameters, the corresponding object will be invocable with type arguments to
         /// yield a specific type.
+        /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -621,10 +653,12 @@ namespace Microsoft.ClearScript
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="type">The type to expose.</param>
         /// <remarks>
+        /// <para>
         /// Host types are exposed to script code in the form of objects whose properties and
         /// methods are bound to the type's static members and nested types. If the type has
         /// generic parameters, the corresponding object will be invocable with type arguments to
         /// yield a specific type.
+        /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -643,10 +677,12 @@ namespace Microsoft.ClearScript
         /// <param name="typeName">The fully qualified name of the type to expose.</param>
         /// <param name="typeArgs">Optional generic type arguments.</param>
         /// <remarks>
+        /// <para>
         /// Host types are exposed to script code in the form of objects whose properties and
         /// methods are bound to the type's static members and nested types. If the type has
         /// generic parameters, the corresponding object will be invocable with type arguments to
         /// yield a specific type.
+        /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -665,10 +701,12 @@ namespace Microsoft.ClearScript
         /// <param name="typeName">The fully qualified name of the type to expose.</param>
         /// <param name="typeArgs">Optional generic type arguments.</param>
         /// <remarks>
+        /// <para>
         /// Host types are exposed to script code in the form of objects whose properties and
         /// methods are bound to the type's static members and nested types. If the type has
         /// generic parameters, the corresponding object will be invocable with type arguments to
         /// yield a specific type.
+        /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -687,10 +725,12 @@ namespace Microsoft.ClearScript
         /// <param name="assemblyName">The name of the assembly that contains the type to expose.</param>
         /// <param name="typeArgs">Optional generic type arguments.</param>
         /// <remarks>
+        /// <para>
         /// Host types are exposed to script code in the form of objects whose properties and
         /// methods are bound to the type's static members and nested types. If the type has
         /// generic parameters, the corresponding object will be invocable with type arguments to
         /// yield a specific type.
+        /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -711,10 +751,12 @@ namespace Microsoft.ClearScript
         /// <param name="assemblyName">The name of the assembly that contains the type to expose.</param>
         /// <param name="typeArgs">Optional generic type arguments.</param>
         /// <remarks>
+        /// <para>
         /// Host types are exposed to script code in the form of objects whose properties and
         /// methods are bound to the type's static members and nested types. If the type has
         /// generic parameters, the corresponding object will be invocable with type arguments to
         /// yield a specific type.
+        /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -732,8 +774,10 @@ namespace Microsoft.ClearScript
         /// <param name="itemName">A name for the new global script item that will represent the type.</param>
         /// <param name="progID">The programmatic identifier (ProgID) of the registered class to import.</param>
         /// <remarks>
+        /// <para>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -752,8 +796,10 @@ namespace Microsoft.ClearScript
         /// <param name="progID">The programmatic identifier (ProgID) of the registered class to import.</param>
         /// <param name="serverName">The name of the server from which to import the type.</param>
         /// <remarks>
+        /// <para>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -772,8 +818,10 @@ namespace Microsoft.ClearScript
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="progID">The programmatic identifier (ProgID) of the registered class to import.</param>
         /// <remarks>
+        /// <para>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -793,8 +841,10 @@ namespace Microsoft.ClearScript
         /// <param name="progID">The programmatic identifier (ProgID) of the registered class to import.</param>
         /// <param name="serverName">The name of the server from which to import the type.</param>
         /// <remarks>
+        /// <para>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{0D43FE01-F093-11CF-8940-00A0C9054228}").
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
@@ -874,9 +924,11 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <param name="code">The script code to execute.</param>
         /// <remarks>
+        /// <para>
         /// In some script languages the distinction between statements and expressions is
         /// significant but ambiguous for certain syntactic elements. This method always
         /// interprets the specified script code as a statement.
+        /// </para>
         /// <para>
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with an automatically selected name. This document will not be discarded
@@ -894,9 +946,11 @@ namespace Microsoft.ClearScript
         /// <param name="documentName">A document name for the script code. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="code">The script code to execute.</param>
         /// <remarks>
+        /// <para>
         /// In some script languages the distinction between statements and expressions is
         /// significant but ambiguous for certain syntactic elements. This method always
         /// interprets the specified script code as a statement.
+        /// </para>
         /// <para>
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with the specified name. This document will not be discarded after execution.
@@ -914,9 +968,11 @@ namespace Microsoft.ClearScript
         /// <param name="discard"><c>True</c> to discard the script document after execution, <c>false</c> otherwise.</param>
         /// <param name="code">The script code to execute.</param>
         /// <remarks>
+        /// <para>
         /// In some script languages the distinction between statements and expressions is
         /// significant but ambiguous for certain syntactic elements. This method always
         /// interprets the specified script code as a statement.
+        /// </para>
         /// <para>
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with the specified name. Discarding this document removes it from view but
@@ -950,9 +1006,11 @@ namespace Microsoft.ClearScript
         /// <param name="code">The script code to evaluate.</param>
         /// <returns>The result value.</returns>
         /// <remarks>
+        /// <para>
         /// In some script languages the distinction between statements and expressions is
         /// significant but ambiguous for certain syntactic elements. This method always
         /// interprets the specified script code as an expression.
+        /// </para>
         /// <para>
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with an automatically selected name. This document will be discarded after
@@ -975,9 +1033,11 @@ namespace Microsoft.ClearScript
         /// <param name="code">The script code to evaluate.</param>
         /// <returns>The result value.</returns>
         /// <remarks>
+        /// <para>
         /// In some script languages the distinction between statements and expressions is
         /// significant but ambiguous for certain syntactic elements. This method always
         /// interprets the specified script code as an expression.
+        /// </para>
         /// <para>
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with the specified name. This document will be discarded after execution.
@@ -1000,9 +1060,11 @@ namespace Microsoft.ClearScript
         /// <param name="code">The script code to evaluate.</param>
         /// <returns>The result value.</returns>
         /// <remarks>
+        /// <para>
         /// In some script languages the distinction between statements and expressions is
         /// significant but ambiguous for certain syntactic elements. This method always
         /// interprets the specified script code as an expression.
+        /// </para>
         /// <para>
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with the specified name. Discarding this document removes it from view but
@@ -1140,12 +1202,12 @@ namespace Microsoft.ClearScript
 
         internal abstract void AddHostItem(string itemName, HostItemFlags flags, object item);
 
-        internal object PrepareResult<T>(T result, ScriptMemberFlags flags)
+        internal object PrepareResult<T>(T result, ScriptMemberFlags flags, bool isListIndexResult)
         {
-            return PrepareResult(result, typeof(T), flags);
+            return PrepareResult(result, typeof(T), flags, isListIndexResult);
         }
 
-        internal virtual object PrepareResult(object result, Type type, ScriptMemberFlags flags)
+        internal virtual object PrepareResult(object result, Type type, ScriptMemberFlags flags, bool isListIndexResult)
         {
             var wrapNull = flags.HasFlag(ScriptMemberFlags.WrapNullResult) || EnableNullResultWrapping;
             if (wrapNull && (result == null))
@@ -1153,7 +1215,7 @@ namespace Microsoft.ClearScript
                 return HostObject.WrapResult(null, type, true);
             }
 
-            if (!flags.HasFlag(ScriptMemberFlags.ExposeRuntimeType) && !DisableTypeRestriction)
+            if (!flags.HasFlag(ScriptMemberFlags.ExposeRuntimeType) && !DisableTypeRestriction && (!isListIndexResult || !DisableListIndexTypeRestriction))
             {
                 return HostObject.WrapResult(result, type, wrapNull);
             }

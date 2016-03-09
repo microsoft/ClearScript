@@ -67,6 +67,7 @@
     <Compile Include="BaseMemberAccessTest.cs" />
     <Compile Include="ExplicitInterfaceMemberAccessTest.cs" />
     <Compile Include="GeneralTestObject.cs" />
+    <Compile Include="HostListTest.cs" />
     <Compile Include="HostVariableTest.cs" />
     <Compile Include="IExplicitBaseTestInterface.cs" />
     <Compile Include="IBaseTestInterface.cs" />

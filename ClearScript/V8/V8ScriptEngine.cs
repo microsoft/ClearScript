@@ -340,9 +340,11 @@ namespace Microsoft.ClearScript.V8
         /// Gets or sets a soft limit for the size of the V8 runtime's heap.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// This property is specified in bytes. When it is set to the default value, heap size
         /// monitoring is disabled, and scripts with memory leaks or excessive memory usage
         /// can cause unrecoverable errors and process termination.
+        /// </para>
         /// <para>
         /// A V8 runtime unconditionally terminates the process when it exceeds its resource
         /// constraints (see <see cref="V8RuntimeConstraints"/>). This property enables external
@@ -397,9 +399,11 @@ namespace Microsoft.ClearScript.V8
         /// Gets or sets the maximum amount by which the V8 runtime is permitted to grow the stack during script execution.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// This property is specified in bytes. When it is set to the default value, no stack
         /// usage limit is enforced, and scripts with unchecked recursion or other excessive stack
         /// usage can cause unrecoverable errors and process termination.
+        /// </para>
         /// <para>
         /// Note that the V8 runtime does not monitor stack usage while a host call is in progress.
         /// Monitoring is resumed when control returns to the runtime.
@@ -421,7 +425,7 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
-        /// Gets or sets a value that controls extension method enumeration.
+        /// Enables or disables extension method enumeration.
         /// </summary>
         /// <remarks>
         /// By default, all exposed extension methods appear as enumerable properties of all host
@@ -626,10 +630,12 @@ namespace Microsoft.ClearScript.V8
         /// <param name="command">The script command to execute.</param>
         /// <returns>The command output.</returns>
         /// <remarks>
+        /// <para>
         /// This method is similar to <see cref="ScriptEngine.Evaluate(string)"/> but optimized for
         /// command consoles. The specified command must be limited to a single expression or
         /// statement. Script engines can override this method to customize command execution as
         /// well as the process of converting the result to a string for console output.
+        /// </para>
         /// <para>
         /// The <see cref="V8ScriptEngine"/> version of this method attempts to use
         /// <see href="http://msdn.microsoft.com/en-us/library/k6xhc6yc(VS.85).aspx">toString</see>

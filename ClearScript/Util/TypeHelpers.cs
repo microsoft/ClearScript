@@ -244,6 +244,30 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
+        public static bool IsAssignableToGenericType(this Type type, Type genericTypeDefinition, out Type[] typeArgs)
+        {
+            Debug.Assert(genericTypeDefinition.IsGenericTypeDefinition);
+
+            for (var testType = type; testType != null; testType = testType.BaseType)
+            {
+                if (testType.IsGenericType && (testType.GetGenericTypeDefinition() == genericTypeDefinition))
+                {
+                    typeArgs = testType.GetGenericArguments();
+                    return true;
+                }
+            }
+
+            var matches = type.GetInterfaces().Where(testType => testType.IsGenericType && (testType.GetGenericTypeDefinition() == genericTypeDefinition)).ToArray();
+            if (matches.Length == 1)
+            {
+                typeArgs = matches[0].GetGenericArguments();
+                return true;
+            }
+
+            typeArgs = null;
+            return false;
+        }
+
         public static bool HasExtensionMethods(this Type type)
         {
             return type.IsDefined(typeof(ExtensionAttribute), false);
@@ -509,7 +533,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var name = getBaseName(type.GetGenericTypeDefinition());
-            var paramList = String.Join(",", typeArgs.Select(typeArg => typeArg.GetFriendlyName(getBaseName)));
+            var paramList = string.Join(",", typeArgs.Select(typeArg => typeArg.GetFriendlyName(getBaseName)));
             return MiscHelpers.FormatInvariant("{0}{1}<{2}>", parentPrefix, name, paramList);
         }
 

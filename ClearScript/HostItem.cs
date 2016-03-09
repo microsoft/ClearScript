@@ -286,7 +286,7 @@ namespace Microsoft.ClearScript
             set { Collateral.TargetPropertyBag.Set(this, value); }
         }
 
-        private IList TargetList
+        private IHostList TargetList
         {
             get { return Collateral.TargetList.Get(this); }
             set { Collateral.TargetList.Set(this, value); }
@@ -491,16 +491,48 @@ namespace Microsoft.ClearScript
 
         private bool BindSpecialTarget<T>(out T specialTarget) where T : class
         {
-            // provide fully dynamic behavior for exposed IDispatchEx implementations
+            if (target.InvokeTarget == null)
+            {
+                specialTarget = null;
+                return false;
+            }
 
             if (typeof(T) == typeof(IDynamic))
             {
+                // provide fully dynamic behavior for exposed IDispatchEx implementations
+
                 var dispatchEx = target.InvokeTarget as IDispatchEx;
                 if ((dispatchEx != null) && dispatchEx.GetType().IsCOMObject)
                 {
                     specialTarget = (T)(object)(new DynamicDispatchExWrapper(dispatchEx));
                     return true;
                 }
+            }
+            else if (typeof(T) == typeof(IHostList))
+            {
+                // generic list support
+
+                Type[] typeArgs;
+                if (target.Type.IsAssignableToGenericType(typeof(IList<>), out typeArgs))
+                {
+                    if (typeof(IList).IsAssignableFrom(target.Type))
+                    {
+                        specialTarget = new HostList(engine, (IList)target.InvokeTarget, typeArgs[0]) as T;
+                        return specialTarget != null;
+                    }
+
+                    specialTarget = typeof(HostList<>).MakeGenericType(typeArgs).CreateInstance(engine, target.InvokeTarget) as T;
+                    return specialTarget != null;
+                }
+
+                if (typeof(IList).IsAssignableFrom(target.Type))
+                {
+                    specialTarget = new HostList(engine, (IList)target.InvokeTarget, typeof(object)) as T;
+                    return specialTarget != null;
+                }
+
+                specialTarget = null;
+                return false;
             }
 
             // The check here is required because the item may be bound to a specific target base
@@ -1218,10 +1250,10 @@ namespace Microsoft.ClearScript
                         IEnumerable enumerable;
                         if (BindSpecialTarget(out enumerable))
                         {
-                            var enumerationHelpersHostItem = Wrap(engine, EnumerationHelpers.HostType, HostItemFlags.PrivateAccess);
+                            var enumerableHelpersHostItem = Wrap(engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
                             try
                             {
-                                return ((IDynamic)enumerationHelpersHostItem).InvokeMethod("GetEnumerator", new object[] { this });
+                                return ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", new object[] { this });
                             }
                             catch (MissingMemberException)
                             {
@@ -1360,7 +1392,7 @@ namespace Microsoft.ClearScript
             {
                 var result = field.GetValue(target.InvokeTarget);
                 isCacheable = (TargetDynamicMetaObject == null) && (field.IsLiteral || field.IsInitOnly);
-                return engine.PrepareResult(result, field.FieldType, field.GetScriptMemberFlags());
+                return engine.PrepareResult(result, field.FieldType, field.GetScriptMemberFlags(), false);
             }
 
             var eventInfo = target.Type.GetScriptableEvent(name, invokeFlags, defaultAccess);
@@ -1421,7 +1453,7 @@ namespace Microsoft.ClearScript
             }
 
             var result = property.GetValue(target.InvokeTarget, invokeFlags, Type.DefaultBinder, args, culture);
-            return engine.PrepareResult(result, property.PropertyType, property.GetScriptMemberFlags());
+            return engine.PrepareResult(result, property.PropertyType, property.GetScriptMemberFlags(), false);
         }
 
         private object SetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture)
@@ -2112,29 +2144,6 @@ namespace Microsoft.ClearScript
             }
 
             #endregion
-        }
-
-        #endregion
-
-        #region Nested type: EnumerationHelpers
-
-        private static class EnumerationHelpers
-        {
-            // ReSharper disable UnusedMember.Local
-
-            public static readonly HostType HostType = HostType.Wrap(typeof(EnumerationHelpers));
-
-            public static IEnumerator<T> GetEnumerator<T>(IEnumerable<T> source)
-            {
-                return source.GetEnumerator();
-            }
-
-            public static IEnumerator GetEnumerator(IEnumerable source)
-            {
-                return source.GetEnumerator();
-            }
-
-            // ReSharper restore UnusedMember.Local
         }
 
         #endregion

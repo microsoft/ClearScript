@@ -215,21 +215,21 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("PropertyBag")]
-        [ExpectedException(typeof(UnauthorizedAccessException))]
         public void PropertyBag_ReadOnly()
         {
-            var bag = new PropertyBag(true) { { "foo", false } };
+            var bag = new PropertyBag(true);
+            bag.SetPropertyNoCheck("foo", false);
             engine.AddHostObject("bag", bag);
-            engine.Execute("bag.foo = true");
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("bag.foo = true"));
         }
 
         [TestMethod, TestCategory("PropertyBag")]
-        [ExpectedException(typeof(UnauthorizedAccessException))]
         public void PropertyBag_ReadOnly_Delete()
         {
-            var bag = new PropertyBag(true) { { "foo", false } };
+            var bag = new PropertyBag(true);
+            bag.SetPropertyNoCheck("foo", false);
             engine.AddHostObject("bag", bag);
-            engine.Execute("delete bag.foo");
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("delete bag.foo"));
         }
 
         [TestMethod, TestCategory("PropertyBag")]

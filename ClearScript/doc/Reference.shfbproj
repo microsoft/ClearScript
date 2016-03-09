@@ -44,10 +44,11 @@
     <CopyrightText>Copyright &amp;#169%3b Microsoft Corporation. All rights reserved.</CopyrightText>
     <NamespaceSummaries>
       <NamespaceSummaryItem name="Microsoft.ClearScript" isDocumented="True">The Microsoft.ClearScript namespace contains types that support all script engines.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Microsoft.ClearScript.V8" isDocumented="True">The Microsoft.ClearScript.V8 namespace contains types that provide access to the V8 high-performance open-source JavaScript engine.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Microsoft.ClearScript.Windows" isDocumented="True">The Microsoft.ClearScript.Windows namespace contains types that provide access to Windows Script engines such as JScript and VBScript.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="(global)" isDocumented="False" />
-<NamespaceSummaryItem name="Microsoft.ClearScript.JavaScript" isDocumented="True">The Microsoft.ClearScript.JavaScript namespace contains types that provide access to JavaScript-specific features.</NamespaceSummaryItem></NamespaceSummaries>
+      <NamespaceSummaryItem name="Microsoft.ClearScript.V8" isDocumented="True">The Microsoft.ClearScript.V8 namespace contains types that provide access to the V8 high-performance open-source JavaScript engine.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Microsoft.ClearScript.Windows" isDocumented="True">The Microsoft.ClearScript.Windows namespace contains types that provide access to Windows Script engines such as JScript and VBScript.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="(global)" isDocumented="False" />
+      <NamespaceSummaryItem name="Microsoft.ClearScript.JavaScript" isDocumented="True">The Microsoft.ClearScript.JavaScript namespace contains types that provide access to JavaScript-specific features.</NamespaceSummaryItem>
+    </NamespaceSummaries>
     <RootNamespaceTitle>ClearScript Library Reference</RootNamespaceTitle>
     <ProjectSummary>The ClearScript library makes it easy to add scripting to your .NET applications.</ProjectSummary>
     <MaximumGroupParts>2</MaximumGroupParts>

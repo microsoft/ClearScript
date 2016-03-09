@@ -356,8 +356,10 @@ namespace Microsoft.ClearScript.Windows
         /// </summary>
         /// <returns>The script call stack formatted as a string.</returns>
         /// <remarks>
+        /// <para>
         /// This method returns an empty string if the script engine is not executing script code.
         /// The stack trace text format is defined by the script engine.
+        /// </para>
         /// <para>
         /// The <see cref="WindowsScriptEngine"/> version of this method returns the empty string
         /// if script debugging features have not been enabled for the instance.
@@ -407,11 +409,7 @@ namespace Microsoft.ClearScript.Windows
             ScriptInvoke(() =>
             {
                 object marshaledItem;
-                if (flags.HasFlag(HostItemFlags.DirectAccess) && item.GetType().IsCOMObject)
-                {
-                    marshaledItem = item;
-                }
-                else
+                if (!flags.HasFlag(HostItemFlags.DirectAccess) || !GetDirectAccessItem(item, out marshaledItem))
                 {
                     marshaledItem = MarshalToScript(item, flags);
                     if (!(marshaledItem is HostItem))
@@ -449,9 +447,38 @@ namespace Microsoft.ClearScript.Windows
             });
         }
 
-        internal override object PrepareResult(object result, Type type, ScriptMemberFlags flags)
+        private static bool GetDirectAccessItem(object item, out object directAccessItem)
         {
-            var tempResult = base.PrepareResult(result, type, flags);
+            while (true)
+            {
+                var scriptMarshalWrapper = item as IScriptMarshalWrapper;
+                if (scriptMarshalWrapper != null)
+                {
+                    item = scriptMarshalWrapper.Unwrap();
+                    continue;
+                }
+
+                var hostTarget = item as HostTarget;
+                if (hostTarget != null)
+                {
+                    item = hostTarget.Target;
+                    continue;
+                }
+
+                if ((item != null) && item.GetType().IsCOMObject)
+                {
+                    directAccessItem = item;
+                    return true;
+                }
+
+                directAccessItem = null;
+                return false;
+            }
+        }
+
+        internal override object PrepareResult(object result, Type type, ScriptMemberFlags flags, bool isListIndexResult)
+        {
+            var tempResult = base.PrepareResult(result, type, flags, isListIndexResult);
             if ((tempResult != null) || !engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
             {
                 return tempResult;

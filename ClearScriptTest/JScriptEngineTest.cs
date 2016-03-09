@@ -1486,6 +1486,29 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+
+            Assert.AreEqual("[HostObject:IFileSystem3]", engine.ExecuteCommand("fso"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_AddCOMObject_FileSystemObject_DirectAccess()
+        {
+            var list = new ArrayList();
+
+            engine.Script.list = list;
+            engine.AddCOMObject("fso", HostItemFlags.DirectAccess, "Scripting.FileSystemObject");
+            engine.Execute(@"
+                drives = fso.Drives;
+                for (e = new Enumerator(drives); !e.atEnd(); e.moveNext()) {
+                    list.Add(e.item().Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+
+            Assert.AreEqual("System.__ComObject", engine.ExecuteCommand("fso"));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]

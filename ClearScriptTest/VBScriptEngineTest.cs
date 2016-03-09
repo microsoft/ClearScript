@@ -1615,6 +1615,29 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+
+            Assert.AreEqual("Object", engine.Evaluate("TypeName(fso)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMObject_FileSystemObject_DirectAccess()
+        {
+            var list = new ArrayList();
+
+            engine.Script.list = list;
+            engine.AddCOMObject("fso", HostItemFlags.DirectAccess, "Scripting.FileSystemObject");
+            engine.Execute(@"
+                set drives = fso.Drives
+                for each drive in drives
+                    list.Add(drive.Path)
+                next
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+
+            Assert.AreEqual("FileSystemObject", engine.Evaluate("TypeName(fso)"));
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]

@@ -130,9 +130,11 @@ namespace Microsoft.ClearScript
         /// <param name="args">Optional constructor arguments.</param>
         /// <returns>A new host object of the specified type.</returns>
         /// <remarks>
+        /// <para>
         /// This function is provided for script languages that do not support external
         /// instantiation. It is overloaded with <see cref="newObj(object, object[])"/> and
         /// selected at runtime if <typeparamref name="T"/> can be used as a type argument.
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see
@@ -167,10 +169,12 @@ namespace Microsoft.ClearScript
         /// <param name="args">Optional constructor arguments.</param>
         /// <returns>A new host object of the specified type.</returns>
         /// <remarks>
+        /// <para>
         /// This function is provided for script languages that do not support external
         /// instantiation. It is overloaded with <see cref="newObj{T}"/> and selected at runtime if
         /// <paramref name="type"/> cannot be used as a type argument. Note that this applies
         /// to some host types that support instantiation, such as certain COM/ActiveX types.
+        /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see
@@ -256,10 +260,12 @@ namespace Microsoft.ClearScript
         /// <param name="initValue">An optional initial value for the variable.</param>
         /// <returns>A new host variable of the specified type.</returns>
         /// <remarks>
+        /// <para>
         /// A host variable is a strongly typed object that holds a value of the specified type.
         /// Host variables are useful for passing method arguments by reference. In addition to
         /// being generally interchangeable with their stored values, host variables support the
         /// following properties:
+        /// </para>
         /// <para>
         /// <list type="table">
         ///     <listheader>
@@ -432,11 +438,13 @@ namespace Microsoft.ClearScript
         /// <param name="scriptFunc">The script function for which to create a delegate.</param>
         /// <returns>A new delegate that invokes the specified script function and returns its result value.</returns>
         /// <remarks>
+        /// <para>
         /// This function creates a delegate that accepts <paramref name="argCount"/> arguments and
         /// returns the result of invoking <paramref name="scriptFunc"/>. The type of all
         /// parameters and the return value is <see cref="System.Object"/>. Such a delegate is
         /// often useful in strongly typed contexts because of
         /// <see href="http://msdn.microsoft.com/en-us/library/ms173174(VS.80).aspx">contravariance</see>.
+        /// </para>
         /// <para>
         /// For information about the types of result values that script code can return, see
         /// <see cref="ScriptEngine.Evaluate(string, bool, string)"/>.
@@ -455,10 +463,12 @@ namespace Microsoft.ClearScript
         /// <typeparam name="T">The host type for which to get the <see cref="System.Type"/>.</typeparam>
         /// <returns>The <see cref="System.Type"/> for the specified host type.</returns>
         /// <remarks>
+        /// <para>
         /// This function is similar to the C#
         /// <c><see href="http://msdn.microsoft.com/en-us/library/58918ffs(VS.71).aspx">typeof</see></c>
         /// operator. It is overloaded with <see cref="typeOf(object)"/> and selected at runtime if
         /// <typeparamref name="T"/> can be used as a type argument.
+        /// </para>
         /// <para>
         /// This function throws an exception if the script engine's
         /// <see cref="ScriptEngine.AllowReflection"/> property is set to <c>false</c>.
@@ -488,11 +498,13 @@ namespace Microsoft.ClearScript
         /// <param name="value">The host type for which to get the <see cref="System.Type"/>.</param>
         /// <returns>The <see cref="System.Type"/> for the specified host type.</returns>
         /// <remarks>
+        /// <para>
         /// This function is similar to the C#
         /// <c><see href="http://msdn.microsoft.com/en-us/library/58918ffs(VS.71).aspx">typeof</see></c>
         /// operator. It is overloaded with <see cref="typeOf{T}"/> and selected at runtime if
         /// <paramref name="value"/> cannot be used as a type argument. Note that this applies to
         /// some host types; examples are static types and overloaded generic type groups.
+        /// </para>
         /// <para>
         /// This function throws an exception if the script engine's
         /// <see cref="ScriptEngine.AllowReflection"/> property is set to <c>false</c>.
@@ -1454,10 +1466,12 @@ namespace Microsoft.ClearScript
         /// <param name="hostTypeArgs">Optional generic type arguments.</param>
         /// <returns>The imported host type.</returns>
         /// <remarks>
+        /// <para>
         /// Host types are imported in the form of objects whose properties and methods are bound
         /// to the host type's static members and nested types. If <paramref name="name"/> refers
         /// to a generic type, the corresponding object will be invocable with type arguments to
         /// yield a specific type.
+        /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see
@@ -1496,10 +1510,12 @@ namespace Microsoft.ClearScript
         /// <param name="hostTypeArgs">Optional generic type arguments.</param>
         /// <returns>The imported host type.</returns>
         /// <remarks>
+        /// <para>
         /// Host types are imported in the form of objects whose properties and methods are bound
         /// to the host type's static members and nested types. If <paramref name="name"/> refers
         /// to a generic type, the corresponding object will be invocable with type arguments to
         /// yield a specific type.
+        /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see
@@ -1533,10 +1549,12 @@ namespace Microsoft.ClearScript
         /// <param name="type">The <see cref="System.Type"/> that specifies the host type to import.</param>
         /// <returns>The imported host type.</returns>
         /// <remarks>
+        /// <para>
         /// Host types are imported in the form of objects whose properties and methods are bound
         /// to the host type's static members and nested types. If <paramref name="type"/> refers
         /// to a generic type, the corresponding object will be invocable with type arguments to
         /// yield a specific type.
+        /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see

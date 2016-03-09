@@ -67,6 +67,8 @@ namespace Microsoft.ClearScript.Util
         where THolder : class
         where TValue : class
     {
+        private readonly ConditionalWeakTable<THolder, TValue> table = new ConditionalWeakTable<THolder, TValue>();
+
         public TValue Get(THolder holder)
         {
             TValue value;
@@ -91,8 +93,6 @@ namespace Microsoft.ClearScript.Util
         {
             table.Remove(holder);
         }
-
-        private readonly ConditionalWeakTable<THolder, TValue> table = new ConditionalWeakTable<THolder, TValue>();
     }
 
     internal sealed class CollateralArray<THolder, TElement> : CollateralObject<THolder, TElement[]> where THolder : class

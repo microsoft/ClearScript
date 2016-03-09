@@ -74,7 +74,7 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("v8-x64.dll")]
     [DeploymentItem("v8-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
-    public class StaticStaticMemberAccessTest : ClearScriptTest
+    public class StaticMemberAccessTest : ClearScriptTest
     {
         #region setup / teardown
 

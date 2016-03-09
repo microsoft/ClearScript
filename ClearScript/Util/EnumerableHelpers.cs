@@ -60,6 +60,7 @@
 //       
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -68,6 +69,8 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class EnumerableHelpers
     {
+        public static readonly HostType HostType = HostType.Wrap(typeof(EnumerableHelpers));
+
         public static IList<T> ToIList<T>(this IEnumerable<T> source)
         {
             return (source as IList<T>) ?? source.ToList();
@@ -112,6 +115,16 @@ namespace Microsoft.ClearScript.Util
                     yield return index;
                 }
             }
+        }
+
+        public static IEnumerator<T> GetEnumerator<T>(IEnumerable<T> source)
+        {
+            return source.GetEnumerator();
+        }
+
+        public static IEnumerator GetEnumerator(IEnumerable source)
+        {
+            return source.GetEnumerator();
         }
     }
 }

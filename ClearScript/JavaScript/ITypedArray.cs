@@ -78,7 +78,9 @@ namespace Microsoft.ClearScript.JavaScript
     /// </summary>
     /// <typeparam name="T">The typed array's element type.</typeparam>
     /// <remarks>
+    /// <para>
     /// The following table lists the specific interfaces implemented by JavaScript typed arrays:
+    /// </para>
     /// <para>
     /// <list type="table">
     ///     <listheader>

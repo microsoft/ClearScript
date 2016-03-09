@@ -103,6 +103,36 @@ namespace Microsoft.ClearScript.Windows
         public abstract void CollectGarbage(ScriptGCType type);
 
         public abstract void Close();
+
+        #region Nested type: DummyEnumDebugStackFrames
+
+        protected class DummyEnumDebugStackFrames : IEnumDebugStackFrames
+        {
+            #region IEnumDebugStackFrames implementation
+
+            public void Next(uint count, out DebugStackFrameDescriptor descriptor, out uint countFetched)
+            {
+                descriptor = default(DebugStackFrameDescriptor);
+                countFetched = 0;
+            }
+
+            public void Skip(uint count)
+            {
+            }
+
+            public void Reset()
+            {
+            }
+
+            public void Clone(out IEnumDebugStackFrames enumFrames)
+            {
+                throw new NotImplementedException();
+            }
+
+            #endregion
+        }
+
+        #endregion
     }
 
     internal class ActiveScriptWrapper32 : ActiveScriptWrapper
@@ -146,13 +176,13 @@ namespace Microsoft.ClearScript.Windows
             pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse32>(pActiveScript);
             pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug32>(pActiveScript);
             pActiveScriptGarbageCollector = RawCOMHelpers.QueryInterfaceNoThrow<IActiveScriptGarbageCollector>(pActiveScript);
-            pDebugStackFrameSniffer = RawCOMHelpers.QueryInterface<IDebugStackFrameSnifferEx32>(pActiveScript);
+            pDebugStackFrameSniffer = RawCOMHelpers.QueryInterfaceNoThrow<IDebugStackFrameSnifferEx32>(pActiveScript);
 
             activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pActiveScript);
             activeScriptParse = (IActiveScriptParse32)activeScript;
             activeScriptDebug = (IActiveScriptDebug32)activeScript;
             activeScriptGarbageCollector = activeScript as IActiveScriptGarbageCollector;
-            debugStackFrameSniffer = (IDebugStackFrameSnifferEx32)activeScript;
+            debugStackFrameSniffer = activeScript as IDebugStackFrameSnifferEx32;
 
             if (flags.HasFlag(WindowsScriptEngineFlags.EnableStandardsMode))
             {
@@ -226,7 +256,14 @@ namespace Microsoft.ClearScript.Windows
 
         public override void EnumStackFrames(out IEnumDebugStackFrames enumFrames)
         {
-            debugStackFrameSniffer.EnumStackFrames(out enumFrames);
+            if (debugStackFrameSniffer != null)
+            {
+                debugStackFrameSniffer.EnumStackFrames(out enumFrames);
+            }
+            else
+            {
+                enumFrames = new DummyEnumDebugStackFrames();
+            }
         }
 
         public override void CollectGarbage(ScriptGCType type)
@@ -297,13 +334,13 @@ namespace Microsoft.ClearScript.Windows
             pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse64>(pActiveScript);
             pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug64>(pActiveScript);
             pActiveScriptGarbageCollector = RawCOMHelpers.QueryInterfaceNoThrow<IActiveScriptGarbageCollector>(pActiveScript);
-            pDebugStackFrameSniffer = RawCOMHelpers.QueryInterface<IDebugStackFrameSnifferEx64>(pActiveScript);
+            pDebugStackFrameSniffer = RawCOMHelpers.QueryInterfaceNoThrow<IDebugStackFrameSnifferEx64>(pActiveScript);
 
             activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pActiveScript);
             activeScriptParse = (IActiveScriptParse64)activeScript;
             activeScriptDebug = (IActiveScriptDebug64)activeScript;
             activeScriptGarbageCollector = activeScript as IActiveScriptGarbageCollector;
-            debugStackFrameSniffer = (IDebugStackFrameSnifferEx64)activeScript;
+            debugStackFrameSniffer = activeScript as IDebugStackFrameSnifferEx64;
 
             if (flags.HasFlag(WindowsScriptEngineFlags.EnableStandardsMode))
             {
@@ -377,7 +414,14 @@ namespace Microsoft.ClearScript.Windows
 
         public override void EnumStackFrames(out IEnumDebugStackFrames enumFrames)
         {
-            debugStackFrameSniffer.EnumStackFrames(out enumFrames);
+            if (debugStackFrameSniffer != null)
+            {
+                debugStackFrameSniffer.EnumStackFrames(out enumFrames);
+            }
+            else
+            {
+                enumFrames = new DummyEnumDebugStackFrames();
+            }
         }
 
         public override void CollectGarbage(ScriptGCType type)

@@ -376,10 +376,12 @@ namespace Microsoft.ClearScript.Windows
         /// <param name="command">The script command to execute.</param>
         /// <returns>The command output.</returns>
         /// <remarks>
+        /// <para>
         /// This method is similar to <see cref="ScriptEngine.Evaluate(string)"/> but optimized for
         /// command consoles. The specified command must be limited to a single expression or
         /// statement. Script engines can override this method to customize command execution as
         /// well as the process of converting the result to a string for console output.
+        /// </para>
         /// <para>
         /// The <see cref="VBScriptEngine"/> version of this method supports both expressions and
         /// statements. If the specified command begins with "eval " (not case-sensitive), the

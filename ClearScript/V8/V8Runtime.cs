@@ -232,9 +232,11 @@ namespace Microsoft.ClearScript.V8
         /// Gets or sets a soft limit for the size of the V8 runtime's heap.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// This property is specified in bytes. When it is set to the default value, heap size
         /// monitoring is disabled, and scripts with memory leaks or excessive memory usage
         /// can cause unrecoverable errors and process termination.
+        /// </para>
         /// <para>
         /// A V8 runtime unconditionally terminates the process when it exceeds its resource
         /// constraints (see <see cref="V8RuntimeConstraints"/>). This property enables external
@@ -289,9 +291,11 @@ namespace Microsoft.ClearScript.V8
         /// Gets or sets the maximum amount by which the stack is permitted to grow during script execution.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// This property is specified in bytes. When it is set to the default value, no stack
         /// usage limit is enforced, and scripts with unchecked recursion or other excessive stack
         /// usage can cause unrecoverable errors and process termination.
+        /// </para>
         /// <para>
         /// Note that the V8 runtime does not monitor stack usage while a host call is in progress.
         /// Monitoring is resumed when control returns to the runtime.
@@ -345,8 +349,10 @@ namespace Microsoft.ClearScript.V8
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <returns>A new V8 script engine instance.</returns>
         /// <remarks>
+        /// <para>
         /// The new script engine instance shares the V8 runtime with other instances created by
         /// this method and any of its overloads.
+        /// </para>
         /// <para>
         /// V8 supports one script debugger per runtime. If script debugging has been enabled in
         /// the current runtime, additional script engine instances cannot disable it or change its
@@ -365,8 +371,10 @@ namespace Microsoft.ClearScript.V8
         /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
         /// <returns>A new V8 script engine instance.</returns>
         /// <remarks>
+        /// <para>
         /// The new script engine instance shares the V8 runtime with other instances created by
         /// this method and any of its overloads.
+        /// </para>
         /// <para>
         /// V8 supports one script debugger per runtime. If script debugging has been enabled in
         /// the current runtime, additional script engine instances cannot disable it or change its
@@ -385,8 +393,10 @@ namespace Microsoft.ClearScript.V8
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <returns>A new V8 script engine instance.</returns>
         /// <remarks>
+        /// <para>
         /// The new script engine instance shares the V8 runtime with other instances created by
         /// this method and any of its overloads.
+        /// </para>
         /// <para>
         /// V8 supports one script debugger per runtime. If script debugging has been enabled in
         /// the current runtime, additional script engine instances cannot disable it or change its
@@ -406,8 +416,10 @@ namespace Microsoft.ClearScript.V8
         /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
         /// <returns>A new V8 script engine instance.</returns>
         /// <remarks>
+        /// <para>
         /// The new script engine instance shares the V8 runtime with other instances created by
         /// this method and any of its overloads.
+        /// </para>
         /// <para>
         /// V8 supports one script debugger per runtime. If script debugging has been enabled in
         /// the current runtime, additional script engine instances cannot disable it or change its

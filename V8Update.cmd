@@ -5,10 +5,12 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=4.7.80.25
+set v8testedrev=4.9.385.30
 
-set gyprev=01528c7244837168a1c80f06ff60fa5a9793c824
+set gyprev=b85ad3e578da830377dbc1843aa4fbc5af17a192
 set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df
+set clangrev=24e8c1c92fe54ef8ed7651b5850c056983354a4a
+set traceeventcommonrev=d83d44b13d07c2fd0a40101a7deef9b93b841732
 
 :ProcessArgs
 
@@ -174,6 +176,26 @@ git checkout -q "%cygwinrev%"
 if errorlevel 1 goto Error
 cd ..\..
 :DownloadCygwinDone
+
+:DownloadClang
+echo Downloading Clang ...
+git clone -n -q https://chromium.googlesource.com/chromium/src/tools/clang.git tools\clang
+if errorlevel 1 goto Error
+cd tools\clang
+git checkout -q "%clangrev%"
+if errorlevel 1 goto Error
+cd ..\..
+:DownloadClangDone
+
+:DownloadTraceEventCommon
+echo Downloading TraceEventCommon ...
+git clone -n -q https://chromium.googlesource.com/chromium/src/base/trace_event/common.git base/trace_event/common
+if errorlevel 1 goto Error
+cd base/trace_event/common
+git checkout -q "%traceeventcommonrev%"
+if errorlevel 1 goto Error
+cd ..\..\..
+:DownloadTraceEventCommonDone
 
 cd ..
 
