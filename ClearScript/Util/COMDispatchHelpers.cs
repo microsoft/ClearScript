@@ -82,7 +82,7 @@ namespace Microsoft.ClearScript.Util
                 {
                     EXCEPINFO excepInfo;
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
-                    dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyGet, ref dispArgs, resultVariantBlock.Addr, out excepInfo);
+                    Marshal.ThrowExceptionForHR(dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyGet, ref dispArgs, resultVariantBlock.Addr, out excepInfo));
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             }
@@ -110,7 +110,20 @@ namespace Microsoft.ClearScript.Util
                     EXCEPINFO excepInfo;
                     Marshal.WriteInt32(namedArgDispidBlock.Addr, SpecialDispIDs.PropertyPut);
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 1, rgdispidNamedArgs = namedArgDispidBlock.Addr };
-                    dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPut | DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out excepInfo);
+
+                    result = dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPut | DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out excepInfo);
+                    if (result == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
+                    {
+                        // VBScript objects can be finicky about property-put dispatch flags
+
+                        result = dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPut, ref dispArgs, IntPtr.Zero, out excepInfo);
+                        if (result == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
+                        {
+                            result = dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out excepInfo);
+                        }
+                    }
+
+                    Marshal.ThrowExceptionForHR(result);
                 }
             }
         }
@@ -144,7 +157,7 @@ namespace Microsoft.ClearScript.Util
                 {
                     EXCEPINFO excepInfo;
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
-                    dispatchEx.InvokeEx(SpecialDispIDs.Default, 0, asConstructor ? DispatchFlags.Construct : DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out excepInfo);
+                    Marshal.ThrowExceptionForHR(dispatchEx.InvokeEx(SpecialDispIDs.Default, 0, asConstructor ? DispatchFlags.Construct : DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out excepInfo));
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             }
@@ -161,7 +174,7 @@ namespace Microsoft.ClearScript.Util
                 {
                     EXCEPINFO excepInfo;
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
-                    dispatchEx.InvokeEx(dispid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out excepInfo);
+                    Marshal.ThrowExceptionForHR(dispatchEx.InvokeEx(dispid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out excepInfo));
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             }

@@ -1827,6 +1827,80 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(foo.toString(), engine.Evaluate("foo.toString()"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScript_PropertyPut()
+        {
+            using (var vbEngine = new VBScriptEngine())
+            {
+                vbEngine.Execute(@"
+                    class Test
+                        private myFoo
+                        public property get foo
+                            foo = myFoo
+                        end property
+                        public property let foo(value)
+                            myFoo = value
+                        end property
+                    end class 
+                    set myTest = new Test
+                    myTest.foo = 123
+                ");
+
+                Assert.AreEqual(123, Convert.ToInt32(vbEngine.Script.myTest.foo));
+
+                vbEngine.Script.myTest.foo = 456;
+                Assert.AreEqual(456, Convert.ToInt32(vbEngine.Script.myTest.foo));
+
+                vbEngine.Script.myTest.foo = "blah";
+                Assert.AreEqual("blah", vbEngine.Script.myTest.foo);
+
+                vbEngine.Script.myTest.foo = new DateTime(2007, 5, 22);
+                Assert.AreEqual(new DateTime(2007, 5, 22), vbEngine.Script.myTest.foo);
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScript_PropertyPut_CrossEngine()
+        {
+            using (var vbEngine = new VBScriptEngine())
+            {
+                vbEngine.Execute(@"
+                    class Test
+                        private myFoo
+                        public property get foo
+                            foo = myFoo
+                        end property
+                        public property let foo(value)
+                            myFoo = value
+                        end property
+                    end class 
+                    set myTest = new Test
+                    myTest.foo = 123
+                ");
+
+                engine.Script.test = vbEngine.Script.myTest;
+                Assert.AreEqual(123, Convert.ToInt32(engine.Evaluate("test.foo")));
+
+                engine.Execute("test.foo = 456");
+                Assert.AreEqual(456, Convert.ToInt32(engine.Evaluate("test.foo")));
+
+                engine.Execute("test.foo = \"blah\"");
+                Assert.AreEqual("blah", engine.Evaluate("test.foo"));
+
+                engine.AddHostObject("bar", new DateTime(2007, 5, 22));
+                engine.Execute("test.foo = bar");
+                Assert.AreEqual(new DateTime(2007, 5, 22), engine.Evaluate("test.foo"));
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScript_PropertyPut_CrossEngine_VBScript()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+            BugFix_VBScript_PropertyPut_CrossEngine();
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

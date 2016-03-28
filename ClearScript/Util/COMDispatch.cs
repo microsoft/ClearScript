@@ -208,7 +208,8 @@ namespace Microsoft.ClearScript.Util
             [Out] out int dispid
         );
 
-        void InvokeEx(
+        [PreserveSig]
+        int InvokeEx(
             [In] int dispid,
             [In] int lcid,
             [In] DispatchFlags flags,

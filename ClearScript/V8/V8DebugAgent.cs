@@ -264,10 +264,14 @@ namespace Microsoft.ClearScript.V8
 
         private void RegisterWaitForQueueEvent()
         {
-            var oldQueueWaitHandle = Interlocked.Exchange(ref queueWaitHandle, ThreadPool.RegisterWaitForSingleObject(queueEvent, OnQueueEvent, null, Timeout.Infinite, true));
-            if (oldQueueWaitHandle != null)
+            RegisteredWaitHandle newQueueWaitHandle;
+            if (MiscHelpers.Try(out newQueueWaitHandle, () => ThreadPool.RegisterWaitForSingleObject(queueEvent, OnQueueEvent, null, Timeout.Infinite, true)))
             {
-                oldQueueWaitHandle.Unregister(null);
+                var oldQueueWaitHandle = Interlocked.Exchange(ref queueWaitHandle, newQueueWaitHandle);
+                if (oldQueueWaitHandle != null)
+                {
+                    oldQueueWaitHandle.Unregister(null);
+                }
             }
         }
 

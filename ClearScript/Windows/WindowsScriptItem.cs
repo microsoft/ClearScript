@@ -271,7 +271,37 @@ namespace Microsoft.ClearScript.Windows
                 var marshaledArgs = engine.MarshalToScript(args);
                 try
                 {
-                    target.InvokeMember(name, BindingFlags.SetProperty, null, target, marshaledArgs, null, CultureInfo.InvariantCulture, null);
+                    try
+                    {
+                        target.InvokeMember(name, BindingFlags.SetProperty, null, target, marshaledArgs, null, CultureInfo.InvariantCulture, null);
+                    }
+                    catch (COMException primaryException)
+                    {
+                        // VBScript objects can be finicky about property-put dispatch flags
+
+                        if (primaryException.ErrorCode == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
+                        {
+                            try
+                            {
+                                target.InvokeMember(name, BindingFlags.SetProperty | BindingFlags.PutDispProperty, null, target, marshaledArgs, null, CultureInfo.InvariantCulture, null);
+                            }
+                            catch (COMException secondaryException)
+                            {
+                                if (secondaryException.ErrorCode == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
+                                {
+                                    target.InvokeMember(name, BindingFlags.SetProperty | BindingFlags.PutRefDispProperty, null, target, marshaledArgs, null, CultureInfo.InvariantCulture, null);
+                                }
+                                else
+                                {
+                                    throw;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
                 }
                 catch (MissingMemberException)
                 {
