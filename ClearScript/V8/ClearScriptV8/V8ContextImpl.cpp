@@ -737,6 +737,7 @@ V8ContextImpl::~V8ContextImpl()
     Dispose(m_hHostIteratorTemplate);
     Dispose(m_hHostDelegateTemplate);
     Dispose(m_hHostObjectTemplate);
+	Dispose(m_hTerminationException);
     Dispose(m_hAccessToken);
     Dispose(m_hAccessTokenName);
     Dispose(m_hCachePropertyName);

@@ -1901,6 +1901,35 @@ namespace Microsoft.ClearScript.Test
             BugFix_VBScript_PropertyPut_CrossEngine();
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_SharedV8RuntimeLeak()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (runtime.CreateScriptEngine())
+                {
+                }
+
+                runtime.CollectGarbage(true);
+                var heapSize = runtime.GetHeapInfo().TotalHeapSize;
+
+                for (var i = 0; i < 500; i++)
+                {
+                    using (runtime.CreateScriptEngine())
+                    {
+                    }
+
+                    if ((i % 25) == 24)
+                    {
+                        runtime.CollectGarbage(true);
+                    }
+                }
+
+                runtime.CollectGarbage(true);
+                Assert.IsFalse(runtime.GetHeapInfo().TotalHeapSize > (heapSize * 1.5));
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
