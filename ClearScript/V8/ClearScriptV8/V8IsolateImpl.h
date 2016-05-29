@@ -133,19 +133,32 @@ public:
     public:
 
         explicit ExecutionScope(V8IsolateImpl* pIsolateImpl):
-            m_pIsolateImpl(pIsolateImpl)
+            m_pIsolateImpl(pIsolateImpl),
+            m_ExecutionStarted(false)
         {
-            m_pIsolateImpl->EnterExecutionScope(reinterpret_cast<size_t*>(&pIsolateImpl));
+            m_pPreviousExecutionScope = m_pIsolateImpl->EnterExecutionScope(this, reinterpret_cast<size_t*>(&pIsolateImpl));
+        }
+
+        void OnExecutionStarted()
+        {
+            m_ExecutionStarted = true;
+        }
+
+        bool ExecutionStarted() const
+        {
+            return m_ExecutionStarted;
         }
 
         ~ExecutionScope()
         {
-            m_pIsolateImpl->ExitExecutionScope();
+            m_pIsolateImpl->ExitExecutionScope(m_pPreviousExecutionScope);
         }
 
     private:
 
         V8IsolateImpl* m_pIsolateImpl;
+        ExecutionScope* m_pPreviousExecutionScope;
+        bool m_ExecutionStarted;
     };
 
     V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort);
@@ -386,11 +399,14 @@ private:
     void DispatchDebugMessages();
     void ProcessDebugMessages();
 
-    void EnterExecutionScope(size_t* pStackMarker);
-    void ExitExecutionScope();
+    ExecutionScope* EnterExecutionScope(ExecutionScope* pExecutionScope, size_t* pStackMarker);
+    void ExitExecutionScope(ExecutionScope* pPreviousExecutionScope);
 
     void SetUpHeapWatchTimer(size_t maxHeapSize);
     void CheckHeapSize(size_t maxHeapSize);
+
+    static void OnBeforeCallEntered(v8::Isolate* pIsolate);
+    void OnBeforeCallEntered();
 
     StdString m_Name;
     v8::Isolate* m_pIsolate;
@@ -410,6 +426,7 @@ private:
     std::atomic<size_t> m_MaxStackUsage;
     size_t m_StackWatchLevel;
     size_t* m_pStackLimit;
+    ExecutionScope* m_pExecutionScope;
     std::atomic<bool> m_IsOutOfMemory;
     std::atomic<bool> m_IsExecutionTerminating;
 };

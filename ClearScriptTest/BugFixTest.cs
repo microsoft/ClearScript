@@ -1186,7 +1186,7 @@ namespace Microsoft.ClearScript.Test
             using (var tempEngine = new V8ScriptEngine(constraints))
             {
                 Assert.AreEqual(Math.PI, tempEngine.Evaluate("Math.PI"));
-                Assert.AreEqual(Convert.ToUInt64(maxNewSpaceSize * 4 + maxOldSpaceSize), tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
+                Assert.AreEqual(Convert.ToUInt64(maxNewSpaceSize * 2 + maxOldSpaceSize), tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
             }
 
             constraints = new V8RuntimeConstraints
@@ -1198,7 +1198,7 @@ namespace Microsoft.ClearScript.Test
             using (var tempEngine = new V8ScriptEngine(constraints))
             {
                 Assert.AreEqual(Math.E, tempEngine.Evaluate("Math.E"));
-                Assert.AreEqual(Convert.ToUInt64(maxNewSpaceSize * 4 + maxOldSpaceSize), tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
+                Assert.AreEqual(Convert.ToUInt64(maxNewSpaceSize * 2 + maxOldSpaceSize), tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
             }
         }
 
@@ -1828,6 +1828,43 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
+        public void BugFix_EquatableComparison_DateTime()
+        {
+            engine.Script.x = new DateTime(2007, 5, 22);
+            engine.Script.y = new DateTime(2007, 5, 22);
+            engine.Script.z = new DateTime(2008, 5, 22);
+            Assert.IsTrue((bool)engine.Evaluate("(x == y) && (x === y)"));
+            Assert.IsFalse((bool)engine.Evaluate("(x != y) || (x !== y)"));
+            Assert.IsTrue((bool)engine.Evaluate("(x != z) && (x !== z)"));
+            Assert.IsFalse((bool)engine.Evaluate("(x == z) || (x === z)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_EquatableComparison_TimeSpan()
+        {
+            engine.Script.x = TimeSpan.FromSeconds(3.5);
+            engine.Script.y = TimeSpan.FromSeconds(3.5);
+            engine.Script.z = TimeSpan.FromSeconds(3.6);
+            Assert.IsTrue((bool)engine.Evaluate("(x == y) && (x === y)"));
+            Assert.IsFalse((bool)engine.Evaluate("(x != y) || (x !== y)"));
+            Assert.IsTrue((bool)engine.Evaluate("(x != z) && (x !== z)"));
+            Assert.IsFalse((bool)engine.Evaluate("(x == z) || (x === z)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_EquatableComparison_WrappedNumeric()
+        {
+            var host = new HostFunctions();
+            engine.Script.x = host.toUInt16(25);
+            engine.Script.y = host.toUInt16(25);
+            engine.Script.z = host.toUInt16(26);
+            Assert.IsTrue((bool)engine.Evaluate("(x == y) && (x === y)"));
+            Assert.IsFalse((bool)engine.Evaluate("(x != y) || (x !== y)"));
+            Assert.IsTrue((bool)engine.Evaluate("(x != z) && (x !== z)"));
+            Assert.IsFalse((bool)engine.Evaluate("(x == z) || (x === z)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
         public void BugFix_VBScript_PropertyPut()
         {
             using (var vbEngine = new VBScriptEngine())
@@ -1899,6 +1936,186 @@ namespace Microsoft.ClearScript.Test
             engine.Dispose();
             engine = new VBScriptEngine();
             BugFix_VBScript_PropertyPut_CrossEngine();
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AddHostType_AssemblyQualifiedName()
+        {
+            engine.AddHostType("Random", typeof(Random).AssemblyQualifiedName);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DoubleExecution()
+        {
+            engine.Execute(@"
+                var num = 0;
+                function foo() {
+                    num += 1;
+                    throw new Error();
+                }
+            ");
+
+            try
+            {
+                engine.Script.foo();
+            }
+            catch (ScriptEngineException)
+            {
+            }
+
+            Assert.AreEqual(1, engine.Script.num);
+
+            engine.Script.num = 0;
+            dynamic foo = engine.Script.foo;
+
+            try
+            {
+                foo();
+            }
+            catch (ScriptEngineException)
+            {
+            }
+
+            Assert.AreEqual(1, engine.Script.num);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DoubleExecution_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+            BugFix_DoubleExecution();
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DoubleExecution_CrossEngine()
+        {
+            using (var vbEngine = new VBScriptEngine())
+            {
+                vbEngine.Execute(@"
+                    class Test
+                        public sub foo
+                            count = count + 1
+                            err.raise 1, ""vb"", ""Bogus""
+                        end sub
+                    end class
+                    set myTest = new Test
+                    count = 0
+                ");
+
+                engine.Execute(@"
+                    function foo() {
+                        vbTest.foo();
+                    }
+                ");
+
+                engine.Script.vbTest = vbEngine.Script.myTest;
+
+                var message = string.Empty;
+                try
+                {
+                    engine.Script.foo();
+                }
+                catch (ScriptEngineException exception)
+                {
+                    message = exception.Message;
+                }
+
+                Assert.AreEqual("Error: Bogus", message);
+                Assert.AreEqual(1, vbEngine.Script.count);
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DoubleExecution_CrossEngine_VBScript()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            using (var vbEngine = new VBScriptEngine())
+            {
+                vbEngine.Execute(@"
+                    class Test
+                        public sub foo
+                            count = count + 1
+                            err.raise 1, ""vb"", ""Bogus""
+                        end sub
+                    end class
+                    set myTest = new Test
+                    count = 0
+                ");
+
+                engine.Execute(@"
+                    sub foo
+                        vbTest.foo
+                    end sub
+                ");
+
+                engine.Script.vbTest = vbEngine.Script.myTest;
+
+                var message = string.Empty;
+                try
+                {
+                    engine.Script.foo();
+                }
+                catch (ScriptEngineException exception)
+                {
+                    message = exception.Message;
+                }
+
+                Assert.AreEqual("Bogus", message);
+                Assert.AreEqual(1, vbEngine.Script.count);
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DoubleExecution_Delegate()
+        {
+            // ReSharper disable EmptyGeneralCatchClause
+
+            var num = 0;
+            engine.Script.foo = new Action(() =>
+            {
+                // ReSharper disable AccessToModifiedClosure
+
+                num += 1;
+                throw new Exception();
+
+                // ReSharper restore AccessToModifiedClosure
+            });
+
+            try
+            {
+                engine.Script.foo();
+            }
+            catch (ScriptEngineException)
+            {
+            }
+
+            Assert.AreEqual(1, num);
+
+            num = 0;
+            dynamic foo = engine.Script.foo;
+
+            try
+            {
+                foo();
+            }
+            catch (Exception)
+            {
+            }
+
+            Assert.AreEqual(1, num);
+
+            // ReSharper restore EmptyGeneralCatchClause
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DoubleExecution_Delegate_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+            BugFix_DoubleExecution_Delegate();
         }
 
         [TestMethod, TestCategory("BugFix")]

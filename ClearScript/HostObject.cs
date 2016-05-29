@@ -60,8 +60,6 @@
 //       
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Microsoft.ClearScript.Util;
 
@@ -74,7 +72,6 @@ namespace Microsoft.ClearScript
         private readonly object target;
         private readonly Type type;
         private static readonly MethodInfo getNullWrapperGenericMethod = typeof(HostObject).GetMethod("GetNullWrapperGeneric", BindingFlags.NonPublic | BindingFlags.Static);
-        private static readonly CanonicalRefMap canonicalRefMap = new CanonicalRefMap();
 
         #endregion
 
@@ -82,7 +79,7 @@ namespace Microsoft.ClearScript
 
         private HostObject(object target, Type type)
         {
-            this.target = canonicalRefMap.GetCanonicalRef(target);
+            this.target = CanonicalRefTable.GetCanonicalRef(target);
             this.type = type ?? target.GetType();
         }
 
@@ -204,71 +201,6 @@ namespace Microsoft.ClearScript
         }
 
         // ReSharper restore UnusedMember.Local
-
-        #endregion
-
-        #region Nested type: CanonicalRefMap
-
-        private class CanonicalRefMap
-        {
-            private readonly object dataLock = new object();
-            private readonly Dictionary<object, WeakReference> map = new Dictionary<object, WeakReference>();
-            private DateTime lastCompactionTime = DateTime.MinValue;
-
-            private const int compactionThreshold = 1024 * 1024;
-            private static readonly TimeSpan compactionInterval = TimeSpan.FromMinutes(3);
-
-            public object GetCanonicalRef(object obj)
-            {
-                if (obj is Enum)
-                {
-                    lock (dataLock)
-                    {
-                        var result = GetCanonicalRefInternal(obj);
-                        CompactIfNecessary();
-                        return result;
-                    }
-                }
-
-                return obj;
-            }
-
-            private object GetCanonicalRefInternal(object obj)
-            {
-                object result;
-
-                WeakReference weakRef;
-                if (map.TryGetValue(obj, out weakRef))
-                {
-                    result = weakRef.Target;
-                    if (result == null)
-                    {
-                        result = obj;
-                        weakRef.Target = result;
-                    }
-                }
-                else
-                {
-                    result = obj;
-                    map.Add(obj, new WeakReference(result));
-                }
-
-                return result;
-            }
-
-            private void CompactIfNecessary()
-            {
-                if (map.Count >= compactionThreshold)
-                {
-                    var now = DateTime.UtcNow;
-                    if ((lastCompactionTime + compactionInterval) <= now)
-                    {
-                        map.Where(pair => !pair.Value.IsAlive).ToList().ForEach(pair => map.Remove(pair.Key));
-                        lastCompactionTime = now;
-                    }
-                }
-            }
-        }
 
         #endregion
     }

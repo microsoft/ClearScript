@@ -85,7 +85,7 @@ public:
             return spIsolateImpl;
         }
 
-        throw V8Exception(V8Exception::Type_General, m_IsolateName, StdString(L"The V8 runtime has been destroyed"));
+        throw V8Exception(V8Exception::Type::General, m_IsolateName, StdString(L"The V8 runtime has been destroyed"), false /*executionStarted*/);
     }
 
     bool TryGetIsolateImpl(SharedPtr<V8IsolateImpl>& spIsolateImpl) const
@@ -108,7 +108,7 @@ public:
             return spContextImpl;
         }
 
-        throw V8Exception(V8Exception::Type_General, m_ContextName, StdString(L"The V8 script engine has been destroyed"));
+        throw V8Exception(V8Exception::Type::General, m_ContextName, StdString(L"The V8 script engine has been destroyed"), false /*executionStarted*/);
     }
 
     bool TryGetContextImpl(SharedPtr<V8ContextImpl>& spContextImpl) const

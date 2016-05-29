@@ -69,27 +69,29 @@ class V8Exception
 {
 public:
 
-    enum Type
+    enum class Type
     {
-        Type_General,
-        Type_Interrupt,
-        Type_Fatal
+        General,
+        Interrupt,
+        Fatal
     };
 
-    V8Exception(Type type, const StdString& engineName, StdString&& message):
+    V8Exception(Type type, const StdString& engineName, StdString&& message, bool executionStarted):
         m_Type(type),
         m_EngineName(engineName),
         m_Message(std::move(message)),
-        m_InnerException(V8Value::Undefined)
+        m_InnerException(V8Value::Undefined),
+        m_ExecutionStarted(executionStarted)
     {
     }
 
-    V8Exception(Type type, const StdString& engineName, StdString&& message, StdString&& stackTrace, V8Value&& innerException):
+    V8Exception(Type type, const StdString& engineName, StdString&& message, StdString&& stackTrace, V8Value&& innerException, bool executionStarted):
         m_Type(type),
         m_EngineName(engineName),
         m_Message(std::move(message)),
         m_StackTrace(std::move(stackTrace)),
-        m_InnerException(std::move(innerException))
+        m_InnerException(std::move(innerException)),
+        m_ExecutionStarted(executionStarted)
     {
     }
 
@@ -102,4 +104,5 @@ private:
     StdString m_Message;
     StdString m_StackTrace;
     V8Value m_InnerException;
+    bool m_ExecutionStarted;
 };

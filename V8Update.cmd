@@ -5,12 +5,12 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=4.9.385.30
+set v8testedrev=5.1.281.50
 
-set gyprev=b85ad3e578da830377dbc1843aa4fbc5af17a192
+set gyprev=4ec6c4e3a94bd04a6da2858163d40b2429b8aad1
 set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df
-set clangrev=24e8c1c92fe54ef8ed7651b5850c056983354a4a
-set traceeventcommonrev=d83d44b13d07c2fd0a40101a7deef9b93b841732
+set clangrev=faee82e064e04e5cbf60cc7327e7a81d2a4557ad
+set traceeventcommonrev=c8c8665c2deaf1cc749d9f8e153256d4f67bf1b8
 
 :ProcessArgs
 

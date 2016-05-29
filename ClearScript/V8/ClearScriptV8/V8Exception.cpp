@@ -77,13 +77,13 @@ void DECLSPEC_NORETURN V8Exception::ThrowScriptEngineException() const
 
     switch (m_Type)
     {
-        case Type_General: default:
-            throw gcnew ScriptEngineException(gcEngineName, gcMessage, gcStackTrace, 0, false, gcInnerException);
+        case Type::General: default:
+            throw gcnew ScriptEngineException(gcEngineName, gcMessage, gcStackTrace, 0, false, m_ExecutionStarted, gcInnerException);
 
-        case Type_Fatal:
-            throw gcnew ScriptEngineException(gcEngineName, gcMessage, gcStackTrace, 0, true, gcInnerException);
+        case Type::Fatal:
+            throw gcnew ScriptEngineException(gcEngineName, gcMessage, gcStackTrace, 0, true, m_ExecutionStarted, gcInnerException);
 
-        case Type_Interrupt:
-            throw gcnew ScriptInterruptedException(gcEngineName, gcMessage, gcStackTrace, 0, false, gcInnerException);
+        case Type::Interrupt:
+            throw gcnew ScriptInterruptedException(gcEngineName, gcMessage, gcStackTrace, 0, false, m_ExecutionStarted, gcInnerException);
     }
 }

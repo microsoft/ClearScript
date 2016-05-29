@@ -136,7 +136,7 @@ namespace Microsoft.ClearScript.V8
 
         private void ConnectClient()
         {
-            SendStringAsync(tcpClient, "Type:connect\r\nV8-Version:" + version + "\r\nProtocol-Version:1\r\nEmbedding-Host:" + name + "\r\nContent-Length:0\r\n\r\n", OnConnectionMessageSent);
+            SendStringAsync(tcpClient, "Type: connect\r\nV8-Version: " + version + "\r\nProtocol-Version: 1\r\nEmbedding-Host: " + name + "\r\nContent-Length: 0\r\n\r\n", OnConnectionMessageSent);
         }
 
         private void OnConnectionMessageSent(bool succeeded)
@@ -284,7 +284,7 @@ namespace Microsoft.ClearScript.V8
                 if (tempTcpClient != null)
                 {
                     var contentBytes = Encoding.UTF8.GetBytes(content);
-                    var headerBytes = Encoding.UTF8.GetBytes(MiscHelpers.FormatInvariant("Content-Length:{0}\r\n\r\n", contentBytes.Length));
+                    var headerBytes = Encoding.UTF8.GetBytes(MiscHelpers.FormatInvariant("Content-Length: {0}\r\n\r\n", contentBytes.Length));
                     tempTcpClient.Client.SendBytesAsync(headerBytes.Concat(contentBytes).ToArray(), OnMessageSent);
                     return;
                 }

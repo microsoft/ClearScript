@@ -505,7 +505,19 @@ namespace Microsoft.ClearScript.Util
         private static Type ImportType(string typeName, string assemblyName, bool useAssemblyName, int typeArgCount)
         {
             var assemblyQualifiedName = GetFullTypeName(typeName, assemblyName, useAssemblyName, typeArgCount);
-            var type = Type.GetType(assemblyQualifiedName);
+
+            Type type = null;
+            try
+            {
+                type = Type.GetType(assemblyQualifiedName);
+            }
+            catch (ArgumentException)
+            {
+            }
+            catch (TypeLoadException)
+            {
+            }
+
             return ((type != null) && useAssemblyName && (type.AssemblyQualifiedName != assemblyQualifiedName)) ? null : type;
         }
 

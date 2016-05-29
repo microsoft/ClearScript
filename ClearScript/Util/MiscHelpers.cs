@@ -304,10 +304,10 @@ namespace Microsoft.ClearScript.Util
             }
             else
             {
-                var floatArg = Convert.ToSingle(value);
-                if (value == floatArg)
+                var floatValue = Convert.ToSingle(value);
+                if (value == floatValue)
                 {
-                    return floatArg;
+                    return floatValue;
                 }
             }
 

@@ -94,7 +94,8 @@ static V8ContextImpl* UnwrapContextImplFromHolder(const v8::PropertyCallbackInfo
 {
     auto hGlobal = info.Holder();
     _ASSERTE(hGlobal->InternalFieldCount() > 0);
-    return static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    auto hField = hGlobal->GetInternalField(0);
+    return (hField.IsEmpty() || hField->IsUndefined()) ? nullptr : static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
 }
 
 //-----------------------------------------------------------------------------
@@ -152,10 +153,10 @@ static T CombineFlags(T flag1, T flag2)
     }
 
 #define VERIFY(RESULT) \
-    Verify(t_TryCatch, RESULT)
+    Verify(t_IsolateExecutionScope, t_TryCatch, RESULT)
 
 #define VERIFY_CHECKPOINT() \
-    Verify(t_TryCatch)
+    Verify(t_IsolateExecutionScope, t_TryCatch)
 
 #define CALLBACK_RETURN(RESULT) \
     BEGIN_COMPOUND_MACRO \
@@ -572,6 +573,11 @@ V8Value V8ContextImpl::InvokeV8Object(void* pvObject, const std::vector<V8Value>
     BEGIN_EXECUTION_SCOPE
 
         v8::Local<v8::Object> hObject = ::ObjectHandleFromPtr(pvObject);
+        if (!hObject->IsCallable())
+        {
+            auto hError = v8::Exception::TypeError(CreateString(StdString(L"Object does not support invocation")))->ToObject();
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined), t_IsolateExecutionScope.ExecutionStarted());
+        }
 
         std::vector<v8::Local<v8::Value>> importedArgs;
         ImportValues(args, importedArgs);
@@ -600,20 +606,26 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const StdString& nam
         if (!hObject->Has(hName))
         {
             auto hError = v8::Exception::TypeError(CreateString(StdString(L"Method or property not found")))->ToObject();
-            throw V8Exception(V8Exception::Type_General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined));
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined), t_IsolateExecutionScope.ExecutionStarted());
         }
 
         auto hValue = hObject->Get(hName);
         if (hValue->IsUndefined() || hValue->IsNull())
         {
             auto hError = v8::Exception::TypeError(CreateString(StdString(L"Property value does not support invocation")))->ToObject();
-            throw V8Exception(V8Exception::Type_General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined));
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined), t_IsolateExecutionScope.ExecutionStarted());
+        }
+
+        auto hMethod = VERIFY(hValue->ToObject());
+        if (!hMethod->IsCallable())
+        {
+            auto hError = v8::Exception::TypeError(CreateString(StdString(L"Property value does not support invocation")))->ToObject();
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined), t_IsolateExecutionScope.ExecutionStarted());
         }
 
         std::vector<v8::Local<v8::Value>> importedArgs;
         ImportValues(args, importedArgs);
 
-        auto hMethod = VERIFY(hValue->ToObject());
         return ExportValue(VERIFY(hMethod->CallAsFunction(hObject, static_cast<int>(importedArgs.size()), importedArgs.data())));
 
     END_EXECUTION_SCOPE
@@ -658,7 +670,7 @@ void V8ContextImpl::GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& ar
             return;
         }
 
-        throw V8Exception(V8Exception::Type_General, m_Name, StdString(L"Object is not a V8 array buffer or view"));
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Object is not a V8 array buffer or view"), false /*executionStarted*/);
 
     END_CONTEXT_SCOPE
 }
@@ -692,7 +704,7 @@ void V8ContextImpl::InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8Ob
             return;
         }
 
-        throw V8Exception(V8Exception::Type_General, m_Name, StdString(L"Object is not a V8 array buffer or view"));
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Object is not a V8 array buffer or view"), false /*executionStarted*/);
 
     END_CONTEXT_SCOPE
 
@@ -737,7 +749,7 @@ V8ContextImpl::~V8ContextImpl()
     Dispose(m_hHostIteratorTemplate);
     Dispose(m_hHostDelegateTemplate);
     Dispose(m_hHostObjectTemplate);
-	Dispose(m_hTerminationException);
+    Dispose(m_hTerminationException);
     Dispose(m_hAccessToken);
     Dispose(m_hAccessTokenName);
     Dispose(m_hCachePropertyName);
@@ -1836,21 +1848,21 @@ void V8ContextImpl::ImportValues(const std::vector<V8Value>& values, std::vector
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::Verify(const v8::TryCatch& tryCatch)
+void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecutionScope, const v8::TryCatch& tryCatch)
 {
     if (tryCatch.HasCaught())
     {
         if (!tryCatch.CanContinue())
         {
             VerifyNotOutOfMemory();
-            throw V8Exception(V8Exception::Type_Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(tryCatch.StackTrace()), V8Value(V8Value::Undefined));
+            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(tryCatch.StackTrace()), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
         }
 
         auto hException = tryCatch.Exception();
         if (hException->SameValue(m_hTerminationException))
         {
             VerifyNotOutOfMemory();
-            throw V8Exception(V8Exception::Type_Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(tryCatch.StackTrace()), V8Value(V8Value::Undefined));
+            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(tryCatch.StackTrace()), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
         }
 
         StdString message;
@@ -2023,7 +2035,7 @@ void V8ContextImpl::Verify(const v8::TryCatch& tryCatch)
             }
         }
 
-        throw V8Exception(V8Exception::Type_General, m_Name, std::move(message), std::move(stackTrace), std::move(hostException));
+        throw V8Exception(V8Exception::Type::General, m_Name, std::move(message), std::move(stackTrace), std::move(hostException), isolateExecutionScope.ExecutionStarted());
     }
 }
 

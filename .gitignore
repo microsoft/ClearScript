@@ -30,6 +30,7 @@ _ReSharper*/
 *.opendb
 *.opensdf
 *.shfbproj_*
+*.VC.db
 ClearScript/V8/V8/build/
 ClearScript/V8/V8/lib/
 ClearScript/V8/V8/include/

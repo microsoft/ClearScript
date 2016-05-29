@@ -80,6 +80,9 @@ namespace Microsoft.ClearScript
         private readonly bool isFatal;
         private const string isFatalItemName = "IsFatal";
 
+        private readonly bool executionStarted;
+        private const string executionStartedItemName = "ExecutionStarted";
+
         private const string defaultMessage = "Script execution was interrupted";
 
         #region constructors
@@ -128,15 +131,17 @@ namespace Microsoft.ClearScript
             engineName = info.GetString(engineNameItemName);
             errorDetails = info.GetString(errorDetailsItemName);
             isFatal = info.GetBoolean(isFatalItemName);
+            executionStarted = info.GetBoolean(executionStartedItemName);
         }
 
-        internal ScriptInterruptedException(string engineName, string message, string errorDetails, int errorCode, bool isFatal, Exception innerException)
+        internal ScriptInterruptedException(string engineName, string message, string errorDetails, int errorCode, bool isFatal, bool executionStarted, Exception innerException)
             : base(MiscHelpers.EnsureNonBlank(message, defaultMessage), innerException)
         {
             this.engineName = engineName;
             // ReSharper disable once RedundantBaseQualifier
             this.errorDetails = MiscHelpers.EnsureNonBlank(errorDetails, base.Message);
             this.isFatal = isFatal;
+            this.executionStarted = executionStarted;
 
             if (errorCode != 0)
             {
@@ -180,6 +185,14 @@ namespace Microsoft.ClearScript
             get { return isFatal; }
         }
 
+        /// <summary>
+        /// Gets a value that indicates whether script code execution had started before the current exception was thrown.
+        /// </summary>
+        public bool ExecutionStarted
+        {
+            get { return executionStarted; }
+        }
+
         #endregion
 
         #region OperationCanceledException overrides
@@ -195,6 +208,7 @@ namespace Microsoft.ClearScript
             info.AddValue(engineNameItemName, engineName);
             info.AddValue(errorDetailsItemName, errorDetails);
             info.AddValue(isFatalItemName, isFatal);
+            info.AddValue(executionStartedItemName, executionStarted);
         }
 
         #endregion

@@ -314,9 +314,9 @@ private:
     }
 
     template <typename T>
-    T Verify(const v8::TryCatch& tryCatch, T result)
+    T Verify(const V8IsolateImpl::ExecutionScope& isolateExecutionScope, const v8::TryCatch& tryCatch, T result)
     {
-        Verify(tryCatch);
+        Verify(isolateExecutionScope, tryCatch);
         return result;
     }
 
@@ -368,7 +368,7 @@ private:
     V8Value ExportValue(v8::Local<v8::Value> hValue);
     void ImportValues(const std::vector<V8Value>& values, std::vector<v8::Local<v8::Value>>& importedValues);
 
-    void Verify(const v8::TryCatch& tryCatch);
+    void Verify(const V8IsolateImpl::ExecutionScope& isolateExecutionScope, const v8::TryCatch& tryCatch);
     void VerifyNotOutOfMemory();
     void ThrowScriptException(const HostException& exception);
 

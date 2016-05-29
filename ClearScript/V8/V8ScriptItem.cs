@@ -223,11 +223,16 @@ namespace Microsoft.ClearScript.V8
                     var scriptError = exception as IScriptEngineException;
                     if (scriptError != null)
                     {
+                        if (scriptError.ExecutionStarted)
+                        {
+                            throw;
+                        }
+
                         engine.CurrentScriptFrame.ScriptError = scriptError;
                     }
                     else
                     {
-                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception);
+                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception);
                     }
                 }
             }

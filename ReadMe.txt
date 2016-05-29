@@ -59,7 +59,7 @@ build, and import V8:
 
    This script downloads the V8 source code and its prerequisites, builds
    32-bit and 64-bit V8 shared libraries, and imports the results into
-   ClearScript. It requires approximately 2GB of additional disk space and does
+   ClearScript. It requires approximately 3GB of additional disk space and does
    not perform any permanent software installation on your machine.
 
    The optional "/N" flag causes V8Update to reuse previously downloaded files

@@ -261,6 +261,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     m_MaxStackUsage(0),
     m_StackWatchLevel(0),
     m_pStackLimit(nullptr),
+    m_pExecutionScope(nullptr),
     m_IsOutOfMemory(false),
     m_IsExecutionTerminating(false)
 {
@@ -276,6 +277,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     }
 
     m_pIsolate = v8::Isolate::New(params);
+    m_pIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
 
     BEGIN_ADDREF_SCOPE
 
@@ -592,7 +594,7 @@ void V8IsolateImpl::CallWithLockNoWait(std::function<void(V8IsolateImpl*)>&& cal
 void DECLSPEC_NORETURN V8IsolateImpl::ThrowOutOfMemoryException()
 {
     m_IsOutOfMemory = true;
-    throw V8Exception(V8Exception::Type_Fatal, m_Name, StdString(L"The V8 runtime has exceeded its memory limit"));
+    throw V8Exception(V8Exception::Type::Fatal, m_Name, StdString(L"The V8 runtime has exceeded its memory limit"), (m_pExecutionScope != nullptr) ? m_pExecutionScope->ExecutionStarted() : false);
 }
 
 //-----------------------------------------------------------------------------
@@ -605,6 +607,7 @@ V8IsolateImpl::~V8IsolateImpl()
         DisableDebugging();
     END_ISOLATE_SCOPE
 
+    m_pIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
     m_pIsolate->Dispose();
 }
 
@@ -703,7 +706,7 @@ void V8IsolateImpl::ProcessDebugMessages()
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
+V8IsolateImpl::ExecutionScope* V8IsolateImpl::EnterExecutionScope(ExecutionScope* pExecutionScope, size_t* pStackMarker)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
@@ -770,7 +773,7 @@ void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
         if ((m_pStackLimit != nullptr) && (pStackMarker < m_pStackLimit))
         {
             // stack usage limit exceeded (host-side detection)
-            throw V8Exception(V8Exception::Type_General, m_Name, StdString(L"The V8 runtime has exceeded its stack usage limit"));
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime has exceeded its stack usage limit"), false /*executionStarted*/);
         }
 
         // enter nested stack usage monitoring scope
@@ -779,13 +782,21 @@ void V8IsolateImpl::EnterExecutionScope(size_t* pStackMarker)
 
     // clear termination flag
     m_IsExecutionTerminating = false;
+
+    // mark execution scope
+    auto pPreviousExecutionScope = m_pExecutionScope;
+    m_pExecutionScope = pExecutionScope;
+    return pPreviousExecutionScope;
 }
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::ExitExecutionScope()
+void V8IsolateImpl::ExitExecutionScope(ExecutionScope* pPreviousExecutionScope)
 {
     _ASSERTE(IsCurrent() && IsLocked());
+
+    // reset execution scope
+    m_pExecutionScope = pPreviousExecutionScope;
 
     // cancel termination to allow remaining script frames to execute
     CancelTerminateExecution();
@@ -878,4 +889,23 @@ void V8IsolateImpl::CheckHeapSize(size_t maxHeapSize)
 
     // the isolate is not out of memory; restart heap watch timer
     SetUpHeapWatchTimer(maxHeapSize);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::OnBeforeCallEntered(v8::Isolate* pIsolate)
+{
+    static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->OnBeforeCallEntered();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::OnBeforeCallEntered()
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    if (m_pExecutionScope)
+    {
+        m_pExecutionScope->OnExecutionStarted();
+    }
 }

@@ -110,7 +110,7 @@ namespace Microsoft.ClearScript.Windows
                 return scriptError;
             }
 
-            return new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception);
+            return new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception);
         }
 
         private bool TryGetScriptError(Exception exception, out IScriptEngineException scriptError)
@@ -140,6 +140,13 @@ namespace Microsoft.ClearScript.Windows
                     {
                         return true;
                     }
+
+                    var hostException = engine.CurrentScriptFrame.HostException;
+                    if (hostException != null)
+                    {
+                        scriptError = new ScriptEngineException(engine.Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, hostException);
+                        return true;
+                    }
                 }
                 else if (RawCOMHelpers.HResult.GetFacility(result) == RawCOMHelpers.HResult.FACILITY_CONTROL)
                 {
@@ -149,21 +156,21 @@ namespace Microsoft.ClearScript.Windows
                     string runtimeErrorMessage;
                     if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out runtimeErrorMessage) && (runtimeErrorMessage != exception.Message))
                     {
-                        scriptError = new ScriptEngineException(engine.Name, runtimeErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
+                        scriptError = new ScriptEngineException(engine.Name, runtimeErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception.InnerException);
                         return true;
                     }
 
                     string syntaxErrorMessage;
                     if (engine.SyntaxErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out syntaxErrorMessage) && (syntaxErrorMessage != exception.Message))
                     {
-                        scriptError = new ScriptEngineException(engine.Name, syntaxErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
+                        scriptError = new ScriptEngineException(engine.Name, syntaxErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception.InnerException);
                         return true;
                     }
                 }
                 else if ((result == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND) || (result == RawCOMHelpers.HResult.DISP_E_UNKNOWNNAME))
                 {
                     // this usually indicates invalid object or property access in JScript
-                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception.InnerException);
                     return true;
                 }
             }
@@ -173,7 +180,7 @@ namespace Microsoft.ClearScript.Windows
                 if ((argumentException != null) && (argumentException.ParamName == null))
                 {
                     // this usually indicates invalid object or property access in VBScript
-                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, exception.InnerException);
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception.InnerException);
                     return true;
                 }
             }
@@ -202,14 +209,18 @@ namespace Microsoft.ClearScript.Windows
                 if ((exception != null) && (engine.CurrentScriptFrame != null))
                 {
                     var scriptError = exception as IScriptEngineException;
-                    if (scriptError != null)
+
+                    if (scriptError == null)
                     {
-                        engine.CurrentScriptFrame.ScriptError = scriptError;
+                        scriptError = GetScriptError(exception);
                     }
-                    else
+
+                    if (scriptError.ExecutionStarted)
                     {
-                        engine.CurrentScriptFrame.ScriptError = GetScriptError(exception);
+                        throw (Exception)scriptError;
                     }
+
+                    engine.CurrentScriptFrame.ScriptError = scriptError;
                 }
 
                 result = null;
@@ -383,7 +394,25 @@ namespace Microsoft.ClearScript.Windows
 
             try
             {
-                return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMember(name, BindingFlags.InvokeMethod, null, target, engine.MarshalToScript(args), null, CultureInfo.InvariantCulture, null)), false);
+                return engine.MarshalToHost(engine.ScriptInvoke(() =>
+                {
+                    // ReSharper disable SuspiciousTypeConversion.Global
+
+                    var dispatchEx = target as IDispatchEx;
+                    if (dispatchEx != null)
+                    {
+                        // Standard IExpando-over-IDispatchEx support appears to repeat failing
+                        // invocations. This issue has been reported. In the meantime we'll bypass
+                        // this facility and interface with IDispatchEx directly.
+
+                        return dispatchEx.InvokeMethod(name, false, engine.MarshalToScript(args));
+                    }
+
+                    // ReSharper restore SuspiciousTypeConversion.Global
+
+                    return target.InvokeMember(name, BindingFlags.InvokeMethod, null, target, engine.MarshalToScript(args), null, CultureInfo.InvariantCulture, null);
+
+                }), false);
             }
             catch (Exception exception)
             {

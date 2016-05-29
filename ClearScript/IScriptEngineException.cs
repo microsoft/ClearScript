@@ -94,6 +94,11 @@ namespace Microsoft.ClearScript
         bool IsFatal { get; }
 
         /// <summary>
+        /// Gets a value that indicates whether script code execution had started before the current exception was thrown.
+        /// </summary>
+        bool ExecutionStarted { get; }
+
+        /// <summary>
         /// Gets the exception that caused the current exception to be thrown, or <c>null</c> if one was not specified.
         /// </summary>
         Exception InnerException { get; }
