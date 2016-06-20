@@ -118,6 +118,11 @@ namespace V8 {
             }
 
         END_LOCK_SCOPE
+
+        if (!spCallback.IsEmpty())
+        {
+            GC::SuppressFinalize(this);
+        }
     }
 
     //-------------------------------------------------------------------------

@@ -340,5 +340,25 @@ namespace Microsoft.ClearScript.V8
         }
 
         #endregion
+
+        #region native callback timer
+
+        public static unsafe void* CreateNativeCallbackTimer(int dueTime, int period, INativeCallback callback)
+        {
+            return AddRefHostObject(new NativeCallbackTimer(dueTime, period, callback));
+        }
+
+        public static unsafe bool ChangeNativeCallbackTimer(void* pTimer, int dueTime, int period)
+        {
+            return ((NativeCallbackTimer)GetHostObject(pTimer)).Change(dueTime, period);
+        }
+
+        public static unsafe void DestroyNativeCallbackTimer(void* pTimer)
+        {
+            ((NativeCallbackTimer)GetHostObject(pTimer)).Dispose();
+            ReleaseHostObject(pTimer);
+        }
+
+        #endregion
     }
 }

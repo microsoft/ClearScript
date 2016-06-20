@@ -386,6 +386,34 @@ void HostObjectHelpers::DestroyDebugAgent(void* pvAgent)
 
 //-----------------------------------------------------------------------------
 
+void HostObjectHelpers::QueueNativeCallback(NativeCallback&& callback)
+{
+    return MiscHelpers::QueueNativeCallback(gcnew NativeCallbackImpl(std::move(callback)));
+}
+
+//-----------------------------------------------------------------------------
+
+void* HostObjectHelpers::CreateNativeCallbackTimer(int dueTime, int period, NativeCallback&& callback)
+{
+    return V8ProxyHelpers::CreateNativeCallbackTimer(dueTime, period, gcnew NativeCallbackImpl(std::move(callback)));
+}
+
+//-----------------------------------------------------------------------------
+
+bool HostObjectHelpers::ChangeNativeCallbackTimer(void* pvTimer, int dueTime, int period)
+{
+    return V8ProxyHelpers::ChangeNativeCallbackTimer(pvTimer, dueTime, period);
+}
+
+//-----------------------------------------------------------------------------
+
+void HostObjectHelpers::DestroyNativeCallbackTimer(void* pvTimer)
+{
+    V8ProxyHelpers::DestroyNativeCallbackTimer(pvTimer);
+}
+
+//-----------------------------------------------------------------------------
+
 bool HostObjectHelpers::TryParseInt32(const StdString& text, int& result)
 {
     return Int32::TryParse(text.ToManagedString(), NumberStyles::Integer, CultureInfo::InvariantCulture, result);

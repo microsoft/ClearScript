@@ -203,6 +203,11 @@ namespace V8 {
             }
 
         END_LOCK_SCOPE
+
+        if (!spIsolate.IsEmpty())
+        {
+            GC::SuppressFinalize(this);
+        }
     }
 
     //-------------------------------------------------------------------------

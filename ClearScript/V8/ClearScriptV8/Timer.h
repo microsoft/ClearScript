@@ -69,39 +69,32 @@ class Timer: public WeakRefTarget<Timer>
 {
 public:
 
-    Timer(unsigned int delay, bool repeating, std::function<void(Timer*)>&& func):
-        m_spTimer(new Concurrency::timer<int>(delay, 0, nullptr, repeating)),
+    Timer(int dueTime, int period, std::function<void(Timer*)>&& func):
+        m_DueTime(dueTime),
+        m_Period(period),
         m_Func(std::move(func))
     {
         auto wrTimer = CreateWeakRef();
-        m_spCall = new Concurrency::call<int>([wrTimer] (int)
+        HostObjectHelpers::NativeCallback callback = [wrTimer] ()
         {
-            Concurrency::create_task([wrTimer]
+            auto spTimer = wrTimer.GetTarget();
+            if (!spTimer.IsEmpty())
             {
-                auto spTimer = wrTimer.GetTarget();
-                if (!spTimer.IsEmpty())
-                {
-                    spTimer->CallFunc();
-                }
-            });
-        });
+                spTimer->CallFunc();
+            }
+        };
 
-        m_spTimer->link_target(m_spCall);
+        m_pvTimer = HostObjectHelpers::CreateNativeCallbackTimer(-1, -1, std::move(callback));
     }
 
     void Start()
     {
-        m_spTimer->start();
+        HostObjectHelpers::ChangeNativeCallbackTimer(m_pvTimer, m_DueTime, m_Period);
     }
 
-    void Pause()
+    ~Timer()
     {
-        m_spTimer->pause();
-    }
-
-    void Stop()
-    {
-        m_spTimer->stop();
+        HostObjectHelpers::DestroyNativeCallbackTimer(m_pvTimer);
     }
 
 private:
@@ -111,7 +104,8 @@ private:
         m_Func(this);
     }
 
-    SharedPtr<Concurrency::timer<int>> m_spTimer;
-    SharedPtr<Concurrency::call<int>> m_spCall;
+    int m_DueTime;
+    int m_Period;
     std::function<void(Timer*)> m_Func;
+    void* m_pvTimer;
 };

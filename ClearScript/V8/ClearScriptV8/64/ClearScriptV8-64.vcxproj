@@ -132,6 +132,7 @@
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
     </ClCompile>
+    <ClCompile Include="..\NativeCallbackImpl.cpp" />
     <ClCompile Include="..\RefCount.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
@@ -220,6 +221,7 @@
     <ClInclude Include="..\HostObjectHolderImpl.h" />
     <ClInclude Include="..\ManagedPlatform.h" />
     <ClInclude Include="..\Mutex.h" />
+    <ClInclude Include="..\NativeCallbackImpl.h" />
     <ClInclude Include="..\NativePlatform.h" />
     <ClInclude Include="..\RefCount.h" />
     <ClInclude Include="..\SharedPtr.h" />

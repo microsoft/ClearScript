@@ -379,6 +379,7 @@ public:
     void* AddRefV8Script(void* pvScript);
     void ReleaseV8Script(void* pvScript);
 
+    void RunBackgroundTask(v8::Task* pTask);
     void RunTaskWithLock(v8::Task* pTask);
     void RunDelayedTaskWithLock(v8::Task* pTask, double delayInSeconds);
 

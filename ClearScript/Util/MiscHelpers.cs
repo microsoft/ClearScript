@@ -64,6 +64,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace Microsoft.ClearScript.Util
 {
@@ -375,6 +376,17 @@ namespace Microsoft.ClearScript.Util
             return
                 ((info.ProcessorArchitecture == 0 /*PROCESSOR_ARCHITECTURE_INTEL*/) ||
                  (info.ProcessorArchitecture == 9 /*PROCESSOR_ARCHITECTURE_AMD64*/));
+        }
+
+        public static void QueueNativeCallback(INativeCallback callback)
+        {
+            ThreadPool.QueueUserWorkItem(state =>
+            {
+                using (callback)
+                {
+                    Try(callback.Invoke);
+                }
+            });
         }
 
         #region Nested type: EmptyArray<T>

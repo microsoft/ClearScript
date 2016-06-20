@@ -101,11 +101,19 @@ void V8Platform::EnsureInstalled()
 
 void V8Platform::CallOnBackgroundThread(v8::Task* pTask, ExpectedRuntime /*runtime*/)
 {
-    SharedPtr<v8::Task> spTask(pTask);
-    Concurrency::create_task([spTask]
+    auto pIsolate = v8::Isolate::GetCurrent();
+    if (pIsolate)
     {
-        spTask->Run();
-    });
+        static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunBackgroundTask(pTask);
+    }
+    else
+    {
+        SharedPtr<v8::Task> spTask(pTask);
+        HostObjectHelpers::QueueNativeCallback([spTask]
+        {
+            spTask->Run();
+        });
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -519,11 +527,28 @@ void V8IsolateImpl::ReleaseV8Script(void* pvScript)
 
 //-----------------------------------------------------------------------------
 
+void V8IsolateImpl::RunBackgroundTask(v8::Task* pTask)
+{
+    SharedPtr<v8::Task> spTask(pTask);
+    auto wrIsolate = CreateWeakRef();
+    HostObjectHelpers::QueueNativeCallback([wrIsolate, spTask]
+    {
+        auto spIsolate = wrIsolate.GetTarget();
+        if (!spIsolate.IsEmpty())
+        {
+            spTask->Run();
+            throw std::bad_exception();
+        }
+    });
+}
+
+//-----------------------------------------------------------------------------
+
 void V8IsolateImpl::RunTaskWithLock(v8::Task* pTask)
 {
     SharedPtr<v8::Task> spTask(pTask);
     auto wrIsolate = CreateWeakRef();
-    Concurrency::create_task([this, wrIsolate, spTask]
+    HostObjectHelpers::QueueNativeCallback([this, wrIsolate, spTask]
     {
         auto spIsolate = wrIsolate.GetTarget();
         if (!spIsolate.IsEmpty())
@@ -542,7 +567,7 @@ void V8IsolateImpl::RunDelayedTaskWithLock(v8::Task* pTask, double delayInSecond
 {
     SharedPtr<v8::Task> spTask(pTask);
     auto wrIsolate = CreateWeakRef();
-    SharedPtr<Timer> spTimer(new Timer(static_cast<unsigned int>(delayInSeconds * 1000), false, [this, wrIsolate, spTask] (Timer* pTimer)
+    SharedPtr<Timer> spTimer(new Timer(static_cast<int>(delayInSeconds * 1000), -1, [this, wrIsolate, spTask] (Timer* pTimer)
     {
         auto spIsolate = wrIsolate.GetTarget();
         if (!spIsolate.IsEmpty())
@@ -837,7 +862,7 @@ void V8IsolateImpl::SetUpHeapWatchTimer(size_t maxHeapSize)
 
     // create heap watch timer
     auto wrIsolate = CreateWeakRef();
-    m_spHeapWatchTimer = new Timer(static_cast<unsigned int>(std::max(GetHeapSizeSampleInterval(), 250.0)), false, [this, wrIsolate, maxHeapSize] (Timer* pTimer)
+    m_spHeapWatchTimer = new Timer(static_cast<int>(std::max(GetHeapSizeSampleInterval(), 250.0)), -1, [this, wrIsolate, maxHeapSize] (Timer* pTimer)
     {
         // heap watch callback; is the isolate still alive?
         auto spIsolate = wrIsolate.GetTarget();

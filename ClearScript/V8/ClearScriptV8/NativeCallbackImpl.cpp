@@ -1,4 +1,4 @@
-﻿// 
+// 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -59,56 +59,92 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#pragma once
+#include "ClearScriptV8Managed.h"
 
-//-----------------------------------------------------------------------------
-// HostObjectHelpers
-//-----------------------------------------------------------------------------
+namespace Microsoft {
+namespace ClearScript {
+namespace V8 {
 
-class HostObjectHelpers
-{
-    PROHIBIT_CONSTRUCT(HostObjectHelpers)
+    //-------------------------------------------------------------------------
+    // NativeCallbackImpl implementation
+    //-------------------------------------------------------------------------
 
-public:
+    NativeCallbackImpl::NativeCallbackImpl(HostObjectHelpers::NativeCallback&& callback):
+        m_gcLock(gcnew Object),
+        m_pspCallback(new SharedPtr<HostObjectHelpers::NativeCallback>(new HostObjectHelpers::NativeCallback(std::move(callback))))
+    {
+    }
 
-    static void* AddRef(void* pvObject);
-    static void Release(void* pvObject);
+    //-------------------------------------------------------------------------
 
-    static V8Value GetProperty(void* pvObject, const StdString& name);
-    static V8Value GetProperty(void* pvObject, const StdString& name, bool& isCacheable);
-    static void SetProperty(void* pvObject, const StdString& name, const V8Value& value);
-    static bool DeleteProperty(void* pvObject, const StdString& name);
-    static void GetPropertyNames(void* pvObject, std::vector<StdString>& names);
+    void NativeCallbackImpl::Invoke()
+    {
+        SharedPtr<HostObjectHelpers::NativeCallback> spCallback;
+        if (TryGetCallback(spCallback))
+        {
+            try
+            {
+                (*spCallback)();
+            }
+            catch (const std::exception&)
+            {
+            }
+            catch (...)
+            {
+            }
+        }
+    }
 
-    static V8Value GetProperty(void* pvObject, int index);
-    static void SetProperty(void* pvObject, int index, const V8Value& value);
-    static bool DeleteProperty(void* pvObject, int index);
-    static void GetPropertyIndices(void* pvObject, std::vector<int>& indices);
+    //-------------------------------------------------------------------------
 
-    static V8Value Invoke(void* pvObject, const std::vector<V8Value>& args, bool asConstructor);
-    static V8Value InvokeMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
-    static bool IsDelegate(void* pvObject);
+    NativeCallbackImpl::~NativeCallbackImpl()
+    {
+        SharedPtr<HostObjectHelpers::NativeCallback> spCallback;
 
-    static V8Value GetEnumerator(void* pvObject);
-    static bool AdvanceEnumerator(void* pvEnumerator, V8Value& value);
+        BEGIN_LOCK_SCOPE(m_gcLock)
 
-    static void* CreateV8ObjectCache();
-    static void CacheV8Object(void* pvCache, void* pvObject, void* pvV8Object);
-    static void* GetCachedV8Object(void* pvCache, void* pvObject);
-    static void GetAllCachedV8Objects(void* pvCache, std::vector<void*>& v8ObjectPtrs);
-    static bool RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject);
+            if (m_pspCallback != nullptr)
+            {
+                // hold callback for destruction outside lock scope
+                spCallback = *m_pspCallback;
+                delete m_pspCallback;
+                m_pspCallback = nullptr;
+            }
 
-    enum class DebugDirective { SendDebugCommand, DispatchDebugMessages };
-    typedef std::function<void(DebugDirective directive, const StdString* pCommand)> DebugCallback;
-    static void* CreateDebugAgent(const StdString& name, const StdString& version, int port, DebugCallback&& callback);
-    static void SendDebugMessage(void* pvAgent, const StdString& content);
-    static void DestroyDebugAgent(void* pvAgent);
+        END_LOCK_SCOPE
 
-    typedef std::function<void()> NativeCallback;
-    static void QueueNativeCallback(NativeCallback&& callback);
-    static void* CreateNativeCallbackTimer(int dueTime, int period, NativeCallback&& callback);
-    static bool ChangeNativeCallbackTimer(void* pvTimer, int dueTime, int period);
-    static void DestroyNativeCallbackTimer(void* pvTimer);
+        if (!spCallback.IsEmpty())
+        {
+            GC::SuppressFinalize(this);
+        }
+    }
 
-    static bool TryParseInt32(const StdString& text, int& result);
-};
+    //-------------------------------------------------------------------------
+
+    NativeCallbackImpl::!NativeCallbackImpl()
+    {
+        if (m_pspCallback != nullptr)
+        {
+            delete m_pspCallback;
+            m_pspCallback = nullptr;
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    bool NativeCallbackImpl::TryGetCallback(SharedPtr<HostObjectHelpers::NativeCallback>& spCallback)
+    {
+        BEGIN_LOCK_SCOPE(m_gcLock)
+
+            if (m_pspCallback == nullptr)
+            {
+                return false;
+            }
+
+            spCallback = *m_pspCallback;
+            return true;
+
+        END_LOCK_SCOPE
+    }
+
+}}}

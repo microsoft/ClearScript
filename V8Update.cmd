@@ -5,7 +5,7 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=5.1.281.50
+set v8testedrev=5.1.281.65
 
 set gyprev=4ec6c4e3a94bd04a6da2858163d40b2429b8aad1
 set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df

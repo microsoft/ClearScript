@@ -85,4 +85,5 @@
 #include "V8ObjectImpl.h"
 #include "V8ScriptImpl.h"
 #include "V8DebugListenerImpl.h"
+#include "NativeCallbackImpl.h"
 #include "V8TestProxyImpl.h"
