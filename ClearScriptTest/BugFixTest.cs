@@ -341,7 +341,7 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_GlobalObjectCrash()
         {
             engine.AddHostObject("random", HostItemFlags.GlobalMembers, new Random());
-            Assert.AreEqual("[object global]", engine.ExecuteCommand("this"));
+            Assert.AreEqual("[object Object]", engine.ExecuteCommand("this"));
         }
 
         [TestMethod, TestCategory("BugFix")]

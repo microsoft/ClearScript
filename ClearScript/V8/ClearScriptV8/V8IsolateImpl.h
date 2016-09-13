@@ -236,14 +236,19 @@ public:
         return v8::ObjectTemplate::New(m_pIsolate);
     }
 
-    v8::Local<v8::FunctionTemplate> CreateFunctionTemplate()
+    v8::Local<v8::FunctionTemplate> CreateFunctionTemplate(v8::FunctionCallback callback = 0, v8::Local<v8::Value> data = v8::Local<v8::Value>(), v8::Local<v8::Signature> signature = v8::Local<v8::Signature>(), int length = 0)
     {
-        return v8::FunctionTemplate::New(m_pIsolate);
+        return v8::FunctionTemplate::New(m_pIsolate, callback, data, signature, length);
     }
 
     v8::Local<v8::Function> CreateFunction(v8::FunctionCallback callback, v8::Local<v8::Value> data = v8::Local<v8::Value>(), int length = 0)
     {
         return v8::Function::New(m_pIsolate, callback, data, length);
+    }
+
+    v8::Local<v8::Private> CreatePrivate(v8::Local<v8::String> hName)
+    {
+        return v8::Private::New(m_pIsolate, hName);
     }
 
     v8::Local<v8::Script> CreateScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
@@ -280,10 +285,10 @@ public:
         return Persistent<T>::New(m_pIsolate, hTarget);
     }
 
-    template <typename T, typename TArg>
-    Persistent<T> MakeWeak(Persistent<T> hTarget, TArg* pArg, void (*pCallback)(v8::Isolate*, Persistent<T>*, TArg*))
+    template <typename T, typename TArg1, typename TArg2>
+    Persistent<T> MakeWeak(Persistent<T> hTarget, TArg1* pArg1, TArg2* pArg2, void (*pCallback)(v8::Isolate*, Persistent<T>*, TArg1*, TArg2*))
     {
-        return hTarget.MakeWeak(m_pIsolate, pArg, pCallback);
+        return hTarget.MakeWeak(m_pIsolate, pArg1, pArg2, pCallback);
     }
 
     template<typename T>

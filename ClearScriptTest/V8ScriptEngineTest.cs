@@ -999,6 +999,43 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ErrorHandling_NestedSyntaxError()
+        {
+            engine.AddHostObject("engine", engine);
+            engine.Execute("good.js", "function bar() { engine.Execute('bad.js', 'function foo() { int c; }'); }");
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Script.bar();
+                }
+                catch (ScriptEngineException exception)
+                {
+                    TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNotNull(exception.InnerException);
+
+                    var hostException = exception.InnerException;
+                    Assert.IsInstanceOfType(hostException, typeof(TargetInvocationException));
+                    TestUtil.AssertValidException(hostException);
+                    Assert.IsNotNull(hostException.InnerException);
+
+                    var nestedException = hostException.InnerException as ScriptEngineException;
+                    Assert.IsNotNull(nestedException);
+                    // ReSharper disable once AccessToDisposedClosure
+                    TestUtil.AssertValidException(engine, nestedException);
+                    // ReSharper disable once PossibleNullReferenceException
+                    Assert.IsNull(nestedException.InnerException);
+                    Assert.IsTrue(nestedException.ErrorDetails.Contains("at bad.js:1:22 -> "));
+                    Assert.IsTrue(nestedException.ErrorDetails.Contains("at bar (good.js:1:25)"));
+
+                    Assert.AreEqual("Error: " + hostException.GetBaseException().Message, exception.Message);
+                    throw;
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_ErrorHandling_NestedScriptError()
         {
             using (var innerEngine = new V8ScriptEngine("inner", V8ScriptEngineFlags.EnableDebugging))
@@ -1544,7 +1581,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_MaxRuntimeStackUsage_HostBounce()
         {
-            engine.MaxRuntimeStackUsage = (UIntPtr)(16 * 1024);
+            engine.MaxRuntimeStackUsage = (UIntPtr)(32 * 1024);
             dynamic foo = engine.Evaluate("(function () { arguments.callee(); })");
             engine.Script.bar = new Action(() => foo());
             TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("bar()"), false);
@@ -1554,7 +1591,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_MaxRuntimeStackUsage_Alternating()
         {
-            engine.MaxRuntimeStackUsage = (UIntPtr)(16 * 1024);
+            engine.MaxRuntimeStackUsage = (UIntPtr)(32 * 1024);
             dynamic foo = engine.Evaluate("(function () { bar(); })");
             engine.Script.bar = new Action(() => foo());
             TestUtil.AssertException<ScriptEngineException>(() => foo(), false);
@@ -1564,7 +1601,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_MaxRuntimeStackUsage_Expansion()
         {
-            engine.MaxRuntimeStackUsage = (UIntPtr)(16 * 1024);
+            engine.MaxRuntimeStackUsage = (UIntPtr)(32 * 1024);
             TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("count = 0; (function () { count++; arguments.callee(); })()"), false);
             var count1 = engine.Script.count;
             engine.MaxRuntimeStackUsage = (UIntPtr)(64 * 1024);

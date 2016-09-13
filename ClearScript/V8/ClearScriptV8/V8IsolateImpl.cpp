@@ -71,6 +71,7 @@ public:
 
     static void EnsureInstalled();
 
+    virtual size_t NumberOfAvailableBackgroundThreads() override;
     virtual void CallOnBackgroundThread(v8::Task* pTask, ExpectedRuntime runtime) override;
     virtual void CallOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask) override;
     virtual void CallDelayedOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask, double delayInSeconds) override;
@@ -99,8 +100,33 @@ void V8Platform::EnsureInstalled()
 
 //-----------------------------------------------------------------------------
 
+size_t V8Platform::NumberOfAvailableBackgroundThreads()
+{
+    return HighResolutionClock::GetHardwareConcurrency();
+}
+
+//-----------------------------------------------------------------------------
+
 void V8Platform::CallOnBackgroundThread(v8::Task* pTask, ExpectedRuntime /*runtime*/)
 {
+
+#if 1
+
+    // Unlike earlier versions, V8 5.3 tracks outstanding background tasks and awaits their
+    // completion within v8::Isolate::Dispose(). In addition, it actually schedules at least one
+    // background task during disposition, and since the corresponding callback fails to acquire a
+    // strong reference to the isolate wrapper (whose shutdown is in progress), it drops the task,
+    // causing V8's wait to deadlock. Because V8's precise behavior is undocumented and could
+    // always be reverted, we'll keep the older code here to ease A/B testing in the future.
+
+    SharedPtr<v8::Task> spTask(pTask);
+    HostObjectHelpers::QueueNativeCallback([spTask]
+    {
+        spTask->Run();
+    });
+
+#else
+
     auto pIsolate = v8::Isolate::GetCurrent();
     if (pIsolate)
     {
@@ -114,6 +140,9 @@ void V8Platform::CallOnBackgroundThread(v8::Task* pTask, ExpectedRuntime /*runti
             spTask->Run();
         });
     }
+
+#endif
+
 }
 
 //-----------------------------------------------------------------------------

@@ -93,7 +93,12 @@ namespace Microsoft.ClearScript
                 ICanonicalRefMap map;
                 if (!table.TryGetValue(type, out map))
                 {
-                    if (type.IsEnum || typeof(IEquatable<>).MakeGenericType(type).IsAssignableFrom(type))
+                    if (type.IsEnum ||
+                        type.IsNumeric() ||
+                        type == typeof(DateTime) ||
+                        type == typeof(DateTimeOffset) ||
+                        type == typeof(TimeSpan) ||
+                        type.GetCustomAttributes(typeof(ImmutableValueAttribute), false).Any())
                     {
                         map = (ICanonicalRefMap)typeof(CanonicalRefMap<>).MakeGenericType(type).CreateInstance();
                     }

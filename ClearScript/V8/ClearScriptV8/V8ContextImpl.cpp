@@ -203,19 +203,20 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
 
         m_hHostObjectCookieName = CreatePersistent(CreateString(StdString(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}")));
         m_hHostExceptionName = CreatePersistent(CreateString(StdString(L"hostException")));
-        m_hEnumeratorPropertyName = CreatePersistent(CreateString(StdString(L"enumerator")));
+        m_hEnumeratorPrivate = CreatePersistent(CreatePrivate(CreateString(StdString(L"enumerator"))));
         m_hDonePropertyName = CreatePersistent(CreateString(StdString(L"done")));
         m_hValuePropertyName = CreatePersistent(CreateString(StdString(L"value")));
-        m_hCachePropertyName = CreatePersistent(CreateString(StdString(L"{545a4a94-f37d-44bb-9e1e-bf3ce730c7e4}")));
-        m_hAccessTokenName = CreatePersistent(CreateString(StdString(L"{cdc19e6e-5d80-4627-a605-bb4805f15086}")));
+        m_hCachePrivate = CreatePersistent(CreatePrivate(CreateString(StdString(L"{545a4a94-f37d-44bb-9e1e-bf3ce730c7e4}"))));
+        m_hAccessTokenPrivate = CreatePersistent(CreatePrivate(CreateString(StdString(L"{cdc19e6e-5d80-4627-a605-bb4805f15086}"))));
 
-        v8::Local<v8::Function> hGetIteratorFunction;
-        v8::Local<v8::Function> hToFunctionFunction;
-        v8::Local<v8::Function> hNextFunction;
+        v8::Local<v8::FunctionTemplate> hGetIteratorFunction;
+        v8::Local<v8::FunctionTemplate> hToFunctionFunction;
+        v8::Local<v8::FunctionTemplate> hNextFunction;
         BEGIN_CONTEXT_SCOPE
-            hGetIteratorFunction = CreateFunction(GetIteratorForHostObject, Wrap());
-            hToFunctionFunction = CreateFunction(CreateFunctionForHostDelegate, Wrap());
-            hNextFunction = CreateFunction(AdvanceHostObjectIterator, Wrap());
+            hGetIteratorFunction = CreateFunctionTemplate(GetIteratorForHostObject, Wrap());
+            hToFunctionFunction = CreateFunctionTemplate(CreateFunctionForHostDelegate, Wrap());
+            hNextFunction = CreateFunctionTemplate(AdvanceHostObjectIterator, Wrap());
+            m_hAccessToken = CreatePersistent(CreateObject());
             m_hTerminationException = CreatePersistent(v8::Exception::Error(CreateString(StdString(L"Script execution was interrupted"))));
         END_CONTEXT_SCOPE
 
@@ -751,11 +752,11 @@ V8ContextImpl::~V8ContextImpl()
     Dispose(m_hHostObjectTemplate);
     Dispose(m_hTerminationException);
     Dispose(m_hAccessToken);
-    Dispose(m_hAccessTokenName);
-    Dispose(m_hCachePropertyName);
+    Dispose(m_hAccessTokenPrivate);
+    Dispose(m_hCachePrivate);
     Dispose(m_hValuePropertyName);
     Dispose(m_hDonePropertyName);
-    Dispose(m_hEnumeratorPropertyName);
+    Dispose(m_hEnumeratorPrivate);
     Dispose(m_hHostExceptionName);
     Dispose(m_hHostObjectCookieName);
 
@@ -1218,7 +1219,7 @@ void V8ContextImpl::GetIteratorForHostObject(const v8::FunctionCallbackInfo<v8::
                 hIterator = pContextImpl->m_hHostIteratorTemplate->InstanceTemplate()->NewInstance();
             END_PULSE_VALUE_SCOPE
 
-            hIterator->SetHiddenValue(pContextImpl->m_hEnumeratorPropertyName, hEnumerator);
+            pContextImpl->SetPrivate(hIterator, pContextImpl->m_hEnumeratorPrivate, hEnumerator);
             CALLBACK_RETURN(hIterator);
         }
         catch (const HostException& exception)
@@ -1237,21 +1238,24 @@ void V8ContextImpl::AdvanceHostObjectIterator(const v8::FunctionCallbackInfo<v8:
     {
         try
         {
-            auto hEnumerator = info.Holder()->GetHiddenValue(pContextImpl->m_hEnumeratorPropertyName)->ToObject();
-            auto hResult = pContextImpl->CreateObject();
-
-            V8Value value(V8Value::Undefined);
-            if (HostObjectHelpers::AdvanceEnumerator(::GetHostObject(hEnumerator), value))
+            auto hEnumerator = pContextImpl->GetPrivate(info.Holder(), pContextImpl->m_hEnumeratorPrivate);
+            if (!hEnumerator.IsEmpty() && hEnumerator->IsObject())
             {
-                hResult->Set(pContextImpl->m_hDonePropertyName, pContextImpl->GetFalse());
-                hResult->Set(pContextImpl->m_hValuePropertyName, pContextImpl->ImportValue(value));
-            }
-            else
-            {
-                hResult->Set(pContextImpl->m_hDonePropertyName, pContextImpl->GetTrue());
-            }
+                auto hResult = pContextImpl->CreateObject();
 
-            CALLBACK_RETURN(hResult);
+                V8Value value(V8Value::Undefined);
+                if (HostObjectHelpers::AdvanceEnumerator(::GetHostObject(hEnumerator->ToObject()), value))
+                {
+                    hResult->Set(pContextImpl->m_hDonePropertyName, pContextImpl->GetFalse());
+                    hResult->Set(pContextImpl->m_hValuePropertyName, pContextImpl->ImportValue(value));
+                }
+                else
+                {
+                    hResult->Set(pContextImpl->m_hDonePropertyName, pContextImpl->GetTrue());
+                }
+
+                CALLBACK_RETURN(hResult);
+            }
         }
         catch (const HostException& exception)
         {
@@ -1322,12 +1326,12 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
             auto hHolder = info.Holder();
             auto cacheCleared = false;
 
-            auto hAccessToken = hHolder->GetHiddenValue(pContextImpl->m_hAccessTokenName);
+            auto hAccessToken = pContextImpl->GetPrivate(hHolder, pContextImpl->m_hAccessTokenPrivate);
             if (pContextImpl->m_hAccessToken != hAccessToken)
             {
                 BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
 
-                    auto hCache = hHolder->GetHiddenValue(pContextImpl->m_hCachePropertyName);
+                    auto hCache = pContextImpl->GetPrivate(hHolder, pContextImpl->m_hCachePrivate);
                     if (!hCache.IsEmpty())
                     {
                         if (hCache->IsObject())
@@ -1339,10 +1343,10 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
                             }
                         }
 
-                        hHolder->DeleteHiddenValue(pContextImpl->m_hCachePropertyName);
+                        pContextImpl->DeletePrivate(hHolder, pContextImpl->m_hCachePrivate);
                     }
 
-                    hHolder->SetHiddenValue(pContextImpl->m_hAccessTokenName, pContextImpl->m_hAccessToken);
+                    pContextImpl->SetPrivate(hHolder, pContextImpl->m_hAccessTokenPrivate, pContextImpl->m_hAccessToken);
                     cacheCleared = true;
 
                 END_PULSE_VALUE_SCOPE
@@ -1365,11 +1369,11 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
             hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::GetHostObject(info.Holder()), StdString(hName), isCacheable));
             if (isCacheable)
             {
-                auto hCache = hHolder->GetHiddenValue(pContextImpl->m_hCachePropertyName);
+                auto hCache = pContextImpl->GetPrivate(hHolder, pContextImpl->m_hCachePrivate);
                 if (hCache.IsEmpty() || !hCache->IsObject())
                 {
                     hCache = pContextImpl->CreateObject();
-                    hHolder->SetHiddenValue(pContextImpl->m_hCachePropertyName, hCache);
+                    pContextImpl->SetPrivate(hHolder, pContextImpl->m_hCachePrivate, hCache);
                 }
 
                 hCache->ToObject()->ForceSet(hName, hResult);
@@ -1626,14 +1630,13 @@ void V8ContextImpl::InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& 
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, void* pvV8ObjectCache)
+void V8ContextImpl::DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, HostObjectHolder* pHolder, void* pvV8ObjectCache)
 {
     IGNORE_UNUSED(pIsolate);
 
-    auto pHolder = ::GetHostObjectHolder(*phObject);
     ASSERT_EVAL(HostObjectHelpers::RemoveV8ObjectCacheEntry(pvV8ObjectCache, pHolder->GetObject()));
-
     delete pHolder;
+
     phObject->Dispose();
 }
 
@@ -1726,8 +1729,8 @@ v8::Local<v8::Value> V8ContextImpl::ImportValue(const V8Value& value)
             if (!hObject.IsEmpty())
             {
                 ::SetHostObjectHolder(hObject, pHolder = pHolder->Clone());
-                hObject->SetHiddenValue(m_hAccessTokenName, m_hAccessToken);
-                pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), m_pvV8ObjectCache, DisposeWeakHandle));
+                SetPrivate(hObject, m_hAccessTokenPrivate, m_hAccessToken);
+                pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), pHolder, m_pvV8ObjectCache, DisposeWeakHandle));
                 HostObjectHelpers::CacheV8Object(m_pvV8ObjectCache, pHolder->GetObject(), pvV8Object);
             }
 
@@ -1868,6 +1871,12 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
         StdString message;
         bool stackOverflow;
 
+        StdString constructorName;
+        if (hException->IsObject())
+        {
+            constructorName = StdString(hException->ToObject()->GetConstructorName());
+        }
+
         StdString value(hException);
         if (value.GetLength() > 0)
         {
@@ -1881,7 +1890,6 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
         }
         else
         {
-            StdString constructorName(hException->ToObject()->GetConstructorName());
             if ((constructorName == L"Error") || (constructorName == L"RangeError"))
             {
                 // It is unclear why V8 sometimes throws Error or RangeError objects that convert
@@ -1933,9 +1941,10 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
                 stackTrace = message;
 
                 auto hMessageStackTrace = hMessage->GetStackTrace();
-                int frameCount = !hMessageStackTrace.IsEmpty() ? hMessageStackTrace->GetFrameCount() : 0;
+                auto frameCount = !hMessageStackTrace.IsEmpty() ? hMessageStackTrace->GetFrameCount() : 0;
+                auto usedSourceLine = false;
 
-                if (frameCount < 1)
+                if ((frameCount < 1) || (constructorName == L"SyntaxError"))
                 {
                     auto hScriptResourceName = hMessage->GetScriptResourceName();
                     if (!hScriptResourceName.IsEmpty() && !hScriptResourceName->IsNull() && !hScriptResourceName->IsUndefined())
@@ -1967,64 +1976,66 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
                         stackTrace += L" -> ";
                         stackTrace += StdString(hSourceLine);
                     }
+
+                    usedSourceLine = true;
                 }
-                else
+
+                for (int index = 0; index < frameCount; index++)
                 {
-                    for (int index = 0; index < frameCount; index++)
+                    auto hFrame = hMessageStackTrace->GetFrame(index);
+                    stackTrace += L"\n    at ";
+
+                    auto hFunctionName = hFrame->GetFunctionName();
+                    if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
                     {
-                        auto hFrame = hMessageStackTrace->GetFrame(index);
-                        stackTrace += L"\n    at ";
-
-                        auto hFunctionName = hFrame->GetFunctionName();
-                        if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
+                        if (hFrame->IsConstructor())
                         {
-                            if (hFrame->IsConstructor())
-                            {
-                                stackTrace += L"new ";
-                            }
-
-                            stackTrace += StdString(hFunctionName);
-                            stackTrace += L" (";
+                            stackTrace += L"new ";
                         }
 
-                        auto hScriptName = hFrame->GetScriptName();
-                        if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
+                        stackTrace += StdString(hFunctionName);
+                        stackTrace += L" (";
+                    }
+
+                    auto hScriptName = hFrame->GetScriptName();
+                    if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
+                    {
+                        stackTrace += StdString(hScriptName);
+                    }
+                    else
+                    {
+                        stackTrace += L"<anonymous>";
+                    }
+
+                    stackTrace += L':';
+                    auto lineNumber = hFrame->GetLineNumber();
+                    if (lineNumber != v8::Message::kNoLineNumberInfo)
+                    {
+                        stackTrace += std::to_wstring(lineNumber);
+                    }
+
+                    stackTrace += L':';
+                    auto column = hFrame->GetColumn();
+                    if (column != v8::Message::kNoColumnInfo)
+                    {
+                        stackTrace += std::to_wstring(column);
+                    }
+
+                    if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
+                    {
+                        stackTrace += L')';
+                    }
+
+                    if (!usedSourceLine)
+                    {
+                        auto hSourceLine = hMessage->GetSourceLine();
+                        if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
                         {
-                            stackTrace += StdString(hScriptName);
-                        }
-                        else
-                        {
-                            stackTrace += L"<anonymous>";
+                            stackTrace += L" -> ";
+                            stackTrace += StdString(hSourceLine);
                         }
 
-                        stackTrace += L':';
-                        auto lineNumber = hFrame->GetLineNumber();
-                        if (lineNumber != v8::Message::kNoLineNumberInfo)
-                        {
-                            stackTrace += std::to_wstring(lineNumber);
-                        }
-
-                        stackTrace += L':';
-                        auto column = hFrame->GetColumn();
-                        if (column != v8::Message::kNoColumnInfo)
-                        {
-                            stackTrace += std::to_wstring(column);
-                        }
-
-                        if (!hFunctionName.IsEmpty() && (hFunctionName->Length() > 0))
-                        {
-                            stackTrace += L')';
-                        }
-
-                        if (index == 0)
-                        {
-                            auto hSourceLine = hMessage->GetSourceLine();
-                            if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
-                            {
-                                stackTrace += L" -> ";
-                                stackTrace += StdString(hSourceLine);
-                            }
-                        }
+                        usedSourceLine = true;
                     }
                 }
             }

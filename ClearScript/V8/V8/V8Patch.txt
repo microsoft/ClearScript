@@ -1,8 +1,8 @@
-diff --git a/build/standalone.gypi b/build/standalone.gypi
-index 6c88409..1ef0e08 100644
---- a/build/standalone.gypi
-+++ b/build/standalone.gypi
-@@ -874,7 +874,7 @@
+diff --git a/gypfiles/standalone.gypi b/gypfiles/standalone.gypi
+index c6c26fb..130a000 100644
+--- a/gypfiles/standalone.gypi
++++ b/gypfiles/standalone.gypi
+@@ -918,7 +918,7 @@
              'EnableFunctionLevelLinking': 'true',
              'RuntimeTypeInfo': 'false',
              'WarningLevel': '3',
@@ -12,10 +12,10 @@ index 6c88409..1ef0e08 100644
              'Detect64BitPortabilityProblems': 'false',
              'conditions': [
 diff --git a/src/v8.cc b/src/v8.cc
-index 154cf62..6222990 100644
+index d660b58..76f5aa3 100644
 --- a/src/v8.cc
 +++ b/src/v8.cc
-@@ -92,7 +92,6 @@ void V8::InitializeOncePerProcess() {
+@@ -91,7 +91,6 @@ void V8::InitializeOncePerProcess() {
  
  
  void V8::InitializePlatform(v8::Platform* platform) {
@@ -23,11 +23,11 @@ index 154cf62..6222990 100644
    CHECK(platform);
    platform_ = platform;
  }
-diff --git a/tools/gyp/v8.gyp b/tools/gyp/v8.gyp
-index b09fd1f..aa840e0 100644
---- a/tools/gyp/v8.gyp
-+++ b/tools/gyp/v8.gyp
-@@ -41,6 +41,7 @@
+diff --git a/src/v8.gyp b/src/v8.gyp
+index 84c361e..26fc971 100644
+--- a/src/v8.gyp
++++ b/src/v8.gyp
+@@ -40,6 +40,7 @@
    'targets': [
      {
        'target_name': 'v8',

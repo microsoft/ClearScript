@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // 
 // Microsoft Public License (MS-PL)
@@ -59,39 +59,33 @@
 //       fitness for a particular purpose and non-infringement.
 //       
 
-#include "ClearScriptV8Native.h"
-#include <windows.h>
+using System;
 
-//-----------------------------------------------------------------------------
-// HighResolutionClock implementation
-//-----------------------------------------------------------------------------
-
-static std::once_flag s_InitializationFlag;
-static LARGE_INTEGER s_TicksPerSecond;
-
-//-----------------------------------------------------------------------------
-
-double HighResolutionClock::GetRelativeSeconds()
+namespace Microsoft.ClearScript
 {
-    std::call_once(s_InitializationFlag, []
+    /// <summary>
+    /// Specifies that instances of the target struct are immutable.
+    /// </summary>
+    /// <remarks>
+    /// When this attribute is applied to a struct, ClearScript exposes the same object reference
+    /// for all instances of the struct that satisfy equality comparison, giving script code the
+    /// ability to use native equality operators to compare the exposed objects. This behavior is
+    /// also enabled automatically for all enums, numeric types, <see cref="DateTime"/>,
+    /// <see cref="DateTimeOffset"/>, and <see cref="TimeSpan"/>.
+    /// </remarks>
+    [AttributeUsage(AttributeTargets.Struct)]
+    public sealed class ImmutableValueAttribute : Attribute
     {
-        ASSERT_EVAL(::QueryPerformanceFrequency(&s_TicksPerSecond));
-    });
+        // ReSharper disable EmptyConstructor
 
-    LARGE_INTEGER tickCount;
-    ASSERT_EVAL(::QueryPerformanceCounter(&tickCount));
+        /// <summary>
+        /// Initializes a new <see cref="ImmutableValueAttribute"/> instance.
+        /// </summary>
+        public ImmutableValueAttribute()
+        {
+            // the help file builder (SHFB) insists on an empty constructor here
+        }
 
-    auto wholeSeconds = tickCount.QuadPart / s_TicksPerSecond.QuadPart;
-    auto remainingTicks = tickCount.QuadPart % s_TicksPerSecond.QuadPart;
-
-    return wholeSeconds + (static_cast<double>(remainingTicks) / s_TicksPerSecond.QuadPart);
-}
-
-//-----------------------------------------------------------------------------
-
-size_t HighResolutionClock::GetHardwareConcurrency()
-{
-    SYSTEM_INFO info;
-    ::GetNativeSystemInfo(&info);
-    return info.dwNumberOfProcessors;
+        // ReSharper restore EmptyConstructor
+    }
 }

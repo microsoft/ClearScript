@@ -167,12 +167,12 @@ public:
         return AsPersistent().IsWeak();
     }
 
-    template <typename TArg>
-    V8FastPersistent<T> MakeWeak(v8::Isolate* pIsolate, TArg* pArg, void (*pCallback)(v8::Isolate*, V8FastPersistent<T>*, TArg*))
+    template <typename TArg1, typename TArg2>
+    V8FastPersistent<T> MakeWeak(v8::Isolate* pIsolate, TArg1* pArg1, TArg2* pArg2, void (*pCallback)(v8::Isolate*, V8FastPersistent<T>*, TArg1*, TArg2*))
     {
         IGNORE_UNUSED(pIsolate);
         _ASSERTE(!IsWeak() && !IsEmpty());
-        AsPersistent().SetWeak(new WeakCallbackContext<TArg>(m_pValue, pArg, pCallback), WeakCallback);
+        AsPersistent().SetWeak(new WeakCallbackContext<TArg1, TArg2>(m_pValue, pArg1, pArg2, pCallback), WeakCallback, v8::WeakCallbackType::kParameter);
         return *this;
     }
 
@@ -227,14 +227,15 @@ private:
         virtual ~WeakCallbackContextBase() {}
     };
 
-    template <typename TArg>
+    template <typename TArg1, typename TArg2>
     class WeakCallbackContext: public WeakCallbackContextBase
     {
     public:
 
-        WeakCallbackContext(T* pValue, TArg* pArg, void (*pCallback)(v8::Isolate*, V8FastPersistent<T>*, TArg*)):
+        WeakCallbackContext(T* pValue, TArg1* pArg1, TArg2* pArg2, void (*pCallback)(v8::Isolate*, V8FastPersistent<T>*, TArg1*, TArg2*)):
             m_pValue(pValue),
-            m_pArg(pArg),
+            m_pArg1(pArg1),
+            m_pArg2(pArg2),
             m_pCallback(pCallback)
         {
         }
@@ -242,18 +243,19 @@ private:
         void InvokeCallback(v8::Isolate* pIsolate) const
         {
             V8FastPersistent<T> hTarget(m_pValue);
-            m_pCallback(pIsolate, &hTarget, m_pArg);
+            m_pCallback(pIsolate, &hTarget, m_pArg1, m_pArg2);
         }
 
     private:
 
         T* m_pValue;
-        TArg* m_pArg;
-        void (*m_pCallback)(v8::Isolate*, V8FastPersistent<T>*, TArg*);
+        TArg1* m_pArg1;
+        TArg2* m_pArg2;
+        void (*m_pCallback)(v8::Isolate*, V8FastPersistent<T>*, TArg1*, TArg2*);
     };
 
     template <typename TArg>
-    static void WeakCallback(const v8::WeakCallbackData<T, TArg>& data)
+    static void WeakCallback(const v8::WeakCallbackInfo<TArg>& data)
     {
         auto pContext = data.GetParameter();
         _ASSERTE(pContext);
@@ -353,12 +355,12 @@ public:
         return (m_pImpl != nullptr) && m_pImpl->IsWeak();
     }
 
-    template <typename TArg>
-    V8SafePersistent<T> MakeWeak(v8::Isolate* pIsolate, TArg* pArg, void (*pCallback)(v8::Isolate*, V8SafePersistent<T>*, TArg*))
+    template <typename TArg1, typename TArg2>
+    V8SafePersistent<T> MakeWeak(v8::Isolate* pIsolate, TArg1* pArg1, TArg2* pArg2, void (*pCallback)(v8::Isolate*, V8SafePersistent<T>*, TArg1*, TArg2*))
     {
         IGNORE_UNUSED(pIsolate);
         _ASSERTE(!IsWeak() && !IsEmpty());
-        m_pImpl->SetWeak(new WeakCallbackContext<TArg>(m_pImpl, pArg, pCallback), WeakCallback);
+        m_pImpl->SetWeak(new WeakCallbackContext<TArg1, TArg2>(m_pImpl, pArg1, pArg2, pCallback), WeakCallback, v8::WeakCallbackType::kParameter);
         return *this;
     }
 
@@ -404,14 +406,15 @@ private:
         virtual ~WeakCallbackContextBase() {}
     };
 
-    template <typename TArg>
+    template <typename TArg1, typename TArg2>
     class WeakCallbackContext: public WeakCallbackContextBase
     {
     public:
 
-        WeakCallbackContext(v8::Persistent<T>* pImpl, TArg* pArg, void (*pCallback)(v8::Isolate*, V8SafePersistent<T>*, TArg*)):
+        WeakCallbackContext(v8::Persistent<T>* pImpl, TArg1* pArg1, TArg2* pArg2, void (*pCallback)(v8::Isolate*, V8SafePersistent<T>*, TArg1*, TArg2*)):
             m_pImpl(pImpl),
-            m_pArg(pArg),
+            m_pArg1(pArg1),
+            m_pArg2(pArg2),
             m_pCallback(pCallback)
         {
         }
@@ -419,18 +422,19 @@ private:
         void InvokeCallback(v8::Isolate* pIsolate) const
         {
             V8SafePersistent<T> hTarget(m_pImpl);
-            m_pCallback(pIsolate, &hTarget, m_pArg);
+            m_pCallback(pIsolate, &hTarget, m_pArg1, m_pArg2);
         }
 
     private:
 
         v8::Persistent<T>* m_pImpl;
-        TArg* m_pArg;
-        void (*m_pCallback)(v8::Isolate*, V8SafePersistent<T>*, TArg*);
+        TArg1* m_pArg1;
+        TArg2* m_pArg2;
+        void (*m_pCallback)(v8::Isolate*, V8SafePersistent<T>*, TArg1*, TArg2*);
     };
 
     template <typename TArg>
-    static void WeakCallback(const v8::WeakCallbackData<T, TArg>& data)
+    static void WeakCallback(const v8::WeakCallbackInfo<TArg>& data)
     {
         auto pContext = data.GetParameter();
         _ASSERTE(pContext);

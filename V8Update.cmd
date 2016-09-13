@@ -5,12 +5,14 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=5.1.281.65
+set v8testedrev=5.3.332.45
 
-set gyprev=4ec6c4e3a94bd04a6da2858163d40b2429b8aad1
+set gyprev=35eafcd939515d51d19556c543f9cf97faf75ee6
 set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df
-set clangrev=faee82e064e04e5cbf60cc7327e7a81d2a4557ad
-set traceeventcommonrev=c8c8665c2deaf1cc749d9f8e153256d4f67bf1b8
+set clangrev=2ad431ac7823581e1f39c5b770704e1e1ca6cb32
+set traceeventcommonrev=54b8455be9505c2cb0cf5c26bb86739c236471aa
+set gtestrev=6f8a66431cb592dad629028a50b3dd418a408c87
+set gmockrev=0421b6f358139f02e102c9c332ce19a33faf75be
 
 :ProcessArgs
 
@@ -159,9 +161,9 @@ if errorlevel 1 goto Error
 
 :DownloadGYP
 echo Downloading GYP ...
-git clone -n -q https://chromium.googlesource.com/external/gyp.git build\gyp
+git clone -n -q https://chromium.googlesource.com/external/gyp.git tools/gyp
 if errorlevel 1 goto Error
-cd build\gyp
+cd tools\gyp
 git checkout -q "%gyprev%"
 if errorlevel 1 goto Error
 cd ..\..
@@ -169,7 +171,7 @@ cd ..\..
 
 :DownloadCygwin
 echo Downloading Cygwin ...
-git clone -n -q https://chromium.googlesource.com/chromium/deps/cygwin.git third_party\cygwin
+git clone -n -q https://chromium.googlesource.com/chromium/deps/cygwin.git third_party/cygwin
 if errorlevel 1 goto Error
 cd third_party/cygwin
 git checkout -q "%cygwinrev%"
@@ -179,7 +181,7 @@ cd ..\..
 
 :DownloadClang
 echo Downloading Clang ...
-git clone -n -q https://chromium.googlesource.com/chromium/src/tools/clang.git tools\clang
+git clone -n -q https://chromium.googlesource.com/chromium/src/tools/clang.git tools/clang
 if errorlevel 1 goto Error
 cd tools\clang
 git checkout -q "%clangrev%"
@@ -191,11 +193,31 @@ cd ..\..
 echo Downloading TraceEventCommon ...
 git clone -n -q https://chromium.googlesource.com/chromium/src/base/trace_event/common.git base/trace_event/common
 if errorlevel 1 goto Error
-cd base/trace_event/common
+cd base\trace_event\common
 git checkout -q "%traceeventcommonrev%"
 if errorlevel 1 goto Error
 cd ..\..\..
 :DownloadTraceEventCommonDone
+
+:DownloadGTest
+echo Downloading GTest ...
+git clone -n -q https://chromium.googlesource.com/external/github.com/google/googletest.git testing/gtest
+if errorlevel 1 goto Error
+cd testing\gtest
+git checkout -q "%gtestrev%"
+if errorlevel 1 goto Error
+cd ..\..
+:DownloadGTestDone
+
+:DownloadGMock
+echo Downloading GMock ...
+git clone -n -q https://chromium.googlesource.com/external/googlemock.git testing/gmock
+if errorlevel 1 goto Error
+cd testing\gmock
+git checkout -q "%gmockrev%"
+if errorlevel 1 goto Error
+cd ..\..
+:DownloadGMockDone
 
 cd ..
 
@@ -208,6 +230,7 @@ cd ..
 :Build
 
 set DEPOT_TOOLS_WIN_TOOLCHAIN=0
+set GYP_GENERATORS=msvs
 
 :CreatePatchFile
 echo Creating patch file ...
@@ -228,9 +251,9 @@ if errorlevel 1 goto Error
 
 :Build32Bit
 cd v8-ia32
-python build\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
+python gypfiles\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error
-msbuild /p:Configuration=%mode% /p:Platform=Win32 /t:v8 tools\gyp\v8.sln >build.log
+msbuild /p:Configuration=%mode% /p:Platform=Win32 /t:v8 src\v8.sln >build.log
 if errorlevel 1 goto Error
 cd ..
 :Build32BitDone
@@ -246,9 +269,9 @@ if errorlevel 1 goto Error
 
 :Build64Bit
 cd v8-x64
-python build\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
+python gypfiles\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error
-msbuild /p:Configuration=%mode% /p:Platform=x64 /t:v8 tools\gyp\v8.sln >build.log
+msbuild /p:Configuration=%mode% /p:Platform=x64 /t:v8 src\v8.sln >build.log
 if errorlevel 1 goto Error
 cd ..
 :Build64BitDone

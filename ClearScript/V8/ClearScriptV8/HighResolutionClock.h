@@ -72,4 +72,5 @@ class HighResolutionClock
 public:
 
     static double GetRelativeSeconds();
+    static size_t GetHardwareConcurrency();
 };

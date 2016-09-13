@@ -216,14 +216,34 @@ private:
         return m_spIsolateImpl->CreateObjectTemplate();
     }
 
-    v8::Local<v8::FunctionTemplate> CreateFunctionTemplate()
+    v8::Local<v8::FunctionTemplate> CreateFunctionTemplate(v8::FunctionCallback callback = 0, v8::Local<v8::Value> data = v8::Local<v8::Value>(), v8::Local<v8::Signature> signature = v8::Local<v8::Signature>(), int length = 0)
     {
-        return m_spIsolateImpl->CreateFunctionTemplate();
+        return m_spIsolateImpl->CreateFunctionTemplate(callback, data, signature, length);
     }
 
     v8::Local<v8::Function> CreateFunction(v8::FunctionCallback callback, v8::Local<v8::Value> data = v8::Local<v8::Value>(), int length = 0)
     {
         return m_spIsolateImpl->CreateFunction(callback, data, length);
+    }
+
+    v8::Local<v8::Private> CreatePrivate(v8::Local<v8::String> hName)
+    {
+        return m_spIsolateImpl->CreatePrivate(hName);
+    }
+
+    v8::Local<v8::Value> GetPrivate(v8::Local<v8::Object> hTarget, v8::Local<v8::Private> hKey)
+    {
+        return hTarget->GetPrivate(m_hContext, hKey).FromMaybe(v8::Local<v8::Value>());
+    }
+
+    bool SetPrivate(v8::Local<v8::Object> hTarget, v8::Local<v8::Private> hKey, v8::Local<v8::Value> hValue)
+    {
+        return hTarget->SetPrivate(m_hContext, hKey, hValue).FromMaybe(false);
+    }
+
+    bool DeletePrivate(v8::Local<v8::Object> hTarget, v8::Local<v8::Private> hKey)
+    {
+        return hTarget->DeletePrivate(m_hContext, hKey).FromMaybe(false);
     }
 
     v8::Local<v8::Script> CreateScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
@@ -260,10 +280,10 @@ private:
         return m_spIsolateImpl->CreatePersistent(hTarget);
     }
 
-    template <typename T, typename TArg>
-    Persistent<T> MakeWeak(Persistent<T> hTarget, TArg* pArg, void (*pCallback)(v8::Isolate*, Persistent<T>*, TArg*))
+    template <typename T, typename TArg1, typename TArg2>
+    Persistent<T> MakeWeak(Persistent<T> hTarget, TArg1* pArg1, TArg2* pArg2, void (*pCallback)(v8::Isolate*, Persistent<T>*, TArg1*, TArg2*))
     {
-        return m_spIsolateImpl->MakeWeak(hTarget, pArg, pCallback);
+        return m_spIsolateImpl->MakeWeak(hTarget, pArg1, pArg2, pCallback);
     }
 
     template<typename T>
@@ -362,7 +382,7 @@ private:
     static void GetHostObjectPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info);
 
     static void InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
-    static void DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, void* pvV8ObjectCache);
+    static void DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, HostObjectHolder* pHolder, void* pvV8ObjectCache);
 
     v8::Local<v8::Value> ImportValue(const V8Value& value);
     V8Value ExportValue(v8::Local<v8::Value> hValue);
@@ -379,11 +399,11 @@ private:
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
     Persistent<v8::String> m_hHostObjectCookieName;
     Persistent<v8::String> m_hHostExceptionName;
-    Persistent<v8::String> m_hEnumeratorPropertyName;
+    Persistent<v8::Private> m_hEnumeratorPrivate;
     Persistent<v8::String> m_hDonePropertyName;
     Persistent<v8::String> m_hValuePropertyName;
-    Persistent<v8::String> m_hCachePropertyName;
-    Persistent<v8::String> m_hAccessTokenName;
+    Persistent<v8::Private> m_hCachePrivate;
+    Persistent<v8::Private> m_hAccessTokenPrivate;
     Persistent<v8::Object> m_hAccessToken;
     Persistent<v8::FunctionTemplate> m_hHostObjectTemplate;
     Persistent<v8::FunctionTemplate> m_hHostDelegateTemplate;
