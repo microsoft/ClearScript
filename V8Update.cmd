@@ -5,12 +5,12 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=5.3.332.45
+set v8testedrev=5.4.500.40
 
-set gyprev=35eafcd939515d51d19556c543f9cf97faf75ee6
+set gyprev=702ac58e477214c635d9b541932e75a95d349352
 set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df
-set clangrev=2ad431ac7823581e1f39c5b770704e1e1ca6cb32
-set traceeventcommonrev=54b8455be9505c2cb0cf5c26bb86739c236471aa
+set clangrev=3afb04a8153e40ff00f9eaa14337851c3ab4a368
+set traceeventcommonrev=315bf1e2d45be7d53346c31cfcc37424a32c30c8
 set gtestrev=6f8a66431cb592dad629028a50b3dd418a408c87
 set gmockrev=0421b6f358139f02e102c9c332ce19a33faf75be
 
@@ -65,6 +65,13 @@ goto ProcessArg
 ::-----------------------------------------------------------------------------
 :: check environment
 ::-----------------------------------------------------------------------------
+
+:CheckOS
+if /i "%PROCESSOR_ARCHITECTURE%"=="AMD64" goto CheckOSDone
+if defined PROCESSOR_ARCHITEW6432 goto CheckOSDone
+echo Error: This script requires a 64-bit operating system.
+goto Exit
+:CheckOSDone
 
 :CheckMSVS
 if "%VisualStudioVersion%"=="12.0" goto UseMSVS2013

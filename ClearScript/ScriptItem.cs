@@ -72,7 +72,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal abstract class ScriptItem : DynamicObject, IExpando, IDynamic, IScriptMarshalWrapper
+    internal abstract class ScriptItem : ScriptObject, IExpando, IDynamic, IScriptMarshalWrapper
     {
         private static readonly MethodInfo throwLastScriptErrorMethod = typeof(ScriptItem).GetMethod("ThrowLastScriptError");
         private static readonly MethodInfo clearLastScriptErrorMethod = typeof(ScriptItem).GetMethod("ClearLastScriptError");
@@ -418,8 +418,6 @@ namespace Microsoft.ClearScript
         #endregion
 
         #region IScriptMarshalWrapper implementation (abstract)
-
-        public abstract ScriptEngine Engine { get; }
 
         public abstract object Unwrap();
 

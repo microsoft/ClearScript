@@ -131,7 +131,7 @@
 // PulseValueScope
 //-----------------------------------------------------------------------------
 
-template<typename T>
+template <typename T>
 class PulseValueScope
 {
     PROHIBIT_COPY(PulseValueScope)

@@ -88,6 +88,7 @@
     <Compile Include="ScriptMemberFlags.cs" />
     <Compile Include="ScriptMethod.cs" />
     <Compile Include="ScriptMemberAttribute.cs" />
+    <Compile Include="ScriptObject.cs" />
     <Compile Include="ScriptUsageAttribute.cs" />
     <Compile Include="Util\AssemblyHelpers.cs" />
     <Compile Include="Util\Collateral.cs" />
@@ -111,6 +112,7 @@
     <Compile Include="V8\IV8DebugListener.cs" />
     <Compile Include="V8\V8ArrayBufferOrViewInfo.cs" />
     <Compile Include="V8\V8ArrayBufferOrViewKind.cs" />
+    <Compile Include="V8\V8CacheKind.cs" />
     <Compile Include="V8\V8DebugAgent.cs" />
     <Compile Include="V8\V8RuntimeHeapInfo.cs" />
     <Compile Include="V8\V8Script.cs" />

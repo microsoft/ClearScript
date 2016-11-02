@@ -2299,6 +2299,20 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<NotSupportedException>(() => engine.Script.sum(DayOfWeek.Monday));
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ScriptObject()
+        {
+            engine.Execute(@"
+                class VBTestObject
+                end class
+                set testObject = new VBTestObject
+            ");
+
+            var obj = engine.Evaluate("testObject") as ScriptObject;
+            Assert.IsNotNull(obj);
+            Assert.AreSame(engine, obj.Engine);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

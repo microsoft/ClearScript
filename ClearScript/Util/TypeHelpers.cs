@@ -66,6 +66,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.ClearScript.Util
 {
@@ -204,7 +205,32 @@ namespace Microsoft.ClearScript.Util
 
             if (!type.IsValueType)
             {
-                return type.IsAssignableFrom(valueType);
+                if (type.IsAssignableFrom(valueType))
+                {
+                    return true;
+                }
+
+                if (type.IsInterface && type.IsImport && valueType.IsCOMObject)
+                {
+                    var result = false;
+                    var pUnknown = Marshal.GetIUnknownForObject(value);
+
+                    var iid = type.GUID;
+                    if (iid != Guid.Empty)
+                    {
+                        IntPtr pInterface;
+                        if (RawCOMHelpers.HResult.Succeeded(Marshal.QueryInterface(pUnknown, ref iid, out pInterface)))
+                        {
+                            Marshal.Release(pInterface);
+                            result = true;
+                        }
+                    }
+
+                    Marshal.Release(pUnknown);
+                    return result;
+                }
+
+                return false;
             }
 
             if (!valueType.IsValueType)

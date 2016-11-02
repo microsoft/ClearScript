@@ -66,14 +66,14 @@
 // HighResolutionClock implementation
 //-----------------------------------------------------------------------------
 
-static std::once_flag s_InitializationFlag;
+static OnceFlag s_InitializationFlag;
 static LARGE_INTEGER s_TicksPerSecond;
 
 //-----------------------------------------------------------------------------
 
 double HighResolutionClock::GetRelativeSeconds()
 {
-    std::call_once(s_InitializationFlag, []
+    s_InitializationFlag.CallOnce([]
     {
         ASSERT_EVAL(::QueryPerformanceFrequency(&s_TicksPerSecond));
     });

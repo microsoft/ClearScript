@@ -75,6 +75,7 @@ using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using UIAutomationClient;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -469,7 +470,6 @@ namespace Microsoft.ClearScript.Test
                 using (item2 as IDisposable)
                 {
                     Assert.AreEqual(456, item2());
-                   
                 }
             }
 
@@ -808,7 +808,7 @@ namespace Microsoft.ClearScript.Test
         {
             // this test is for a crash that occurred only on debug V8 builds
             engine.AddHostObject("bag", HostItemFlags.GlobalMembers, new PropertyBag());
-            engine.AddHostObject("test", HostItemFlags.GlobalMembers, new ReadOnlyCollection<int>(new [] { 5, 4, 3, 2, 1 }));
+            engine.AddHostObject("test", HostItemFlags.GlobalMembers, new ReadOnlyCollection<int>(new[] { 5, 4, 3, 2, 1 }));
             TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("this[2] = 123"));
         }
 
@@ -2145,6 +2145,79 @@ namespace Microsoft.ClearScript.Test
                 runtime.CollectGarbage(true);
                 Assert.IsFalse(runtime.GetHeapInfo().TotalHeapSize > (heapSize * 1.5));
             }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8ExceptionWhileInterrupting()
+        {
+            var context = new PropertyBag();
+            engine.Script.context = context;
+
+            var startEvent = new ManualResetEventSlim();
+            var waitEvent = new ManualResetEventSlim();
+            var tokenSource = new CancellationTokenSource();
+
+            context["count"] = 0;
+            context["startEvent"] = startEvent;
+            context["waitForCancel"] = new Action(() => waitEvent.Wait(tokenSource.Token));
+
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    engine.Execute(@"
+                        context.count = 1;
+                        context.startEvent.Set();
+                        context.waitForCancel();
+                        context.count = 2;
+                    ");
+                }
+                catch (ScriptEngineException)
+                {
+                }
+                catch (ScriptInterruptedException)
+                {
+                }
+            });
+
+            thread.Start();
+            startEvent.Wait(Timeout.Infinite);
+
+            tokenSource.Cancel();
+            engine.Interrupt();
+            thread.Join();
+
+            Assert.AreEqual(1, context["count"]);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_InteropMethodCallWithInteropArg()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+            engine.AddHostType("Automation", typeof(CUIAutomationClass));
+            engine.AddHostType(typeof(UIA_PropertyIds));
+            engine.AddHostType(typeof(UIA_ControlTypeIds));
+            engine.AddHostType(typeof(IUIAutomationCondition));
+            engine.Execute(@"
+                    automation = new Automation();
+                    condition1 = automation.CreatePropertyCondition(UIA_PropertyIds.UIA_ControlTypePropertyId, UIA_ControlTypeIds.UIA_CustomControlTypeId);
+                    condition2 = automation.CreatePropertyCondition(UIA_PropertyIds.UIA_ControlTypePropertyId, UIA_ControlTypeIds.UIA_CustomControlTypeId);
+                    condition3 = automation.CreatePropertyCondition(UIA_PropertyIds.UIA_ControlTypePropertyId, UIA_ControlTypeIds.UIA_CustomControlTypeId);
+                    conditions = host.newArr(IUIAutomationCondition, 3);
+                    conditions[0] = condition1;
+                    conditions[1] = condition2;
+                    conditions[2] = condition3;
+                    andCondition = automation.CreateAndCondition(condition1, condition2);
+                    andAndCondition = automation.CreateAndConditionFromArray(conditions);
+                ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_InteropMethodCallWithInteropArg_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+            BugFix_InteropMethodCallWithInteropArg();
         }
 
         // ReSharper restore InconsistentNaming

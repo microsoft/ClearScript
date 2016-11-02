@@ -38,21 +38,25 @@ build, and import V8:
    with any third-party software required to download and build V8. Rights to
    V8 and its prerequisites are provided by their rights holders.
    
-2. Install Git (http://www.git-scm.com/download/win). Ensure that Git is added
+2. IMPORTANT: Because of changes in V8 5.4, this procedure and the V8Update
+   script now require a 64-bit operating system. Once built, ClearScript can
+   still be deployed in a 32-bit environment.
+   
+3. Install Git (http://www.git-scm.com/download/win). Ensure that Git is added
    to your executable path by selecting the option "Use Git from the Windows
    Command Prompt".
 
-3. Install the latest Python 2.x (http://www.python.org/downloads/) and add it
+4. Install the latest Python 2.x (http://www.python.org/downloads/) and add it
    to your executable path. V8's build process requires at least Python 2.7 and
    does not support Python 3.x.
 
-4. Unzip or clone the ClearScript source code into a convenient directory.
+5. Unzip or clone the ClearScript source code into a convenient directory.
    IMPORTANT: Ensure that the path to your ClearScript root directory does not
    contain any non-ASCII characters.
    
-5. Ensure that your Visual Studio installation includes C++ support.
+6. Ensure that your Visual Studio installation includes C++ support.
 
-6. Open a Visual Studio developer command prompt and run the V8Update script
+7. Open a Visual Studio developer command prompt and run the V8Update script
    from your ClearScript root directory:
 
       C:\ClearScript> V8Update [/N] [Debug|Release] [Latest|Tested|<Revision>]

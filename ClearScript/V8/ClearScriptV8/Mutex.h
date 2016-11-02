@@ -111,7 +111,7 @@ private:
 // NullMutex
 //-----------------------------------------------------------------------------
 
-struct NullMutex
+class NullMutex
 {
     PROHIBIT_COPY(NullMutex)
 
@@ -171,3 +171,24 @@ private:
 #define END_MUTEX_SCOPE \
         IGNORE_UNUSED(t_MutexLock); \
     }
+
+//-----------------------------------------------------------------------------
+// OnceFlag
+//-----------------------------------------------------------------------------
+
+class OnceFlag
+{
+    PROHIBIT_COPY(OnceFlag)
+
+public:
+
+    OnceFlag();
+
+    void CallOnce(std::function<void()>&& func);
+
+    ~OnceFlag();
+
+private:
+
+    class OnceFlagImpl* m_pImpl;
+};

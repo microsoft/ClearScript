@@ -88,6 +88,8 @@ public:
     virtual V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard) = 0;
 
     virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) = 0;
+    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) = 0;
+    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
     virtual bool CanExecute(V8ScriptHolder* pHolder) = 0;
     virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) = 0;
 

@@ -1,8 +1,8 @@
 diff --git a/gypfiles/standalone.gypi b/gypfiles/standalone.gypi
-index c6c26fb..130a000 100644
+index 6599bb8..285fbb6 100644
 --- a/gypfiles/standalone.gypi
 +++ b/gypfiles/standalone.gypi
-@@ -918,7 +918,7 @@
+@@ -949,7 +949,7 @@
              'EnableFunctionLevelLinking': 'true',
              'RuntimeTypeInfo': 'false',
              'WarningLevel': '3',
@@ -11,8 +11,38 @@ index c6c26fb..130a000 100644
              'DebugInformationFormat': '3',
              'Detect64BitPortabilityProblems': 'false',
              'conditions': [
+diff --git a/include/v8.h b/include/v8.h
+index d7e39ad..4701f29 100644
+--- a/include/v8.h
++++ b/include/v8.h
+@@ -1170,6 +1170,7 @@ class V8_EXPORT ScriptCompiler {
+     // caller. The CachedData object is alive as long as the Source object is
+     // alive.
+     V8_INLINE const CachedData* GetCachedData() const;
++    V8_EXPORT void DeleteCachedData();
+ 
+    private:
+     friend class ScriptCompiler;
+diff --git a/src/api.cc b/src/api.cc
+index 6858a32..63f45a5 100644
+--- a/src/api.cc
++++ b/src/api.cc
+@@ -1713,6 +1713,13 @@ void ObjectTemplate::SetImmutableProto() {
+ // --- S c r i p t s ---
+ 
+ 
++void ScriptCompiler::Source::DeleteCachedData()
++{
++    delete cached_data;
++    cached_data = nullptr;
++}
++
++    
+ // Internally, UnboundScript is a SharedFunctionInfo, and Script is a
+ // JSFunction.
+ 
 diff --git a/src/v8.cc b/src/v8.cc
-index d660b58..76f5aa3 100644
+index 08796f3..c7fd6d2 100644
 --- a/src/v8.cc
 +++ b/src/v8.cc
 @@ -91,7 +91,6 @@ void V8::InitializeOncePerProcess() {
@@ -24,10 +54,10 @@ index d660b58..76f5aa3 100644
    platform_ = platform;
  }
 diff --git a/src/v8.gyp b/src/v8.gyp
-index 84c361e..26fc971 100644
+index 1adb2fe..e2552fc 100644
 --- a/src/v8.gyp
 +++ b/src/v8.gyp
-@@ -40,6 +40,7 @@
+@@ -41,6 +41,7 @@
    'targets': [
      {
        'target_name': 'v8',

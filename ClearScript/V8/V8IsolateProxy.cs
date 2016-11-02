@@ -78,6 +78,10 @@ namespace Microsoft.ClearScript.V8
 
         public abstract V8Script Compile(string documentName, string code);
 
+        public abstract V8Script Compile(string documentName, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
+
+        public abstract V8Script Compile(string documentName, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
+
         public abstract V8RuntimeHeapInfo GetHeapInfo();
 
         public abstract void CollectGarbage(bool exhaustive);

@@ -2137,6 +2137,14 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<ScriptEngineException>(() => engine.Script.sum(DayOfWeek.Monday));
         }
 
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ScriptObject()
+        {
+            var obj = engine.Evaluate("({})") as ScriptObject;
+            Assert.IsNotNull(obj);
+            Assert.AreSame(engine, obj.Engine);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

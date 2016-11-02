@@ -202,3 +202,62 @@ RecursiveMutex::~RecursiveMutex()
 {
     delete m_pImpl;
 }
+
+//-----------------------------------------------------------------------------
+// OnceFlagImpl
+//-----------------------------------------------------------------------------
+
+class OnceFlagImpl
+{
+    PROHIBIT_COPY(OnceFlagImpl)
+
+public:
+
+    OnceFlagImpl()
+    {
+    }
+
+    void CallOnce(std::function<void()>&& func)
+    {
+        if (!m_Called)
+        {
+            BEGIN_MUTEX_SCOPE(m_Mutex)
+
+                if (!m_Called)
+                {
+                    func();
+                    m_Called = true;
+                }
+
+            END_MUTEX_SCOPE
+        }
+    }
+
+private:
+
+    std::atomic<bool> m_Called;
+    SimpleMutex m_Mutex;
+};
+
+//-----------------------------------------------------------------------------
+// OnceFlag implementation
+//-----------------------------------------------------------------------------
+
+OnceFlag::OnceFlag():
+    m_pImpl(new OnceFlagImpl)
+{
+}
+
+//-----------------------------------------------------------------------------
+
+void OnceFlag::CallOnce(std::function<void()>&& func)
+{
+    m_pImpl->CallOnce(std::move(func));
+}
+
+//-----------------------------------------------------------------------------
+
+OnceFlag::~OnceFlag()
+{
+    delete m_pImpl;
+}

@@ -149,6 +149,70 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    V8Script^ V8IsolateProxyImpl::Compile(String^ gcDocumentName, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes)
+    {
+        if (cacheKind == V8CacheKind::None)
+        {
+            gcCacheBytes = nullptr;
+            return Compile(gcDocumentName, gcCode);
+        }
+
+        try
+        {
+            std::vector<std::uint8_t> cacheBytes;
+            auto cacheType = (cacheKind == V8CacheKind::Parser) ? V8CacheType::Parser : V8CacheType::Code;
+            auto gcScript = gcnew V8ScriptImpl(gcDocumentName, GetIsolate()->Compile(StdString(gcDocumentName), StdString(gcCode), cacheType, cacheBytes));
+
+            auto length = static_cast<int>(cacheBytes.size());
+            if (length < 1)
+            {
+                gcCacheBytes = nullptr;
+            }
+            else
+            {
+                gcCacheBytes = gcnew array<Byte>(length);
+                Marshal::Copy((IntPtr)&cacheBytes[0], gcCacheBytes, 0, length);
+            }
+
+            return gcScript;
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ThrowScriptEngineException();
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    V8Script^ V8IsolateProxyImpl::Compile(String^ gcDocumentName, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted)
+    {
+        if ((cacheKind == V8CacheKind::None) || (gcCacheBytes == nullptr) || (gcCacheBytes->Length < 1))
+        {
+            cacheAccepted = false;
+            return Compile(gcDocumentName, gcCode);
+        }
+
+        try
+        {
+            auto length = gcCacheBytes->Length;
+            std::vector<std::uint8_t> cacheBytes(length);
+            Marshal::Copy(gcCacheBytes, 0, (IntPtr)&cacheBytes[0], length);
+
+            bool tempCacheAccepted;
+            auto cacheType = (cacheKind == V8CacheKind::Parser) ? V8CacheType::Parser : V8CacheType::Code;
+            auto gcScript = gcnew V8ScriptImpl(gcDocumentName, GetIsolate()->Compile(StdString(gcDocumentName), StdString(gcCode), cacheType, cacheBytes, tempCacheAccepted));
+
+            cacheAccepted = tempCacheAccepted;
+            return gcScript;
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ThrowScriptEngineException();
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
     V8RuntimeHeapInfo^ V8IsolateProxyImpl::GetHeapInfo()
     {
         V8IsolateHeapInfo heapInfo;

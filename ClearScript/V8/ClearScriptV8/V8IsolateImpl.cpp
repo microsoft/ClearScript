@@ -84,14 +84,14 @@ private:
     V8Platform();
 
     static V8Platform ms_Instance;
-    static std::once_flag ms_InstallationFlag;
+    static OnceFlag ms_InstallationFlag;
 };
 
 //-----------------------------------------------------------------------------
 
 void V8Platform::EnsureInstalled()
 {
-    std::call_once(ms_InstallationFlag, []
+    ms_InstallationFlag.CallOnce([]
     {
         v8::V8::InitializePlatform(&ms_Instance);
         ASSERT_EVAL(v8::V8::Initialize());
@@ -109,54 +109,25 @@ size_t V8Platform::NumberOfAvailableBackgroundThreads()
 
 void V8Platform::CallOnBackgroundThread(v8::Task* pTask, ExpectedRuntime /*runtime*/)
 {
-
-#if 1
-
-    // Unlike earlier versions, V8 5.3 tracks outstanding background tasks and awaits their
-    // completion within v8::Isolate::Dispose(). In addition, it actually schedules at least one
-    // background task during disposition, and since the corresponding callback fails to acquire a
-    // strong reference to the isolate wrapper (whose shutdown is in progress), it drops the task,
-    // causing V8's wait to deadlock. Because V8's precise behavior is undocumented and could
-    // always be reverted, we'll keep the older code here to ease A/B testing in the future.
-
     SharedPtr<v8::Task> spTask(pTask);
     HostObjectHelpers::QueueNativeCallback([spTask]
     {
         spTask->Run();
     });
-
-#else
-
-    auto pIsolate = v8::Isolate::GetCurrent();
-    if (pIsolate)
-    {
-        static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunBackgroundTask(pTask);
-    }
-    else
-    {
-        SharedPtr<v8::Task> spTask(pTask);
-        HostObjectHelpers::QueueNativeCallback([spTask]
-        {
-            spTask->Run();
-        });
-    }
-
-#endif
-
 }
 
 //-----------------------------------------------------------------------------
 
 void V8Platform::CallOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask)
 {
-    static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskWithLock(pTask);
+    static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskWithLockAsync(pTask);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8Platform::CallDelayedOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask, double delayInSeconds)
 {
-    static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunDelayedTaskWithLock(pTask, delayInSeconds);
+    static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskWithLockDelayed(pTask, delayInSeconds);
 }
 
 //-----------------------------------------------------------------------------
@@ -190,7 +161,7 @@ V8Platform::V8Platform()
 //-----------------------------------------------------------------------------
 
 V8Platform V8Platform::ms_Instance;
-std::once_flag V8Platform::ms_InstallationFlag;
+OnceFlag V8Platform::ms_InstallationFlag;
 
 //-----------------------------------------------------------------------------
 // V8ArrayBufferAllocator
@@ -211,7 +182,6 @@ private:
     V8ArrayBufferAllocator();
 
     static V8ArrayBufferAllocator ms_Instance;
-    static std::once_flag ms_InstallationFlag;
 };
 
 //-----------------------------------------------------------------------------
@@ -251,7 +221,6 @@ V8ArrayBufferAllocator::V8ArrayBufferAllocator()
 //-----------------------------------------------------------------------------
 
 V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
-std::once_flag V8ArrayBufferAllocator::ms_InstallationFlag;
 
 //-----------------------------------------------------------------------------
 // V8IsolateImpl implementation
@@ -397,7 +366,7 @@ void V8IsolateImpl::EnableDebugging(int debugPort)
             }
         });
 
-        v8::Debug::SetMessageHandler(OnDebugMessageShared);
+        v8::Debug::SetMessageHandler(m_pIsolate, OnDebugMessageShared);
 
         m_DebuggingEnabled = true;
         m_DebugPort = debugPort;
@@ -411,7 +380,7 @@ void V8IsolateImpl::DisableDebugging()
     _ASSERTE(IsCurrent() && IsLocked());
     if (m_DebuggingEnabled)
     {
-        v8::Debug::SetMessageHandler(nullptr);
+        v8::Debug::SetMessageHandler(m_pIsolate, nullptr);
         HostObjectHelpers::DestroyDebugAgent(m_pvDebugAgent);
 
         m_DebuggingEnabled = false;
@@ -470,6 +439,30 @@ V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdS
 
         SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, 0));
         return spContextImpl->Compile(documentName, code);
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, 0));
+        return spContextImpl->Compile(documentName, code, cacheType, cacheBytes);
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, 0));
+        return spContextImpl->Compile(documentName, code, cacheType, cacheBytes, cacheAccepted);
 
     END_ISOLATE_SCOPE
 }
@@ -556,65 +549,60 @@ void V8IsolateImpl::ReleaseV8Script(void* pvScript)
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::RunBackgroundTask(v8::Task* pTask)
+void V8IsolateImpl::RunTaskWithLockAsync(v8::Task* pTask)
 {
     SharedPtr<v8::Task> spTask(pTask);
-    auto wrIsolate = CreateWeakRef();
-    HostObjectHelpers::QueueNativeCallback([wrIsolate, spTask]
+    CallWithLockAsync([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
     {
-        auto spIsolate = wrIsolate.GetTarget();
-        if (!spIsolate.IsEmpty())
-        {
-            spTask->Run();
-            throw std::bad_exception();
-        }
+        spTask->Run();
     });
 }
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::RunTaskWithLock(v8::Task* pTask)
+void V8IsolateImpl::RunTaskWithLockDelayed(v8::Task* pTask, double delayInSeconds)
 {
     SharedPtr<v8::Task> spTask(pTask);
+
     auto wrIsolate = CreateWeakRef();
-    HostObjectHelpers::QueueNativeCallback([this, wrIsolate, spTask]
+    SharedPtr<Timer> spTimer(new Timer(static_cast<int>(delayInSeconds * 1000), -1, [this, wrIsolate, spTask] (Timer* pTimer) mutable
     {
-        auto spIsolate = wrIsolate.GetTarget();
-        if (!spIsolate.IsEmpty())
+        if (!spTask.IsEmpty())
         {
-            CallWithLockNoWait([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
+            auto spIsolate = wrIsolate.GetTarget();
+            if (!spIsolate.IsEmpty())
             {
-                spTask->Run();
-            });
-        }
-    });
-}
+                CallWithLockNoWait([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
+                {
+                    spTask->Run();
+                });
 
-//-----------------------------------------------------------------------------
+                // Release the timer's strong task reference. Doing so avoids a deadlock when
+                // spIsolate's implicit destruction below triggers immediate isolate teardown.
 
-void V8IsolateImpl::RunDelayedTaskWithLock(v8::Task* pTask, double delayInSeconds)
-{
-    SharedPtr<v8::Task> spTask(pTask);
-    auto wrIsolate = CreateWeakRef();
-    SharedPtr<Timer> spTimer(new Timer(static_cast<int>(delayInSeconds * 1000), -1, [this, wrIsolate, spTask] (Timer* pTimer)
-    {
-        auto spIsolate = wrIsolate.GetTarget();
-        if (!spIsolate.IsEmpty())
-        {
-            CallWithLockNoWait([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
-            {
-                spTask->Run();
-            });
+                spTask.Empty();
 
-            BEGIN_MUTEX_SCOPE(m_DataMutex)
-                m_TaskTimers.erase(std::remove(m_TaskTimers.begin(), m_TaskTimers.end(), pTimer), m_TaskTimers.end());
-            END_MUTEX_SCOPE
+                // the timer has fired; discard it
+
+                BEGIN_MUTEX_SCOPE(m_DataMutex)
+                    m_TaskTimers.erase(std::remove(m_TaskTimers.begin(), m_TaskTimers.end(), pTimer), m_TaskTimers.end());
+                END_MUTEX_SCOPE
+            }
         }
     }));
+
+    // hold on to the timer to ensure callback execution
 
     BEGIN_MUTEX_SCOPE(m_DataMutex)
         m_TaskTimers.push_back(spTimer);
     END_MUTEX_SCOPE
+
+    // Release the local task reference explicitly. Doing so avoids a deadlock if the callback is
+    // executed synchronously. That shouldn't happen given the current timer implementation.
+
+    spTask.Empty();
+
+    // now it's safe to start the timer
 
     spTimer->Start();
 }
@@ -635,11 +623,7 @@ void V8IsolateImpl::CallWithLockNoWait(std::function<void(V8IsolateImpl*)>&& cal
     }
     else
     {
-        std::function<void(V8IsolateImpl*)> userCallback(std::move(callback));
-        CallWithLockAsync([userCallback] (V8IsolateImpl* pIsolateImpl)
-        {
-            userCallback(pIsolateImpl);
-        });
+        CallWithLockAsync(std::move(callback));
     }
 }
 
@@ -660,6 +644,13 @@ V8IsolateImpl::~V8IsolateImpl()
     BEGIN_ISOLATE_SCOPE
         DisableDebugging();
     END_ISOLATE_SCOPE
+
+    {
+        std::vector<SharedPtr<Timer>> taskTimers;
+        BEGIN_MUTEX_SCOPE(m_DataMutex)
+            std::swap(taskTimers, m_TaskTimers);
+        END_MUTEX_SCOPE
+    }
 
     m_pIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
     m_pIsolate->Dispose();
@@ -739,23 +730,16 @@ void V8IsolateImpl::DispatchDebugMessages()
 {
     if (++m_DebugMessageDispatchCount == 1)
     {
-        ProcessDebugMessages();
+        BEGIN_ISOLATE_SCOPE
+
+            m_DebugMessageDispatchCount = 0;
+            if (m_ContextPtrs.size() > 0)
+            {
+                m_ContextPtrs.front()->ProcessDebugMessages();
+            }
+
+        END_ISOLATE_SCOPE
     }
-}
-
-//-----------------------------------------------------------------------------
-
-void V8IsolateImpl::ProcessDebugMessages()
-{
-    BEGIN_ISOLATE_SCOPE
-
-        m_DebugMessageDispatchCount = 0;
-        if (m_ContextPtrs.size() > 0)
-        {
-            m_ContextPtrs.front()->ProcessDebugMessages();
-        }
-
-    END_ISOLATE_SCOPE
 }
 
 //-----------------------------------------------------------------------------

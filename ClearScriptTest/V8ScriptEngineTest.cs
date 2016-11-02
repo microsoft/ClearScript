@@ -894,6 +894,250 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_General_ParserCache()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
+
+            byte[] cacheBytes;
+            using (var tempEngine = new V8ScriptEngine())
+            {
+                using (tempEngine.Compile(generalScript, V8CacheKind.Parser, out cacheBytes))
+                {
+                }
+            }
+
+            Assert.IsNotNull(cacheBytes);
+            Assert.IsTrue((cacheBytes.Length > 50) && (cacheBytes.Length < 2000)); // typical size is ~100
+
+            bool cacheAccepted;
+            using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out cacheAccepted))
+            {
+                Assert.IsTrue(cacheAccepted);
+                using (var console = new StringWriter())
+                {
+                    var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                    clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                    engine.AddHostObject("host", new ExtendedHostFunctions());
+                    engine.AddHostObject("clr", clr);
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+
+                    console.GetStringBuilder().Clear();
+                    Assert.AreEqual(string.Empty, console.ToString());
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_General_ParserCache_BadData()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
+
+            byte[] cacheBytes;
+            using (var tempEngine = new V8ScriptEngine())
+            {
+                using (tempEngine.Compile(generalScript, V8CacheKind.Parser, out cacheBytes))
+                {
+                }
+            }
+
+            Assert.IsNotNull(cacheBytes);
+            Assert.IsTrue((cacheBytes.Length > 50) && (cacheBytes.Length < 2000)); // typical size is ~100
+
+            cacheBytes = cacheBytes.Take(cacheBytes.Length - 1).ToArray();
+
+            bool cacheAccepted;
+            using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out cacheAccepted))
+            {
+                Assert.IsFalse(cacheAccepted);
+                using (var console = new StringWriter())
+                {
+                    var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                    clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                    engine.AddHostObject("host", new ExtendedHostFunctions());
+                    engine.AddHostObject("clr", clr);
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+
+                    console.GetStringBuilder().Clear();
+                    Assert.AreEqual(string.Empty, console.ToString());
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_General_ParserCache_DebuggingEnabled()
+        {
+            byte[] cacheBytes;
+            using (var tempEngine = new V8ScriptEngine())
+            {
+                using (tempEngine.Compile(generalScript, V8CacheKind.Parser, out cacheBytes))
+                {
+                }
+            }
+
+            Assert.IsNotNull(cacheBytes);
+            Assert.IsTrue((cacheBytes.Length > 50) && (cacheBytes.Length < 2000)); // typical size is ~100
+
+            bool cacheAccepted;
+            using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out cacheAccepted))
+            {
+                Assert.IsFalse(cacheAccepted);
+                using (var console = new StringWriter())
+                {
+                    var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                    clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                    engine.AddHostObject("host", new ExtendedHostFunctions());
+                    engine.AddHostObject("clr", clr);
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+
+                    console.GetStringBuilder().Clear();
+                    Assert.AreEqual(string.Empty, console.ToString());
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_General_CodeCache()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
+
+            byte[] cacheBytes;
+            using (var tempEngine = new V8ScriptEngine())
+            {
+                using (tempEngine.Compile(generalScript, V8CacheKind.Code, out cacheBytes))
+                {
+                }
+            }
+
+            Assert.IsNotNull(cacheBytes);
+            Assert.IsTrue(cacheBytes.Length > 4000); // typical size is ~8K
+
+            bool cacheAccepted;
+            using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out cacheAccepted))
+            {
+                Assert.IsTrue(cacheAccepted);
+                using (var console = new StringWriter())
+                {
+                    var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                    clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                    engine.AddHostObject("host", new ExtendedHostFunctions());
+                    engine.AddHostObject("clr", clr);
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+
+                    console.GetStringBuilder().Clear();
+                    Assert.AreEqual(string.Empty, console.ToString());
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_General_CodeCache_BadData()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
+
+            byte[] cacheBytes;
+            using (var tempEngine = new V8ScriptEngine())
+            {
+                using (tempEngine.Compile(generalScript, V8CacheKind.Code, out cacheBytes))
+                {
+                }
+            }
+
+            Assert.IsNotNull(cacheBytes);
+            Assert.IsTrue(cacheBytes.Length > 4000); // typical size is ~8K
+
+            cacheBytes = cacheBytes.Take(cacheBytes.Length - 1).ToArray();
+
+            bool cacheAccepted;
+            using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out cacheAccepted))
+            {
+                Assert.IsFalse(cacheAccepted);
+                using (var console = new StringWriter())
+                {
+                    var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                    clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                    engine.AddHostObject("host", new ExtendedHostFunctions());
+                    engine.AddHostObject("clr", clr);
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+
+                    console.GetStringBuilder().Clear();
+                    Assert.AreEqual(string.Empty, console.ToString());
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_General_CodeCache_DebuggingEnabled()
+        {
+            byte[] cacheBytes;
+            using (var tempEngine = new V8ScriptEngine())
+            {
+                using (tempEngine.Compile(generalScript, V8CacheKind.Code, out cacheBytes))
+                {
+                }
+            }
+
+            Assert.IsNotNull(cacheBytes);
+            Assert.IsTrue(cacheBytes.Length > 4000); // typical size is ~8K
+
+            bool cacheAccepted;
+            using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out cacheAccepted))
+            {
+                Assert.IsFalse(cacheAccepted);
+                using (var console = new StringWriter())
+                {
+                    var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                    clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                    engine.AddHostObject("host", new ExtendedHostFunctions());
+                    engine.AddHostObject("clr", clr);
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+
+                    console.GetStringBuilder().Clear();
+                    Assert.AreEqual(string.Empty, console.ToString());
+
+                    engine.Evaluate(script);
+                    Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_ErrorHandling_SyntaxError()
         {
             TestUtil.AssertException<ScriptEngineException>(() =>
@@ -2275,7 +2519,12 @@ namespace Microsoft.ClearScript.Test
                     return result;
                 }
             ");
-            Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(array));
+
+            // run test several times to verify workaround for V8 optimizer bug
+            for (var i = 0; i < 64; i++)
+            {
+                Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(array));
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -2292,7 +2541,12 @@ namespace Microsoft.ClearScript.Test
                     return result;
                 }
             ");
-            Assert.AreEqual(array.Aggregate((current, next) => Convert.ToInt32(current) + Convert.ToInt32(next)), engine.Script.sum(array));
+
+            // run test several times to verify workaround for V8 optimizer bug
+            for (var i = 0; i < 64; i++)
+            {
+                Assert.AreEqual(array.Aggregate((current, next) => Convert.ToInt32(current) + Convert.ToInt32(next)), engine.Script.sum(array));
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -2308,7 +2562,12 @@ namespace Microsoft.ClearScript.Test
                     return result;
                 }
             ");
-            Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(HostObject.Wrap(array, typeof(IEnumerable))));
+
+            // run test several times to verify workaround for V8 optimizer bug
+            for (var i = 0; i < 64; i++)
+            {
+                Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(HostObject.Wrap(array, typeof(IEnumerable))));
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -2323,7 +2582,12 @@ namespace Microsoft.ClearScript.Test
                     return result;
                 }
             ");
-            TestUtil.AssertException<NotSupportedException>(() => engine.Script.sum(DayOfWeek.Monday));
+
+            // run test several times to verify workaround for V8 optimizer bug
+            for (var i = 0; i < 64; i++)
+            {
+                TestUtil.AssertException<NotSupportedException>(() => engine.Script.sum(DayOfWeek.Monday));
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -2344,6 +2608,14 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("Count", engine.Evaluate("Object.keys(foo).find(function (key) { return key == 'Count' })"));
             Assert.IsInstanceOfType(engine.Evaluate("foo.Count"), typeof(HostMethod));
             Assert.AreEqual(25, engine.Evaluate("foo.Count()"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ScriptObject()
+        {
+            var obj = engine.Evaluate("({})") as ScriptObject;
+            Assert.IsNotNull(obj);
+            Assert.AreSame(engine, obj.Engine);
         }
 
         // ReSharper restore InconsistentNaming

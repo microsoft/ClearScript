@@ -97,6 +97,8 @@ public:
     V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard);
 
     V8ScriptHolder* Compile(const StdString& documentName, const StdString& code);
+    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes);
+    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted);
     bool CanExecute(V8ScriptHolder* pHolder);
     V8Value Execute(V8ScriptHolder* pHolder, bool evaluate);
 
@@ -286,7 +288,7 @@ private:
         return m_spIsolateImpl->MakeWeak(hTarget, pArg1, pArg2, pCallback);
     }
 
-    template<typename T>
+    template <typename T>
     void ClearWeak(Persistent<T> hTarget)
     {
         return m_spIsolateImpl->ClearWeak(hTarget);

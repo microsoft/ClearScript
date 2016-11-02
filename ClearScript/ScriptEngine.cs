@@ -1131,7 +1131,7 @@ namespace Microsoft.ClearScript
         ///     </item>
         ///     <item>
         ///         <term><b>Script&#xA0;Object</b></term>
-        ///         <term><see href="http://msdn.microsoft.com/en-us/library/system.dynamic.dynamicobject.aspx">System.Dynamic.DynamicObject</see></term>
+        ///         <term><see cref="ScriptObject"/></term>
         ///         <description>
         ///         This includes all native script objects that have no .NET representation. C#'s
         ///         <see href="http://msdn.microsoft.com/en-us/library/dd264741.aspx">dynamic</see>

@@ -86,6 +86,10 @@ namespace Microsoft.ClearScript.V8
 
         public abstract V8Script Compile(string documentName, string code);
 
+        public abstract V8Script Compile(string documentName, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
+
+        public abstract V8Script Compile(string documentName, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
+
         public abstract object Execute(V8Script script, bool evaluate);
 
         public abstract void Interrupt();

@@ -291,7 +291,7 @@ public:
         return hTarget.MakeWeak(m_pIsolate, pArg1, pArg2, pCallback);
     }
 
-    template<typename T>
+    template <typename T>
     void ClearWeak(Persistent<T> hTarget)
     {
         return hTarget.ClearWeak();
@@ -306,6 +306,11 @@ public:
     v8::Local<v8::Value> ThrowException(v8::Local<v8::Value> hException)
     {
         return m_pIsolate->ThrowException(hException);
+    }
+
+    bool IsDebuggingEnabled()
+    {
+        return m_DebuggingEnabled;
     }
 
     void TerminateExecution()
@@ -345,6 +350,11 @@ public:
         m_pIsolate->RequestInterrupt(callback, pvData);
     }
 
+    void ProcessDebugMessages()
+    {
+        v8::Debug::ProcessDebugMessages(m_pIsolate);
+    }
+
     bool IsCurrent() const
     {
         return m_pIsolate == v8::Isolate::GetCurrent();
@@ -375,6 +385,8 @@ public:
     void SetMaxStackUsage(size_t value);
 
     V8ScriptHolder* Compile(const StdString& documentName, const StdString& code);
+    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes);
+    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted);
     void GetHeapInfo(V8IsolateHeapInfo& heapInfo);
     void CollectGarbage(bool exhaustive);
 
@@ -384,9 +396,8 @@ public:
     void* AddRefV8Script(void* pvScript);
     void ReleaseV8Script(void* pvScript);
 
-    void RunBackgroundTask(v8::Task* pTask);
-    void RunTaskWithLock(v8::Task* pTask);
-    void RunDelayedTaskWithLock(v8::Task* pTask, double delayInSeconds);
+    void RunTaskWithLockAsync(v8::Task* pTask);
+    void RunTaskWithLockDelayed(v8::Task* pTask, double delayInSeconds);
 
     void CallWithLockNoWait(std::function<void(V8IsolateImpl*)>&& callback);
     void DECLSPEC_NORETURN ThrowOutOfMemoryException();
@@ -403,7 +414,6 @@ private:
     static void OnDebugMessageShared(const v8::Debug::Message& message);
     void OnDebugMessage(const v8::Debug::Message& message);
     void DispatchDebugMessages();
-    void ProcessDebugMessages();
 
     ExecutionScope* EnterExecutionScope(ExecutionScope* pExecutionScope, size_t* pStackMarker);
     void ExitExecutionScope(ExecutionScope* pPreviousExecutionScope);

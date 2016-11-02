@@ -199,5 +199,8 @@
     <ClInclude Include="..\NativeCallbackImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\V8CacheType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

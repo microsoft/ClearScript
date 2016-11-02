@@ -464,7 +464,7 @@ namespace Microsoft.ClearScript
         /// <returns>The <see cref="System.Type"/> for the specified host type.</returns>
         /// <remarks>
         /// <para>
-        /// This function is similar to the C#
+        /// This function is similar to C#'s
         /// <c><see href="http://msdn.microsoft.com/en-us/library/58918ffs(VS.71).aspx">typeof</see></c>
         /// operator. It is overloaded with <see cref="typeOf(object)"/> and selected at runtime if
         /// <typeparamref name="T"/> can be used as a type argument.
@@ -499,7 +499,7 @@ namespace Microsoft.ClearScript
         /// <returns>The <see cref="System.Type"/> for the specified host type.</returns>
         /// <remarks>
         /// <para>
-        /// This function is similar to the C#
+        /// This function is similar to C#'s
         /// <c><see href="http://msdn.microsoft.com/en-us/library/58918ffs(VS.71).aspx">typeof</see></c>
         /// operator. It is overloaded with <see cref="typeOf{T}"/> and selected at runtime if
         /// <paramref name="value"/> cannot be used as a type argument. Note that this applies to
@@ -534,7 +534,7 @@ namespace Microsoft.ClearScript
         /// <param name="value">The object to test for compatibility with the specified host type.</param>
         /// <returns><c>True</c> if <paramref name="value"/> is compatible with the specified type, <c>false</c> otherwise.</returns>
         /// <remarks>
-        /// This function is similar to the C#
+        /// This function is similar to C#'s
         /// <c><see href="http://msdn.microsoft.com/en-us/library/scekt9xw(VS.71).aspx">is</see></c>
         /// operator.
         /// </remarks>
@@ -565,7 +565,7 @@ namespace Microsoft.ClearScript
         /// <param name="value">The object to cast to the specified host type.</param>
         /// <returns>The result of the cast if successful, <c>null</c> otherwise.</returns>
         /// <remarks>
-        /// This function is similar to the C#
+        /// This function is similar to C#'s
         /// <c><see href="http://msdn.microsoft.com/en-us/library/cscsdfbt(VS.71).aspx">as</see></c>
         /// operator.
         /// </remarks>

@@ -89,7 +89,7 @@ static void* GetHostObject(v8::Local<v8::Object> hObject)
 
 //-----------------------------------------------------------------------------
 
-template<typename T>
+template <typename T>
 static V8ContextImpl* UnwrapContextImplFromHolder(const v8::PropertyCallbackInfo<T>& info)
 {
     auto hGlobal = info.Holder();
@@ -392,6 +392,69 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
 
         v8::ScriptCompiler::Source source(CreateString(code), v8::ScriptOrigin(CreateString(documentName)));
         auto hScript = VERIFY(CreateUnboundScript(&source));
+        return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromScriptHandle(CreatePersistent(hScript)));
+
+    END_EXECUTION_SCOPE
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes)
+{
+    if (cacheType == V8CacheType::None)
+    {
+        cacheBytes.clear();
+        return Compile(documentName, code);
+    }
+
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_EXECUTION_SCOPE
+
+        v8::ScriptCompiler::Source source(CreateString(code), v8::ScriptOrigin(CreateString(documentName)));
+        auto hScript = VERIFY(CreateUnboundScript(&source, (cacheType == V8CacheType::Parser) ? v8::ScriptCompiler::kProduceParserCache : v8::ScriptCompiler::kProduceCodeCache));
+
+        cacheBytes.clear();
+
+        auto pCachedData = source.GetCachedData();
+        if (pCachedData != nullptr)
+        {
+            if ((pCachedData->length > 0) && (pCachedData->data != nullptr))
+            {
+                cacheBytes.resize(pCachedData->length);
+                memcpy_s(&cacheBytes[0], cacheBytes.size(), pCachedData->data, pCachedData->length);
+            }
+
+            // Delete cached data explicitly via a custom exported method. Doing so avoids Debug-
+            // Release heap mismatches caused by V8's inlining of v8::ScriptCompiler::~Source.
+
+            source.DeleteCachedData();
+        }
+
+        return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromScriptHandle(CreatePersistent(hScript)));
+
+    END_EXECUTION_SCOPE
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted)
+{
+    if ((cacheType == V8CacheType::None) || (cacheBytes.size() < 1))
+    {
+        cacheAccepted = false;
+        return Compile(documentName, code);
+    }
+
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_EXECUTION_SCOPE
+
+        auto pCachedData = new v8::ScriptCompiler::CachedData(&cacheBytes[0], static_cast<int>(cacheBytes.size()), v8::ScriptCompiler::CachedData::BufferNotOwned);
+        v8::ScriptCompiler::Source source(CreateString(code), v8::ScriptOrigin(CreateString(documentName)), pCachedData);
+        auto hScript = VERIFY(CreateUnboundScript(&source, (cacheType == V8CacheType::Parser) ? v8::ScriptCompiler::kConsumeParserCache : v8::ScriptCompiler::kConsumeCodeCache));
+
+        cacheAccepted = !m_spIsolateImpl->IsDebuggingEnabled() && !pCachedData->rejected;
         return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromScriptHandle(CreatePersistent(hScript)));
 
     END_EXECUTION_SCOPE
@@ -717,7 +780,7 @@ void V8ContextImpl::ProcessDebugMessages()
 {
     BEGIN_CONTEXT_SCOPE
 
-        v8::Debug::ProcessDebugMessages();
+        m_spIsolateImpl->ProcessDebugMessages();
 
     END_CONTEXT_SCOPE
 }
@@ -896,6 +959,12 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, st
 
 void V8ContextImpl::GetGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
+    if (!hKey->IsString())
+    {
+        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
+        return;
+    }
+
     auto pContextImpl = ::UnwrapContextImplFromHolder(info);
     if (CheckContextImplForGlobalObjectCallback(pContextImpl))
     {
@@ -921,6 +990,12 @@ void V8ContextImpl::GetGlobalProperty(v8::Local<v8::Name> hKey, const v8::Proper
 
 void V8ContextImpl::SetGlobalProperty(v8::Local<v8::Name> hKey, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
+    if (!hKey->IsString())
+    {
+        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
+        return;
+    }
+
     auto pContextImpl = ::UnwrapContextImplFromHolder(info);
     if (CheckContextImplForGlobalObjectCallback(pContextImpl))
     {
@@ -947,6 +1022,12 @@ void V8ContextImpl::SetGlobalProperty(v8::Local<v8::Name> hKey, v8::Local<v8::Va
 
 void V8ContextImpl::QueryGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Integer>& info)
 {
+    if (!hKey->IsString())
+    {
+        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
+        return;
+    }
+
     auto pContextImpl = ::UnwrapContextImplFromHolder(info);
     if (CheckContextImplForGlobalObjectCallback(pContextImpl))
     {
@@ -972,6 +1053,12 @@ void V8ContextImpl::QueryGlobalProperty(v8::Local<v8::Name> hKey, const v8::Prop
 
 void V8ContextImpl::DeleteGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Boolean>& info)
 {
+    if (!hKey->IsString())
+    {
+        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
+        return;
+    }
+
     auto pContextImpl = ::UnwrapContextImplFromHolder(info);
     if (CheckContextImplForGlobalObjectCallback(pContextImpl))
     {
@@ -1312,6 +1399,12 @@ void V8ContextImpl::InvokeHostDelegate(const v8::FunctionCallbackInfo<v8::Value>
 
 void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
+    if (!hKey->IsString())
+    {
+        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
+        return;
+    }
+
     auto pContextImpl = ::UnwrapContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
@@ -1393,6 +1486,12 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
 
 void V8ContextImpl::SetHostObjectProperty(v8::Local<v8::Name> hKey, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
+    if (!hKey->IsString())
+    {
+        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
+        return;
+    }
+
     auto pContextImpl = ::UnwrapContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
@@ -1413,6 +1512,12 @@ void V8ContextImpl::SetHostObjectProperty(v8::Local<v8::Name> hKey, v8::Local<v8
 
 void V8ContextImpl::QueryHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Integer>& info)
 {
+    if (!hKey->IsString())
+    {
+        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
+        return;
+    }
+
     auto pContextImpl = ::UnwrapContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
@@ -1447,6 +1552,12 @@ void V8ContextImpl::QueryHostObjectProperty(v8::Local<v8::Name> hKey, const v8::
 
 void V8ContextImpl::DeleteHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Boolean>& info)
 {
+    if (!hKey->IsString())
+    {
+        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
+        return;
+    }
+
     auto pContextImpl = ::UnwrapContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
@@ -2064,13 +2175,21 @@ void V8ContextImpl::VerifyNotOutOfMemory()
 
 void V8ContextImpl::ThrowScriptException(const HostException& exception)
 {
-    auto hException = v8::Exception::Error(CreateString(exception.GetMessage()))->ToObject();
+    // WARNING: Error instantiation may fail during script interruption. Check Exception::Error()
+    // result to avoid access violations. Extra defense is warranted here.
 
-    auto hHostException = ImportValue(exception.GetException());
-    if (!hHostException.IsEmpty() && hHostException->IsObject())
+    if (!IsExecutionTerminating())
     {
-        hException->Set(m_hHostExceptionName, hHostException);
-    }
+        auto hException = v8::Exception::Error(CreateString(exception.GetMessage()))->ToObject();
+        if (!hException.IsEmpty() && hException->IsObject())
+        {
+            auto hHostException = ImportValue(exception.GetException());
+            if (!hHostException.IsEmpty() && hHostException->IsObject())
+            {
+                hException->Set(m_hHostExceptionName, hHostException);
+            }
 
-    ThrowException(hException);
+            ThrowException(hException);
+        }
+    }
 }

@@ -456,6 +456,84 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
+        /// Creates a compiled script, generating cache data for accelerated recompilation.
+        /// </summary>
+        /// <param name="code">The script code to compile.</param>
+        /// <param name="cacheKind">The kind of cache data to be generated.</param>
+        /// <param name="cacheBytes">Cache data for accelerated recompilation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// The generated cache data can be stored externally and is usable in other V8 runtimes
+        /// and application processes. V8 runtimes with debugging enabled cannot generate cache
+        /// data.
+        /// </remarks>
+        /// <seealso cref="Compile(string, V8CacheKind, byte[], out bool)"/>
+        public V8Script Compile(string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+        {
+            return Compile(null, code, cacheKind, out cacheBytes);
+        }
+
+        /// <summary>
+        /// Creates a compiled script with an associated document name, generating cache data for accelerated recompilation.
+        /// </summary>
+        /// <param name="documentName">A document name for the compiled script. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <param name="cacheKind">The kind of cache data to be generated.</param>
+        /// <param name="cacheBytes">Cache data for accelerated recompilation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// The generated cache data can be stored externally and is usable in other V8 runtimes
+        /// and application processes. V8 runtimes with debugging enabled cannot generate cache
+        /// data.
+        /// </remarks>
+        /// <seealso cref="Compile(string, string, V8CacheKind, byte[], out bool)"/>
+        public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+        {
+            VerifyNotDisposed();
+            var uniqueName = name + ":" + documentNameManager.GetUniqueName(documentName, "Script Document");
+            return proxy.Compile(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, cacheKind, out cacheBytes);
+        }
+
+        /// <summary>
+        /// Creates a compiled script, consuming previously generated cache data.
+        /// </summary>
+        /// <param name="code">The script code to compile.</param>
+        /// <param name="cacheKind">The kind of cache data to be consumed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build. V8 runtimes with debugging enabled cannot consume cache data.
+        /// </remarks>
+        /// <seealso cref="Compile(string, V8CacheKind, out byte[])"/>
+        public V8Script Compile(string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+        {
+            return Compile(null, code, cacheKind, cacheBytes, out cacheAccepted);
+        }
+
+        /// <summary>
+        /// Creates a compiled script with an associated document name, consuming previously generated cache data.
+        /// </summary>
+        /// <param name="documentName">A document name for the compiled script. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <param name="cacheKind">The kind of cache data to be consumed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build. V8 runtimes with debugging enabled cannot consume cache data.
+        /// </remarks>
+        /// <seealso cref="Compile(string, string, V8CacheKind, out byte[])"/>
+        public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+        {
+            VerifyNotDisposed();
+            var uniqueName = name + ":" + documentNameManager.GetUniqueName(documentName, "Script Document");
+            return proxy.Compile(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, cacheKind, cacheBytes, out cacheAccepted);
+        }
+
+        /// <summary>
         /// Returns memory usage information.
         /// </summary>
         /// <returns>A <see cref="V8RuntimeHeapInfo"/> object containing memory usage information.</returns>
