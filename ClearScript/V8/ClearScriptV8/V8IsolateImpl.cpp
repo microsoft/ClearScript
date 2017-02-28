@@ -62,6 +62,23 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
+// SharedPtrTraits<v8::Task>
+//-----------------------------------------------------------------------------
+
+template<>
+class SharedPtrTraits<v8::Task>
+{
+    PROHIBIT_CONSTRUCT(SharedPtrTraits)
+
+public:
+
+    static void Destroy(v8::Task* pTarget)
+    {
+        pTarget->Delete();
+    }
+};
+
+//-----------------------------------------------------------------------------
 // V8Platform
 //-----------------------------------------------------------------------------
 
@@ -69,6 +86,7 @@ class V8Platform: public v8::Platform
 {
 public:
 
+    static V8Platform& GetInstance();
     static void EnsureInstalled();
 
     virtual size_t NumberOfAvailableBackgroundThreads() override;
@@ -86,6 +104,13 @@ private:
     static V8Platform ms_Instance;
     static OnceFlag ms_InstallationFlag;
 };
+
+//-----------------------------------------------------------------------------
+
+V8Platform& V8Platform::GetInstance()
+{
+    return ms_Instance;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -228,7 +253,9 @@ V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
 
 #define BEGIN_ISOLATE_ENTRY_SCOPE \
     { \
-        v8::Isolate::Scope t_IsolateEntryScope(m_pIsolate);
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        v8::Isolate::Scope t_IsolateEntryScope(m_pIsolate); \
+    __pragma(warning(default:4456))
 
 #define END_ISOLATE_ENTRY_SCOPE \
         IGNORE_UNUSED(t_IsolateEntryScope); \
@@ -236,7 +263,9 @@ V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
 
 #define BEGIN_ISOLATE_NATIVE_SCOPE \
     { \
-        NativeScope t_IsolateNativeScope(this);
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        NativeScope t_IsolateNativeScope(this); \
+    __pragma(warning(default:4456))
 
 #define END_ISOLATE_NATIVE_SCOPE \
         IGNORE_UNUSED(t_IsolateNativeScope); \
@@ -244,7 +273,9 @@ V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
 
 #define BEGIN_ISOLATE_SCOPE \
     { \
-        Scope t_IsolateScope(this);
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        Scope t_IsolateScope(this); \
+    __pragma(warning(default:4456))
 
 #define END_ISOLATE_SCOPE \
         IGNORE_UNUSED(t_IsolateScope); \
@@ -290,7 +321,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
         m_pIsolate->SetData(0, this);
 
         BEGIN_ISOLATE_ENTRY_SCOPE
-            v8::V8::SetCaptureStackTraceForUncaughtExceptions(true, 64, v8::StackTrace::kDetailed);
+            m_pIsolate->SetCaptureStackTraceForUncaughtExceptions(true, 64, v8::StackTrace::kDetailed);
         END_ISOLATE_ENTRY_SCOPE
 
         if (enableDebugging)
@@ -343,7 +374,7 @@ void V8IsolateImpl::EnableDebugging(int debugPort)
     _ASSERTE(IsCurrent() && IsLocked());
     if (!m_DebuggingEnabled)
     {
-        StdString version(v8::String::NewFromUtf8(m_pIsolate, v8::V8::GetVersion()));
+        StdString version(v8::String::NewFromUtf8(m_pIsolate, v8::V8::GetVersion(), v8::NewStringType::kNormal).FromMaybe(v8::Local<v8::String>()));
         if (debugPort < 1)
         {
             debugPort = 9222;
@@ -499,7 +530,7 @@ void V8IsolateImpl::CollectGarbage(bool exhaustive)
     }
     else
     {
-        while (!IdleNotification(100));
+        while (!IdleNotificationDeadline(V8Platform::GetInstance().MonotonicallyIncreasingTime() + 0.1));
     }
 
     END_ISOLATE_SCOPE
@@ -511,7 +542,7 @@ void* V8IsolateImpl::AddRefV8Object(void* pvObject)
 {
     BEGIN_ISOLATE_SCOPE
 
-        return ::PtrFromObjectHandle(CreatePersistent(::ObjectHandleFromPtr(pvObject)));
+        return ::PtrFromHandle(CreatePersistent(::HandleFromPtr<v8::Object>(pvObject)));
 
     END_ISOLATE_SCOPE
 }
@@ -522,7 +553,7 @@ void V8IsolateImpl::ReleaseV8Object(void* pvObject)
 {
     CallWithLockNoWait([pvObject] (V8IsolateImpl* pIsolateImpl)
     {
-        pIsolateImpl->Dispose(::ObjectHandleFromPtr(pvObject));
+        pIsolateImpl->Dispose(::HandleFromPtr<v8::Object>(pvObject));
     });
 }
 
@@ -532,7 +563,7 @@ void* V8IsolateImpl::AddRefV8Script(void* pvScript)
 {
     BEGIN_ISOLATE_SCOPE
 
-        return ::PtrFromScriptHandle(CreatePersistent(::ScriptHandleFromPtr(pvScript)));
+        return ::PtrFromHandle(CreatePersistent(::HandleFromPtr<v8::UnboundScript>(pvScript)));
 
     END_ISOLATE_SCOPE
 }
@@ -543,7 +574,7 @@ void V8IsolateImpl::ReleaseV8Script(void* pvScript)
 {
     CallWithLockNoWait([pvScript] (V8IsolateImpl* pIsolateImpl)
     {
-        pIsolateImpl->Dispose(::ScriptHandleFromPtr(pvScript));
+        pIsolateImpl->Dispose(::HandleFromPtr<v8::Script>(pvScript));
     });
 }
 

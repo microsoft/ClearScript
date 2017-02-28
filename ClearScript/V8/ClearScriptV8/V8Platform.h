@@ -67,6 +67,9 @@
 
 #pragma warning(push, 3)
 
+#define V8_DEPRECATION_WARNINGS
+#define V8_IMMINENT_DEPRECATION_WARNINGS
+
 #include "v8.h"
 #include "v8-platform.h"
 #include "v8-debug.h"
@@ -460,28 +463,16 @@ using Persistent = V8FastPersistent<T>;
 // helper functions
 //-----------------------------------------------------------------------------
 
-inline void* PtrFromObjectHandle(Persistent<v8::Object> hObject)
+template <typename T>
+inline void* PtrFromHandle(const Persistent<T>& handle)
 {
-    return hObject.ToPtr();
+    return handle.ToPtr();
 }
 
 //-----------------------------------------------------------------------------
 
-inline Persistent<v8::Object> ObjectHandleFromPtr(void* pvObject)
+template <typename T>
+inline Persistent<T> HandleFromPtr(void* pvObject)
 {
-    return Persistent<v8::Object>::FromPtr(pvObject);
-}
-
-//-----------------------------------------------------------------------------
-
-inline void* PtrFromScriptHandle(Persistent<v8::UnboundScript> hScript)
-{
-    return hScript.ToPtr();
-}
-
-//-----------------------------------------------------------------------------
-
-inline Persistent<v8::UnboundScript> ScriptHandleFromPtr(void* pvScript)
-{
-    return Persistent<v8::UnboundScript>::FromPtr(pvScript);
+    return Persistent<T>::FromPtr(pvObject);
 }

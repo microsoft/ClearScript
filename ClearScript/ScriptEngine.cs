@@ -1284,6 +1284,11 @@ namespace Microsoft.ClearScript
                 return marshaledResult.ToString();
             }
 
+            if (marshaledResult is ScriptItem)
+            {
+                return "[ScriptObject]";
+            }
+
             return result.ToString();
         }
 

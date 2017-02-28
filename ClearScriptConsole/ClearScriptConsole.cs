@@ -85,15 +85,11 @@ namespace Microsoft.ClearScript.Test
         {
             try
             {
-                var dirPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-                if (dirPath != null)
+                var fileName = Path.ChangeExtension("Startup", engine.FileNameExtension);
+                var filePath = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), fileName);
+                if (File.Exists(filePath))
                 {
-                    var fileName = Path.ChangeExtension("Startup", engine.FileNameExtension);
-                    var filePath = Path.Combine(dirPath, fileName);
-                    if (File.Exists(filePath))
-                    {
-                        engine.Execute(fileName, File.ReadAllText(filePath));
-                    }
+                    engine.Execute(fileName, File.ReadAllText(filePath));
                 }
             }
             catch (Exception exception)

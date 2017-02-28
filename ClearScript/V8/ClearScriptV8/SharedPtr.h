@@ -121,7 +121,9 @@ private:
 
 #define BEGIN_ADDREF_SCOPE \
     { \
-        AddRefScope t_AddRefScope(GetRefCount());
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        AddRefScope t_AddRefScope(GetRefCount()); \
+    __pragma(warning(default:4456))
 
 #define END_ADDREF_SCOPE \
         IGNORE_UNUSED(t_AddRefScope); \

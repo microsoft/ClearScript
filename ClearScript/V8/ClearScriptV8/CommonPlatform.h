@@ -121,11 +121,29 @@
     {
 
 #define END_COMPOUND_MACRO \
-    __pragma(warning(push)) \
-    __pragma(warning(disable:4127)) \
+    __pragma(warning(disable:4127)) /* conditional expression is constant */ \
     } \
     while (false) \
-    __pragma(warning(pop))
+    __pragma(warning(default:4127))
+
+//-----------------------------------------------------------------------------
+// global helper functions
+//-----------------------------------------------------------------------------
+
+template <typename TFlag>
+inline TFlag CombineFlags(TFlag flag1, TFlag flag2)
+{
+    using TUnderlying = std::underlying_type_t<TFlag>;
+    return static_cast<TFlag>(static_cast<TUnderlying>(flag1) | static_cast<TUnderlying>(flag2));
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag, typename... TOthers>
+inline TFlag CombineFlags(TFlag flag1, TFlag flag2, TOthers... others)
+{
+    return CombineFlags(flag1, CombineFlags(flag2, others...));
+}
 
 //-----------------------------------------------------------------------------
 // PulseValueScope
@@ -160,9 +178,11 @@ private:
 //-----------------------------------------------------------------------------
 
 #define BEGIN_PULSE_VALUE_SCOPE(ADDRESS, VALUE) \
-        { \
-            PulseValueScope<std::remove_reference<decltype(*(ADDRESS))>::type> t_PulseValueScope((ADDRESS), (VALUE));
+    { \
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        PulseValueScope<std::remove_reference<decltype(*(ADDRESS))>::type> t_PulseValueScope((ADDRESS), (VALUE)); \
+    __pragma(warning(default:4456))
 
 #define END_PULSE_VALUE_SCOPE \
-            IGNORE_UNUSED(t_PulseValueScope); \
-        }
+        IGNORE_UNUSED(t_PulseValueScope); \
+    }

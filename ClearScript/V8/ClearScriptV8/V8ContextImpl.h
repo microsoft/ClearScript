@@ -198,9 +198,19 @@ private:
         return m_spIsolateImpl->CreateInteger(value);
     }
 
-    v8::Local<v8::String> CreateString(const StdString& value)
+    v8::MaybeLocal<v8::String> CreateString(const StdString& value)
     {
         return m_spIsolateImpl->CreateString(value);
+    }
+
+    v8::Local<v8::Symbol> CreateSymbol(v8::Local<v8::String> hName = v8::Local<v8::String>())
+    {
+        return m_spIsolateImpl->CreateSymbol(hName);
+    }
+
+    v8::Local<v8::Private> CreatePrivate(v8::Local<v8::String> hName = v8::Local<v8::String>())
+    {
+        return m_spIsolateImpl->CreatePrivate(hName);
     }
 
     v8::Local<v8::Array> CreateArray(int length = 0)
@@ -223,37 +233,7 @@ private:
         return m_spIsolateImpl->CreateFunctionTemplate(callback, data, signature, length);
     }
 
-    v8::Local<v8::Function> CreateFunction(v8::FunctionCallback callback, v8::Local<v8::Value> data = v8::Local<v8::Value>(), int length = 0)
-    {
-        return m_spIsolateImpl->CreateFunction(callback, data, length);
-    }
-
-    v8::Local<v8::Private> CreatePrivate(v8::Local<v8::String> hName)
-    {
-        return m_spIsolateImpl->CreatePrivate(hName);
-    }
-
-    v8::Local<v8::Value> GetPrivate(v8::Local<v8::Object> hTarget, v8::Local<v8::Private> hKey)
-    {
-        return hTarget->GetPrivate(m_hContext, hKey).FromMaybe(v8::Local<v8::Value>());
-    }
-
-    bool SetPrivate(v8::Local<v8::Object> hTarget, v8::Local<v8::Private> hKey, v8::Local<v8::Value> hValue)
-    {
-        return hTarget->SetPrivate(m_hContext, hKey, hValue).FromMaybe(false);
-    }
-
-    bool DeletePrivate(v8::Local<v8::Object> hTarget, v8::Local<v8::Private> hKey)
-    {
-        return hTarget->DeletePrivate(m_hContext, hKey).FromMaybe(false);
-    }
-
-    v8::Local<v8::Script> CreateScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
-    {
-        return m_spIsolateImpl->CreateScript(pSource, options);
-    }
-
-    v8::Local<v8::UnboundScript> CreateUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
+    v8::MaybeLocal<v8::UnboundScript> CreateUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
     {
         return m_spIsolateImpl->CreateUnboundScript(pSource, options);
     }
@@ -325,9 +305,9 @@ private:
         return m_spIsolateImpl->ContextDisposedNotification();
     }
 
-    bool IdleNotification(int idleTimeInMilliseconds)
+    bool IdleNotificationDeadline(double deadlineInSeconds)
     {
-        return m_spIsolateImpl->IdleNotification(idleTimeInMilliseconds);
+        return m_spIsolateImpl->IdleNotificationDeadline(deadlineInSeconds);
     }
 
     void LowMemoryNotification()
@@ -342,10 +322,14 @@ private:
         return result;
     }
 
+    void Teardown();
     ~V8ContextImpl();
 
-    v8::Local<v8::Value> Wrap();
     SharedPtr<V8WeakContextBinding> GetWeakBinding();
+
+    HostObjectHolder* GetHostObjectHolder(v8::Local<v8::Object> hObject);
+    bool SetHostObjectHolder(v8::Local<v8::Object> hObject, HostObjectHolder* pHolder);
+    void* GetHostObject(v8::Local<v8::Object> hObject);
 
     static bool CheckContextImplForGlobalObjectCallback(V8ContextImpl* pContextImpl);
     static bool CheckContextImplForHostObjectCallback(V8ContextImpl* pContextImpl);
@@ -399,14 +383,16 @@ private:
     Persistent<v8::Context> m_hContext;
     Persistent<v8::Object> m_hGlobal;
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
-    Persistent<v8::String> m_hHostObjectCookieName;
-    Persistent<v8::String> m_hHostExceptionName;
-    Persistent<v8::Private> m_hEnumeratorPrivate;
-    Persistent<v8::String> m_hDonePropertyName;
-    Persistent<v8::String> m_hValuePropertyName;
-    Persistent<v8::Private> m_hCachePrivate;
-    Persistent<v8::Private> m_hAccessTokenPrivate;
+    Persistent<v8::Symbol> m_hIsHostObjectKey;
+    Persistent<v8::Private> m_hHostObjectHolderKey;
+    Persistent<v8::String> m_hHostExceptionKey;
+    Persistent<v8::Private> m_hEnumeratorKey;
+    Persistent<v8::String> m_hDoneKey;
+    Persistent<v8::String> m_hValueKey;
+    Persistent<v8::Private> m_hCacheKey;
+    Persistent<v8::Private> m_hAccessTokenKey;
     Persistent<v8::Object> m_hAccessToken;
+    Persistent<v8::String> m_hInternalUseOnly;
     Persistent<v8::FunctionTemplate> m_hHostObjectTemplate;
     Persistent<v8::FunctionTemplate> m_hHostDelegateTemplate;
     Persistent<v8::FunctionTemplate> m_hHostIteratorTemplate;

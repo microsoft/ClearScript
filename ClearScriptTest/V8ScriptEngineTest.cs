@@ -1417,7 +1417,7 @@ namespace Microsoft.ClearScript.Test
                 }
             });
 
-            engine.MaxRuntimeHeapSize = (UIntPtr)(limit * 16);
+            engine.MaxRuntimeHeapSize = (UIntPtr)(limit * 64);
             engine.Execute("x = 5");
         }
 

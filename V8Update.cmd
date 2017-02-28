@@ -5,12 +5,12 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=5.4.500.40
+set v8testedrev=5.5.372.40
 
-set gyprev=702ac58e477214c635d9b541932e75a95d349352
+set gyprev=e7079f0e0e14108ab0dba58728ff219637458563
 set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df
-set clangrev=3afb04a8153e40ff00f9eaa14337851c3ab4a368
-set traceeventcommonrev=315bf1e2d45be7d53346c31cfcc37424a32c30c8
+set clangrev=1f92f999fc374a479e98a189ebdfe25c09484486
+set traceeventcommonrev=e0fa02a02f61430dae2bddfd89a334ea4389f495
 set gtestrev=6f8a66431cb592dad629028a50b3dd418a408c87
 set gmockrev=0421b6f358139f02e102c9c332ce19a33faf75be
 
@@ -18,6 +18,7 @@ set gmockrev=0421b6f358139f02e102c9c332ce19a33faf75be
 
 set download=true
 set mode=Release
+set isdebug=false
 
 :ProcessArg
 if "%1"=="" goto ProcessArgsDone
@@ -47,9 +48,11 @@ goto NextArg
 
 :SetDebugMode
 set mode=Debug
+set isdebug=true
 goto NextArg
 :SetReleaseMode
 set mode=Release
+set isdebug=false
 goto NextArg
 
 :SetV8Rev
@@ -258,7 +261,7 @@ if errorlevel 1 goto Error
 
 :Build32Bit
 cd v8-ia32
-python gypfiles\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
+python gypfiles\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dis_debug=%isdebug% -Dv8_use_snapshot=true -Dv8_use_external_startup_data=0 -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error
 msbuild /p:Configuration=%mode% /p:Platform=Win32 /t:v8 src\v8.sln >build.log
 if errorlevel 1 goto Error
@@ -276,7 +279,7 @@ if errorlevel 1 goto Error
 
 :Build64Bit
 cd v8-x64
-python gypfiles\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dv8_use_snapshot=false -Dv8_enable_i18n_support=0 >gyp.log
+python gypfiles\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dis_debug=%isdebug% -Dv8_use_snapshot=true -Dv8_use_external_startup_data=0 -Dv8_enable_i18n_support=0 >gyp.log
 if errorlevel 1 goto Error
 msbuild /p:Configuration=%mode% /p:Platform=x64 /t:v8 src\v8.sln >build.log
 if errorlevel 1 goto Error

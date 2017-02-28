@@ -62,64 +62,113 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
+// FromMaybeScope
+//-----------------------------------------------------------------------------
+
+class FromMaybeScope
+{
+};
+
+//-----------------------------------------------------------------------------
+// FromMaybeFailure
+//-----------------------------------------------------------------------------
+
+class FromMaybeFailure
+{
+};
+
+//-----------------------------------------------------------------------------
 // local helper functions
 //-----------------------------------------------------------------------------
 
-static HostObjectHolder* GetHostObjectHolder(v8::Local<v8::Object> hObject)
+template <typename T>
+inline T FromMaybe(FromMaybeScope& /*scope*/, const v8::Maybe<T>& maybe)
 {
-    _ASSERTE(hObject->InternalFieldCount() > 0);
-    return static_cast<HostObjectHolder*>(hObject->GetAlignedPointerFromInternalField(0));
-}
+    T result;
+    if (maybe.To(&result))
+    {
+        return result;
+    }
 
-//-----------------------------------------------------------------------------
-
-static void SetHostObjectHolder(v8::Local<v8::Object> hObject, HostObjectHolder* pHolder)
-{
-    _ASSERTE(hObject->InternalFieldCount() > 0);
-    hObject->SetAlignedPointerInInternalField(0, pHolder);
-}
-
-//-----------------------------------------------------------------------------
-
-static void* GetHostObject(v8::Local<v8::Object> hObject)
-{
-    auto pHolder = ::GetHostObjectHolder(hObject);
-    return (pHolder != nullptr) ? pHolder->GetObject() : nullptr;
+    throw FromMaybeFailure();
 }
 
 //-----------------------------------------------------------------------------
 
 template <typename T>
-static V8ContextImpl* UnwrapContextImplFromHolder(const v8::PropertyCallbackInfo<T>& info)
+inline v8::Local<T> FromMaybe(FromMaybeScope& /*scope*/, const v8::MaybeLocal<T>& maybe)
 {
-    auto hGlobal = info.Holder();
-    _ASSERTE(hGlobal->InternalFieldCount() > 0);
-    auto hField = hGlobal->GetInternalField(0);
-    return (hField.IsEmpty() || hField->IsUndefined()) ? nullptr : static_cast<V8ContextImpl*>(hGlobal->GetAlignedPointerFromInternalField(0));
+    v8::Local<T> result;
+    if (maybe.ToLocal(&result))
+    {
+        return result;
+    }
+
+    throw FromMaybeFailure();
 }
 
 //-----------------------------------------------------------------------------
 
 template <typename T>
-static V8ContextImpl* UnwrapContextImplFromData(const v8::PropertyCallbackInfo<T>& info)
+inline T FromMaybeDefault(const v8::Maybe<T>& maybe, const T& defaultValue = T())
 {
-    return static_cast<V8ContextImpl*>(v8::Local<v8::External>::Cast(info.Data())->Value());
+    return maybe.FromMaybe(defaultValue);
 }
 
 //-----------------------------------------------------------------------------
 
 template <typename T>
-static V8ContextImpl* UnwrapContextImplFromData(const v8::FunctionCallbackInfo<T>& info)
+inline v8::Local<T> FromMaybeDefault(const v8::MaybeLocal<T>& maybe, const v8::Local<T>& defaultValue = v8::Local<T>())
 {
-    return static_cast<V8ContextImpl*>(v8::Local<v8::External>::Cast(info.Data())->Value());
+    return maybe.FromMaybe(defaultValue);
 }
 
 //-----------------------------------------------------------------------------
 
-template <typename T>
-static T CombineFlags(T flag1, T flag2)
+inline v8::Local<v8::String> ValueAsString(const v8::Local<v8::Value>& hValue)
 {
-    return static_cast<T>(static_cast<std::underlying_type_t<T>>(flag1) | static_cast<std::underlying_type_t<T>>(flag2));
+    return (!hValue.IsEmpty() && hValue->IsString()) ? hValue.As<v8::String>() : v8::Local<v8::String>();
+}
+
+//-----------------------------------------------------------------------------
+
+inline v8::Local<v8::Object> ValueAsObject(const v8::Local<v8::Value>& hValue)
+{
+    return (!hValue.IsEmpty() && hValue->IsObject()) ? hValue.As<v8::Object>() : v8::Local<v8::Object>();
+}
+
+//-----------------------------------------------------------------------------
+
+inline v8::Local<v8::External> ValueAsExternal(const v8::Local<v8::Value>& hValue)
+{
+    return (!hValue.IsEmpty() && hValue->IsExternal()) ? hValue.As<v8::External>() : v8::Local<v8::External>();
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TInfo>
+static V8ContextImpl* GetContextImplFromHolder(const TInfo& info)
+{
+    auto hHolder = info.Holder();
+    if (!hHolder.IsEmpty() && hHolder->InternalFieldCount() > 0)
+    {
+        auto hField = hHolder->GetInternalField(0);
+        if (!hField.IsEmpty() && !hField->IsUndefined())
+        {
+            return static_cast<V8ContextImpl*>(hHolder->GetAlignedPointerFromInternalField(0));
+        }
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TInfo>
+static V8ContextImpl* GetContextImplFromData(const TInfo& info)
+{
+    auto hContextImpl = ::ValueAsExternal(info.Data());
+    return !hContextImpl.IsEmpty() ? static_cast<V8ContextImpl*>(hContextImpl->Value()) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -128,15 +177,48 @@ static T CombineFlags(T flag1, T flag2)
 
 #define BEGIN_ISOLATE_SCOPE \
     { \
-        V8IsolateImpl::Scope t_IsolateScope(m_spIsolateImpl);
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        V8IsolateImpl::Scope t_IsolateScope(m_spIsolateImpl); \
+    __pragma(warning(default:4456))
 
 #define END_ISOLATE_SCOPE \
         IGNORE_UNUSED(t_IsolateScope); \
     }
 
+#define FROM_MAYBE_TRY \
+    { \
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        FromMaybeScope t_FromMaybeScope; \
+    __pragma(warning(default:4456)) \
+        try \
+        {
+
+#define FROM_MAYBE_CATCH \
+            IGNORE_UNUSED(t_FromMaybeScope); \
+        } \
+        catch (const FromMaybeFailure&) \
+        { \
+
+#define FROM_MAYBE_END \
+            IGNORE_UNUSED(t_FromMaybeScope); \
+        } \
+    }
+
+#define FROM_MAYBE_CATCH_CONSUME \
+    FROM_MAYBE_CATCH \
+    FROM_MAYBE_END
+
+#define FROM_MAYBE(...) \
+    (::FromMaybe(t_FromMaybeScope, __VA_ARGS__))
+
+#define FROM_MAYBE_DEFAULT(...) \
+    (::FromMaybeDefault(__VA_ARGS__))
+
 #define BEGIN_CONTEXT_SCOPE \
     { \
-        Scope t_ContextScope(this);
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        Scope t_ContextScope(this); \
+    __pragma(warning(default:4456))
 
 #define END_CONTEXT_SCOPE \
         IGNORE_UNUSED(t_ContextScope); \
@@ -144,19 +226,27 @@ static T CombineFlags(T flag1, T flag2)
 
 #define BEGIN_EXECUTION_SCOPE \
     { \
-        V8IsolateImpl::ExecutionScope t_IsolateExecutionScope(m_spIsolateImpl); \
-        v8::TryCatch t_TryCatch;
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        V8IsolateImpl::ExecutionScope t_ExecutionScope(m_spIsolateImpl); \
+        V8IsolateImpl::TryCatch t_TryCatch(m_spIsolateImpl); \
+    __pragma(warning(default:4456))
 
 #define END_EXECUTION_SCOPE \
         IGNORE_UNUSED(t_TryCatch); \
-        IGNORE_UNUSED(t_IsolateExecutionScope); \
+        IGNORE_UNUSED(t_ExecutionScope); \
     }
 
+#define EXECUTION_STARTED \
+    (t_ExecutionScope.ExecutionStarted())
+
 #define VERIFY(RESULT) \
-    Verify(t_IsolateExecutionScope, t_TryCatch, RESULT)
+    (Verify(t_ExecutionScope, t_TryCatch, RESULT))
+
+#define VERIFY_MAYBE(RESULT) \
+    (Verify(t_ExecutionScope, t_TryCatch, FROM_MAYBE_DEFAULT(RESULT)))
 
 #define VERIFY_CHECKPOINT() \
-    Verify(t_IsolateExecutionScope, t_TryCatch)
+    (Verify(t_ExecutionScope, t_TryCatch))
 
 #define CALLBACK_RETURN(RESULT) \
     BEGIN_COMPOUND_MACRO \
@@ -173,12 +263,14 @@ static std::atomic<size_t> s_InstanceCount(0);
 V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort):
     m_Name(name),
     m_spIsolateImpl(pIsolateImpl),
+    m_pvV8ObjectCache(nullptr),
     m_AllowHostObjectConstructorCall(false),
     m_DisableHostObjectInterception(false)
 {
     VerifyNotOutOfMemory();
 
     BEGIN_ISOLATE_SCOPE
+    FROM_MAYBE_TRY
 
         if (disableGlobalMembers)
         {
@@ -188,65 +280,78 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
         {
             auto hGlobalTemplate = CreateObjectTemplate();
             hGlobalTemplate->SetInternalFieldCount(1);
-            hGlobalTemplate->SetHandler(v8::NamedPropertyHandlerConfiguration(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyNames, v8::Local<v8::Value>(), ::CombineFlags(v8::PropertyHandlerFlags::kNonMasking, v8::PropertyHandlerFlags::kOnlyInterceptStrings)));
+            hGlobalTemplate->SetHandler(v8::NamedPropertyHandlerConfiguration(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyNames, v8::Local<v8::Value>(), v8::PropertyHandlerFlags::kNonMasking));
             hGlobalTemplate->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyIndices));
 
             m_hContext = CreatePersistent(CreateContext(nullptr, hGlobalTemplate));
 
-            m_hGlobal = CreatePersistent(m_hContext->Global()->GetPrototype()->ToObject());
-            _ASSERTE(m_hGlobal->InternalFieldCount() > 0);
-            m_hGlobal->SetAlignedPointerInInternalField(0, this);
+            auto hGlobal = ::ValueAsObject(m_hContext->Global()->GetPrototype());
+            if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
+            {
+                m_hGlobal = CreatePersistent(hGlobal);
+                m_hGlobal->SetAlignedPointerInInternalField(0, this);
+            }
         }
 
-        // Be careful when renaming the cookie or changing the way host objects are marked.
-        // Such a change will require a corresponding change in the V8ScriptEngine constructor.
-
-        m_hHostObjectCookieName = CreatePersistent(CreateString(StdString(L"{c2cf47d3-916b-4a3f-be2a-6ff567425808}")));
-        m_hHostExceptionName = CreatePersistent(CreateString(StdString(L"hostException")));
-        m_hEnumeratorPrivate = CreatePersistent(CreatePrivate(CreateString(StdString(L"enumerator"))));
-        m_hDonePropertyName = CreatePersistent(CreateString(StdString(L"done")));
-        m_hValuePropertyName = CreatePersistent(CreateString(StdString(L"value")));
-        m_hCachePrivate = CreatePersistent(CreatePrivate(CreateString(StdString(L"{545a4a94-f37d-44bb-9e1e-bf3ce730c7e4}"))));
-        m_hAccessTokenPrivate = CreatePersistent(CreatePrivate(CreateString(StdString(L"{cdc19e6e-5d80-4627-a605-bb4805f15086}"))));
+        auto hContextImpl = CreateExternal(this);
 
         v8::Local<v8::FunctionTemplate> hGetIteratorFunction;
         v8::Local<v8::FunctionTemplate> hToFunctionFunction;
         v8::Local<v8::FunctionTemplate> hNextFunction;
+
         BEGIN_CONTEXT_SCOPE
-            hGetIteratorFunction = CreateFunctionTemplate(GetIteratorForHostObject, Wrap());
-            hToFunctionFunction = CreateFunctionTemplate(CreateFunctionForHostDelegate, Wrap());
-            hNextFunction = CreateFunctionTemplate(AdvanceHostObjectIterator, Wrap());
+
+            m_hIsHostObjectKey = CreatePersistent(CreateSymbol());
+            FROM_MAYBE(m_hContext->Global()->Set(m_hContext, FROM_MAYBE(CreateString(StdString(L"isHostObjectKey"))), m_hIsHostObjectKey));
+
+            m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
+            m_hHostExceptionKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(L"hostException"))));
+            m_hEnumeratorKey = CreatePersistent(CreatePrivate());
+            m_hDoneKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(L"done"))));
+            m_hValueKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(L"value"))));
+            m_hCacheKey = CreatePersistent(CreatePrivate());
+            m_hAccessTokenKey = CreatePersistent(CreatePrivate());
+            m_hInternalUseOnly = CreatePersistent(FROM_MAYBE(CreateString(StdString(L"This function is for ClearScript internal use only"))));
+
+            hGetIteratorFunction = CreateFunctionTemplate(GetIteratorForHostObject, hContextImpl);
+            hToFunctionFunction = CreateFunctionTemplate(CreateFunctionForHostDelegate, hContextImpl);
+            hNextFunction = CreateFunctionTemplate(AdvanceHostObjectIterator, hContextImpl);
             m_hAccessToken = CreatePersistent(CreateObject());
-            m_hTerminationException = CreatePersistent(v8::Exception::Error(CreateString(StdString(L"Script execution was interrupted"))));
+            m_hTerminationException = CreatePersistent(v8::Exception::Error(FROM_MAYBE(CreateString(StdString(L"Script execution was interrupted")))));
+
         END_CONTEXT_SCOPE
 
         m_hHostObjectTemplate = CreatePersistent(CreateFunctionTemplate());
-        m_hHostObjectTemplate->SetClassName(CreateString(StdString(L"HostObject")));
-        m_hHostObjectTemplate->SetCallHandler(HostObjectConstructorCallHandler, Wrap());
-        m_hHostObjectTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-        m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap(), v8::PropertyHandlerFlags::kOnlyInterceptStrings));
-        m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, Wrap()));
-        m_hHostObjectTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, Wrap());
+        m_hHostObjectTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(L"HostObject"))));
+        m_hHostObjectTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
+        m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
+        m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
+        m_hHostObjectTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
 
         m_hHostDelegateTemplate = CreatePersistent(CreateFunctionTemplate());
-        m_hHostDelegateTemplate->SetClassName(CreateString(StdString(L"HostDelegate")));
-        m_hHostDelegateTemplate->SetCallHandler(HostObjectConstructorCallHandler, Wrap());
-        m_hHostDelegateTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-        m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, Wrap(), v8::PropertyHandlerFlags::kOnlyInterceptStrings));
-        m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, Wrap()));
-        m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, Wrap());
+        m_hHostDelegateTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(L"HostDelegate"))));
+        m_hHostDelegateTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
+        m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
+        m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
+        m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
-        m_hHostDelegateTemplate->PrototypeTemplate()->Set(CreateString(StdString(L"toFunction")), hToFunctionFunction);
+        m_hHostDelegateTemplate->PrototypeTemplate()->Set(FROM_MAYBE(CreateString(StdString(L"toFunction"))), hToFunctionFunction);
 
         m_hHostIteratorTemplate = CreatePersistent(CreateFunctionTemplate());
-        m_hHostIteratorTemplate->SetClassName(CreateString(StdString(L"HostIterator")));
-        m_hHostIteratorTemplate->SetCallHandler(HostObjectConstructorCallHandler, Wrap());
-        m_hHostIteratorTemplate->PrototypeTemplate()->Set(CreateString(StdString(L"next")), hNextFunction);
+        m_hHostIteratorTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(L"HostIterator"))));
+        m_hHostIteratorTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
+        m_hHostIteratorTemplate->PrototypeTemplate()->Set(FROM_MAYBE(CreateString(StdString(L"next"))), hNextFunction);
 
         m_spIsolateImpl->AddContext(this, enableDebugging, debugPort);
         m_pvV8ObjectCache = HostObjectHelpers::CreateV8ObjectCache();
 
+    FROM_MAYBE_CATCH
+
+        Teardown();
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot initialize the script engine because a script exception is pending"), false /*executionStarted*/);
+
+    FROM_MAYBE_END
     END_ISOLATE_SCOPE
 
     ++s_InstanceCount;
@@ -330,20 +435,21 @@ V8Value V8ContextImpl::GetRootObject()
 void V8ContextImpl::SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers)
 {
     BEGIN_CONTEXT_SCOPE
+    FROM_MAYBE_TRY
 
-        auto hName = CreateString(name);
-        auto hValue = ImportValue(value);
+        auto hName = FROM_MAYBE(CreateString(name));
+        auto hValue = ::ValueAsObject(ImportValue(value));
 
-        v8::Local<v8::Value> hOldValue;
-        if (m_hContext->Global()->HasOwnProperty(hName))
+        v8::Local<v8::Object> hOldValue;
+        if (FROM_MAYBE(m_hContext->Global()->HasOwnProperty(m_hContext, hName)))
         {
-            hOldValue = m_hContext->Global()->GetRealNamedProperty(hName);
+            hOldValue = ::ValueAsObject(FROM_MAYBE(m_hContext->Global()->GetRealNamedProperty(m_hContext, hName)));
         }
 
-        m_hContext->Global()->ForceSet(hName, hValue, static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
-        if (globalMembers && hValue->IsObject())
+        auto result = FROM_MAYBE(m_hContext->Global()->DefineOwnProperty(m_hContext, hName, hValue, v8::ReadOnly));
+        if (result && globalMembers && !hValue.IsEmpty())
         {
-            if (!hOldValue.IsEmpty() && hOldValue->IsObject())
+            if (!hOldValue.IsEmpty())
             {
                 for (auto it = m_GlobalMembersStack.begin(); it != m_GlobalMembersStack.end(); it++)
                 {
@@ -356,9 +462,14 @@ void V8ContextImpl::SetGlobalProperty(const StdString& name, const V8Value& valu
                 }
             }
 
-            m_GlobalMembersStack.emplace_back(name, CreatePersistent(hValue->ToObject()));
+            m_GlobalMembersStack.emplace_back(name, CreatePersistent(hValue));
         }
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), false /*executionStarted*/);
+
+    FROM_MAYBE_END
     END_CONTEXT_SCOPE
 }
 
@@ -368,10 +479,16 @@ V8Value V8ContextImpl::Execute(const StdString& documentName, const StdString& c
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
 
-        v8::ScriptCompiler::Source source(CreateString(code), v8::ScriptOrigin(CreateString(documentName)));
-        auto hScript = VERIFY(CreateScript(&source));
-        auto hResult = VERIFY(hScript->Run());
+        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), v8::ScriptOrigin(FROM_MAYBE(CreateString(documentName))));
+        auto hScript = VERIFY_MAYBE(v8::ScriptCompiler::Compile(m_hContext, &source));
+        if (hScript.IsEmpty())
+        {
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Script compilation failed; no additional information was provided by the V8 runtime"), false /*executionStarted*/);
+        }
+
+        auto hResult = VERIFY_MAYBE(hScript->Run(m_hContext));
         if (!evaluate)
         {
             hResult = GetUndefined();
@@ -379,6 +496,11 @@ V8Value V8ContextImpl::Execute(const StdString& documentName, const StdString& c
 
         return ExportValue(hResult);
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
@@ -389,11 +511,22 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
 
-        v8::ScriptCompiler::Source source(CreateString(code), v8::ScriptOrigin(CreateString(documentName)));
-        auto hScript = VERIFY(CreateUnboundScript(&source));
-        return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromScriptHandle(CreatePersistent(hScript)));
+        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), v8::ScriptOrigin(FROM_MAYBE(CreateString(documentName))));
+        auto hScript = VERIFY_MAYBE(CreateUnboundScript(&source));
+        if (hScript.IsEmpty())
+        {
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Script compilation failed; no additional information was provided by the V8 runtime"), false /*executionStarted*/);
+        }
 
+        return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)));
+
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
@@ -410,9 +543,14 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
 
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
 
-        v8::ScriptCompiler::Source source(CreateString(code), v8::ScriptOrigin(CreateString(documentName)));
-        auto hScript = VERIFY(CreateUnboundScript(&source, (cacheType == V8CacheType::Parser) ? v8::ScriptCompiler::kProduceParserCache : v8::ScriptCompiler::kProduceCodeCache));
+        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), v8::ScriptOrigin(FROM_MAYBE(CreateString(documentName))));
+        auto hScript = VERIFY_MAYBE(CreateUnboundScript(&source, (cacheType == V8CacheType::Parser) ? v8::ScriptCompiler::kProduceParserCache : v8::ScriptCompiler::kProduceCodeCache));
+        if (hScript.IsEmpty())
+        {
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Script compilation failed; no additional information was provided by the V8 runtime"), false /*executionStarted*/);
+        }
 
         cacheBytes.clear();
 
@@ -431,8 +569,13 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
             source.DeleteCachedData();
         }
 
-        return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromScriptHandle(CreatePersistent(hScript)));
+        return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)));
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
@@ -449,14 +592,24 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
 
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
 
         auto pCachedData = new v8::ScriptCompiler::CachedData(&cacheBytes[0], static_cast<int>(cacheBytes.size()), v8::ScriptCompiler::CachedData::BufferNotOwned);
-        v8::ScriptCompiler::Source source(CreateString(code), v8::ScriptOrigin(CreateString(documentName)), pCachedData);
-        auto hScript = VERIFY(CreateUnboundScript(&source, (cacheType == V8CacheType::Parser) ? v8::ScriptCompiler::kConsumeParserCache : v8::ScriptCompiler::kConsumeCodeCache));
+        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), v8::ScriptOrigin(FROM_MAYBE(CreateString(documentName))), pCachedData);
+        auto hScript = VERIFY_MAYBE(CreateUnboundScript(&source, (cacheType == V8CacheType::Parser) ? v8::ScriptCompiler::kConsumeParserCache : v8::ScriptCompiler::kConsumeCodeCache));
+        if (hScript.IsEmpty())
+        {
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Script compilation failed; no additional information was provided by the V8 runtime"), false /*executionStarted*/);
+        }
 
         cacheAccepted = !m_spIsolateImpl->IsDebuggingEnabled() && !pCachedData->rejected;
-        return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromScriptHandle(CreatePersistent(hScript)));
+        return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)));
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
@@ -475,8 +628,8 @@ V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder, bool evaluate)
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
-        auto hScript = ::ScriptHandleFromPtr(pHolder->GetScript());
-        auto hResult = VERIFY(hScript->BindToCurrentContext()->Run());
+        auto hScript = ::HandleFromPtr<v8::UnboundScript>(pHolder->GetScript());
+        auto hResult = VERIFY_MAYBE(hScript->BindToCurrentContext()->Run(m_hContext));
         if (!evaluate)
         {
             hResult = GetUndefined();
@@ -539,9 +692,15 @@ V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, const StdString& name
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
 
-        return ExportValue(::ObjectHandleFromPtr(pvObject)->Get(CreateString(name)));
+        return ExportValue(FROM_MAYBE(::HandleFromPtr<v8::Object>(pvObject)->Get(m_hContext, FROM_MAYBE(CreateString(name)))));
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
@@ -552,9 +711,15 @@ void V8ContextImpl::SetV8ObjectProperty(void* pvObject, const StdString& name, c
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
 
-        ::ObjectHandleFromPtr(pvObject)->Set(CreateString(name), ImportValue(value));
+        ASSERT_EVAL(FROM_MAYBE(::HandleFromPtr<v8::Object>(pvObject)->Set(m_hContext, FROM_MAYBE(CreateString(name)), ImportValue(value))));
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
@@ -564,9 +729,15 @@ void V8ContextImpl::SetV8ObjectProperty(void* pvObject, const StdString& name, c
 bool V8ContextImpl::DeleteV8ObjectProperty(void* pvObject, const StdString& name)
 {
     BEGIN_CONTEXT_SCOPE
+    FROM_MAYBE_TRY
 
-        return ::ObjectHandleFromPtr(pvObject)->Delete(CreateString(name));
+        return FROM_MAYBE(::HandleFromPtr<v8::Object>(pvObject)->Delete(m_hContext, FROM_MAYBE(CreateString(name))));
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), false /*executionStarted*/);
+
+    FROM_MAYBE_END
     END_CONTEXT_SCOPE
 }
 
@@ -576,7 +747,7 @@ void V8ContextImpl::GetV8ObjectPropertyNames(void* pvObject, std::vector<StdStri
 {
     BEGIN_CONTEXT_SCOPE
 
-        GetV8ObjectPropertyNames(::ObjectHandleFromPtr(pvObject), names);
+        GetV8ObjectPropertyNames(::HandleFromPtr<v8::Object>(pvObject), names);
 
     END_CONTEXT_SCOPE
 }
@@ -587,9 +758,15 @@ V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, int index)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
 
-        return ExportValue(::ObjectHandleFromPtr(pvObject)->Get(index));
+        return ExportValue(FROM_MAYBE(::HandleFromPtr<v8::Object>(pvObject)->Get(m_hContext, index)));
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
@@ -600,9 +777,15 @@ void V8ContextImpl::SetV8ObjectProperty(void* pvObject, int index, const V8Value
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
 
-        ::ObjectHandleFromPtr(pvObject)->Set(index, ImportValue(value));
+        ASSERT_EVAL(FROM_MAYBE(::HandleFromPtr<v8::Object>(pvObject)->Set(m_hContext, index, ImportValue(value))));
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
@@ -612,9 +795,15 @@ void V8ContextImpl::SetV8ObjectProperty(void* pvObject, int index, const V8Value
 bool V8ContextImpl::DeleteV8ObjectProperty(void* pvObject, int index)
 {
     BEGIN_CONTEXT_SCOPE
+    FROM_MAYBE_TRY
 
-        return ::ObjectHandleFromPtr(pvObject)->Delete(index);
+        return FROM_MAYBE(::HandleFromPtr<v8::Object>(pvObject)->Delete(m_hContext, index));
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), false /*executionStarted*/);
+
+    FROM_MAYBE_END
     END_CONTEXT_SCOPE
 }
 
@@ -624,7 +813,7 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(void* pvObject, std::vector<int>&
 {
     BEGIN_CONTEXT_SCOPE
 
-        GetV8ObjectPropertyIndices(::ObjectHandleFromPtr(pvObject), indices);
+        GetV8ObjectPropertyIndices(::HandleFromPtr<v8::Object>(pvObject), indices);
 
     END_CONTEXT_SCOPE
 }
@@ -636,11 +825,19 @@ V8Value V8ContextImpl::InvokeV8Object(void* pvObject, const std::vector<V8Value>
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
 
-        v8::Local<v8::Object> hObject = ::ObjectHandleFromPtr(pvObject);
+        v8::Local<v8::Object> hObject = ::HandleFromPtr<v8::Object>(pvObject);
         if (!hObject->IsCallable())
         {
-            auto hError = v8::Exception::TypeError(CreateString(StdString(L"Object does not support invocation")))->ToObject();
-            throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined), t_IsolateExecutionScope.ExecutionStarted());
+            FROM_MAYBE_TRY
+
+                auto hError = v8::Exception::TypeError(FROM_MAYBE(CreateString(StdString(L"Object does not support invocation")))).As<v8::Object>();
+                throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(FROM_MAYBE(hError->Get(m_hContext, FROM_MAYBE(CreateString(StdString(L"stack")))))), V8Value(V8Value::Undefined), EXECUTION_STARTED);
+
+            FROM_MAYBE_CATCH
+
+                throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Object does not support invocation"), EXECUTION_STARTED);
+
+            FROM_MAYBE_END
         }
 
         std::vector<v8::Local<v8::Value>> importedArgs;
@@ -648,10 +845,10 @@ V8Value V8ContextImpl::InvokeV8Object(void* pvObject, const std::vector<V8Value>
 
         if (asConstructor)
         {
-            return ExportValue(VERIFY(hObject->CallAsConstructor(static_cast<int>(importedArgs.size()), importedArgs.data())));
+            return ExportValue(VERIFY_MAYBE(hObject->CallAsConstructor(m_hContext, static_cast<int>(importedArgs.size()), importedArgs.data())));
         }
 
-        return ExportValue(VERIFY(hObject->CallAsFunction(hObject, static_cast<int>(importedArgs.size()), importedArgs.data())));
+        return ExportValue(VERIFY_MAYBE(hObject->CallAsFunction(m_hContext, hObject, static_cast<int>(importedArgs.size()), importedArgs.data())));
 
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
@@ -663,35 +860,49 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const StdString& nam
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
 
-        v8::Local<v8::Object> hObject = ::ObjectHandleFromPtr(pvObject);
+        v8::Local<v8::Object> hObject = ::HandleFromPtr<v8::Object>(pvObject);
 
-        auto hName = CreateString(name);
-        if (!hObject->Has(hName))
+        auto hMethod = ::ValueAsObject(VERIFY_MAYBE(hObject->Get(m_hContext, FROM_MAYBE(CreateString(name)))));
+        if (hMethod.IsEmpty())
         {
-            auto hError = v8::Exception::TypeError(CreateString(StdString(L"Method or property not found")))->ToObject();
-            throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined), t_IsolateExecutionScope.ExecutionStarted());
+            FROM_MAYBE_TRY
+
+                auto hError = v8::Exception::TypeError(FROM_MAYBE(CreateString(StdString(L"Method or property not found")))).As<v8::Object>();
+                throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(FROM_MAYBE(hError->Get(m_hContext, FROM_MAYBE(CreateString(StdString(L"stack")))))), V8Value(V8Value::Undefined), EXECUTION_STARTED);
+
+            FROM_MAYBE_CATCH
+
+                throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Method or property not found"), EXECUTION_STARTED);
+
+            FROM_MAYBE_END
         }
 
-        auto hValue = hObject->Get(hName);
-        if (hValue->IsUndefined() || hValue->IsNull())
-        {
-            auto hError = v8::Exception::TypeError(CreateString(StdString(L"Property value does not support invocation")))->ToObject();
-            throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined), t_IsolateExecutionScope.ExecutionStarted());
-        }
-
-        auto hMethod = VERIFY(hValue->ToObject());
         if (!hMethod->IsCallable())
         {
-            auto hError = v8::Exception::TypeError(CreateString(StdString(L"Property value does not support invocation")))->ToObject();
-            throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(hError->Get(CreateString(StdString(L"stack")))), V8Value(V8Value::Undefined), t_IsolateExecutionScope.ExecutionStarted());
+            FROM_MAYBE_TRY
+
+                auto hError = v8::Exception::TypeError(FROM_MAYBE(CreateString(StdString(L"Property value does not support invocation")))).As<v8::Object>();
+                throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(FROM_MAYBE(hError->Get(m_hContext, FROM_MAYBE(CreateString(StdString(L"stack")))))), V8Value(V8Value::Undefined), EXECUTION_STARTED);
+
+            FROM_MAYBE_CATCH
+
+                throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Property value does not support invocation"), EXECUTION_STARTED);
+
+            FROM_MAYBE_END
         }
 
         std::vector<v8::Local<v8::Value>> importedArgs;
         ImportValues(args, importedArgs);
 
-        return ExportValue(VERIFY(hMethod->CallAsFunction(hObject, static_cast<int>(importedArgs.size()), importedArgs.data())));
+        return ExportValue(VERIFY_MAYBE(hMethod->CallAsFunction(m_hContext, hObject, static_cast<int>(importedArgs.size()), importedArgs.data())));
 
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"The V8 runtime cannot perform the requested operation because a script exception is pending"), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
 }
@@ -702,7 +913,7 @@ void V8ContextImpl::GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& ar
 {
     BEGIN_CONTEXT_SCOPE
 
-        v8::Local<v8::Object> hObject = ::ObjectHandleFromPtr(pvObject);
+        v8::Local<v8::Object> hObject = ::HandleFromPtr<v8::Object>(pvObject);
 
         if (hObject->IsArrayBuffer())
         {
@@ -745,7 +956,7 @@ void V8ContextImpl::InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8Ob
 {
     BEGIN_CONTEXT_SCOPE
 
-        v8::Local<v8::Object> hObject = ::ObjectHandleFromPtr(pvObject);
+        v8::Local<v8::Object> hObject = ::HandleFromPtr<v8::Object>(pvObject);
 
         if (hObject->IsArrayBuffer())
         {
@@ -787,22 +998,32 @@ void V8ContextImpl::ProcessDebugMessages()
 
 //-----------------------------------------------------------------------------
 
-V8ContextImpl::~V8ContextImpl()
+void V8ContextImpl::Teardown()
 {
     _ASSERTE(m_spIsolateImpl->IsCurrent() && m_spIsolateImpl->IsLocked());
-    --s_InstanceCount;
 
-    std::vector<void*> v8ObjectPtrs;
-    HostObjectHelpers::GetAllCachedV8Objects(m_pvV8ObjectCache, v8ObjectPtrs);
-    for (auto pvV8Object: v8ObjectPtrs)
+    if (m_pvV8ObjectCache != nullptr)
     {
-        auto hObject = ::ObjectHandleFromPtr(pvV8Object);
-        delete ::GetHostObjectHolder(hObject);
-        ClearWeak(hObject);
-        Dispose(hObject);
+        std::vector<void*> v8ObjectPtrs;
+        HostObjectHelpers::GetAllCachedV8Objects(m_pvV8ObjectCache, v8ObjectPtrs);
+        for (auto pvV8Object : v8ObjectPtrs)
+        {
+            auto hObject = ::HandleFromPtr<v8::Object>(pvV8Object);
+
+            auto pHolder = GetHostObjectHolder(hObject);
+            if (pHolder != nullptr)
+            {
+                delete pHolder;
+            }
+
+            ClearWeak(hObject);
+            Dispose(hObject);
+        }
+
+        HostObjectHelpers::Release(m_pvV8ObjectCache);
+        m_pvV8ObjectCache = nullptr;
     }
 
-    HostObjectHelpers::Release(m_pvV8ObjectCache);
     m_spIsolateImpl->RemoveContext(this);
 
     for (auto it = m_GlobalMembersStack.rbegin(); it != m_GlobalMembersStack.rend(); it++)
@@ -814,34 +1035,40 @@ V8ContextImpl::~V8ContextImpl()
     Dispose(m_hHostDelegateTemplate);
     Dispose(m_hHostObjectTemplate);
     Dispose(m_hTerminationException);
+    Dispose(m_hInternalUseOnly);
     Dispose(m_hAccessToken);
-    Dispose(m_hAccessTokenPrivate);
-    Dispose(m_hCachePrivate);
-    Dispose(m_hValuePropertyName);
-    Dispose(m_hDonePropertyName);
-    Dispose(m_hEnumeratorPrivate);
-    Dispose(m_hHostExceptionName);
-    Dispose(m_hHostObjectCookieName);
+    Dispose(m_hAccessTokenKey);
+    Dispose(m_hCacheKey);
+    Dispose(m_hValueKey);
+    Dispose(m_hDoneKey);
+    Dispose(m_hEnumeratorKey);
+    Dispose(m_hHostExceptionKey);
+    Dispose(m_hHostObjectHolderKey);
+    Dispose(m_hIsHostObjectKey);
 
     // As of V8 3.16.0, the global property getter for a disposed context
     // may be invoked during GC after the V8ContextImpl instance is gone.
 
     if (!m_hGlobal.IsEmpty())
     {
-        _ASSERTE(m_hGlobal->InternalFieldCount() > 0);
-        m_hGlobal->SetAlignedPointerInInternalField(0, nullptr);
+        if (m_hGlobal->InternalFieldCount() > 0)
+        {
+            m_hGlobal->SetAlignedPointerInInternalField(0, nullptr);
+        }
+
         Dispose(m_hGlobal);
     }
 
     Dispose(m_hContext);
-    ContextDisposedNotification();
 }
 
 //-----------------------------------------------------------------------------
 
-v8::Local<v8::Value> V8ContextImpl::Wrap()
+V8ContextImpl::~V8ContextImpl()
 {
-    return CreateExternal(this);
+    --s_InstanceCount;
+    Teardown();
+    ContextDisposedNotification();
 }
 
 //-----------------------------------------------------------------------------
@@ -854,6 +1081,47 @@ SharedPtr<V8WeakContextBinding> V8ContextImpl::GetWeakBinding()
     }
 
     return m_spWeakBinding;
+}
+
+//-----------------------------------------------------------------------------
+
+HostObjectHolder* V8ContextImpl::GetHostObjectHolder(v8::Local<v8::Object> hObject)
+{
+    if (!hObject.IsEmpty())
+    {
+        auto hHolder = ::ValueAsExternal(FROM_MAYBE_DEFAULT(hObject->GetPrivate(m_hContext, m_hHostObjectHolderKey)));
+        if (!hHolder.IsEmpty())
+        {
+            return static_cast<HostObjectHolder*>(hHolder->Value());
+        }
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8ContextImpl::SetHostObjectHolder(v8::Local<v8::Object> hObject, HostObjectHolder* pHolder)
+{
+    if (!hObject.IsEmpty())
+    {
+        return FROM_MAYBE_DEFAULT(hObject->SetPrivate(m_hContext, m_hHostObjectHolderKey, CreateExternal(pHolder)));
+    }
+
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+void* V8ContextImpl::GetHostObject(v8::Local<v8::Object> hObject)
+{
+    auto pHolder = GetHostObjectHolder(hObject);
+    if (pHolder != nullptr)
+    {
+        return pHolder->GetObject();
+    }
+
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -903,27 +1171,25 @@ void V8ContextImpl::GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std:
 {
     names.clear();
 
-    auto hNames = hObject->GetPropertyNames();
-    if (!hNames.IsEmpty())
-    {
+    FROM_MAYBE_TRY
+
+        auto hNames = FROM_MAYBE(hObject->GetPropertyNames(m_hContext));
         auto nameCount = static_cast<int>(hNames->Length());
 
         names.reserve(nameCount);
         for (auto index = 0; index < nameCount; index++)
         {
-            auto hName = hNames->Get(index);
-            if (!hName.IsEmpty())
-            {
-                StdString name(hName);
+            auto hName = FROM_MAYBE(hNames->Get(m_hContext, index));
+            StdString name(hName);
 
-                int propertyIndex;
-                if (!HostObjectHelpers::TryParseInt32(name, propertyIndex))
-                {
-                    names.push_back(std::move(name));
-                }
+            int propertyIndex;
+            if (!HostObjectHelpers::TryParseInt32(name, propertyIndex))
+            {
+                names.push_back(std::move(name));
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
@@ -932,361 +1198,391 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, st
 {
     indices.clear();
 
-    auto hNames = hObject->GetPropertyNames();
-    if (!hNames.IsEmpty())
-    {
+    FROM_MAYBE_TRY
+
+        auto hNames = FROM_MAYBE(hObject->GetPropertyNames(m_hContext));
         auto nameCount = static_cast<int>(hNames->Length());
 
         indices.reserve(nameCount);
         for (auto index = 0; index < nameCount; index++)
         {
-            auto hName = hNames->Get(index);
-            if (!hName.IsEmpty())
-            {
-                StdString name(hName);
+            auto hName = FROM_MAYBE(hNames->Get(m_hContext, index));
+            StdString name(hName);
 
-                int propertyIndex;
-                if (HostObjectHelpers::TryParseInt32(name, propertyIndex))
-                {
-                    indices.push_back(propertyIndex);
-                }
+            int propertyIndex;
+            if (HostObjectHelpers::TryParseInt32(name, propertyIndex))
+            {
+                indices.push_back(propertyIndex);
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::GetGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
-    if (!hKey->IsString())
+    auto hName = ::ValueAsString(hKey);
+    if (hName.IsEmpty())
     {
-        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
         return;
     }
 
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        const auto& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            auto hName = hKey->ToString();
-            if (!hName->Equals(pContextImpl->m_hHostObjectCookieName))
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
             {
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
-                    if (it->second->HasOwnProperty(hName))
+                    if (FROM_MAYBE(it->second->HasOwnProperty(pContextImpl->m_hContext, hName)))
                     {
-                        CALLBACK_RETURN(it->second->Get(hName));
+                        CALLBACK_RETURN(FROM_MAYBE(it->second->Get(pContextImpl->m_hContext, hName)));
                     }
                 }
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::SetGlobalProperty(v8::Local<v8::Name> hKey, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
-    if (!hKey->IsString())
+    auto hName = ::ValueAsString(hKey);
+    if (hName.IsEmpty())
     {
-        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
         return;
     }
 
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        const auto& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            auto hName = hKey->ToString();
-            if (!hName->Equals(pContextImpl->m_hHostObjectCookieName))
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
             {
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
-                    if (it->second->HasOwnProperty(hName))
+                    if (FROM_MAYBE(it->second->HasOwnProperty(pContextImpl->m_hContext, hName)))
                     {
-                        it->second->Set(hName, hValue);
+                        it->second->Set(pContextImpl->m_hContext, hName, hValue);
                         CALLBACK_RETURN(hValue);
                     }
                 }
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::QueryGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Integer>& info)
 {
-    if (!hKey->IsString())
+    auto hName = ::ValueAsString(hKey);
+    if (hName.IsEmpty())
     {
-        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
         return;
     }
 
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        const auto& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            auto hName = hKey->ToString();
-            if (!hName->Equals(pContextImpl->m_hHostObjectCookieName))
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
             {
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
-                    if (it->second->HasOwnProperty(hName))
+                    if (FROM_MAYBE(it->second->HasOwnProperty(pContextImpl->m_hContext, hName)))
                     {
-                        CALLBACK_RETURN(it->second->GetPropertyAttributes(hName));
+                        CALLBACK_RETURN(FROM_MAYBE(it->second->GetPropertyAttributes(pContextImpl->m_hContext, hName)));
                     }
                 }
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::DeleteGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Boolean>& info)
 {
-    if (!hKey->IsString())
+    auto hName = ::ValueAsString(hKey);
+    if (hName.IsEmpty())
     {
-        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
         return;
     }
 
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        const auto& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            auto hName = hKey->ToString();
-            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
             {
-                if (it->second->HasOwnProperty(hName))
+                for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
-                    // WORKAROUND: v8::Object::Delete() crashes if a custom property deleter calls
-                    // ThrowException(). Interestingly, there is no crash if the same deleter is
-                    // invoked directly from script via the delete operator.
-
-                    if (it->second->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
+                    if (FROM_MAYBE(it->second->HasOwnProperty(pContextImpl->m_hContext, hName)))
                     {
-                        try
-                        {
-                            CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::GetHostObject(it->second), StdString(hName)));
-                        }
-                        catch (const HostException&)
-                        {
-                            CALLBACK_RETURN(false);
-                        }
-                    }
+                        // WORKAROUND: v8::Object::Delete() crashes if a custom property deleter calls
+                        // ThrowException(). Interestingly, there is no crash if the same deleter is
+                        // invoked directly from script via the delete operator.
 
-                    CALLBACK_RETURN(it->second->Delete(hName));
+                        auto pvObject = pContextImpl->GetHostObject(it->second);
+                        if (pvObject != nullptr)
+                        {
+                            try
+                            {
+                                CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(pvObject, StdString(hName)));
+                            }
+                            catch (const HostException&)
+                            {
+                                CALLBACK_RETURN(false);
+                            }
+                        }
+
+                        CALLBACK_RETURN(FROM_MAYBE(it->second->Delete(pContextImpl->m_hContext, hName)));
+                    }
                 }
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::GetGlobalPropertyNames(const v8::PropertyCallbackInfo<v8::Array>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        try
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            try
             {
-                std::vector<StdString> names;
-                for (auto it = stack.rbegin(); it != stack.rend(); it++)
+                const auto& stack = pContextImpl->m_GlobalMembersStack;
+                if (stack.size() > 0)
                 {
-                    std::vector<StdString> tempNames;
-                    if (it->second->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
+                    std::vector<StdString> names;
+                    for (auto it = stack.rbegin(); it != stack.rend(); it++)
                     {
-                        HostObjectHelpers::GetPropertyNames(::GetHostObject(it->second), tempNames);
+                        std::vector<StdString> tempNames;
+
+                        auto pvObject = pContextImpl->GetHostObject(it->second);
+                        if (pvObject != nullptr)
+                        {
+                            HostObjectHelpers::GetPropertyNames(pvObject, tempNames);
+                        }
+                        else
+                        {
+                            pContextImpl->GetV8ObjectPropertyNames(it->second, tempNames);
+                        }
+
+                        names.insert(names.end(), tempNames.begin(), tempNames.end());
                     }
-                    else
+
+                    std::sort(names.begin(), names.end());
+                    auto newEnd = std::unique(names.begin(), names.end());
+                    auto nameCount = static_cast<int>(newEnd - names.begin());
+
+                    auto hImportedNames = pContextImpl->CreateArray(nameCount);
+                    for (auto index = 0; index < nameCount; index++)
                     {
-                        pContextImpl->GetV8ObjectPropertyNames(it->second, tempNames);
+                        ASSERT_EVAL(FROM_MAYBE(hImportedNames->Set(pContextImpl->m_hContext, index, FROM_MAYBE(pContextImpl->CreateString(names[index])))));
                     }
 
-                    names.insert(names.end(), tempNames.begin(), tempNames.end());
+                    CALLBACK_RETURN(hImportedNames);
                 }
-
-                std::sort(names.begin(), names.end());
-                auto newEnd = std::unique(names.begin(), names.end());
-                auto nameCount = static_cast<int>(newEnd - names.begin());
-
-                auto hImportedNames = pContextImpl->CreateArray(nameCount);
-                for (auto index = 0; index < nameCount; index++)
-                {
-                    hImportedNames->Set(index, pContextImpl->CreateString(names[index]));
-                }
-
-                CALLBACK_RETURN(hImportedNames);
+            }
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
             }
         }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
-        }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::GetGlobalProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        const auto& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            auto hName = pContextImpl->CreateInteger(index)->ToString();
-            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
             {
-                if (it->second->HasOwnProperty(hName))
+                auto hName = FROM_MAYBE(pContextImpl->CreateInteger(index)->ToString(pContextImpl->m_hContext));
+                for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
-                    CALLBACK_RETURN(it->second->Get(index));
+                    if (FROM_MAYBE(it->second->HasOwnProperty(pContextImpl->m_hContext, hName)))
+                    {
+                        CALLBACK_RETURN(FROM_MAYBE(it->second->Get(pContextImpl->m_hContext, index)));
+                    }
                 }
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::SetGlobalProperty(std::uint32_t index, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        const auto& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            auto hName = pContextImpl->CreateInteger(index)->ToString();
-            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
             {
-                if (it->second->HasOwnProperty(hName))
+                auto hName = FROM_MAYBE(pContextImpl->CreateInteger(index)->ToString(pContextImpl->m_hContext));
+                for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
-                    it->second->Set(index, hValue);
-                    CALLBACK_RETURN(hValue);
+                    if (FROM_MAYBE(it->second->HasOwnProperty(pContextImpl->m_hContext, hName)))
+                    {
+                        it->second->Set(pContextImpl->m_hContext, index, hValue);
+                        CALLBACK_RETURN(hValue);
+                    }
                 }
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::QueryGlobalProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Integer>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        const auto& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            auto hIndex = pContextImpl->CreateInteger(index);
-            auto hName = hIndex->ToString();
-            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
             {
-                if (it->second->HasOwnProperty(hName))
+                auto hIndex = pContextImpl->CreateInteger(index);
+                auto hName = FROM_MAYBE(hIndex->ToString(pContextImpl->m_hContext));
+                for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
-                    CALLBACK_RETURN(it->second->GetPropertyAttributes(hIndex));
+                    if (FROM_MAYBE(it->second->HasOwnProperty(pContextImpl->m_hContext, hName)))
+                    {
+                        CALLBACK_RETURN(FROM_MAYBE(it->second->GetPropertyAttributes(pContextImpl->m_hContext, hIndex)));
+                    }
                 }
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::DeleteGlobalProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Boolean>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        const auto& stack = pContextImpl->m_GlobalMembersStack;
-        if (stack.size() > 0)
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            auto hName = pContextImpl->CreateInteger(index)->ToString();
-            for (auto it = stack.rbegin(); it != stack.rend(); it++)
+            const auto& stack = pContextImpl->m_GlobalMembersStack;
+            if (stack.size() > 0)
             {
-                if (it->second->HasOwnProperty(hName))
+                auto hName = FROM_MAYBE(pContextImpl->CreateInteger(index)->ToString(pContextImpl->m_hContext));
+                for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
-                    CALLBACK_RETURN(it->second->Delete(index));
+                    if (FROM_MAYBE(it->second->HasOwnProperty(pContextImpl->m_hContext, hName)))
+                    {
+                        CALLBACK_RETURN(FROM_MAYBE(it->second->Delete(pContextImpl->m_hContext, index)));
+                    }
                 }
             }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::GetGlobalPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromHolder(info);
-    if (CheckContextImplForGlobalObjectCallback(pContextImpl))
-    {
-        try
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromHolder(info);
+        if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
-            const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            try
             {
-                std::vector<int> indices;
-                for (auto it = stack.rbegin(); it != stack.rend(); it++)
+                const auto& stack = pContextImpl->m_GlobalMembersStack;
+                if (stack.size() > 0)
                 {
-                    std::vector<int> tempIndices;
-                    if (it->second->HasOwnProperty(pContextImpl->m_hHostObjectCookieName))
+                    std::vector<int> indices;
+                    for (auto it = stack.rbegin(); it != stack.rend(); it++)
                     {
-                        HostObjectHelpers::GetPropertyIndices(::GetHostObject(it->second), tempIndices);
+                        std::vector<int> tempIndices;
+
+                        auto pvObject = pContextImpl->GetHostObject(it->second);
+                        if (pvObject != nullptr)
+                        {
+                            HostObjectHelpers::GetPropertyIndices(pvObject, tempIndices);
+                        }
+                        else
+                        {
+                            pContextImpl->GetV8ObjectPropertyIndices(it->second, tempIndices);
+                        }
+
+                        indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
                     }
-                    else
+
+                    std::sort(indices.begin(), indices.end());
+                    auto newEnd = std::unique(indices.begin(), indices.end());
+                    auto indexCount = static_cast<int>(newEnd - indices.begin());
+
+                    auto hImportedIndices = pContextImpl->CreateArray(indexCount);
+                    for (auto index = 0; index < indexCount; index++)
                     {
-                        pContextImpl->GetV8ObjectPropertyIndices(it->second, tempIndices);
+                        ASSERT_EVAL(FROM_MAYBE(hImportedIndices->Set(pContextImpl->m_hContext, index, pContextImpl->CreateInteger(indices[index]))));
                     }
 
-                    indices.insert(indices.end(), tempIndices.begin(), tempIndices.end());
+                    CALLBACK_RETURN(hImportedIndices);
                 }
-
-                std::sort(indices.begin(), indices.end());
-                auto newEnd = std::unique(indices.begin(), indices.end());
-                auto indexCount = static_cast<int>(newEnd - indices.begin());
-
-                auto hImportedIndices = pContextImpl->CreateArray(indexCount);
-                for (auto index = 0; index < indexCount; index++)
-                {
-                    hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
-                }
-
-                CALLBACK_RETURN(hImportedIndices);
+            }
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
             }
         }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
-        }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::HostObjectConstructorCallHandler(const v8::FunctionCallbackInfo<v8::Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
+    auto pContextImpl = ::GetContextImplFromData(info);
     if ((pContextImpl != nullptr) && !pContextImpl->m_AllowHostObjectConstructorCall)
     {
-        pContextImpl->ThrowException(v8::Exception::Error(pContextImpl->CreateString(StdString(L"This function is for ClearScript internal use only"))));
+        pContextImpl->ThrowException(v8::Exception::Error(pContextImpl->m_hInternalUseOnly));
     }
 }
 
@@ -1294,216 +1590,256 @@ void V8ContextImpl::HostObjectConstructorCallHandler(const v8::FunctionCallbackI
 
 void V8ContextImpl::GetIteratorForHostObject(const v8::FunctionCallbackInfo<v8::Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
-    if (pContextImpl != nullptr)
-    {
-        try
-        {
-            auto hEnumerator = pContextImpl->ImportValue(HostObjectHelpers::GetEnumerator(::GetHostObject(info.Holder())));
+    FROM_MAYBE_TRY
 
-            v8::Local<v8::Object> hIterator;
-            BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_AllowHostObjectConstructorCall, true)
-                hIterator = pContextImpl->m_hHostIteratorTemplate->InstanceTemplate()->NewInstance();
-            END_PULSE_VALUE_SCOPE
-
-            pContextImpl->SetPrivate(hIterator, pContextImpl->m_hEnumeratorPrivate, hEnumerator);
-            CALLBACK_RETURN(hIterator);
-        }
-        catch (const HostException& exception)
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (pContextImpl != nullptr)
         {
-            pContextImpl->ThrowScriptException(exception);
+            auto pvObject = pContextImpl->GetHostObject(info.Holder());
+            if (pvObject != nullptr)
+            {
+                try
+                {
+                    auto hEnumerator = pContextImpl->ImportValue(HostObjectHelpers::GetEnumerator(pvObject));
+
+                    v8::Local<v8::Object> hIterator;
+                    BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_AllowHostObjectConstructorCall, true)
+                        hIterator = FROM_MAYBE(pContextImpl->m_hHostIteratorTemplate->InstanceTemplate()->NewInstance(pContextImpl->m_hContext));
+                    END_PULSE_VALUE_SCOPE
+
+                    ASSERT_EVAL(FROM_MAYBE(hIterator->SetPrivate(pContextImpl->m_hContext, pContextImpl->m_hEnumeratorKey, hEnumerator)));
+                    CALLBACK_RETURN(hIterator);
+                }
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
+            }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::AdvanceHostObjectIterator(const v8::FunctionCallbackInfo<v8::Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
-    if (pContextImpl != nullptr)
-    {
-        try
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (pContextImpl != nullptr)
         {
-            auto hEnumerator = pContextImpl->GetPrivate(info.Holder(), pContextImpl->m_hEnumeratorPrivate);
-            if (!hEnumerator.IsEmpty() && hEnumerator->IsObject())
+            try
             {
-                auto hResult = pContextImpl->CreateObject();
-
-                V8Value value(V8Value::Undefined);
-                if (HostObjectHelpers::AdvanceEnumerator(::GetHostObject(hEnumerator->ToObject()), value))
+                auto hHolder = ::ValueAsObject(info.Holder());
+                if (!hHolder.IsEmpty())
                 {
-                    hResult->Set(pContextImpl->m_hDonePropertyName, pContextImpl->GetFalse());
-                    hResult->Set(pContextImpl->m_hValuePropertyName, pContextImpl->ImportValue(value));
-                }
-                else
-                {
-                    hResult->Set(pContextImpl->m_hDonePropertyName, pContextImpl->GetTrue());
+                    auto hEnumerator = ::ValueAsObject(FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hEnumeratorKey)));
+                    if (!hEnumerator.IsEmpty())
+                    {
+                        auto pvObject = pContextImpl->GetHostObject(hEnumerator);
+                        if (pvObject != nullptr)
+                        {
+                            auto hResult = pContextImpl->CreateObject();
+
+                            V8Value value(V8Value::Undefined);
+                            if (HostObjectHelpers::AdvanceEnumerator(pvObject, value))
+                            {
+                                ASSERT_EVAL(FROM_MAYBE(hResult->Set(pContextImpl->m_hContext, pContextImpl->m_hDoneKey, pContextImpl->GetFalse())));
+                                ASSERT_EVAL(FROM_MAYBE(hResult->Set(pContextImpl->m_hContext, pContextImpl->m_hValueKey, pContextImpl->ImportValue(value))));
+                            }
+                            else
+                            {
+                                ASSERT_EVAL(FROM_MAYBE(hResult->Set(pContextImpl->m_hContext, pContextImpl->m_hDoneKey, pContextImpl->GetTrue())));
+                            }
+
+                            CALLBACK_RETURN(hResult);
+                        }
+                    }
                 }
 
-                CALLBACK_RETURN(hResult);
+
+            }
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
             }
         }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
-        }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::CreateFunctionForHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
-    if (pContextImpl != nullptr)
-    {
-        CALLBACK_RETURN(pContextImpl->CreateFunction(InvokeHostDelegate, info.Holder()));
-    }
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (pContextImpl != nullptr)
+        {
+            CALLBACK_RETURN(FROM_MAYBE(v8::Function::New(pContextImpl->m_hContext, InvokeHostDelegate, info.Holder())));
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::InvokeHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info)
 {
-    auto hTarget = info.Data();
-
-    auto argCount = info.Length();
-    if (argCount < 1)
+    auto hTarget = ::ValueAsObject(info.Data());
+    if (!hTarget.IsEmpty())
     {
-        if (info.IsConstructCall())
+        auto argCount = info.Length();
+        if (argCount < 1)
         {
-            CALLBACK_RETURN(hTarget->ToObject()->CallAsConstructor(0, nullptr));
+            if (info.IsConstructCall())
+            {
+                CALLBACK_RETURN(FROM_MAYBE_DEFAULT(hTarget->CallAsConstructor(info.GetIsolate()->GetCurrentContext(), 0, nullptr)));
+            }
+
+            CALLBACK_RETURN(FROM_MAYBE_DEFAULT(hTarget->CallAsFunction(info.GetIsolate()->GetCurrentContext(), hTarget, 0, nullptr)));
         }
 
-        CALLBACK_RETURN(hTarget->ToObject()->CallAsFunction(hTarget, 0, nullptr));
+        std::vector<v8::Local<v8::Value>> args;
+        args.reserve(argCount);
+
+        for (auto index = 0; index < argCount; index++)
+        {
+            args.push_back(info[index]);
+        }
+
+        if (info.IsConstructCall())
+        {
+            CALLBACK_RETURN(FROM_MAYBE_DEFAULT(hTarget->CallAsConstructor(info.GetIsolate()->GetCurrentContext(), argCount, &args[0])));
+        }
+
+        CALLBACK_RETURN(FROM_MAYBE_DEFAULT(hTarget->CallAsFunction(info.GetIsolate()->GetCurrentContext(), hTarget, argCount, &args[0])));
     }
-
-    std::vector<v8::Local<v8::Value>> args;
-    args.reserve(argCount);
-
-    for (auto index = 0; index < argCount; index++)
-    {
-        args.push_back(info[index]);
-    }
-
-    if (info.IsConstructCall())
-    {
-        CALLBACK_RETURN(hTarget->ToObject()->CallAsConstructor(argCount, &args[0]));
-    }
-
-    CALLBACK_RETURN(hTarget->ToObject()->CallAsFunction(hTarget, argCount, &args[0]));
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
-    if (!hKey->IsString())
-    {
-        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
-        return;
-    }
+    FROM_MAYBE_TRY
 
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
-    if (CheckContextImplForHostObjectCallback(pContextImpl))
-    {
-        try
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (CheckContextImplForHostObjectCallback(pContextImpl))
         {
-            auto hName = hKey->ToString();
-            if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
-            {
-                CALLBACK_RETURN(true);
-            }
-
             auto hHolder = info.Holder();
-            auto cacheCleared = false;
+            auto pvObject = pContextImpl->GetHostObject(hHolder);
 
-            auto hAccessToken = pContextImpl->GetPrivate(hHolder, pContextImpl->m_hAccessTokenPrivate);
-            if (pContextImpl->m_hAccessToken != hAccessToken)
+            auto hName = ::ValueAsString(hKey);
+            if (hName.IsEmpty())
             {
-                BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
-
-                    auto hCache = pContextImpl->GetPrivate(hHolder, pContextImpl->m_hCachePrivate);
-                    if (!hCache.IsEmpty())
-                    {
-                        if (hCache->IsObject())
-                        {
-                            auto hNames = hCache->ToObject()->GetOwnPropertyNames();
-                            for (auto index = hNames->Length(); index > 0; index--)
-                            {
-                                hHolder->Delete(hNames->Get(index - 1));
-                            }
-                        }
-
-                        pContextImpl->DeletePrivate(hHolder, pContextImpl->m_hCachePrivate);
-                    }
-
-                    pContextImpl->SetPrivate(hHolder, pContextImpl->m_hAccessTokenPrivate, pContextImpl->m_hAccessToken);
-                    cacheCleared = true;
-
-                END_PULSE_VALUE_SCOPE
-            }
-
-            v8::Local<v8::Value> hResult;
-            if (!cacheCleared)
-            {
-                BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
-
-                    if (hHolder->HasOwnProperty(hName))
-                    {
-                        CALLBACK_RETURN(hResult);
-                    }
-
-                END_PULSE_VALUE_SCOPE
-            }
-
-            bool isCacheable;
-            hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::GetHostObject(info.Holder()), StdString(hName), isCacheable));
-            if (isCacheable)
-            {
-                auto hCache = pContextImpl->GetPrivate(hHolder, pContextImpl->m_hCachePrivate);
-                if (hCache.IsEmpty() || !hCache->IsObject())
+                if (!hKey.IsEmpty() && hKey->StrictEquals(pContextImpl->m_hIsHostObjectKey))
                 {
-                    hCache = pContextImpl->CreateObject();
-                    pContextImpl->SetPrivate(hHolder, pContextImpl->m_hCachePrivate, hCache);
+                    CALLBACK_RETURN((pvObject != nullptr) ? pContextImpl->GetTrue() : pContextImpl->GetFalse());
                 }
 
-                hCache->ToObject()->ForceSet(hName, hResult);
-                hHolder->ForceSet(hName, hResult, v8::DontEnum);
+                return;
             }
 
-            CALLBACK_RETURN(hResult);
+            if (pvObject != nullptr)
+            {
+                try
+                {
+                    auto cacheCleared = false;
+
+                    auto hAccessToken = FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hAccessTokenKey));
+                    if (pContextImpl->m_hAccessToken != hAccessToken)
+                    {
+                        BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
+
+                            auto hCache = ::ValueAsObject(FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey)));
+                            if (!hCache.IsEmpty())
+                            {
+                                auto hNames = FROM_MAYBE(hCache->GetOwnPropertyNames(pContextImpl->m_hContext));
+                                for (auto index = hNames->Length(); index > 0; index--)
+                                {
+                                    ASSERT_EVAL(FROM_MAYBE(hHolder->Delete(pContextImpl->m_hContext, FROM_MAYBE(hNames->Get(pContextImpl->m_hContext, index - 1)))));
+                                }
+
+                                ASSERT_EVAL(FROM_MAYBE(hHolder->DeletePrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey)));
+                            }
+
+                            ASSERT_EVAL(FROM_MAYBE(hHolder->SetPrivate(pContextImpl->m_hContext, pContextImpl->m_hAccessTokenKey, pContextImpl->m_hAccessToken)));
+                            cacheCleared = true;
+
+                        END_PULSE_VALUE_SCOPE
+                    }
+
+                    v8::Local<v8::Value> hResult;
+                    if (!cacheCleared)
+                    {
+                        BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
+
+                            if (FROM_MAYBE(hHolder->HasOwnProperty(pContextImpl->m_hContext, hName)))
+                            {
+                                CALLBACK_RETURN(hResult);
+                            }
+
+                        END_PULSE_VALUE_SCOPE
+                    }
+
+                    bool isCacheable;
+                    hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(pvObject, StdString(hName), isCacheable));
+                    if (isCacheable)
+                    {
+                        BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
+
+                            auto hCache = ::ValueAsObject(FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey)));
+                            if (hCache.IsEmpty())
+                            {
+                                hCache = pContextImpl->CreateObject();
+                                ASSERT_EVAL(FROM_MAYBE(hHolder->SetPrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey, hCache)));
+                            }
+
+                            ASSERT_EVAL(FROM_MAYBE(hCache->Set(pContextImpl->m_hContext, hName, hResult)));
+                            ASSERT_EVAL(FROM_MAYBE(hHolder->DefineOwnProperty(pContextImpl->m_hContext, hName, hResult, v8::DontEnum)));
+
+                        END_PULSE_VALUE_SCOPE
+                    }
+
+                    CALLBACK_RETURN(hResult);
+                }
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
+            }
         }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
-        }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::SetHostObjectProperty(v8::Local<v8::Name> hKey, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
-    if (!hKey->IsString())
+    auto hName = ::ValueAsString(hKey);
+    if (hName.IsEmpty())
     {
-        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
         return;
     }
 
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
+    auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        try
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
+        if (pvObject != nullptr)
         {
-            auto hName = hKey->ToString();
-            HostObjectHelpers::SetProperty(::GetHostObject(info.Holder()), StdString(hName), pContextImpl->ExportValue(hValue));
-            CALLBACK_RETURN(hValue);
-        }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
+            try
+            {
+                HostObjectHelpers::SetProperty(pvObject, StdString(hName), pContextImpl->ExportValue(hValue));
+                CALLBACK_RETURN(hValue);
+            }
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
+            }
         }
     }
 }
@@ -1512,38 +1848,36 @@ void V8ContextImpl::SetHostObjectProperty(v8::Local<v8::Name> hKey, v8::Local<v8
 
 void V8ContextImpl::QueryHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Integer>& info)
 {
-    if (!hKey->IsString())
+    auto hName = ::ValueAsString(hKey);
+    if (hName.IsEmpty())
     {
-        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
         return;
     }
 
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
+    auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        try
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
+        if (pvObject != nullptr)
         {
-            auto hName = hKey->ToString();
-            if (hName->Equals(pContextImpl->m_hHostObjectCookieName))
+            try
             {
-                CALLBACK_RETURN(v8::ReadOnly | v8::DontEnum | v8::DontDelete);
-            }
+                std::vector<StdString> names;
+                HostObjectHelpers::GetPropertyNames(pvObject, names);
 
-            std::vector<StdString> names;
-            HostObjectHelpers::GetPropertyNames(::GetHostObject(info.Holder()), names);
-
-            StdString name(hName);
-            for (auto it = names.begin(); it != names.end(); it++)
-            {
-                if (it->Compare(name) == 0)
+                StdString name(hName);
+                for (auto it = names.begin(); it != names.end(); it++)
                 {
-                    CALLBACK_RETURN(v8::None);
+                    if (it->Compare(name) == 0)
+                    {
+                        CALLBACK_RETURN(v8::None);
+                    }
                 }
             }
-        }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
+            }
         }
     }
 }
@@ -1552,23 +1886,26 @@ void V8ContextImpl::QueryHostObjectProperty(v8::Local<v8::Name> hKey, const v8::
 
 void V8ContextImpl::DeleteHostObjectProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Boolean>& info)
 {
-    if (!hKey->IsString())
+    auto hName = ::ValueAsString(hKey);
+    if (hName.IsEmpty())
     {
-        // apparently V8 ignores v8::PropertyHandlerFlags::kOnlyInterceptStrings in some cases
         return;
     }
 
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
+    auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        try
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
+        if (pvObject != nullptr)
         {
-            auto hName = hKey->ToString();
-            CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::GetHostObject(info.Holder()), StdString(hName)));
-        }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
+            try
+            {
+                CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(pvObject, StdString(hName)));
+            }
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
+            }
         }
     }
 }
@@ -1577,44 +1914,56 @@ void V8ContextImpl::DeleteHostObjectProperty(v8::Local<v8::Name> hKey, const v8:
 
 void V8ContextImpl::GetHostObjectPropertyNames(const v8::PropertyCallbackInfo<v8::Array>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
-    if (CheckContextImplForHostObjectCallback(pContextImpl))
-    {
-        try
-        {
-            std::vector<StdString> names;
-            HostObjectHelpers::GetPropertyNames(::GetHostObject(info.Holder()), names);
-            auto nameCount = static_cast<int>(names.size());
+    FROM_MAYBE_TRY
 
-            auto hImportedNames = pContextImpl->CreateArray(nameCount);
-            for (auto index = 0; index < nameCount; index++)
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (CheckContextImplForHostObjectCallback(pContextImpl))
+        {
+            auto pvObject = pContextImpl->GetHostObject(info.Holder());
+            if (pvObject != nullptr)
             {
-                hImportedNames->Set(index, pContextImpl->CreateString(names[index]));
-            }
+                try
+                {
+                    std::vector<StdString> names;
+                    HostObjectHelpers::GetPropertyNames(pvObject, names);
+                    auto nameCount = static_cast<int>(names.size());
 
-            CALLBACK_RETURN(hImportedNames);
+                    auto hImportedNames = pContextImpl->CreateArray(nameCount);
+                    for (auto index = 0; index < nameCount; index++)
+                    {
+                        ASSERT_EVAL(FROM_MAYBE(hImportedNames->Set(pContextImpl->m_hContext, index, FROM_MAYBE(pContextImpl->CreateString(names[index])))));
+                    }
+
+                    CALLBACK_RETURN(hImportedNames);
+                }
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
+            }
         }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
-        }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::GetHostObjectProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
+    auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        try
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
+        if (pvObject != nullptr)
         {
-            CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::GetProperty(::GetHostObject(info.Holder()), index)));
-        }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
+            try
+            {
+                CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::GetProperty(pvObject, index)));
+            }
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
+            }
         }
     }
 }
@@ -1623,17 +1972,21 @@ void V8ContextImpl::GetHostObjectProperty(std::uint32_t index, const v8::Propert
 
 void V8ContextImpl::SetHostObjectProperty(std::uint32_t index, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
+    auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        try
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
+        if (pvObject != nullptr)
         {
-            HostObjectHelpers::SetProperty(::GetHostObject(info.Holder()), index, pContextImpl->ExportValue(hValue));
-            CALLBACK_RETURN(hValue);
-        }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
+            try
+            {
+                HostObjectHelpers::SetProperty(pvObject, index, pContextImpl->ExportValue(hValue));
+                CALLBACK_RETURN(hValue);
+            }
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
+            }
         }
     }
 }
@@ -1642,25 +1995,29 @@ void V8ContextImpl::SetHostObjectProperty(std::uint32_t index, v8::Local<v8::Val
 
 void V8ContextImpl::QueryHostObjectProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Integer>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
+    auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        try
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
+        if (pvObject != nullptr)
         {
-            std::vector<int> indices;
-            HostObjectHelpers::GetPropertyIndices(::GetHostObject(info.Holder()), indices);
-
-            for (auto it = indices.begin(); it < indices.end(); it++)
+            try
             {
-                if (*it == static_cast<int>(index))
+                std::vector<int> indices;
+                HostObjectHelpers::GetPropertyIndices(pvObject, indices);
+
+                for (auto it = indices.begin(); it < indices.end(); it++)
                 {
-                    CALLBACK_RETURN(v8::None);
+                    if (*it == static_cast<int>(index))
+                    {
+                        CALLBACK_RETURN(v8::None);
+                    }
                 }
             }
-        }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
+            }
         }
     }
 }
@@ -1669,16 +2026,20 @@ void V8ContextImpl::QueryHostObjectProperty(std::uint32_t index, const v8::Prope
 
 void V8ContextImpl::DeleteHostObjectProperty(std::uint32_t index, const v8::PropertyCallbackInfo<v8::Boolean>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
+    auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        try
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
+        if (pvObject != nullptr)
         {
-            CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(::GetHostObject(info.Holder()), index));
-        }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
+            try
+            {
+                CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(pvObject, index));
+            }
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
+            }
         }
     }
 }
@@ -1687,54 +2048,66 @@ void V8ContextImpl::DeleteHostObjectProperty(std::uint32_t index, const v8::Prop
 
 void V8ContextImpl::GetHostObjectPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
-    if (CheckContextImplForHostObjectCallback(pContextImpl))
-    {
-        try
-        {
-            std::vector<int> indices;
-            HostObjectHelpers::GetPropertyIndices(::GetHostObject(info.Holder()), indices);
-            auto indexCount = static_cast<int>(indices.size());
+    FROM_MAYBE_TRY
 
-            auto hImportedIndices = pContextImpl->CreateArray(indexCount);
-            for (auto index = 0; index < indexCount; index++)
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (CheckContextImplForHostObjectCallback(pContextImpl))
+        {
+            auto pvObject = pContextImpl->GetHostObject(info.Holder());
+            if (pvObject != nullptr)
             {
-                hImportedIndices->Set(index, pContextImpl->CreateInteger(indices[index]));
-            }
+                try
+                {
+                    std::vector<int> indices;
+                    HostObjectHelpers::GetPropertyIndices(pvObject, indices);
+                    auto indexCount = static_cast<int>(indices.size());
 
-            CALLBACK_RETURN(hImportedIndices);
+                    auto hImportedIndices = pContextImpl->CreateArray(indexCount);
+                    for (auto index = 0; index < indexCount; index++)
+                    {
+                        ASSERT_EVAL(FROM_MAYBE(hImportedIndices->Set(pContextImpl->m_hContext, index, pContextImpl->CreateInteger(indices[index]))));
+                    }
+
+                    CALLBACK_RETURN(hImportedIndices);
+                }
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
+            }
         }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
-        }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ContextImpl::InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info)
 {
-    auto pContextImpl = ::UnwrapContextImplFromData(info);
+    auto pContextImpl = ::GetContextImplFromData(info);
     if (CheckContextImplForHostObjectCallback(pContextImpl))
     {
-        try
+        auto pvObject = pContextImpl->GetHostObject(info.Holder());
+        if (pvObject != nullptr)
         {
-            auto argCount = info.Length();
-
-            std::vector<V8Value> exportedArgs;
-            exportedArgs.reserve(argCount);
-
-            for (auto index = 0; index < argCount; index++)
+            try
             {
-                exportedArgs.push_back(pContextImpl->ExportValue(info[index]));
-            }
+                auto argCount = info.Length();
 
-            CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::Invoke(::GetHostObject(info.Holder()), exportedArgs, info.IsConstructCall())));
-        }
-        catch (const HostException& exception)
-        {
-            pContextImpl->ThrowScriptException(exception);
+                std::vector<V8Value> exportedArgs;
+                exportedArgs.reserve(argCount);
+
+                for (auto index = 0; index < argCount; index++)
+                {
+                    exportedArgs.push_back(pContextImpl->ExportValue(info[index]));
+                }
+
+                CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::Invoke(pvObject, exportedArgs, info.IsConstructCall())));
+            }
+            catch (const HostException& exception)
+            {
+                pContextImpl->ThrowScriptException(exception);
+            }
         }
     }
 }
@@ -1755,108 +2128,106 @@ void V8ContextImpl::DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Obje
 
 v8::Local<v8::Value> V8ContextImpl::ImportValue(const V8Value& value)
 {
-    if (value.IsNonexistent())
-    {
-        return v8::Local<v8::Value>();
-    }
+    FROM_MAYBE_TRY
 
-    if (value.IsUndefined())
-    {
-        return GetUndefined();
-    }
-
-    if (value.IsNull())
-    {
-        return GetNull();
-    }
-
-    {
-        bool result;
-        if (value.AsBoolean(result))
+        if (value.IsNonexistent())
         {
-            return result ? GetTrue() : GetFalse();
+            return v8::Local<v8::Value>();
         }
-    }
 
-    {
-        double result;
-        if (value.AsNumber(result))
+        if (value.IsUndefined())
         {
-            return CreateNumber(result);
+            return GetUndefined();
         }
-    }
 
-    {
-        std::int32_t result;
-        if (value.AsInt32(result))
+        if (value.IsNull())
         {
-            return CreateInteger(result);
+            return GetNull();
         }
-    }
 
-    {
-        std::uint32_t result;
-        if (value.AsUInt32(result))
         {
-            return CreateInteger(result);
-        }
-    }
-
-    {
-        const StdString* pString;
-        if (value.AsString(pString))
-        {
-            return CreateString(*pString);
-        }
-    }
-
-    {
-        HostObjectHolder* pHolder;
-        if (value.AsHostObject(pHolder))
-        {
-            auto pvV8Object = HostObjectHelpers::GetCachedV8Object(m_pvV8ObjectCache, pHolder->GetObject());
-            if (pvV8Object != nullptr)
+            bool result;
+            if (value.AsBoolean(result))
             {
-                return CreateLocal(::ObjectHandleFromPtr(pvV8Object));
+                return result ? GetTrue() : GetFalse();
             }
+        }
 
-            v8::Local<v8::Object> hObject;
-            if (HostObjectHelpers::IsDelegate(pHolder->GetObject()))
+        {
+            double result;
+            if (value.AsNumber(result))
             {
-                BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectConstructorCall, true)
-                    hObject = m_hHostDelegateTemplate->InstanceTemplate()->NewInstance();
-                END_PULSE_VALUE_SCOPE
+                return CreateNumber(result);
             }
-            else
+        }
+
+        {
+            std::int32_t result;
+            if (value.AsInt32(result))
             {
-                BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectConstructorCall, true)
-                    hObject = m_hHostObjectTemplate->InstanceTemplate()->NewInstance();
-                END_PULSE_VALUE_SCOPE
+                return CreateInteger(result);
             }
+        }
 
-            // WARNING: Instantiation may fail during script interruption. Check NewInstance()
-            // result to avoid access violations and V8 fatal errors in ::SetObjectHolder().
-
-            if (!hObject.IsEmpty())
+        {
+            std::uint32_t result;
+            if (value.AsUInt32(result))
             {
-                ::SetHostObjectHolder(hObject, pHolder = pHolder->Clone());
-                SetPrivate(hObject, m_hAccessTokenPrivate, m_hAccessToken);
-                pvV8Object = ::PtrFromObjectHandle(MakeWeak(CreatePersistent(hObject), pHolder, m_pvV8ObjectCache, DisposeWeakHandle));
+                return CreateInteger(result);
+            }
+        }
+
+        {
+            const StdString* pString;
+            if (value.AsString(pString))
+            {
+                return FROM_MAYBE(CreateString(*pString));
+            }
+        }
+
+        {
+            HostObjectHolder* pHolder;
+            if (value.AsHostObject(pHolder))
+            {
+                auto pvV8Object = HostObjectHelpers::GetCachedV8Object(m_pvV8ObjectCache, pHolder->GetObject());
+                if (pvV8Object != nullptr)
+                {
+                    return CreateLocal(::HandleFromPtr<v8::Object>(pvV8Object));
+                }
+
+                v8::Local<v8::Object> hObject;
+                if (HostObjectHelpers::IsDelegate(pHolder->GetObject()))
+                {
+                    BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectConstructorCall, true)
+                        hObject = FROM_MAYBE(m_hHostDelegateTemplate->InstanceTemplate()->NewInstance(m_hContext));
+                    END_PULSE_VALUE_SCOPE
+                }
+                else
+                {
+                    BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectConstructorCall, true)
+                        hObject = FROM_MAYBE(m_hHostObjectTemplate->InstanceTemplate()->NewInstance(m_hContext));
+                    END_PULSE_VALUE_SCOPE
+                }
+
+                ASSERT_EVAL(SetHostObjectHolder(hObject, pHolder = pHolder->Clone()));
+                ASSERT_EVAL(FROM_MAYBE(hObject->SetPrivate(m_hContext, m_hAccessTokenKey, m_hAccessToken)));
+                pvV8Object = ::PtrFromHandle(MakeWeak(CreatePersistent(hObject), pHolder, m_pvV8ObjectCache, DisposeWeakHandle));
                 HostObjectHelpers::CacheV8Object(m_pvV8ObjectCache, pHolder->GetObject(), pvV8Object);
+
+                return hObject;
             }
-
-            return hObject;
         }
-    }
 
-    {
-        V8ObjectHolder* pHolder;
-        V8Value::Subtype subtype;
-        if (value.AsV8Object(pHolder, subtype))
         {
-            return CreateLocal(::ObjectHandleFromPtr(pHolder->GetObject()));
+            V8ObjectHolder* pHolder;
+            V8Value::Subtype subtype;
+            if (value.AsV8Object(pHolder, subtype))
+            {
+                return CreateLocal(::HandleFromPtr<v8::Object>(pHolder->GetObject()));
+            }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 
     return GetUndefined();
 }
@@ -1865,82 +2236,87 @@ v8::Local<v8::Value> V8ContextImpl::ImportValue(const V8Value& value)
 
 V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
 {
-    if (hValue.IsEmpty())
-    {
-        return V8Value(V8Value::Nonexistent);
-    }
+    FROM_MAYBE_TRY
 
-    if (hValue->IsUndefined())
-    {
-        return V8Value(V8Value::Undefined);
-    }
-
-    if (hValue->IsNull())
-    {
-        return V8Value(V8Value::Null);
-    }
-
-    if (hValue->IsBoolean())
-    {
-        return V8Value(hValue->BooleanValue());
-    }
-
-    if (hValue->IsNumber())
-    {
-        return V8Value(hValue->NumberValue());
-    }
-
-    if (hValue->IsInt32())
-    {
-        return V8Value(hValue->Int32Value());
-    }
-
-    if (hValue->IsUint32())
-    {
-        return V8Value(hValue->Uint32Value());
-    }
-
-    if (hValue->IsString())
-    {
-        return V8Value(new StdString(hValue));
-    }
-
-    if (hValue->IsObject())
-    {
-        auto hObject = hValue->ToObject();
-        if (hObject->HasOwnProperty(m_hHostObjectCookieName))
+        if (hValue.IsEmpty())
         {
-            return V8Value(::GetHostObjectHolder(hObject)->Clone());
+            return V8Value(V8Value::Nonexistent);
         }
 
-        auto subtype = V8Value::Subtype::None;
-        if (hObject->IsArrayBuffer())
-            subtype = V8Value::Subtype::ArrayBuffer;
-        else if (hObject->IsArrayBufferView())
-            if (hObject->IsDataView())
-                subtype = V8Value::Subtype::DataView;
-            else if (hObject->IsTypedArray())
-                if (hObject->IsUint8Array())
-                    subtype = V8Value::Subtype::Uint8Array;
-                else if (hObject->IsUint8ClampedArray())
-                    subtype = V8Value::Subtype::Uint8ClampedArray;
-                else if (hObject->IsInt8Array())
-                    subtype = V8Value::Subtype::Int8Array;
-                else if (hObject->IsUint16Array())
-                    subtype = V8Value::Subtype::Uint16Array;
-                else if (hObject->IsInt16Array())
-                    subtype = V8Value::Subtype::Int16Array;
-                else if (hObject->IsUint32Array())
-                    subtype = V8Value::Subtype::Uint32Array;
-                else if (hObject->IsInt32Array())
-                    subtype = V8Value::Subtype::Int32Array;
-                else if (hObject->IsFloat32Array())
-                    subtype = V8Value::Subtype::Float32Array;
-                else if (hObject->IsFloat64Array())
-                    subtype = V8Value::Subtype::Float64Array;
+        if (hValue->IsUndefined())
+        {
+            return V8Value(V8Value::Undefined);
+        }
 
-        return V8Value(new V8ObjectHolderImpl(GetWeakBinding(), ::PtrFromObjectHandle(CreatePersistent(hObject))), subtype);
-    }
+        if (hValue->IsNull())
+        {
+            return V8Value(V8Value::Null);
+        }
+
+        if (hValue->IsBoolean())
+        {
+            return V8Value(FROM_MAYBE(hValue->BooleanValue(m_hContext)));
+        }
+
+        if (hValue->IsNumber())
+        {
+            return V8Value(FROM_MAYBE(hValue->NumberValue(m_hContext)));
+        }
+
+        if (hValue->IsInt32())
+        {
+            return V8Value(FROM_MAYBE(hValue->Int32Value(m_hContext)));
+        }
+
+        if (hValue->IsUint32())
+        {
+            return V8Value(FROM_MAYBE(hValue->Uint32Value(m_hContext)));
+        }
+
+        if (hValue->IsString())
+        {
+            return V8Value(new StdString(hValue));
+        }
+
+        auto hObject = ::ValueAsObject(hValue);
+        if (!hObject.IsEmpty())
+        {
+            auto pHolder = GetHostObjectHolder(hObject);
+            if (pHolder != nullptr)
+            {
+                return V8Value(pHolder->Clone());
+            }
+
+            auto subtype = V8Value::Subtype::None;
+            if (hObject->IsArrayBuffer())
+                subtype = V8Value::Subtype::ArrayBuffer;
+            else if (hObject->IsArrayBufferView())
+                if (hObject->IsDataView())
+                    subtype = V8Value::Subtype::DataView;
+                else if (hObject->IsTypedArray())
+                    if (hObject->IsUint8Array())
+                        subtype = V8Value::Subtype::Uint8Array;
+                    else if (hObject->IsUint8ClampedArray())
+                        subtype = V8Value::Subtype::Uint8ClampedArray;
+                    else if (hObject->IsInt8Array())
+                        subtype = V8Value::Subtype::Int8Array;
+                    else if (hObject->IsUint16Array())
+                        subtype = V8Value::Subtype::Uint16Array;
+                    else if (hObject->IsInt16Array())
+                        subtype = V8Value::Subtype::Int16Array;
+                    else if (hObject->IsUint32Array())
+                        subtype = V8Value::Subtype::Uint32Array;
+                    else if (hObject->IsInt32Array())
+                        subtype = V8Value::Subtype::Int32Array;
+                    else if (hObject->IsFloat32Array())
+                        subtype = V8Value::Subtype::Float32Array;
+                    else if (hObject->IsFloat64Array())
+                        subtype = V8Value::Subtype::Float64Array;
+
+            return V8Value(new V8ObjectHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hObject))), subtype);
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
 
     return V8Value(V8Value::Undefined);
 }
@@ -1969,14 +2345,14 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
         if (!tryCatch.CanContinue())
         {
             VerifyNotOutOfMemory();
-            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(tryCatch.StackTrace()), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
+            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(FROM_MAYBE_DEFAULT(tryCatch.StackTrace(m_hContext))), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
         }
 
         auto hException = tryCatch.Exception();
         if (hException->SameValue(m_hTerminationException))
         {
             VerifyNotOutOfMemory();
-            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(tryCatch.StackTrace()), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
+            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(FROM_MAYBE_DEFAULT(tryCatch.StackTrace(m_hContext))), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
         }
 
         StdString message;
@@ -1985,7 +2361,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
         StdString constructorName;
         if (hException->IsObject())
         {
-            constructorName = StdString(hException->ToObject()->GetConstructorName());
+            constructorName = StdString(hException.As<v8::Object>()->GetConstructorName());
         }
 
         StdString value(hException);
@@ -2035,7 +2411,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
         }
         else
         {
-            auto hStackTrace = tryCatch.StackTrace();
+            auto hStackTrace = FROM_MAYBE_DEFAULT(tryCatch.StackTrace(m_hContext));
             if (!hStackTrace.IsEmpty())
             {
                 stackTrace = StdString(hStackTrace);
@@ -2060,7 +2436,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
                     auto hScriptResourceName = hMessage->GetScriptResourceName();
                     if (!hScriptResourceName.IsEmpty() && !hScriptResourceName->IsNull() && !hScriptResourceName->IsUndefined())
                     {
-                        auto hScriptName = hScriptResourceName->ToString();
+                        auto hScriptName = FROM_MAYBE_DEFAULT(hScriptResourceName->ToString(m_hContext));
                         if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
                         {
                             stackTrace += L"\n    at ";
@@ -2077,11 +2453,11 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
                     }
 
                     stackTrace += L':';
-                    stackTrace += std::to_wstring(hMessage->GetLineNumber());
+                    stackTrace += std::to_wstring(FROM_MAYBE_DEFAULT(hMessage->GetLineNumber(m_hContext)));
                     stackTrace += L':';
-                    stackTrace += std::to_wstring(hMessage->GetStartColumn() + 1);
+                    stackTrace += std::to_wstring(FROM_MAYBE_DEFAULT(hMessage->GetStartColumn(m_hContext)) + 1);
 
-                    auto hSourceLine = hMessage->GetSourceLine();
+                    auto hSourceLine = FROM_MAYBE_DEFAULT(hMessage->GetSourceLine(m_hContext));
                     if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
                     {
                         stackTrace += L" -> ";
@@ -2139,7 +2515,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
 
                     if (!usedSourceLine)
                     {
-                        auto hSourceLine = hMessage->GetSourceLine();
+                        auto hSourceLine = FROM_MAYBE_DEFAULT(hMessage->GetSourceLine(m_hContext));
                         if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
                         {
                             stackTrace += L" -> ";
@@ -2153,7 +2529,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
 
             if (hException->IsObject())
             {
-                hostException = ExportValue(hException->ToObject()->Get(m_hHostExceptionName));
+                hostException = ExportValue(FROM_MAYBE_DEFAULT(hException.As<v8::Object>()->Get(m_hContext, m_hHostExceptionKey)));
             }
         }
 
@@ -2175,21 +2551,25 @@ void V8ContextImpl::VerifyNotOutOfMemory()
 
 void V8ContextImpl::ThrowScriptException(const HostException& exception)
 {
-    // WARNING: Error instantiation may fail during script interruption. Check Exception::Error()
-    // result to avoid access violations. Extra defense is warranted here.
+    FROM_MAYBE_TRY
 
-    if (!IsExecutionTerminating())
-    {
-        auto hException = v8::Exception::Error(CreateString(exception.GetMessage()))->ToObject();
-        if (!hException.IsEmpty() && hException->IsObject())
+        // WARNING: Error instantiation may fail during script interruption. Check Exception::Error()
+        // result to avoid access violations. Extra defense is warranted here.
+
+        if (!IsExecutionTerminating())
         {
-            auto hHostException = ImportValue(exception.GetException());
-            if (!hHostException.IsEmpty() && hHostException->IsObject())
+            auto hException = v8::Exception::Error(FROM_MAYBE(CreateString(exception.GetMessage()))).As<v8::Object>();
+            if (!hException.IsEmpty() && hException->IsObject())
             {
-                hException->Set(m_hHostExceptionName, hHostException);
-            }
+                auto hHostException = ImportValue(exception.GetException());
+                if (!hHostException.IsEmpty() && hHostException->IsObject())
+                {
+                    ASSERT_EVAL(FROM_MAYBE(hException->Set(m_hContext, m_hHostExceptionKey, hHostException)));
+                }
 
-            ThrowException(hException);
+                ThrowException(hException);
+            }
         }
-    }
+
+    FROM_MAYBE_CATCH_CONSUME
 }

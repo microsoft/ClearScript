@@ -273,9 +273,9 @@ public:
     {
     }
 
-    v8::Local<v8::String> ToV8String(v8::Isolate* pIsolate) const
+    v8::MaybeLocal<v8::String> ToV8String(v8::Isolate* pIsolate) const
     {
-        return v8::String::NewFromTwoByte(pIsolate, reinterpret_cast<const uint16_t*>(ToCString()), v8::String::kNormalString, GetLength());
+        return v8::String::NewFromTwoByte(pIsolate, reinterpret_cast<const uint16_t*>(ToCString()), v8::NewStringType::kNormal, GetLength());
     }
 
 private:
@@ -283,7 +283,7 @@ private:
     static std::wstring GetValue(v8::Local<v8::Value> hValue)
     {
         v8::String::Value value(hValue);
-        return std::wstring(*value, value.length());
+        return std::wstring(EnsureNonNull(*value), value.length());
     }
 
 #endif // !_M_CEE

@@ -1,8 +1,8 @@
 diff --git a/gypfiles/standalone.gypi b/gypfiles/standalone.gypi
-index 6599bb8..285fbb6 100644
+index 7e41ce8..43e1f5c 100644
 --- a/gypfiles/standalone.gypi
 +++ b/gypfiles/standalone.gypi
-@@ -949,7 +949,7 @@
+@@ -953,7 +953,7 @@
              'EnableFunctionLevelLinking': 'true',
              'RuntimeTypeInfo': 'false',
              'WarningLevel': '3',
@@ -11,23 +11,35 @@ index 6599bb8..285fbb6 100644
              'DebugInformationFormat': '3',
              'Detect64BitPortabilityProblems': 'false',
              'conditions': [
+diff --git a/include/v8-platform.h b/include/v8-platform.h
+index e115674..6d3639a 100644
+--- a/include/v8-platform.h
++++ b/include/v8-platform.h
+@@ -22,6 +22,7 @@ class Task {
+   virtual ~Task() = default;
+ 
+   virtual void Run() = 0;
++  virtual void Delete();
+ };
+ 
+ /**
 diff --git a/include/v8.h b/include/v8.h
-index d7e39ad..4701f29 100644
+index 36edf53..8ae9d50 100644
 --- a/include/v8.h
 +++ b/include/v8.h
-@@ -1170,6 +1170,7 @@ class V8_EXPORT ScriptCompiler {
+@@ -1224,6 +1224,7 @@ class V8_EXPORT ScriptCompiler {
      // caller. The CachedData object is alive as long as the Source object is
      // alive.
      V8_INLINE const CachedData* GetCachedData() const;
 +    V8_EXPORT void DeleteCachedData();
  
-    private:
-     friend class ScriptCompiler;
+     // Prevent copying.
+     Source(const Source&) = delete;
 diff --git a/src/api.cc b/src/api.cc
-index 6858a32..63f45a5 100644
+index 44933b9..af48b94 100644
 --- a/src/api.cc
 +++ b/src/api.cc
-@@ -1713,6 +1713,13 @@ void ObjectTemplate::SetImmutableProto() {
+@@ -1730,6 +1730,13 @@ void ObjectTemplate::SetImmutableProto() {
  // --- S c r i p t s ---
  
  
@@ -40,6 +52,20 @@ index 6858a32..63f45a5 100644
 +    
  // Internally, UnboundScript is a SharedFunctionInfo, and Script is a
  // JSFunction.
+ 
+diff --git a/src/cancelable-task.cc b/src/cancelable-task.cc
+index defbb44..8b26370 100644
+--- a/src/cancelable-task.cc
++++ b/src/cancelable-task.cc
+@@ -7,6 +7,9 @@
+ #include "src/base/platform/platform.h"
+ #include "src/isolate.h"
+ 
++void v8::Task::Delete() { delete this; }
++
++
+ namespace v8 {
+ namespace internal {
  
 diff --git a/src/v8.cc b/src/v8.cc
 index 08796f3..c7fd6d2 100644
@@ -54,10 +80,10 @@ index 08796f3..c7fd6d2 100644
    platform_ = platform;
  }
 diff --git a/src/v8.gyp b/src/v8.gyp
-index 1adb2fe..e2552fc 100644
+index 9a38247..340833b 100644
 --- a/src/v8.gyp
 +++ b/src/v8.gyp
-@@ -41,6 +41,7 @@
+@@ -42,6 +42,7 @@
    'targets': [
      {
        'target_name': 'v8',

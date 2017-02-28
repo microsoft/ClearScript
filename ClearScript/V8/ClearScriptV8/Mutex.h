@@ -166,7 +166,9 @@ private:
 
 #define BEGIN_MUTEX_SCOPE(MUTEX) \
     { \
-        MutexLock<decltype(MUTEX)> t_MutexLock(MUTEX);
+    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
+        MutexLock<decltype(MUTEX)> t_MutexLock(MUTEX); \
+    __pragma(warning(default:4456))
 
 #define END_MUTEX_SCOPE \
         IGNORE_UNUSED(t_MutexLock); \

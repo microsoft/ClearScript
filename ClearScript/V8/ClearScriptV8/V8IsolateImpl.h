@@ -161,6 +161,19 @@ public:
         bool m_ExecutionStarted;
     };
 
+    class TryCatch: public v8::TryCatch
+    {
+        PROHIBIT_COPY(TryCatch)
+        PROHIBIT_HEAP(TryCatch)
+
+    public:
+
+        explicit TryCatch(V8IsolateImpl* pIsolateImpl):
+            v8::TryCatch(pIsolateImpl->m_pIsolate)
+        {
+        }
+    };
+
     V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort);
     static size_t GetInstanceCount();
 
@@ -216,9 +229,19 @@ public:
         return v8::Uint32::NewFromUnsigned(m_pIsolate, value);
     }
 
-    v8::Local<v8::String> CreateString(const StdString& value)
+    v8::MaybeLocal<v8::String> CreateString(const StdString& value)
     {
         return value.ToV8String(m_pIsolate);
+    }
+
+    v8::Local<v8::Symbol> CreateSymbol(v8::Local<v8::String> hName = v8::Local<v8::String>())
+    {
+        return v8::Symbol::New(m_pIsolate, hName);
+    }
+
+    v8::Local<v8::Private> CreatePrivate(v8::Local<v8::String> hName = v8::Local<v8::String>())
+    {
+        return v8::Private::New(m_pIsolate, hName);
     }
 
     v8::Local<v8::Array> CreateArray(int length = 0)
@@ -241,24 +264,9 @@ public:
         return v8::FunctionTemplate::New(m_pIsolate, callback, data, signature, length);
     }
 
-    v8::Local<v8::Function> CreateFunction(v8::FunctionCallback callback, v8::Local<v8::Value> data = v8::Local<v8::Value>(), int length = 0)
+    v8::MaybeLocal<v8::UnboundScript> CreateUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
     {
-        return v8::Function::New(m_pIsolate, callback, data, length);
-    }
-
-    v8::Local<v8::Private> CreatePrivate(v8::Local<v8::String> hName)
-    {
-        return v8::Private::New(m_pIsolate, hName);
-    }
-
-    v8::Local<v8::Script> CreateScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
-    {
-        return v8::ScriptCompiler::Compile(m_pIsolate, pSource, options);
-    }
-
-    v8::Local<v8::UnboundScript> CreateUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
-    {
-        return v8::ScriptCompiler::CompileUnbound(m_pIsolate, pSource, options);
+        return v8::ScriptCompiler::CompileUnboundScript(m_pIsolate, pSource, options);
     }
 
     template <typename T>
@@ -335,9 +343,9 @@ public:
         return m_pIsolate->ContextDisposedNotification();
     }
 
-    bool IdleNotification(int idleTimeInMilliseconds)
+    bool IdleNotificationDeadline(double deadlineInSeconds)
     {
-        return m_pIsolate->IdleNotification(idleTimeInMilliseconds);
+        return m_pIsolate->IdleNotificationDeadline(deadlineInSeconds);
     }
 
     void LowMemoryNotification()

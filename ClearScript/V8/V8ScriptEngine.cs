@@ -287,17 +287,25 @@ namespace Microsoft.ClearScript.V8
                                 return new this(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
                             }
 
+                            var isHostObjectKey = this.isHostObjectKey;
+                            delete this.isHostObjectKey;
+
                             return {
 
                                 getCommandResult: function (value) {
-                                    if ((value != null) && !value.hasOwnProperty('{c2cf47d3-916b-4a3f-be2a-6ff567425808}')) {
-                                        if ((typeof(value) == 'object') || (typeof(value) == 'function')) {
-                                            if (typeof(value.toString) == 'function') {
-                                                return value.toString();
-                                            }
-                                        }
+                                    if (value == null) {
+                                        return value;
                                     }
-                                    return value;
+                                    if (typeof(value.hasOwnProperty) != 'function') {
+                                        return '[external]';
+                                    }
+                                    if (value[isHostObjectKey] === true) {
+                                        return value;
+                                    }
+                                    if (typeof(value.toString) != 'function') {
+                                        return '[' + typeof(value) + ']';
+                                    }
+                                    return value.toString();
                                 },
 
                                 invokeConstructor: function (constructor, args) {
