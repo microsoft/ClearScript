@@ -134,11 +134,16 @@ size_t V8Platform::NumberOfAvailableBackgroundThreads()
 
 void V8Platform::CallOnBackgroundThread(v8::Task* pTask, ExpectedRuntime /*runtime*/)
 {
-    SharedPtr<v8::Task> spTask(pTask);
-    HostObjectHelpers::QueueNativeCallback([spTask]
+    auto pIsolate = v8::Isolate::GetCurrent();
+    if (pIsolate == nullptr)
     {
-        spTask->Run();
-    });
+        pTask->Run();
+        pTask->Delete();
+    }
+    else
+    {
+        static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskAsync(pTask);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -300,7 +305,8 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     m_pStackLimit(nullptr),
     m_pExecutionScope(nullptr),
     m_IsOutOfMemory(false),
-    m_IsExecutionTerminating(false)
+    m_IsExecutionTerminating(false),
+    m_Released(false)
 {
     V8Platform::EnsureInstalled();
 
@@ -580,62 +586,122 @@ void V8IsolateImpl::ReleaseV8Script(void* pvScript)
 
 //-----------------------------------------------------------------------------
 
+void V8IsolateImpl::RunTaskAsync(v8::Task* pTask)
+{
+    if (m_Released)
+    {
+        pTask->Run();
+        pTask->Delete();
+    }
+    else
+    {
+        std::shared_ptr<v8::Task> spTask(pTask, [] (v8::Task* pTask) { pTask->Delete(); });
+        std::weak_ptr<v8::Task> wpTask(spTask);
+
+        BEGIN_MUTEX_SCOPE(m_DataMutex)
+            m_AsyncTasks.push_back(std::move(spTask));
+        END_MUTEX_SCOPE
+
+        auto wrIsolate = CreateWeakRef();
+        HostObjectHelpers::QueueNativeCallback([this, wrIsolate, wpTask] ()
+        {
+            auto spIsolate = wrIsolate.GetTarget();
+            if (!spIsolate.IsEmpty())
+            {
+                auto spTask = wpTask.lock();
+                if (spTask)
+                {
+                    spTask->Run();
+
+                    BEGIN_MUTEX_SCOPE(m_DataMutex)
+                        m_AsyncTasks.erase(std::remove(m_AsyncTasks.begin(), m_AsyncTasks.end(), spTask), m_AsyncTasks.end());
+                    END_MUTEX_SCOPE
+                }
+            }
+        });
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void V8IsolateImpl::RunTaskWithLockAsync(v8::Task* pTask)
 {
-    SharedPtr<v8::Task> spTask(pTask);
-    CallWithLockAsync([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
+    if (m_Released)
     {
-        spTask->Run();
-    });
+        pTask->Run();
+        pTask->Delete();
+    }
+    else
+    {
+        std::shared_ptr<v8::Task> spTask(pTask, [] (v8::Task* pTask) { pTask->Delete(); });
+        CallWithLockAsync([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
+        {
+            spTask->Run();
+        });
+    }
 }
 
 //-----------------------------------------------------------------------------
 
 void V8IsolateImpl::RunTaskWithLockDelayed(v8::Task* pTask, double delayInSeconds)
 {
-    SharedPtr<v8::Task> spTask(pTask);
-
-    auto wrIsolate = CreateWeakRef();
-    SharedPtr<Timer> spTimer(new Timer(static_cast<int>(delayInSeconds * 1000), -1, [this, wrIsolate, spTask] (Timer* pTimer) mutable
+    if (m_Released)
     {
-        if (!spTask.IsEmpty())
+        pTask->Delete();
+    }
+    else
+    {
+        std::shared_ptr<v8::Task> spTask(pTask, [] (v8::Task* pTask) { pTask->Delete(); });
+
+        auto wrIsolate = CreateWeakRef();
+        SharedPtr<Timer> spTimer(new Timer(static_cast<int>(delayInSeconds * 1000), -1, [this, wrIsolate, spTask] (Timer* pTimer) mutable
         {
-            auto spIsolate = wrIsolate.GetTarget();
-            if (!spIsolate.IsEmpty())
+            if (spTask)
             {
-                CallWithLockNoWait([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
+                auto spIsolate = wrIsolate.GetTarget();
+                if (!spIsolate.IsEmpty())
                 {
-                    spTask->Run();
-                });
+                    CallWithLockNoWait([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
+                    {
+                        spTask->Run();
+                    });
 
-                // Release the timer's strong task reference. Doing so avoids a deadlock when
-                // spIsolate's implicit destruction below triggers immediate isolate teardown.
+                    // Release the timer's strong task reference. Doing so avoids a deadlock when
+                    // spIsolate's implicit destruction below triggers immediate isolate teardown.
 
-                spTask.Empty();
+                    spTask.reset();
 
-                // the timer has fired; discard it
+                    // the timer has fired; discard it
 
-                BEGIN_MUTEX_SCOPE(m_DataMutex)
-                    m_TaskTimers.erase(std::remove(m_TaskTimers.begin(), m_TaskTimers.end(), pTimer), m_TaskTimers.end());
-                END_MUTEX_SCOPE
+                    BEGIN_MUTEX_SCOPE(m_DataMutex)
+                        m_TaskTimers.erase(std::remove(m_TaskTimers.begin(), m_TaskTimers.end(), pTimer), m_TaskTimers.end());
+                    END_MUTEX_SCOPE
+                }
+                else
+                {
+                    // Release the timer's strong task reference. Doing so avoids a deadlock if the
+                    // isolate is awaiting task completion on the managed finalization thread.
+
+                    spTask.reset();
+                }
             }
-        }
-    }));
+        }));
 
-    // hold on to the timer to ensure callback execution
+        // hold on to the timer to ensure callback execution
 
-    BEGIN_MUTEX_SCOPE(m_DataMutex)
-        m_TaskTimers.push_back(spTimer);
-    END_MUTEX_SCOPE
+        BEGIN_MUTEX_SCOPE(m_DataMutex)
+            m_TaskTimers.push_back(spTimer);
+        END_MUTEX_SCOPE
 
-    // Release the local task reference explicitly. Doing so avoids a deadlock if the callback is
-    // executed synchronously. That shouldn't happen given the current timer implementation.
+        // Release the local task reference explicitly. Doing so avoids a deadlock if the callback is
+        // executed synchronously. That shouldn't happen given the current timer implementation.
 
-    spTask.Empty();
+        spTask.reset();
 
-    // now it's safe to start the timer
+        // now it's safe to start the timer
 
-    spTimer->Start();
+        spTimer->Start();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -671,16 +737,28 @@ void DECLSPEC_NORETURN V8IsolateImpl::ThrowOutOfMemoryException()
 V8IsolateImpl::~V8IsolateImpl()
 {
     --s_InstanceCount;
+    m_Released = true;
+
+    // Entering the isolate scope triggers call-with-lock queue processing. It should always be
+    // done here, if for no other reason than that it may prevent deadlocks in V8 isolate disposal.
 
     BEGIN_ISOLATE_SCOPE
         DisableDebugging();
     END_ISOLATE_SCOPE
 
     {
+        std::vector<std::shared_ptr<v8::Task>> asyncTasks;
         std::vector<SharedPtr<Timer>> taskTimers;
+
         BEGIN_MUTEX_SCOPE(m_DataMutex)
+            std::swap(asyncTasks, m_AsyncTasks);
             std::swap(taskTimers, m_TaskTimers);
         END_MUTEX_SCOPE
+
+        for (const auto& spTask : asyncTasks)
+        {
+            spTask->Run();
+        }
     }
 
     m_pIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);

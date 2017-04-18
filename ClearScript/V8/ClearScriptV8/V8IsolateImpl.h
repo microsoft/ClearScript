@@ -404,6 +404,7 @@ public:
     void* AddRefV8Script(void* pvScript);
     void ReleaseV8Script(void* pvScript);
 
+    void RunTaskAsync(v8::Task* pTask);
     void RunTaskWithLockAsync(v8::Task* pTask);
     void RunTaskWithLockDelayed(v8::Task* pTask, double delayInSeconds);
 
@@ -437,6 +438,7 @@ private:
     RecursiveMutex m_Mutex;
     std::list<V8ContextImpl*> m_ContextPtrs;
     SimpleMutex m_DataMutex;
+    std::vector<std::shared_ptr<v8::Task>> m_AsyncTasks;
     std::queue<std::function<void(V8IsolateImpl*)>> m_CallWithLockQueue;
     std::vector<SharedPtr<Timer>> m_TaskTimers;
     bool m_DebuggingEnabled;
@@ -453,4 +455,5 @@ private:
     ExecutionScope* m_pExecutionScope;
     std::atomic<bool> m_IsOutOfMemory;
     std::atomic<bool> m_IsExecutionTerminating;
+    std::atomic<bool> m_Released;
 };

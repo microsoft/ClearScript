@@ -233,6 +233,7 @@ public:
 
     T* operator->() const
     {
+        _ASSERTE(m_pTarget != nullptr);
         return m_pTarget;
     }
 
