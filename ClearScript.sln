@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClearScript", "ClearScript\ClearScript.csproj", "{D2382D2C-6576-4D96-B6CD-057C4F6BED96}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClearScriptTest", "ClearScriptTest\ClearScriptTest.csproj", "{EDC7144E-FDA9-4CC7-B2CD-B5EBFD610A7D}"
@@ -36,7 +38,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		ClearScript\doc\FAQtorial.docx = ClearScript\doc\FAQtorial.docx
 		ClearScript\doc\FAQtorial.pdf = ClearScript\doc\FAQtorial.pdf
-		MS-PL.txt = MS-PL.txt
+		License.txt = License.txt
 		ReadMe.txt = ReadMe.txt
 		ClearScript\doc\Reference.chm = ClearScript\doc\Reference.chm
 		Version.tt = Version.tt
@@ -83,7 +85,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{CDCF4EEA-1CA4-412E-8C77-78893A67A577} = {14370560-F9FD-486D-A88E-D22C02576442}
 		{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6} = {14370560-F9FD-486D-A88E-D22C02576442}
+		{CDCF4EEA-1CA4-412E-8C77-78893A67A577} = {14370560-F9FD-486D-A88E-D22C02576442}
 	EndGlobalSection
 EndGlobal
