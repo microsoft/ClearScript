@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -289,6 +290,35 @@ namespace Microsoft.ClearScript.Test
         public void MemberAccess_Method_GetType_Blocked()
         {
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.GetType()"));
+        }
+
+        [TestMethod, TestCategory("MemberAccess")]
+        public void MemberAccess_Method_GetType_Blocked_Exception()
+        {
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute(@"
+                try {
+                    testObject.GetType();
+                }
+                catch (exception)
+                {
+                    exception.hostException.GetType();
+                }
+            "));
+        }
+
+        [TestMethod, TestCategory("MemberAccess")]
+        public void MemberAccess_Method_GetType_Blocked_Exception_Interface()
+        {
+            engine.AddHostType(typeof(_Exception));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute(@"
+                try {
+                    testObject.GetType();
+                }
+                catch (exception)
+                {
+                    host.cast(_Exception, exception.hostException).GetType();
+                }
+            "));
         }
 
         [TestMethod, TestCategory("MemberAccess")]

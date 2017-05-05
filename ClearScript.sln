@@ -36,10 +36,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "V8", "V8", "{14370560-F9FD-
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5488F9BE-286E-459B-8384-E9EDA331BD5B}"
 	ProjectSection(SolutionItems) = preProject
+		Build.txt = Build.txt
 		ClearScript\doc\FAQtorial.docx = ClearScript\doc\FAQtorial.docx
 		ClearScript\doc\FAQtorial.pdf = ClearScript\doc\FAQtorial.pdf
 		License.txt = License.txt
-		ReadMe.txt = ReadMe.txt
+		ReadMe.md = ReadMe.md
 		ClearScript\doc\Reference.chm = ClearScript\doc\Reference.chm
 		Version.tt = Version.tt
 	EndProjectSection
