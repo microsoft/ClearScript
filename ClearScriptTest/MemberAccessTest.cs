@@ -209,6 +209,12 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("MemberAccess")]
+        public void MemberAccess_Property_Blocked()
+        {
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("host.proc(0, function () {}).Method"));
+        }
+
+        [TestMethod, TestCategory("MemberAccess")]
         public void MemberAccess_ReadOnlyProperty()
         {
             Assert.AreEqual(testObject.ReadOnlyProperty, (int)engine.Evaluate("testObject.ReadOnlyProperty"));

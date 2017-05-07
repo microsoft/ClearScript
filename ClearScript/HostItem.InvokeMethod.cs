@@ -480,7 +480,7 @@ namespace Microsoft.ClearScript
 
             public override object Invoke(HostItem hostItem)
             {
-                if (reflectionMethods.Contains(method))
+                if (reflectionMethods.Contains(method, MemberComparer<MethodInfo>.Instance))
                 {
                     hostItem.Engine.CheckReflection();
                 }

@@ -31,7 +31,9 @@ namespace Microsoft.ClearScript.Util
 
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool FreeLibrary(IntPtr hLibrary);
+        public static extern bool FreeLibrary(
+            [In] IntPtr hLibrary
+        );
 
         [DllImport("ole32.dll", ExactSpelling = true)]
         public static extern uint CLSIDFromProgID(
@@ -86,9 +88,13 @@ namespace Microsoft.ClearScript.Util
         );
 
         [DllImport("kernel32.dll", SetLastError = false)]
-        public static extern void GetSystemInfo(out SystemInfo info);
+        public static extern void GetSystemInfo(
+            [Out] out SystemInfo info
+        );
 
         [DllImport("kernel32.dll")]
-        public static extern void GetNativeSystemInfo(out SystemInfo info);
+        public static extern void GetNativeSystemInfo(
+            [Out] out SystemInfo info
+        );
     }
 }

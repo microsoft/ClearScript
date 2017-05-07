@@ -32,6 +32,11 @@ namespace Microsoft.ClearScript
         internal static bool EnableVTablePatching;
         [ThreadStatic] private static bool bypassVTablePatching;
 
+        private static readonly PropertyInfo[] reflectionProperties =
+        {
+            typeof(Delegate).GetProperty("Method")
+        };
+
         #endregion
 
         #region constructors
@@ -1389,6 +1394,11 @@ namespace Microsoft.ClearScript
 
         private object GetHostProperty(PropertyInfo property, BindingFlags invokeFlags, object[] args, CultureInfo culture)
         {
+            if (reflectionProperties.Contains(property, MemberComparer<PropertyInfo>.Instance))
+            {
+                engine.CheckReflection();
+            }
+
             if (property.GetGetMethod(invokeFlags.HasFlag(BindingFlags.NonPublic)) == null)
             {
                 throw new UnauthorizedAccessException("Property get method is unavailable or inaccessible");
