@@ -105,10 +105,14 @@ using (var engine = new V8ScriptEngine())
 ```
 
 # Tutorial
-A [PDF](https://en.wikipedia.org/wiki/Portable_Document_Format) tutorial is available [here](https://github.com/Microsoft/ClearScript/blob/master/ClearScript/doc/FAQtorial.pdf).
+View a [PDF](https://en.wikipedia.org/wiki/Portable_Document_Format) tutorial [here](https://github.com/Microsoft/ClearScript/blob/master/ClearScript/doc/FAQtorial.pdf).
+
+Click [here](https://github.com/Microsoft/ClearScript/raw/master/ClearScript/doc/FAQtorial.docx) to download a copy in [Word](https://en.wikipedia.org/wiki/Microsoft_Word) format.
 
 # Reference
-The ClearScript Library Reference, in [CHM](https://en.wikipedia.org/wiki/Microsoft_Compiled_HTML_Help) format, is available [here](https://github.com/Microsoft/ClearScript/blob/master/ClearScript/doc/Reference.chm). If you get a security warning when you open this file, uncheck "Always ask before opening this file".
+Browse the ClearScript Library Reference [here](https://microsoft.github.io/ClearScript/Reference/index.html).
+
+Click [here](https://github.com/Microsoft/ClearScript/raw/master/ClearScript/doc/Reference.chm) to download the reference in [CHM](https://en.wikipedia.org/wiki/Microsoft_Compiled_HTML_Help) format. If you get a security warning when you open this file, uncheck "Always ask before opening this file".
 
 # Project Details
 See [here](https://github.com/Microsoft/ClearScript/blob/master/Build.txt) for information about building, integrating, and deploying ClearScript.
