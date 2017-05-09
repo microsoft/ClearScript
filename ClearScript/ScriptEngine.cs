@@ -126,7 +126,8 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// When this property is set to <c>true</c>, script code running in the current script
         /// engine is permitted to use reflection. This affects
-        /// <see cref="System.Object.GetType"/>, <see cref="HostFunctions.typeOf(object)"/> and
+        /// <see cref="System.Object.GetType"/>, <see cref="System.Exception.GetType"/>,
+        /// <see cref="System.Delegate.Method"/>, <see cref="HostFunctions.typeOf(object)"/> and
         /// <see cref="HostFunctions.typeOf{T}"/>. By default, any attempt to invoke these methods
         /// from script code results in an exception.
         /// </remarks>

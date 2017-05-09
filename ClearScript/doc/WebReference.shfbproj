@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <!-- The configuration and platform will be used to determine which
+         assemblies to include from solution and project documentation
+         sources -->
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{5e8abcfa-8cbd-4d77-bfcc-d396e945a10e}</ProjectGuid>
+    <SHFBSchemaVersion>2015.6.5.0</SHFBSchemaVersion>
+    <!-- AssemblyName, Name, and RootNamespace are not used by SHFB but Visual
+         Studio adds them anyway -->
+    <AssemblyName>Documentation</AssemblyName>
+    <RootNamespace>Documentation</RootNamespace>
+    <Name>Documentation</Name>
+    <!-- SHFB properties -->
+    <OutputPath>..\..\docs\Reference\</OutputPath>
+    <HtmlHelpName>Reference</HtmlHelpName>
+    <Language>en-US</Language>
+    <HelpTitle>ClearScript Library</HelpTitle>
+    <DocumentationSources>
+      <DocumentationSource sourceFile="..\ClearScript.csproj" />
+    </DocumentationSources>
+    <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, SealedProtected</VisibleItems>
+    <MissingTags>Summary, Parameter, Returns, TypeParameter</MissingTags>
+    <FeedbackEMailAddress>ClearScript%40microsoft.com</FeedbackEMailAddress>
+    <FeedbackEMailLinkText>Microsoft</FeedbackEMailLinkText>
+    <FrameworkVersion>.NET Framework 4.0</FrameworkVersion>
+    <PresentationStyle>VS2013</PresentationStyle>
+    <Preliminary>False</Preliminary>
+    <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>
+    <HelpFileFormat>Website</HelpFileFormat>
+    <IndentHtml>False</IndentHtml>
+    <KeepLogFile>True</KeepLogFile>
+    <DisableCodeBlockComponent>False</DisableCodeBlockComponent>
+    <CppCommentsFixup>False</CppCommentsFixup>
+    <CleanIntermediates>True</CleanIntermediates>
+    <SyntaxFilters>Standard</SyntaxFilters>
+    <SdkLinkTarget>Blank</SdkLinkTarget>
+    <RootNamespaceContainer>True</RootNamespaceContainer>
+    <NamingMethod>MemberName</NamingMethod>
+    <ContentPlacement>AboveNamespaces</ContentPlacement>
+    <CopyrightText>Copyright &amp;#169%3b Microsoft Corporation. All rights reserved.</CopyrightText>
+    <NamespaceSummaries>
+      <NamespaceSummaryItem name="Microsoft.ClearScript" isDocumented="True">The Microsoft.ClearScript namespace contains types that support all script engines.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Microsoft.ClearScript.V8" isDocumented="True">The Microsoft.ClearScript.V8 namespace contains types that provide access to the V8 high-performance open-source JavaScript engine.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Microsoft.ClearScript.Windows" isDocumented="True">The Microsoft.ClearScript.Windows namespace contains types that provide access to Windows Script engines such as JScript and VBScript.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="(global)" isDocumented="False" />
+      <NamespaceSummaryItem name="Microsoft.ClearScript.JavaScript" isDocumented="True">The Microsoft.ClearScript.JavaScript namespace contains types that provide access to JavaScript-specific features.</NamespaceSummaryItem>
+    </NamespaceSummaries>
+    <RootNamespaceTitle>ClearScript Library Reference</RootNamespaceTitle>
+    <ProjectSummary>The ClearScript library makes it easy to add scripting to your .NET applications.</ProjectSummary>
+    <MaximumGroupParts>2</MaximumGroupParts>
+    <NamespaceGrouping>False</NamespaceGrouping>
+    <HelpFileVersion>1.0.0.0</HelpFileVersion>
+    <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
+    <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
+  </PropertyGroup>
+  <!-- There are no properties for these groups.  AnyCPU needs to appear in
+       order for Visual Studio to perform the build.  The others are optional
+       common platform types that may appear. -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Win32' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Win32' ">
+  </PropertyGroup>
+  <!-- Import the SHFB build targets -->
+  <Import Project="$(SHFBROOT)\SandcastleHelpFileBuilder.targets" />
+</Project>
