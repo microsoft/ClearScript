@@ -105,7 +105,7 @@ using (var engine = new V8ScriptEngine())
 ```
 
 # Tutorial
-View a [PDF](https://en.wikipedia.org/wiki/Portable_Document_Format) tutorial [here](https://github.com/Microsoft/ClearScript/blob/master/ClearScript/doc/FAQtorial.pdf).
+A [PDF](https://en.wikipedia.org/wiki/Portable_Document_Format) tutorial is available [here](https://github.com/Microsoft/ClearScript/blob/master/ClearScript/doc/FAQtorial.pdf).
 
 Click [here](https://github.com/Microsoft/ClearScript/raw/master/ClearScript/doc/FAQtorial.docx) to download a copy in [Word](https://en.wikipedia.org/wiki/Microsoft_Word) format.
 
