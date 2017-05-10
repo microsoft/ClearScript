@@ -1,7 +1,7 @@
-<html>
+ï»¿<html>
 
 <head>
-<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
 <meta name=Generator content="Microsoft Word 15 (filtered)">
 <title>ClearScript FAQtorial</title>
 <style>
@@ -191,12 +191,12 @@ ul
 
 </div>
 
-<h1 style='margin-left:.25in;text-indent:-.25in'>1. What’s a FAQtorial?</h1>
+<h1 style='margin-left:.25in;text-indent:-.25in'>1. Whatâ€™s a FAQtorial?</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>It’s a tutorial in the form of questions
-and answers. It may look like a FAQ list, but it’s really a guide.</p>
+<p class=MsoNormal style='margin-left:.25in'>Itâ€™s a tutorial in the form of questions
+and answers. It may look like a FAQ list, but itâ€™s really a guide.</p>
 
-<h1 style='margin-left:.25in;text-indent:-.25in'>2. OK, so what’s ClearScript?</h1>
+<h1 style='margin-left:.25in;text-indent:-.25in'>2. OK, so whatâ€™s ClearScript?</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>ClearScript is a library that
 allows you to add scripting to your .NET applications. It supports JScript and
@@ -210,10 +210,10 @@ high-performance open-source JavaScript engine. Unlike Windows Script engine
 instances, V8 instances have no thread affinity and are suitable for
 server-side asynchronous scripting.</p>
 
-<h1 style='margin-left:.25in;text-indent:-.25in'>3. Hasn’t that been done
+<h1 style='margin-left:.25in;text-indent:-.25in'>3. Hasnâ€™t that been done
 before?</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>Perhaps, but sometimes it’s fun to
+<p class=MsoNormal style='margin-left:.25in'>Perhaps, but sometimes itâ€™s fun to
 start something from scratch and see how far you can take it.</p>
 
 <h1 style='margin-left:.25in;text-indent:-.25in'>4. Why would I want to add
@@ -225,28 +225,28 @@ extension. The ability to automate an application may be desirable for testing p
 or for running complex jobs. Another goal might be to process active content
 that includes embedded scripts, such as web pages.</p>
 
-<h1 style='margin-left:.25in;text-indent:-.25in'>5. Doesn’t .NET have its own
+<h1 style='margin-left:.25in;text-indent:-.25in'>5. Doesnâ€™t .NET have its own
 scripting technologies?</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>Yes, but they’re designed for a
+<p class=MsoNormal style='margin-left:.25in'>Yes, but theyâ€™re designed for a
 different purpose. They typically introduce numerous language extensions in
-order to “retarget” standard script languages for full-blown .NET development.
-That is <i>not</i> ClearScript’s goal. ClearScript focuses on adding
+order to â€œretargetâ€ standard script languages for full-blown .NET development.
+That is <i>not</i> ClearScriptâ€™s goal. ClearScript focuses on adding
 standards-based scripting to <i>existing</i> .NET applications with minimal
 effort.</p>
 
-<h1 style='margin-left:.25in;text-indent:-.25in'>6. OK, but if it’s been done
-before, what’s so special about ClearScript?</h1>
+<h1 style='margin-left:.25in;text-indent:-.25in'>6. OK, but if itâ€™s been done
+before, whatâ€™s so special about ClearScript?</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>ClearScript is all about
-simplicity. It’s one line of code to instantiate a script engine, another to
+simplicity. Itâ€™s one line of code to instantiate a script engine, another to
 expose a host resource for scripting, and one more to execute a script. You
-don’t worry about implementing hosting interfaces, creating scriptable proxies,
+donâ€™t worry about implementing hosting interfaces, creating scriptable proxies,
 decorating class members, etc.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>Because it aims to make existing applications
 scriptable without modification or special coding, ClearScript works hard to give
-script code the ability to access a long list of .NET features – constructors,
+script code the ability to access a long list of .NET features â€“ constructors,
 methods, properties, fields, events, indexers, extension methods, nested types,
 output parameters, statics, generics, enums, delegates, etc. It does this
 without introducing special syntax or requiring script language extensions of
@@ -265,7 +265,7 @@ for applications that use its new V8-based JavaScript engine.</p>
 instantiate a script engine with ClearScript?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
-margin-left:.25in'>You simply “new up” a class instance:</p>
+margin-left:.25in'>You simply â€œnew upâ€ a class instance:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
 background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
@@ -285,7 +285,7 @@ font-family:Consolas'> <b>Microsoft.ClearScript.V8</b>;</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas'>…</span></p>
+font-family:Consolas'>â€¦</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F2F2F2;
@@ -298,7 +298,7 @@ engine = <span style='color:blue'>new</span> <b><span style='color:#2B91AF'>V8Sc
 only its built-in objects and functions and has no access to the host
 application.</p>
 
-<h1 style='margin-left:.25in;text-indent:-.25in'>8. That’s not very useful; how
+<h1 style='margin-left:.25in;text-indent:-.25in'>8. Thatâ€™s not very useful; how
 do I expose my host API for scripting?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
@@ -322,7 +322,7 @@ font-family:Consolas'> System;</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas'>…</span></p>
+font-family:Consolas'>â€¦</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
@@ -339,14 +339,14 @@ style='color:#2B91AF'>Console</span>));</span></p>
 
 <p class=MsoNormal style='margin-top:14.0pt;margin-right:0in;margin-bottom:
 0in;margin-left:.25in;margin-bottom:.0001pt'>The script engine now contains two
-root-level objects – a <i>host object</i> and a <i>host type</i> – that provide
+root-level objects â€“ a <i>host object</i> and a <i>host type</i> â€“ that provide
 access to the corresponding host resources.</p>
 
 <h1 style='margin-left:.25in;text-indent:-.25in'>9. What can script code do
 with a host object?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
-margin-left:.25in'>It can access the object’s public members directly:</p>
+margin-left:.25in'>It can access the objectâ€™s public members directly:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
 background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
@@ -372,7 +372,7 @@ color:#A31515'>var uriString = <b>uri.ToString</b>();</span></p>
 with a host type?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
-margin-left:.25in'>It can access the type’s static members and nested types
+margin-left:.25in'>It can access the typeâ€™s static members and nested types
 directly:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
@@ -399,7 +399,7 @@ font-family:Consolas;color:#A31515'> = 'Please wait...';</span></p>
 
 <p class=MsoNormal style='margin-top:14.0pt;margin-right:0in;margin-bottom:
 0in;margin-left:.25in;margin-bottom:.0001pt'>Host types can also be used to
-invoke constructors and specify generic type arguments. There’ll be more on
+invoke constructors and specify generic type arguments. Thereâ€™ll be more on
 that later.</p>
 
 <h1 style='margin-left:.25in;text-indent:-.25in'>11. Once my host API is
@@ -434,7 +434,7 @@ result = engine.<b>Evaluate</b>(<span style='color:#A31515'>&quot;Math.sqrt(Math
 methods for running scripts?</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>Some script languages have ambiguous
-syntactic elements whose meaning depends on whether they’re part of a statement
+syntactic elements whose meaning depends on whether theyâ€™re part of a statement
 or an expression. For example, in VBScript a single equals sign is used for
 both assignment (statement) and equality testing (expression). To resolve this
 ambiguity the host must establish the syntactic context for script execution. <b><span
@@ -443,7 +443,7 @@ interprets script code in a statement context, while <b><span style='font-size:
 10.0pt;line-height:115%;font-family:Consolas'>Evaluate</span></b> treats code
 as an expression.</p>
 
-<h1 style='margin-left:.25in;text-indent:-.25in'>13. You’ve covered host
+<h1 style='margin-left:.25in;text-indent:-.25in'>13. Youâ€™ve covered host
 methods and properties. What about fields?</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>To script code, the public fields
@@ -454,7 +454,7 @@ methods?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
 margin-left:.25in'>ClearScript supports C#-like type inference, so you can call
-most generic methods just as you’d call them from C#. However, some generic
+most generic methods just as youâ€™d call them from C#. However, some generic
 methods require explicit type arguments. To call such a method from script
 code, place the required number of host types at the beginning of the argument
 list. For example, suppose the host exposes the following types:</p>
@@ -464,7 +464,7 @@ background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
 
 <p class=MsoNormal style='line-height:normal;page-break-after:avoid;background:
 #C6D9F1;text-autospace:none;border:none;padding:0in'><span style='font-size:
-10.0pt;font-family:Consolas'>Host – C#</span></p>
+10.0pt;font-family:Consolas'>Host â€“ C#</span></p>
 
 </div>
 
@@ -483,7 +483,7 @@ font-family:Consolas'> System.Linq;</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas'>…</span></p>
+font-family:Consolas'>â€¦</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
@@ -498,7 +498,7 @@ style='color:#A31515'>&quot;Enumerable&quot;</span>, <span style='color:blue'>ty
 style='color:#2B91AF'>Enumerable</span>));</span></p>
 
 <p class=MsoNormal style='margin-top:14.0pt;margin-right:0in;margin-bottom:
-10.0pt;margin-left:.25in'>Here’s how to call the <a
+10.0pt;margin-left:.25in'>Hereâ€™s how to call the <a
 href="http://msdn.microsoft.com/en-us/library/bb341042.aspx"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>Enumerable.Empty</span></b></a>
 generic method from script code:</p>
@@ -523,7 +523,7 @@ methods?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
 margin-left:.25in'>Extension methods are available if the type that implements
-them has been exposed. Continuing the previous example, here’s script code that
+them has been exposed. Continuing the previous example, hereâ€™s script code that
 calls the <a href="http://msdn.microsoft.com/en-us/library/bb298736.aspx"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>Enumerable.ToArray</span></b></a>
 extension method:</p>
@@ -546,7 +546,7 @@ color:#A31515'>var numbers = Enumerable.Range(0, 10).<b>ToArray()</b>;</span></p
 0in;margin-left:.25in;margin-bottom:.0001pt'>Note that <a
 href="http://msdn.microsoft.com/en-us/library/bb298736.aspx"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>Enumerable.ToArray</span></b></a>
-is a generic extension method whose type argument is inferred from its “this”
+is a generic extension method whose type argument is inferred from its â€œthisâ€
 argument. As you can see, ClearScript allows you to call it using the same
 convenient syntax as C#.</p>
 
@@ -554,7 +554,7 @@ convenient syntax as C#.</p>
 using a script function?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
-margin-left:.25in'>Yes. Here’s how to connect a host event source to a script
+margin-left:.25in'>Yes. Hereâ€™s how to connect a host event source to a script
 handler function:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
@@ -575,7 +575,7 @@ Console.CancelKeyPress.<b>connect</b>(function (sender, args) {</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas;color:#A31515'>    Console.WriteLine('{0} pressed!',
+font-family:Consolas;color:#A31515'>Â Â Â  Console.WriteLine('{0} pressed!',
 args.SpecialKey);</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
@@ -614,7 +614,7 @@ background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
 
 <p class=MsoNormal style='line-height:normal;page-break-after:avoid;background:
 #C6D9F1;text-autospace:none;border:none;padding:0in'><span style='font-size:
-10.0pt;font-family:Consolas'>Host – C#</span></p>
+10.0pt;font-family:Consolas'>Host â€“ C#</span></p>
 
 </div>
 
@@ -633,7 +633,7 @@ font-family:Consolas'> Microsoft.ClearScript;</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas'>…</span></p>
+font-family:Consolas'>â€¦</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
@@ -696,7 +696,7 @@ color:#A31515'>var newUri = <b>new Uri</b>('http://www.example.com');</span></p>
 .25in;margin-bottom:.0001pt;text-indent:-.25in'>18. What about an array?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
-margin-left:.25in'>There’s a utility function for creating host arrays, too:</p>
+margin-left:.25in'>Thereâ€™s a utility function for creating host arrays, too:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
 background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
@@ -722,7 +722,7 @@ object implements <a
 href="http://msdn.microsoft.com/en-us/library/system.collections.ilist.aspx"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>System.Collections.IList</span></b></a>,
 ClearScript exposes read/write properties with numeric names that match the
-object’s valid indices:</p>
+objectâ€™s valid indices:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
 background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
@@ -745,7 +745,7 @@ color:#A31515'>uriArray[</span></b><span style='font-size:10.0pt;font-family:
 Consolas;color:#A31515'>1<b>]</b> = firstUri;</span></p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-.25in;margin-bottom:.0001pt;text-indent:-.25in'>20.  Can I call methods with
+.25in;margin-bottom:.0001pt;text-indent:-.25in'>20. Â Can I call methods with
 output parameters from script code?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
@@ -756,7 +756,7 @@ background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
 
 <p class=MsoNormal style='line-height:normal;page-break-after:avoid;background:
 #C6D9F1;text-autospace:none;border:none;padding:0in'><span style='font-size:
-10.0pt;font-family:Consolas'>Host – C#</span></p>
+10.0pt;font-family:Consolas'>Host â€“ C#</span></p>
 
 </div>
 
@@ -769,7 +769,7 @@ font-family:Consolas'> System.Collections.Generic;</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas'>…</span></p>
+font-family:Consolas'>â€¦</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F2F2F2;
@@ -807,7 +807,7 @@ font-family:Consolas;color:#A31515'>if (dict.TryGetValue('key', <b>uriVar.out</b
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas;color:#A31515'>    Console.WriteLine('Found Uri value:
+font-family:Consolas;color:#A31515'>Â Â Â  Console.WriteLine('Found Uri value:
 {0}.', <b>uriVar</b>);</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
@@ -826,7 +826,7 @@ href="http://msdn.microsoft.com/en-us/library/14akc2c7.aspx"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ref</span></b></a>
 parameters. The second is <b><span style='font-size:10.0pt;line-height:115%;
 font-family:Consolas'>value</span></b>, which provides read/write access to the
-value stored within the variable. If you’re passing a variable into an input
+value stored within the variable. If youâ€™re passing a variable into an input
 parameter, invoking <b><span style='font-size:10.0pt;line-height:115%;
 font-family:Consolas'>value</span></b> is unnecessary.</p>
 
@@ -842,7 +842,7 @@ background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
 
 <p class=MsoNormal style='line-height:normal;page-break-after:avoid;background:
 #C6D9F1;text-autospace:none;border:none;padding:0in'><span style='font-size:
-10.0pt;font-family:Consolas'>Host – C#</span></p>
+10.0pt;font-family:Consolas'>Host â€“ C#</span></p>
 
 </div>
 
@@ -855,7 +855,7 @@ font-family:Consolas'> System.Threading;</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas'>…</span></p>
+font-family:Consolas'>â€¦</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
@@ -891,7 +891,7 @@ function (state) {</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas;color:#A31515'>    Console.WriteLine('Timer fired: {0}.',
+font-family:Consolas;color:#A31515'>Â Â Â  Console.WriteLine('Timer fired: {0}.',
 state);</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
@@ -931,13 +931,13 @@ background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas;color:#A31515'>var callback =  <b>new TimerCallback</b>(function
+font-family:Consolas;color:#A31515'>var callback =Â  <b>new TimerCallback</b>(function
 (state) {</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas;color:#A31515'>    Console.WriteLine('Timer fired: {0}.',
+font-family:Consolas;color:#A31515'>Â Â Â  Console.WriteLine('Timer fired: {0}.',
 state);</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
@@ -971,7 +971,7 @@ font-family:Consolas'> Microsoft.ClearScript;</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas'>…</span></p>
+font-family:Consolas'>â€¦</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
@@ -1079,14 +1079,14 @@ color:#A31515'>myDictionary.Add('foo', 123);</span></p>
 from script code?</h1>
 
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
-margin-left:.25in'>Not without the host’s explicit permission:</p>
+margin-left:.25in'>Not without the hostâ€™s explicit permission:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
 background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
 
 <p class=MsoNormal style='line-height:normal;page-break-after:avoid;background:
 #C6D9F1;text-autospace:none;border:none;padding:0in'><span style='font-size:
-10.0pt;font-family:Consolas'>Host – C#</span></p>
+10.0pt;font-family:Consolas'>Host â€“ C#</span></p>
 
 </div>
 
@@ -1099,7 +1099,7 @@ font-family:Consolas'> Microsoft.ClearScript;</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas'>…</span></p>
+font-family:Consolas'>â€¦</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F2F2F2;
@@ -1173,7 +1173,7 @@ functions and access script objects directly?</h1>
 margin-left:.25in'>Yes. ClearScript provides a <a
 href="http://msdn.microsoft.com/en-us/library/dd264736.aspx">dynamic</a>
 property named <b><span style='font-size:10.0pt;line-height:115%;font-family:
-Consolas'>Script</span></b> that represents a script engine’s root-level
+Consolas'>Script</span></b> that represents a script engineâ€™s root-level
 namespace. Consider the following script:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
@@ -1193,7 +1193,7 @@ font-family:Consolas;color:#A31515'>function myFunc(x, y, z) {</span></p>
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
 margin-left:.5in;margin-bottom:.0001pt;line-height:normal;page-break-after:
 avoid;background:#F2F2F2;text-autospace:none'><span style='font-size:10.0pt;
-font-family:Consolas;color:#A31515'>    return { xValue: x, yValue: y, zValue:
+font-family:Consolas;color:#A31515'>Â Â Â  return { xValue: x, yValue: y, zValue:
 z };</span></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:.5in;margin-bottom:0in;
@@ -1211,7 +1211,7 @@ background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
 
 <p class=MsoNormal style='line-height:normal;page-break-after:avoid;background:
 #C6D9F1;text-autospace:none;border:none;padding:0in'><span style='font-size:
-10.0pt;font-family:Consolas'>Host – C#</span></p>
+10.0pt;font-family:Consolas'>Host â€“ C#</span></p>
 
 </div>
 
@@ -1224,9 +1224,9 @@ color:blue'>var</span><span style='font-size:10.0pt;font-family:Consolas'> yValu
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .25in;margin-bottom:.0001pt;text-indent:-.25in'>26. How do I debug script code?</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>If you’re using ClearScript with JScript,
+<p class=MsoNormal style='margin-left:.25in'>If youâ€™re using ClearScript with JScript,
 VBScript, or another Windows Script engine, you can use Visual Studio to debug
-your application in script mode. If you’re using ClearScript’s new V8-based JavaScript
+your application in script mode. If youâ€™re using ClearScriptâ€™s new V8-based JavaScript
 engine, your best option is <a href="http://www.eclipse.org/">Eclipse</a> combined
 with <a href="http://code.google.com/p/chromedevtools/">Google Chrome Developer
 Tools for Java</a>. Best of all is that you can attach both Visual Studio and
