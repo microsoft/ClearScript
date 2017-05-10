@@ -1,0 +1,564 @@
+<html>
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=Generator content="Microsoft Word 15 (filtered)">
+<title>ClearScript Examples</title>
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+@font-face
+	{font-family:"Calibri Light";
+	panose-1:2 15 3 2 2 2 4 3 2 4;}
+@font-face
+	{font-family:Consolas;
+	panose-1:2 11 6 9 2 2 4 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin-top:0in;
+	margin-right:0in;
+	margin-bottom:8.0pt;
+	margin-left:0in;
+	line-height:107%;
+	font-size:11.0pt;
+	font-family:"Calibri",sans-serif;}
+p.MsoHeader, li.MsoHeader, div.MsoHeader
+	{mso-style-link:"Header Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:11.0pt;
+	font-family:"Calibri",sans-serif;}
+p.MsoFooter, li.MsoFooter, div.MsoFooter
+	{mso-style-link:"Footer Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:11.0pt;
+	font-family:"Calibri",sans-serif;}
+p.MsoTitle, li.MsoTitle, div.MsoTitle
+	{mso-style-link:"Title Char";
+	margin-top:6.0pt;
+	margin-right:0in;
+	margin-bottom:15.0pt;
+	margin-left:0in;
+	border:none;
+	padding:0in;
+	font-size:26.0pt;
+	font-family:"Calibri Light",sans-serif;
+	color:#323E4F;
+	letter-spacing:.25pt;}
+p.MsoTitleCxSpFirst, li.MsoTitleCxSpFirst, div.MsoTitleCxSpFirst
+	{mso-style-link:"Title Char";
+	margin-top:6.0pt;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:0in;
+	margin-bottom:.0001pt;
+	border:none;
+	padding:0in;
+	font-size:26.0pt;
+	font-family:"Calibri Light",sans-serif;
+	color:#323E4F;
+	letter-spacing:.25pt;}
+p.MsoTitleCxSpMiddle, li.MsoTitleCxSpMiddle, div.MsoTitleCxSpMiddle
+	{mso-style-link:"Title Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	border:none;
+	padding:0in;
+	font-size:26.0pt;
+	font-family:"Calibri Light",sans-serif;
+	color:#323E4F;
+	letter-spacing:.25pt;}
+p.MsoTitleCxSpLast, li.MsoTitleCxSpLast, div.MsoTitleCxSpLast
+	{mso-style-link:"Title Char";
+	margin-top:0in;
+	margin-right:0in;
+	margin-bottom:15.0pt;
+	margin-left:0in;
+	border:none;
+	padding:0in;
+	font-size:26.0pt;
+	font-family:"Calibri Light",sans-serif;
+	color:#323E4F;
+	letter-spacing:.25pt;}
+span.TitleChar
+	{mso-style-name:"Title Char";
+	mso-style-link:Title;
+	font-family:"Calibri Light",sans-serif;
+	color:#323E4F;
+	letter-spacing:.25pt;}
+span.HeaderChar
+	{mso-style-name:"Header Char";
+	mso-style-link:Header;}
+span.FooterChar
+	{mso-style-name:"Footer Char";
+	mso-style-link:Footer;}
+.MsoChpDefault
+	{font-family:"Calibri",sans-serif;}
+.MsoPapDefault
+	{margin-bottom:8.0pt;
+	line-height:107%;}
+ /* Page Definitions */
+ @page WordSection1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+	{page:WordSection1;}
+-->
+</style>
+
+</head>
+
+<body lang=EN-US style="background-color: gray">
+
+<div class=WordSection1 style="width: 8in; margin: auto; zoom: 1.25; background-color: white; padding: .25in">
+
+<div style='border:none;border-bottom:solid #4472C4 1.0pt;padding:0in 0in 4.0pt 0in'>
+
+<p class=MsoTitle style='margin-top:0in'>ClearScript Examples</p>
+
+</div>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>using</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'> System;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>using</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'> Microsoft.ClearScript.JavaScript;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>using</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'> Microsoft.ClearScript.V8;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// create a script engine</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>using</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'> (</span><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>var</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'> engine = </span><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>new</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'> </span><span style='font-size:9.5pt;font-family:Consolas;
+color:#2B91AF'>V8ScriptEngine</span><span style='font-size:9.5pt;font-family:
+Consolas;color:black'>())</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>{</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// expose a host type</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.AddHostType(</span><span style='font-size:9.5pt;
+font-family:Consolas;color:#A31515'>&quot;Console&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>, </span><span
+style='font-size:9.5pt;font-family:Consolas;color:blue'>typeof</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>(</span><span
+style='font-size:9.5pt;font-family:Consolas;color:#2B91AF'>Console</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>));</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:#A31515'>&quot;Console.WriteLine('{0} is an interesting
+number.', Math.PI)&quot;</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// expose a host object</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.AddHostObject(</span><span style='font-size:9.5pt;
+font-family:Consolas;color:#A31515'>&quot;random&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>, </span><span
+style='font-size:9.5pt;font-family:Consolas;color:blue'>new</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'> </span><span
+style='font-size:9.5pt;font-family:Consolas;color:#2B91AF'>Random</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>());</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:#A31515'>&quot;Console.WriteLine(random.NextDouble())&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// expose entire assemblies</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.AddHostObject(</span><span style='font-size:9.5pt;
+font-family:Consolas;color:#A31515'>&quot;lib&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>, </span><span
+style='font-size:9.5pt;font-family:Consolas;color:blue'>new</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'> </span><span
+style='font-size:9.5pt;font-family:Consolas;color:#2B91AF'>HostTypeCollection</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>(</span><span
+style='font-size:9.5pt;font-family:Consolas;color:#A31515'>&quot;mscorlib&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>, </span><span
+style='font-size:9.5pt;font-family:Consolas;color:#A31515'>&quot;System.Core&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>));</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:#A31515'>&quot;Console.WriteLine(lib.System.DateTime.Now)&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// create a host object from script</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:maroon'>@&quot;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        birthday = new lib.System.DateTime(2007, 5, 22);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        Console.WriteLine(birthday.ToLongDateString());</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>    &quot;</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// use a generic class from script</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:maroon'>@&quot;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        Dictionary = lib.System.Collections.Generic.Dictionary;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        dict = new Dictionary(lib.System.String,
+lib.System.Int32);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        dict.Add('foo', 123);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>    &quot;</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// call a host method with an output parameter</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.AddHostObject(</span><span style='font-size:9.5pt;
+font-family:Consolas;color:#A31515'>&quot;host&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>, </span><span
+style='font-size:9.5pt;font-family:Consolas;color:blue'>new</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'> </span><span
+style='font-size:9.5pt;font-family:Consolas;color:#2B91AF'>HostFunctions</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>());</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:maroon'>@&quot;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        intVar = host.newVar(lib.System.Int32);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        found = dict.TryGetValue('foo', intVar.out);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        Console.WriteLine('{0} {1}', found, intVar);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>    &quot;</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// create and populate a host array</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:maroon'>@&quot;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        numbers = host.newArr(lib.System.Int32, 20);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        for (var i = 0; i &lt; numbers.Length; i++) { numbers[i]
+= i; }</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        Console.WriteLine(lib.System.String.Join(', ', numbers));</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>    &quot;</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// create a script delegate</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:maroon'>@&quot;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        Filter = lib.System.Func(lib.System.Int32,
+lib.System.Boolean);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        oddFilter = new Filter(function(value) {</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>            return (value &amp; 1) ? true : false;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        });</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>    &quot;</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// use LINQ from script</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:maroon'>@&quot;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        oddNumbers = numbers.Where(oddFilter);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        Console.WriteLine(lib.System.String.Join(', ',
+oddNumbers));</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>    &quot;</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// use a dynamic host object</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:maroon'>@&quot;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        expando = new lib.System.Dynamic.ExpandoObject();</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        expando.foo = 123;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        expando.bar = 'qux';</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>        delete expando.foo;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:maroon'>    &quot;</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// call a script function</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:#A31515'>&quot;function print(x) { Console.WriteLine(x); }&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Script.print(</span><span style='font-size:9.5pt;
+font-family:Consolas;color:#2B91AF'>DateTime</span><span style='font-size:9.5pt;
+font-family:Consolas;color:black'>.Now.DayOfWeek);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// examine a script object</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:#A31515'>&quot;person = { name: 'Fred', age: 5 }&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:#2B91AF'>Console</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>.WriteLine(engine.Script.person.name);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:green'>// read a JavaScript typed array</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    engine.Execute(</span><span style='font-size:9.5pt;font-family:
+Consolas;color:#A31515'>&quot;values = new Int32Array([1, 2, 3, 4, 5])&quot;</span><span
+style='font-size:9.5pt;font-family:Consolas;color:black'>);</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>var</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'> values = (</span><span style='font-size:9.5pt;font-family:Consolas;
+color:#2B91AF'>ITypedArray</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&lt;</span><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>int</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>&gt;)engine.Script.values;</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>    </span><span style='font-size:9.5pt;font-family:Consolas;
+color:#2B91AF'>Console</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>.WriteLine(</span><span style='font-size:9.5pt;font-family:Consolas;
+color:blue'>string</span><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>.Join(</span><span style='font-size:9.5pt;font-family:Consolas;
+color:#A31515'>&quot;, &quot;</span><span style='font-size:9.5pt;font-family:
+Consolas;color:black'>, values.ToArray()));</span></p>
+
+<p class=MsoNormal style='margin-bottom:0in;margin-bottom:.0001pt;line-height:
+normal;text-autospace:none'><span style='font-size:9.5pt;font-family:Consolas;
+color:black'>}</span></p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+</div>
+
+</body>
+
+</html>

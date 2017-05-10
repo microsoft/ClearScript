@@ -85,10 +85,10 @@ NOTE: The first time you open the solution, Visual Studio may prompt you to
 upgrade one or more projects to the latest platform toolset or .NET Framework.
 We recommend that you select "Cancel" or "Don't Upgrade".
 
-OPTIONAL: The ClearScript distribution includes a copy of the ClearScript
-Library Reference in Compiled HTML (.CHM) format. If you'd like to rebuild this
-file, use Sandcastle Help File Builder (SHFB, http://shfb.codeplex.com) with
-the provided SHFB project file (ClearScript\doc\Reference.shfbproj).
+OPTIONAL: The ClearScript repository includes the ClearScript Library Reference
+in HTML and Compiled HTML (.CHM) formats. If you'd like to rebuild these files,
+use Sandcastle Help File Builder (SHFB, https://github.com/EWSoftware/SHFB)
+with the provided SHFB project files (ClearScript\doc\[Web]Reference.shfbproj).
 
 ------------------------------------------------------------
 III. Building strong-named ClearScript assemblies (optional)
