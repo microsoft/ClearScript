@@ -198,17 +198,20 @@ and answers. It may look like a FAQ list, but it’s really a guide.</p>
 
 <h1 style='margin-left:.25in;text-indent:-.25in'>2. OK, so what’s ClearScript?</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>ClearScript is a library that
-allows you to add scripting to your .NET applications. It supports JScript and
-VBScript out of the box and in theory can work with other <a
+<p class=MsoNormal style='margin-left:.25in'><a name="_Hlk482337160">ClearScript
+is a library that allows you to add scripting to your .NET applications. It
+supports </a><a
+href="https://msdn.microsoft.com/en-us/library/hbxc2t98(v=vs.84).aspx">JScript</a>
+and <a href="https://msdn.microsoft.com/en-us/library/t0aew7h6(v=vs.84).aspx">VBScript</a>
+out of the box and in theory can work with other <a
 href="http://msdn.microsoft.com/en-us/library/bb871518.aspx">Windows Script</a>
 engines.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><i><span style='color:#00B050'>New!</span></i></b>
-ClearScript 5 supports the <a href="https://developers.google.com/v8/">V8</a>
-high-performance open-source JavaScript engine. Unlike Windows Script engine
-instances, V8 instances have no thread affinity and are suitable for
-server-side asynchronous scripting.</p>
+<a name="_Hlk482337197">ClearScript 5 supports the </a><a name="_Hlk482337218"></a><a
+href="https://developers.google.com/v8/">V8</a> high-performance open-source JavaScript
+engine. Unlike Windows Script engine instances, V8 instances have no thread
+affinity and are suitable for server-side asynchronous scripting.</p>
 
 <h1 style='margin-left:.25in;text-indent:-.25in'>3. Hasn’t that been done
 before?</h1>
@@ -668,8 +671,9 @@ text-autospace:none'><span style='font-size:10.0pt;font-family:Consolas;
 color:#A31515'>var newUri = <b>host.newObj</b>(<b>Uri</b>, 'http://www.example.com');</span></p>
 
 <p class=MsoNormal style='margin-top:14.0pt;margin-right:0in;margin-bottom:
-0in;margin-left:.25in;margin-bottom:.0001pt'>Note that <b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>newObj</span></b>
+0in;margin-left:.25in;margin-bottom:.0001pt'>Note that <a
+href="https://microsoft.github.io/ClearScript/Reference/html/M_Microsoft_ClearScript_HostFunctions_newObj__1.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>newObj</span></b></a>
 is a generic method that requires an explicit type argument. Its first argument
 (the type argument) is the host type to be instantiated. The rest of the
 arguments are passed to the constructor that matches the argument signature.</p>
@@ -906,10 +910,15 @@ color:#A31515'>var timer = host.newObj(Timer, <b>callback</b>, 'foo', 5000,
 5000);</span></p>
 
 <p class=MsoNormal style='margin-top:14.0pt;margin-right:0in;margin-bottom:
-0in;margin-left:.25in;margin-bottom:.0001pt'>In addition to <b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>del</span></b>, ClearScript
-provides <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>proc</span></b>
-and <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>func</span></b>;
+0in;margin-left:.25in;margin-bottom:.0001pt'>In addition to <a
+href="https://microsoft.github.io/ClearScript/Reference/html/M_Microsoft_ClearScript_HostFunctions_del__1.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>del</span></b></a>,
+ClearScript provides <a
+href="https://microsoft.github.io/ClearScript/Reference/html/M_Microsoft_ClearScript_HostFunctions_proc.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>proc</span></b></a>
+and <a
+href="https://microsoft.github.io/ClearScript/Reference/html/Overload_Microsoft_ClearScript_HostFunctions_func.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>func</span></b></a>;
 these functions create specialized delegates compatible with <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>System.Action</span></b>
 and <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>System.Func</span></b>
@@ -1108,8 +1117,9 @@ style='color:#A31515'>&quot;xHost&quot;</span>, <span style='color:blue'>new</sp
 <b><span style='color:#2B91AF'>ExtendedHostFunctions</span></b>());</span></p>
 
 <p class=MsoNormal style='margin-top:14.0pt;margin-right:0in;margin-bottom:
-10.0pt;margin-left:.25in'>By exposing an instance of <b><span style='font-size:
-10.0pt;line-height:115%;font-family:Consolas'>ExtendedHostFunctions</span></b>,
+10.0pt;margin-left:.25in'>By exposing an instance of <a
+href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_ExtendedHostFunctions.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ExtendedHostFunctions</span></b></a>,
 the host hands over the keys to the kingdom:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
@@ -1172,9 +1182,11 @@ functions and access script objects directly?</h1>
 <p class=MsoNormal style='margin-top:6.0pt;margin-right:0in;margin-bottom:10.0pt;
 margin-left:.25in'>Yes. ClearScript provides a <a
 href="http://msdn.microsoft.com/en-us/library/dd264736.aspx">dynamic</a>
-property named <b><span style='font-size:10.0pt;line-height:115%;font-family:
-Consolas'>Script</span></b> that represents a script engine’s root-level
-namespace. Consider the following script:</p>
+property named <a
+href="https://microsoft.github.io/ClearScript/Reference/html/P_Microsoft_ClearScript_ScriptEngine_Script.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>Script</span></b></a>
+that represents a script engine’s root-level namespace. Consider the following
+script:</p>
 
 <div style='border:none;border-bottom:solid windowtext 1.0pt;padding:0in 0in 1.0pt 0in;
 background:#C6D9F1;margin-left:.5in;margin-right:.5in'>
@@ -1231,14 +1243,21 @@ engine, your best option is <a href="http://www.eclipse.org/">Eclipse</a> combin
 with <a href="http://code.google.com/p/chromedevtools/">Google Chrome Developer
 Tools for Java</a>. Best of all is that you can attach both Visual Studio and
 Eclipse to the same process for simultaneous debugging of script, managed, and
-native code. See the <b>ReadMe.txt</b> file for the latest information about
-using ClearScript with V8.</p>
+native code. See <a
+href="https://microsoft.github.io/ClearScript/Details/Build.html">here</a> for
+the latest information about using ClearScript with V8.</p>
 
 <h1 style='margin-left:.25in;text-indent:-.25in'>27. How can I learn more?</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>Take a look at the ClearScript API
-reference that accompanies this FAQtorial. Also check out the <b>ClearScriptConsole</b>
-and <b>ClearScriptBenchmarks</b> test programs.</p>
+<p class=MsoNormal style='margin-left:.25in'>Take a look at the ClearScript <a
+href="https://microsoft.github.io/ClearScript/Reference/html/R_Project_Reference.htm">API
+reference</a> that accompanies this FAQtorial. Also check out the <a
+href="https://github.com/Microsoft/ClearScript/tree/master/ClearScriptConsole"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptConsole</span></b></a>
+and <a
+href="https://github.com/Microsoft/ClearScript/tree/master/ClearScriptBenchmarks"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptBenchmarks</span></b></a>
+test programs.</p>
 
 </div>
 
