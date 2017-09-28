@@ -609,6 +609,7 @@
     <HelpKINode Title="IArrayBufferView.Size Property " Url="html/P_Microsoft_ClearScript_JavaScript_IArrayBufferView_Size.htm" />
   </HelpKINode>
   <HelpKINode Title="SuppressExtensionMethodEnumeration property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_SuppressExtensionMethodEnumeration.htm" />
+  <HelpKINode Title="SuppressInstanceMethodEnumeration property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_SuppressInstanceMethodEnumeration.htm" />
   <HelpKINode Title="ToArray method" Url="html/M_Microsoft_ClearScript_JavaScript_ITypedArray_1_ToArray.htm" />
   <HelpKINode Title="toByte method" Url="html/M_Microsoft_ClearScript_HostFunctions_toByte.htm" />
   <HelpKINode Title="toChar method" Url="html/M_Microsoft_ClearScript_HostFunctions_toChar.htm" />
@@ -712,6 +713,7 @@
   <HelpKINode Title="V8ScriptEngine.RuntimeHeapSizeSampleInterval property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_RuntimeHeapSizeSampleInterval.htm" />
   <HelpKINode Title="V8ScriptEngine.Script property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_Script.htm" />
   <HelpKINode Title="V8ScriptEngine.SuppressExtensionMethodEnumeration property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_SuppressExtensionMethodEnumeration.htm" />
+  <HelpKINode Title="V8ScriptEngine.SuppressInstanceMethodEnumeration property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_SuppressInstanceMethodEnumeration.htm" />
   <HelpKINode Title="V8ScriptEngine.V8ScriptEngine constructor" Url="html/Overload_Microsoft_ClearScript_V8_V8ScriptEngine__ctor.htm" />
   <HelpKINode Title="V8ScriptEngineFlags enumeration" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
   <HelpKINode Title="Values property" Url="html/P_Microsoft_ClearScript_PropertyBag_Values.htm" />

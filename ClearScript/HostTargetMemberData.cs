@@ -22,6 +22,8 @@ namespace Microsoft.ClearScript
         public FieldInfo[] AllFields;
         public MethodInfo[] AllMethods;
         public PropertyInfo[] AllProperties;
+
+        public object EnumerationSettingsToken;
         public ExtensionMethodSummary ExtensionMethodSummary;
     }
 

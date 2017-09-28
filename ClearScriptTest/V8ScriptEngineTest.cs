@@ -1601,7 +1601,32 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_DynamicHostObject_Element_Convert()
+        public void V8ScriptEngine_DynamicHostObject_Element_Index()
+        {
+            engine.Script.testObject = new DynamicTestObject { DisableInvocation = true, DisableDynamicMembers = true };
+            engine.Script.host = new HostFunctions();
+
+            Assert.IsInstanceOfType(engine.Evaluate("testObject[123]"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 123)"), typeof(Undefined));
+            Assert.AreEqual(456, engine.Evaluate("testObject[123] = 456"));
+            Assert.AreEqual(456, engine.Evaluate("testObject[123]"));
+            Assert.AreEqual(456, engine.Evaluate("host.getElement(testObject, 123)"));
+            Assert.IsTrue((bool)engine.Evaluate("delete testObject[123]"));
+            Assert.IsInstanceOfType(engine.Evaluate("testObject[123]"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 123)"), typeof(Undefined));
+
+            Assert.IsInstanceOfType(engine.Evaluate("testObject['foo']"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 'foo')"), typeof(Undefined));
+            Assert.AreEqual("bar", engine.Evaluate("testObject['foo'] = 'bar'"));
+            Assert.AreEqual("bar", engine.Evaluate("testObject['foo']"));
+            Assert.AreEqual("bar", engine.Evaluate("host.getElement(testObject, 'foo')"));
+            Assert.IsTrue((bool)engine.Evaluate("delete testObject['foo']"));
+            Assert.IsInstanceOfType(engine.Evaluate("testObject['foo']"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 'foo')"), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DynamicHostObject_Convert()
         {
             engine.Script.testObject = new DynamicTestObject();
             engine.Script.host = new HostFunctions();
@@ -2530,6 +2555,25 @@ namespace Microsoft.ClearScript.Test
             {
                 TestUtil.AssertException<NotSupportedException>(() => engine.Script.sum(DayOfWeek.Monday));
             }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_SuppressInstanceMethodEnumeration()
+        {
+            engine.Script.foo = Enumerable.Range(0, 25).ToArray();
+            Assert.AreEqual("ToString", engine.Evaluate("Object.keys(foo).find(function (key) { return key == 'ToString' })"));
+            Assert.IsInstanceOfType(engine.Evaluate("foo.ToString"), typeof(HostMethod));
+            Assert.AreEqual("System.Int32[]", engine.Evaluate("foo.ToString()"));
+
+            engine.SuppressInstanceMethodEnumeration = true;
+            Assert.IsInstanceOfType(engine.Evaluate("Object.keys(foo).find(function (key) { return key == 'ToString' })"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("foo.ToString"), typeof(HostMethod));
+            Assert.AreEqual("System.Int32[]", engine.Evaluate("foo.ToString()"));
+
+            engine.SuppressInstanceMethodEnumeration = false;
+            Assert.AreEqual("ToString", engine.Evaluate("Object.keys(foo).find(function (key) { return key == 'ToString' })"));
+            Assert.IsInstanceOfType(engine.Evaluate("foo.ToString"), typeof(HostMethod));
+            Assert.AreEqual("System.Int32[]", engine.Evaluate("foo.ToString()"));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]

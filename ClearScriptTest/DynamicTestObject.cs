@@ -30,6 +30,10 @@ namespace Microsoft.ClearScript.Test
             return string.Join("+", args);
         }
 
+        public bool DisableInvocation { get; set; }
+
+        public bool DisableDynamicMembers { get; set; }
+
         public override bool TryCreateInstance(CreateInstanceBinder binder, object[] args, out object result)
         {
             if (args.Length > 0)
@@ -43,7 +47,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
         {
-            if (args.Length > 0)
+            if (!DisableInvocation && args.Length > 0)
             {
                 result = string.Join(",", args);
                 return true;
@@ -83,7 +87,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            if (!binder.Name.StartsWith("Z", StringComparison.Ordinal))
+            if (!DisableDynamicMembers && !binder.Name.StartsWith("Z", StringComparison.Ordinal))
             {
                 return memberMap.TryGetValue(binder.Name, out result);
             }
@@ -93,7 +97,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            if (!binder.Name.StartsWith("Z", StringComparison.Ordinal))
+            if (!DisableDynamicMembers && !binder.Name.StartsWith("Z", StringComparison.Ordinal))
             {
                 memberMap[binder.Name] = value;
                 return true;
@@ -104,7 +108,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TryDeleteMember(DeleteMemberBinder binder)
         {
-            if (!binder.Name.StartsWith("Z", StringComparison.Ordinal))
+            if (!DisableDynamicMembers && !binder.Name.StartsWith("Z", StringComparison.Ordinal))
             {
                 return memberMap.Remove(binder.Name);
             }
@@ -114,7 +118,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
         {
-            if (indexes.All(index => (index is int) || (index is string)))
+            if (indexes.All(index => (index is int) || ((index is string) && !((string)index).StartsWith("Z", StringComparison.Ordinal))))
             {
                 return indexMap.TryGetValue(string.Join(":", indexes), out result);
             }
@@ -124,7 +128,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
         {
-            if (indexes.All(index => (index is int) || (index is string)))
+            if (indexes.All(index => (index is int) || ((index is string) && !((string)index).StartsWith("Z", StringComparison.Ordinal))))
             {
                 indexMap[string.Join(":", indexes)] = value;
                 return true;
@@ -135,7 +139,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TryDeleteIndex(DeleteIndexBinder binder, object[] indexes)
         {
-            if (indexes.All(index => (index is int) || (index is string)))
+            if (indexes.All(index => (index is int) || ((index is string) && !((string)index).StartsWith("Z", StringComparison.Ordinal))))
             {
                 return indexMap.Remove(string.Join(":", indexes));
             }

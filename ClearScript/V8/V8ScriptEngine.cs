@@ -36,6 +36,7 @@ namespace Microsoft.ClearScript.V8
         private readonly HostItemCollateral hostItemCollateral;
         private readonly IUniqueNameManager documentNameManager = new UniqueFileNameManager();
         private List<string> documentNames;
+        private bool suppressInstanceMethodEnumeration;
         private bool suppressExtensionMethodEnumeration;
 
         #endregion
@@ -375,14 +376,40 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
+        /// Enables or disables instance method enumeration.
+        /// </summary>
+        /// <remarks>
+        /// By default, a host object's instance methods are exposed as enumerable properties.
+        /// Setting this property to <c>true</c> causes instance methods to be excluded from
+        /// property enumeration. This affects all host objects exposed in the current script
+        /// engine. Note that instance methods remain both retrievable and invocable regardless of
+        /// this property's value.
+        /// </remarks>
+        public bool SuppressInstanceMethodEnumeration
+        {
+            get { return suppressInstanceMethodEnumeration; }
+            set
+            {
+                suppressInstanceMethodEnumeration = value;
+                OnEnumerationSettingsChanged();
+            }
+        }
+
+        /// <summary>
         /// Enables or disables extension method enumeration.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// By default, all exposed extension methods appear as enumerable properties of all host
-        /// objects, regardless of type. Setting this property to <c>true</c> excludes all
-        /// extension methods from the list of enumerable properties of all host objects. Note that
-        /// doing so affects only property enumeration; extension methods remain both retrievable
-        /// and invocable regardless of this property's value.
+        /// objects, regardless of type. Setting this property to <c>true</c> causes extension
+        /// methods to be excluded from property enumeration. This affects all host objects exposed
+        /// in the current script engine. Note that extension methods remain both retrievable and
+        /// invocable regardless of this property's value.
+        /// </para>
+        /// <para>
+        /// This property has no effect if <see cref="SuppressInstanceMethodEnumeration"/> is set
+        /// to <c>true</c>.
+        /// </para>
         /// </remarks>
         public bool SuppressExtensionMethodEnumeration
         {
@@ -737,6 +764,11 @@ namespace Microsoft.ClearScript.V8
         #endregion
 
         #region ScriptEngine overrides (internal members)
+
+        internal override bool EnumerateInstanceMethods
+        {
+            get { return base.EnumerateInstanceMethods && !SuppressInstanceMethodEnumeration; }
+        }
 
         internal override bool EnumerateExtensionMethods
         {

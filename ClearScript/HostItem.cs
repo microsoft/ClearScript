@@ -333,7 +333,7 @@ namespace Microsoft.ClearScript
 
         private string[] EnumeratedMethodNames
         {
-            get { return engine.EnumerateExtensionMethods ? AllMethodNames : OwnMethodNames; }
+            get { return engine.EnumerateInstanceMethods ? (engine.EnumerateExtensionMethods ? AllMethodNames : OwnMethodNames) : MiscHelpers.GetEmptyArray<string>(); }
         }
 
         private string[] AllPropertyNames
@@ -364,6 +364,12 @@ namespace Microsoft.ClearScript
         {
             get { return targetMemberData.AllProperties; }
             set { targetMemberData.AllProperties = value; }
+        }
+
+        private object EnumerationSettingsToken
+        {
+            get { return targetMemberData.EnumerationSettingsToken; }
+            set { targetMemberData.EnumerationSettingsToken = value; }
         }
 
         private ExtensionMethodSummary ExtensionMethodSummary
@@ -752,6 +758,20 @@ namespace Microsoft.ClearScript
                 ((TargetList != null) && (CachedListCount != TargetList.Count)))
             {
                 AllPropertyNames = GetAllPropertyNames();
+                updated = true;
+            }
+            else
+            {
+                updated = false;
+            }
+        }
+
+        private void UpdateEnumerationSettingsToken(out bool updated)
+        {
+            var enumerationSettingsToken = engine.EnumerationSettingsToken;
+            if (EnumerationSettingsToken != enumerationSettingsToken)
+            {
+                EnumerationSettingsToken = enumerationSettingsToken;
                 updated = true;
             }
             else
@@ -1185,6 +1205,8 @@ namespace Microsoft.ClearScript
                         {
                             return target;
                         }
+
+                        return result;
                     }
 
                     throw new NotSupportedException("Object does not support the requested invocation operation");
@@ -1292,35 +1314,75 @@ namespace Microsoft.ClearScript
                     return GetHostProperty(defaultProperty, invokeFlags, args, culture);
                 }
 
+                if (TargetDynamicMetaObject != null)
+                {
+                    object result;
+                    if (TargetDynamicMetaObject.TryGetIndex(args, out result))
+                    {
+                        return result;
+                    }
+                }
+
                 return Nonexistent.Value;
             }
 
-            if ((TargetDynamicMetaObject != null) && (TargetDynamicMetaObject.GetDynamicMemberNames().Contains(name)))
+            if ((TargetDynamicMetaObject != null) && (args.Length < 1))
             {
+                int index;
                 object result;
-                if (TargetDynamicMetaObject.TryGetMember(name, out result))
+
+                if (TargetDynamicMetaObject.GetDynamicMemberNames().Contains(name))
+                {
+                    if (TargetDynamicMetaObject.TryGetMember(name, out result))
+                    {
+                        return result;
+                    }
+
+                    if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                    {
+                        if (TargetDynamicMetaObject.TryGetIndex(new object[] { index }, out result))
+                        {
+                            return result;
+                        }
+                    }
+
+                    if (TargetDynamicMetaObject.TryGetIndex(new object[] { name }, out result))
+                    {
+                        return result;
+                    }
+
+                    if (includeBoundMembers)
+                    {
+                        if (HostMethodMap == null)
+                        {
+                            HostMethodMap = new Dictionary<string, HostMethod>();
+                        }
+
+                        HostMethod hostMethod;
+                        if (!HostMethodMap.TryGetValue(name, out hostMethod))
+                        {
+                            hostMethod = new HostMethod(this, name);
+                            HostMethodMap.Add(name, hostMethod);
+                        }
+
+                        return hostMethod;
+                    }
+
+                    return Nonexistent.Value;
+                }
+
+                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                {
+                    if (TargetDynamicMetaObject.TryGetIndex(new object[] { index }, out result))
+                    {
+                        return result;
+                    }
+                }
+
+                if (TargetDynamicMetaObject.TryGetIndex(new object[] { name }, out result))
                 {
                     return result;
                 }
-
-                if (includeBoundMembers)
-                {
-                    if (HostMethodMap == null)
-                    {
-                        HostMethodMap = new Dictionary<string, HostMethod>();
-                    }
-
-                    HostMethod hostMethod;
-                    if (!HostMethodMap.TryGetValue(name, out hostMethod))
-                    {
-                        hostMethod = new HostMethod(this, name);
-                        HostMethodMap.Add(name, hostMethod);
-                    }
-
-                    return hostMethod;
-                }
-
-                return Nonexistent.Value;
             }
 
             var property = target.Type.GetScriptableProperty(name, invokeFlags, bindArgs, defaultAccess);
@@ -1412,15 +1474,29 @@ namespace Microsoft.ClearScript
         {
             if (name == SpecialMemberNames.Default)
             {
+                if (args.Length < 2)
+                {
+                    throw new InvalidOperationException("Invalid argument count");
+                }
+
+                object result;
+
                 var defaultProperty = target.Type.GetScriptableDefaultProperty(invokeFlags, bindArgs.Take(bindArgs.Length - 1).ToArray(), defaultAccess);
                 if (defaultProperty != null)
                 {
                     return SetHostProperty(defaultProperty, invokeFlags, args, culture);
                 }
 
+                if (TargetDynamicMetaObject != null)
+                {
+                    if (TargetDynamicMetaObject.TrySetIndex(args.Take(args.Length - 1).ToArray(), args[args.Length - 1], out result))
+                    {
+                        return result;
+                    }
+                }
+
                 // special case to enable JScript/VBScript "x(a) = b" syntax when x is a host indexed property 
 
-                object result;
                 if (InvokeHelpers.TryInvokeObject(this, target, invokeFlags, args, bindArgs, false, out result))
                 {
                     return result;
@@ -1432,7 +1508,22 @@ namespace Microsoft.ClearScript
             if ((TargetDynamicMetaObject != null) && (args.Length == 1))
             {
                 object result;
+
                 if (TargetDynamicMetaObject.TrySetMember(name, args[0], out result))
+                {
+                    return result;
+                }
+
+                int index;
+                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                {
+                    if (TargetDynamicMetaObject.TrySetIndex(new object[] { index }, args[0], out result))
+                    {
+                        return result;
+                    }
+                }
+
+                if (TargetDynamicMetaObject.TrySetIndex(new object[] { name }, args[0], out result))
                 {
                     return result;
                 }
@@ -1790,7 +1881,12 @@ namespace Microsoft.ClearScript
                 if (TargetDynamicMetaObject != null)
                 {
                     bool result;
-                    if (TargetDynamicMetaObject.TryDeleteMember(name, out result))
+                    if (TargetDynamicMetaObject.TryDeleteMember(name, out result) && result)
+                    {
+                        return true;
+                    }
+
+                    if (TargetDynamicMetaObject.TryDeleteIndex(new object[] { name }, out result))
                     {
                         return result;
                     }
@@ -1815,7 +1911,10 @@ namespace Microsoft.ClearScript
                 bool updatedPropertyNames;
                 UpdatePropertyNames(out updatedPropertyNames);
 
-                if (updatedFieldNames || updatedMethodNames || updatedPropertyNames || (AllMemberNames == null))
+                bool updatedEnumerationSettingsToken;
+                UpdateEnumerationSettingsToken(out updatedEnumerationSettingsToken);
+
+                if (updatedFieldNames || updatedMethodNames || updatedPropertyNames || updatedEnumerationSettingsToken || (AllMemberNames == null))
                 {
                     AllMemberNames = AllFieldNames.Concat(EnumeratedMethodNames).Concat(AllPropertyNames).ExcludeIndices().Distinct().ToArray();
                 }
@@ -1851,7 +1950,13 @@ namespace Microsoft.ClearScript
                 if (TargetDynamicMetaObject != null)
                 {
                     bool result;
-                    if (TargetDynamicMetaObject.TryDeleteMember(index.ToString(CultureInfo.InvariantCulture), out result))
+
+                    if (TargetDynamicMetaObject.TryDeleteMember(index.ToString(CultureInfo.InvariantCulture), out result) && result)
+                    {
+                        return true;
+                    }
+
+                    if (TargetDynamicMetaObject.TryDeleteIndex(new object[] { index }, out result))
                     {
                         return result;
                     }
@@ -2086,6 +2191,18 @@ namespace Microsoft.ClearScript
                         if (TargetDynamicMetaObject.TryDeleteMember(member.Name, out result) && result)
                         {
                             RemoveExpandoMemberName(member.Name);
+                        }
+                        else
+                        {
+                            int index;
+                            if (int.TryParse(member.Name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index) && TargetDynamicMetaObject.TryDeleteIndex(new object[] { index }, out result))
+                            {
+                                RemoveExpandoMemberName(index.ToString(CultureInfo.InvariantCulture));
+                            }
+                            else if (TargetDynamicMetaObject.TryDeleteIndex(new object[] { member.Name }, out result))
+                            {
+                                RemoveExpandoMemberName(member.Name);
+                            }
                         }
                     }
                     else

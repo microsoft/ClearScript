@@ -1140,9 +1140,14 @@ namespace Microsoft.ClearScript
 
         #region internal members
 
-        internal virtual bool EnumerateExtensionMethods
+        internal virtual bool EnumerateInstanceMethods
         {
             get { return true; }
+        }
+
+        internal virtual bool EnumerateExtensionMethods
+        {
+            get { return EnumerateInstanceMethods; }
         }
 
         internal abstract void AddHostItem(string itemName, HostItemFlags flags, object item);
@@ -1364,6 +1369,22 @@ namespace Microsoft.ClearScript
         internal virtual T SyncInvoke<T>(Func<T> func)
         {
             return func();
+        }
+
+        #endregion
+
+        #region enumeration settings
+
+        private object enumerationSettingsToken = new object();
+
+        internal object EnumerationSettingsToken
+        {
+            get { return enumerationSettingsToken; }
+        }
+
+        internal void OnEnumerationSettingsChanged()
+        {
+            enumerationSettingsToken = new object();
         }
 
         #endregion

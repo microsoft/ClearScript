@@ -995,7 +995,41 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
-        public void JScriptEngine_DynamicHostObject_Element_Convert()
+        public void JScriptEngine_DynamicHostObject_Element_Index()
+        {
+            engine.Script.testObject = new DynamicTestObject { DisableInvocation = true, DisableDynamicMembers = true };
+            engine.Script.host = new HostFunctions();
+
+            Assert.IsInstanceOfType(engine.Evaluate("testObject[123]"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 123)"), typeof(Undefined));
+            Assert.AreEqual(456, engine.Evaluate("testObject[123] = 456"));
+            Assert.AreEqual(456, engine.Evaluate("testObject[123]"));
+            Assert.AreEqual(456, engine.Evaluate("host.getElement(testObject, 123)"));
+            Assert.IsTrue((bool)engine.Evaluate("delete testObject[123]"));
+            Assert.IsInstanceOfType(engine.Evaluate("testObject[123]"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 123)"), typeof(Undefined));
+
+            Assert.IsInstanceOfType(engine.Evaluate("testObject['foo']"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 'foo')"), typeof(Undefined));
+            Assert.AreEqual("bar", engine.Evaluate("testObject['foo'] = 'bar'"));
+            Assert.AreEqual("bar", engine.Evaluate("testObject['foo']"));
+            Assert.AreEqual("bar", engine.Evaluate("host.getElement(testObject, 'foo')"));
+            Assert.IsTrue((bool)engine.Evaluate("delete testObject['foo']"));
+            Assert.IsInstanceOfType(engine.Evaluate("testObject['foo']"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 'foo')"), typeof(Undefined));
+
+            Assert.IsInstanceOfType(engine.Evaluate("testObject('foo', 'bar', 'baz')"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 'foo', 'bar', 'baz')"), typeof(Undefined));
+            Assert.AreEqual("qux", engine.Evaluate("testObject('foo', 'bar', 'baz') = 'qux'"));
+            Assert.AreEqual("qux", engine.Evaluate("testObject('foo', 'bar', 'baz')"));
+            Assert.AreEqual("qux", engine.Evaluate("host.getElement(testObject, 'foo', 'bar', 'baz')"));
+            Assert.IsInstanceOfType(engine.Evaluate("testObject('foo', 'bar', 'baz') = undefined"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("testObject('foo', 'bar', 'baz')"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 'foo', 'bar', 'baz')"), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DynamicHostObject_Convert()
         {
             engine.Script.testObject = new DynamicTestObject();
             engine.Script.host = new HostFunctions();

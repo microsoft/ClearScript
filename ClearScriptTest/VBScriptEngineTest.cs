@@ -914,7 +914,41 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
-        public void VBScriptEngine_DynamicHostObject_Element_Convert()
+        public void VBScriptEngine_DynamicHostObject_Element_Index()
+        {
+            engine.Script.testObject = new DynamicTestObject { DisableInvocation = true, DisableDynamicMembers = true };
+            engine.Script.host = new HostFunctions();
+
+            Assert.IsInstanceOfType(engine.Evaluate("testObject(clng(123))"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, clng(123))"), typeof(Undefined));
+            engine.Execute("testObject(clng(123)) = 456");
+            Assert.AreEqual((short)456, engine.Evaluate("testObject(clng(123))"));
+            Assert.AreEqual((short)456, engine.Evaluate("host.getElement(testObject, clng(123))"));
+            engine.Execute("testObject(clng(123)) = nothing");
+            Assert.IsInstanceOfType(engine.Evaluate("testObject(clng(123))"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, clng(123))"), typeof(Undefined));
+
+            Assert.IsInstanceOfType(engine.Evaluate("testObject(\"foo\")"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, \"foo\")"), typeof(Undefined));
+            engine.Execute("testObject(\"foo\") = \"bar\"");
+            Assert.AreEqual("bar", engine.Evaluate("testObject(\"foo\")"));
+            Assert.AreEqual("bar", engine.Evaluate("host.getElement(testObject, \"foo\")"));
+            engine.Execute("testObject(\"foo\") = nothing");
+            Assert.IsInstanceOfType(engine.Evaluate("testObject(\"foo\")"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, \"foo\")"), typeof(Undefined));
+
+            Assert.IsInstanceOfType(engine.Evaluate("testObject(\"foo\", \"bar\", \"baz\")"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, \"foo\", \"bar\", \"baz\")"), typeof(Undefined));
+            engine.Execute("testObject(\"foo\", \"bar\", \"baz\") = \"qux\"");
+            Assert.AreEqual("qux", engine.Evaluate("testObject(\"foo\", \"bar\", \"baz\")"));
+            Assert.AreEqual("qux", engine.Evaluate("host.getElement(testObject, \"foo\", \"bar\", \"baz\")"));
+            engine.Execute("testObject(\"foo\", \"bar\", \"baz\") = nothing");
+            Assert.IsInstanceOfType(engine.Evaluate("testObject(\"foo\", \"bar\", \"baz\")"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, \"foo\", \"bar\", \"baz\")"), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_DynamicHostObject_Convert()
         {
             engine.Script.testObject = new DynamicTestObject();
             engine.Script.host = new HostFunctions();
