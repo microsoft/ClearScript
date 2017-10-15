@@ -424,33 +424,118 @@ C++ Redistributable for Visual Studio 2015</a></p>
 <p class=MsoNormal style='margin-left:.25in'>V8 does not support standard
 Windows script debugging. Instead, it implements its own TCP/IP-based debugging
 protocol. A convenient way to debug JavaScript code running in V8 is to use the
-open-source Eclipse IDE:</p>
+Visual Studio Code IDE:</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
-<a href="https://java.com/en/download/">Java</a> and <a
-href="http://www.eclipse.org/downloads/">Eclipse</a>.</p>
+<a href="https://code.visualstudio.com/">Visual Studio Code</a>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
-Google Chrome Developer Tools for Java:</p>
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Set
+up one or more ClearScript V8 debug configurations:</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>a.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Launch
-Eclipse and click <b>Help</b> &#8594; <b>Install New Software</b>.</p>
+Visual Studio Code and click <b>File</b> &#8594; <b>Preferences </b>&#8594;<b> Settings
+</b>to open your User Settings file.</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>b.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Paste
-the following URL into the <b>Work with</b> field: <a
-href="http://chromedevtools.googlecode.com/svn/update/dev/">http://chromedevtools.googlecode.com/svn/update/dev/</a></p>
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Add
+the following section to the file:</p>
+
+<p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#9CDCFE'>&quot;launch&quot;</span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>:
+{</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>   
+</span></b><b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas;
+color:#9CDCFE'>&quot;version&quot;</span></b><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:#D4D4D4'>: </span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#CE9178'>&quot;0.2.0&quot;</span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>,</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>   
+</span></b><b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas;
+color:#9CDCFE'>&quot;configurations&quot;</span></b><b><span style='font-size:
+10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>: [</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>       
+{</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>           
+</span></b><b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas;
+color:#9CDCFE'>&quot;name&quot;</span></b><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:#D4D4D4'>: </span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#CE9178'>&quot;Attach
+to ClearScript V8 on port 9222&quot;</span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>,</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>           
+</span></b><b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas;
+color:#9CDCFE'>&quot;type&quot;</span></b><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:#D4D4D4'>: </span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#CE9178'>&quot;node&quot;</span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>,</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>           
+</span></b><b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas;
+color:#9CDCFE'>&quot;request&quot;</span></b><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:#D4D4D4'>: </span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#CE9178'>&quot;attach&quot;</span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>,</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>           
+</span></b><b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas;
+color:#9CDCFE'>&quot;protocol&quot;</span></b><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:#D4D4D4'>: </span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#CE9178'>&quot;legacy&quot;</span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>,</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>           
+</span></b><b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas;
+color:#9CDCFE'>&quot;port&quot;</span></b><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:#D4D4D4'>: </span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#B5CEA8'>9222</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>       
+}</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>   
+]</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+14.0pt;margin-left:1.5in;background:#1E1E1E'><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:#D4D4D4'>}</span></b></p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>c.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Select
-<b>Google Chrome Developer Tools</b> and complete the dialog.</p>
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>You
+can specify additional configurations for different TCP/IP port numbers.</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>d.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Restart
-Eclipse.</p>
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Click
+<b>File</b> &#8594; <b>Save</b>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Enable
@@ -460,27 +545,28 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8ScriptEngine</s
 constructor with <a
 href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8ScriptEngineFlags.EnableDebugging</span></b></a>
-and an available TCP/IP port number. The default port number is 9222.</p>
+and a TCP/IP port number that matches one of your debug configurations. The
+default port number is 9222.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Attach
-the Eclipse debugger to your application:</p>
+the Visual Studio Code debugger to your application:</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>a.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>In
-Eclipse, select <b>Run</b> &#8594; <b>Debug Configurations</b>.</p>
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Click
+<b>View</b> &#8594; <b>Debug</b> to bring up the Debug view.</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>b.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Right-click
-on <b>Standalone V8 VM</b> and select <b>New</b>.</p>
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Select
+the appropriate debug configuration at the top of the Debug Side Bar.</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>c.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Fill
-in the correct port number and click <b>Debug</b>.</p>
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Click
+<b>Debug</b> &#8594; <b>Start Debugging</b>.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Note:</span></b>
-You can also attach Visual Studio to your application for simultaneous
-debugging of script, managed, and native code.</p>
+You can also attach Visual Studio to your application for simultaneous debugging
+of script, managed, and native code.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'>VI. Acknowledgments</h1>
