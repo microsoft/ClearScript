@@ -15,7 +15,7 @@ namespace V8 {
     {
     public:
 
-        V8IsolateProxyImpl(String^ gcName, V8RuntimeConstraints^ gcConstraints, Boolean enableDebugging, Int32 debugPort);
+        V8IsolateProxyImpl(String^ gcName, V8RuntimeConstraints^ gcConstraints, Boolean enableDebugging, Boolean enableRemoteDebugging, Int32 debugPort);
 
         property UIntPtr MaxHeapSize
         {

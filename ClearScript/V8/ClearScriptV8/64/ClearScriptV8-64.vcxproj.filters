@@ -64,6 +64,9 @@
     <ClCompile Include="..\NativeCallbackImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\StdString.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -83,6 +86,8 @@
   <ItemGroup>
     <CustomBuild Include="..\..\V8\lib\v8-x64.dll" />
     <CustomBuild Include="..\..\V8\lib\v8-x64.pdb" />
+    <CustomBuild Include="..\..\V8\lib\v8-base-x64.dll" />
+    <CustomBuild Include="..\..\V8\lib\v8-base-x64.pdb" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ClearScriptV8Managed.h">

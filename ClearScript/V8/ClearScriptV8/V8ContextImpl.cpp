@@ -202,7 +202,7 @@ static std::atomic<size_t> s_InstanceCount(0);
 
 //-----------------------------------------------------------------------------
 
-V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort):
+V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, bool enableRemoteDebugging, int debugPort):
     m_Name(name),
     m_spIsolateImpl(pIsolateImpl),
     m_pvV8ObjectCache(nullptr),
@@ -246,7 +246,6 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
             m_hIsHostObjectKey = CreatePersistent(CreateSymbol());
             FROM_MAYBE(m_hContext->Global()->Set(m_hContext, FROM_MAYBE(CreateString(StdString(L"isHostObjectKey"))), m_hIsHostObjectKey));
 
-            m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
             m_hHostExceptionKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(L"hostException"))));
             m_hEnumeratorKey = CreatePersistent(CreatePrivate());
             m_hDoneKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(L"done"))));
@@ -285,7 +284,7 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
         m_hHostIteratorTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
         m_hHostIteratorTemplate->PrototypeTemplate()->Set(FROM_MAYBE(CreateString(StdString(L"next"))), hNextFunction);
 
-        m_spIsolateImpl->AddContext(this, enableDebugging, debugPort);
+        m_spIsolateImpl->AddContext(this, enableDebugging, enableRemoteDebugging, debugPort);
         m_pvV8ObjectCache = HostObjectHelpers::CreateV8ObjectCache();
 
     FROM_MAYBE_CATCH
@@ -773,7 +772,7 @@ V8Value V8ContextImpl::InvokeV8Object(void* pvObject, const std::vector<V8Value>
             FROM_MAYBE_TRY
 
                 auto hError = v8::Exception::TypeError(FROM_MAYBE(CreateString(StdString(L"Object does not support invocation")))).As<v8::Object>();
-                throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(FROM_MAYBE(hError->Get(m_hContext, FROM_MAYBE(CreateString(StdString(L"stack")))))), V8Value(V8Value::Undefined), EXECUTION_STARTED);
+                throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hError), CreateStdString(FROM_MAYBE(hError->Get(m_hContext, FROM_MAYBE(CreateString(StdString(L"stack")))))), V8Value(V8Value::Undefined), EXECUTION_STARTED);
 
             FROM_MAYBE_CATCH
 
@@ -812,7 +811,7 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const StdString& nam
             FROM_MAYBE_TRY
 
                 auto hError = v8::Exception::TypeError(FROM_MAYBE(CreateString(StdString(L"Method or property not found")))).As<v8::Object>();
-                throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(FROM_MAYBE(hError->Get(m_hContext, FROM_MAYBE(CreateString(StdString(L"stack")))))), V8Value(V8Value::Undefined), EXECUTION_STARTED);
+                throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hError), CreateStdString(FROM_MAYBE(hError->Get(m_hContext, FROM_MAYBE(CreateString(StdString(L"stack")))))), V8Value(V8Value::Undefined), EXECUTION_STARTED);
 
             FROM_MAYBE_CATCH
 
@@ -826,7 +825,7 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const StdString& nam
             FROM_MAYBE_TRY
 
                 auto hError = v8::Exception::TypeError(FROM_MAYBE(CreateString(StdString(L"Property value does not support invocation")))).As<v8::Object>();
-                throw V8Exception(V8Exception::Type::General, m_Name, StdString(hError), StdString(FROM_MAYBE(hError->Get(m_hContext, FROM_MAYBE(CreateString(StdString(L"stack")))))), V8Value(V8Value::Undefined), EXECUTION_STARTED);
+                throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hError), CreateStdString(FROM_MAYBE(hError->Get(m_hContext, FROM_MAYBE(CreateString(StdString(L"stack")))))), V8Value(V8Value::Undefined), EXECUTION_STARTED);
 
             FROM_MAYBE_CATCH
 
@@ -929,11 +928,11 @@ void V8ContextImpl::InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8Ob
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::ProcessDebugMessages()
+bool V8ContextImpl::IsHostObject(v8::Local<v8::Object> hObject)
 {
     BEGIN_CONTEXT_SCOPE
 
-        m_spIsolateImpl->ProcessDebugMessages();
+        return !hObject.IsEmpty() && FROM_MAYBE_DEFAULT(hObject->HasPrivate(m_hContext, GetHostObjectHolderKey()));
 
     END_CONTEXT_SCOPE
 }
@@ -985,7 +984,6 @@ void V8ContextImpl::Teardown()
     Dispose(m_hDoneKey);
     Dispose(m_hEnumeratorKey);
     Dispose(m_hHostExceptionKey);
-    Dispose(m_hHostObjectHolderKey);
     Dispose(m_hIsHostObjectKey);
 
     // As of V8 3.16.0, the global property getter for a disposed context
@@ -1031,7 +1029,7 @@ HostObjectHolder* V8ContextImpl::GetHostObjectHolder(v8::Local<v8::Object> hObje
 {
     if (!hObject.IsEmpty())
     {
-        auto hHolder = ::ValueAsExternal(FROM_MAYBE_DEFAULT(hObject->GetPrivate(m_hContext, m_hHostObjectHolderKey)));
+        auto hHolder = ::ValueAsExternal(FROM_MAYBE_DEFAULT(hObject->GetPrivate(m_hContext, GetHostObjectHolderKey())));
         if (!hHolder.IsEmpty())
         {
             return static_cast<HostObjectHolder*>(hHolder->Value());
@@ -1047,7 +1045,7 @@ bool V8ContextImpl::SetHostObjectHolder(v8::Local<v8::Object> hObject, HostObjec
 {
     if (!hObject.IsEmpty())
     {
-        return FROM_MAYBE_DEFAULT(hObject->SetPrivate(m_hContext, m_hHostObjectHolderKey, CreateExternal(pHolder)));
+        return FROM_MAYBE_DEFAULT(hObject->SetPrivate(m_hContext, GetHostObjectHolderKey(), CreateExternal(pHolder)));
     }
 
     return false;
@@ -1122,7 +1120,7 @@ void V8ContextImpl::GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std:
         for (auto index = 0; index < nameCount; index++)
         {
             auto hName = FROM_MAYBE(hNames->Get(m_hContext, index));
-            StdString name(hName);
+            auto name = CreateStdString(hName);
 
             int propertyIndex;
             if (!HostObjectHelpers::TryParseInt32(name, propertyIndex))
@@ -1149,7 +1147,7 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, st
         for (auto index = 0; index < nameCount; index++)
         {
             auto hName = FROM_MAYBE(hNames->Get(m_hContext, index));
-            StdString name(hName);
+            auto name = CreateStdString(hName);
 
             int propertyIndex;
             if (HostObjectHelpers::TryParseInt32(name, propertyIndex))
@@ -1286,7 +1284,7 @@ void V8ContextImpl::DeleteGlobalProperty(v8::Local<v8::Name> hKey, const v8::Pro
                         {
                             try
                             {
-                                CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(pvObject, StdString(hName)));
+                                CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(pvObject, pContextImpl->CreateStdString(hName)));
                             }
                             catch (const HostException&)
                             {
@@ -1727,7 +1725,7 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
                     }
 
                     bool isCacheable;
-                    hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(pvObject, StdString(hName), isCacheable));
+                    hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(pvObject, pContextImpl->CreateStdString(hName), isCacheable));
                     if (isCacheable)
                     {
                         BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
@@ -1775,7 +1773,7 @@ void V8ContextImpl::SetHostObjectProperty(v8::Local<v8::Name> hKey, v8::Local<v8
         {
             try
             {
-                HostObjectHelpers::SetProperty(pvObject, StdString(hName), pContextImpl->ExportValue(hValue));
+                HostObjectHelpers::SetProperty(pvObject, pContextImpl->CreateStdString(hName), pContextImpl->ExportValue(hValue));
                 CALLBACK_RETURN(hValue);
             }
             catch (const HostException& exception)
@@ -1807,7 +1805,7 @@ void V8ContextImpl::QueryHostObjectProperty(v8::Local<v8::Name> hKey, const v8::
                 std::vector<StdString> names;
                 HostObjectHelpers::GetPropertyNames(pvObject, names);
 
-                StdString name(hName);
+                auto name = pContextImpl->CreateStdString(hName);
                 for (auto it = names.begin(); it != names.end(); it++)
                 {
                     if (it->Compare(name) == 0)
@@ -1842,7 +1840,7 @@ void V8ContextImpl::DeleteHostObjectProperty(v8::Local<v8::Name> hKey, const v8:
         {
             try
             {
-                CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(pvObject, StdString(hName)));
+                CALLBACK_RETURN(HostObjectHelpers::DeleteProperty(pvObject, pContextImpl->CreateStdString(hName)));
             }
             catch (const HostException& exception)
             {
@@ -2217,7 +2215,7 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
 
         if (hValue->IsString())
         {
-            return V8Value(new StdString(hValue));
+            return V8Value(new StdString(CreateStdString(hValue)));
         }
 
         auto hObject = ::ValueAsObject(hValue);
@@ -2287,14 +2285,14 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
         if (!tryCatch.CanContinue())
         {
             VerifyNotOutOfMemory();
-            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(FROM_MAYBE_DEFAULT(tryCatch.StackTrace(m_hContext))), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
+            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), CreateStdString(FROM_MAYBE_DEFAULT(tryCatch.StackTrace(m_hContext))), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
         }
 
         auto hException = tryCatch.Exception();
         if (hException->SameValue(m_hTerminationException))
         {
             VerifyNotOutOfMemory();
-            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), StdString(FROM_MAYBE_DEFAULT(tryCatch.StackTrace(m_hContext))), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
+            throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host"), CreateStdString(FROM_MAYBE_DEFAULT(tryCatch.StackTrace(m_hContext))), V8Value(V8Value::Undefined), isolateExecutionScope.ExecutionStarted());
         }
 
         StdString message;
@@ -2303,10 +2301,10 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
         StdString constructorName;
         if (hException->IsObject())
         {
-            constructorName = StdString(hException.As<v8::Object>()->GetConstructorName());
+            constructorName = CreateStdString(hException.As<v8::Object>()->GetConstructorName());
         }
 
-        StdString value(hException);
+        auto value = CreateStdString(hException);
         if (value.GetLength() > 0)
         {
             message = std::move(value);
@@ -2356,7 +2354,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
             auto hStackTrace = FROM_MAYBE_DEFAULT(tryCatch.StackTrace(m_hContext));
             if (!hStackTrace.IsEmpty())
             {
-                stackTrace = StdString(hStackTrace);
+                stackTrace = CreateStdString(hStackTrace);
             }
 
             auto hMessage = tryCatch.Message();
@@ -2364,7 +2362,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
             {
                 if (message.GetLength() < 1)
                 {
-                    message = StdString(hMessage->Get());
+                    message = CreateStdString(hMessage->Get());
                 }
 
                 stackTrace = message;
@@ -2382,7 +2380,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
                         if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
                         {
                             stackTrace += L"\n    at ";
-                            stackTrace += StdString(hScriptName);
+                            stackTrace += CreateStdString(hScriptName);
                         }
                         else
                         {
@@ -2403,7 +2401,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
                     if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
                     {
                         stackTrace += L" -> ";
-                        stackTrace += StdString(hSourceLine);
+                        stackTrace += CreateStdString(hSourceLine);
                     }
 
                     usedSourceLine = true;
@@ -2422,14 +2420,14 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
                             stackTrace += L"new ";
                         }
 
-                        stackTrace += StdString(hFunctionName);
+                        stackTrace += CreateStdString(hFunctionName);
                         stackTrace += L" (";
                     }
 
                     auto hScriptName = hFrame->GetScriptName();
                     if (!hScriptName.IsEmpty() && (hScriptName->Length() > 0))
                     {
-                        stackTrace += StdString(hScriptName);
+                        stackTrace += CreateStdString(hScriptName);
                     }
                     else
                     {
@@ -2461,7 +2459,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
                         if (!hSourceLine.IsEmpty() && (hSourceLine->Length() > 0))
                         {
                             stackTrace += L" -> ";
-                            stackTrace += StdString(hSourceLine);
+                            stackTrace += CreateStdString(hSourceLine);
                         }
 
                         usedSourceLine = true;

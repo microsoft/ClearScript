@@ -307,9 +307,9 @@ bool HostObjectHelpers::RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject)
 
 //-----------------------------------------------------------------------------
 
-void* HostObjectHelpers::CreateDebugAgent(const StdString& name, const StdString& version, int port, DebugCallback&& callback)
+void* HostObjectHelpers::CreateDebugAgent(const StdString& name, const StdString& version, int port, bool remote, DebugCallback&& callback)
 {
-    return V8ProxyHelpers::CreateDebugAgent(name.ToManagedString(), version.ToManagedString(), port, gcnew V8DebugListenerImpl(std::move(callback)));
+    return V8ProxyHelpers::CreateDebugAgent(name.ToManagedString(), version.ToManagedString(), port, remote, gcnew V8DebugListenerImpl(std::move(callback)));
 }
 
 //-----------------------------------------------------------------------------

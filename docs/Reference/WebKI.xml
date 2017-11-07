@@ -77,6 +77,10 @@
   <HelpKINode Title="EnableJITDebugging enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
   <HelpKINode Title="EnableModeless method" Url="html/M_Microsoft_ClearScript_Windows_IHostWindow_EnableModeless.htm" />
   <HelpKINode Title="EnableNullResultWrapping property" Url="html/P_Microsoft_ClearScript_ScriptEngine_EnableNullResultWrapping.htm" />
+  <HelpKINode Title="EnableRemoteDebugging enumeration member">
+    <HelpKINode Title="V8RuntimeFlags Enumeration" Url="html/T_Microsoft_ClearScript_V8_V8RuntimeFlags.htm" />
+    <HelpKINode Title="V8ScriptEngineFlags Enumeration" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
+  </HelpKINode>
   <HelpKINode Title="EnableStandardsMode enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
   <HelpKINode Title="Engine property" Url="html/P_Microsoft_ClearScript_ScriptObject_Engine.htm" />
   <HelpKINode Title="EngineName property">

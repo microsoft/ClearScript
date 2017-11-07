@@ -25,7 +25,7 @@ namespace Microsoft.ClearScript.Util
 
         public bool Change(int dueTime, int period)
         {
-            if (!disposedFlag.IsSet())
+            if (!disposedFlag.IsSet)
             {
                 bool result;
                 if (MiscHelpers.Try(out result, () => timer.Change(dueTime, period)))
@@ -39,7 +39,7 @@ namespace Microsoft.ClearScript.Util
 
         private void OnTimer(object state)
         {
-            if (!disposedFlag.IsSet())
+            if (!disposedFlag.IsSet)
             {
                 MiscHelpers.Try(callback.Invoke);
             }

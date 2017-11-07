@@ -59,6 +59,7 @@ namespace Microsoft.ClearScript.V8
         /// bytes rather than MiB. For example, the values 16 and 16777216 both specify a limit
         /// of 16 MiB.
         /// </remarks>
+        [Obsolete("Executable code now occupies the old object heap. See MaxOldSpaceSize.")]
         public int MaxExecutableSize { get; set; }
 
         /// <summary>
@@ -72,7 +73,7 @@ namespace Microsoft.ClearScript.V8
         /// bytes rather than MiB. For example, the values 16 and 16777216 both specify a limit
         /// of 16 MiB.
         /// </remarks>
-        [Obsolete("This property is obsolete. Use MaxNewSpaceSize instead.")]
+        [Obsolete("Use MaxNewSpaceSize instead.")]
         public int MaxYoungSpaceSize
         {
             get { return MaxNewSpaceSize; }

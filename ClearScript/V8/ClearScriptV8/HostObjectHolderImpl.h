@@ -15,8 +15,8 @@ public:
 
     explicit HostObjectHolderImpl(void* pvObject);
 
-    HostObjectHolderImpl* Clone() const;
-    void* GetObject() const;
+    virtual HostObjectHolderImpl* Clone() const override;
+    virtual void* GetObject() const override;
 
     ~HostObjectHolderImpl();
 

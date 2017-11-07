@@ -15,9 +15,9 @@ public:
 
     V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvScript);
 
-    V8ScriptHolderImpl* Clone() const;
-    bool IsSameIsolate(void* pvIsolate) const;
-    void* GetScript() const;
+    virtual V8ScriptHolderImpl* Clone() const override;
+    virtual bool IsSameIsolate(void* pvIsolate) const override;
+    virtual void* GetScript() const override;
 
     ~V8ScriptHolderImpl();
 

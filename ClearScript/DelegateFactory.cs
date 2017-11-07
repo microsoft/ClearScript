@@ -69,6 +69,8 @@ namespace Microsoft.ClearScript
 
         private static Delegate CreateSimpleDelegate(ScriptEngine engine, object target, Type delegateType)
         {
+            // ReSharper disable PossibleNullReferenceException
+
             var method = delegateType.GetMethod("Invoke");
             var paramTypes = method.GetParameters().Select(param => param.ParameterType).ToArray();
 
@@ -86,11 +88,14 @@ namespace Microsoft.ClearScript
 
             var shim = (DelegateShim)shimType.CreateInstance(engine, target);
             return shim.Delegate;
+
+            // ReSharper restore PossibleNullReferenceException
         }
 
         private static Delegate CreateComplexDelegate(ScriptEngine engine, object target, Type delegateType)
         {
             // ReSharper disable CoVariantArrayConversion
+            // ReSharper disable PossibleNullReferenceException
 
             var method = delegateType.GetMethod("Invoke");
 
@@ -155,9 +160,13 @@ namespace Microsoft.ClearScript
             {
                 if (paramTypes[index].IsByRef)
                 {
+                    // ReSharper disable AssignNullToNotNullAttribute
+
                     var member = innerParamTypes[index].GetProperty("Value");
                     var resultExpr = Expression.MakeMemberAccess(varExprs[index], member);
                     finallyExprs.Add(Expression.Assign(paramExprs[index], resultExpr));
+
+                    // ReSharper restore AssignNullToNotNullAttribute
                 }
             }
 
@@ -167,6 +176,7 @@ namespace Microsoft.ClearScript
             var topBlockExpr = Expression.Block(method.ReturnType, varExprs, topExprs);
             return Expression.Lambda(delegateType, topBlockExpr, paramExprs).Compile();
 
+            // ReSharper restore PossibleNullReferenceException
             // ReSharper restore CoVariantArrayConversion
         }
 

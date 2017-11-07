@@ -5,14 +5,15 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=5.5.372.40
+set v8testedrev=6.2.414.40
 
-set gyprev=e7079f0e0e14108ab0dba58728ff219637458563
-set cygwinrev=c89e446b273697fadf3a10ff1007a97c0b7de6df
-set clangrev=1f92f999fc374a479e98a189ebdfe25c09484486
-set traceeventcommonrev=e0fa02a02f61430dae2bddfd89a334ea4389f495
+set gyprev=d61a9397e668fa9843c4aa7da9e79460fe590bfb
+set clangrev=40f69660bf3cd407e72b8ae240fdd6c513dddbfe
+set traceeventcommonrev=65d1d42a5df6c0a563a6fdfa58a135679185e5d9
 set gtestrev=6f8a66431cb592dad629028a50b3dd418a408c87
 set gmockrev=0421b6f358139f02e102c9c332ce19a33faf75be
+set jinja2rev=d34383206fa42d52faa10bb9931d6d538f3a57e0
+set markupsaferev=8f45f5cfa0009d2a70589bcda0349b8cb2b72783
 
 :ProcessArgs
 
@@ -77,14 +78,10 @@ goto Exit
 :CheckOSDone
 
 :CheckMSVS
-if "%VisualStudioVersion%"=="12.0" goto UseMSVS2013
 if "%VisualStudioVersion%"=="14.0" goto UseMSVS2015
-echo Error: This script requires a Visual Studio 2013 or 2015 Developer Command
-echo Prompt. Browse to http://www.visualstudio.com for more information.
+echo Error: This script requires a Visual Studio 2015 Developer Command Prompt.
+echo Browse to http://www.visualstudio.com for more information.
 goto Exit
-:UseMSVS2013
-set GYP_MSVS_VERSION=2013
-goto CheckMSVSDone
 :UseMSVS2015
 set GYP_MSVS_VERSION=2015
 :CheckMSVSDone
@@ -179,16 +176,6 @@ if errorlevel 1 goto Error
 cd ..\..
 :DownloadGYPDone
 
-:DownloadCygwin
-echo Downloading Cygwin ...
-git clone -n -q https://chromium.googlesource.com/chromium/deps/cygwin.git third_party/cygwin
-if errorlevel 1 goto Error
-cd third_party/cygwin
-git checkout -q "%cygwinrev%"
-if errorlevel 1 goto Error
-cd ..\..
-:DownloadCygwinDone
-
 :DownloadClang
 echo Downloading Clang ...
 git clone -n -q https://chromium.googlesource.com/chromium/src/tools/clang.git tools/clang
@@ -229,6 +216,26 @@ if errorlevel 1 goto Error
 cd ..\..
 :DownloadGMockDone
 
+:DownloadJinja2
+echo Downloading Jinja2 ...
+git clone -n -q https://chromium.googlesource.com/chromium/src/third_party/markupsafe.git third_party/markupsafe
+if errorlevel 1 goto Error
+cd third_party\markupsafe
+git checkout -q "%markupsaferev%"
+if errorlevel 1 goto Error
+cd ..\..
+:DownloadJinja2Done
+
+:DownloadMarkupSafe
+echo Downloading MarkupSafe ...
+git clone -n -q https://chromium.googlesource.com/chromium/src/third_party/jinja2.git third_party/jinja2
+if errorlevel 1 goto Error
+cd third_party\jinja2
+git checkout -q "%jinja2rev%"
+if errorlevel 1 goto Error
+cd ..\..
+:DownloadMarkupSafeDone
+
 cd ..
 
 :DownloadDone
@@ -253,10 +260,8 @@ cd ..
 :Copy32Bit
 echo Building 32-bit V8 ...
 if exist v8-ia32\ goto Copy32BitDone
-md v8-ia32
-if errorlevel 1 goto Error
-xcopy v8\*.* v8-ia32\ /e /y >nul
-if errorlevel 1 goto Error
+robocopy v8 v8-ia32 /mir /xd .git >nul
+if errorlevel 8 goto Error
 :Copy32BitDone
 
 :Build32Bit
@@ -271,10 +276,8 @@ cd ..
 :Copy64Bit
 echo Building 64-bit V8 ...
 if exist v8-x64\ goto Copy64BitDone
-md v8-x64
-if errorlevel 1 goto Error
-xcopy v8\*.* v8-x64\ /e /y >nul
-if errorlevel 1 goto Error
+robocopy v8 v8-x64 /mir /xd .git >nul
+if errorlevel 8 goto Error
 :Copy64BitDone
 
 :Build64Bit
@@ -308,17 +311,25 @@ if errorlevel 1 goto Error
 
 :ImportLibs
 echo Importing V8 libraries ...
-copy build\v8-ia32\build\%mode%\v8-ia32.dll lib\ >nul
+copy build\v8-ia32\src\%mode%\v8-base-ia32.dll lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-ia32\build\%mode%\v8-ia32.pdb lib\ >nul
+copy build\v8-ia32\src\%mode%\v8-base-ia32.pdb lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-ia32\build\%mode%\lib\v8-ia32.lib lib\ >nul
+copy build\v8-ia32\src\%mode%\v8-ia32.dll lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-x64\build\%mode%\v8-x64.dll lib\ >nul
+copy build\v8-ia32\src\%mode%\v8-ia32.pdb lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-x64\build\%mode%\v8-x64.pdb lib\ >nul
+copy build\v8-ia32\src\%mode%\lib\v8-ia32.lib lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-x64\build\%mode%\lib\v8-x64.lib lib\ >nul
+copy build\v8-x64\src\%mode%\v8-base-x64.dll lib\ >nul
+if errorlevel 1 goto Error
+copy build\v8-x64\src\%mode%\v8-base-x64.pdb lib\ >nul
+if errorlevel 1 goto Error
+copy build\v8-x64\src\%mode%\v8-x64.dll lib\ >nul
+if errorlevel 1 goto Error
+copy build\v8-x64\src\%mode%\v8-x64.pdb lib\ >nul
+if errorlevel 1 goto Error
+copy build\v8-x64\src\%mode%\lib\v8-x64.lib lib\ >nul
 if errorlevel 1 goto Error
 :ImportLibsDone
 

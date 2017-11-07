@@ -169,7 +169,7 @@ namespace Microsoft.ClearScript.Util
                     var name = GetManagedTypeInfoName(typeInfo, typeLib);
                     var guid = GetTypeInfoGuid(typeInfo);
 
-                    var type = assembly.GetType(name, false /*throwOnError*/, true /*ignoreCase*/);
+                    var type = assembly.GetType(name, false, true);
                     if ((type != null) && (type.GUID == guid))
                     {
                         return type;
@@ -185,6 +185,7 @@ namespace Microsoft.ClearScript.Util
                         }
                     }
 
+                    // ReSharper disable once PossibleNullReferenceException
                     type = types.FirstOrDefault(testType => (testType.GUID == guid) && (testType.FullName.Equals(name, StringComparison.OrdinalIgnoreCase)));
                     if (type != null)
                     {

@@ -131,11 +131,13 @@ namespace Microsoft.ClearScript.Util
 
             if (type.IsNullable())
             {
+                // ReSharper disable once AssignNullToNotNullAttribute
                 return (value == null) || (Nullable.GetUnderlyingType(type).IsAssignableFrom(ref value));
             }
 
             if (value == null)
             {
+                // ReSharper disable once PossibleNullReferenceException
                 return !type.IsValueType;
             }
 
@@ -145,6 +147,7 @@ namespace Microsoft.ClearScript.Util
                 return true;
             }
 
+            // ReSharper disable once PossibleNullReferenceException
             if (!type.IsValueType)
             {
                 if (type.IsAssignableFrom(valueType))
@@ -569,6 +572,7 @@ namespace Microsoft.ClearScript.Util
                 return null;
             }
 
+            // ReSharper disable once PossibleNullReferenceException
             var result = Type.DefaultBinder.SelectProperty(bindFlags, candidates, null, bindArgs.Select(GetPropertyIndexType).ToArray(), null);
             if (result != null)
             {
@@ -600,9 +604,13 @@ namespace Microsoft.ClearScript.Util
 
             public bool Equals(PropertyInfo first, PropertyInfo second)
             {
+                // ReSharper disable PossibleNullReferenceException
+
                 var firstParamTypes = first.GetIndexParameters().Select(param => param.ParameterType);
                 var secondParamTypes = second.GetIndexParameters().Select(param => param.ParameterType);
                 return firstParamTypes.SequenceEqual(secondParamTypes);
+
+                // ReSharper restore PossibleNullReferenceException
             }
 
             public int GetHashCode(PropertyInfo property)

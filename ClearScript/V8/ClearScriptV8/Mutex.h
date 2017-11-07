@@ -13,7 +13,16 @@ class SimpleMutex
 
 public:
 
+#ifdef _M_CEE
+    class Impl;
+#else // !_M_CEE
+    using Impl = std::mutex;
+#endif // !_M_CEE
+
     SimpleMutex();
+
+    Impl& GetImpl() { return *m_pImpl; }
+    const Impl& GetImpl() const { return *m_pImpl; }
 
     void Lock();
     bool TryLock();
@@ -23,7 +32,7 @@ public:
 
 private:
 
-    class SimpleMutexImpl* m_pImpl;
+    Impl* m_pImpl;
 };
 
 //-----------------------------------------------------------------------------
@@ -36,7 +45,16 @@ class RecursiveMutex
 
 public:
 
+#ifdef _M_CEE
+    class Impl;
+#else // !_M_CEE
+    using Impl = std::recursive_mutex;
+#endif // !_M_CEE
+
     RecursiveMutex();
+
+    Impl& GetImpl() { return *m_pImpl; }
+    const Impl& GetImpl() const { return *m_pImpl; }
 
     void Lock();
     bool TryLock();
@@ -46,7 +64,7 @@ public:
 
 private:
 
-    class RecursiveMutexImpl* m_pImpl;
+    Impl* m_pImpl;
 };
 
 //-----------------------------------------------------------------------------
@@ -128,11 +146,12 @@ public:
 
     OnceFlag();
 
-    void CallOnce(std::function<void()>&& func);
+    void CallOnce(const std::function<void()>& func);
 
     ~OnceFlag();
 
 private:
 
-    class OnceFlagImpl* m_pImpl;
+    class Impl;
+    Impl* m_pImpl;
 };

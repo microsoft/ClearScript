@@ -107,7 +107,7 @@ namespace Microsoft.ClearScript.V8
         /// Initializes a new V8 script engine instance with the specified options and debug port.
         /// </summary>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         /// <remarks>
         /// A separate V8 runtime is created for the new script engine instance.
         /// </remarks>
@@ -134,7 +134,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         /// <remarks>
         /// A separate V8 runtime is created for the new script engine instance.
         /// </remarks>
@@ -161,7 +161,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         /// <remarks>
         /// A separate V8 runtime is created for the new script engine instance.
         /// </remarks>
@@ -190,7 +190,7 @@ namespace Microsoft.ClearScript.V8
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="constraints">Resource constraints for the V8 runtime (see remarks).</param>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         /// <remarks>
         /// A separate V8 runtime is created for the new script engine instance.
         /// </remarks>
@@ -208,7 +208,7 @@ namespace Microsoft.ClearScript.V8
                 hostItemCollateral = activeRuntime.HostItemCollateral;
 
                 engineFlags = flags;
-                proxy = V8ContextProxy.Create(activeRuntime.IsolateProxy, Name, flags.HasFlag(V8ScriptEngineFlags.EnableDebugging), flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers), debugPort);
+                proxy = V8ContextProxy.Create(activeRuntime.IsolateProxy, Name, flags.HasFlag(V8ScriptEngineFlags.EnableDebugging), flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers), flags.HasFlag(V8ScriptEngineFlags.EnableRemoteDebugging), debugPort);
                 script = GetRootItem();
 
                 var engineInternal = Evaluate(
@@ -607,7 +607,7 @@ namespace Microsoft.ClearScript.V8
 
         private void VerifyNotDisposed()
         {
-            if (disposedFlag.IsSet())
+            if (disposedFlag.IsSet)
             {
                 throw new ObjectDisposedException(ToString());
             }

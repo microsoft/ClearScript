@@ -75,7 +75,7 @@ namespace Microsoft.ClearScript.V8
         /// Initializes a new V8 runtime instance with the specified options and debug port.
         /// </summary>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         public V8Runtime(V8RuntimeFlags flags, int debugPort)
             : this(null, null, flags, debugPort)
         {
@@ -96,7 +96,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         public V8Runtime(string name, V8RuntimeFlags flags, int debugPort)
             : this(name, null, flags, debugPort)
         {
@@ -117,7 +117,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <param name="constraints">Resource constraints for the instance.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         public V8Runtime(V8RuntimeConstraints constraints, V8RuntimeFlags flags, int debugPort)
             : this(null, constraints, flags, debugPort)
         {
@@ -140,11 +140,11 @@ namespace Microsoft.ClearScript.V8
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="constraints">Resource constraints for the instance.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         public V8Runtime(string name, V8RuntimeConstraints constraints, V8RuntimeFlags flags, int debugPort)
         {
             this.name = nameManager.GetUniqueName(name, GetType().GetRootName());
-            proxy = V8IsolateProxy.Create(this.name, constraints, flags.HasFlag(V8RuntimeFlags.EnableDebugging), debugPort);
+            proxy = V8IsolateProxy.Create(this.name, constraints, flags.HasFlag(V8RuntimeFlags.EnableDebugging), flags.HasFlag(V8RuntimeFlags.EnableRemoteDebugging), debugPort);
         }
 
         #endregion
@@ -298,7 +298,7 @@ namespace Microsoft.ClearScript.V8
         /// <para>
         /// V8 supports one script debugger per runtime. If script debugging has been enabled in
         /// the current runtime, additional script engine instances cannot disable it or change its
-        /// TCP/IP port, nor can they enable script debugging on a different port.
+        /// TCP port, nor can they enable script debugging on a different port.
         /// </para>
         /// </remarks>
         public V8ScriptEngine CreateScriptEngine(V8ScriptEngineFlags flags)
@@ -310,7 +310,7 @@ namespace Microsoft.ClearScript.V8
         /// Creates a new V8 script engine instance with the specified options and debug port.
         /// </summary>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         /// <returns>A new V8 script engine instance.</returns>
         /// <remarks>
         /// <para>
@@ -320,7 +320,7 @@ namespace Microsoft.ClearScript.V8
         /// <para>
         /// V8 supports one script debugger per runtime. If script debugging has been enabled in
         /// the current runtime, additional script engine instances cannot disable it or change its
-        /// TCP/IP port, nor can they enable script debugging on a different port.
+        /// TCP port, nor can they enable script debugging on a different port.
         /// </para>
         /// </remarks>
         public V8ScriptEngine CreateScriptEngine(V8ScriptEngineFlags flags, int debugPort)
@@ -342,7 +342,7 @@ namespace Microsoft.ClearScript.V8
         /// <para>
         /// V8 supports one script debugger per runtime. If script debugging has been enabled in
         /// the current runtime, additional script engine instances cannot disable it or change its
-        /// TCP/IP port, nor can they enable script debugging on a different port.
+        /// TCP port, nor can they enable script debugging on a different port.
         /// </para>
         /// </remarks>
         public V8ScriptEngine CreateScriptEngine(string engineName, V8ScriptEngineFlags flags)
@@ -355,7 +355,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <param name="engineName">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
-        /// <param name="debugPort">A TCP/IP port on which to listen for a debugger connection.</param>
+        /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         /// <returns>A new V8 script engine instance.</returns>
         /// <remarks>
         /// <para>
@@ -365,7 +365,7 @@ namespace Microsoft.ClearScript.V8
         /// <para>
         /// V8 supports one script debugger per runtime. If script debugging has been enabled in
         /// the current runtime, additional script engine instances cannot disable it or change its
-        /// TCP/IP port, nor can they enable script debugging on a different port.
+        /// TCP port, nor can they enable script debugging on a different port.
         /// </para>
         /// </remarks>
         public V8ScriptEngine CreateScriptEngine(string engineName, V8ScriptEngineFlags flags, int debugPort)
@@ -515,7 +515,7 @@ namespace Microsoft.ClearScript.V8
 
         private void VerifyNotDisposed()
         {
-            if (disposedFlag.IsSet())
+            if (disposedFlag.IsSet)
             {
                 throw new ObjectDisposedException(ToString());
             }

@@ -53,6 +53,7 @@ namespace Microsoft.ClearScript.Test
 
         private static bool ReflectionFilter(Type type)
         {
+            // ReSharper disable once PossibleNullReferenceException
             return (type != typeof(Type)) && !type.FullName.StartsWith("System.Reflection.", StringComparison.Ordinal);
         }
 
@@ -61,7 +62,7 @@ namespace Microsoft.ClearScript.Test
             // ReSharper disable CollectionNeverQueried.Local
 
             typeCollection = typeCollection ?? new HostTypeCollection(filter, assemblyNames);
-            var allNodes = GetLeafNodes(typeCollection).OrderBy(hostType => hostType.Type.GetLocator());
+            var allNodes = GetLeafNodes(typeCollection).OrderBy(hostType => hostType.Type.GetLocator()).ToArray();
 
             var visitedNodes = new SortedDictionary<string, HostType>();
             foreach (var type in GetImportableTypes(assemblyNames, filter))

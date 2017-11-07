@@ -26,6 +26,8 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("ClearScriptV8-32.dll")]
     [DeploymentItem("v8-x64.dll")]
     [DeploymentItem("v8-ia32.dll")]
+    [DeploymentItem("v8-base-x64.dll")]
+    [DeploymentItem("v8-base-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class BugFixTest : ClearScriptTest
     {
@@ -2085,7 +2087,7 @@ namespace Microsoft.ClearScript.Test
                 }
 
                 runtime.CollectGarbage(true);
-                Assert.IsFalse(runtime.GetHeapInfo().TotalHeapSize > (heapSize * 1.5));
+                Assert.IsFalse(runtime.GetHeapInfo().TotalHeapSize > (heapSize * 1.75));
             }
         }
 

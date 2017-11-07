@@ -17,8 +17,9 @@ namespace V8 {
 
         V8DebugListenerImpl(HostObjectHelpers::DebugCallback&& callback);
 
-        virtual bool SendDebugCommand(String^ gcCommand);
-        virtual void DispatchDebugMessages();
+        virtual void ConnectClient();
+        virtual void SendCommand(String^ gcCommand);
+        virtual void DisconnectClient();
 
         ~V8DebugListenerImpl();
         !V8DebugListenerImpl();

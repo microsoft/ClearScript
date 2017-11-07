@@ -219,10 +219,17 @@ namespace Microsoft.ClearScript
         private static object BindMethodRaw(BindingFlags bindFlags, InvokeMemberBinder binder, HostTarget target, object[] bindArgs)
         {
             var expr = DynamicHelpers.Bind(binder, target, bindArgs).Expression;
+
+            // ReSharper disable ConditionIsAlwaysTrueOrFalse
+            // ReSharper disable HeuristicUnreachableCode
+
             if (expr == null)
             {
                 return new Func<Exception>(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}'", binder.Name)));
             }
+
+            // ReSharper restore HeuristicUnreachableCode
+            // ReSharper restore ConditionIsAlwaysTrueOrFalse
 
             if (expr.NodeType == ExpressionType.Dynamic)
             {
@@ -311,6 +318,7 @@ namespace Microsoft.ClearScript
         private MethodBindResult BindMethodUsingReflection(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs, object[] args)
         {
             // ReSharper disable CoVariantArrayConversion
+            // ReSharper disable PossibleNullReferenceException
 
             var candidates = GetReflectionCandidates(bindFlags, hostTarget, name, typeArgs).Distinct().ToArray();
             if (candidates.Length > 0)
@@ -331,6 +339,7 @@ namespace Microsoft.ClearScript
 
             return new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}' that matches the specified arguments", name)));
 
+            // ReSharper restore PossibleNullReferenceException
             // ReSharper restore CoVariantArrayConversion
         }
 

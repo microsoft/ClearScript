@@ -20,13 +20,13 @@ namespace V8 {
     // V8ContextProxyImpl implementation
     //-------------------------------------------------------------------------
 
-    V8ContextProxyImpl::V8ContextProxyImpl(V8IsolateProxy^ gcIsolateProxy, String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Int32 debugPort):
+    V8ContextProxyImpl::V8ContextProxyImpl(V8IsolateProxy^ gcIsolateProxy, String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Boolean enableRemoteDebugging, Int32 debugPort):
         m_gcLock(gcnew Object)
     {
         try
         {
             auto gcIsolateProxyImpl = dynamic_cast<V8IsolateProxyImpl^>(gcIsolateProxy);
-            m_pspContext = new SharedPtr<V8Context>(V8Context::Create(gcIsolateProxyImpl->GetIsolate(), StdString(gcName), enableDebugging, disableGlobalMembers, debugPort));
+            m_pspContext = new SharedPtr<V8Context>(V8Context::Create(gcIsolateProxyImpl->GetIsolate(), StdString(gcName), enableDebugging, disableGlobalMembers, enableRemoteDebugging, debugPort));
         }
         catch (const V8Exception& exception)
         {

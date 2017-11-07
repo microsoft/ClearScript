@@ -3,10 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Microsoft.ClearScript.Util
 {
+    [SuppressMessage("ReSharper", "PossibleNullReferenceException", Justification = "This is a performance-critical class with extensive test coverage.")]
     internal static class UnmanagedMemoryHelpers
     {
         private delegate ulong ReadArrayFromUnmanagedMemoryHandler(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex);

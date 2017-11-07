@@ -11,7 +11,7 @@ class V8Context: public WeakRefTarget<V8Context>
 {
 public:
 
-    static V8Context* Create(const SharedPtr<V8Isolate>& spIsolate, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort);
+    static V8Context* Create(const SharedPtr<V8Isolate>& spIsolate, const StdString& name, bool enableDebugging, bool disableGlobalMembers, bool enableRemoteDebugging, int debugPort);
     static size_t GetInstanceCount();
 
     virtual size_t GetMaxIsolateHeapSize() = 0;

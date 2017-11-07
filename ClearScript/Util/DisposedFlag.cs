@@ -9,9 +9,9 @@ namespace Microsoft.ClearScript.Util
     {
         private bool disposed;
 
-        public bool IsSet()
+        public bool IsSet
         {
-            return disposed;
+            get { return disposed; }
         }
 
         public bool Set()
@@ -24,9 +24,9 @@ namespace Microsoft.ClearScript.Util
     {
         private int disposed;
 
-        public bool IsSet()
+        public bool IsSet
         {
-            return disposed != 0;
+            get { return disposed != 0; }
         }
 
         public bool Set()

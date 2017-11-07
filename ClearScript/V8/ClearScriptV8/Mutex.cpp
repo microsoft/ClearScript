@@ -4,45 +4,11 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
-// SimpleMutexImpl
-//-----------------------------------------------------------------------------
-
-class SimpleMutexImpl
-{
-    PROHIBIT_COPY(SimpleMutexImpl)
-
-public:
-
-    SimpleMutexImpl()
-    {
-    }
-
-    void Lock()
-    {
-        m_Mutex.lock();
-    }
-
-    bool TryLock()
-    {
-        return m_Mutex.try_lock();
-    }
-
-    void Unlock()
-    {
-        m_Mutex.unlock();
-    }
-
-private:
-
-    std::mutex m_Mutex;
-};
-
-//-----------------------------------------------------------------------------
 // SimpleMutex implementation
 //-----------------------------------------------------------------------------
 
 SimpleMutex::SimpleMutex():
-    m_pImpl(new SimpleMutexImpl)
+    m_pImpl(new Impl)
 {
 }
 
@@ -50,21 +16,21 @@ SimpleMutex::SimpleMutex():
 
 void SimpleMutex::Lock()
 {
-    m_pImpl->Lock();
+    m_pImpl->lock();
 }
 
 //-----------------------------------------------------------------------------
 
 bool SimpleMutex::TryLock()
 {
-    return m_pImpl->TryLock();
+    return m_pImpl->try_lock();
 }
 
 //-----------------------------------------------------------------------------
 
 void SimpleMutex::Unlock()
 {
-    m_pImpl->Unlock();
+    m_pImpl->unlock();
 }
 
 //-----------------------------------------------------------------------------
@@ -75,45 +41,11 @@ SimpleMutex::~SimpleMutex()
 }
 
 //-----------------------------------------------------------------------------
-// RecursiveMutexImpl
-//-----------------------------------------------------------------------------
-
-class RecursiveMutexImpl
-{
-    PROHIBIT_COPY(RecursiveMutexImpl)
-
-public:
-
-    RecursiveMutexImpl()
-    {
-    }
-
-    void Lock()
-    {
-        m_Mutex.lock();
-    }
-
-    bool TryLock()
-    {
-        return m_Mutex.try_lock();
-    }
-
-    void Unlock()
-    {
-        m_Mutex.unlock();
-    }
-
-private:
-
-    std::recursive_mutex m_Mutex;
-};
-
-//-----------------------------------------------------------------------------
 // RecursiveMutex implementation
 //-----------------------------------------------------------------------------
 
 RecursiveMutex::RecursiveMutex():
-    m_pImpl(new RecursiveMutexImpl)
+    m_pImpl(new Impl)
 {
 }
 
@@ -121,21 +53,21 @@ RecursiveMutex::RecursiveMutex():
 
 void RecursiveMutex::Lock()
 {
-    m_pImpl->Lock();
+    m_pImpl->lock();
 }
 
 //-----------------------------------------------------------------------------
 
 bool RecursiveMutex::TryLock()
 {
-    return m_pImpl->TryLock();
+    return m_pImpl->try_lock();
 }
 
 //-----------------------------------------------------------------------------
 
 void RecursiveMutex::Unlock()
 {
-    m_pImpl->Unlock();
+    m_pImpl->unlock();
 }
 
 //-----------------------------------------------------------------------------
@@ -146,20 +78,20 @@ RecursiveMutex::~RecursiveMutex()
 }
 
 //-----------------------------------------------------------------------------
-// OnceFlagImpl
+// OnceFlag::Impl
 //-----------------------------------------------------------------------------
 
-class OnceFlagImpl
+class OnceFlag::Impl
 {
-    PROHIBIT_COPY(OnceFlagImpl)
+    PROHIBIT_COPY(Impl)
 
 public:
 
-    OnceFlagImpl()
+    Impl()
     {
     }
 
-    void CallOnce(std::function<void()>&& func)
+    void CallOnce(const std::function<void()>& func)
     {
         if (!m_Called)
         {
@@ -186,13 +118,13 @@ private:
 //-----------------------------------------------------------------------------
 
 OnceFlag::OnceFlag():
-    m_pImpl(new OnceFlagImpl)
+    m_pImpl(new Impl)
 {
 }
 
 //-----------------------------------------------------------------------------
 
-void OnceFlag::CallOnce(std::function<void()>&& func)
+void OnceFlag::CallOnce(const std::function<void()>& func)
 {
     m_pImpl->CallOnce(std::move(func));
 }

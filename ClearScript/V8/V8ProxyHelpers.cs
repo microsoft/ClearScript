@@ -265,9 +265,9 @@ namespace Microsoft.ClearScript.V8
 
         #region V8 debug agent
 
-        public static unsafe void* CreateDebugAgent(string name, string version, int port, IV8DebugListener listener)
+        public static unsafe void* CreateDebugAgent(string name, string version, int port, bool remote, IV8DebugListener listener)
         {
-            return AddRefHostObject(new V8DebugAgent(name, version, port, listener));
+            return AddRefHostObject(new V8DebugAgent(name, version, port, remote, listener));
         }
 
         public static unsafe void SendDebugMessage(void* pAgent, string content)

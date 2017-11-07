@@ -19,27 +19,35 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    bool V8DebugListenerImpl::SendDebugCommand(String^ gcCommand)
+    void V8DebugListenerImpl::ConnectClient()
+    {
+        SharedPtr<HostObjectHelpers::DebugCallback> spCallback;
+        if (TryGetCallback(spCallback))
+        {
+            (*spCallback)(HostObjectHelpers::DebugDirective::ConnectClient, nullptr /*pCommand*/);
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8DebugListenerImpl::SendCommand(String^ gcCommand)
     {
         SharedPtr<HostObjectHelpers::DebugCallback> spCallback;
         if (TryGetCallback(spCallback))
         {
             StdString command(gcCommand);
-            (*spCallback)(HostObjectHelpers::DebugDirective::SendDebugCommand, &command);
-            return true;
+            (*spCallback)(HostObjectHelpers::DebugDirective::SendCommand, &command);
         }
-
-        return false;
     }
 
     //-------------------------------------------------------------------------
 
-    void V8DebugListenerImpl::DispatchDebugMessages()
+    void V8DebugListenerImpl::DisconnectClient()
     {
         SharedPtr<HostObjectHelpers::DebugCallback> spCallback;
         if (TryGetCallback(spCallback))
         {
-            (*spCallback)(HostObjectHelpers::DebugDirective::DispatchDebugMessages, nullptr);
+            (*spCallback)(HostObjectHelpers::DebugDirective::DisconnectClient, nullptr /*pCommand*/);
         }
     }
 

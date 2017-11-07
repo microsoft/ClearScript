@@ -27,12 +27,16 @@ namespace Microsoft.ClearScript.Test
         {
             try
             {
+                // ReSharper disable AssignNullToNotNullAttribute
+
                 var fileName = Path.ChangeExtension("Startup", engine.FileNameExtension);
                 var filePath = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), fileName);
                 if (File.Exists(filePath))
                 {
                     engine.Execute(fileName, File.ReadAllText(filePath));
                 }
+
+                // ReSharper restore AssignNullToNotNullAttribute
             }
             catch (Exception exception)
             {

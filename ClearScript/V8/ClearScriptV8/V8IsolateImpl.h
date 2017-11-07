@@ -13,7 +13,7 @@ class V8ContextImpl;
 // V8IsolateImpl
 //-----------------------------------------------------------------------------
 
-class V8IsolateImpl: public V8Isolate
+class V8IsolateImpl: public V8Isolate, public v8_inspector::V8InspectorClient, public v8_inspector::V8Inspector::Channel
 {
     PROHIBIT_COPY(V8IsolateImpl)
 
@@ -116,10 +116,11 @@ public:
         }
     };
 
-    V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort);
+    V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, bool enableRemoteDebugging, int debugPort);
     static size_t GetInstanceCount();
 
     const StdString& GetName() const { return m_Name; }
+    const Persistent<v8::Private>& GetHostObjectHolderKey() const { return m_hHostObjectHolderKey; }
 
     v8::Local<v8::Context> CreateContext(v8::ExtensionConfiguration* pExtensionConfiguation = nullptr, v8::Local<v8::ObjectTemplate> hGlobalTemplate = v8::Local<v8::ObjectTemplate>(), v8::Local<v8::Value> hGlobalObject = v8::Local<v8::Value>())
     {
@@ -174,6 +175,11 @@ public:
     v8::MaybeLocal<v8::String> CreateString(const StdString& value)
     {
         return value.ToV8String(m_pIsolate);
+    }
+
+    StdString CreateStdString(v8::Local<v8::Value> hValue)
+    {
+        return StdString(m_pIsolate, hValue);
     }
 
     v8::Local<v8::Symbol> CreateSymbol(v8::Local<v8::String> hName = v8::Local<v8::String>())
@@ -300,11 +306,6 @@ public:
         m_pIsolate->RequestInterrupt(callback, pvData);
     }
 
-    void ProcessDebugMessages()
-    {
-        v8::Debug::ProcessDebugMessages(m_pIsolate);
-    }
-
     bool IsCurrent() const
     {
         return m_pIsolate == v8::Isolate::GetCurrent();
@@ -320,25 +321,35 @@ public:
         return m_IsOutOfMemory;
     }
 
-    void AddContext(V8ContextImpl* pContextImpl, bool enableDebugging, int debugPort);
+    void AddContext(V8ContextImpl* pContextImpl, bool enableDebugging, bool enableRemoteDebugging, int debugPort);
     void RemoveContext(V8ContextImpl* pContextImpl);
 
-    void EnableDebugging(int debugPort);
+    void EnableDebugging(int port, bool remote);
     void DisableDebugging();
 
-    size_t GetMaxHeapSize();
-    void SetMaxHeapSize(size_t value);
-    double GetHeapSizeSampleInterval();
-    void SetHeapSizeSampleInterval(double value);
+    virtual size_t GetMaxHeapSize() override;
+    virtual void SetMaxHeapSize(size_t value) override;
+    virtual double GetHeapSizeSampleInterval() override;
+    virtual void SetHeapSizeSampleInterval(double value) override;
 
-    size_t GetMaxStackUsage();
-    void SetMaxStackUsage(size_t value);
+    virtual size_t GetMaxStackUsage() override;
+    virtual void SetMaxStackUsage(size_t value) override;
 
-    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code);
-    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes);
-    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted);
-    void GetHeapInfo(V8IsolateHeapInfo& heapInfo);
-    void CollectGarbage(bool exhaustive);
+    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) override;
+    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) override;
+    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual void GetHeapInfo(V8IsolateHeapInfo& heapInfo) override;
+    virtual void CollectGarbage(bool exhaustive) override;
+
+    virtual void runMessageLoopOnPause(int contextGroupId) override;
+    virtual void quitMessageLoopOnPause() override;
+    virtual v8::Local<v8::Context> ensureDefaultContextInGroup(int contextGroupId) override;
+    virtual double currentTimeMS() override;
+    virtual bool functionSupportsScopes(v8::Local<v8::Function> hFunction) override;
+
+    virtual void sendResponse(int callId, std::unique_ptr<v8_inspector::StringBuffer> spMessage) override;
+    virtual void sendNotification(std::unique_ptr<v8_inspector::StringBuffer> spMessage) override;
+    virtual void flushProtocolNotifications() override;
 
     void* AddRefV8Object(void* pvObject);
     void ReleaseV8Object(void* pvObject);
@@ -360,11 +371,12 @@ private:
     void CallWithLockAsync(std::function<void(V8IsolateImpl*)>&& callback);
     static void ProcessCallWithLockQueue(v8::Isolate* pIsolate, void* pvIsolateImpl);
     void ProcessCallWithLockQueue();
+    void ProcessCallWithLockQueue(std::unique_lock<std::mutex>& lock);
+    void ProcessCallWithLockQueue(std::queue<std::function<void(V8IsolateImpl*)>>& callWithLockQueue);
 
+    void ConnectDebugClient();
     void SendDebugCommand(const StdString& command);
-    static void OnDebugMessageShared(const v8::Debug::Message& message);
-    void OnDebugMessage(const v8::Debug::Message& message);
-    void DispatchDebugMessages();
+    void DisconnectDebugClient();
 
     ExecutionScope* EnterExecutionScope(ExecutionScope* pExecutionScope, size_t* pStackMarker);
     void ExitExecutionScope(ExecutionScope* pPreviousExecutionScope);
@@ -377,16 +389,21 @@ private:
 
     StdString m_Name;
     v8::Isolate* m_pIsolate;
+    Persistent<v8::Private> m_hHostObjectHolderKey;
     RecursiveMutex m_Mutex;
     std::list<V8ContextImpl*> m_ContextPtrs;
     SimpleMutex m_DataMutex;
     std::vector<std::shared_ptr<v8::Task>> m_AsyncTasks;
     std::queue<std::function<void(V8IsolateImpl*)>> m_CallWithLockQueue;
+    std::condition_variable m_CallWithLockQueueChanged;
     std::vector<SharedPtr<Timer>> m_TaskTimers;
     bool m_DebuggingEnabled;
     int m_DebugPort;
     void* m_pvDebugAgent;
-    std::atomic<size_t> m_DebugMessageDispatchCount;
+    std::unique_ptr<v8_inspector::V8Inspector> m_spInspector;
+    std::unique_ptr<v8_inspector::V8InspectorSession> m_spInspectorSession;
+    bool m_InMessageLoop;
+    bool m_QuitMessageLoop;
     std::atomic<size_t> m_MaxHeapSize;
     std::atomic<double> m_HeapSizeSampleInterval;
     size_t m_HeapWatchLevel;

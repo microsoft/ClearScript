@@ -45,6 +45,8 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BadV8Deployment")]
         [DeploymentItem("v8-x64.dll", "BadV8Deployment_NoManagedAssembly")]
         [DeploymentItem("v8-ia32.dll", "BadV8Deployment_NoManagedAssembly")]
+        [DeploymentItem("v8-base-x64.dll", "BadV8Deployment_NoManagedAssembly")]
+        [DeploymentItem("v8-base-ia32.dll", "BadV8Deployment_NoManagedAssembly")]
         public void BadV8Deployment_NoManagedAssembly()
         {
             V8Proxy.RunWithDeploymentDir("BadV8Deployment_NoManagedAssembly", () =>

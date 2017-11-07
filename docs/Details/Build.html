@@ -183,7 +183,7 @@ ul
 
 <body lang=EN-US link=blue vlink=purple style="background-color: gray">
 
-<div class=WordSection1 style="width: 8in; margin: auto; zoom: 1.25; background-color: white; padding: .25in">
+<div class=WordSection1 style="width: 9in; margin: auto; zoom: 1.2; background-color: white; padding: .25in">
 
 <div style='border:none;border-bottom:solid #4F81BD 1.0pt;padding:0in 0in 4.0pt 0in'>
 
@@ -217,11 +217,12 @@ server-side scripting.</p>
 Building ClearScript</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>The provided project and solution
-files support Visual Studio 2013 and 2015. They produce architecture-neutral
-managed libraries that target .NET Framework 4.0. ClearScript has been tested
-with .NET Framework 4.5 as well. It does not support older environments. The
-output directory is <b><span style='font-size:10.0pt;line-height:115%;
-font-family:Consolas'>bin\[Debug|Release]</span></b>.</p>
+files support Visual Studio <a
+href="https://www.visualstudio.com/vs/older-downloads/">2015</a> and <a
+href="https://www.visualstudio.com/downloads/">2017</a>. They produce
+architecture-neutral managed libraries that target .NET Framework 4.5.
+ClearScript does not support older environments. The output directory is <b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin\[Debug|Release]</span></b>.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>There are two ways to build
 ClearScript – with and without V8 support. If you don't need V8 support, simply
@@ -241,38 +242,44 @@ V8. Rights to V8 and its prerequisites are provided by their rights holders.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
-style='color:red'>Important:</span></b> Because of changes in V8 5.4, this
-procedure and the V8Update script now require a 64-bit operating system. Once
-built, ClearScript can still be deployed in a 32-bit environment.</p>
+style='color:red'>Important:</span></b> Because of changes in V8 5.4, this procedure
+and the V8Update script now require a 64-bit operating system. Once built,
+ClearScript can still be deployed in a 32-bit environment.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
+style='color:red'>Important:</span></b> Although ClearScript now supports Visual
+Studio 2017, V8 and the V8Update script still require Visual Studio 2015.</p>
+
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
 <a href="http://www.git-scm.com/download/win">Git</a>. Ensure that Git is added
 to your executable path by selecting the option <b>Use Git from the Windows
 Command Prompt</b>.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
 the latest Python 2.x from <a href="http://www.python.org/downloads/">here</a>
 and add it to your executable path. V8's build process requires at least Python
 2.7 and does not support Python 3.x.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>6.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Unzip
 or clone the <a href="https://github.com/Microsoft/ClearScript">ClearScript
 source code</a> into a convenient directory. <b><span style='color:red'>Important:</span></b>
 Ensure that the path to your ClearScript root directory does not contain any
 non-ASCII characters.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>6.<span
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>7.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Ensure
 that your Visual Studio installation includes C++ support.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>7.<span
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>8.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Open
-a Visual Studio developer command prompt and run the <b><span style='font-size:
-10.0pt;line-height:115%;font-family:Consolas'>V8Update</span></b> script from
-your ClearScript root directory:</p>
+a <a href="https://www.visualstudio.com/vs/older-downloads/">Visual Studio 2015</a>
+developer command prompt and run the <b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas'>V8Update</span></b> script from your
+ClearScript root directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><b><span style='font-size:10.0pt;
@@ -309,12 +316,12 @@ revision history.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>You are now ready to build the full
 <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScript</span></b>
-solution using Visual Studio.</p>
+solution using Visual Studio 2015 or 2017.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Note:</span></b>
-The first time you open the solution, Visual Studio may prompt you to upgrade one
-or more projects to the latest platform toolset or .NET Framework. We recommend
-that you select <b>Cancel</b> or <b>Don't Upgrade</b>.</p>
+The first time you open the solution, Visual Studio may prompt you to upgrade
+one or more projects to the latest platform toolset or .NET Framework. We
+recommend that you select <b>Cancel</b> or <b>Don't Upgrade</b>.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Optional:</span></b>
 The ClearScript repository includes the <a
@@ -341,8 +348,9 @@ style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span
 a cryptographic key pair in your ClearScript root directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
-14.0pt;margin-left:1.0in;background:#F2F2F2'><b><span style='font-size:10.0pt;
-line-height:115%;font-family:Consolas'>C:\ClearScript&gt; sn -k ClearScript.snk</span></b></p>
+14.0pt;margin-left:1.0in;background:#F2F2F2'><a name="OLE_LINK5"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>C:\ClearScript&gt;
+sn -k ClearScript.snk</span></b></a></p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Open
@@ -392,6 +400,14 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-64.
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>v8-base-ia32.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>v8-base-x64.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>v8-ia32.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
@@ -403,32 +419,32 @@ that you add these assemblies as content files at the root of your web
 application and set their <b>Copy to Output Directory</b> properties to <b>Do
 not copy</b>.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
-style='color:red'>Important:</span></b> If Visual Studio is not installed on
-your deployment machine, you must install 32-bit and 64-bit Visual C++
-Redistributable packages:</p>
-
-<p class=MsoListParagraph style='margin-left:1.0in'><a
-href="https://www.microsoft.com/en-us/download/details.aspx?id=40784">Visual
-C++ Redistributable for Visual Studio 2013</a></p>
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'><a
+name="OLE_LINK4"></a><a name="OLE_LINK3">4.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><b><span style='color:red'>Important:</span></b> </a>If Visual Studio is
+not installed on your deployment machine, you must install 32-bit and 64-bit
+Visual C++ Redistributable packages:</p>
 
 <p class=MsoListParagraph style='margin-left:1.0in'><a
 href="https://www.microsoft.com/en-us/download/details.aspx?id=48145">Visual
 C++ Redistributable for Visual Studio 2015</a></p>
+
+<p class=MsoListParagraph style='margin-left:1.0in'>Visual C++ Redistributable
+for Visual Studio 2017 <a href="https://go.microsoft.com/fwlink/?LinkId=746572">[x64]</a>
+<a href="https://go.microsoft.com/fwlink/?LinkId=746571">[x86]</a></p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'><span style='font:7.0pt "Times New Roman"'>&nbsp;
 </span>V. Debugging with ClearScript and V8</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>V8 does not support standard
-Windows script debugging. Instead, it implements its own TCP/IP-based debugging
-protocol. A convenient way to debug JavaScript code running in V8 is to use the
-Visual Studio Code IDE:</p>
+Windows script debugging. Instead, it implements its own WebSocket-based
+debugging protocol. A convenient way to debug JavaScript code running in V8 is
+to use the Visual Studio Code IDE:</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
-<a href="https://code.visualstudio.com/">Visual Studio Code</a>.</p>
+and launch <a href="https://code.visualstudio.com/">Visual Studio Code</a>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Set
@@ -477,8 +493,8 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'> �
 color:#9CDCFE'>&quot;name&quot;</span></b><b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas;color:#D4D4D4'>: </span></b><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#CE9178'>&quot;Attach
-to ClearScript V8 on port 9222&quot;</span></b><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>,</span></b></p>
+to ClearScript V8 on port 9222&quot;</span></b><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:#D4D4D4'>,</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
@@ -504,7 +520,16 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'> �
 </span></b><b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas;
 color:#9CDCFE'>&quot;protocol&quot;</span></b><b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas;color:#D4D4D4'>: </span></b><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#CE9178'>&quot;legacy&quot;</span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#CE9178'>&quot;inspector&quot;</span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>,</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.5in;margin-bottom:.0001pt;background:#1E1E1E'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>           
+</span></b><b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas;
+color:#9CDCFE'>&quot;address&quot;</span></b><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:#D4D4D4'>: </span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#CE9178'>&quot;localhost&quot;</span></b><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'>,</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
@@ -531,7 +556,10 @@ line-height:115%;font-family:Consolas;color:#D4D4D4'>}</span></b></p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>c.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>You
-can specify additional configurations for different TCP/IP port numbers.</p>
+can specify additional configurations for different hosts, port numbers, and
+other options. See <a
+href="https://code.visualstudio.com/docs/nodejs/nodejs-debugging">here</a> for
+more information.</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>d.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Click
@@ -542,19 +570,44 @@ style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span
 script debugging in your application by invoking the <a
 href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngine.htm"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8ScriptEngine</span></b></a>
-constructor with <a
+constructor with <a name="OLE_LINK2"></a><a
 href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8ScriptEngineFlags.EnableDebugging</span></b></a>
-and a TCP/IP port number that matches one of your debug configurations. The
+and a TCP port number that matches one of your debug configurations. The
 default port number is 9222.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>If
+you’d like to debug your application remotely, you must also do the following:</p>
+
+<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>a.<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Construct
+your script engine with the additional flag <a
+href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8ScriptEngineFlags.EnableRemoteDebugging</span></b></a>.</p>
+
+<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'><a
+name="OLE_LINK6">b.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><b><span style='color:red'>Important:</span></b> Add HTTP listening
+permissions by running the following command as an administrator:</a></p>
+
+<p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
+14.0pt;margin-left:1.5in;background:#F2F2F2'><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas'>C:\ClearScript&gt; netsh http add urlacl
+url=http://+:&lt;Port&gt;/ listen=yes user=&lt;User&gt;</span></b></p>
+
+<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>c.<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
+style='color:red'>Important:</span></b> If necessary, configure your firewall
+to allow incoming connections to your TCP port.</p>
+
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Attach
 the Visual Studio Code debugger to your application:</p>
 
-<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>a.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Click
-<b>View</b> &#8594; <b>Debug</b> to bring up the Debug view.</p>
+<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'><a
+name="OLE_LINK1">a.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Click <b>View</b> </a>&#8594; <b>Debug</b> to bring up the Debug view.</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>b.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Select
@@ -564,9 +617,9 @@ the appropriate debug configuration at the top of the Debug Side Bar.</p>
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Click
 <b>Debug</b> &#8594; <b>Start Debugging</b>.</p>
 
-<p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Note:</span></b>
-You can also attach Visual Studio to your application for simultaneous debugging
-of script, managed, and native code.</p>
+<p class=MsoNormal style='margin-left:.5in'><b><span style='color:#00B050'>Note:</span></b>
+You can also attach Visual Studio to your application for simultaneous
+debugging of script, managed, and native code.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'>VI. Acknowledgments</h1>

@@ -15,7 +15,7 @@ namespace V8 {
     {
     public:
 
-        V8ContextProxyImpl(V8IsolateProxy^ gcIsolateProxy, String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Int32 debugPort);
+        V8ContextProxyImpl(V8IsolateProxy^ gcIsolateProxy, String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Boolean enableRemoteDebugging, Int32 debugPort);
 
         property UIntPtr MaxRuntimeHeapSize
         {

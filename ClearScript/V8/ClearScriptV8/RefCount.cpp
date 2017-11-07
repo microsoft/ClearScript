@@ -4,16 +4,16 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
-// RefCountImpl
+// RefCount::Impl
 //-----------------------------------------------------------------------------
 
-class RefCountImpl
+class RefCount::Impl
 {
-    PROHIBIT_COPY(RefCountImpl)
+    PROHIBIT_COPY(Impl)
 
 public:
 
-    RefCountImpl(size_t count):
+    Impl(size_t count):
         m_Count(count)
     {
     }
@@ -38,7 +38,7 @@ private:
 //-----------------------------------------------------------------------------
 
 RefCount::RefCount(size_t count):
-    m_pImpl(new RefCountImpl(count))
+    m_pImpl(new Impl(count))
 {
 }
 

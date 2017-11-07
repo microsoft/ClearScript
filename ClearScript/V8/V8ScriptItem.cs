@@ -72,7 +72,7 @@ namespace Microsoft.ClearScript.V8
 
         private void VerifyNotDisposed()
         {
-            if (disposedFlag.IsSet())
+            if (disposedFlag.IsSet)
             {
                 throw new ObjectDisposedException(ToString());
             }

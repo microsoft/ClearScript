@@ -1,8 +1,8 @@
 diff --git a/gypfiles/standalone.gypi b/gypfiles/standalone.gypi
-index 7e41ce8..43e1f5c 100644
+index 63930d8aef..8f10b95f2c 100644
 --- a/gypfiles/standalone.gypi
 +++ b/gypfiles/standalone.gypi
-@@ -953,7 +953,7 @@
+@@ -943,9 +943,10 @@
              'EnableFunctionLevelLinking': 'true',
              'RuntimeTypeInfo': 'false',
              'WarningLevel': '3',
@@ -10,9 +10,25 @@ index 7e41ce8..43e1f5c 100644
 +            'WarnAsError': 'false',
              'DebugInformationFormat': '3',
              'Detect64BitPortabilityProblems': 'false',
++            'AdditionalOptions': ['/bigobj'],
              'conditions': [
+               [ 'msvs_multi_core_compile', {
+                 'AdditionalOptions': ['/MP'],
+diff --git a/include/v8-inspector.h b/include/v8-inspector.h
+index 43bf3b4f60..60d05e2b1b 100644
+--- a/include/v8-inspector.h
++++ b/include/v8-inspector.h
+@@ -211,6 +211,8 @@ class V8_EXPORT V8InspectorClient {
+   // TODO(dgozman): this was added to support service worker shadow page. We
+   // should not connect at all.
+   virtual bool canExecuteScripts(int contextGroupId) { return true; }
++  
++  virtual bool functionSupportsScopes(v8::Local<v8::Function>) { return true; }
+ };
+ 
+ class V8_EXPORT V8Inspector {
 diff --git a/include/v8-platform.h b/include/v8-platform.h
-index e115674..6d3639a 100644
+index ed2acc3a74..4a6886c826 100644
 --- a/include/v8-platform.h
 +++ b/include/v8-platform.h
 @@ -22,6 +22,7 @@ class Task {
@@ -24,70 +40,135 @@ index e115674..6d3639a 100644
  
  /**
 diff --git a/include/v8.h b/include/v8.h
-index 36edf53..8ae9d50 100644
+index eec2256aea..d244fedb5b 100644
 --- a/include/v8.h
 +++ b/include/v8.h
-@@ -1224,6 +1224,7 @@ class V8_EXPORT ScriptCompiler {
+@@ -1271,6 +1271,7 @@ class V8_EXPORT ScriptCompiler {
      // caller. The CachedData object is alive as long as the Source object is
      // alive.
      V8_INLINE const CachedData* GetCachedData() const;
 +    V8_EXPORT void DeleteCachedData();
  
-     // Prevent copying.
-     Source(const Source&) = delete;
+     V8_INLINE const ScriptOriginOptions& GetResourceOptions() const;
+ 
 diff --git a/src/api.cc b/src/api.cc
-index 44933b9..af48b94 100644
+index d676a7426c..93ad605123 100644
 --- a/src/api.cc
 +++ b/src/api.cc
-@@ -1730,6 +1730,13 @@ void ObjectTemplate::SetImmutableProto() {
+@@ -1933,6 +1933,13 @@ void ObjectTemplate::SetImmutableProto() {
  // --- S c r i p t s ---
  
  
 +void ScriptCompiler::Source::DeleteCachedData()
 +{
-+    delete cached_data;
-+    cached_data = nullptr;
++  delete cached_data;
++  cached_data = nullptr;
 +}
 +
-+    
++
  // Internally, UnboundScript is a SharedFunctionInfo, and Script is a
  // JSFunction.
  
 diff --git a/src/cancelable-task.cc b/src/cancelable-task.cc
-index defbb44..8b26370 100644
+index 7c9cc9cb93..8dfc2542a4 100644
 --- a/src/cancelable-task.cc
 +++ b/src/cancelable-task.cc
-@@ -7,6 +7,9 @@
+@@ -7,6 +7,10 @@
  #include "src/base/platform/platform.h"
  #include "src/isolate.h"
  
++
 +void v8::Task::Delete() { delete this; }
 +
 +
  namespace v8 {
  namespace internal {
  
+diff --git a/src/inspector/v8-debugger.cc b/src/inspector/v8-debugger.cc
+index acd778b2b6..b8da5df24a 100644
+--- a/src/inspector/v8-debugger.cc
++++ b/src/inspector/v8-debugger.cc
+@@ -678,6 +678,7 @@ v8::MaybeLocal<v8::Array> V8Debugger::internalProperties(
+     v8::Local<v8::Value> boundFunction = function->GetBoundFunction();
+     v8::Local<v8::Value> scopes;
+     if (boundFunction->IsUndefined() &&
++        m_inspector->client()->functionSupportsScopes(function) && 
+         functionScopes(context, function).ToLocal(&scopes)) {
+       createDataProperty(context, properties, properties->Length(),
+                          toV8StringInternalized(m_isolate, "[[Scopes]]"));
 diff --git a/src/v8.cc b/src/v8.cc
-index 08796f3..c7fd6d2 100644
+index e8ced8d082..b3b2821959 100644
 --- a/src/v8.cc
 +++ b/src/v8.cc
-@@ -91,7 +91,6 @@ void V8::InitializeOncePerProcess() {
+@@ -85,7 +85,6 @@ void V8::InitializeOncePerProcess() {
  
  
  void V8::InitializePlatform(v8::Platform* platform) {
 -  CHECK(!platform_);
    CHECK(platform);
    platform_ = platform;
- }
+   v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/v8.gyp b/src/v8.gyp
-index 9a38247..340833b 100644
+index ea0f8780d7..e74af78e8a 100644
 --- a/src/v8.gyp
 +++ b/src/v8.gyp
-@@ -42,6 +42,7 @@
+@@ -41,6 +41,7 @@
    'targets': [
      {
        'target_name': 'v8',
 +      'product_name': 'v8-' + '<(v8_target_arch)',
        'dependencies_traverse': 1,
-       'dependencies': ['v8_maybe_snapshot'],
+       'dependencies': ['v8_maybe_snapshot', 'v8_dump_build_config'],
        'conditions': [
+@@ -1827,6 +1828,7 @@
+     },
+     {
+       'target_name': 'v8_libbase',
++      'product_name': 'v8-base-' + '<(v8_target_arch)',
+       'type': '<(component)',
+       'variables': {
+         'optimize': 'max',
+diff --git a/src/v8dll-main.cc b/src/v8dll-main.cc
+index 6250b3e341..268bcc76eb 100644
+--- a/src/v8dll-main.cc
++++ b/src/v8dll-main.cc
+@@ -10,6 +10,11 @@
+ #if V8_OS_WIN
+ #include "src/base/win32-headers.h"
+ 
++#include "include/v8-inspector.h"
++PVOID forceExports[] = {
++  v8_inspector::V8Inspector::create
++};
++
+ extern "C" {
+ BOOL WINAPI DllMain(HANDLE hinstDLL,
+                     DWORD dwReason,
+diff --git a/tools/testrunner/utils/dump_build_config_gyp.py b/tools/testrunner/utils/dump_build_config_gyp.py
+index 920459d929..48644fc294 100644
+--- a/tools/testrunner/utils/dump_build_config_gyp.py
++++ b/tools/testrunner/utils/dump_build_config_gyp.py
+@@ -22,10 +22,14 @@ GYP_GN_CONVERSION = {
+   'is_component_build': {
+     '"shared_library"': 'true',
+     '"static_library"': 'false',
++    'shared_library': 'true',
++    'static_library': 'false',
+   },
+   'is_debug': {
+     '"Debug"': 'true',
+     '"Release"': 'false',
++    'Debug': 'true',
++    'Release': 'false',
+   },
+ }
+ 
+@@ -33,6 +37,8 @@ DEFAULT_CONVERSION ={
+   '0': 'false',
+   '1': 'true',
+   '"ia32"': '"x86"',
++  'ia32': '"x86"',
++  'x64': '"x64"',
+ }
+ 
+ def gyp_to_gn(key, value):

@@ -40,9 +40,9 @@ public:
     static void GetAllCachedV8Objects(void* pvCache, std::vector<void*>& v8ObjectPtrs);
     static bool RemoveV8ObjectCacheEntry(void* pvCache, void* pvObject);
 
-    enum class DebugDirective { SendDebugCommand, DispatchDebugMessages };
+    enum class DebugDirective { ConnectClient, SendCommand, DisconnectClient };
     typedef std::function<void(DebugDirective directive, const StdString* pCommand)> DebugCallback;
-    static void* CreateDebugAgent(const StdString& name, const StdString& version, int port, DebugCallback&& callback);
+    static void* CreateDebugAgent(const StdString& name, const StdString& version, int port, bool remote, DebugCallback&& callback);
     static void SendDebugMessage(void* pvAgent, const StdString& content);
     static void DestroyDebugAgent(void* pvAgent);
 

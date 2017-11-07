@@ -11,7 +11,7 @@ namespace V8 {
     // V8IsolateProxyImpl implementation
     //-------------------------------------------------------------------------
 
-    V8IsolateProxyImpl::V8IsolateProxyImpl(String^ gcName, V8RuntimeConstraints^ gcConstraints, Boolean enableDebugging, Int32 debugPort):
+    V8IsolateProxyImpl::V8IsolateProxyImpl(String^ gcName, V8RuntimeConstraints^ gcConstraints, Boolean enableDebugging, Boolean enableRemoteDebugging, Int32 debugPort):
         m_gcLock(gcnew Object)
     {
         const V8IsolateConstraints* pConstraints = nullptr;
@@ -25,7 +25,7 @@ namespace V8 {
 
         try
         {
-            m_pspIsolate = new SharedPtr<V8Isolate>(V8Isolate::Create(StdString(gcName), pConstraints, enableDebugging, debugPort));
+            m_pspIsolate = new SharedPtr<V8Isolate>(V8Isolate::Create(StdString(gcName), pConstraints, enableDebugging, enableRemoteDebugging, debugPort));
         }
         catch (const V8Exception& exception)
         {

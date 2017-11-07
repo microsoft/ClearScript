@@ -22,5 +22,6 @@ public:
 
 private:
 
-    class RefCountImpl* m_pImpl;
+    class Impl;
+    Impl* m_pImpl;
 };

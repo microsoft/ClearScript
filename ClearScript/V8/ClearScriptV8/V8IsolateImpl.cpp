@@ -38,6 +38,7 @@ public:
     virtual void CallIdleOnForegroundThread(v8::Isolate* pIsolate, v8::IdleTask* pTask) override;
     virtual bool IdleTasksEnabled(v8::Isolate* pIsolate) override;
     virtual double MonotonicallyIncreasingTime() override;
+    virtual v8::TracingController* GetTracingController() override;
 
 private:
 
@@ -45,6 +46,7 @@ private:
 
     static V8Platform ms_Instance;
     static OnceFlag ms_InstallationFlag;
+    v8::TracingController m_TracingController;
 };
 
 //-----------------------------------------------------------------------------
@@ -126,6 +128,13 @@ double V8Platform::MonotonicallyIncreasingTime()
 
 //-----------------------------------------------------------------------------
 
+v8::TracingController* V8Platform::GetTracingController()
+{
+    return &m_TracingController;
+}
+
+//-----------------------------------------------------------------------------
+
 V8Platform::V8Platform()
 {
 }
@@ -198,16 +207,6 @@ V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
 // V8IsolateImpl implementation
 //-----------------------------------------------------------------------------
 
-#define BEGIN_ISOLATE_ENTRY_SCOPE \
-    { \
-    __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
-        v8::Isolate::Scope t_IsolateEntryScope(m_pIsolate); \
-    __pragma(warning(default:4456))
-
-#define END_ISOLATE_ENTRY_SCOPE \
-        IGNORE_UNUSED(t_IsolateEntryScope); \
-    }
-
 #define BEGIN_ISOLATE_NATIVE_SCOPE \
     { \
     __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
@@ -230,16 +229,18 @@ V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
 
 //-----------------------------------------------------------------------------
 
+static const int s_ContextGroupId = 1;
 static const size_t s_StackBreathingRoom = static_cast<size_t>(16 * 1024);
 static size_t* const s_pMinStackLimit = reinterpret_cast<size_t*>(sizeof(size_t));
 static std::atomic<size_t> s_InstanceCount(0);
 
 //-----------------------------------------------------------------------------
 
-V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, int debugPort) :
+V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, bool enableRemoteDebugging, int debugPort) :
     m_Name(name),
     m_DebuggingEnabled(false),
-    m_DebugMessageDispatchCount(0),
+    m_InMessageLoop(false),
+    m_QuitMessageLoop(false),
     m_MaxHeapSize(0),
     m_HeapWatchLevel(0),
     m_MaxStackUsage(0),
@@ -256,29 +257,27 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     params.array_buffer_allocator = &V8ArrayBufferAllocator::GetInstance();
     if (pConstraints != nullptr)
     {
-        params.constraints.set_max_semi_space_size(pConstraints->GetMaxNewSpaceSize());
+        params.constraints.set_max_semi_space_size_in_kb(static_cast<size_t>(pConstraints->GetMaxNewSpaceSize()) * 1024);
         params.constraints.set_max_old_space_size(pConstraints->GetMaxOldSpaceSize());
-        params.constraints.set_max_executable_size(pConstraints->GetMaxExecutableSize());
     }
 
     m_pIsolate = v8::Isolate::New(params);
     m_pIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
 
     BEGIN_ADDREF_SCOPE
+    BEGIN_ISOLATE_SCOPE
 
         m_pIsolate->SetData(0, this);
+        m_pIsolate->SetCaptureStackTraceForUncaughtExceptions(true, 64, v8::StackTrace::kDetailed);
 
-        BEGIN_ISOLATE_ENTRY_SCOPE
-            m_pIsolate->SetCaptureStackTraceForUncaughtExceptions(true, 64, v8::StackTrace::kDetailed);
-        END_ISOLATE_ENTRY_SCOPE
+        m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
 
         if (enableDebugging)
         {
-            BEGIN_ISOLATE_SCOPE
-                EnableDebugging(debugPort);
-            END_ISOLATE_SCOPE
+            EnableDebugging(debugPort, enableRemoteDebugging);
         }
 
+    END_ISOLATE_SCOPE
     END_ADDREF_SCOPE
 
     ++s_InstanceCount;
@@ -293,9 +292,10 @@ size_t V8IsolateImpl::GetInstanceCount()
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, bool enableDebugging, int debugPort)
+void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, bool enableDebugging, bool enableRemoteDebugging, int debugPort)
 {
     _ASSERTE(IsCurrent() && IsLocked());
+
     if (!enableDebugging)
     {
         m_ContextPtrs.push_back(pContextImpl);
@@ -303,7 +303,12 @@ void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, bool enableDebugging
     else
     {
         m_ContextPtrs.push_front(pContextImpl);
-        EnableDebugging(debugPort);
+        EnableDebugging(debugPort, enableRemoteDebugging);
+    }
+
+    if (m_spInspector)
+    {
+        m_spInspector->contextCreated(v8_inspector::V8ContextInfo(pContextImpl->GetContext(), s_ContextGroupId, pContextImpl->GetName().GetStringView()));
     }
 }
 
@@ -312,43 +317,56 @@ void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, bool enableDebugging
 void V8IsolateImpl::RemoveContext(V8ContextImpl* pContextImpl)
 {
     _ASSERTE(IsCurrent() && IsLocked());
+
+    if (m_spInspector)
+    {
+        m_spInspector->contextDestroyed(pContextImpl->GetContext());
+    }
+
     m_ContextPtrs.remove(pContextImpl);
 }
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::EnableDebugging(int debugPort)
+void V8IsolateImpl::EnableDebugging(int port, bool remote)
 {
     _ASSERTE(IsCurrent() && IsLocked());
+
     if (!m_DebuggingEnabled)
     {
-        StdString version(v8::String::NewFromUtf8(m_pIsolate, v8::V8::GetVersion(), v8::NewStringType::kNormal).FromMaybe(v8::Local<v8::String>()));
-        if (debugPort < 1)
+        const char* pVersion = v8::V8::GetVersion();
+        StdString version(v8_inspector::StringView(reinterpret_cast<const uint8_t*>(pVersion), strlen(pVersion)));
+
+        if (port < 1)
         {
-            debugPort = 9222;
+            port = 9222;
         }
 
         auto wrIsolate = CreateWeakRef();
-        m_pvDebugAgent = HostObjectHelpers::CreateDebugAgent(m_Name, version, debugPort, [this, wrIsolate] (HostObjectHelpers::DebugDirective directive, const StdString* pCommand)
+        m_pvDebugAgent = HostObjectHelpers::CreateDebugAgent(m_Name, version, port, remote, [this, wrIsolate] (HostObjectHelpers::DebugDirective directive, const StdString* pCommand)
         {
             auto spIsolate = wrIsolate.GetTarget();
             if (!spIsolate.IsEmpty())
             {
-                if ((directive == HostObjectHelpers::DebugDirective::SendDebugCommand) && pCommand)
+                if (directive == HostObjectHelpers::DebugDirective::ConnectClient)
+                {
+                    ConnectDebugClient();
+                }
+                else if ((directive == HostObjectHelpers::DebugDirective::SendCommand) && pCommand)
                 {
                     SendDebugCommand(*pCommand);
                 }
-                else if (directive == HostObjectHelpers::DebugDirective::DispatchDebugMessages)
+                else if (directive == HostObjectHelpers::DebugDirective::DisconnectClient)
                 {
-                    DispatchDebugMessages();
+                    DisconnectDebugClient();
                 }
             }
         });
 
-        v8::Debug::SetMessageHandler(m_pIsolate, OnDebugMessageShared);
+        m_spInspector = v8_inspector::V8Inspector::create(m_pIsolate, this);
 
         m_DebuggingEnabled = true;
-        m_DebugPort = debugPort;
+        m_DebugPort = port;
     }
 }
 
@@ -357,13 +375,14 @@ void V8IsolateImpl::EnableDebugging(int debugPort)
 void V8IsolateImpl::DisableDebugging()
 {
     _ASSERTE(IsCurrent() && IsLocked());
+
     if (m_DebuggingEnabled)
     {
-        v8::Debug::SetMessageHandler(m_pIsolate, nullptr);
-        HostObjectHelpers::DestroyDebugAgent(m_pvDebugAgent);
+        m_spInspectorSession.reset();
+        m_spInspector.reset();
 
+        HostObjectHelpers::DestroyDebugAgent(m_pvDebugAgent);
         m_DebuggingEnabled = false;
-        m_DebugMessageDispatchCount = 0;
     }
 }
 
@@ -416,7 +435,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdS
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, 0));
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, false, 0));
         return spContextImpl->Compile(documentName, code);
 
     END_ISOLATE_SCOPE
@@ -428,7 +447,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdS
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, 0));
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, false, 0));
         return spContextImpl->Compile(documentName, code, cacheType, cacheBytes);
 
     END_ISOLATE_SCOPE
@@ -440,7 +459,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdS
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, 0));
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, false, 0));
         return spContextImpl->Compile(documentName, code, cacheType, cacheBytes, cacheAccepted);
 
     END_ISOLATE_SCOPE
@@ -482,6 +501,108 @@ void V8IsolateImpl::CollectGarbage(bool exhaustive)
     }
 
     END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::runMessageLoopOnPause(int /*contextGroupId*/)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    std::unique_lock<std::mutex> lock(m_DataMutex.GetImpl());
+
+    if (!m_InMessageLoop)
+    {
+        m_QuitMessageLoop = false;
+
+        BEGIN_PULSE_VALUE_SCOPE(&m_InMessageLoop, true)
+
+            ProcessCallWithLockQueue(lock);
+
+            while (true)
+            {
+                m_CallWithLockQueueChanged.wait(lock);
+                ProcessCallWithLockQueue(lock);
+
+                if (m_QuitMessageLoop)
+                {
+                    break;
+                }
+            }
+
+        END_PULSE_VALUE_SCOPE
+
+        ProcessCallWithLockQueue(lock);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::quitMessageLoopOnPause()
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    BEGIN_MUTEX_SCOPE(m_DataMutex)
+        m_QuitMessageLoop = true;
+    END_MUTEX_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+v8::Local<v8::Context> V8IsolateImpl::ensureDefaultContextInGroup(int contextGroupId)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    if (m_ContextPtrs.size() > 0)
+    {
+        return m_ContextPtrs.front()->GetContext();
+    }
+
+    return v8_inspector::V8InspectorClient::ensureDefaultContextInGroup(contextGroupId);
+}
+
+//-----------------------------------------------------------------------------
+
+double V8IsolateImpl::currentTimeMS()
+{
+    return HighResolutionClock::GetRelativeSeconds() * 1000;
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8IsolateImpl::functionSupportsScopes(v8::Local<v8::Function> hFunction)
+{
+    if (m_ContextPtrs.size() > 0)
+    {
+        return !m_ContextPtrs.front()->IsHostObject(hFunction);
+    }
+
+    return v8_inspector::V8InspectorClient::functionSupportsScopes(hFunction);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::sendResponse(int /*callId*/, std::unique_ptr<v8_inspector::StringBuffer> spMessage)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    if (m_pvDebugAgent)
+    {
+        HostObjectHelpers::SendDebugMessage(m_pvDebugAgent, StdString(spMessage->string()));
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::sendNotification(std::unique_ptr<v8_inspector::StringBuffer> spMessage)
+{
+    sendResponse(0, std::move(spMessage));
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::flushProtocolNotifications()
+{
 }
 
 //-----------------------------------------------------------------------------
@@ -703,6 +824,8 @@ V8IsolateImpl::~V8IsolateImpl()
         }
     }
 
+    Dispose(m_hHostObjectHolderKey);
+
     m_pIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
     m_pIsolate->Dispose();
 }
@@ -713,14 +836,24 @@ void V8IsolateImpl::CallWithLockAsync(std::function<void(V8IsolateImpl*)>&& call
 {
     if (callback)
     {
-        size_t queueLength;
+        auto requestInterrupt = false;
 
         BEGIN_MUTEX_SCOPE(m_DataMutex)
+
             m_CallWithLockQueue.push(std::move(callback));
-            queueLength = m_CallWithLockQueue.size();
+
+            if (m_InMessageLoop)
+            {
+                m_CallWithLockQueueChanged.notify_one();
+            }
+            else
+            {
+                requestInterrupt = m_CallWithLockQueue.size() == 1;
+            }
+
         END_MUTEX_SCOPE
 
-        if (queueLength == 1)
+        if (requestInterrupt)
         {
             RequestInterrupt(ProcessCallWithLockQueue, this);
         }
@@ -744,53 +877,78 @@ void V8IsolateImpl::ProcessCallWithLockQueue()
         std::swap(callWithLockQueue, m_CallWithLockQueue);
     END_MUTEX_SCOPE
 
+    ProcessCallWithLockQueue(callWithLockQueue);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::ProcessCallWithLockQueue(std::unique_lock<std::mutex>& lock)
+{
+    _ASSERTE(lock.owns_lock());
+
+    std::queue<std::function<void(V8IsolateImpl*)>> callWithLockQueue(std::move(m_CallWithLockQueue));
     while (callWithLockQueue.size() > 0)
     {
-        callWithLockQueue.front()(this);
+        lock.unlock();
+        ProcessCallWithLockQueue(callWithLockQueue);
+        lock.lock();
+        callWithLockQueue = std::move(m_CallWithLockQueue);
+    }
+}
+
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::ProcessCallWithLockQueue(std::queue<std::function<void(V8IsolateImpl*)>>& callWithLockQueue)
+{
+    while (callWithLockQueue.size() > 0)
+    {
+        try
+        {
+            callWithLockQueue.front()(this);
+        }
+        catch (...)
+        {
+        }
+
         callWithLockQueue.pop();
     }
 }
 
 //-----------------------------------------------------------------------------
 
+void V8IsolateImpl::ConnectDebugClient()
+{
+    CallWithLockNoWait([] (V8IsolateImpl* pIsolateImpl)
+    {
+        if (pIsolateImpl->m_spInspector && !pIsolateImpl->m_spInspectorSession)
+        {
+            pIsolateImpl->m_spInspectorSession = pIsolateImpl->m_spInspector->connect(s_ContextGroupId, pIsolateImpl, v8_inspector::StringView());
+        }
+    });
+}
+
+//-----------------------------------------------------------------------------
+
 void V8IsolateImpl::SendDebugCommand(const StdString& command)
 {
-    v8::Debug::SendCommand(m_pIsolate, reinterpret_cast<const uint16_t*>(command.ToCString()), command.GetLength());
-}
-
-//-----------------------------------------------------------------------------
-
-void V8IsolateImpl::OnDebugMessageShared(const v8::Debug::Message& message)
-{
-    static_cast<V8IsolateImpl*>(message.GetIsolate()->GetData(0))->OnDebugMessage(message);
-}
-
-//-----------------------------------------------------------------------------
-
-void V8IsolateImpl::OnDebugMessage(const v8::Debug::Message& message)
-{
-    if (m_pvDebugAgent)
+    CallWithLockNoWait([command] (V8IsolateImpl* pIsolateImpl)
     {
-        HostObjectHelpers::SendDebugMessage(m_pvDebugAgent, StdString(message.GetJSON()));
-    }
+        if (pIsolateImpl->m_spInspectorSession)
+        {
+            pIsolateImpl->m_spInspectorSession->dispatchProtocolMessage(command.GetStringView());
+        }
+    });
 }
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::DispatchDebugMessages()
+void V8IsolateImpl::DisconnectDebugClient()
 {
-    if (++m_DebugMessageDispatchCount == 1)
+    CallWithLockNoWait([] (V8IsolateImpl* pIsolateImpl)
     {
-        BEGIN_ISOLATE_SCOPE
-
-            m_DebugMessageDispatchCount = 0;
-            if (m_ContextPtrs.size() > 0)
-            {
-                m_ContextPtrs.front()->ProcessDebugMessages();
-            }
-
-        END_ISOLATE_SCOPE
-    }
+        pIsolateImpl->m_spInspectorSession.reset();
+    });
 }
 
 //-----------------------------------------------------------------------------

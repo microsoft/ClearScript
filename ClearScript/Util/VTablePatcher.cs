@@ -36,19 +36,27 @@ namespace Microsoft.ClearScript.Util
                         var pSlot = pVTable + patch.SlotIndex * IntPtr.Size;
                         var pTarget = Marshal.ReadIntPtr(pSlot);
 
-                        uint oldProtect;
-                        if (NativeMethods.VirtualProtect(pSlot, (UIntPtr)IntPtr.Size, 0x04 /*PAGE_READWRITE*/, out oldProtect))
+                        var thunkSize = patch.ThunkBytes.Length;
+                        var pThunk = NativeMethods.HeapAlloc(hHeap, 0, (UIntPtr)thunkSize);
+                        if (pThunk != IntPtr.Zero)
                         {
-                            var thunkSize = patch.ThunkBytes.Length;
-                            var pThunk = NativeMethods.HeapAlloc(hHeap, 0, (UIntPtr)thunkSize);
                             for (var index = 0; index < thunkSize; index++)
                             {
                                 Marshal.WriteByte(pThunk + index, patch.ThunkBytes[index]);
                             }
 
                             Marshal.WriteIntPtr(pThunk + patch.TargetOffset, pTarget);
-                            Marshal.WriteIntPtr(pSlot, pThunk);
-                            NativeMethods.VirtualProtect(pSlot, (UIntPtr)IntPtr.Size, oldProtect, out oldProtect);
+
+                            uint oldProtect;
+                            if (NativeMethods.VirtualProtect(pSlot, (UIntPtr)IntPtr.Size, 0x04 /*PAGE_READWRITE*/, out oldProtect))
+                            {
+                                Marshal.WriteIntPtr(pSlot, pThunk);
+                                NativeMethods.VirtualProtect(pSlot, (UIntPtr)IntPtr.Size, oldProtect, out oldProtect);
+                            }
+                            else
+                            {
+                                NativeMethods.HeapFree(hHeap, 0, pThunk);
+                            }
                         }
                     }
                 }
@@ -59,7 +67,7 @@ namespace Microsoft.ClearScript.Util
         {
             if (hHeap == IntPtr.Zero)
             {
-                hHeap = NativeMethods.HeapCreate(0x00040005 /*HEAP_CREATE_ENABLE_EXECUTE|HEAP_GENERATE_EXCEPTIONS|HEAP_NO_SERIALIZE*/, UIntPtr.Zero, UIntPtr.Zero);
+                hHeap = NativeMethods.HeapCreate(0x00040001 /*HEAP_CREATE_ENABLE_EXECUTE|HEAP_NO_SERIALIZE*/, UIntPtr.Zero, UIntPtr.Zero);
                 if (hHeap == IntPtr.Zero)
                 {
                     throw new Win32Exception();

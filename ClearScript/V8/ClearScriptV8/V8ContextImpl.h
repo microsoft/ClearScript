@@ -19,37 +19,38 @@ class V8ContextImpl: public V8Context
 
 public:
 
-    V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, int debugPort);
+    V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, bool enableRemoteDebugging, int debugPort);
     static size_t GetInstanceCount();
 
     const StdString& GetName() const { return m_Name; }
+    const Persistent<v8::Context>& GetContext() const { return m_hContext; }
 
-    size_t GetMaxIsolateHeapSize();
-    void SetMaxIsolateHeapSize(size_t value);
-    double GetIsolateHeapSizeSampleInterval();
-    void SetIsolateHeapSizeSampleInterval(double value);
+    virtual size_t GetMaxIsolateHeapSize() override;
+    virtual void SetMaxIsolateHeapSize(size_t value) override;
+    virtual double GetIsolateHeapSizeSampleInterval() override;
+    virtual void SetIsolateHeapSizeSampleInterval(double value) override;
 
-    size_t GetMaxIsolateStackUsage();
-    void SetMaxIsolateStackUsage(size_t value);
+    virtual size_t GetMaxIsolateStackUsage() override;
+    virtual void SetMaxIsolateStackUsage(size_t value) override;
 
-    void CallWithLock(LockCallbackT* pCallback, void* pvArg);
+    virtual void CallWithLock(LockCallbackT* pCallback, void* pvArg) override;
 
-    V8Value GetRootObject();
-    void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers);
-    V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard);
+    virtual V8Value GetRootObject() override;
+    virtual void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers) override;
+    virtual V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard) override;
 
-    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code);
-    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes);
-    V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted);
-    bool CanExecute(V8ScriptHolder* pHolder);
-    V8Value Execute(V8ScriptHolder* pHolder, bool evaluate);
+    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) override;
+    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) override;
+    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual bool CanExecute(V8ScriptHolder* pHolder) override;
+    virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) override;
 
-    void Interrupt();
-    void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo);
-    void CollectGarbage(bool exhaustive);
-    void OnAccessSettingsChanged();
+    virtual void Interrupt() override;
+    virtual void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo) override;
+    virtual void CollectGarbage(bool exhaustive) override;
+    virtual void OnAccessSettingsChanged() override;
 
-    void Destroy();
+    virtual void Destroy() override;
 
     V8Value GetV8ObjectProperty(void* pvObject, const StdString& name);
     void SetV8ObjectProperty(void* pvObject, const StdString& name, const V8Value& value);
@@ -67,7 +68,7 @@ public:
     void GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length);
     void InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8ObjectHelpers::ArrayBufferOrViewDataCallbackT* pCallback, void* pvArg);
 
-    void ProcessDebugMessages();
+    bool IsHostObject(v8::Local<v8::Object> hObject);
 
 private:
 
@@ -79,16 +80,19 @@ private:
     public:
 
         explicit Scope(V8ContextImpl* pContextImpl):
-            m_pContextImpl(pContextImpl),
-            m_ContextScope(m_pContextImpl->m_hContext)
+            m_ContextScope(pContextImpl->m_hContext)
         {
         }
 
     private:
 
-        V8ContextImpl* m_pContextImpl;
         v8::Context::Scope m_ContextScope;
     };
+
+    const Persistent<v8::Private>& GetHostObjectHolderKey() const
+    {
+        return m_spIsolateImpl->GetHostObjectHolderKey();
+    }
 
     v8::Local<v8::Context> CreateContext(v8::ExtensionConfiguration* pExtensionConfiguation = nullptr, v8::Local<v8::ObjectTemplate> hGlobalTemplate = v8::Local<v8::ObjectTemplate>(), v8::Local<v8::Value> hGlobalObject = v8::Local<v8::Value>())
     {
@@ -143,6 +147,11 @@ private:
     v8::MaybeLocal<v8::String> CreateString(const StdString& value)
     {
         return m_spIsolateImpl->CreateString(value);
+    }
+
+    StdString CreateStdString(v8::Local<v8::Value> hValue)
+    {
+        return m_spIsolateImpl->CreateStdString(hValue);
     }
 
     v8::Local<v8::Symbol> CreateSymbol(v8::Local<v8::String> hName = v8::Local<v8::String>())
@@ -326,7 +335,6 @@ private:
     Persistent<v8::Object> m_hGlobal;
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
     Persistent<v8::Symbol> m_hIsHostObjectKey;
-    Persistent<v8::Private> m_hHostObjectHolderKey;
     Persistent<v8::String> m_hHostExceptionKey;
     Persistent<v8::Private> m_hEnumeratorKey;
     Persistent<v8::String> m_hDoneKey;

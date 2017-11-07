@@ -15,8 +15,8 @@ public:
 
     V8ObjectHolderImpl(V8WeakContextBinding* pBinding, void* pvObject);
 
-    V8ObjectHolderImpl* Clone() const;
-    void* GetObject() const;
+    virtual V8ObjectHolderImpl* Clone() const override;
+    virtual void* GetObject() const override;
 
     V8Value GetProperty(const StdString& name) const;
     void SetProperty(const StdString& name, const V8Value& value) const;

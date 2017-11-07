@@ -210,8 +210,13 @@ public:
 
 public:
 
-    explicit StdString(v8::Local<v8::Value> hValue):
-        m_Value(GetValue(hValue))
+    StdString(v8::Isolate* pIsolate, v8::Local<v8::Value> hValue):
+        m_Value(GetValue(pIsolate, hValue))
+    {
+    }
+
+    explicit StdString(const v8_inspector::StringView& stringView):
+        m_Value(GetValue(stringView))
     {
     }
 
@@ -220,13 +225,23 @@ public:
         return v8::String::NewFromTwoByte(pIsolate, reinterpret_cast<const uint16_t*>(ToCString()), v8::NewStringType::kNormal, GetLength());
     }
 
+    v8_inspector::StringView GetStringView(size_t index = 0, size_t length = SIZE_MAX) const
+    {
+        auto valueLength = m_Value.length();
+        index = std::min(index, valueLength);
+        length = std::min(length, valueLength - index);
+        return v8_inspector::StringView(ToCString() + index, length);
+    }
+
 private:
 
-    static std::wstring GetValue(v8::Local<v8::Value> hValue)
+    static std::wstring GetValue(v8::Isolate* pIsolate, v8::Local<v8::Value> hValue)
     {
-        v8::String::Value value(hValue);
+        v8::String::Value value(pIsolate, hValue);
         return std::wstring(EnsureNonNull(*value), value.length());
     }
+
+    static std::wstring GetValue(const v8_inspector::StringView& stringView);
 
 #endif // !_M_CEE
 

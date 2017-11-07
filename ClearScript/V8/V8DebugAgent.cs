@@ -2,14 +2,14 @@
 // Licensed under the MIT license.
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.ClearScript.Properties;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8
@@ -18,16 +18,14 @@ namespace Microsoft.ClearScript.V8
     {
         #region data
 
+        private readonly Guid targetId = Guid.NewGuid();
+
         private readonly string name;
         private readonly string version;
         private readonly IV8DebugListener listener;
 
-        private TcpListener tcpListener;
-        private TcpClient tcpClient;
-
-        private readonly ConcurrentQueue<string> queue = new ConcurrentQueue<string>();
-        private readonly AutoResetEvent queueEvent = new AutoResetEvent(false);
-        private RegisteredWaitHandle queueWaitHandle;
+        private HttpListener httpListener;
+        private V8DebugClient activeClient;
 
         private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
 
@@ -35,271 +33,252 @@ namespace Microsoft.ClearScript.V8
 
         #region constructors
 
-        public V8DebugAgent(string name, string version, int port, IV8DebugListener listener)
+        public V8DebugAgent(string name, string version, int port, bool remote, IV8DebugListener listener)
         {
             this.name = name;
             this.version = version;
             this.listener = listener;
 
-            RegisterWaitForQueueEvent();
+            var started = false;
 
-            MiscHelpers.Try(() =>
+            if (remote)
             {
-                tcpListener = new TcpListener(IPAddress.Loopback, port);
-                tcpListener.Start();
-                tcpListener.BeginAcceptTcpClient(OnClientAccepted, null);
-            });
-        }
-
-        #endregion
-
-        #region session management
-
-        private void OnClientAccepted(IAsyncResult result)
-        {
-            if (!disposedFlag.IsSet())
-            {
-                TcpClient tempTcpClient;
-                if (MiscHelpers.Try(out tempTcpClient, () => tcpListener.EndAcceptTcpClient(result)))
+                started = MiscHelpers.Try(() =>
                 {
-                    if (Interlocked.CompareExchange(ref tcpClient, tempTcpClient, null) == null)
-                    {
-                        ConnectClient();
-                    }
-                    else
-                    {
-                        RejectClient(tempTcpClient);
-                    }
-
-                    MiscHelpers.Try(() => tcpListener.BeginAcceptTcpClient(OnClientAccepted, null));
-                }
+                    httpListener = new HttpListener();
+                    httpListener.Prefixes.Add("http://+:" + port + "/");
+                    httpListener.Start();
+                });
             }
-        }
 
-        private void ConnectClient()
-        {
-            SendStringAsync(tcpClient, "Type: connect\r\nV8-Version: " + version + "\r\nProtocol-Version: 1\r\nEmbedding-Host: " + name + "\r\nContent-Length: 0\r\n\r\n", OnConnectionMessageSent);
-        }
-
-        private void OnConnectionMessageSent(bool succeeded)
-        {
-            if (succeeded)
+            if (!started)
             {
-                ReceiveMessage();
-            }
-            else
-            {
-                DisconnectClient("Could not send connection message");
-            }
-        }
-
-        private static void RejectClient(TcpClient tcpClient)
-        {
-            SendStringAsync(tcpClient, "Remote debugging session already active\r\n", succeeded => MiscHelpers.Try(tcpClient.Close));
-        }
-
-        private void DisconnectClient(string errorMessage)
-        {
-            var tempTcpClient = Interlocked.Exchange(ref tcpClient, null);
-            if (tempTcpClient != null)
-            {
-                if (!string.IsNullOrWhiteSpace(errorMessage))
+                started = MiscHelpers.Try(() =>
                 {
-                    Trace("Disconnecting debugger: " + errorMessage);
-                }
+                    httpListener = new HttpListener();
+                    httpListener.Prefixes.Add("http://127.0.0.1:" + port + "/");
+                    httpListener.Start();
+                });
+            }
 
-                MiscHelpers.Try(tempTcpClient.Close);
+            if (started)
+            {
+                StartAcquireHttpListenerContext();
             }
         }
 
         #endregion
 
-        #region inbound message processing
+        #region public members
 
-        private void ReceiveMessage()
+        public void SendCommand(V8DebugClient client, string command)
         {
-            ReceiveLineAsync(line => OnHeaderLineReceived(line, -1));
+            if (client == activeClient)
+            {
+                listener.SendCommand(command);
+            }
         }
 
-        private void OnHeaderLineReceived(string line, int contentLength)
+        public void SendMessage(string message)
         {
-            if (line != null)
+            if (!disposedFlag.IsSet)
             {
-                if (!string.IsNullOrWhiteSpace(line))
+                var client = activeClient;
+                if (client != null)
                 {
-                    var segments = line.Split(':');
-                    if ((segments.Length == 2) && (segments[0] == "Content-Length"))
-                    {
-                        int length;
-                        if (int.TryParse(segments[1], out length))
-                        {
-                            contentLength = length;
-                        }
-                    }
+                    client.SendMessage(message);
+                }
+            }
+        }
 
-                    ReceiveLineAsync(nextLine => OnHeaderLineReceived(nextLine, contentLength));
-                }
-                else if (contentLength > 0)
+        public void OnClientFailed(V8DebugClient client)
+        {
+            if (Interlocked.CompareExchange(ref activeClient, null, client) == client)
+            {
+                listener.DisconnectClient();
+            }
+        }
+
+        #endregion
+
+        #region HTTP endpoint
+
+        private void StartAcquireHttpListenerContext()
+        {
+            MiscHelpers.Try(() => httpListener.GetContextAsync().ContinueWith(OnHttpListenerContextAcquired));
+        }
+
+        private void OnHttpListenerContextAcquired(Task<HttpListenerContext> task)
+        {
+            if (!disposedFlag.IsSet)
+            {
+                HttpListenerContext httpContext;
+                if (MiscHelpers.Try(out httpContext, () => task.Result))
                 {
-                    ReceiveStringAsync(contentLength, OnMessageReceived);
+                    if (!httpContext.Request.IsWebSocketRequest)
+                    {
+                        HandleHttpRequest(httpContext);
+                    }
+                    else if (!httpContext.Request.RawUrl.Equals("/" + targetId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        httpContext.Response.StatusCode = 404;
+                        httpContext.Response.Close();
+                    }
+                    else if (!StartAcceptWebSocket(httpContext))
+                    {
+                        httpContext.Response.StatusCode = 500;
+                        httpContext.Response.Close();
+                    }
                 }
-                else if (contentLength == 0)
+
+                StartAcquireHttpListenerContext();
+            }
+        }
+
+        private void HandleHttpRequest(HttpListenerContext httpContext)
+        {
+            // https://github.com/buggerjs/bugger-daemon/blob/master/README.md#api,
+            // https://github.com/nodejs/node/blob/master/src/inspector_socket_server.cc
+
+            if (httpContext.Request.RawUrl.Equals("/json", StringComparison.OrdinalIgnoreCase) ||
+                httpContext.Request.RawUrl.Equals("/json/list", StringComparison.OrdinalIgnoreCase))
+            {
+                if (activeClient != null)
                 {
-                    OnMessageReceived(string.Empty);
+                    SendHttpResponse(httpContext, MiscHelpers.FormatInvariant(
+                        "[ {{\n" +
+                            "  \"id\": \"{0}\",\n" +
+                            "  \"type\": \"node\",\n" +
+                            "  \"description\": \"ClearScript V8 runtime: {1}\",\n" +
+                            "  \"title\": \"{2}\",\n" +
+                            "  \"url\": \"{3}\"\n" +
+                        "}} ]\n",
+                        targetId,
+                        JsonEscape(name),
+                        JsonEscape(AppDomain.CurrentDomain.FriendlyName),
+                        JsonEscape(new Uri(Process.GetCurrentProcess().MainModule.FileName))
+                    ));
                 }
                 else
                 {
-                    OnMessageReceivedInternal(null, "Message content length not specified");
+                    SendHttpResponse(httpContext, MiscHelpers.FormatInvariant(
+                        "[ {{\n" +
+                            "  \"id\": \"{0}\",\n" +
+                            "  \"type\": \"node\",\n" +
+                            "  \"description\": \"ClearScript V8 runtime: {1}\",\n" +
+                            "  \"title\": \"{2}\",\n" +
+                            "  \"url\": \"{3}\",\n" +
+                            "  \"devtoolsFrontendUrl\": \"chrome-devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws={4}:{5}/{0}\",\n" +
+                            "  \"webSocketDebuggerUrl\": \"ws://{4}:{5}/{0}\"\n" +
+                        "}} ]\n",
+                        targetId,
+                        JsonEscape(name),
+                        JsonEscape(AppDomain.CurrentDomain.FriendlyName),
+                        JsonEscape(new Uri(Process.GetCurrentProcess().MainModule.FileName)),
+                        httpContext.Request.Url.Host,
+                        httpContext.Request.Url.Port
+                    ));
                 }
             }
-            else
+            else if (httpContext.Request.RawUrl.Equals("/json/version", StringComparison.OrdinalIgnoreCase))
             {
-                OnMessageReceivedInternal(null, "Could not receive message header");
+                SendHttpResponse(httpContext, MiscHelpers.FormatInvariant(
+                    "{{\n" +
+                        "  \"Browser\": \"ClearScript {0} with V8 {1}\",\n" +
+                        "  \"Protocol-Version\": \"1.1\"\n" +
+                    "}}\n",
+                    ClearScriptVersion.Value,
+                    version
+                ));
             }
-        }
-
-        void OnMessageReceived(string content)
-        {
-            OnMessageReceivedInternal(content, "Could not receive message content");
-        }
-
-        void OnMessageReceivedInternal(string content, string errorMessage)
-        {
-            bool disconnect;
-            if (content != null)
+            else if (httpContext.Request.RawUrl.StartsWith("/json/activate/", StringComparison.OrdinalIgnoreCase))
             {
-                disconnect = content.Contains("\"type\":\"request\",\"command\":\"disconnect\"}");
-            }
-            else
-            {
-                content = "{\"seq\":1,\"type\":\"request\",\"command\":\"disconnect\"}";
-                disconnect = true;
-            }
-
-            if (listener.SendDebugCommand(content))
-            {
-                ThreadPool.QueueUserWorkItem(state => listener.DispatchDebugMessages());
-            }
-
-            if (disconnect)
-            {
-                DisconnectClient(errorMessage);
-            }
-            else
-            {
-                ReceiveMessage();
-            }
-        }
-
-        #endregion
-
-        #region outbound message queue
-
-        public void SendMessage(string content)
-        {
-            if (!disposedFlag.IsSet())
-            {
-                queue.Enqueue(content);
-                MiscHelpers.Try(() => queueEvent.Set());
-            }
-        }
-
-        private void RegisterWaitForQueueEvent()
-        {
-            RegisteredWaitHandle newQueueWaitHandle;
-            if (MiscHelpers.Try(out newQueueWaitHandle, () => ThreadPool.RegisterWaitForSingleObject(queueEvent, OnQueueEvent, null, Timeout.Infinite, true)))
-            {
-                var oldQueueWaitHandle = Interlocked.Exchange(ref queueWaitHandle, newQueueWaitHandle);
-                if (oldQueueWaitHandle != null)
+                var requestTargetId = httpContext.Request.RawUrl.Substring(15);
+                if (requestTargetId.Equals(targetId.ToString(), StringComparison.OrdinalIgnoreCase))
                 {
-                    oldQueueWaitHandle.Unregister(null);
-                }
-            }
-        }
-
-        private void OnQueueEvent(object state, bool timedOut)
-        {
-            string content;
-            while (queue.TryDequeue(out content))
-            {
-                var tempTcpClient = tcpClient;
-                if (tempTcpClient != null)
-                {
-                    var contentBytes = Encoding.UTF8.GetBytes(content);
-                    var headerBytes = Encoding.UTF8.GetBytes(MiscHelpers.FormatInvariant("Content-Length: {0}\r\n\r\n", contentBytes.Length));
-                    tempTcpClient.Client.SendBytesAsync(headerBytes.Concat(contentBytes).ToArray(), OnMessageSent);
-                    return;
-                }
-            }
-
-            if (!disposedFlag.IsSet())
-            {
-                RegisterWaitForQueueEvent();
-            }
-        }
-
-        private void OnMessageSent(bool succeeded)
-        {
-            if (succeeded)
-            {
-                OnQueueEvent(null, false);
-            }
-            else
-            {
-                DisconnectClient("Could not send message");
-            }
-        }
-
-        #endregion
-
-        #region protocol helpers
-
-        private static void SendStringAsync(TcpClient tcpClient, string content, Action<bool> callback)
-        {
-            tcpClient.Client.SendBytesAsync(Encoding.UTF8.GetBytes(content), callback);
-        }
-
-        private void ReceiveStringAsync(int sizeInBytes, Action<string> callback)
-        {
-            tcpClient.Client.ReceiveBytesAsync(sizeInBytes, bytes => callback((bytes != null) ? Encoding.UTF8.GetString(bytes) : null));
-        }
-
-        private void ReceiveLineAsync(Action<string> callback)
-        {
-            var lineBytes = new List<byte>(1024);
-            tcpClient.Client.ReceiveBytesAsync(1, bytes => OnLineBytesReceived(bytes, lineBytes, callback));
-        }
-
-        private void OnLineBytesReceived(byte[] bytes, List<byte> lineBytes, Action<string> callback)
-        {
-            if (bytes != null)
-            {
-                var lastIndex = lineBytes.Count - 1;
-                if ((lastIndex >= 0) && (lineBytes[lastIndex] == Convert.ToByte('\r')) && (bytes[0] == Convert.ToByte('\n')))
-                {
-                    lineBytes.RemoveAt(lastIndex);
-                    callback(Encoding.UTF8.GetString(lineBytes.ToArray()));
+                    SendHttpResponse(httpContext, "Target activated", "text/plain");
                 }
                 else
                 {
-                    lineBytes.Add(bytes[0]);
-                    tcpClient.Client.ReceiveBytesAsync(1, nextBytes => OnLineBytesReceived(nextBytes, lineBytes, callback));
+                    SendHttpResponse(httpContext, "No such target id: " + requestTargetId, "text/plain", 404);
                 }
+            }
+            else if (httpContext.Request.RawUrl.StartsWith("/json/close/", StringComparison.OrdinalIgnoreCase))
+            {
+                var requestTargetId = httpContext.Request.RawUrl.Substring(12);
+                if (requestTargetId.Equals(targetId.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                    SendHttpResponse(httpContext, "Target is closing", "text/plain");
+                }
+                else
+                {
+                    SendHttpResponse(httpContext, "No such target id: " + requestTargetId, "text/plain", 404);
+                }
+            }
+            else if (httpContext.Request.RawUrl.StartsWith("/json/new?", StringComparison.OrdinalIgnoreCase) ||
+                     httpContext.Request.RawUrl.Equals("/json/protocol", StringComparison.OrdinalIgnoreCase))
+            {
+                httpContext.Response.StatusCode = 501;
+                httpContext.Response.Close();
             }
             else
             {
-                callback(null);
+                httpContext.Response.StatusCode = 404;
+                httpContext.Response.Close();
             }
         }
 
         #endregion
 
-        #region diagnostics
+        #region WebSocket client connection
 
-        [Conditional("DEBUG")]
-        void Trace(string message)
+        private bool StartAcceptWebSocket(HttpListenerContext httpContext)
         {
-            Debug.WriteLine(message);
+            return MiscHelpers.Try(() => httpContext.AcceptWebSocketAsync(null).ContinueWith(task => OnWebSocketAccepted(httpContext, task)));
+        }
+
+        private void OnWebSocketAccepted(HttpListenerContext httpContext, Task<HttpListenerWebSocketContext> task)
+        {
+            if (!disposedFlag.IsSet)
+            {
+                HttpListenerWebSocketContext webSocketContext;
+                if (MiscHelpers.Try(out webSocketContext, () => task.Result))
+                {
+                    if ((webSocketContext == null) || (webSocketContext.WebSocket == null))
+                    {
+                        httpContext.Response.StatusCode = 500;
+                        httpContext.Response.Close();
+                    }
+                    else if (!ConnectClient(webSocketContext.WebSocket))
+                    {
+                        httpContext.Response.StatusCode = 403;
+                        httpContext.Response.Close();
+                    }
+                }
+            }
+        }
+
+        private bool ConnectClient(WebSocket webSocket)
+        {
+            var client = new V8DebugClient(this, webSocket);
+            if (Interlocked.CompareExchange(ref activeClient, client, null) == null)
+            {
+                listener.ConnectClient();
+                client.Start();
+                return true;
+            }
+
+            return false;
+        }
+
+        private void DisconnectClient(WebSocketCloseStatus status, string errorMessage)
+        {
+            var client = Interlocked.Exchange(ref activeClient, null);
+            if (client != null)
+            {
+                client.Dispose(status, errorMessage);
+                listener.DisconnectClient();
+            }
         }
 
         #endregion
@@ -310,14 +289,30 @@ namespace Microsoft.ClearScript.V8
         {
             if (disposedFlag.Set())
             {
-                MiscHelpers.Try(tcpListener.Stop);
-                DisconnectClient(null);
-
-                queueWaitHandle.Unregister(null);
-                queueEvent.Close();
-
+                MiscHelpers.Try(httpListener.Stop);
+                DisconnectClient(WebSocketCloseStatus.EndpointUnavailable, "The V8 runtime has been destroyed");
                 listener.Dispose();
             }
+        }
+
+        #endregion
+
+        #region protocol utilities
+
+        private static void SendHttpResponse(HttpListenerContext httpContext, string content, string contentType = "application/json", int statusCode = 200)
+        {
+            var contentBytes = Encoding.UTF8.GetBytes(content);
+            httpContext.Response.SendChunked = false;
+            httpContext.Response.ContentType = contentType + "; charset=UTF-8";
+            httpContext.Response.ContentLength64 = contentBytes.Length;
+            httpContext.Response.OutputStream.Write(contentBytes, 0, contentBytes.Length);
+            httpContext.Response.StatusCode = statusCode;
+            httpContext.Response.Close();
+        }
+
+        private static string JsonEscape(object value)
+        {
+            return new string(value.ToString().Select(ch => ((ch == '\"') || (ch == '\\')) ? '_' : ch).ToArray());
         }
 
         #endregion

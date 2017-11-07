@@ -25,6 +25,8 @@ namespace Microsoft.ClearScript.Util
                 {
                     if ((index != (args.Length - 1)) || !param.ParameterType.IsInstanceOfType(args[index]))
                     {
+                        // ReSharper disable AssignNullToNotNullAttribute
+
                         var tailArgType = param.ParameterType.GetElementType();
                         var tailArgs = Array.CreateInstance(tailArgType, args.Length - index);
                         for (var innerIndex = index; innerIndex < args.Length; innerIndex++)
@@ -44,6 +46,8 @@ namespace Microsoft.ClearScript.Util
                         argList.Add(tailArgs);
                         tailArgsArg = tailArgs;
                         break;
+
+                        // ReSharper restore AssignNullToNotNullAttribute
                     }
                 }
 

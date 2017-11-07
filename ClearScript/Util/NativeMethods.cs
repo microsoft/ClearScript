@@ -75,6 +75,13 @@ namespace Microsoft.ClearScript.Util
         );
 
         [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool HeapFree(
+            [In] IntPtr hHeap,
+            [In] uint flags,
+            [In] IntPtr pBlock
+        );
+
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool HeapDestroy(
             [In] IntPtr hHeap
         );
