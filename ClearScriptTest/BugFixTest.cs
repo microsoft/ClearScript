@@ -2164,6 +2164,56 @@ namespace Microsoft.ClearScript.Test
             BugFix_InteropMethodCallWithInteropArg();
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NestedType()
+        {
+            engine.AddHostType(typeof(NestedTypeTest));
+            Assert.AreEqual(NestedTypeTest.NestedType.Foo, engine.Evaluate("NestedTypeTest.NestedType.Foo"));
+            Assert.AreEqual(NestedTypeTest.NestedType.Bar, engine.Evaluate("NestedTypeTest.NestedType.Bar"));
+            Assert.AreEqual(NestedTypeTest.NestedType.Baz, engine.Evaluate("NestedTypeTest.NestedType.Baz"));
+            Assert.AreEqual(NestedTypeTest.NestedType.Qux, engine.Evaluate("NestedTypeTest.NestedType.Qux"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NestedType_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+
+            engine.AddHostType(typeof(NestedTypeTest));
+            Assert.AreEqual(NestedTypeTest.NestedType.Foo, engine.Evaluate("NestedTypeTest.NestedType.Foo"));
+            Assert.AreEqual(NestedTypeTest.NestedType.Bar, engine.Evaluate("NestedTypeTest.NestedType.Bar"));
+            Assert.AreEqual(NestedTypeTest.NestedType.Baz, engine.Evaluate("NestedTypeTest.NestedType.Baz"));
+            Assert.AreEqual(NestedTypeTest.NestedType.Qux, engine.Evaluate("NestedTypeTest.NestedType.Qux"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NestedType_VBScript()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            engine.AddHostType(typeof(NestedTypeTest));
+            Assert.AreEqual(NestedTypeTest.NestedType.Foo, engine.Evaluate("NestedTypeTest.NestedType.Foo"));
+            Assert.AreEqual(NestedTypeTest.NestedType.Bar, engine.Evaluate("NestedTypeTest.NestedType.Bar"));
+            Assert.AreEqual(NestedTypeTest.NestedType.Baz, engine.Evaluate("NestedTypeTest.NestedType.Baz"));
+            Assert.AreEqual(NestedTypeTest.NestedType.Qux, engine.Evaluate("NestedTypeTest.NestedType.Qux"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NestedType_VBScript_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New VBScriptEngine
+                    engine.AddHostType(GetType(BugFixTest.NestedTypeTest))
+                    Assert.AreEqual(BugFixTest.NestedTypeTest.NestedType.Foo, engine.Evaluate(""NestedTypeTest.NestedType.Foo""))
+                    Assert.AreEqual(BugFixTest.NestedTypeTest.NestedType.Bar, engine.Evaluate(""NestedTypeTest.NestedType.Bar""))
+                    Assert.AreEqual(BugFixTest.NestedTypeTest.NestedType.Baz, engine.Evaluate(""NestedTypeTest.NestedType.Baz""))
+                    Assert.AreEqual(BugFixTest.NestedTypeTest.NestedType.Qux, engine.Evaluate(""NestedTypeTest.NestedType.Qux""))
+                End Using
+            ");
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2392,6 +2442,14 @@ namespace Microsoft.ClearScript.Test
             }
 
             // ReSharper restore InconsistentNaming
+        }
+
+        public class NestedTypeTest
+        {
+            public enum NestedType
+            {
+                Foo, Bar, Baz, Qux
+            }
         }
 
         #endregion

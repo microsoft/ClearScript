@@ -187,7 +187,15 @@ namespace Microsoft.ClearScript
                     var tempResult = Wrap(nestedTypes.Select(testType => testType.ApplyTypeArguments(type.GetGenericArguments())).ToArray());
                     if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
                     {
-                        return tempResult.TryInvoke(context, invokeFlags, args, bindArgs, out result);
+                        if (tempResult.TryInvoke(context, invokeFlags, args, bindArgs, out result))
+                        {
+                            return true;
+                        }
+
+                        if (!invokeFlags.HasFlag(BindingFlags.GetField) && !invokeFlags.HasFlag(BindingFlags.GetProperty))
+                        {
+                            return false;
+                        }
                     }
 
                     result = tempResult;
