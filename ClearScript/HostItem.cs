@@ -187,7 +187,7 @@ namespace Microsoft.ClearScript
                 if ((args.Length > testLength) && (name != SpecialMemberNames.Default))
                 {
                     bool valueIsCacheable;
-                    var value = GetHostProperty(name, GetCommonBindFlags(), MiscHelpers.GetEmptyArray<object>(), MiscHelpers.GetEmptyArray<object>(), culture, false, out valueIsCacheable);
+                    var value = GetHostProperty(name, GetCommonBindFlags(), ArrayHelpers.GetEmptyArray<object>(), ArrayHelpers.GetEmptyArray<object>(), culture, false, out valueIsCacheable);
                     if (!(value is Nonexistent))
                     {
                         var hostItem = engine.MarshalToScript(value) as HostItem;
@@ -333,7 +333,7 @@ namespace Microsoft.ClearScript
 
         private string[] EnumeratedMethodNames
         {
-            get { return engine.EnumerateInstanceMethods ? (engine.EnumerateExtensionMethods ? AllMethodNames : OwnMethodNames) : MiscHelpers.GetEmptyArray<string>(); }
+            get { return engine.EnumerateInstanceMethods ? (engine.EnumerateExtensionMethods ? AllMethodNames : OwnMethodNames) : ArrayHelpers.GetEmptyArray<string>(); }
         }
 
         private string[] AllPropertyNames
@@ -647,7 +647,7 @@ namespace Microsoft.ClearScript
                 return GetLocalFieldNames().Concat(GetLocalEventNames()).Distinct().ToArray();
             }
 
-            return MiscHelpers.GetEmptyArray<string>();
+            return ArrayHelpers.GetEmptyArray<string>();
         }
 
         private string[] GetAllMethodNames(out string[] ownMethodNames)
@@ -1622,7 +1622,7 @@ namespace Microsoft.ClearScript
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            result = ThisDynamic.GetProperty(binder.Name, MiscHelpers.GetEmptyArray<object>()).ToDynamicResult(engine);
+            result = ThisDynamic.GetProperty(binder.Name, ArrayHelpers.GetEmptyArray<object>()).ToDynamicResult(engine);
             return true;
         }
 
@@ -1643,7 +1643,7 @@ namespace Microsoft.ClearScript
                     return true;
                 }
 
-                result = ThisDynamic.GetProperty(indices[0].ToString(), MiscHelpers.GetEmptyArray<object>()).ToDynamicResult(engine);
+                result = ThisDynamic.GetProperty(indices[0].ToString(), ArrayHelpers.GetEmptyArray<object>()).ToDynamicResult(engine);
                 return true;
             }
 
@@ -1925,7 +1925,7 @@ namespace Microsoft.ClearScript
 
         object IDynamic.GetProperty(int index)
         {
-            return ThisDynamic.GetProperty(index.ToString(CultureInfo.InvariantCulture), MiscHelpers.GetEmptyArray<object>());
+            return ThisDynamic.GetProperty(index.ToString(CultureInfo.InvariantCulture), ArrayHelpers.GetEmptyArray<object>());
         }
 
         void IDynamic.SetProperty(int index, object value)
@@ -2007,7 +2007,7 @@ namespace Microsoft.ClearScript
                     var maxCount = Math.Min(count, elements.Length);
                     while ((index < maxCount) && TargetEnumerator.MoveNext())
                     {
-                        elements[index++] = ThisDynamic.GetProperty("Current", MiscHelpers.GetEmptyArray<object>());
+                        elements[index++] = ThisDynamic.GetProperty("Current", ArrayHelpers.GetEmptyArray<object>());
                     }
                 }
 

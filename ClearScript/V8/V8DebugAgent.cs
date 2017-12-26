@@ -5,12 +5,13 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
-using System.Net.WebSockets;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.Properties;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.Web;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -18,16 +19,17 @@ namespace Microsoft.ClearScript.V8
     {
         #region data
 
-        private readonly Guid targetId = Guid.NewGuid();
+        private const string faviconUrl = "https://microsoft.github.io/ClearScript/favicon.png";
 
+        private readonly Guid targetId = Guid.NewGuid();
         private readonly string name;
         private readonly string version;
         private readonly IV8DebugListener listener;
 
-        private HttpListener httpListener;
+        private TcpListener tcpListener;
         private V8DebugClient activeClient;
 
-        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
         #endregion
 
@@ -45,9 +47,8 @@ namespace Microsoft.ClearScript.V8
             {
                 started = MiscHelpers.Try(() =>
                 {
-                    httpListener = new HttpListener();
-                    httpListener.Prefixes.Add("http://+:" + port + "/");
-                    httpListener.Start();
+                    tcpListener = new TcpListener(IPAddress.Any, port);
+                    tcpListener.Start();
                 });
             }
 
@@ -55,15 +56,14 @@ namespace Microsoft.ClearScript.V8
             {
                 started = MiscHelpers.Try(() =>
                 {
-                    httpListener = new HttpListener();
-                    httpListener.Prefixes.Add("http://127.0.0.1:" + port + "/");
-                    httpListener.Start();
+                    tcpListener = new TcpListener(IPAddress.Loopback, port);
+                    tcpListener.Start();
                 });
             }
 
             if (started)
             {
-                StartAcquireHttpListenerContext();
+                StartAcceptWebClient();
             }
         }
 
@@ -101,130 +101,141 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
-        #region HTTP endpoint
+        #region web endpoint
 
-        private void StartAcquireHttpListenerContext()
+        private void StartAcceptWebClient()
         {
-            MiscHelpers.Try(() => httpListener.GetContextAsync().ContinueWith(OnHttpListenerContextAcquired));
+            tcpListener.AcceptSocketAsync().ContinueWith(OnWebClientAccepted);
         }
 
-        private void OnHttpListenerContextAcquired(Task<HttpListenerContext> task)
+        private void OnWebClientAccepted(Task<Socket> task)
         {
+            Socket socket;
+            var succeeded = MiscHelpers.Try(out socket, () => task.Result);
+
             if (!disposedFlag.IsSet)
             {
-                HttpListenerContext httpContext;
-                if (MiscHelpers.Try(out httpContext, () => task.Result))
+                if (succeeded)
                 {
-                    if (!httpContext.Request.IsWebSocketRequest)
-                    {
-                        HandleHttpRequest(httpContext);
-                    }
-                    else if (!httpContext.Request.RawUrl.Equals("/" + targetId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        httpContext.Response.StatusCode = 404;
-                        httpContext.Response.Close();
-                    }
-                    else if (!StartAcceptWebSocket(httpContext))
-                    {
-                        httpContext.Response.StatusCode = 500;
-                        httpContext.Response.Close();
-                    }
+                    WebContext.CreateAsync(socket).ContinueWith(OnWebContextCreated);
                 }
 
-                StartAcquireHttpListenerContext();
+                StartAcceptWebClient();
             }
         }
 
-        private void HandleHttpRequest(HttpListenerContext httpContext)
+        private void OnWebContextCreated(Task<WebContext> task)
+        {
+            WebContext webContext;
+            if (MiscHelpers.Try(out webContext, () => task.Result) && !disposedFlag.IsSet)
+            {
+                if (!webContext.Request.IsWebSocketRequest)
+                {
+                    HandleWebRequest(webContext);
+                }
+                else if (!webContext.Request.RawUrl.Equals("/" + targetId, StringComparison.OrdinalIgnoreCase))
+                {
+                    webContext.Response.Close(404);
+                }
+                else
+                {
+                    StartAcceptWebSocket(webContext);
+                }
+            }
+        }
+
+        private void HandleWebRequest(WebContext webContext)
         {
             // https://github.com/buggerjs/bugger-daemon/blob/master/README.md#api,
             // https://github.com/nodejs/node/blob/master/src/inspector_socket_server.cc
 
-            if (httpContext.Request.RawUrl.Equals("/json", StringComparison.OrdinalIgnoreCase) ||
-                httpContext.Request.RawUrl.Equals("/json/list", StringComparison.OrdinalIgnoreCase))
+            if (webContext.Request.RawUrl.Equals("/json", StringComparison.OrdinalIgnoreCase) ||
+                webContext.Request.RawUrl.Equals("/json/list", StringComparison.OrdinalIgnoreCase))
             {
                 if (activeClient != null)
                 {
-                    SendHttpResponse(httpContext, MiscHelpers.FormatInvariant(
-                        "[ {{\n" +
-                            "  \"id\": \"{0}\",\n" +
-                            "  \"type\": \"node\",\n" +
-                            "  \"description\": \"ClearScript V8 runtime: {1}\",\n" +
-                            "  \"title\": \"{2}\",\n" +
-                            "  \"url\": \"{3}\"\n" +
-                        "}} ]\n",
-                        targetId,
-                        JsonEscape(name),
-                        JsonEscape(AppDomain.CurrentDomain.FriendlyName),
-                        JsonEscape(new Uri(Process.GetCurrentProcess().MainModule.FileName))
-                    ));
-                }
-                else
-                {
-                    SendHttpResponse(httpContext, MiscHelpers.FormatInvariant(
-                        "[ {{\n" +
-                            "  \"id\": \"{0}\",\n" +
-                            "  \"type\": \"node\",\n" +
-                            "  \"description\": \"ClearScript V8 runtime: {1}\",\n" +
-                            "  \"title\": \"{2}\",\n" +
-                            "  \"url\": \"{3}\",\n" +
-                            "  \"devtoolsFrontendUrl\": \"chrome-devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws={4}:{5}/{0}\",\n" +
-                            "  \"webSocketDebuggerUrl\": \"ws://{4}:{5}/{0}\"\n" +
-                        "}} ]\n",
+                    SendWebResponse(webContext, MiscHelpers.FormatInvariant(
+                        "[ {{\r\n" +
+                            "  \"id\": \"{0}\",\r\n" +
+                            "  \"type\": \"node\",\r\n" +
+                            "  \"description\": \"ClearScript V8 runtime: {1}\",\r\n" +
+                            "  \"title\": \"{2}\",\r\n" +
+                            "  \"url\": \"{3}\",\r\n" +
+                            "  \"faviconUrl\": \"{4}\"\r\n" +
+                        "}} ]\r\n",
                         targetId,
                         JsonEscape(name),
                         JsonEscape(AppDomain.CurrentDomain.FriendlyName),
                         JsonEscape(new Uri(Process.GetCurrentProcess().MainModule.FileName)),
-                        httpContext.Request.Url.Host,
-                        httpContext.Request.Url.Port
+                        faviconUrl
+                    ));
+                }
+                else
+                {
+                    SendWebResponse(webContext, MiscHelpers.FormatInvariant(
+                        "[ {{\r\n" +
+                            "  \"id\": \"{0}\",\r\n" +
+                            "  \"type\": \"node\",\r\n" +
+                            "  \"description\": \"ClearScript V8 runtime: {1}\",\r\n" +
+                            "  \"title\": \"{2}\",\r\n" +
+                            "  \"url\": \"{3}\",\r\n" +
+                            "  \"faviconUrl\": \"{6}\",\r\n" +
+                            "  \"devtoolsFrontendUrl\": \"chrome-devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws={4}:{5}/{0}\",\r\n" +
+                            "  \"webSocketDebuggerUrl\": \"ws://{4}:{5}/{0}\"\r\n" +
+                        "}} ]\r\n",
+                        targetId,
+                        JsonEscape(name),
+                        JsonEscape(AppDomain.CurrentDomain.FriendlyName),
+                        JsonEscape(new Uri(Process.GetCurrentProcess().MainModule.FileName)),
+                        webContext.Request.Uri.Host,
+                        webContext.Request.Uri.Port,
+                        faviconUrl
                     ));
                 }
             }
-            else if (httpContext.Request.RawUrl.Equals("/json/version", StringComparison.OrdinalIgnoreCase))
+            else if (webContext.Request.RawUrl.Equals("/json/version", StringComparison.OrdinalIgnoreCase))
             {
-                SendHttpResponse(httpContext, MiscHelpers.FormatInvariant(
-                    "{{\n" +
-                        "  \"Browser\": \"ClearScript {0} with V8 {1}\",\n" +
-                        "  \"Protocol-Version\": \"1.1\"\n" +
-                    "}}\n",
+                SendWebResponse(webContext, MiscHelpers.FormatInvariant(
+                    "{{\r\n" +
+                        "  \"Browser\": \"ClearScript {0} [V8 {1}]\",\r\n" +
+                        "  \"Protocol-Version\": \"1.1\"\r\n" +
+                    "}}\r\n",
                     ClearScriptVersion.Value,
                     version
                 ));
             }
-            else if (httpContext.Request.RawUrl.StartsWith("/json/activate/", StringComparison.OrdinalIgnoreCase))
+            else if (webContext.Request.RawUrl.StartsWith("/json/activate/", StringComparison.OrdinalIgnoreCase))
             {
-                var requestTargetId = httpContext.Request.RawUrl.Substring(15);
+                var requestTargetId = webContext.Request.RawUrl.Substring(15);
                 if (requestTargetId.Equals(targetId.ToString(), StringComparison.OrdinalIgnoreCase))
                 {
-                    SendHttpResponse(httpContext, "Target activated", "text/plain");
+                    SendWebResponse(webContext, "Target activated", "text/plain");
                 }
                 else
                 {
-                    SendHttpResponse(httpContext, "No such target id: " + requestTargetId, "text/plain", 404);
+                    SendWebResponse(webContext, "No such target id: " + requestTargetId, "text/plain", 404);
                 }
             }
-            else if (httpContext.Request.RawUrl.StartsWith("/json/close/", StringComparison.OrdinalIgnoreCase))
+            else if (webContext.Request.RawUrl.StartsWith("/json/close/", StringComparison.OrdinalIgnoreCase))
             {
-                var requestTargetId = httpContext.Request.RawUrl.Substring(12);
+                var requestTargetId = webContext.Request.RawUrl.Substring(12);
                 if (requestTargetId.Equals(targetId.ToString(), StringComparison.OrdinalIgnoreCase))
                 {
-                    SendHttpResponse(httpContext, "Target is closing", "text/plain");
+                    SendWebResponse(webContext, "Target is closing", "text/plain");
                 }
                 else
                 {
-                    SendHttpResponse(httpContext, "No such target id: " + requestTargetId, "text/plain", 404);
+                    SendWebResponse(webContext, "No such target id: " + requestTargetId, "text/plain", 404);
                 }
             }
-            else if (httpContext.Request.RawUrl.StartsWith("/json/new?", StringComparison.OrdinalIgnoreCase) ||
-                     httpContext.Request.RawUrl.Equals("/json/protocol", StringComparison.OrdinalIgnoreCase))
+            else if (webContext.Request.RawUrl.StartsWith("/json/new?", StringComparison.OrdinalIgnoreCase) ||
+                     webContext.Request.RawUrl.Equals("/json/protocol", StringComparison.OrdinalIgnoreCase))
             {
-                httpContext.Response.StatusCode = 501;
-                httpContext.Response.Close();
+                webContext.Response.Close(501);
             }
             else
             {
-                httpContext.Response.StatusCode = 404;
-                httpContext.Response.Close();
+                webContext.Response.Close(404);
             }
         }
 
@@ -232,29 +243,24 @@ namespace Microsoft.ClearScript.V8
 
         #region WebSocket client connection
 
-        private bool StartAcceptWebSocket(HttpListenerContext httpContext)
+        private void StartAcceptWebSocket(WebContext webContext)
         {
-            return MiscHelpers.Try(() => httpContext.AcceptWebSocketAsync(null).ContinueWith(task => OnWebSocketAccepted(httpContext, task)));
+            webContext.AcceptWebSocketAsync().ContinueWith(task => OnWebSocketAccepted(webContext, task));
         }
 
-        private void OnWebSocketAccepted(HttpListenerContext httpContext, Task<HttpListenerWebSocketContext> task)
+        private void OnWebSocketAccepted(WebContext webContext, Task<WebSocket> task)
         {
-            if (!disposedFlag.IsSet)
+            WebSocket webSocket;
+            if (MiscHelpers.Try(out webSocket, () => task.Result))
             {
-                HttpListenerWebSocketContext webSocketContext;
-                if (MiscHelpers.Try(out webSocketContext, () => task.Result))
+                if (!ConnectClient(webSocket))
                 {
-                    if ((webSocketContext == null) || (webSocketContext.WebSocket == null))
-                    {
-                        httpContext.Response.StatusCode = 500;
-                        httpContext.Response.Close();
-                    }
-                    else if (!ConnectClient(webSocketContext.WebSocket))
-                    {
-                        httpContext.Response.StatusCode = 403;
-                        httpContext.Response.Close();
-                    }
+                    webSocket.Close(WebSocket.ErrorCode.PolicyViolation, "A debugger is already connected");
                 }
+            }
+            else
+            {
+                webContext.Response.Close(500);
             }
         }
 
@@ -271,12 +277,12 @@ namespace Microsoft.ClearScript.V8
             return false;
         }
 
-        private void DisconnectClient(WebSocketCloseStatus status, string errorMessage)
+        private void DisconnectClient(WebSocket.ErrorCode errorCode, string message)
         {
             var client = Interlocked.Exchange(ref activeClient, null);
             if (client != null)
             {
-                client.Dispose(status, errorMessage);
+                client.Dispose(errorCode, message);
                 listener.DisconnectClient();
             }
         }
@@ -289,8 +295,8 @@ namespace Microsoft.ClearScript.V8
         {
             if (disposedFlag.Set())
             {
-                MiscHelpers.Try(httpListener.Stop);
-                DisconnectClient(WebSocketCloseStatus.EndpointUnavailable, "The V8 runtime has been destroyed");
+                MiscHelpers.Try(tcpListener.Stop);
+                DisconnectClient(WebSocket.ErrorCode.EndpointUnavailable, "The V8 runtime has been destroyed");
                 listener.Dispose();
             }
         }
@@ -299,15 +305,15 @@ namespace Microsoft.ClearScript.V8
 
         #region protocol utilities
 
-        private static void SendHttpResponse(HttpListenerContext httpContext, string content, string contentType = "application/json", int statusCode = 200)
+        private static void SendWebResponse(WebContext webContext, string content, string contentType = "application/json", int statusCode = 200)
         {
-            var contentBytes = Encoding.UTF8.GetBytes(content);
-            httpContext.Response.SendChunked = false;
-            httpContext.Response.ContentType = contentType + "; charset=UTF-8";
-            httpContext.Response.ContentLength64 = contentBytes.Length;
-            httpContext.Response.OutputStream.Write(contentBytes, 0, contentBytes.Length);
-            httpContext.Response.StatusCode = statusCode;
-            httpContext.Response.Close();
+            using (webContext.Response)
+            {
+                var contentBytes = Encoding.UTF8.GetBytes(content);
+                webContext.Response.ContentType = contentType + "; charset=UTF-8";
+                webContext.Response.OutputStream.Write(contentBytes, 0, contentBytes.Length);
+                webContext.Response.StatusCode = statusCode;
+            }
         }
 
         private static string JsonEscape(object value)

@@ -139,7 +139,7 @@ namespace Microsoft.ClearScript.Test
                 throw new OperationCanceledException(messageBuilder.ToString());
             }
 
-            results.CompiledAssembly.GetType("TestModule").InvokeMember("TestSub", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>());
+            results.CompiledAssembly.GetType("TestModule").InvokeMember("TestSub", BindingFlags.InvokeMethod, null, null, ArrayHelpers.GetEmptyArray<object>());
         }
 
         public static object InvokeVBTestFunction(string code, string extraDefinitions = null)
@@ -178,7 +178,7 @@ namespace Microsoft.ClearScript.Test
                 throw new OperationCanceledException(messageBuilder.ToString());
             }
 
-            return results.CompiledAssembly.GetType("TestModule").InvokeMember("TestFunction", BindingFlags.InvokeMethod, null, null, MiscHelpers.GetEmptyArray<object>());
+            return results.CompiledAssembly.GetType("TestModule").InvokeMember("TestFunction", BindingFlags.InvokeMethod, null, null, ArrayHelpers.GetEmptyArray<object>());
         }
 
         public static void Iterate(Array array, Action<int[]> action)

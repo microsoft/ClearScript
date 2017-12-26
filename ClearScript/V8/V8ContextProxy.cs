@@ -24,6 +24,8 @@ namespace Microsoft.ClearScript.V8
 
         public abstract void AddGlobalItem(string name, object item, bool globalMembers);
 
+        public abstract void AwaitDebuggerAndPause();
+
         public abstract object Execute(string documentName, string code, bool evaluate, bool discard);
 
         public abstract V8Script Compile(string documentName, string code);

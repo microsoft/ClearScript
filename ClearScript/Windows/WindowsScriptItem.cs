@@ -18,7 +18,7 @@ namespace Microsoft.ClearScript.Windows
         private readonly WindowsScriptEngine engine;
         private readonly IExpando target;
         private WindowsScriptItem holder;
-        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
         private WindowsScriptItem(WindowsScriptEngine engine, IExpando target)
         {
@@ -297,7 +297,7 @@ namespace Microsoft.ClearScript.Windows
         public override object GetProperty(int index)
         {
             VerifyNotDisposed();
-            return GetProperty(index.ToString(CultureInfo.InvariantCulture), MiscHelpers.GetEmptyArray<object>());
+            return GetProperty(index.ToString(CultureInfo.InvariantCulture), ArrayHelpers.GetEmptyArray<object>());
         }
 
         public override void SetProperty(int index, object value)

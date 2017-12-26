@@ -416,6 +416,13 @@ void V8ContextImpl::SetGlobalProperty(const StdString& name, const V8Value& valu
 
 //-----------------------------------------------------------------------------
 
+void V8ContextImpl::AwaitDebuggerAndPause()
+{
+    m_spIsolateImpl->AwaitDebuggerAndPause();
+}
+
+//-----------------------------------------------------------------------------
+
 V8Value V8ContextImpl::Execute(const StdString& documentName, const StdString& code, bool evaluate, bool /*discard*/)
 {
     BEGIN_CONTEXT_SCOPE

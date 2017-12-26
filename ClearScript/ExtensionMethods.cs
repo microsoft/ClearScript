@@ -50,9 +50,9 @@ namespace Microsoft.ClearScript
     {
         public ExtensionMethodSummary()
         {
-            Types = MiscHelpers.GetEmptyArray<Type>();
-            Methods = MiscHelpers.GetEmptyArray<MethodInfo>();
-            MethodNames = MiscHelpers.GetEmptyArray<string>();
+            Types = ArrayHelpers.GetEmptyArray<Type>();
+            Methods = ArrayHelpers.GetEmptyArray<MethodInfo>();
+            MethodNames = ArrayHelpers.GetEmptyArray<string>();
         }
 
         public ExtensionMethodSummary(Dictionary<Type, MethodInfo[]> table)

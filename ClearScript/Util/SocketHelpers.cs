@@ -2,76 +2,101 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript.Util
 {
     internal static class SocketHelpers
     {
-        public static void SendBytesAsync(this Socket socket, byte[] bytes, Action<bool> callback)
+        public static Task SendStringAsync(this Socket socket, string value, Encoding encoding = null)
         {
-            socket.SendBytesAsync(bytes, 0, bytes.Length, callback);
+            return socket.SendBytesAsync((encoding ?? Encoding.UTF8).GetBytes(value));
         }
 
-        public static void SendBytesAsync(this Socket socket, byte[] bytes, int offset, int count, Action<bool> callback)
+        public static async Task<string> ReceiveLineAsync(this Socket socket, Encoding encoding = null)
         {
-            if (!MiscHelpers.Try(() => socket.BeginSend(bytes, offset, count, SocketFlags.None, result => socket.OnBytesSent(result, bytes, offset, count, callback), null)))
-            {
-                callback(false);
-            }
-        }
+            var lineBytes = new List<byte>(1024);
+            var bytes = new byte[1];
 
-        public static void OnBytesSent(this Socket socket, IAsyncResult result, byte[] bytes, int offset, int count, Action<bool> callback)
-        {
-            int sentCount;
-            if (MiscHelpers.Try(out sentCount, () => socket.EndReceive(result)) && (sentCount > 0))
+            while (true)
             {
-                if (sentCount >= count)
+                await socket.ReceiveBytesAsync(bytes, 0, 1).ConfigureAwait(false);
+
+                var lastIndex = lineBytes.Count - 1;
+                if ((lastIndex >= 0) && (lineBytes[lastIndex] == Convert.ToByte('\r')) && (bytes[0] == Convert.ToByte('\n')))
                 {
-                    callback(true);
+                    lineBytes.RemoveAt(lastIndex);
+                    break;
                 }
-                else
-                {
-                    socket.SendBytesAsync(bytes, offset + sentCount, count - sentCount, callback);
-                }
+
+                lineBytes.Add(bytes[0]);
             }
-            else
+
+            return (encoding ?? Encoding.UTF8).GetString(lineBytes.ToArray());
+        }
+
+        public static Task SendBytesAsync(this Socket socket, byte[] bytes)
+        {
+            return socket.SendBytesAsync(bytes, 0, bytes.Length);
+        }
+
+        public static async Task SendBytesAsync(this Socket socket, byte[] bytes, int offset, int count)
+        {
+            while (count > 0)
             {
-                callback(false);
+                var sentCount = await socket.SendAsync(bytes, offset, count).ConfigureAwait(false);
+                if (sentCount < 1)
+                {
+                    throw new IOException("Failed to send data to socket");
+                }
+
+                offset += sentCount;
+                count -= sentCount;
             }
         }
 
-        public static void ReceiveBytesAsync(this Socket socket, int count, Action<byte[]> callback)
+        public static async Task<byte[]> ReceiveBytesAsync(this Socket socket, int count)
         {
-            socket.ReceiveBytesAsync(new byte[count], 0, count, callback);
+            var bytes = new byte[count];
+            await socket.ReceiveBytesAsync(bytes, 0, count).ConfigureAwait(false);
+            return bytes;
         }
 
-        public static void ReceiveBytesAsync(this Socket socket, byte[] bytes, int offset, int count, Action<byte[]> callback)
+        public static async Task ReceiveBytesAsync(this Socket socket, byte[] bytes, int offset, int count)
         {
-            if (!MiscHelpers.Try(() => socket.BeginReceive(bytes, offset, count, SocketFlags.None, result => socket.OnBytesReceived(result, bytes, offset, count, callback), null)))
+            while (count > 0)
             {
-                callback(null);
+                var receivedCount = await socket.ReceiveAsync(bytes, offset, count).ConfigureAwait(false);
+                if (receivedCount < 1)
+                {
+                    throw new IOException("Failed to receive data from socket");
+                }
+
+                offset += receivedCount;
+                count -= receivedCount;
             }
         }
 
-        public static void OnBytesReceived(this Socket socket, IAsyncResult result, byte[] bytes, int offset, int count, Action<byte[]> callback)
+        private static Task<int> SendAsync(this Socket socket, byte[] bytes, int offset, int count)
         {
-            int receivedCount;
-            if (MiscHelpers.Try(out receivedCount, () => socket.EndReceive(result)) && (receivedCount > 0))
-            {
-                if (receivedCount >= count)
-                {
-                    callback(bytes);
-                }
-                else
-                {
-                    socket.ReceiveBytesAsync(bytes, offset + receivedCount, count - receivedCount, callback);
-                }
-            }
-            else
-            {
-                callback(null);
-            }
+            return Task<int>.Factory.FromAsync(
+                (callback, state) => socket.BeginSend(bytes, offset, count, SocketFlags.None, callback, state),
+                socket.EndSend,
+                null
+            );
+        }
+
+        private static Task<int> ReceiveAsync(this Socket socket, byte[] bytes, int offset, int count)
+        {
+            return Task<int>.Factory.FromAsync(
+                (callback, state) => socket.BeginReceive(bytes, offset, count, SocketFlags.None, callback, state),
+                socket.EndReceive,
+                null
+            );
         }
     }
 }

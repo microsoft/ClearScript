@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.Web;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -19,10 +21,9 @@ namespace Microsoft.ClearScript.V8
         private readonly WebSocket webSocket;
 
         private readonly ConcurrentQueue<string> queue = new ConcurrentQueue<string>();
-        private readonly AutoResetEvent queueEvent = new AutoResetEvent(false);
-        private RegisteredWaitHandle queueWaitHandle;
+        private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1);
 
-        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
         #endregion
 
@@ -36,128 +37,127 @@ namespace Microsoft.ClearScript.V8
 
         public void Start()
         {
-            RegisterWaitForQueueEvent();
             StartReceiveMessage();
         }
 
         #endregion
 
-        #region inbound message processing
+        #region inbound message reception
 
         private void StartReceiveMessage()
         {
-            if (!MiscHelpers.Try(() => webSocket.ReceiveMessageAsync(WebSocketMessageType.Text, OnMessageReceived)))
-            {
-                OnFailed(WebSocketCloseStatus.ProtocolError, "Could not receive data from web socket");
-            }
+            webSocket.ReceiveMessageAsync().ContinueWith(OnMessageReceived);
         }
 
-        private void OnMessageReceived(byte[] bytes, WebSocketCloseStatus status, string errorMessage)
+        private void OnMessageReceived(Task<WebSocket.Message> task)
         {
-            if (!disposedFlag.IsSet)
+            try
             {
-                if (bytes == null)
+                var message = task.Result;
+                if (!disposedFlag.IsSet)
                 {
-                    OnFailed(status, errorMessage);
+                    if (message.IsBinary)
+                    {
+                        OnFailed(WebSocket.ErrorCode.InvalidMessageType, "Received unexpected binary message from WebSocket");
+                    }
+                    else
+                    {
+                        agent.SendCommand(this, Encoding.UTF8.GetString(message.Payload));
+                        StartReceiveMessage();
+                    }
                 }
-                else
+            }
+            catch (AggregateException aggregateException)
+            {
+                aggregateException.Handle(exception =>
                 {
-                    agent.SendCommand(this, Encoding.UTF8.GetString(bytes));
-                    StartReceiveMessage();
-                }
+                    if (!disposedFlag.IsSet)
+                    {
+                        var webSocketException = exception as WebSocket.Exception;
+                        if (webSocketException != null)
+                        {
+                            OnFailed(webSocketException.ErrorCode, webSocketException.Message);
+                        }
+                        else
+                        {
+                            OnFailed(WebSocket.ErrorCode.ProtocolError, "Could not receive message from WebSocket");
+                        }
+                    }
+
+                    return true;
+                });
             }
         }
 
         #endregion
 
-        #region outbound message queue
+        #region outbound message delivery
 
         public void SendMessage(string message)
         {
             if (!disposedFlag.IsSet)
             {
                 queue.Enqueue(message);
-                MiscHelpers.Try(() => queueEvent.Set());
+                SendMessagesAsync().ContinueWith(OnMessagesSent);
             }
         }
 
-        private void RegisterWaitForQueueEvent()
+        private async Task SendMessagesAsync()
         {
-            RegisteredWaitHandle newQueueWaitHandle;
-            if (MiscHelpers.Try(out newQueueWaitHandle, () => ThreadPool.RegisterWaitForSingleObject(queueEvent, OnQueueEvent, null, Timeout.Infinite, true)))
-            {
-                var oldQueueWaitHandle = Interlocked.Exchange(ref queueWaitHandle, newQueueWaitHandle);
-                if (oldQueueWaitHandle != null)
-                {
-                    oldQueueWaitHandle.Unregister(null);
-                }
-            }
-        }
-
-        private void OnQueueEvent(object state, bool timedOut)
-        {
-            if (!disposedFlag.IsSet)
+            using (await sendSemaphore.CreateLockScopeAsync().ConfigureAwait(false))
             {
                 string message;
-                if (queue.TryDequeue(out message))
+                while (queue.TryDequeue(out message))
                 {
-                    if (!MiscHelpers.Try(() => webSocket.SendMessageAsync(WebSocketMessageType.Text, Encoding.UTF8.GetBytes(message), OnMessageSent)))
-                    {
-                        OnFailed(WebSocketCloseStatus.ProtocolError, "Could not send data to web socket");
-                    }
-                }
-                else
-                {
-                    RegisterWaitForQueueEvent();
+                    await webSocket.SendMessageAsync(Encoding.UTF8.GetBytes(message)).ConfigureAwait(false);
                 }
             }
         }
 
-        private void OnMessageSent(bool succeeded, WebSocketCloseStatus status, string errorMessage)
+        private void OnMessagesSent(Task task)
         {
-            if (!disposedFlag.IsSet)
+            try
             {
-                if (succeeded)
+                task.Wait();
+            }
+            catch (AggregateException aggregateException)
+            {
+                aggregateException.Handle(exception =>
                 {
-                    OnQueueEvent(null, false);
-                }
-                else
-                {
-                    OnFailed(status, errorMessage);
-                }
+                    if (!disposedFlag.IsSet)
+                    {
+                        var webSocketException = exception as WebSocket.Exception;
+                        if (webSocketException != null)
+                        {
+                            OnFailed(webSocketException.ErrorCode, webSocketException.Message);
+                        }
+                        else
+                        {
+                            OnFailed(WebSocket.ErrorCode.ProtocolError, "Could not send message to WebSocket");
+                        }
+                    }
+
+                    return true;
+                });
             }
         }
 
         #endregion
 
-        #region shutdown
+        #region teardown
 
-        private void OnFailed(WebSocketCloseStatus status, string errorMessage)
+        private void OnFailed(WebSocket.ErrorCode errorCode, string message)
         {
-            Dispose(status, errorMessage);
+            Dispose(errorCode, message);
             agent.OnClientFailed(this);
         }
 
-        public void Dispose(WebSocketCloseStatus status, string errorMessage)
+        public void Dispose(WebSocket.ErrorCode errorCode, string message)
         {
             if (disposedFlag.Set())
             {
-                switch (webSocket.State)
-                {
-                    case WebSocketState.Connecting:
-                    case WebSocketState.Open:
-                    case WebSocketState.CloseReceived:
-                        MiscHelpers.Try(() => webSocket.CloseOutputAsync(status, errorMessage, CancellationToken.None));
-                        break;
-                }
-
-                var tempQueueWaitHandle = queueWaitHandle;
-                if (tempQueueWaitHandle != null)
-                {
-                    tempQueueWaitHandle.Unregister(null);
-                }
-
-                queueEvent.Close();
+                webSocket.Close(errorCode, message);
+                sendSemaphore.Dispose();
             }
         }
 

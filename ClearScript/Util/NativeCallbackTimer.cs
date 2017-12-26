@@ -10,7 +10,7 @@ namespace Microsoft.ClearScript.Util
     {
         private readonly Timer timer;
         private readonly INativeCallback callback;
-        private readonly InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
         public NativeCallbackTimer(int dueTime, int period, INativeCallback callback)
         {

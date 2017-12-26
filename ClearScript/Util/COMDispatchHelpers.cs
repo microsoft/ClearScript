@@ -161,7 +161,7 @@ namespace Microsoft.ClearScript.Util
 
         public object GetProperty(int index)
         {
-            return dispatchEx.GetProperty(index.ToString(CultureInfo.InvariantCulture), false, MiscHelpers.GetEmptyArray<object>());
+            return dispatchEx.GetProperty(index.ToString(CultureInfo.InvariantCulture), false, ArrayHelpers.GetEmptyArray<object>());
         }
 
         public void SetProperty(int index, object value)

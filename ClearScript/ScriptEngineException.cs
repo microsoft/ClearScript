@@ -137,6 +137,27 @@ namespace Microsoft.ClearScript
 
         #endregion
 
+        #region Object overrides
+
+        /// <summary>
+        /// Returns a string that represents the current exception.
+        /// </summary>
+        /// <returns>A string that represents the current exception.</returns>
+        public override string ToString()
+        {
+            var result = base.ToString();
+
+            if (!string.IsNullOrEmpty(errorDetails) && (errorDetails != Message))
+            {
+                var details = "   " + errorDetails.Replace("\n", "\n   ");
+                result += "\n   --- Script error details follow ---\n" + details;
+            }
+
+            return result;
+        }
+
+        #endregion
+
         #region InvalidOperationException overrides
 
         /// <summary>

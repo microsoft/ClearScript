@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2006
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClearScript", "ClearScript\ClearScript.csproj", "{D2382D2C-6576-4D96-B6CD-057C4F6BED96}"
 EndProject
@@ -39,7 +39,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ClearScript\doc\Build.docx = ClearScript\doc\Build.docx
 		ClearScript\doc\Examples.docx = ClearScript\doc\Examples.docx
 		ClearScript\doc\FAQtorial.docx = ClearScript\doc\FAQtorial.docx
-		ClearScript\doc\FAQtorial.pdf = ClearScript\doc\FAQtorial.pdf
 		License.txt = License.txt
 		ReadMe.md = ReadMe.md
 		ClearScript\doc\Reference.chm = ClearScript\doc\Reference.chm
@@ -89,5 +88,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{2D63EA35-BA9C-4E77-B5A4-4938DBBFEFA6} = {14370560-F9FD-486D-A88E-D22C02576442}
 		{CDCF4EEA-1CA4-412E-8C77-78893A67A577} = {14370560-F9FD-486D-A88E-D22C02576442}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3BAF1393-35E4-45F1-AC56-4A22646B56E5}
 	EndGlobalSection
 EndGlobal

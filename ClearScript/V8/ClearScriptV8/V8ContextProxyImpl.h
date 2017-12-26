@@ -38,6 +38,7 @@ namespace V8 {
         virtual void InvokeWithLock(Action^ gcAction) override;
         virtual Object^ GetRootItem() override;
         virtual void AddGlobalItem(String^ gcName, Object^ gcItem, Boolean globalMembers) override;
+        virtual void AwaitDebuggerAndPause() override;
         virtual Object^ Execute(String^ gcDocumentName, String^ gcCode, Boolean evaluate, Boolean discard) override;
         virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode) override;
         virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes) override;

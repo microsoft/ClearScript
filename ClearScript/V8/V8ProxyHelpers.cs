@@ -59,7 +59,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object GetHostObjectProperty(object obj, string name)
         {
-            return ((IDynamic)obj).GetProperty(name, MiscHelpers.GetEmptyArray<object>());
+            return ((IDynamic)obj).GetProperty(name, ArrayHelpers.GetEmptyArray<object>());
         }
 
         public static unsafe object GetHostObjectProperty(void* pObject, string name, out bool isCacheable)
@@ -69,7 +69,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object GetHostObjectProperty(object obj, string name, out bool isCacheable)
         {
-            return ((IDynamic)obj).GetProperty(name, MiscHelpers.GetEmptyArray<object>(), out isCacheable);
+            return ((IDynamic)obj).GetProperty(name, ArrayHelpers.GetEmptyArray<object>(), out isCacheable);
         }
 
         public static unsafe void SetHostObjectProperty(void* pObject, string name, object value)
@@ -191,7 +191,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object GetEnumeratorForHostObject(object obj)
         {
-            return ((IDynamic)obj).InvokeMethod(SpecialMemberNames.NewEnum, MiscHelpers.GetEmptyArray<object>());
+            return ((IDynamic)obj).InvokeMethod(SpecialMemberNames.NewEnum, ArrayHelpers.GetEmptyArray<object>());
         }
 
         public static unsafe bool AdvanceEnumerator(void* pEnumerator, out object value)
@@ -204,7 +204,7 @@ namespace Microsoft.ClearScript.V8
             var wrapper = (IScriptMarshalWrapper)enumerator;
             if (((IEnumerator)wrapper.Unwrap()).MoveNext())
             {
-                value = ((IDynamic)enumerator).GetProperty("Current", MiscHelpers.GetEmptyArray<object>());
+                value = ((IDynamic)enumerator).GetProperty("Current", ArrayHelpers.GetEmptyArray<object>());
                 return true;
             }
 

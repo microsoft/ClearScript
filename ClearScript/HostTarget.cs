@@ -21,12 +21,12 @@ namespace Microsoft.ClearScript
 
         public virtual string[] GetAuxMethodNames(IHostInvokeContext context, BindingFlags bindFlags)
         {
-            return MiscHelpers.GetEmptyArray<string>();
+            return ArrayHelpers.GetEmptyArray<string>();
         }
 
         public virtual string[] GetAuxPropertyNames(IHostInvokeContext context, BindingFlags bindFlags)
         {
-            return MiscHelpers.GetEmptyArray<string>();
+            return ArrayHelpers.GetEmptyArray<string>();
         }
 
         public virtual bool TryInvokeAuxMember(IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)

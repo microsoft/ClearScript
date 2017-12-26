@@ -24,15 +24,18 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: ScopeImpl
 
-        private class ScopeImpl : IDisposable
+        private sealed class ScopeImpl : IDisposable
         {
             private readonly Action exitAction;
-            private DisposedFlag disposedFlag = new DisposedFlag();
+            private readonly OneWayFlag disposedFlag = new OneWayFlag();
 
             public ScopeImpl(Action enterAction, Action exitAction)
             {
                 this.exitAction = exitAction;
-                enterAction();
+                if (enterAction != null)
+                {
+                    enterAction();
+                }
             }
 
             #region IDisposable implementation
@@ -52,16 +55,19 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: ScopeImpl<T>
 
-        private class ScopeImpl<T> : IScope<T>
+        private sealed class ScopeImpl<T> : IScope<T>
         {
             private readonly T value;
             private readonly Action<T> exitAction;
-            private DisposedFlag disposedFlag = new DisposedFlag();
+            private readonly OneWayFlag disposedFlag = new OneWayFlag();
 
             public ScopeImpl(Func<T> enterFunc, Action<T> exitAction)
             {
                 this.exitAction = exitAction;
-                value = enterFunc();
+                if (enterFunc != null)
+                {
+                    value = enterFunc();
+                }
             }
 
             #region IScope<T> implementation

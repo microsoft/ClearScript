@@ -271,6 +271,17 @@ public:
 
     void TerminateExecution()
     {
+        BEGIN_MUTEX_SCOPE(m_DataMutex)
+
+            if (m_AwaitingDebugger)
+            {
+                m_AbortMessageLoop = true;
+                m_CallWithLockQueueChanged.notify_one();
+                return;
+            }
+
+        END_MUTEX_SCOPE
+
         m_pIsolate->TerminateExecution();
         m_IsExecutionTerminating = true;
     }
@@ -335,6 +346,7 @@ public:
     virtual size_t GetMaxStackUsage() override;
     virtual void SetMaxStackUsage(size_t value) override;
 
+    virtual void AwaitDebuggerAndPause() override;
     virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) override;
     virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) override;
     virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
@@ -343,9 +355,9 @@ public:
 
     virtual void runMessageLoopOnPause(int contextGroupId) override;
     virtual void quitMessageLoopOnPause() override;
+    virtual void runIfWaitingForDebugger(int contextGroupId) override;
     virtual v8::Local<v8::Context> ensureDefaultContextInGroup(int contextGroupId) override;
     virtual double currentTimeMS() override;
-    virtual bool functionSupportsScopes(v8::Local<v8::Function> hFunction) override;
 
     virtual void sendResponse(int callId, std::unique_ptr<v8_inspector::StringBuffer> spMessage) override;
     virtual void sendNotification(std::unique_ptr<v8_inspector::StringBuffer> spMessage) override;
@@ -367,6 +379,8 @@ public:
     ~V8IsolateImpl();
 
 private:
+
+    bool RunMessageLoop(bool awaitingDebugger);
 
     void CallWithLockAsync(std::function<void(V8IsolateImpl*)>&& callback);
     static void ProcessCallWithLockQueue(v8::Isolate* pIsolate, void* pvIsolateImpl);
@@ -402,8 +416,10 @@ private:
     void* m_pvDebugAgent;
     std::unique_ptr<v8_inspector::V8Inspector> m_spInspector;
     std::unique_ptr<v8_inspector::V8InspectorSession> m_spInspectorSession;
+    bool m_AwaitingDebugger;
     bool m_InMessageLoop;
     bool m_QuitMessageLoop;
+    bool m_AbortMessageLoop;
     std::atomic<size_t> m_MaxHeapSize;
     std::atomic<double> m_HeapSizeSampleInterval;
     size_t m_HeapWatchLevel;

@@ -173,7 +173,7 @@ namespace Microsoft.ClearScript
                 return type.GetScriptableNestedTypes(bindFlags, context.DefaultAccess).Select(testType => testType.GetRootName()).Distinct().ToArray();
             }
 
-            return MiscHelpers.GetEmptyArray<string>();
+            return ArrayHelpers.GetEmptyArray<string>();
         }
 
         public override bool TryInvokeAuxMember(IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)

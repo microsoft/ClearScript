@@ -7,11 +7,14 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript.Util
 {
     internal static class MiscHelpers
     {
+        #region COM helpers
+
         public static object CreateCOMObject(string progID, string serverName)
         {
             return Activator.CreateInstance(GetCOMType(progID, serverName));
@@ -85,6 +88,15 @@ namespace Microsoft.ClearScript.Util
             return type != null;
         }
 
+        public static string GetDispIDName(int dispid)
+        {
+            return FormatInvariant("[DISPID={0}]", dispid);
+        }
+
+        #endregion
+
+        #region argument helpers
+
         public static void VerifyNonNullArgument(object value, string name)
         {
             if (value == null)
@@ -100,6 +112,10 @@ namespace Microsoft.ClearScript.Util
                 throw new ArgumentException(message, name);
             }
         }
+
+        #endregion
+
+        #region string helpers
 
         public static string EnsureNonBlank(string input, string alternate)
         {
@@ -138,6 +154,10 @@ namespace Microsoft.ClearScript.Util
 
             return string.Join("\n", lines) + '\n';
         }
+
+        #endregion
+
+        #region index helpers
 
         public static bool TryGetIndex(object arg, out int index)
         {
@@ -181,15 +201,40 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        public static int UnsignedAsSigned(uint value)
+        #endregion
+
+        #region simplified exception handling
+
+        public static bool Try(Action action)
         {
-            return BitConverter.ToInt32(BitConverter.GetBytes(value), 0);
+            try
+            {
+                action();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
-        public static uint SignedAsUnsigned(int value)
+        public static bool Try<T>(out T result, Func<T> func)
         {
-            return BitConverter.ToUInt32(BitConverter.GetBytes(value), 0);
+            try
+            {
+                result = func();
+                return true;
+            }
+            catch (Exception)
+            {
+                result = default(T);
+                return false;
+            }
         }
+
+        #endregion
+
+        #region primitive marshaling
 
         public static bool TryMarshalPrimitiveToHost(object obj, out object result)
         {
@@ -259,42 +304,9 @@ namespace Microsoft.ClearScript.Util
             // ReSharper restore CompareOfFloatsByEqualityOperator
         }
 
-        public static T[] GetEmptyArray<T>()
-        {
-            return EmptyArray<T>.Value;
-        }
+        #endregion
 
-        public static string GetDispIDName(int dispid)
-        {
-            return FormatInvariant("[DISPID={0}]", dispid);
-        }
-
-        public static bool Try(Action action)
-        {
-            try
-            {
-                action();
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        public static bool Try<T>(out T result, Func<T> func)
-        {
-            try
-            {
-                result = func();
-                return true;
-            }
-            catch (Exception)
-            {
-                result = default(T);
-                return false;
-            }
-        }
+        #region miscellaneous
 
         public static T Exchange<T>(ref T target, T value)
         {
@@ -331,16 +343,15 @@ namespace Microsoft.ClearScript.Util
             });
         }
 
-        #region Nested type: EmptyArray<T>
-
-        private static class EmptyArray<T>
+        public static Random CreateSeededRandom()
         {
-            private static readonly T[] value = new T[0];
+            return new Random(Convert.ToUInt32(DateTime.Now.Ticks.ToUnsigned() & 0x00000000FFFFFFFFUL).ToSigned());
+        }
 
-            public static T[] Value
-            {
-                get { return value; }
-            }
+        public static async Task<IDisposable> CreateLockScopeAsync(this SemaphoreSlim semaphore)
+        {
+            await semaphore.WaitAsync().ConfigureAwait(false);
+            return Scope.Create(null, () => semaphore.Release());
         }
 
         #endregion

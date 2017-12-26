@@ -45,7 +45,7 @@ namespace Microsoft.ClearScript.Windows
         private uint nextSourceContext = 1;
 
         private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
-        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
         #endregion
 

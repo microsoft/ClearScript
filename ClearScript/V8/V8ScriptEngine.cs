@@ -28,10 +28,11 @@ namespace Microsoft.ClearScript.V8
         private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
         private readonly object script;
-        private InterlockedDisposedFlag disposedFlag = new InterlockedDisposedFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
         private const int continuationInterval = 2000;
         private bool inContinuationTimerScope;
+        private bool awaitDebuggerAndPause;
 
         private readonly HostItemCollateral hostItemCollateral;
         private readonly IUniqueNameManager documentNameManager = new UniqueFileNameManager();
@@ -280,6 +281,11 @@ namespace Microsoft.ClearScript.V8
                 );
 
                 ((IDisposable)engineInternal).Dispose();
+
+                if (flags.HasFlag(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart))
+                {
+                    awaitDebuggerAndPause = true;
+                }
             }
         }
 
@@ -624,6 +630,11 @@ namespace Microsoft.ClearScript.V8
             {
                 if (inContinuationTimerScope || (ContinuationCallback == null))
                 {
+                    if (MiscHelpers.Exchange(ref awaitDebuggerAndPause, false))
+                    {
+                        proxy.AwaitDebuggerAndPause();
+                    }
+
                     return proxy.Execute(script, evaluate);
                 }
 
@@ -634,6 +645,12 @@ namespace Microsoft.ClearScript.V8
                     try
                     {
                         state[0].Change(continuationInterval, Timeout.Infinite);
+
+                        if (MiscHelpers.Exchange(ref awaitDebuggerAndPause, false))
+                        {
+                            proxy.AwaitDebuggerAndPause();
+                        }
+
                         return proxy.Execute(script, evaluate);
                     }
                     finally
@@ -902,6 +919,11 @@ namespace Microsoft.ClearScript.V8
 
                 if (inContinuationTimerScope || (ContinuationCallback == null))
                 {
+                    if (MiscHelpers.Exchange(ref awaitDebuggerAndPause, false))
+                    {
+                        proxy.AwaitDebuggerAndPause();
+                    }
+
                     return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate, discard);
                 }
 
@@ -912,6 +934,12 @@ namespace Microsoft.ClearScript.V8
                     try
                     {
                         state[0].Change(continuationInterval, Timeout.Infinite);
+
+                        if (MiscHelpers.Exchange(ref awaitDebuggerAndPause, false))
+                        {
+                            proxy.AwaitDebuggerAndPause();
+                        }
+
                         return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate, discard);
                     }
                     finally

@@ -19,6 +19,7 @@
   <HelpKINode Title="arrType&lt;T&gt; method" Url="html/M_Microsoft_ClearScript_ExtendedHostFunctions_arrType__1.htm" />
   <HelpKINode Title="asType(Of T) method" Url="html/M_Microsoft_ClearScript_HostFunctions_asType__1.htm" />
   <HelpKINode Title="asType&lt;T&gt; method" Url="html/M_Microsoft_ClearScript_HostFunctions_asType__1.htm" />
+  <HelpKINode Title="AwaitDebuggerAndPauseOnStart enumeration member" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
   <HelpKINode Title="cast(Of T) method" Url="html/M_Microsoft_ClearScript_HostFunctions_cast__1.htm" />
   <HelpKINode Title="cast&lt;T&gt; method" Url="html/M_Microsoft_ClearScript_HostFunctions_cast__1.htm" />
   <HelpKINode Title="CheckAccess method" Url="html/M_Microsoft_ClearScript_Windows_WindowsScriptEngine_CheckAccess.htm" />
@@ -564,6 +565,7 @@
   <HelpKINode Title="ScriptEngineException.GetObjectData method" Url="html/M_Microsoft_ClearScript_ScriptEngineException_GetObjectData.htm" />
   <HelpKINode Title="ScriptEngineException.IsFatal property" Url="html/P_Microsoft_ClearScript_ScriptEngineException_IsFatal.htm" />
   <HelpKINode Title="ScriptEngineException.ScriptEngineException constructor" Url="html/Overload_Microsoft_ClearScript_ScriptEngineException__ctor.htm" />
+  <HelpKINode Title="ScriptEngineException.ToString method" Url="html/M_Microsoft_ClearScript_ScriptEngineException_ToString.htm" />
   <HelpKINode Title="ScriptInterruptedException class">
     <HelpKINode Title="ScriptInterruptedException Class" Url="html/T_Microsoft_ClearScript_ScriptInterruptedException.htm" />
     <HelpKINode Title="about ScriptInterruptedException class" Url="html/T_Microsoft_ClearScript_ScriptInterruptedException.htm" />
@@ -578,6 +580,7 @@
   <HelpKINode Title="ScriptInterruptedException.GetObjectData method" Url="html/M_Microsoft_ClearScript_ScriptInterruptedException_GetObjectData.htm" />
   <HelpKINode Title="ScriptInterruptedException.IsFatal property" Url="html/P_Microsoft_ClearScript_ScriptInterruptedException_IsFatal.htm" />
   <HelpKINode Title="ScriptInterruptedException.ScriptInterruptedException constructor" Url="html/Overload_Microsoft_ClearScript_ScriptInterruptedException__ctor.htm" />
+  <HelpKINode Title="ScriptInterruptedException.ToString method" Url="html/M_Microsoft_ClearScript_ScriptInterruptedException_ToString.htm" />
   <HelpKINode Title="ScriptMemberAttribute class">
     <HelpKINode Title="ScriptMemberAttribute Class" Url="html/T_Microsoft_ClearScript_ScriptMemberAttribute.htm" />
     <HelpKINode Title="about ScriptMemberAttribute class" Url="html/T_Microsoft_ClearScript_ScriptMemberAttribute.htm" />
@@ -625,7 +628,11 @@
   <HelpKINode Title="toSByte method" Url="html/M_Microsoft_ClearScript_HostFunctions_toSByte.htm" />
   <HelpKINode Title="toSingle method" Url="html/M_Microsoft_ClearScript_HostFunctions_toSingle.htm" />
   <HelpKINode Title="toStaticType method" Url="html/M_Microsoft_ClearScript_HostFunctions_toStaticType.htm" />
-  <HelpKINode Title="ToString method" Url="html/M_Microsoft_ClearScript_Undefined_ToString.htm" />
+  <HelpKINode Title="ToString method">
+    <HelpKINode Title="ScriptEngineException.ToString Method " Url="html/M_Microsoft_ClearScript_ScriptEngineException_ToString.htm" />
+    <HelpKINode Title="ScriptInterruptedException.ToString Method " Url="html/M_Microsoft_ClearScript_ScriptInterruptedException_ToString.htm" />
+    <HelpKINode Title="Undefined.ToString Method " Url="html/M_Microsoft_ClearScript_Undefined_ToString.htm" />
+  </HelpKINode>
   <HelpKINode Title="TotalHeapSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalHeapSize.htm" />
   <HelpKINode Title="TotalHeapSizeExecutable property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalHeapSizeExecutable.htm" />
   <HelpKINode Title="TotalPhysicalSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalPhysicalSize.htm" />

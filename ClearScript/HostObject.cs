@@ -70,7 +70,7 @@ namespace Microsoft.ClearScript
 
         private static HostObject GetNullWrapper(Type type)
         {
-            return (HostObject)getNullWrapperGenericMethod.MakeGenericMethod(type).Invoke(null, MiscHelpers.GetEmptyArray<object>());
+            return (HostObject)getNullWrapperGenericMethod.MakeGenericMethod(type).Invoke(null, ArrayHelpers.GetEmptyArray<object>());
         }
 
         // ReSharper disable UnusedMember.Local

@@ -561,7 +561,7 @@ namespace Microsoft.ClearScript.Test
             var property = member as PropertyInfo;
             if (property != null)
             {
-                Assert.AreEqual(property.GetValue(target, MiscHelpers.GetEmptyArray<object>()), engine.Evaluate(objectName + "." + scriptMemberName));
+                Assert.AreEqual(property.GetValue(target, ArrayHelpers.GetEmptyArray<object>()), engine.Evaluate(objectName + "." + scriptMemberName));
                 return;
             }
 
@@ -571,7 +571,7 @@ namespace Microsoft.ClearScript.Test
                 switch (method.GetParameters().Length)
                 {
                     case 0:
-                        Assert.AreEqual(method.Invoke(target, MiscHelpers.GetEmptyArray<object>()), engine.Evaluate(objectName + "." + scriptMemberName + "()"));
+                        Assert.AreEqual(method.Invoke(target, ArrayHelpers.GetEmptyArray<object>()), engine.Evaluate(objectName + "." + scriptMemberName + "()"));
                         break;
 
                     case 1:

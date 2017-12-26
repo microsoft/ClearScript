@@ -31,6 +31,13 @@ namespace Microsoft.ClearScript.V8
         /// Specifies that remote script debugging is to be enabled. This option is ignored if
         /// <see cref="EnableDebugging"/> is not specified.
         /// </summary>
-        EnableRemoteDebugging = 0x00000004
+        EnableRemoteDebugging = 0x00000004,
+
+        /// <summary>
+        /// Specifies that the script engine is to wait for a debugger connection and schedule a
+        /// pause before executing the first line of application script code. This option is
+        /// ignored if <see cref="EnableDebugging"/> is not specified.
+        /// </summary>
+        AwaitDebuggerAndPauseOnStart = 0x00000008
     }
 }

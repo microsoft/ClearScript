@@ -51,7 +51,7 @@ namespace Microsoft.ClearScript.Util
             }
             else
             {
-                base.Set(holder, MiscHelpers.GetEmptyArray<TElement>());
+                base.Set(holder, ArrayHelpers.GetEmptyArray<TElement>());
             }
         }
     }

@@ -1109,7 +1109,7 @@ namespace Microsoft.ClearScript
         public object Invoke(string funcName, params object[] args)
         {
             MiscHelpers.VerifyNonBlankArgument(funcName, "funcName", "Invalid function name");
-            return ((IDynamic)Script).InvokeMethod(funcName, args ?? MiscHelpers.GetEmptyArray<object>());
+            return ((IDynamic)Script).InvokeMethod(funcName, args ?? ArrayHelpers.GetEmptyArray<object>());
         }
 
         /// <summary>

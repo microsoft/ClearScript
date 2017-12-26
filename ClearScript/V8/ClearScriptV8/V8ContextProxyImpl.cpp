@@ -120,6 +120,20 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    void V8ContextProxyImpl::AwaitDebuggerAndPause()
+    {
+        try
+        {
+            return GetContext()->AwaitDebuggerAndPause();
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ThrowScriptEngineException();
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
     Object^ V8ContextProxyImpl::Execute(String^ gcDocumentName, String^ gcCode, Boolean evaluate, Boolean discard)
     {
         try

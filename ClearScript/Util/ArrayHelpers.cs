@@ -37,5 +37,24 @@ namespace Microsoft.ClearScript.Util
                 }
             }
         }
+
+        public static T[] GetEmptyArray<T>()
+        {
+            return EmptyArray<T>.Value;
+        }
+
+        #region Nested type: EmptyArray<T>
+
+        private static class EmptyArray<T>
+        {
+            private static readonly T[] value = new T[0];
+
+            public static T[] Value
+            {
+                get { return value; }
+            }
+        }
+
+        #endregion
     }
 }

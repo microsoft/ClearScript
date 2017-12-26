@@ -27,6 +27,8 @@ public:
 
     virtual V8Value GetRootObject() = 0;
     virtual void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers) = 0;
+
+    virtual void AwaitDebuggerAndPause() = 0;
     virtual V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard) = 0;
 
     virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) = 0;

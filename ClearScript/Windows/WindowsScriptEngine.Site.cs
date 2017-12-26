@@ -218,7 +218,7 @@ namespace Microsoft.ClearScript.Windows
                     keepGoing = keepGoing && !engine.CurrentScriptFrame.InterruptRequested;
                 }
 
-                return keepGoing ? RawCOMHelpers.HResult.S_OK : MiscHelpers.SignedAsUnsigned(RawCOMHelpers.HResult.E_ABORT);
+                return keepGoing ? RawCOMHelpers.HResult.S_OK : RawCOMHelpers.HResult.E_ABORT.ToUnsigned();
             }
 
             #endregion

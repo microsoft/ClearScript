@@ -157,7 +157,7 @@ namespace Microsoft.ClearScript
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            return TryWrappedBindAndInvoke(binder, MiscHelpers.GetEmptyArray<object>(), out result);
+            return TryWrappedBindAndInvoke(binder, ArrayHelpers.GetEmptyArray<object>(), out result);
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
@@ -215,7 +215,7 @@ namespace Microsoft.ClearScript
 
         public MethodInfo[] GetMethods(BindingFlags bindFlags)
         {
-            return MiscHelpers.GetEmptyArray<MethodInfo>();
+            return ArrayHelpers.GetEmptyArray<MethodInfo>();
         }
 
         public FieldInfo GetField(string name, BindingFlags bindFlags)
@@ -240,7 +240,7 @@ namespace Microsoft.ClearScript
 
         public PropertyInfo[] GetProperties(BindingFlags bindFlags)
         {
-            return MiscHelpers.GetEmptyArray<PropertyInfo>();
+            return ArrayHelpers.GetEmptyArray<PropertyInfo>();
         }
 
         public MemberInfo[] GetMember(string name, BindingFlags bindFlags)

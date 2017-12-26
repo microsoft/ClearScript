@@ -124,7 +124,7 @@ namespace Microsoft.ClearScript.Util
                 var reflect = obj as IReflect;
                 if (reflect != null)
                 {
-                    return reflect.InvokeMember(name, BindingFlags.GetField, null, obj, MiscHelpers.GetEmptyArray<object>(), null, CultureInfo.InvariantCulture, null);
+                    return reflect.InvokeMember(name, BindingFlags.GetField, null, obj, ArrayHelpers.GetEmptyArray<object>(), null, CultureInfo.InvariantCulture, null);
                 }
 
                 throw new InvalidOperationException("Invalid field retrieval");
@@ -149,7 +149,7 @@ namespace Microsoft.ClearScript.Util
 
             public override object[] GetCustomAttributes(Type attributeType, bool inherit)
             {
-                return MiscHelpers.GetEmptyArray<object>();
+                return ArrayHelpers.GetEmptyArray<object>();
             }
 
             public override object[] GetCustomAttributes(bool inherit)
@@ -222,7 +222,7 @@ namespace Microsoft.ClearScript.Util
 
             public override ParameterInfo[] GetParameters()
             {
-                return MiscHelpers.GetEmptyArray<ParameterInfo>();
+                return ArrayHelpers.GetEmptyArray<ParameterInfo>();
             }
 
             public override object Invoke(object obj, BindingFlags invokeFlags, Binder binder, object[] args, CultureInfo culture)
@@ -232,7 +232,7 @@ namespace Microsoft.ClearScript.Util
 
             public override object[] GetCustomAttributes(Type attributeType, bool inherit)
             {
-                return MiscHelpers.GetEmptyArray<object>();
+                return ArrayHelpers.GetEmptyArray<object>();
             }
 
             public override object[] GetCustomAttributes(bool inherit)
@@ -310,7 +310,7 @@ namespace Microsoft.ClearScript.Util
 
             public override ParameterInfo[] GetIndexParameters()
             {
-                return MiscHelpers.GetEmptyArray<ParameterInfo>();
+                return ArrayHelpers.GetEmptyArray<ParameterInfo>();
             }
 
             public override MethodInfo GetSetMethod(bool nonPublic)
@@ -330,7 +330,7 @@ namespace Microsoft.ClearScript.Util
 
             public override object[] GetCustomAttributes(Type attributeType, bool inherit)
             {
-                return MiscHelpers.GetEmptyArray<object>();
+                return ArrayHelpers.GetEmptyArray<object>();
             }
 
             public override object[] GetCustomAttributes(bool inherit)

@@ -32,6 +32,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -46,6 +47,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
     <SignAssembly>true</SignAssembly>
@@ -56,6 +58,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Web" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
@@ -90,10 +93,11 @@
     <Compile Include="ScriptObject.cs" />
     <Compile Include="ScriptUsageAttribute.cs" />
     <Compile Include="Util\AssemblyHelpers.cs" />
+    <Compile Include="Util\BitwiseHelpers.cs" />
     <Compile Include="Util\Collateral.cs" />
     <Compile Include="Util\COMDispatchHelpers.cs" />
     <Compile Include="Util\CoTaskMemBlock.cs" />
-    <Compile Include="Util\DisposedFlag.cs" />
+    <Compile Include="Util\OneWayFlag.cs" />
     <Compile Include="HostList.cs" />
     <Compile Include="Util\INativeCallback.cs" />
     <Compile Include="Util\IHostInvokeContext.cs" />
@@ -107,9 +111,12 @@
     <Compile Include="Util\Scope.cs" />
     <Compile Include="Util\SocketHelpers.cs" />
     <Compile Include="Util\SpecialDispIDs.cs" />
+    <Compile Include="Util\Web\WebContext.cs" />
+    <Compile Include="Util\Web\WebRequest.cs" />
+    <Compile Include="Util\Web\WebResponse.cs" />
     <Compile Include="Util\UnmanagedMemoryHelpers.cs" />
     <Compile Include="Util\VTablePatcher.cs" />
-    <Compile Include="Util\WebSocketHelpers.cs" />
+    <Compile Include="Util\Web\WebSocket.cs" />
     <Compile Include="V8\IV8DebugListener.cs" />
     <Compile Include="V8\V8ArrayBufferOrViewInfo.cs" />
     <Compile Include="V8\V8ArrayBufferOrViewKind.cs" />

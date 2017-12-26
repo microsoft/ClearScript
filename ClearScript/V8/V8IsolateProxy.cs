@@ -18,6 +18,8 @@ namespace Microsoft.ClearScript.V8
 
         public abstract UIntPtr MaxStackUsage { get; set; }
 
+        public abstract void AwaitDebuggerAndPause();
+
         public abstract V8Script Compile(string documentName, string code);
 
         public abstract V8Script Compile(string documentName, string code, V8CacheKind cacheKind, out byte[] cacheBytes);

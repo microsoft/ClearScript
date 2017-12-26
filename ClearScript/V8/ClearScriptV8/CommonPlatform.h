@@ -100,6 +100,13 @@ class PulseValueScope
 
 public:
 
+    PulseValueScope(T* pValue, const T& value):
+        m_pValue(pValue),
+        m_OriginalValue(std::move(*pValue))
+    {
+        *m_pValue = value;
+    }
+
     PulseValueScope(T* pValue, T&& value):
         m_pValue(pValue),
         m_OriginalValue(std::move(*pValue))

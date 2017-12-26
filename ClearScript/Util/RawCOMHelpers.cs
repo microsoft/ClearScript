@@ -85,13 +85,13 @@ namespace Microsoft.ClearScript.Util
             public const int S_OK = 0;
             public const int S_FALSE = 1;
 
-            public static readonly int E_NOINTERFACE = MiscHelpers.UnsignedAsSigned(0x80004002U);
-            public static readonly int E_ABORT = MiscHelpers.UnsignedAsSigned(0x80004004U);
-            public static readonly int E_INVALIDARG = MiscHelpers.UnsignedAsSigned(0x80070057U);
+            public static readonly int E_NOINTERFACE = 0x80004002U.ToSigned();
+            public static readonly int E_ABORT = 0x80004004U.ToSigned();
+            public static readonly int E_INVALIDARG = 0x80070057U.ToSigned();
 
-            public static readonly int DISP_E_UNKNOWNNAME = MiscHelpers.UnsignedAsSigned(0x80020006U);
-            public static readonly int DISP_E_MEMBERNOTFOUND = MiscHelpers.UnsignedAsSigned(0x80020003U);
-            public static readonly int SCRIPT_E_REPORTED = MiscHelpers.UnsignedAsSigned(0x80020101U);
+            public static readonly int DISP_E_UNKNOWNNAME = 0x80020006U.ToSigned();
+            public static readonly int DISP_E_MEMBERNOTFOUND = 0x80020003U.ToSigned();
+            public static readonly int SCRIPT_E_REPORTED = 0x80020101U.ToSigned();
 
             public static readonly int CLEARSCRIPT_E_HOSTEXCEPTION = MakeResult(SEVERITY_ERROR, FACILITY_URT, 0xBAFF);
             public static readonly int CLEARSCRIPT_E_SCRIPTITEMEXCEPTION = MakeResult(SEVERITY_ERROR, FACILITY_URT, 0xB0FF);
@@ -100,7 +100,7 @@ namespace Microsoft.ClearScript.Util
 
             public static void Check(uint result)
             {
-                Check(MiscHelpers.UnsignedAsSigned(result));
+                Check(result.ToSigned());
             }
 
             public static void Check(int result)
@@ -120,7 +120,7 @@ namespace Microsoft.ClearScript.Util
 
             public static int GetSeverity(uint result)
             {
-                return GetSeverity(MiscHelpers.UnsignedAsSigned(result));
+                return GetSeverity(result.ToSigned());
             }
 
             public static int GetSeverity(int result)
@@ -130,7 +130,7 @@ namespace Microsoft.ClearScript.Util
 
             public static int GetFacility(uint result)
             {
-                return GetFacility(MiscHelpers.UnsignedAsSigned(result));
+                return GetFacility(result.ToSigned());
             }
 
             public static int GetFacility(int result)
@@ -140,7 +140,7 @@ namespace Microsoft.ClearScript.Util
 
             public static int GetCode(uint result)
             {
-                return GetCode(MiscHelpers.UnsignedAsSigned(result));
+                return GetCode(result.ToSigned());
             }
 
             public static int GetCode(int result)
@@ -150,7 +150,7 @@ namespace Microsoft.ClearScript.Util
 
             public static int MakeResult(int severity, int facility, int code)
             {
-                return MiscHelpers.UnsignedAsSigned((uint)(code & 0xFFFF) | ((uint)(facility & 0x1FFF) << 16) | ((uint)(severity & 0x1) << 31));
+                return ((uint)(code & 0xFFFF) | ((uint)(facility & 0x1FFF) << 16) | ((uint)(severity & 0x1) << 31)).ToSigned();
             }
         }
 

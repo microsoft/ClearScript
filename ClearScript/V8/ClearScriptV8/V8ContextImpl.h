@@ -37,6 +37,8 @@ public:
 
     virtual V8Value GetRootObject() override;
     virtual void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers) override;
+
+    virtual void AwaitDebuggerAndPause() override;
     virtual V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard) override;
 
     virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) override;

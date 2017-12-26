@@ -77,6 +77,20 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    void V8IsolateProxyImpl::AwaitDebuggerAndPause()
+    {
+        try
+        {
+            return GetIsolate()->AwaitDebuggerAndPause();
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ThrowScriptEngineException();
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
     V8Script^ V8IsolateProxyImpl::Compile(String^ gcDocumentName, String^ gcCode)
     {
         try

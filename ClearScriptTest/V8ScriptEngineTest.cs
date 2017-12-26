@@ -376,6 +376,22 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Interrupt_AwaitDebuggerAndPauseOnStart()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart);
+
+            ThreadPool.QueueUserWorkItem(state =>
+            {
+                Thread.Sleep(1000);
+                engine.Interrupt();
+            });
+
+            TestUtil.AssertException<OperationCanceledException>(() => engine.Evaluate("Math.E * Math.PI"));
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         [ExpectedException(typeof(ScriptEngineException))]
         public void V8ScriptEngine_AccessContext_Default()
         {
@@ -399,6 +415,18 @@ namespace Microsoft.ClearScript.Test
 
             engine.ContinuationCallback = () => false;
             TestUtil.AssertException<OperationCanceledException>(() => engine.Execute("while (true) { var foo = test.foo; }"));
+            engine.ContinuationCallback = null;
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ContinuationCallback_AwaitDebuggerAndPauseOnStart()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart);
+
+            engine.ContinuationCallback = () => false;
+            TestUtil.AssertException<OperationCanceledException>(() => engine.Evaluate("Math.E * Math.PI"));
             engine.ContinuationCallback = null;
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
         }

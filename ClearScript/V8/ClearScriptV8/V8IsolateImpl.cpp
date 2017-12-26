@@ -38,6 +38,7 @@ public:
     virtual void CallIdleOnForegroundThread(v8::Isolate* pIsolate, v8::IdleTask* pTask) override;
     virtual bool IdleTasksEnabled(v8::Isolate* pIsolate) override;
     virtual double MonotonicallyIncreasingTime() override;
+    virtual double CurrentClockTimeMillis() override;
     virtual v8::TracingController* GetTracingController() override;
 
 private:
@@ -124,6 +125,13 @@ bool V8Platform::IdleTasksEnabled(v8::Isolate* /*pIsolate*/)
 double V8Platform::MonotonicallyIncreasingTime()
 {
     return HighResolutionClock::GetRelativeSeconds();
+}
+
+//-----------------------------------------------------------------------------
+
+double V8Platform::CurrentClockTimeMillis()
+{
+    return V8Platform::MonotonicallyIncreasingTime() * 1000.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -239,8 +247,10 @@ static std::atomic<size_t> s_InstanceCount(0);
 V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, bool enableRemoteDebugging, int debugPort) :
     m_Name(name),
     m_DebuggingEnabled(false),
+    m_AwaitingDebugger(false),
     m_InMessageLoop(false),
     m_QuitMessageLoop(false),
+    m_AbortMessageLoop(false),
     m_MaxHeapSize(0),
     m_HeapWatchLevel(0),
     m_MaxStackUsage(0),
@@ -431,6 +441,30 @@ void V8IsolateImpl::SetMaxStackUsage(size_t value)
 
 //-----------------------------------------------------------------------------
 
+void V8IsolateImpl::AwaitDebuggerAndPause()
+{
+    BEGIN_ISOLATE_SCOPE
+
+        if (m_DebuggingEnabled)
+        {
+            if (!m_spInspectorSession && !RunMessageLoop(true))
+            {
+                throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(L"Script execution interrupted by host while awaiting debugger connection"), false);
+            }
+
+            _ASSERTE(m_spInspectorSession);
+            if (m_spInspectorSession)
+            {
+                StdString breakReason(L"Break on debugger connection");
+                m_spInspectorSession->schedulePauseOnNextStatement(breakReason.GetStringView(), breakReason.GetStringView());
+            }
+        }
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
 V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdString& code)
 {
     BEGIN_ISOLATE_SCOPE
@@ -507,33 +541,7 @@ void V8IsolateImpl::CollectGarbage(bool exhaustive)
 
 void V8IsolateImpl::runMessageLoopOnPause(int /*contextGroupId*/)
 {
-    _ASSERTE(IsCurrent() && IsLocked());
-
-    std::unique_lock<std::mutex> lock(m_DataMutex.GetImpl());
-
-    if (!m_InMessageLoop)
-    {
-        m_QuitMessageLoop = false;
-
-        BEGIN_PULSE_VALUE_SCOPE(&m_InMessageLoop, true)
-
-            ProcessCallWithLockQueue(lock);
-
-            while (true)
-            {
-                m_CallWithLockQueueChanged.wait(lock);
-                ProcessCallWithLockQueue(lock);
-
-                if (m_QuitMessageLoop)
-                {
-                    break;
-                }
-            }
-
-        END_PULSE_VALUE_SCOPE
-
-        ProcessCallWithLockQueue(lock);
-    }
+    RunMessageLoop(false);
 }
 
 //-----------------------------------------------------------------------------
@@ -545,6 +553,13 @@ void V8IsolateImpl::quitMessageLoopOnPause()
     BEGIN_MUTEX_SCOPE(m_DataMutex)
         m_QuitMessageLoop = true;
     END_MUTEX_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::runIfWaitingForDebugger(int /*contextGroupId*/)
+{
+    quitMessageLoopOnPause();
 }
 
 //-----------------------------------------------------------------------------
@@ -566,18 +581,6 @@ v8::Local<v8::Context> V8IsolateImpl::ensureDefaultContextInGroup(int contextGro
 double V8IsolateImpl::currentTimeMS()
 {
     return HighResolutionClock::GetRelativeSeconds() * 1000;
-}
-
-//-----------------------------------------------------------------------------
-
-bool V8IsolateImpl::functionSupportsScopes(v8::Local<v8::Function> hFunction)
-{
-    if (m_ContextPtrs.size() > 0)
-    {
-        return !m_ContextPtrs.front()->IsHostObject(hFunction);
-    }
-
-    return v8_inspector::V8InspectorClient::functionSupportsScopes(hFunction);
 }
 
 //-----------------------------------------------------------------------------
@@ -828,6 +831,45 @@ V8IsolateImpl::~V8IsolateImpl()
 
     m_pIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
     m_pIsolate->Dispose();
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8IsolateImpl::RunMessageLoop(bool awaitingDebugger)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    std::unique_lock<std::mutex> lock(m_DataMutex.GetImpl());
+
+    if (!m_InMessageLoop)
+    {
+        m_QuitMessageLoop = false;
+        m_AbortMessageLoop = false;
+
+        BEGIN_PULSE_VALUE_SCOPE(&m_AwaitingDebugger, awaitingDebugger)
+        BEGIN_PULSE_VALUE_SCOPE(&m_InMessageLoop, true)
+
+            ProcessCallWithLockQueue(lock);
+
+            while (true)
+            {
+                m_CallWithLockQueueChanged.wait(lock);
+                ProcessCallWithLockQueue(lock);
+
+                if (m_QuitMessageLoop || m_AbortMessageLoop)
+                {
+                    break;
+                }
+            }
+
+        END_PULSE_VALUE_SCOPE
+        END_PULSE_VALUE_SCOPE
+
+        ProcessCallWithLockQueue(lock);
+        return m_QuitMessageLoop;
+    }
+
+    return false;
 }
 
 //-----------------------------------------------------------------------------
