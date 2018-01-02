@@ -131,7 +131,7 @@ double V8Platform::MonotonicallyIncreasingTime()
 
 double V8Platform::CurrentClockTimeMillis()
 {
-    return V8Platform::MonotonicallyIncreasingTime() * 1000.0;
+    return std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 //-----------------------------------------------------------------------------

@@ -2214,6 +2214,14 @@ namespace Microsoft.ClearScript.Test
             ");
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8_Date_now()
+        {
+            var value = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+            var scriptValue = Convert.ToDouble(engine.Evaluate("Date.now()"));
+            Assert.IsTrue(Math.Abs(scriptValue - value) < 5.0);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
