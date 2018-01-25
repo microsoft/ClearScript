@@ -41,7 +41,7 @@ namespace Microsoft.ClearScript.Util.Web
                     await socket.SendBytesAsync(stream.GetBuffer(), 0, Convert.ToInt32(stream.Length)).ConfigureAwait(false);
                 }
 
-                return new WebSocket(socket);
+                return new WebSocket(socket, true);
             }
 
             throw new InvalidOperationException("Cannot accept a WebSocket connection in the current state");

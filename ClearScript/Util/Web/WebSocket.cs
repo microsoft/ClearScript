@@ -19,6 +19,7 @@ namespace Microsoft.ClearScript.Util.Web
         #region data
 
         private readonly Socket socket;
+        private readonly bool isServerSocket;
 
         private readonly Random random = MiscHelpers.CreateSeededRandom();
         private readonly SemaphoreSlim receiveSemaphore = new SemaphoreSlim(1);
@@ -30,9 +31,10 @@ namespace Microsoft.ClearScript.Util.Web
 
         #region constructors
 
-        internal WebSocket(Socket socket)
+        internal WebSocket(Socket socket, bool isServerSocket)
         {
             this.socket = socket;
+            this.isServerSocket = isServerSocket;
         }
 
         #endregion
@@ -243,9 +245,13 @@ namespace Microsoft.ClearScript.Util.Web
             using (await sendSemaphore.CreateLockScopeAsync().ConfigureAwait(false))
             {
                 var header = new byte[2];
+                var masked = !isServerSocket;
 
                 header[0] = frame.OpCode.And(HeaderBits.OpCodeMask);
-                header[1] = HeaderBits.Masked;
+                if (masked)
+                {
+                    header[1] = HeaderBits.Masked;
+                }
 
                 if (frame.Final)
                 {
@@ -276,10 +282,14 @@ namespace Microsoft.ClearScript.Util.Web
                     await socket.SendBytesAsync(lengthBytes).ConfigureAwait(false);
                 }
 
-                var key = new byte[4];
-                random.NextBytes(key);
+                byte[] key = null;
+                if (masked)
+                {
+                    key = new byte[4];
+                    random.NextBytes(key);
 
-                await socket.SendBytesAsync(key).ConfigureAwait(false);
+                    await socket.SendBytesAsync(key).ConfigureAwait(false);
+                }
 
                 const int segmentLength = 1024 * 1024; // must be a multiple of 4
                 var segment = new byte[segmentLength];
@@ -289,9 +299,13 @@ namespace Microsoft.ClearScript.Util.Web
                 {
                     Array.Copy(frame.Payload, index, segment, 0L, segmentLength);
 
-                    for (var i = 0; i < segmentLength; ++i)
+                    if (masked)
                     {
-                        segment[i] ^= key[i % 4];
+                        for (var i = 0; i < segmentLength; ++i)
+                        {
+                            // ReSharper disable once PossibleNullReferenceException
+                            segment[i] ^= key[i % 4];
+                        }
                     }
 
                     await socket.SendBytesAsync(segment).ConfigureAwait(false);
@@ -305,9 +319,13 @@ namespace Microsoft.ClearScript.Util.Web
                 {
                     Array.Copy(frame.Payload, index, segment, 0L, remainingLength);
 
-                    for (var i = 0; i < remainingLength; ++i)
+                    if (masked)
                     {
-                        segment[i] ^= key[i % 4];
+                        for (var i = 0; i < remainingLength; ++i)
+                        {
+                            // ReSharper disable once PossibleNullReferenceException
+                            segment[i] ^= key[i % 4];
+                        }
                     }
 
                     await socket.SendBytesAsync(segment, 0, remainingLength).ConfigureAwait(false);
