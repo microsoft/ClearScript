@@ -371,7 +371,19 @@ namespace Microsoft.ClearScript.Test
             // V8 can't interrupt code that accesses only native data
             engine.AddHostObject("test", new { foo = "bar" });
 
-            TestUtil.AssertException<OperationCanceledException>(() => engine.Execute("checkpoint.Set(); while (true) { var foo = test.foo; }"));
+            TestUtil.AssertException<OperationCanceledException>(() =>
+            {
+                try
+                {
+                    engine.Execute("checkpoint.Set(); while (true) { var foo = test.foo; }");
+                }
+                catch (ScriptInterruptedException exception)
+                {
+                    Assert.IsNull(exception.ScriptException);
+                    throw;
+                }
+            });
+
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
         }
 
@@ -387,7 +399,19 @@ namespace Microsoft.ClearScript.Test
                 engine.Interrupt();
             });
 
-            TestUtil.AssertException<OperationCanceledException>(() => engine.Evaluate("Math.E * Math.PI"));
+            TestUtil.AssertException<OperationCanceledException>(() =>
+            {
+                try
+                {
+                    engine.Evaluate("Math.E * Math.PI");
+                }
+                catch (ScriptInterruptedException exception)
+                {
+                    Assert.IsNull(exception.ScriptException);
+                    throw;
+                }
+            });
+
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
         }
 
@@ -1121,6 +1145,8 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     TestUtil.AssertValidException(engine, exception);
+                    Assert.IsNotNull(exception.ScriptException);
+                    Assert.AreEqual("SyntaxError", exception.ScriptException.constructor.name);
                     Assert.IsNull(exception.InnerException);
                     Assert.IsTrue(exception.Message.Contains("SyntaxError"));
                     Assert.IsTrue(exception.ErrorDetails.Contains(" -> "));
@@ -1141,6 +1167,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     TestUtil.AssertValidException(engine, exception);
+                    Assert.AreEqual(123, exception.ScriptException);
                     Assert.IsNull(exception.InnerException);
                     Assert.IsTrue(exception.Message.StartsWith("123", StringComparison.Ordinal));
                     Assert.IsTrue(exception.ErrorDetails.Contains(" -> "));
@@ -1161,6 +1188,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     TestUtil.AssertValidException(engine, exception);
+                    Assert.AreEqual("TypeError", exception.ScriptException.constructor.name);
                     Assert.IsNull(exception.InnerException);
                     throw;
                 }
@@ -1181,6 +1209,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     TestUtil.AssertValidException(engine, exception);
+                    Assert.AreEqual("Error", exception.ScriptException.constructor.name);
                     Assert.IsNotNull(exception.InnerException);
 
                     var hostException = exception.InnerException;
@@ -1208,6 +1237,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     TestUtil.AssertValidException(engine, exception);
+                    Assert.AreEqual("TypeError", exception.ScriptException.constructor.name);
                     Assert.IsNull(exception.InnerException);
                     throw;
                 }
@@ -1229,6 +1259,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     TestUtil.AssertValidException(engine, exception);
+                    Assert.AreEqual("Error", exception.ScriptException.constructor.name);
                     Assert.IsNotNull(exception.InnerException);
 
                     var hostException = exception.InnerException;
@@ -1267,6 +1298,7 @@ namespace Microsoft.ClearScript.Test
                     catch (ScriptEngineException exception)
                     {
                         TestUtil.AssertValidException(engine, exception);
+                        Assert.AreEqual("Error", exception.ScriptException.constructor.name);
                         Assert.IsNotNull(exception.InnerException);
 
                         var hostException = exception.InnerException;
@@ -1305,6 +1337,7 @@ namespace Microsoft.ClearScript.Test
                     catch (ScriptEngineException exception)
                     {
                         TestUtil.AssertValidException(engine, exception);
+                        Assert.AreEqual("Error", exception.ScriptException.constructor.name);
                         Assert.IsNotNull(exception.InnerException);
 
                         var hostException = exception.InnerException;
@@ -1349,6 +1382,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
+                    Assert.IsNull(exception.ScriptException);
                     throw;
                 }
             });
@@ -1363,6 +1397,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
+                    Assert.IsNull(exception.ScriptException);
                     throw;
                 }
             });
@@ -1385,6 +1420,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
+                    Assert.IsNull(exception.ScriptException);
                     throw;
                 }
             });
@@ -1415,6 +1451,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
+                    Assert.IsNull(exception.ScriptException);
                     throw;
                 }
             });
@@ -1448,6 +1485,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
+                    Assert.IsNull(exception.ScriptException);
                     throw;
                 }
             });
@@ -2632,6 +2670,42 @@ namespace Microsoft.ClearScript.Test
             var obj = engine.Evaluate("({})") as ScriptObject;
             Assert.IsNotNull(obj);
             Assert.AreSame(engine, obj.Engine);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DateTimeConversion()
+        {
+            engine.Script.now = DateTime.Now;
+            Assert.AreEqual("HostObject", engine.Evaluate("now.constructor.name"));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableDateTimeConversion);
+            var utcEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
+            var now = DateTime.Now;
+            engine.Script.now = now;
+            Assert.AreEqual("Date", engine.Evaluate("now.constructor.name"));
+            Assert.IsTrue(Math.Abs((now.ToUniversalTime() - utcEpoch).TotalMilliseconds - Convert.ToDouble(engine.Evaluate("now.valueOf()"))) <= 1.0);
+
+            var utcNow = DateTime.UtcNow;
+            engine.Script.now = utcNow;
+            Assert.AreEqual("Date", engine.Evaluate("now.constructor.name"));
+            Assert.IsTrue(Math.Abs((utcNow - utcEpoch).TotalMilliseconds - Convert.ToDouble(engine.Evaluate("now.valueOf()"))) <= 1.0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DateTimeConversion_FromScript()
+        {
+            Assert.IsInstanceOfType(engine.Evaluate("new Date(Date.now())"), typeof(ScriptObject));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableDateTimeConversion);
+            var utcEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
+            var utcNowObj = engine.Evaluate("now = new Date(Date.now())");
+            Assert.IsInstanceOfType(utcNowObj, typeof(DateTime));
+            Assert.AreEqual(DateTimeKind.Utc, ((DateTime)utcNowObj).Kind);
+            Assert.IsTrue(Math.Abs(((DateTime)utcNowObj - utcEpoch).TotalMilliseconds - Convert.ToDouble(engine.Evaluate("now.valueOf()"))) <= 1.0);
         }
 
         // ReSharper restore InconsistentNaming

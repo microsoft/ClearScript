@@ -26,6 +26,11 @@ public:
         Null
     };
 
+    enum DateTimeInitializer
+    {
+        DateTime
+    };
+
     enum class Subtype: std::uint16_t
     {
         None,
@@ -107,6 +112,13 @@ public:
         m_Subtype(Subtype::None)
     {
         m_Data.pHostObjectHolder = pHostObjectHolder;
+    }
+
+    V8Value(DateTimeInitializer, double value):
+        m_Type(Type::DateTime),
+        m_Subtype(Subtype::None)
+    {
+        m_Data.DoubleValue = value;
     }
 
     V8Value(const V8Value& that)
@@ -226,6 +238,17 @@ public:
         return false;
     }
 
+    bool AsDateTime(double& result) const
+    {
+        if (m_Type == Type::DateTime)
+        {
+            result = m_Data.DoubleValue;
+            return true;
+        }
+
+        return false;
+    }
+
     ~V8Value()
     {
         Dispose();
@@ -244,7 +267,8 @@ private:
         UInt32,
         String,
         V8Object,
-        HostObject
+        HostObject,
+        DateTime
     };
 
     union Data
@@ -267,7 +291,7 @@ private:
         {
             m_Data.BooleanValue = that.m_Data.BooleanValue;
         }
-        else if (m_Type == Type::Number)
+        else if ((m_Type == Type::Number) || (m_Type == Type::DateTime))
         {
             m_Data.DoubleValue = that.m_Data.DoubleValue;
         }

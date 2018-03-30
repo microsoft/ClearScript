@@ -171,7 +171,7 @@ namespace Microsoft.ClearScript.Windows
                         engine.activeScript.SetScriptState(ScriptState.Started);
 
                         var description = excepInfo.bstrDescription ?? "Script execution interrupted by host";
-                        engine.CurrentScriptFrame.ScriptError = new ScriptInterruptedException(engine.Name, description, GetDetails(error, description), excepInfo.scode, false, true, null);
+                        engine.CurrentScriptFrame.ScriptError = new ScriptInterruptedException(engine.Name, description, GetDetails(error, description), excepInfo.scode, false, true, null, null);
                     }
                     else
                     {
@@ -191,7 +191,7 @@ namespace Microsoft.ClearScript.Windows
                             }
                         }
 
-                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, description, GetDetails(error, description), excepInfo.scode, false, true, innerException);
+                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, description, GetDetails(error, description), excepInfo.scode, false, true, null, innerException);
                     }
                 }
             }
@@ -271,7 +271,7 @@ namespace Microsoft.ClearScript.Windows
                     if (excepInfo.scode == RawCOMHelpers.HResult.E_ABORT)
                     {
                         var description = excepInfo.bstrDescription ?? "Script execution interrupted by host";
-                        engine.CurrentScriptFrame.PendingScriptError = new ScriptInterruptedException(engine.Name, description, GetDetails(errorDebug, description), excepInfo.scode, false, true, null);
+                        engine.CurrentScriptFrame.PendingScriptError = new ScriptInterruptedException(engine.Name, description, GetDetails(errorDebug, description), excepInfo.scode, false, true, null, null);
                     }
                     else
                     {
@@ -291,7 +291,7 @@ namespace Microsoft.ClearScript.Windows
                             }
                         }
 
-                        engine.CurrentScriptFrame.PendingScriptError = new ScriptEngineException(engine.Name, description, GetDetails(errorDebug, description), excepInfo.scode, false, true, innerException);
+                        engine.CurrentScriptFrame.PendingScriptError = new ScriptEngineException(engine.Name, description, GetDetails(errorDebug, description), excepInfo.scode, false, true, null, innerException);
                     }
                 }
 

@@ -244,7 +244,7 @@ static std::atomic<size_t> s_InstanceCount(0);
 
 //-----------------------------------------------------------------------------
 
-V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, bool enableRemoteDebugging, int debugPort) :
+V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, const Options& options):
     m_Name(name),
     m_DebuggingEnabled(false),
     m_AwaitingDebugger(false),
@@ -282,9 +282,9 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
 
         m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
 
-        if (enableDebugging)
+        if (options.EnableDebugging)
         {
-            EnableDebugging(debugPort, enableRemoteDebugging);
+            EnableDebugging(options.DebugPort, options.EnableRemoteDebugging);
         }
 
     END_ISOLATE_SCOPE
@@ -302,18 +302,18 @@ size_t V8IsolateImpl::GetInstanceCount()
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, bool enableDebugging, bool enableRemoteDebugging, int debugPort)
+void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, const V8Context::Options& options)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    if (!enableDebugging)
+    if (!options.EnableDebugging)
     {
         m_ContextPtrs.push_back(pContextImpl);
     }
     else
     {
         m_ContextPtrs.push_front(pContextImpl);
-        EnableDebugging(debugPort, enableRemoteDebugging);
+        EnableDebugging(options.DebugPort, options.EnableRemoteDebugging);
     }
 
     if (m_spInspector)
@@ -469,7 +469,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdS
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, false, 0));
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this));
         return spContextImpl->Compile(documentName, code);
 
     END_ISOLATE_SCOPE
@@ -481,7 +481,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdS
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, false, 0));
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this));
         return spContextImpl->Compile(documentName, code, cacheType, cacheBytes);
 
     END_ISOLATE_SCOPE
@@ -493,7 +493,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdS
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this, StdString(), false, true, false, 0));
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this));
         return spContextImpl->Compile(documentName, code, cacheType, cacheBytes, cacheAccepted);
 
     END_ISOLATE_SCOPE

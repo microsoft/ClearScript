@@ -38,6 +38,16 @@ namespace Microsoft.ClearScript.V8
         /// pause before executing the first line of application script code. This option is
         /// ignored if <see cref="EnableDebugging"/> is not specified.
         /// </summary>
-        AwaitDebuggerAndPauseOnStart = 0x00000008
+        AwaitDebuggerAndPauseOnStart = 0x00000008,
+
+        /// <summary>
+        /// Specifies that the script engine is to perform automatic conversion between
+        /// .NET <see cref="DateTime"/> objects and JavaScript
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</see>
+        /// objects. This conversion is bidirectional. A <c>DateTime</c> object constructed from
+        /// JavaScript <c>Date</c> object always represents a Coordinated Universal Time (UTC) and
+        /// has its <see cref="DateTime.Kind"/> property set to <see cref="DateTimeKind.Utc"/>.
+        /// </summary>
+        EnableDateTimeConversion = 0x00000010
     }
 }

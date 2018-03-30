@@ -1,8 +1,8 @@
 diff --git a/gypfiles/standalone.gypi b/gypfiles/standalone.gypi
-index 63930d8aef..8f10b95f2c 100644
+index ec47f1c0ab..90bebbc901 100644
 --- a/gypfiles/standalone.gypi
 +++ b/gypfiles/standalone.gypi
-@@ -943,9 +943,10 @@
+@@ -949,9 +949,10 @@
              'EnableFunctionLevelLinking': 'true',
              'RuntimeTypeInfo': 'false',
              'WarningLevel': '3',
@@ -15,7 +15,7 @@ index 63930d8aef..8f10b95f2c 100644
                [ 'msvs_multi_core_compile', {
                  'AdditionalOptions': ['/MP'],
 diff --git a/include/v8-platform.h b/include/v8-platform.h
-index 74630b6f19..e8e9770543 100644
+index 2bb14df93e..e30effff7a 100644
 --- a/include/v8-platform.h
 +++ b/include/v8-platform.h
 @@ -22,6 +22,7 @@ class Task {
@@ -27,10 +27,10 @@ index 74630b6f19..e8e9770543 100644
  
  /**
 diff --git a/include/v8.h b/include/v8.h
-index f100153364..fd5fd177e3 100644
+index acb3efbc71..00817b1774 100644
 --- a/include/v8.h
 +++ b/include/v8.h
-@@ -1321,6 +1321,7 @@ class V8_EXPORT ScriptCompiler {
+@@ -1305,6 +1305,7 @@ class V8_EXPORT ScriptCompiler {
      // caller. The CachedData object is alive as long as the Source object is
      // alive.
      V8_INLINE const CachedData* GetCachedData() const;
@@ -39,10 +39,10 @@ index f100153364..fd5fd177e3 100644
      V8_INLINE const ScriptOriginOptions& GetResourceOptions() const;
  
 diff --git a/src/api.cc b/src/api.cc
-index 300b88f70e..4986addbbe 100644
+index 147cc397f2..370c67337d 100644
 --- a/src/api.cc
 +++ b/src/api.cc
-@@ -1958,6 +1958,13 @@ void ObjectTemplate::SetImmutableProto() {
+@@ -2047,6 +2047,13 @@ void ObjectTemplate::SetImmutableProto() {
  // --- S c r i p t s ---
  
  
@@ -72,10 +72,10 @@ index 7c9cc9cb93..8dfc2542a4 100644
  namespace internal {
  
 diff --git a/src/v8.cc b/src/v8.cc
-index 4e1c96b187..9d3b870e90 100644
+index a6d97e8ff1..1b715d3402 100644
 --- a/src/v8.cc
 +++ b/src/v8.cc
-@@ -85,7 +85,6 @@ void V8::InitializeOncePerProcess() {
+@@ -93,7 +93,6 @@ void V8::InitializeOncePerProcess() {
  
  
  void V8::InitializePlatform(v8::Platform* platform) {
@@ -84,7 +84,7 @@ index 4e1c96b187..9d3b870e90 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/v8.gyp b/src/v8.gyp
-index 89eb271f61..d2b3b8f9dc 100644
+index 218b173af2..c6c58319c5 100644
 --- a/src/v8.gyp
 +++ b/src/v8.gyp
 @@ -41,6 +41,7 @@
@@ -95,7 +95,7 @@ index 89eb271f61..d2b3b8f9dc 100644
        'dependencies_traverse': 1,
        'dependencies': ['v8_maybe_snapshot', 'v8_dump_build_config#target'],
        'conditions': [
-@@ -1839,6 +1840,7 @@
+@@ -1870,6 +1871,7 @@
      },
      {
        'target_name': 'v8_libbase',

@@ -144,7 +144,7 @@ namespace Microsoft.ClearScript.V8
         public V8Runtime(string name, V8RuntimeConstraints constraints, V8RuntimeFlags flags, int debugPort)
         {
             this.name = nameManager.GetUniqueName(name, GetType().GetRootName());
-            proxy = V8IsolateProxy.Create(this.name, constraints, flags.HasFlag(V8RuntimeFlags.EnableDebugging), flags.HasFlag(V8RuntimeFlags.EnableRemoteDebugging), debugPort);
+            proxy = V8IsolateProxy.Create(this.name, constraints, flags, debugPort);
         }
 
         #endregion

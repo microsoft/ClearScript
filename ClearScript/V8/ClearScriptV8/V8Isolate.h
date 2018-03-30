@@ -11,7 +11,14 @@ class V8Isolate: public WeakRefTarget<V8Isolate>
 {
 public:
 
-    static V8Isolate* Create(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, bool enableRemoteDebugging, int debugPort);
+    struct Options
+    {
+        bool EnableDebugging = false;
+        bool EnableRemoteDebugging = false;
+        int DebugPort = 0;
+    };
+
+    static V8Isolate* Create(const StdString& name, const V8IsolateConstraints* pConstraints, const Options& options);
     static size_t GetInstanceCount();
 
     virtual size_t GetMaxHeapSize() = 0;

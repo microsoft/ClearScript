@@ -52,7 +52,7 @@ namespace Microsoft.ClearScript.Windows
                 return scriptError;
             }
 
-            return new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception);
+            return new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception);
         }
 
         private bool TryGetScriptError(Exception exception, out IScriptEngineException scriptError)
@@ -86,7 +86,7 @@ namespace Microsoft.ClearScript.Windows
                     var hostException = engine.CurrentScriptFrame.HostException;
                     if (hostException != null)
                     {
-                        scriptError = new ScriptEngineException(engine.Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, hostException);
+                        scriptError = new ScriptEngineException(engine.Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
                         return true;
                     }
                 }
@@ -98,21 +98,21 @@ namespace Microsoft.ClearScript.Windows
                     string runtimeErrorMessage;
                     if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out runtimeErrorMessage) && (runtimeErrorMessage != exception.Message))
                     {
-                        scriptError = new ScriptEngineException(engine.Name, runtimeErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception.InnerException);
+                        scriptError = new ScriptEngineException(engine.Name, runtimeErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                         return true;
                     }
 
                     string syntaxErrorMessage;
                     if (engine.SyntaxErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out syntaxErrorMessage) && (syntaxErrorMessage != exception.Message))
                     {
-                        scriptError = new ScriptEngineException(engine.Name, syntaxErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception.InnerException);
+                        scriptError = new ScriptEngineException(engine.Name, syntaxErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                         return true;
                     }
                 }
                 else if ((result == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND) || (result == RawCOMHelpers.HResult.DISP_E_UNKNOWNNAME))
                 {
                     // this usually indicates invalid object or property access in JScript
-                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception.InnerException);
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                     return true;
                 }
             }
@@ -122,7 +122,7 @@ namespace Microsoft.ClearScript.Windows
                 if ((argumentException != null) && (argumentException.ParamName == null))
                 {
                     // this usually indicates invalid object or property access in VBScript
-                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, exception.InnerException);
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                     return true;
                 }
             }

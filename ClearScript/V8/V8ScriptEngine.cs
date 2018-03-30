@@ -209,7 +209,7 @@ namespace Microsoft.ClearScript.V8
                 hostItemCollateral = activeRuntime.HostItemCollateral;
 
                 engineFlags = flags;
-                proxy = V8ContextProxy.Create(activeRuntime.IsolateProxy, Name, flags.HasFlag(V8ScriptEngineFlags.EnableDebugging), flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers), flags.HasFlag(V8ScriptEngineFlags.EnableRemoteDebugging), debugPort);
+                proxy = V8ContextProxy.Create(activeRuntime.IsolateProxy, Name, flags, debugPort);
                 script = GetRootItem();
 
                 var engineInternal = Evaluate(
@@ -601,16 +601,6 @@ namespace Microsoft.ClearScript.V8
             return MarshalToHost(ScriptInvoke(() => proxy.GetRootItem()), false);
         }
 
-        private void BaseScriptInvoke(Action action)
-        {
-            base.ScriptInvoke(action);
-        }
-
-        private T BaseScriptInvoke<T>(Func<T> func)
-        {
-            return base.ScriptInvoke(func);
-        }
-
         private void VerifyNotDisposed()
         {
             if (disposedFlag.IsSet)
@@ -834,6 +824,11 @@ namespace Microsoft.ClearScript.V8
                 return obj;
             }
 
+            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableDateTimeConversion) && (obj is DateTime))
+            {
+                return obj;
+            }
+
             var hostItem = obj as HostItem;
             if (hostItem != null)
             {
@@ -968,15 +963,21 @@ namespace Microsoft.ClearScript.V8
         internal override void ScriptInvoke(Action action)
         {
             VerifyNotDisposed();
-            proxy.InvokeWithLock(() => BaseScriptInvoke(action));
+            using (CreateEngineScope())
+            {
+                proxy.InvokeWithLock(() => ScriptInvokeInternal(action));
+            }
         }
 
         internal override T ScriptInvoke<T>(Func<T> func)
         {
             VerifyNotDisposed();
-            var result = default(T);
-            proxy.InvokeWithLock(() => result = BaseScriptInvoke(func));
-            return result;
+            using (CreateEngineScope())
+            {
+                var result = default(T);
+                proxy.InvokeWithLock(() => result = ScriptInvokeInternal(func));
+                return result;
+            }
         }
 
         #endregion

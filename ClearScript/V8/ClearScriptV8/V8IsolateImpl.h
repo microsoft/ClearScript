@@ -116,7 +116,7 @@ public:
         }
     };
 
-    V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, bool enableDebugging, bool enableRemoteDebugging, int debugPort);
+    V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, const Options& options);
     static size_t GetInstanceCount();
 
     const StdString& GetName() const { return m_Name; }
@@ -332,7 +332,7 @@ public:
         return m_IsOutOfMemory;
     }
 
-    void AddContext(V8ContextImpl* pContextImpl, bool enableDebugging, bool enableRemoteDebugging, int debugPort);
+    void AddContext(V8ContextImpl* pContextImpl, const V8Context::Options& options);
     void RemoveContext(V8ContextImpl* pContextImpl);
 
     void EnableDebugging(int port, bool remote);

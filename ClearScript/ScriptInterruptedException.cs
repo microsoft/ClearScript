@@ -25,6 +25,7 @@ namespace Microsoft.ClearScript
         private readonly bool executionStarted;
         private const string executionStartedItemName = "ExecutionStarted";
 
+        private readonly object scriptException;
         private const string defaultMessage = "Script execution was interrupted";
 
         #region constructors
@@ -76,7 +77,7 @@ namespace Microsoft.ClearScript
             executionStarted = info.GetBoolean(executionStartedItemName);
         }
 
-        internal ScriptInterruptedException(string engineName, string message, string errorDetails, int errorCode, bool isFatal, bool executionStarted, Exception innerException)
+        internal ScriptInterruptedException(string engineName, string message, string errorDetails, int errorCode, bool isFatal, bool executionStarted, object scriptException, Exception innerException)
             : base(MiscHelpers.EnsureNonBlank(message, defaultMessage), innerException)
         {
             this.engineName = engineName;
@@ -84,6 +85,7 @@ namespace Microsoft.ClearScript
             this.errorDetails = MiscHelpers.EnsureNonBlank(errorDetails, base.Message);
             this.isFatal = isFatal;
             this.executionStarted = executionStarted;
+            this.scriptException = scriptException;
 
             if (errorCode != 0)
             {
@@ -133,6 +135,14 @@ namespace Microsoft.ClearScript
         public bool ExecutionStarted
         {
             get { return executionStarted; }
+        }
+
+        /// <summary>
+        /// Gets the script exception that caused the current exception to be thrown, or <c>null</c> if one was not specified.
+        /// </summary>
+        public dynamic ScriptException
+        {
+            get { return scriptException; }
         }
 
         #endregion

@@ -1272,32 +1272,12 @@ namespace Microsoft.ClearScript
 
         internal virtual void HostInvoke(Action action)
         {
-            var previousEngine = currentEngine;
-            currentEngine = this;
-
-            try
-            {
-                action();
-            }
-            finally
-            {
-                currentEngine = previousEngine;
-            }
+            action();
         }
 
         internal virtual T HostInvoke<T>(Func<T> func)
         {
-            var previousEngine = currentEngine;
-            currentEngine = this;
-
-            try
-            {
-                return func();
-            }
-            finally
-            {
-                currentEngine = previousEngine;
-            }
+            return func();
         }
 
         #endregion
@@ -1306,7 +1286,28 @@ namespace Microsoft.ClearScript
 
         internal ScriptFrame CurrentScriptFrame { get; private set; }
 
+        internal IDisposable CreateEngineScope()
+        {
+            return Scope.Create(() => MiscHelpers.Exchange(ref currentEngine, this), previousEngine => currentEngine = previousEngine);
+        }
+
         internal virtual void ScriptInvoke(Action action)
+        {
+            using (CreateEngineScope())
+            {
+                ScriptInvokeInternal(action);
+            }
+        }
+
+        internal virtual T ScriptInvoke<T>(Func<T> func)
+        {
+            using (CreateEngineScope())
+            {
+                return ScriptInvokeInternal(func);
+            }
+        }
+
+        internal void ScriptInvokeInternal(Action action)
         {
             var previousScriptFrame = CurrentScriptFrame;
             CurrentScriptFrame = new ScriptFrame();
@@ -1321,7 +1322,7 @@ namespace Microsoft.ClearScript
             }
         }
 
-        internal virtual T ScriptInvoke<T>(Func<T> func)
+        internal T ScriptInvokeInternal<T>(Func<T> func)
         {
             var previousScriptFrame = CurrentScriptFrame;
             CurrentScriptFrame = new ScriptFrame();
@@ -1350,10 +1351,10 @@ namespace Microsoft.ClearScript
             {
                 if (scriptError is ScriptInterruptedException)
                 {
-                    throw new ScriptInterruptedException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.IsFatal, scriptError.ExecutionStarted, scriptError.InnerException);
+                    throw new ScriptInterruptedException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.IsFatal, scriptError.ExecutionStarted, scriptError.ScriptException, scriptError.InnerException);
                 }
 
-                throw new ScriptEngineException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.IsFatal, scriptError.ExecutionStarted, scriptError.InnerException);
+                throw new ScriptEngineException(scriptError.EngineName, scriptError.Message, scriptError.ErrorDetails, scriptError.HResult, scriptError.IsFatal, scriptError.ExecutionStarted, scriptError.ScriptException, scriptError.InnerException);
             }
         }
 

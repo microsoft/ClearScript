@@ -8,7 +8,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{5e8abcfa-8cbd-4d77-bfcc-d396e945a10e}</ProjectGuid>
-    <SHFBSchemaVersion>2015.6.5.0</SHFBSchemaVersion>
+    <SHFBSchemaVersion>2017.9.26.0</SHFBSchemaVersion>
     <!-- AssemblyName, Name, and RootNamespace are not used by SHFB but Visual
          Studio adds them anyway -->
     <AssemblyName>Documentation</AssemblyName>
@@ -22,7 +22,7 @@
     <DocumentationSources>
       <DocumentationSource sourceFile="..\ClearScript.csproj" />
     </DocumentationSources>
-    <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, SealedProtected</VisibleItems>
+    <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, SealedProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <MissingTags>Summary, Parameter, Returns, TypeParameter</MissingTags>
     <FeedbackEMailAddress>ClearScript%40microsoft.com</FeedbackEMailAddress>
     <FeedbackEMailLinkText>Microsoft</FeedbackEMailLinkText>

@@ -2222,6 +2222,77 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(Math.Abs(scriptValue - value) < 5.0);
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NonEnumerablePropertyAccess()
+        {
+            engine.Script.dump = new Action<dynamic, string>((obj, value) =>
+            {
+                Assert.AreEqual(value, obj.message);
+            });
+
+            engine.Execute(@"
+                message = 'hello';
+                dump({ message: message }, message);
+                message = 'world';
+                dump(new Error(message), message);
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NonEnumerablePropertyAccess_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+
+            engine.Script.dump = new Action<dynamic, string>((obj, value) =>
+            {
+                Assert.AreEqual(value, obj.message);
+            });
+
+            engine.Execute(@"
+                message = 'hello';
+                dump({ message: message }, message);
+                message = 'world';
+                dump(new Error(message), message);
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NonEnumerablePropertyAccess_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New V8ScriptEngine
+                    engine.Script.dump = Sub(obj As Object, value As String)
+                        Assert.AreEqual(value, obj.message)
+                    End Sub
+                    engine.Execute(
+                        ""message = 'hello';"" & _
+                        ""dump({ message: message }, message);"" & _
+                        ""message = 'world';"" & _
+                        ""dump(new Error(message), message);""
+                    )
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NonEnumerablePropertyAccess_JScript_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+                    engine.Script.dump = Sub(obj As Object, value As String)
+                        Assert.AreEqual(value, obj.message)
+                    End Sub
+                    engine.Execute(
+                        ""message = 'hello';"" & _
+                        ""dump({ message: message }, message);"" & _
+                        ""message = 'world';"" & _
+                        ""dump(new Error(message), message);""
+                    )
+                End Using
+            ");
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

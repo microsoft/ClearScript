@@ -19,7 +19,8 @@ class V8ContextImpl: public V8Context
 
 public:
 
-    V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, bool enableDebugging, bool disableGlobalMembers, bool enableRemoteDebugging, int debugPort);
+    explicit V8ContextImpl(V8IsolateImpl* pIsolateImpl);
+    V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, const Options& options);
     static size_t GetInstanceCount();
 
     const StdString& GetName() const { return m_Name; }
@@ -287,8 +288,8 @@ private:
     static bool CheckContextImplForGlobalObjectCallback(V8ContextImpl* pContextImpl);
     static bool CheckContextImplForHostObjectCallback(V8ContextImpl* pContextImpl);
 
-    void GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std::vector<StdString>& names);
-    void GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, std::vector<int>& indices);
+    void GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std::vector<StdString>& names, v8::PropertyFilter filter);
+    void GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, std::vector<int>& indices, v8::PropertyFilter filter);
 
     static void GetGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Value>& info);
     static void SetGlobalProperty(v8::Local<v8::Name> hKey, v8::Local<v8::Value> hValue, const v8::PropertyCallbackInfo<v8::Value>& info);
@@ -333,6 +334,7 @@ private:
 
     StdString m_Name;
     SharedPtr<V8IsolateImpl> m_spIsolateImpl;
+    bool m_DateTimeConversionEnabled;
     Persistent<v8::Context> m_hContext;
     Persistent<v8::Object> m_hGlobal;
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;

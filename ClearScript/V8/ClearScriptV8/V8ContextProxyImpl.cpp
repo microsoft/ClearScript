@@ -20,13 +20,20 @@ namespace V8 {
     // V8ContextProxyImpl implementation
     //-------------------------------------------------------------------------
 
-    V8ContextProxyImpl::V8ContextProxyImpl(V8IsolateProxy^ gcIsolateProxy, String^ gcName, Boolean enableDebugging, Boolean disableGlobalMembers, Boolean enableRemoteDebugging, Int32 debugPort):
+    V8ContextProxyImpl::V8ContextProxyImpl(V8IsolateProxy^ gcIsolateProxy, String^ gcName, V8ScriptEngineFlags flags, Int32 debugPort):
         m_gcLock(gcnew Object)
     {
+        V8Context::Options options;
+        options.EnableDebugging = flags.HasFlag(V8ScriptEngineFlags::EnableDebugging);
+        options.EnableRemoteDebugging = flags.HasFlag(V8ScriptEngineFlags::EnableRemoteDebugging);
+        options.DisableGlobalMembers = flags.HasFlag(V8ScriptEngineFlags::DisableGlobalMembers);
+        options.EnableDateTimeConversion = flags.HasFlag(V8ScriptEngineFlags::EnableDateTimeConversion);
+        options.DebugPort = debugPort;
+
         try
         {
             auto gcIsolateProxyImpl = dynamic_cast<V8IsolateProxyImpl^>(gcIsolateProxy);
-            m_pspContext = new SharedPtr<V8Context>(V8Context::Create(gcIsolateProxyImpl->GetIsolate(), StdString(gcName), enableDebugging, disableGlobalMembers, enableRemoteDebugging, debugPort));
+            m_pspContext = new SharedPtr<V8Context>(V8Context::Create(gcIsolateProxyImpl->GetIsolate(), StdString(gcName), options));
         }
         catch (const V8Exception& exception)
         {
@@ -455,6 +462,14 @@ namespace V8 {
         }
 
         {
+            auto gcValue = dynamic_cast<DateTime^>(gcObject);
+            if (gcValue != nullptr)
+            {
+                return V8Value(V8Value::DateTime, (gcValue->ToUniversalTime() - DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind::Utc)).TotalMilliseconds);
+            }
+        }
+
+        {
             auto gcValue = dynamic_cast<V8ObjectImpl^>(gcObject);
             if (gcValue != nullptr)
             {
@@ -538,6 +553,14 @@ namespace V8 {
             if (value.AsHostObject(pHolder))
             {
                 return V8ProxyHelpers::GetHostObject(pHolder->GetObject());
+            }
+        }
+
+        {
+            double result;
+            if (value.AsDateTime(result))
+            {
+                return DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind::Utc) + TimeSpan::FromMilliseconds(result);
             }
         }
 

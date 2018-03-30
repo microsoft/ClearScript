@@ -5,11 +5,11 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=6.3.292.48
+set v8testedrev=6.5.254.41
 
 set gyprev=d61a9397e668fa9843c4aa7da9e79460fe590bfb
-set clangrev=b3169f97cc1a9daa1a9fbae15752588079792098
-set traceeventcommonrev=abcc4153b783b5e2c2dafcfbf658017ecb56989a
+set clangrev=27088876ff821e8a1518383576a43662a3255d56
+set traceeventcommonrev=0e9a47d74970bee1bbfc063c47215406f8918699
 set gtestrev=6f8a66431cb592dad629028a50b3dd418a408c87
 set gmockrev=0421b6f358139f02e102c9c332ce19a33faf75be
 set jinja2rev=d34383206fa42d52faa10bb9931d6d538f3a57e0
@@ -78,12 +78,12 @@ goto Exit
 :CheckOSDone
 
 :CheckMSVS
-if "%VisualStudioVersion%"=="14.0" goto UseMSVS2015
-echo Error: This script requires a Visual Studio 2015 Developer Command Prompt.
+if "%VisualStudioVersion%"=="15.0" goto UseMSVS2017
+echo Error: This script requires a Visual Studio 2017 Developer Command Prompt.
 echo Browse to http://www.visualstudio.com for more information.
 goto Exit
-:UseMSVS2015
-set GYP_MSVS_VERSION=2015
+:UseMSVS2017
+set GYP_MSVS_VERSION=2017
 :CheckMSVSDone
 
 ::-----------------------------------------------------------------------------
@@ -165,8 +165,6 @@ echo Patching V8 ...
 git config user.name ClearScript
 if errorlevel 1 goto Error
 git config user.email "ClearScript@microsoft.com"
-if errorlevel 1 goto Error
-git cherry-pick -n ac0fe8ec8a13493aba5fd7fe55220d23cee62562
 if errorlevel 1 goto Error
 git apply --ignore-whitespace ..\..\V8Patch.txt 2>applyPatch.log
 if errorlevel 1 goto Error
@@ -252,6 +250,7 @@ cd ..
 
 :Build
 
+set GYP_CHROMIUM_NO_ACTION=0
 set DEPOT_TOOLS_WIN_TOOLCHAIN=0
 set GYP_GENERATORS=msvs
 

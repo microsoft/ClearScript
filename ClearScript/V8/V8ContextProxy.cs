@@ -7,9 +7,9 @@ namespace Microsoft.ClearScript.V8
 {
     internal abstract class V8ContextProxy : V8Proxy
     {
-        public static V8ContextProxy Create(V8IsolateProxy isolateProxy, string name, bool enableDebugging, bool disableGlobalMembers, bool enableRemoteDebugging, int debugPort)
+        public static V8ContextProxy Create(V8IsolateProxy isolateProxy, string name, V8ScriptEngineFlags flags, int debugPort)
         {
-            return CreateImpl<V8ContextProxy>(isolateProxy, name, enableDebugging, disableGlobalMembers, enableRemoteDebugging, debugPort);
+            return CreateImpl<V8ContextProxy>(isolateProxy, name, flags, debugPort);
         }
 
         public abstract UIntPtr MaxRuntimeHeapSize { get; set; }
