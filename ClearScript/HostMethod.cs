@@ -60,6 +60,11 @@ namespace Microsoft.ClearScript
             return true;
         }
 
+        public override Invocability GetInvocability(BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic)
+        {
+            return Invocability.Delegate;
+        }
+
         #endregion
     }
 }

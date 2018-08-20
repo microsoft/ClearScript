@@ -68,7 +68,16 @@ namespace Microsoft.ClearScript.Util
 
             public override FieldAttributes Attributes
             {
-                get { throw new NotImplementedException(); }
+                get
+                {
+                    // This occurs during VB-based dynamic script item invocation. It was not
+                    // observed before script items gained an IReflect/IExpando implementation that
+                    // exposes script item properties as fields. Apparently VB's dynamic invocation
+                    // support not only recognizes IReflect/IExpando but actually favors it over
+                    // DynamicObject.
+
+                    return FieldAttributes.Public;
+                }
             }
 
             public override RuntimeFieldHandle FieldHandle

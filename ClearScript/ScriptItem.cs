@@ -246,7 +246,7 @@ namespace Microsoft.ClearScript
         public MemberInfo[] GetMember(string name, BindingFlags bindFlags)
         {
             // ReSharper disable CoVariantArrayConversion
-            return GetFields(bindFlags).Where(propertyInfo => propertyInfo.Name == name).ToArray();
+            return new [] { MemberMap.GetField(name) };
             // ReSharper restore CoVariantArrayConversion
         }
 

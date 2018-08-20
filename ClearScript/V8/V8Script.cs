@@ -11,19 +11,28 @@ namespace Microsoft.ClearScript.V8
     /// </summary>
     public abstract class V8Script : IDisposable
     {
-        private readonly string name;
+        private readonly DocumentInfo documentInfo;
 
-        internal V8Script(string name)
+        internal V8Script(DocumentInfo documentInfo)
         {
-            this.name = name;
+            this.documentInfo = documentInfo;
         }
 
         /// <summary>
         /// Gets the document name associated with the compiled script.
         /// </summary>
+        [Obsolete("Use DocumentInfo instead.")]
         public string Name
         {
-            get { return name; }
+            get { return documentInfo.UniqueName; }
+        }
+
+        /// <summary>
+        /// Gets the document information associated with the compiled script.
+        /// </summary>
+        public DocumentInfo DocumentInfo
+        {
+            get { return documentInfo; }
         }
 
         #region IDisposable implementation (abstract)

@@ -202,7 +202,7 @@ namespace Microsoft.ClearScript.Windows
                         return new ScriptMethod(this, name);
                     }
 
-                    return Nonexistent.Value;
+                    return Undefined.Value;
                 }
             }), false);
 

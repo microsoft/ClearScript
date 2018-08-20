@@ -83,6 +83,11 @@ namespace Microsoft.ClearScript
             return target.TryInvoke(context, invokeFlags, args, bindArgs, out result);
         }
 
+        public override Invocability GetInvocability(BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic)
+        {
+            return target.GetInvocability(bindFlags, defaultAccess, ignoreDynamic);
+        }
+
         #endregion
 
         #region IByRefArg implementation

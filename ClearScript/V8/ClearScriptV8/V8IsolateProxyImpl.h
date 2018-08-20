@@ -36,9 +36,9 @@ namespace V8 {
         }
 
         virtual void AwaitDebuggerAndPause() override;
-        virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode) override;
-        virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes) override;
-        virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted) override;
+        virtual V8Script^ Compile(DocumentInfo documentInfo, String^ gcCode) override;
+        virtual V8Script^ Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes) override;
+        virtual V8Script^ Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted) override;
         virtual V8RuntimeHeapInfo^ GetHeapInfo() override;
         virtual void CollectGarbage(bool exhaustive) override;
 

@@ -25,6 +25,7 @@ namespace Microsoft.ClearScript
 
         public object EnumerationSettingsToken;
         public ExtensionMethodSummary ExtensionMethodSummary;
+        public Invocability? TargetInvocability;
     }
 
     internal sealed class SharedHostObjectMemberData : HostTargetMemberData

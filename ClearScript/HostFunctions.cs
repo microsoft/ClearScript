@@ -223,12 +223,12 @@ namespace Microsoft.ClearScript
         ///     <item>
         ///         <term><c>out</c></term>
         ///         <term>read-only</term>
-        ///         <description>A reference to the host variable that can be passed as an <c><see href="http://msdn.microsoft.com/en-us/library/t3c3bfhx(VS.80).aspx">out</see></c> argument.</description>
+        ///         <description>A reference to the host variable that can be passed as an <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/out-parameter-modifier">out</see></c> argument.</description>
         ///     </item>
         ///     <item>
         ///         <term><c>ref</c></term>
         ///         <term>read-only</term>
-        ///         <description>A reference to the host variable that can be passed as a <c><see href="http://msdn.microsoft.com/en-us/library/14akc2c7(VS.80).aspx">ref</see></c> argument.</description>
+        ///         <description>A reference to the host variable that can be passed as a <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/ref">ref</see></c> argument.</description>
         ///     </item>
         /// </list>
         /// </para>
@@ -305,7 +305,7 @@ namespace Microsoft.ClearScript
         /// This function creates a delegate that accepts <paramref name="argCount"/> arguments and
         /// returns no value. The type of all parameters is <see cref="System.Object"/>. Such a
         /// delegate is often useful in strongly typed contexts because of
-        /// <see href="http://msdn.microsoft.com/en-us/library/ms173174(VS.80).aspx">contravariance</see>.
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/">contravariance</see>.
         /// </remarks>
         /// <example>
         /// The following code demonstrates delegating a callback to a script function.
@@ -344,7 +344,7 @@ namespace Microsoft.ClearScript
         /// returns a value of the specified type. The type of all parameters is
         /// <see cref="System.Object"/>. Such a delegate is often useful in strongly typed contexts
         /// because of
-        /// <see href="http://msdn.microsoft.com/en-us/library/ms173174(VS.80).aspx">contravariance</see>.
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/">contravariance</see>.
         /// </remarks>
         /// <example>
         /// The following code demonstrates delegating a callback to a script function.
@@ -385,7 +385,7 @@ namespace Microsoft.ClearScript
         /// returns the result of invoking <paramref name="scriptFunc"/>. The type of all
         /// parameters and the return value is <see cref="System.Object"/>. Such a delegate is
         /// often useful in strongly typed contexts because of
-        /// <see href="http://msdn.microsoft.com/en-us/library/ms173174(VS.80).aspx">contravariance</see>.
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/">contravariance</see>.
         /// </para>
         /// <para>
         /// For information about the types of result values that script code can return, see
@@ -407,7 +407,7 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// <para>
         /// This function is similar to C#'s
-        /// <c><see href="http://msdn.microsoft.com/en-us/library/58918ffs(VS.71).aspx">typeof</see></c>
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/typeof">typeof</see></c>
         /// operator. It is overloaded with <see cref="typeOf(object)"/> and selected at runtime if
         /// <typeparamref name="T"/> can be used as a type argument.
         /// </para>
@@ -442,7 +442,7 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// <para>
         /// This function is similar to C#'s
-        /// <c><see href="http://msdn.microsoft.com/en-us/library/58918ffs(VS.71).aspx">typeof</see></c>
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/typeof">typeof</see></c>
         /// operator. It is overloaded with <see cref="typeOf{T}"/> and selected at runtime if
         /// <paramref name="value"/> cannot be used as a type argument. Note that this applies to
         /// some host types; examples are static types and overloaded generic type groups.
@@ -477,7 +477,7 @@ namespace Microsoft.ClearScript
         /// <returns><c>True</c> if <paramref name="value"/> is compatible with the specified type, <c>false</c> otherwise.</returns>
         /// <remarks>
         /// This function is similar to C#'s
-        /// <c><see href="http://msdn.microsoft.com/en-us/library/scekt9xw(VS.71).aspx">is</see></c>
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/is">is</see></c>
         /// operator.
         /// </remarks>
         /// <example>
@@ -508,7 +508,7 @@ namespace Microsoft.ClearScript
         /// <returns>The result of the cast if successful, <c>null</c> otherwise.</returns>
         /// <remarks>
         /// This function is similar to C#'s
-        /// <c><see href="http://msdn.microsoft.com/en-us/library/cscsdfbt(VS.71).aspx">as</see></c>
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/as">as</see></c>
         /// operator.
         /// </remarks>
         /// <example>

@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
+
 namespace Microsoft.ClearScript.V8
 {
     /// <summary>
@@ -19,6 +21,7 @@ namespace Microsoft.ClearScript.V8
         /// Selects parser caching. Parser cache data is smaller and less expensive to generate
         /// than code cache data, but it is less effective at accelerating recompilation.
         /// </summary>
+        [Obsolete("V8 no longer supports parser caching. This option is now equivalent to Code.")]
         Parser,
 
         /// <summary>

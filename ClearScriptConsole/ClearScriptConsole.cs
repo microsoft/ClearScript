@@ -34,7 +34,7 @@ namespace Microsoft.ClearScript.Test
                 var filePath = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), fileName);
                 if (File.Exists(filePath))
                 {
-                    engine.Execute(fileName, File.ReadAllText(filePath));
+                    engine.Execute(new DocumentInfo(new Uri(filePath)), File.ReadAllText(filePath));
                 }
 
                 // ReSharper restore AssignNullToNotNullAttribute

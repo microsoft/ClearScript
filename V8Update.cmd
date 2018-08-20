@@ -5,21 +5,14 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=6.5.254.41
-
-set gyprev=d61a9397e668fa9843c4aa7da9e79460fe590bfb
-set clangrev=27088876ff821e8a1518383576a43662a3255d56
-set traceeventcommonrev=0e9a47d74970bee1bbfc063c47215406f8918699
-set gtestrev=6f8a66431cb592dad629028a50b3dd418a408c87
-set gmockrev=0421b6f358139f02e102c9c332ce19a33faf75be
-set jinja2rev=d34383206fa42d52faa10bb9931d6d538f3a57e0
-set markupsaferev=8f45f5cfa0009d2a70589bcda0349b8cb2b72783
+set v8testedrev=6.8.275.28
 
 :ProcessArgs
 
 set download=true
 set mode=Release
 set isdebug=false
+set isofficial=true
 
 :ProcessArg
 if "%1"=="" goto ProcessArgsDone
@@ -50,10 +43,12 @@ goto NextArg
 :SetDebugMode
 set mode=Debug
 set isdebug=true
+set isofficial=false
 goto NextArg
 :SetReleaseMode
 set mode=Release
 set isdebug=false
+set isofficial=true
 goto NextArg
 
 :SetV8Rev
@@ -83,7 +78,6 @@ echo Error: This script requires a Visual Studio 2017 Developer Command Prompt.
 echo Browse to http://www.visualstudio.com for more information.
 goto Exit
 :UseMSVS2017
-set GYP_MSVS_VERSION=2017
 :CheckMSVSDone
 
 ::-----------------------------------------------------------------------------
@@ -96,6 +90,8 @@ echo Build mode: %mode%
 cd ClearScript\v8\v8
 if errorlevel 1 goto Exit
 
+set DEPOT_TOOLS_WIN_TOOLCHAIN=0
+
 if /i "%download%"=="true" goto Download
 
 if exist build\ goto SkipDownload
@@ -106,6 +102,7 @@ goto Download
 
 :SkipDownload
 cd build
+path %cd%\DepotTools;%path%
 goto Build
 
 ::-----------------------------------------------------------------------------
@@ -148,97 +145,39 @@ if errorlevel 1 goto Error
 
 cd build
 
-:DownloadV8
-echo Downloading V8 ...
-git clone -n -q https://chromium.googlesource.com/v8/v8.git
+:DownloadDepotTools
+echo Downloading Depot Tools ...
+powershell -Command "(New-Object Net.WebClient).DownloadFile('https://storage.googleapis.com/chrome-infra/depot_tools.zip', 'DepotTools.zip')"
 if errorlevel 1 goto Error
-cd v8
-git checkout -q "%v8rev%"
+:DownloadDepotToolsDone
+
+:ExpandDepotTools
+echo Expanding Depot Tools ...
+powershell -Command "Add-Type -AssemblyName System.IO.Compression.FileSystem; [IO.Compression.ZipFile]::ExtractToDirectory('DepotTools.zip', 'DepotTools')"
 if errorlevel 1 goto Error
-cd ..
-:DownloadV8Done
+:ExpandDepotToolsDone
+
+path %cd%\DepotTools;%path%
+
+:SyncClient
+echo Downloading V8 and dependencies ...
+call gclient config https://chromium.googlesource.com/v8/v8 >config.log
+if errorlevel 1 goto Error
+call gclient sync -r %v8rev% >sync.log
+if errorlevel 1 goto Error
+:SyncClientDone
 
 cd v8
 
 :PatchV8
 echo Patching V8 ...
-git config user.name ClearScript
+call git config user.name ClearScript
 if errorlevel 1 goto Error
-git config user.email "ClearScript@microsoft.com"
+call git config user.email "ClearScript@microsoft.com"
 if errorlevel 1 goto Error
-git apply --ignore-whitespace ..\..\V8Patch.txt 2>applyPatch.log
+call git apply --ignore-whitespace ..\..\V8Patch.txt 2>applyPatch.log
 if errorlevel 1 goto Error
 :PatchV8Done
-
-:DownloadGYP
-echo Downloading GYP ...
-git clone -n -q https://chromium.googlesource.com/external/gyp.git tools/gyp
-if errorlevel 1 goto Error
-cd tools\gyp
-git checkout -q "%gyprev%"
-if errorlevel 1 goto Error
-cd ..\..
-:DownloadGYPDone
-
-:DownloadClang
-echo Downloading Clang ...
-git clone -n -q https://chromium.googlesource.com/chromium/src/tools/clang.git tools/clang
-if errorlevel 1 goto Error
-cd tools\clang
-git checkout -q "%clangrev%"
-if errorlevel 1 goto Error
-cd ..\..
-:DownloadClangDone
-
-:DownloadTraceEventCommon
-echo Downloading TraceEventCommon ...
-git clone -n -q https://chromium.googlesource.com/chromium/src/base/trace_event/common.git base/trace_event/common
-if errorlevel 1 goto Error
-cd base\trace_event\common
-git checkout -q "%traceeventcommonrev%"
-if errorlevel 1 goto Error
-cd ..\..\..
-:DownloadTraceEventCommonDone
-
-:DownloadGTest
-echo Downloading GTest ...
-git clone -n -q https://chromium.googlesource.com/external/github.com/google/googletest.git testing/gtest
-if errorlevel 1 goto Error
-cd testing\gtest
-git checkout -q "%gtestrev%"
-if errorlevel 1 goto Error
-cd ..\..
-:DownloadGTestDone
-
-:DownloadGMock
-echo Downloading GMock ...
-git clone -n -q https://chromium.googlesource.com/external/googlemock.git testing/gmock
-if errorlevel 1 goto Error
-cd testing\gmock
-git checkout -q "%gmockrev%"
-if errorlevel 1 goto Error
-cd ..\..
-:DownloadGMockDone
-
-:DownloadJinja2
-echo Downloading Jinja2 ...
-git clone -n -q https://chromium.googlesource.com/chromium/src/third_party/markupsafe.git third_party/markupsafe
-if errorlevel 1 goto Error
-cd third_party\markupsafe
-git checkout -q "%markupsaferev%"
-if errorlevel 1 goto Error
-cd ..\..
-:DownloadJinja2Done
-
-:DownloadMarkupSafe
-echo Downloading MarkupSafe ...
-git clone -n -q https://chromium.googlesource.com/chromium/src/third_party/jinja2.git third_party/jinja2
-if errorlevel 1 goto Error
-cd third_party\jinja2
-git checkout -q "%jinja2rev%"
-if errorlevel 1 goto Error
-cd ..\..
-:DownloadMarkupSafeDone
 
 cd ..
 
@@ -250,46 +189,34 @@ cd ..
 
 :Build
 
-set GYP_CHROMIUM_NO_ACTION=0
-set DEPOT_TOOLS_WIN_TOOLCHAIN=0
-set GYP_GENERATORS=msvs
-
 :CreatePatchFile
 echo Creating patch file ...
 cd v8
-git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createPatch.log
+call git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createPatch.log
 if errorlevel 1 goto Error
 cd ..
 :CreatePatchFileDone
 
-:Copy32Bit
-echo Building 32-bit V8 ...
-if exist v8-ia32\ goto Copy32BitDone
-robocopy v8 v8-ia32 /mir /xd .git >nul
-if errorlevel 8 goto Error
-:Copy32BitDone
-
 :Build32Bit
-cd v8-ia32
-python gypfiles\gyp_v8 -Dtarget_arch=ia32 -Dcomponent=shared_library -Dis_debug=%isdebug% -Dv8_use_snapshot=true -Dv8_use_external_startup_data=0 -Dv8_enable_i18n_support=0 >gyp.log
+echo Building 32-bit V8 ...
+cd v8
+call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x86 >nul
 if errorlevel 1 goto Error
-msbuild /p:Configuration=%mode% /p:Platform=Win32 /t:v8 src\v8.sln >build.log
+call gn gen out\ia32\%mode% --args="fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" v8_enable_i18n_support=false v8_target_cpu=\"x86\" v8_use_external_startup_data=false v8_use_snapshot=true enable_precompiled_headers=false" >gn.log
+if errorlevel 1 goto Error
+ninja -C out\ia32\%mode% v8-ia32.dll >build-ia32.log
 if errorlevel 1 goto Error
 cd ..
 :Build32BitDone
 
-:Copy64Bit
-echo Building 64-bit V8 ...
-if exist v8-x64\ goto Copy64BitDone
-robocopy v8 v8-x64 /mir /xd .git >nul
-if errorlevel 8 goto Error
-:Copy64BitDone
-
 :Build64Bit
-cd v8-x64
-python gypfiles\gyp_v8 -Dtarget_arch=x64 -Dcomponent=shared_library -Dis_debug=%isdebug% -Dv8_use_snapshot=true -Dv8_use_external_startup_data=0 -Dv8_enable_i18n_support=0 >gyp.log
+echo Building 64-bit V8 ...
+cd v8
+call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64 >nul
 if errorlevel 1 goto Error
-msbuild /p:Configuration=%mode% /p:Platform=x64 /t:v8 src\v8.sln >build.log
+call gn gen out\x64\%mode% --args="fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" v8_enable_i18n_support=false v8_target_cpu=\"x64\" v8_use_external_startup_data=false v8_use_snapshot=true enable_precompiled_headers=false" >gn.log
+if errorlevel 1 goto Error
+ninja -C out\x64\%mode% v8-x64.dll >build-x64.log
 if errorlevel 1 goto Error
 cd ..
 :Build64BitDone
@@ -316,25 +243,25 @@ if errorlevel 1 goto Error
 
 :ImportLibs
 echo Importing V8 libraries ...
-copy build\v8-ia32\src\%mode%\v8-base-ia32.dll lib\ >nul
+copy build\v8\out\ia32\%mode%\v8-base-ia32.dll lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-ia32\src\%mode%\v8-base-ia32.pdb lib\ >nul
+copy build\v8\out\ia32\%mode%\v8-base-ia32.dll.pdb lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-ia32\src\%mode%\v8-ia32.dll lib\ >nul
+copy build\v8\out\ia32\%mode%\v8-ia32.dll lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-ia32\src\%mode%\v8-ia32.pdb lib\ >nul
+copy build\v8\out\ia32\%mode%\v8-ia32.dll.pdb lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-ia32\src\%mode%\lib\v8-ia32.lib lib\ >nul
+copy build\v8\out\ia32\%mode%\v8-ia32.dll.lib lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-x64\src\%mode%\v8-base-x64.dll lib\ >nul
+copy build\v8\out\x64\%mode%\v8-base-x64.dll lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-x64\src\%mode%\v8-base-x64.pdb lib\ >nul
+copy build\v8\out\x64\%mode%\v8-base-x64.dll.pdb lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-x64\src\%mode%\v8-x64.dll lib\ >nul
+copy build\v8\out\x64\%mode%\v8-x64.dll lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-x64\src\%mode%\v8-x64.pdb lib\ >nul
+copy build\v8\out\x64\%mode%\v8-x64.dll.pdb lib\ >nul
 if errorlevel 1 goto Error
-copy build\v8-x64\src\%mode%\lib\v8-x64.lib lib\ >nul
+copy build\v8\out\x64\%mode%\v8-x64.dll.lib lib\ >nul
 if errorlevel 1 goto Error
 :ImportLibsDone
 

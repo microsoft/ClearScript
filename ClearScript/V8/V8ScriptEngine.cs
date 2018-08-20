@@ -445,12 +445,23 @@ namespace Microsoft.ClearScript.V8
         /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
         public V8Script Compile(string documentName, string code)
         {
+            return Compile(new DocumentInfo(documentName), code);
+        }
+
+        /// <summary>
+        /// Creates a compiled script with the specified document information.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
+        public V8Script Compile(DocumentInfo documentInfo, string code)
+        {
             VerifyNotDisposed();
 
             return ScriptInvoke(() =>
             {
-                var uniqueName = documentNameManager.GetUniqueName(documentName, "Script Document");
-                return proxy.Compile(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code);
+                documentInfo.UniqueName = documentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
+                return proxy.Compile(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code);
             });
         }
 
@@ -488,14 +499,33 @@ namespace Microsoft.ClearScript.V8
         /// <seealso cref="Compile(string, string, V8CacheKind, byte[], out bool)"/>
         public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
+            return Compile(new DocumentInfo(documentName), code, cacheKind, out cacheBytes);
+        }
+
+        /// <summary>
+        /// Creates a compiled script with the specified document information, generating cache data for accelerated recompilation.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <param name="cacheKind">The kind of cache data to be generated.</param>
+        /// <param name="cacheBytes">Cache data for accelerated recompilation.</param>
+        /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
+        /// <remarks>
+        /// The generated cache data can be stored externally and is usable in other V8 script
+        /// engines and application processes. V8 script engines with debugging enabled cannot
+        /// generate cache data.
+        /// </remarks>
+        /// <seealso cref="Compile(DocumentInfo, string, V8CacheKind, byte[], out bool)"/>
+        public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+        {
             VerifyNotDisposed();
 
             V8Script tempScript = null;
             cacheBytes = ScriptInvoke(() =>
             {
                 byte[] tempCacheBytes;
-                var uniqueName = documentNameManager.GetUniqueName(documentName, "Script Document");
-                tempScript = proxy.Compile(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, cacheKind, out tempCacheBytes);
+                documentInfo.UniqueName = documentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
+                tempScript = proxy.Compile(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code, cacheKind, out tempCacheBytes);
                 return tempCacheBytes;
             });
 
@@ -536,14 +566,33 @@ namespace Microsoft.ClearScript.V8
         /// <seealso cref="Compile(string, string, V8CacheKind, out byte[])"/>
         public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
+            return Compile(new DocumentInfo(documentName), code, cacheKind, cacheBytes, out cacheAccepted);
+        }
+
+        /// <summary>
+        /// Creates a compiled script with an associated document name, consuming previously generated cache data.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <param name="cacheKind">The kind of cache data to be consumed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build. V8 script engines with debugging enabled cannot consume cache data.
+        /// </remarks>
+        /// <seealso cref="Compile(DocumentInfo, string, V8CacheKind, out byte[])"/>
+        public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+        {
             VerifyNotDisposed();
 
             V8Script tempScript = null;
             cacheAccepted = ScriptInvoke(() =>
             {
                 bool tempCacheAccepted;
-                var uniqueName = documentNameManager.GetUniqueName(documentName, "Script Document");
-                tempScript = proxy.Compile(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, cacheKind, cacheBytes, out tempCacheAccepted);
+                documentInfo.UniqueName = documentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
+                tempScript = proxy.Compile(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code, cacheKind, cacheBytes, out tempCacheAccepted);
                 return tempCacheAccepted;
             });
 
@@ -896,20 +945,20 @@ namespace Microsoft.ClearScript.V8
             return V8ScriptItem.Wrap(this, obj);
         }
 
-        internal override object Execute(string documentName, string code, bool evaluate, bool discard)
+        internal override object Execute(DocumentInfo documentInfo, string code, bool evaluate)
         {
             VerifyNotDisposed();
 
             return ScriptInvoke(() =>
             {
-                var uniqueName = documentNameManager.GetUniqueName(documentName, "Script Document");
-                if (discard)
+                documentInfo.UniqueName = documentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
+                if (documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient))
                 {
-                    uniqueName += " [temp]";
+                    documentInfo.UniqueName += " [temp]";
                 }
                 else if (documentNames != null)
                 {
-                    documentNames.Add(uniqueName);
+                    documentNames.Add(documentInfo.UniqueName);
                 }
 
                 if (inContinuationTimerScope || (ContinuationCallback == null))
@@ -919,7 +968,7 @@ namespace Microsoft.ClearScript.V8
                         proxy.AwaitDebuggerAndPause();
                     }
 
-                    return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate, discard);
+                    return proxy.Execute(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate);
                 }
 
                 var state = new Timer[] { null };
@@ -935,7 +984,7 @@ namespace Microsoft.ClearScript.V8
                             proxy.AwaitDebuggerAndPause();
                         }
 
-                        return proxy.Execute(uniqueName, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate, discard);
+                        return proxy.Execute(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate);
                     }
                     finally
                     {

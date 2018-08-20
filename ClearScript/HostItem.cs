@@ -130,6 +130,19 @@ namespace Microsoft.ClearScript
             get { return flags; }
         }
 
+        public Invocability Invocability
+        {
+            get
+            {
+                if (TargetInvocability == null)
+                {
+                    TargetInvocability = target.GetInvocability(GetCommonBindFlags(), defaultAccess, flags.HasFlag(HostItemFlags.HideDynamicMembers));
+                }
+
+                return TargetInvocability.GetValueOrDefault();
+            }
+        }
+
         public object InvokeMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture, bool bypassTunneling)
         {
             bool isCacheable;
@@ -378,6 +391,12 @@ namespace Microsoft.ClearScript
             set { targetMemberData.ExtensionMethodSummary = value; }
         }
 
+        private Invocability? TargetInvocability
+        {
+            get { return targetMemberData.TargetInvocability; }
+            set { targetMemberData.TargetInvocability = value; }
+        }
+
         #endregion
 
         #region initialization
@@ -522,6 +541,13 @@ namespace Microsoft.ClearScript
                 {
                     // host indexed properties can share their (dummy) member data
                     targetMemberData = engine.SharedHostIndexedPropertyMemberData;
+                    return;
+                }
+
+                if (target is ScriptMethod)
+                {
+                    // script methods can share their (dummy) member data
+                    targetMemberData = engine.SharedScriptMethodMemberData;
                     return;
                 }
 
@@ -1014,14 +1040,24 @@ namespace Microsoft.ClearScript
         {
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
+                object value;
+
                 if (name == SpecialMemberNames.Default)
                 {
-                    if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
+                    if (invokeFlags.HasFlag(BindingFlags.GetField))
                     {
-                        return TargetPropertyBag;
+                        if (args.Length < 1)
+                        {
+                            return TargetPropertyBag;
+                        }
+
+                        if (args.Length == 1)
+                        {
+                            return TargetPropertyBag.TryGetValue(Convert.ToString(args[0]), out value) ? value : Nonexistent.Value;
+                        }
                     }
 
-                    throw new NotSupportedException("Object does not support invocation");
+                    throw new NotSupportedException("Object does not support the requested invocation operation");
                 }
 
                 if (name == SpecialMemberNames.NewEnum)
@@ -1029,7 +1065,6 @@ namespace Microsoft.ClearScript
                     return HostObject.Wrap(TargetPropertyBag.GetEnumerator(), typeof(IEnumerator));
                 }
 
-                object value;
                 if (!TargetPropertyBag.TryGetValue(name, out value))
                 {
                     throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no property named '{0}'", name));
@@ -1041,9 +1076,22 @@ namespace Microsoft.ClearScript
                     return result;
                 }
 
-                if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
+                if (invokeFlags.HasFlag(BindingFlags.GetField))
                 {
-                    return value;
+                    if (args.Length < 1)
+                    {
+                        return value;
+                    }
+
+                    if (args.Length == 1)
+                    {
+                        if (value == null)
+                        {
+                            throw new InvalidOperationException("Cannot invoke a null property value");
+                        }
+
+                        return ((HostItem)Wrap(engine, value)).InvokeMember(SpecialMemberNames.Default, invokeFlags, args, bindArgs, null, true);
+                    }
                 }
 
                 throw new NotSupportedException("Object does not support the requested invocation operation");
@@ -1051,6 +1099,16 @@ namespace Microsoft.ClearScript
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
             {
+                if (name == SpecialMemberNames.Default)
+                {
+                    if (args.Length == 1)
+                    {
+                        return TargetPropertyBag[Convert.ToString(args[0])];
+                    }
+
+                    throw new InvalidOperationException("Invalid argument count");
+                }
+
                 if (args.Length < 1)
                 {
                     object value;
@@ -1062,9 +1120,35 @@ namespace Microsoft.ClearScript
 
             if (invokeFlags.HasFlag(BindingFlags.SetField))
             {
+                if (name == SpecialMemberNames.Default)
+                {
+                    if (args.Length == 2)
+                    {
+                        return TargetPropertyBag[Convert.ToString(args[0])] = args[1];
+                    }
+
+                    throw new InvalidOperationException("Invalid argument count");
+                }
+
                 if (args.Length == 1)
                 {
                     return TargetPropertyBag[name] = args[0];
+                }
+
+                if (args.Length == 2)
+                {
+                    object value;
+                    if (TargetPropertyBag.TryGetValue(name, out value))
+                    {
+                        if (value == null)
+                        {
+                            throw new InvalidOperationException("Cannot invoke a null property value");
+                        }
+
+                        return ((HostItem)Wrap(engine, value)).InvokeMember(SpecialMemberNames.Default, invokeFlags, args, bindArgs, null, true);
+                    }
+
+                    throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no property named '{0}'", name));
                 }
 
                 throw new InvalidOperationException("Invalid argument count");
@@ -1206,7 +1290,12 @@ namespace Microsoft.ClearScript
                             return target;
                         }
 
-                        return result;
+                        if (TargetDynamicMetaObject != null)
+                        {
+                            // dynamic target; don't throw for default indexed property retrieval failure
+
+                            return result;
+                        }
                     }
 
                     throw new NotSupportedException("Object does not support the requested invocation operation");

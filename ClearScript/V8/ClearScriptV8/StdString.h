@@ -14,7 +14,7 @@ class StringToUniPtr
 public:
 
     explicit StringToUniPtr(String^ gcValue):
-        m_pValue(Microsoft::ClearScript::V8::V8ProxyHelpers::AllocString(gcValue))
+        m_pValue(V8ProxyHelpers::AllocString(gcValue))
     {
     }
 
@@ -25,7 +25,7 @@ public:
 
     ~StringToUniPtr()
     {
-        Microsoft::ClearScript::V8::V8ProxyHelpers::FreeString(m_pValue);
+        V8ProxyHelpers::FreeString(m_pValue);
     }
 
 private:

@@ -129,7 +129,7 @@ namespace Microsoft.ClearScript.V8
 
         private static IEnumerable<string> GetDirPaths()
         {
-            // The assembly location may be empty if the the host preloaded the assembly
+            // The assembly location may be empty if the host preloaded the assembly
             // from custom storage. Support for this scenario was requested on CodePlex.
 
             var location = typeof(V8Proxy).Assembly.Location;

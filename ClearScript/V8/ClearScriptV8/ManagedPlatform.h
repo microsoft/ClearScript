@@ -29,8 +29,10 @@ using namespace System;
 using namespace System::Globalization;
 using namespace System::Runtime::InteropServices;
 using namespace System::Threading;
+using namespace Microsoft::ClearScript;
 using namespace Microsoft::ClearScript::JavaScript;
 using namespace Microsoft::ClearScript::Util;
+using namespace Microsoft::ClearScript::V8;
 
 //-----------------------------------------------------------------------------
 // global macros

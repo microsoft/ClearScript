@@ -246,6 +246,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Evaluate_DocumentInfo_WithDocumentName()
+        {
+            const string documentName = "DoTheMath";
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentName), "Math.E * Math.PI"));
+            Assert.IsFalse(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Evaluate_DocumentInfo_WithDocumentUri()
+        {
+            const string documentName = "DoTheMath";
+            var documentUri = new Uri(@"c:\foo\bar\baz\" + documentName);
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentUri) { Flags = DocumentFlags.None }, "Math.E * Math.PI"));
+            Assert.IsTrue(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Evaluate_DocumentInfo_WithDocumentUri_Relative()
+        {
+            const string documentName = "DoTheMath";
+            var documentUri = new Uri(documentName, UriKind.Relative);
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentUri) { Flags = DocumentFlags.None }, "Math.E * Math.PI"));
+            Assert.IsTrue(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Evaluate_DocumentInfo_DiscardDocument()
+        {
+            const string documentName = "DoTheMath";
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentName) { Flags = DocumentFlags.IsTransient }, "Math.E * Math.PI"));
+            Assert.IsFalse(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Evaluate_DocumentInfo_RetainDocument()
+        {
+            const string documentName = "DoTheMath";
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentName) { Flags = DocumentFlags.None }, "Math.E * Math.PI"));
+            Assert.IsTrue(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_Execute()
         {
             engine.Execute("epi = Math.E * Math.PI");
@@ -275,6 +317,53 @@ namespace Microsoft.ClearScript.Test
         {
             const string documentName = "DoTheMath";
             engine.Execute(documentName, false, "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsTrue(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Execute_DocumentInfo_WithDocumentName()
+        {
+            const string documentName = "DoTheMath";
+            engine.Execute(new DocumentInfo(documentName), "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsTrue(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Execute_DocumentInfo_WithDocumentUri()
+        {
+            const string documentName = "DoTheMath";
+            var documentUri = new Uri(@"c:\foo\bar\baz\" + documentName);
+            engine.Execute(new DocumentInfo(documentUri), "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsTrue(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Execute_DocumentInfo_WithDocumentUri_Relative()
+        {
+            const string documentName = "DoTheMath";
+            var documentUri = new Uri(documentName, UriKind.Relative);
+            engine.Execute(new DocumentInfo(documentUri), "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsTrue(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Execute_DocumentInfo_DiscardDocument()
+        {
+            const string documentName = "DoTheMath";
+            engine.Execute(new DocumentInfo(documentName) { Flags = DocumentFlags.IsTransient }, "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsFalse(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Execute_DocumentInfo_RetainDocument()
+        {
+            const string documentName = "DoTheMath";
+            engine.Execute(new DocumentInfo(documentName) { Flags = DocumentFlags.None }, "epi = Math.E * Math.PI");
             Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
             Assert.IsTrue(engine.GetDebugDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
         }
@@ -932,6 +1021,14 @@ namespace Microsoft.ClearScript.Test
             engine.Script.testObject = new DynamicTestObject();
             engine.Script.host = new HostFunctions();
             Assert.AreEqual("bar+baz+qux", engine.Evaluate("host.toStaticType(testObject).SomeMethod('foo', 'bar', 'baz', 'qux')"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DynamicHostObject_StaticType_Invoke()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            TestUtil.AssertException<NotSupportedException>(() => engine.Evaluate("host.toStaticType(testObject)('foo', 'bar', 'baz', 'qux')"));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -2119,6 +2216,41 @@ namespace Microsoft.ClearScript.Test
             var obj = engine.Evaluate("({})") as ScriptObject;
             Assert.IsNotNull(obj);
             Assert.AreSame(engine, obj.Engine);
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ArrayInvocability()
+        {
+            engine.Script.foo = Enumerable.Range(123, 5).ToArray();
+            Assert.AreEqual(124, engine.Evaluate("foo(1)"));
+            Assert.AreEqual(456, engine.Evaluate("foo(1) = 456"));
+
+            engine.Script.foo = new IConvertible[] { "bar" };
+            Assert.AreEqual("bar", engine.Evaluate("foo(0)"));
+            Assert.AreEqual("baz", engine.Evaluate("foo(0) = 'baz'"));
+
+            engine.Script.bar = new List<string>();
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("bar.Add(foo(0))"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_PropertyBagInvocability()
+        {
+            engine.Script.lib = new HostTypeCollection("mscorlib", "System", "System.Core");
+            Assert.IsInstanceOfType(engine.Evaluate("lib('System')"), typeof(PropertyBag));
+            Assert.IsInstanceOfType(engine.Evaluate("lib.System('Collections')"), typeof(PropertyBag));
+            Assert.IsInstanceOfType(engine.Evaluate("lib('Bogus')"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("lib.System('Heinous')"), typeof(Undefined));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("lib('Bogus') = 123"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("lib.System('Heinous') = 456"));
+
+            engine.Script.foo = new PropertyBag { { "Null", null } };
+            Assert.IsNull(engine.Evaluate("foo.Null"));
+            TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("foo.Null(123)"));
+            engine.Execute("foo(null) = 123");
+            Assert.AreEqual(123, Convert.ToInt32(engine.Evaluate("foo(null)")));
+            engine.Execute("foo(undefined) = 456");
+            Assert.AreEqual(456, Convert.ToInt32(engine.Evaluate("foo(undefined)")));
         }
 
         // ReSharper restore InconsistentNaming

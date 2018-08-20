@@ -31,6 +31,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)'=='15.0'">
     <PlatformToolset>v141</PlatformToolset>
+    <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)'==''">$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)'=='14.0'">
     <PlatformToolset>v140</PlatformToolset>
@@ -81,7 +82,7 @@
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='14.0'">true</GenerateDebugInformation>
-      <AdditionalDependencies>..\..\V8\lib\v8-ia32.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\..\V8\lib\v8-ia32.dll.lib</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>..\..\..\Exports</AdditionalIncludeDirectories>
@@ -112,7 +113,7 @@
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='14.0'">true</GenerateDebugInformation>
-      <AdditionalDependencies>..\..\V8\lib\v8-ia32.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\..\V8\lib\v8-ia32.dll.lib</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
@@ -207,7 +208,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\V8\lib\v8-ia32.pdb">
+    <CustomBuild Include="..\..\V8\lib\v8-ia32.dll.pdb">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -239,6 +240,7 @@
     <ClInclude Include="..\V8ContextImpl.h" />
     <ClInclude Include="..\V8ContextProxyImpl.h" />
     <ClInclude Include="..\V8DebugListenerImpl.h" />
+    <ClInclude Include="..\V8DocumentInfo.h" />
     <ClInclude Include="..\V8Exception.h" />
     <ClInclude Include="..\V8Isolate.h" />
     <ClInclude Include="..\V8IsolateConstraints.h" />
@@ -268,7 +270,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
     </CustomBuild>
-    <CustomBuild Include="..\..\V8\lib\v8-base-ia32.pdb">
+    <CustomBuild Include="..\..\V8\lib\v8-base-ia32.dll.pdb">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -277,6 +279,9 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

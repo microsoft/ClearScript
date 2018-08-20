@@ -14,8 +14,8 @@ public:
     struct Options
     {
         bool EnableDebugging = false;
-        bool EnableRemoteDebugging  = false;
-        bool DisableGlobalMembers  = true;
+        bool EnableRemoteDebugging = false;
+        bool DisableGlobalMembers = true;
         bool EnableDateTimeConversion = false;
         int DebugPort = 0;
     };
@@ -38,11 +38,11 @@ public:
     virtual void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers) = 0;
 
     virtual void AwaitDebuggerAndPause() = 0;
-    virtual V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard) = 0;
+    virtual V8Value Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate) = 0;
 
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) = 0;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) = 0;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
     virtual bool CanExecute(V8ScriptHolder* pHolder) = 0;
     virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) = 0;
 

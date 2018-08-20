@@ -339,7 +339,7 @@ namespace Microsoft.ClearScript.Windows
             if (trimmedCommand.StartsWith("eval ", StringComparison.OrdinalIgnoreCase))
             {
                 var expression = MiscHelpers.FormatInvariant("EngineInternal.getCommandResult({0})", trimmedCommand.Substring(5));
-                return GetCommandResultString(Evaluate("Expression", true, expression, false));
+                return GetCommandResultString(Evaluate(new DocumentInfo("Expression") { Flags = DocumentFlags.IsTransient }, expression, false));
             }
 
             Execute("Command", true, trimmedCommand);

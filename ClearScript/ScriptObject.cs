@@ -7,7 +7,7 @@ namespace Microsoft.ClearScript
     /// </summary>
     /// <remarks>
     /// Use this class in conjunction with C#'s
-    /// <c><see href="http://msdn.microsoft.com/en-us/library/scekt9xw(VS.71).aspx">is</see></c>
+    /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/is">is</see></c>
     /// operator to identify script objects.
     /// </remarks>
     /// <seealso cref="ScriptEngine.Evaluate(string, bool, string)"/>

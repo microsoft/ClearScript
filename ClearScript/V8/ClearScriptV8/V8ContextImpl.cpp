@@ -275,16 +275,24 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
         m_hHostObjectTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
         m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
         m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
-        m_hHostObjectTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
+
+        m_hHostInvocableTemplate = CreatePersistent(CreateFunctionTemplate());
+        m_hHostInvocableTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(L"HostInvocable"))));
+        m_hHostInvocableTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
+        m_hHostInvocableTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
+        m_hHostInvocableTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
+        m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
+        m_hHostInvocableTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
 
         m_hHostDelegateTemplate = CreatePersistent(CreateFunctionTemplate());
         m_hHostDelegateTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(L"HostDelegate"))));
         m_hHostDelegateTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
         m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
         m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
-        m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
+        m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
+        m_hHostDelegateTemplate->InstanceTemplate()->SetImmutableProto(); // instructs our patched V8 typeof implementation to return "function" 
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(FROM_MAYBE(CreateString(StdString(L"toFunction"))), hToFunctionFunction);
 
         m_hHostIteratorTemplate = CreatePersistent(CreateFunctionTemplate());
@@ -431,13 +439,13 @@ void V8ContextImpl::AwaitDebuggerAndPause()
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::Execute(const StdString& documentName, const StdString& code, bool evaluate, bool /*discard*/)
+V8Value V8ContextImpl::Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
     FROM_MAYBE_TRY
 
-        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), v8::ScriptOrigin(FROM_MAYBE(CreateString(documentName))));
+        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo));
         auto hScript = VERIFY_MAYBE(v8::ScriptCompiler::Compile(m_hContext, &source));
         if (hScript.IsEmpty())
         {
@@ -463,13 +471,13 @@ V8Value V8ContextImpl::Execute(const StdString& documentName, const StdString& c
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdString& code)
+V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, const StdString& code)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
     FROM_MAYBE_TRY
 
-        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), v8::ScriptOrigin(FROM_MAYBE(CreateString(documentName))));
+        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo));
         auto hScript = VERIFY_MAYBE(CreateUnboundScript(&source));
         if (hScript.IsEmpty())
         {
@@ -489,40 +497,44 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes)
+V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes)
 {
     if (cacheType == V8CacheType::None)
     {
         cacheBytes.clear();
-        return Compile(documentName, code);
+        return Compile(documentInfo, code);
     }
 
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
     FROM_MAYBE_TRY
 
-        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), v8::ScriptOrigin(FROM_MAYBE(CreateString(documentName))));
-        auto hScript = VERIFY_MAYBE(CreateUnboundScript(&source, (cacheType == V8CacheType::Parser) ? v8::ScriptCompiler::kProduceParserCache : v8::ScriptCompiler::kProduceCodeCache));
+        auto hCode = FROM_MAYBE(CreateString(code));
+
+        v8::ScriptCompiler::Source source(hCode, CreateScriptOrigin(documentInfo));
+        auto hScript = VERIFY_MAYBE(CreateUnboundScript(&source));
         if (hScript.IsEmpty())
         {
             throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Script compilation failed; no additional information was provided by the V8 runtime"), false /*executionStarted*/);
         }
 
         cacheBytes.clear();
-
-        auto pCachedData = source.GetCachedData();
-        if (pCachedData != nullptr)
+        if (cacheType != V8CacheType::None)
         {
-            if ((pCachedData->length > 0) && (pCachedData->data != nullptr))
+            auto pCachedData = v8::ScriptCompiler::CreateCodeCache(hScript);
+            if (pCachedData != nullptr)
             {
-                cacheBytes.resize(pCachedData->length);
-                memcpy_s(&cacheBytes[0], cacheBytes.size(), pCachedData->data, pCachedData->length);
+                if ((pCachedData->length > 0) && (pCachedData->data != nullptr))
+                {
+                    cacheBytes.resize(pCachedData->length);
+                    memcpy_s(&cacheBytes[0], cacheBytes.size(), pCachedData->data, pCachedData->length);
+                }
+
+                // Delete cached data explicitly via a custom exported method. Doing so avoids Debug-
+                // Release heap mismatches.
+
+                pCachedData->Delete();
             }
-
-            // Delete cached data explicitly via a custom exported method. Doing so avoids Debug-
-            // Release heap mismatches caused by V8's inlining of v8::ScriptCompiler::~Source.
-
-            source.DeleteCachedData();
         }
 
         return new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)));
@@ -538,12 +550,12 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted)
+V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted)
 {
     if ((cacheType == V8CacheType::None) || (cacheBytes.size() < 1))
     {
         cacheAccepted = false;
-        return Compile(documentName, code);
+        return Compile(documentInfo, code);
     }
 
     BEGIN_CONTEXT_SCOPE
@@ -551,8 +563,9 @@ V8ScriptHolder* V8ContextImpl::Compile(const StdString& documentName, const StdS
     FROM_MAYBE_TRY
 
         auto pCachedData = new v8::ScriptCompiler::CachedData(&cacheBytes[0], static_cast<int>(cacheBytes.size()), v8::ScriptCompiler::CachedData::BufferNotOwned);
-        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), v8::ScriptOrigin(FROM_MAYBE(CreateString(documentName))), pCachedData);
-        auto hScript = VERIFY_MAYBE(CreateUnboundScript(&source, (cacheType == V8CacheType::Parser) ? v8::ScriptCompiler::kConsumeParserCache : v8::ScriptCompiler::kConsumeCodeCache));
+        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo), pCachedData);
+
+        auto hScript = VERIFY_MAYBE(CreateUnboundScript(&source, v8::ScriptCompiler::kConsumeCodeCache));
         if (hScript.IsEmpty())
         {
             throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Script compilation failed; no additional information was provided by the V8 runtime"), false /*executionStarted*/);
@@ -703,7 +716,7 @@ void V8ContextImpl::GetV8ObjectPropertyNames(void* pvObject, std::vector<StdStri
 {
     BEGIN_CONTEXT_SCOPE
 
-        GetV8ObjectPropertyNames(::HandleFromPtr<v8::Object>(pvObject), names, v8::ALL_PROPERTIES);
+        GetV8ObjectPropertyNames(::HandleFromPtr<v8::Object>(pvObject), names, v8::ONLY_ENUMERABLE);
 
     END_CONTEXT_SCOPE
 }
@@ -769,7 +782,7 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(void* pvObject, std::vector<int>&
 {
     BEGIN_CONTEXT_SCOPE
 
-        GetV8ObjectPropertyIndices(::HandleFromPtr<v8::Object>(pvObject), indices, v8::ALL_PROPERTIES);
+        GetV8ObjectPropertyIndices(::HandleFromPtr<v8::Object>(pvObject), indices, v8::ONLY_ENUMERABLE);
 
     END_CONTEXT_SCOPE
 }
@@ -989,6 +1002,7 @@ void V8ContextImpl::Teardown()
 
     Dispose(m_hHostIteratorTemplate);
     Dispose(m_hHostDelegateTemplate);
+    Dispose(m_hHostInvocableTemplate);
     Dispose(m_hHostObjectTemplate);
     Dispose(m_hTerminationException);
     Dispose(m_hInternalUseOnly);
@@ -2151,7 +2165,15 @@ v8::Local<v8::Value> V8ContextImpl::ImportValue(const V8Value& value)
                 }
 
                 v8::Local<v8::Object> hObject;
-                if (HostObjectHelpers::IsDelegate(pHolder->GetObject()))
+
+                auto invocability = HostObjectHelpers::GetInvocability(pHolder->GetObject());
+                if (invocability == HostObjectHelpers::V8Invocability::None)
+                {
+                    BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectConstructorCall, true)
+                        hObject = FROM_MAYBE(m_hHostObjectTemplate->InstanceTemplate()->NewInstance(m_hContext));
+                    END_PULSE_VALUE_SCOPE
+                }
+                else if (invocability == HostObjectHelpers::V8Invocability::Delegate)
                 {
                     BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectConstructorCall, true)
                         hObject = FROM_MAYBE(m_hHostDelegateTemplate->InstanceTemplate()->NewInstance(m_hContext));
@@ -2160,7 +2182,7 @@ v8::Local<v8::Value> V8ContextImpl::ImportValue(const V8Value& value)
                 else
                 {
                     BEGIN_PULSE_VALUE_SCOPE(&m_AllowHostObjectConstructorCall, true)
-                        hObject = FROM_MAYBE(m_hHostObjectTemplate->InstanceTemplate()->NewInstance(m_hContext));
+                        hObject = FROM_MAYBE(m_hHostInvocableTemplate->InstanceTemplate()->NewInstance(m_hContext));
                     END_PULSE_VALUE_SCOPE
                 }
 
@@ -2302,6 +2324,28 @@ void V8ContextImpl::ImportValues(const std::vector<V8Value>& values, std::vector
     {
         importedValues.push_back(ImportValue(values[index]));
     }
+}
+
+//-----------------------------------------------------------------------------
+
+v8::ScriptOrigin V8ContextImpl::CreateScriptOrigin(const V8DocumentInfo& documentInfo)
+{
+    FROM_MAYBE_TRY
+
+        return v8::ScriptOrigin(
+            FROM_MAYBE(CreateString(documentInfo.ResourceName)),
+            v8::Local<v8::Integer>(),
+            v8::Local<v8::Integer>(),
+            v8::Local<v8::Boolean>(),
+            v8::Local<v8::Integer>(),
+            (documentInfo.SourceMapUrl.GetLength() > 0) ? FROM_MAYBE(CreateString(documentInfo.SourceMapUrl)) : v8::Local<v8::String>()
+        );
+
+    FROM_MAYBE_CATCH
+
+        throw;
+
+    FROM_MAYBE_END
 }
 
 //-----------------------------------------------------------------------------

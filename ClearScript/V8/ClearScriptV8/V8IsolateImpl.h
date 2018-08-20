@@ -327,6 +327,11 @@ public:
         return v8::Locker::IsLocked(m_pIsolate);
     }
 
+    v8::Local<v8::String> GetTypeOf(v8::Local<v8::Value> hValue)
+    {
+        return !hValue.IsEmpty() ? hValue->TypeOf(m_pIsolate) : GetUndefined()->TypeOf(m_pIsolate);
+    }
+
     bool IsOutOfMemory() const
     {
         return m_IsOutOfMemory;
@@ -347,9 +352,9 @@ public:
     virtual void SetMaxStackUsage(size_t value) override;
 
     virtual void AwaitDebuggerAndPause() override;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) override;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) override;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
     virtual void GetHeapInfo(V8IsolateHeapInfo& heapInfo) override;
     virtual void CollectGarbage(bool exhaustive) override;
 
@@ -370,8 +375,10 @@ public:
     void ReleaseV8Script(void* pvScript);
 
     void RunTaskAsync(v8::Task* pTask);
+    void RunTaskDelayed(v8::Task* pTask, double delayInSeconds);
     void RunTaskWithLockAsync(v8::Task* pTask);
     void RunTaskWithLockDelayed(v8::Task* pTask, double delayInSeconds);
+    std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner();
 
     void CallWithLockNoWait(std::function<void(V8IsolateImpl*)>&& callback);
     void DECLSPEC_NORETURN ThrowOutOfMemoryException();
@@ -407,6 +414,7 @@ private:
     RecursiveMutex m_Mutex;
     std::list<V8ContextImpl*> m_ContextPtrs;
     SimpleMutex m_DataMutex;
+    std::shared_ptr<v8::TaskRunner> m_spForegroundTaskRunner;
     std::vector<std::shared_ptr<v8::Task>> m_AsyncTasks;
     std::queue<std::function<void(V8IsolateImpl*)>> m_CallWithLockQueue;
     std::condition_variable m_CallWithLockQueueChanged;

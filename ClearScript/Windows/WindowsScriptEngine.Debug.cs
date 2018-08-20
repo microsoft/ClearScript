@@ -18,17 +18,17 @@ namespace Microsoft.ClearScript.Windows
         {
             private readonly WindowsScriptEngine engine;
             private readonly UIntPtr sourceContext;
-            private readonly string name;
+            private readonly DocumentInfo documentInfo;
             private readonly string code;
 
             private string[] codeLines;
             private IDebugApplicationNode node;
 
-            public DebugDocument(WindowsScriptEngine engine, UIntPtr sourceContext, string name, string code, bool transient)
+            public DebugDocument(WindowsScriptEngine engine, UIntPtr sourceContext, DocumentInfo documentInfo, string code)
             {
                 this.engine = engine;
                 this.sourceContext = sourceContext;
-                this.name = name + (transient ? " [temp]" : "");
+                this.documentInfo = documentInfo;
                 this.code = code;
                 Initialize();
             }
@@ -57,21 +57,62 @@ namespace Microsoft.ClearScript.Windows
                 node = null;
             }
 
+            private string GetFileName()
+            {
+                return Path.HasExtension(documentInfo.Name) ? documentInfo.Name : Path.ChangeExtension(documentInfo.Name, engine.FileNameExtension);
+            }
+
+            private string GetUrl()
+            {
+                if (documentInfo.Uri != null)
+                {
+                    return documentInfo.Uri.IsAbsoluteUri ? documentInfo.Uri.AbsoluteUri : documentInfo.Uri.ToString();
+                }
+
+                return MiscHelpers.FormatInvariant("{0}/{1}", engine.Name, GetFileName());
+            }
+
+            private bool TryGetSourceMapUrl(out string sourceMapUrl)
+            {
+                if (documentInfo.SourceMapUri != null)
+                {
+                    sourceMapUrl = documentInfo.SourceMapUri.IsAbsoluteUri ? documentInfo.SourceMapUri.AbsoluteUri : documentInfo.SourceMapUri.ToString();
+                    return true;
+                }
+
+                sourceMapUrl = null;
+                return false;
+            }
+
             #region IDebugDocumentInfo implementation
 
-            public void GetName(DocumentNameType type, out string documentName)
+            public uint GetName(DocumentNameType type, out string documentName)
             {
                 switch (type)
                 {
-                    case DocumentNameType.URL:
-                        var fullName = Path.HasExtension(name) ? name : Path.ChangeExtension(name, engine.FileNameExtension);
-                        documentName = MiscHelpers.FormatInvariant("{0}/{1}", engine.Name, fullName);
-                        break;
+                    case DocumentNameType.AppNode:
+                    case DocumentNameType.Title:
+                        documentName = documentInfo.Name;
+                        return RawCOMHelpers.HResult.S_OK;
 
-                    default:
-                        documentName = name;
-                        break;
+                    case DocumentNameType.FileTail:
+                        documentName = GetFileName();
+                        return RawCOMHelpers.HResult.S_OK;
+
+                    case DocumentNameType.URL:
+                        documentName = GetUrl();
+                        return RawCOMHelpers.HResult.S_OK;
+
+                    case DocumentNameType.UniqueTitle:
+                        documentName = documentInfo.UniqueName;
+                        return RawCOMHelpers.HResult.S_OK;
+
+                    case DocumentNameType.SourceMapURL:
+                        return TryGetSourceMapUrl(out documentName) ? RawCOMHelpers.HResult.S_OK : RawCOMHelpers.HResult.E_FAIL.ToUnsigned();
                 }
+
+                documentName = null;
+                return RawCOMHelpers.HResult.E_FAIL.ToUnsigned();
             }
 
             public void GetDocumentClassId(out Guid clsid)

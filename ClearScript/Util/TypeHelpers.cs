@@ -2,8 +2,10 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -39,6 +41,8 @@ namespace Microsoft.ClearScript.Util
             typeof(double?),
             typeof(decimal?)
         };
+
+        private static readonly ConcurrentDictionary<Tuple<Type, BindingFlags, ScriptAccess, bool>, Invocability> invocabilityMap = new ConcurrentDictionary<Tuple<Type, BindingFlags, ScriptAccess, bool>, Invocability>();
 
         public static bool IsStatic(this Type type)
         {
@@ -331,6 +335,12 @@ namespace Microsoft.ClearScript.Util
 
         public static IEnumerable<PropertyInfo> GetScriptableDefaultProperties(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
+            if (type.IsArray)
+            {
+                var property = typeof(IList<>).MakeSpecificType(type.GetElementType()).GetProperty("Item");
+                return (property != null) ? new[] { property } : ArrayHelpers.GetEmptyArray<PropertyInfo>();
+            }
+
             var properties = type.GetProperties(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
@@ -361,6 +371,11 @@ namespace Microsoft.ClearScript.Util
         public static IEnumerable<Type> GetScriptableNestedTypes(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
         {
             return type.GetNestedTypes(bindFlags).Where(nestedType => nestedType.IsScriptable(defaultAccess));
+        }
+
+        public static Invocability GetInvocability(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic)
+        {
+            return invocabilityMap.GetOrAdd(Tuple.Create(type, bindFlags, defaultAccess, ignoreDynamic), GetInvocabilityInternal);
         }
 
         public static object CreateInstance(this Type type, params object[] args)
@@ -535,6 +550,26 @@ namespace Microsoft.ClearScript.Util
             }
 
             return fullTypeName;
+        }
+
+        private static Invocability GetInvocabilityInternal(Tuple<Type, BindingFlags, ScriptAccess, bool> args)
+        {
+            if (typeof(Delegate).IsAssignableFrom(args.Item1))
+            {
+                return Invocability.Delegate;
+            }
+
+            if (!args.Item4 && typeof(IDynamicMetaObjectProvider).IsAssignableFrom(args.Item1))
+            {
+                return Invocability.Dynamic;
+            }
+
+            if (args.Item1.GetScriptableDefaultProperties(args.Item2, args.Item3).Any())
+            {
+                return Invocability.DefaultProperty;
+            }
+
+            return Invocability.None;
         }
 
         private static bool IsValidLocatorChar(char ch)

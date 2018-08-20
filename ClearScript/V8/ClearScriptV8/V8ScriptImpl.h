@@ -15,7 +15,7 @@ namespace V8 {
     {
     public:
 
-        V8ScriptImpl(String^ gcDocumentName, V8ScriptHolder* pHolder);
+        V8ScriptImpl(ClearScript::DocumentInfo documentInfo, V8ScriptHolder* pHolder);
 
         SharedPtr<V8ScriptHolder> GetHolder();
 

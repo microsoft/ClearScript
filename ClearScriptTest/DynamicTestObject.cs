@@ -47,7 +47,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
         {
-            if (!DisableInvocation && args.Length > 0)
+            if (!DisableInvocation && (args.Length > 0))
             {
                 result = string.Join(",", args);
                 return true;

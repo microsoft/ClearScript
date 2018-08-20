@@ -85,9 +85,9 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\V8\lib\v8-x64.dll" />
-    <CustomBuild Include="..\..\V8\lib\v8-x64.pdb" />
+    <CustomBuild Include="..\..\V8\lib\v8-x64.dll.pdb" />
     <CustomBuild Include="..\..\V8\lib\v8-base-x64.dll" />
-    <CustomBuild Include="..\..\V8\lib\v8-base-x64.pdb" />
+    <CustomBuild Include="..\..\V8\lib\v8-base-x64.dll.pdb" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ClearScriptV8Managed.h">
@@ -205,6 +205,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\V8CacheType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\V8DocumentInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

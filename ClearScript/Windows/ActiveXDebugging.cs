@@ -78,7 +78,9 @@ namespace Microsoft.ClearScript.Windows
         AppNode,
         Title,
         FileTail,
-        URL
+        URL,
+		UniqueTitle,
+		SourceMapURL
     }
 
     internal enum BreakpointState
@@ -644,7 +646,8 @@ namespace Microsoft.ClearScript.Windows
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IDebugDocumentInfo
     {
-        void GetName(
+        [PreserveSig]
+        uint GetName(
             [In] DocumentNameType type,
             [Out] [MarshalAs(UnmanagedType.BStr)] out string name
         );
@@ -661,7 +664,8 @@ namespace Microsoft.ClearScript.Windows
     {
         #region IDebugDocumentInfo methods
 
-        void GetName(
+        [PreserveSig]
+        uint GetName(
             [In] DocumentNameType type,
             [Out] [MarshalAs(UnmanagedType.BStr)] out string name
         );
@@ -682,7 +686,8 @@ namespace Microsoft.ClearScript.Windows
     {
         #region IDebugDocumentInfo methods
 
-        void GetName(
+        [PreserveSig]
+        uint GetName(
             [In] DocumentNameType type,
             [Out] [MarshalAs(UnmanagedType.BStr)] out string name
         );
@@ -701,7 +706,8 @@ namespace Microsoft.ClearScript.Windows
     {
         #region IDebugDocumentInfo methods
 
-        void GetName(
+        [PreserveSig]
+        uint GetName(
             [In] DocumentNameType type,
             [Out] [MarshalAs(UnmanagedType.BStr)] out string name
         );
@@ -764,7 +770,8 @@ namespace Microsoft.ClearScript.Windows
     {
         #region IDebugDocumentInfo methods
 
-        void GetName(
+        [PreserveSig]
+        uint GetName(
             [In] DocumentNameType type,
             [Out] [MarshalAs(UnmanagedType.BStr)] out string name
         );

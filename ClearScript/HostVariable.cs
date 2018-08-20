@@ -160,6 +160,11 @@ namespace Microsoft.ClearScript
             return false;
         }
 
+        public override Invocability GetInvocability(BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic)
+        {
+            return typeof(T).GetInvocability(bindFlags, defaultAccess, ignoreDynamic);
+        }
+
         #endregion
 
         #region IHostVariable implementation

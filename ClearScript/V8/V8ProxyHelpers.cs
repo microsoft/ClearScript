@@ -162,26 +162,20 @@ namespace Microsoft.ClearScript.V8
             return ((IDynamic)obj).InvokeMethod(name, args);
         }
 
-        public static unsafe bool HostObjectIsDelegate(void* pObject)
+        public static unsafe Invocability GetHostObjectInvocability(void* pObject)
         {
-            return HostObjectIsDelegate(GetHostObject(pObject));
+            return GetHostObjectInvocability(GetHostObject(pObject));
         }
 
-        public static bool HostObjectIsDelegate(object obj)
+        public static Invocability GetHostObjectInvocability(object obj)
         {
             var hostItem = obj as HostItem;
             if (hostItem == null)
             {
-                return false;
+                return Invocability.None;
             }
 
-            var hostTarget = hostItem.Target;
-            if ((hostTarget is HostType) || (hostTarget is HostMethod))
-            {
-                return true;
-            }
-
-            return hostTarget.Flags.HasFlag(HostTargetFlags.AllowInstanceMembers) && typeof(Delegate).IsAssignableFrom(hostTarget.Type);
+            return hostItem.Invocability;
         }
 
         public static unsafe object GetEnumeratorForHostObject(void* pObject)

@@ -40,11 +40,11 @@ public:
     virtual void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers) override;
 
     virtual void AwaitDebuggerAndPause() override;
-    virtual V8Value Execute(const StdString& documentName, const StdString& code, bool evaluate, bool discard) override;
+    virtual V8Value Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate) override;
 
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) override;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) override;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
     virtual bool CanExecute(V8ScriptHolder* pHolder) override;
     virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) override;
 
@@ -269,6 +269,11 @@ private:
         m_spIsolateImpl->LowMemoryNotification();
     }
 
+    v8::Local<v8::String> GetTypeOf(v8::Local<v8::Value> hValue)
+    {
+        return m_spIsolateImpl->GetTypeOf(hValue);
+    }
+
     template <typename T>
     T Verify(const V8IsolateImpl::ExecutionScope& isolateExecutionScope, const v8::TryCatch& tryCatch, T result)
     {
@@ -328,6 +333,7 @@ private:
     V8Value ExportValue(v8::Local<v8::Value> hValue);
     void ImportValues(const std::vector<V8Value>& values, std::vector<v8::Local<v8::Value>>& importedValues);
 
+    v8::ScriptOrigin CreateScriptOrigin(const V8DocumentInfo& documentInfo);
     void Verify(const V8IsolateImpl::ExecutionScope& isolateExecutionScope, const v8::TryCatch& tryCatch);
     void VerifyNotOutOfMemory();
     void ThrowScriptException(const HostException& exception);
@@ -348,6 +354,7 @@ private:
     Persistent<v8::Object> m_hAccessToken;
     Persistent<v8::String> m_hInternalUseOnly;
     Persistent<v8::FunctionTemplate> m_hHostObjectTemplate;
+    Persistent<v8::FunctionTemplate> m_hHostInvocableTemplate;
     Persistent<v8::FunctionTemplate> m_hHostDelegateTemplate;
     Persistent<v8::FunctionTemplate> m_hHostIteratorTemplate;
     Persistent<v8::Value> m_hTerminationException;

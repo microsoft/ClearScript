@@ -149,12 +149,12 @@ namespace Microsoft.ClearScript.Windows
             return scriptDispatch;
         }
 
-        private void Parse(string documentName, string code, ScriptTextFlags flags, IntPtr pVarResult, out EXCEPINFO excepInfo, bool discard)
+        private void Parse(DocumentInfo documentInfo, string code, ScriptTextFlags flags, IntPtr pVarResult, out EXCEPINFO excepInfo)
         {
             var formattedCode = FormatCode ? MiscHelpers.FormatCode(code) : code;
 
             DebugDocument debugDocument;
-            var sourceContext = CreateDebugDocument(documentName, formattedCode, discard, out debugDocument);
+            var sourceContext = CreateDebugDocument(documentInfo, formattedCode, out debugDocument);
             if (sourceContext != UIntPtr.Zero)
             {
                 flags |= ScriptTextFlags.HostManagesSource;
@@ -166,7 +166,7 @@ namespace Microsoft.ClearScript.Windows
             }
             finally
             {
-                if (discard && (sourceContext != UIntPtr.Zero))
+                if (documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient) && (sourceContext != UIntPtr.Zero))
                 {
                     debugDocumentMap.Remove(sourceContext);
                     debugDocument.Close();
@@ -174,7 +174,7 @@ namespace Microsoft.ClearScript.Windows
             }
         }
 
-        private UIntPtr CreateDebugDocument(string name, string code, bool transient, out DebugDocument document)
+        private UIntPtr CreateDebugDocument(DocumentInfo documentInfo, string code, out DebugDocument document)
         {
             UIntPtr sourceContext;
             if (!sourceManagement)
@@ -185,8 +185,9 @@ namespace Microsoft.ClearScript.Windows
             else
             {
                 sourceContext = new UIntPtr(nextSourceContext++);
-                var uniqueName = debugDocumentNameManager.GetUniqueName(name, "Script Document");
-                document = new DebugDocument(this, sourceContext, uniqueName, code, transient);
+                documentInfo.UniqueName = debugDocumentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
+                documentInfo.UniqueName += documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient) ? " [temp]" : "";
+                document = new DebugDocument(this, sourceContext, documentInfo, code);
                 debugDocumentMap[sourceContext] = document;
             }
 
@@ -232,7 +233,7 @@ namespace Microsoft.ClearScript.Windows
                         var documentText = (IDebugDocumentText)document;
 
                         string documentName;
-                        document.GetName(DocumentNameType.Title, out documentName);
+                        document.GetName(DocumentNameType.UniqueTitle, out documentName);
 
                         uint position;
                         uint length;
@@ -593,7 +594,7 @@ namespace Microsoft.ClearScript.Windows
             return WindowsScriptItem.Wrap(this, obj);
         }
 
-        internal override object Execute(string documentName, string code, bool evaluate, bool discard)
+        internal override object Execute(DocumentInfo documentInfo, string code, bool evaluate)
         {
             VerifyNotDisposed();
 
@@ -603,14 +604,14 @@ namespace Microsoft.ClearScript.Windows
                 if (!evaluate)
                 {
                     const ScriptTextFlags flags = ScriptTextFlags.IsVisible;
-                    Parse(documentName, code, flags, IntPtr.Zero, out excepInfo, discard);
+                    Parse(documentInfo, code, flags, IntPtr.Zero, out excepInfo);
                     return null;
                 }
 
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
                     const ScriptTextFlags flags = ScriptTextFlags.IsExpression;
-                    Parse(documentName, code, flags, resultVariantBlock.Addr, out excepInfo, discard);
+                    Parse(documentInfo, code, flags, resultVariantBlock.Addr, out excepInfo);
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             });
@@ -790,7 +791,7 @@ namespace Microsoft.ClearScript.Windows
             return debugDocumentMap.Values.Select(debugDocument =>
             {
                 string name;
-                debugDocument.GetName(DocumentNameType.Title, out name);
+                debugDocument.GetName(DocumentNameType.UniqueTitle, out name);
                 return name;
             });
         }

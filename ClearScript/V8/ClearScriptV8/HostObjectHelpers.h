@@ -29,7 +29,9 @@ public:
 
     static V8Value Invoke(void* pvObject, const std::vector<V8Value>& args, bool asConstructor);
     static V8Value InvokeMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
-    static bool IsDelegate(void* pvObject);
+
+    enum class V8Invocability { None, Delegate, Other };
+    static V8Invocability GetInvocability(void* pvObject);
 
     static V8Value GetEnumerator(void* pvObject);
     static bool AdvanceEnumerator(void* pvEnumerator, V8Value& value);

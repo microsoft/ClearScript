@@ -155,6 +155,28 @@ namespace Microsoft.ClearScript.Util
             return string.Join("\n", lines) + '\n';
         }
 
+        public static string GetUrlOrPath(Uri uri, string alternate)
+        {
+            Debug.Assert(alternate != null);
+
+            if (uri == null)
+            {
+                return alternate;
+            }
+
+            if (!uri.IsAbsoluteUri)
+            {
+                return uri.ToString();
+            }
+
+            if (uri.IsFile)
+            {
+                return uri.LocalPath;
+            }
+
+            return uri.AbsoluteUri;
+        }
+
         #endregion
 
         #region index helpers

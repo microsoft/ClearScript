@@ -926,7 +926,22 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public void Execute(string documentName, bool discard, string code)
         {
-            Execute(documentName, code, false, discard);
+            Execute(new DocumentInfo(documentName) { Flags = discard ? DocumentFlags.IsTransient : DocumentFlags.None }, code);
+        }
+
+        /// <summary>
+        /// Executes script code with the specified document information.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="code">The script code to execute.</param>
+        /// <remarks>
+        /// In some script languages the distinction between statements and expressions is
+        /// significant but ambiguous for certain syntactic elements. This method always
+        /// interprets the specified script code as a statement.
+        /// </remarks>
+        public void Execute(DocumentInfo documentInfo, string code)
+        {
+            Execute(documentInfo, code, false);
         }
 
         /// <summary>
@@ -942,7 +957,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public virtual string ExecuteCommand(string command)
         {
-            return GetCommandResultString(Evaluate("Command", true, command, false));
+            return GetCommandResultString(Evaluate(new DocumentInfo("Command") { Flags = DocumentFlags.IsTransient }, command, false));
         }
 
         /// <summary>
@@ -1097,7 +1112,29 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object Evaluate(string documentName, bool discard, string code)
         {
-            return Evaluate(documentName, discard, code, true);
+            return Evaluate(new DocumentInfo(documentName) { Flags = discard ? DocumentFlags.IsTransient : DocumentFlags.None }, code);
+        }
+
+        /// <summary>
+        /// Evaluates script code with the specified document information.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="code">The script code to evaluate.</param>
+        /// <returns>The result value.</returns>
+        /// <remarks>
+        /// <para>
+        /// In some script languages the distinction between statements and expressions is
+        /// significant but ambiguous for certain syntactic elements. This method always
+        /// interprets the specified script code as an expression.
+        /// </para>
+        /// <para>
+        /// For information about the types of result values that script code can return, see
+        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// </para>
+        /// </remarks>
+        public object Evaluate(DocumentInfo documentInfo, string code)
+        {
+            return Evaluate(documentInfo, code, true);
         }
 
         /// <summary>
@@ -1193,11 +1230,16 @@ namespace Microsoft.ClearScript
             return args.Select(arg => MarshalToHost(arg, preserveHostTargets)).ToArray();
         }
 
-        internal abstract object Execute(string documentName, string code, bool evaluate, bool discard);
+        internal abstract object Execute(DocumentInfo documentInfo, string code, bool evaluate);
 
-        internal object Evaluate(string documentName, bool discard, string code, bool marshalResult)
+        internal object Evaluate(DocumentInfo documentInfo, string code, bool marshalResult)
         {
-            var result = Execute(documentName, code, true, discard);
+            if (!documentInfo.Flags.HasValue)
+            {
+                documentInfo.Flags = DocumentFlags.IsTransient;
+            }
+
+            var result = Execute(documentInfo, code, true);
             if (marshalResult)
             {
                 result = MarshalToHost(result, false);
@@ -1577,6 +1619,7 @@ namespace Microsoft.ClearScript
 
         internal readonly HostTargetMemberData SharedHostMethodMemberData = new HostTargetMemberData();
         internal readonly HostTargetMemberData SharedHostIndexedPropertyMemberData = new HostTargetMemberData();
+        internal readonly HostTargetMemberData SharedScriptMethodMemberData = new HostTargetMemberData();
 
         private readonly ConditionalWeakTable<Type, List<WeakReference>> sharedHostObjectMemberDataCache = new ConditionalWeakTable<Type, List<WeakReference>>();
 

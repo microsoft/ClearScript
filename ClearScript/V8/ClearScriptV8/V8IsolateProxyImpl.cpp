@@ -96,11 +96,11 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    V8Script^ V8IsolateProxyImpl::Compile(String^ gcDocumentName, String^ gcCode)
+    V8Script^ V8IsolateProxyImpl::Compile(DocumentInfo documentInfo, String^ gcCode)
     {
         try
         {
-            return gcnew V8ScriptImpl(gcDocumentName, GetIsolate()->Compile(StdString(gcDocumentName), StdString(gcCode)));
+            return gcnew V8ScriptImpl(documentInfo, GetIsolate()->Compile(V8DocumentInfo(documentInfo), StdString(gcCode)));
         }
         catch (const V8Exception& exception)
         {
@@ -110,19 +110,22 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    V8Script^ V8IsolateProxyImpl::Compile(String^ gcDocumentName, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes)
+    V8Script^ V8IsolateProxyImpl::Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes)
     {
+        #pragma warning(push)
+        #pragma warning(disable:4947) /* 'Microsoft::ClearScript::V8::V8CacheKind::Parser': marked as obsolete */
+
         if (cacheKind == V8CacheKind::None)
         {
             gcCacheBytes = nullptr;
-            return Compile(gcDocumentName, gcCode);
+            return Compile(documentInfo, gcCode);
         }
 
         try
         {
             std::vector<std::uint8_t> cacheBytes;
             auto cacheType = (cacheKind == V8CacheKind::Parser) ? V8CacheType::Parser : V8CacheType::Code;
-            auto gcScript = gcnew V8ScriptImpl(gcDocumentName, GetIsolate()->Compile(StdString(gcDocumentName), StdString(gcCode), cacheType, cacheBytes));
+            auto gcScript = gcnew V8ScriptImpl(documentInfo, GetIsolate()->Compile(V8DocumentInfo(documentInfo), StdString(gcCode), cacheType, cacheBytes));
 
             auto length = static_cast<int>(cacheBytes.size());
             if (length < 1)
@@ -141,16 +144,21 @@ namespace V8 {
         {
             exception.ThrowScriptEngineException();
         }
+
+        #pragma warning(pop)
     }
 
     //-------------------------------------------------------------------------
 
-    V8Script^ V8IsolateProxyImpl::Compile(String^ gcDocumentName, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted)
+    V8Script^ V8IsolateProxyImpl::Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted)
     {
+        #pragma warning(push)
+        #pragma warning(disable:4947) /* 'Microsoft::ClearScript::V8::V8CacheKind::Parser': marked as obsolete */
+
         if ((cacheKind == V8CacheKind::None) || (gcCacheBytes == nullptr) || (gcCacheBytes->Length < 1))
         {
             cacheAccepted = false;
-            return Compile(gcDocumentName, gcCode);
+            return Compile(documentInfo, gcCode);
         }
 
         try
@@ -161,7 +169,7 @@ namespace V8 {
 
             bool tempCacheAccepted;
             auto cacheType = (cacheKind == V8CacheKind::Parser) ? V8CacheType::Parser : V8CacheType::Code;
-            auto gcScript = gcnew V8ScriptImpl(gcDocumentName, GetIsolate()->Compile(StdString(gcDocumentName), StdString(gcCode), cacheType, cacheBytes, tempCacheAccepted));
+            auto gcScript = gcnew V8ScriptImpl(documentInfo, GetIsolate()->Compile(V8DocumentInfo(documentInfo), StdString(gcCode), cacheType, cacheBytes, tempCacheAccepted));
 
             cacheAccepted = tempCacheAccepted;
             return gcScript;
@@ -170,6 +178,8 @@ namespace V8 {
         {
             exception.ThrowScriptEngineException();
         }
+
+        #pragma warning(pop)
     }
 
     //-------------------------------------------------------------------------

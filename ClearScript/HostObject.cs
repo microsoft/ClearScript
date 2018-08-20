@@ -126,6 +126,11 @@ namespace Microsoft.ClearScript
             get { return HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods; }
         }
 
+        public override Invocability GetInvocability(BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic)
+        {
+            return type.GetInvocability(bindFlags, defaultAccess, ignoreDynamic);
+        }
+
         #endregion
 
         #region Nested type: NullWrapper<T>

@@ -39,10 +39,10 @@ namespace V8 {
         virtual Object^ GetRootItem() override;
         virtual void AddGlobalItem(String^ gcName, Object^ gcItem, Boolean globalMembers) override;
         virtual void AwaitDebuggerAndPause() override;
-        virtual Object^ Execute(String^ gcDocumentName, String^ gcCode, Boolean evaluate, Boolean discard) override;
-        virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode) override;
-        virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes) override;
-        virtual V8Script^ Compile(String^ gcDocumentName, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted) override;
+        virtual Object^ Execute(DocumentInfo documentInfo, String^ gcCode, Boolean evaluate) override;
+        virtual V8Script^ Compile(DocumentInfo documentInfo, String^ gcCode) override;
+        virtual V8Script^ Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes) override;
+        virtual V8Script^ Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted) override;
         virtual Object^ Execute(V8Script^ gcScript, Boolean evaluate) override;
         virtual void Interrupt() override;
         virtual V8RuntimeHeapInfo^ GetRuntimeHeapInfo() override;

@@ -87,6 +87,7 @@ namespace Microsoft.ClearScript.Util
 
             public static readonly int E_NOINTERFACE = 0x80004002U.ToSigned();
             public static readonly int E_ABORT = 0x80004004U.ToSigned();
+            public static readonly int E_FAIL = 0x80004005U.ToSigned();
             public static readonly int E_INVALIDARG = 0x80070057U.ToSigned();
 
             public static readonly int DISP_E_UNKNOWNNAME = 0x80020006U.ToSigned();

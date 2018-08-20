@@ -40,5 +40,7 @@ namespace Microsoft.ClearScript
             result = null;
             return false;
         }
+
+        public abstract Invocability GetInvocability(BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic);
     }
 }

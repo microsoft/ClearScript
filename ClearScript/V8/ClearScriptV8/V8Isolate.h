@@ -30,9 +30,9 @@ public:
     virtual void SetMaxStackUsage(size_t value) = 0;
 
     virtual void AwaitDebuggerAndPause() = 0;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code) = 0;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) = 0;
-    virtual V8ScriptHolder* Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
     virtual void GetHeapInfo(V8IsolateHeapInfo& heapInfo) = 0;
     virtual void CollectGarbage(bool exhaustive) = 0;
 

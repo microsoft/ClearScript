@@ -17,6 +17,7 @@ using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 using UIAutomationClient;
 
 namespace Microsoft.ClearScript.Test
@@ -294,11 +295,16 @@ namespace Microsoft.ClearScript.Test
         {
             // ReSharper disable RedundantAssignment
 
-            var x = new object();
-            var wr = new WeakReference(x);
+            WeakReference wr = null;
 
-            VariantClearTestHelper(x);
-            x = null;
+            new Action(() =>
+            {
+                var x = new object();
+                wr = new WeakReference(x);
+
+                VariantClearTestHelper(x);
+                x = null;
+            })();
 
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
@@ -658,23 +664,29 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_V8CachedObjectLeak()
         {
-            object x = null;
             WeakReference wr = null;
 
             new Action(() =>
             {
+                // ReSharper disable RedundantAssignment
+
+                object x = null;
+
                 using (var tempEngine = new V8ScriptEngine())
                 {
                     tempEngine.AddHostType("Action", typeof(Action));
                     x = tempEngine.Evaluate("action = new Action(function () {})");
                     wr = new WeakReference(tempEngine);
                 }
+
+                Assert.IsInstanceOfType(x, typeof(Action));
+                TestUtil.AssertException<ObjectDisposedException>((Action)x);
+
+                x = null;
+
+                // ReSharper restore RedundantAssignment
             })();
 
-            Assert.IsInstanceOfType(x, typeof(Action));
-            TestUtil.AssertException<ObjectDisposedException>((Action)x);
-
-            x = null;
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
             Assert.IsFalse(wr.IsAlive);
@@ -1120,6 +1132,7 @@ namespace Microsoft.ClearScript.Test
         {
             const int maxNewSpaceSize = 16;
             const int maxOldSpaceSize = 512;
+			const double tolerance = .05;
 
             var constraints = new V8RuntimeConstraints
             {
@@ -1130,7 +1143,10 @@ namespace Microsoft.ClearScript.Test
             using (var tempEngine = new V8ScriptEngine(constraints))
             {
                 Assert.AreEqual(Math.PI, tempEngine.Evaluate("Math.PI"));
-                Assert.AreEqual(Convert.ToUInt64(maxNewSpaceSize * 2 + maxOldSpaceSize), tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
+				var expected = Convert.ToDouble(maxNewSpaceSize * 2 + maxOldSpaceSize);
+				var actual = Convert.ToDouble(tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
+				var ratio = actual / expected;
+				Assert.IsTrue((ratio >= 1 - tolerance) && (ratio <= 1 + tolerance));
             }
 
             constraints = new V8RuntimeConstraints
@@ -1142,9 +1158,12 @@ namespace Microsoft.ClearScript.Test
             using (var tempEngine = new V8ScriptEngine(constraints))
             {
                 Assert.AreEqual(Math.E, tempEngine.Evaluate("Math.E"));
-                Assert.AreEqual(Convert.ToUInt64(maxNewSpaceSize * 2 + maxOldSpaceSize), tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
-            }
-        }
+				var expected = Convert.ToDouble(maxNewSpaceSize * 2 + maxOldSpaceSize);
+				var actual = Convert.ToDouble(tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
+				var ratio = actual / expected;
+				Assert.IsTrue((ratio >= 1 - tolerance) && (ratio <= 1 + tolerance));
+			}
+		}
 
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_TooManyDebugApplications()
@@ -1735,7 +1754,7 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_ScriptObjectInHostVariable()
         {
             engine.Script.host = new HostFunctions();
-            Assert.IsTrue(engine.Evaluate(null, true, "host.newVar({})", false).ToString().StartsWith("[HostVariable:", StringComparison.Ordinal));
+            Assert.IsTrue(engine.Evaluate(new DocumentInfo("Expresion") { Flags = DocumentFlags.IsTransient }, "host.newVar({})", false).ToString().StartsWith("[HostVariable:", StringComparison.Ordinal));
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -2219,7 +2238,7 @@ namespace Microsoft.ClearScript.Test
         {
             var value = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
             var scriptValue = Convert.ToDouble(engine.Evaluate("Date.now()"));
-            Assert.IsTrue(Math.Abs(scriptValue - value) < 5.0);
+            Assert.IsTrue(Math.Abs(scriptValue - value) < 25.0);
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -2291,6 +2310,51 @@ namespace Microsoft.ClearScript.Test
                     )
                 End Using
             ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NonexistentPropertyAccess_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New V8ScriptEngine
+                    engine.Script.dump = Sub(obj As Object, message As Object, stack As Object)
+                        Assert.AreEqual(message, obj.message)
+                        Assert.AreEqual(stack, obj.stack)
+                    End Sub
+                    engine.Execute(
+                        ""message = 'hello';"" & _
+                        ""stack = 'world';"" & _
+                        ""dump({ message: message, stack: stack }, message, stack);"" & _
+                        ""dump({ message: message }, message, undefined);""
+                    )
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_NonexistentPropertyAccess_JScript_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New JScriptEngine
+                    engine.Script.dump = Sub(obj As Object, message As Object, stack As Object)
+                        Assert.AreEqual(message, obj.message)
+                        Assert.AreEqual(stack, obj.stack)
+                    End Sub
+                    engine.Execute(
+                        ""message = 'hello';"" & _
+                        ""stack = 'world';"" & _
+                        ""dump({ message: message, stack: stack }, message, stack);"" & _
+                        ""dump({ message: message }, message, undefined);""
+                    )
+                End Using
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_JsonDotNetSerialization()
+        {
+            var obj = engine.Evaluate("({foo:123,bar:'baz'})");
+            Assert.AreEqual("{\"foo\":123,\"bar\":\"baz\"}", JsonConvert.SerializeObject(obj));
         }
 
         // ReSharper restore InconsistentNaming

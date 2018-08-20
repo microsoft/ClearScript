@@ -3,8 +3,6 @@
 
 #include "ClearScriptV8Managed.h"
 
-using namespace Microsoft::ClearScript::V8;
-
 //-----------------------------------------------------------------------------
 // local helper functions
 //-----------------------------------------------------------------------------
@@ -216,11 +214,21 @@ V8Value HostObjectHelpers::InvokeMethod(void* pvObject, const StdString& name, c
 
 //-----------------------------------------------------------------------------
 
-bool HostObjectHelpers::IsDelegate(void* pvObject)
+HostObjectHelpers::V8Invocability HostObjectHelpers::GetInvocability(void* pvObject)
 {
     try
     {
-        return V8ProxyHelpers::HostObjectIsDelegate(pvObject);
+        switch (V8ProxyHelpers::GetHostObjectInvocability(pvObject))
+        {
+            case Invocability::None:
+                return V8Invocability::None;
+
+            case Invocability::Delegate:
+                return V8Invocability::Delegate;
+
+            default:
+                return V8Invocability::Other;
+        }
     }
     catch (Exception^ gcException)
     {

@@ -19,6 +19,7 @@
 #include "V8Exception.h"
 #include "V8IsolateConstraints.h"
 #include "V8IsolateHeapInfo.h"
+#include "V8DocumentInfo.h"
 #include "V8CacheType.h"
 #include "V8Isolate.h"
 #include "V8Context.h"

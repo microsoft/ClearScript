@@ -268,6 +268,53 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Evaluate_DocumentInfo_WithDocumentName()
+        {
+            const string documentName = "DoTheMath";
+            engine.EnableDocumentNameTracking();
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentName), "Math.E * Math.PI"));
+            Assert.IsFalse(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Evaluate_DocumentInfo_WithDocumentUri()
+        {
+            const string documentName = "DoTheMath";
+            var documentUri = new Uri(@"c:\foo\bar\baz\" + documentName);
+            engine.EnableDocumentNameTracking();
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentUri) { Flags = DocumentFlags.None }, "Math.E * Math.PI"));
+            Assert.IsTrue(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Evaluate_DocumentInfo_WithDocumentUri_Relative()
+        {
+            const string documentName = "DoTheMath";
+            var documentUri = new Uri(documentName, UriKind.Relative);
+            engine.EnableDocumentNameTracking();
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentUri) { Flags = DocumentFlags.None }, "Math.E * Math.PI"));
+            Assert.IsTrue(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Evaluate_DocumentInfo_DiscardDocument()
+        {
+            const string documentName = "DoTheMath";
+            engine.EnableDocumentNameTracking();
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentName) { Flags = DocumentFlags.IsTransient }, "Math.E * Math.PI"));
+            Assert.IsFalse(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Evaluate_DocumentInfo_RetainDocument()
+        {
+            const string documentName = "DoTheMath";
+            engine.EnableDocumentNameTracking();
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate(new DocumentInfo(documentName) { Flags = DocumentFlags.None }, "Math.E * Math.PI"));
+            Assert.IsTrue(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_Execute()
         {
             engine.Execute("epi = Math.E * Math.PI");
@@ -300,6 +347,58 @@ namespace Microsoft.ClearScript.Test
             const string documentName = "DoTheMath";
             engine.EnableDocumentNameTracking();
             engine.Execute(documentName, false, "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsTrue(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Execute_DocumentInfo_WithDocumentName()
+        {
+            const string documentName = "DoTheMath";
+            engine.EnableDocumentNameTracking();
+            engine.Execute(new DocumentInfo(documentName), "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsTrue(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Execute_DocumentInfo_WithDocumentUri()
+        {
+            const string documentName = "DoTheMath";
+            var documentUri = new Uri(@"c:\foo\bar\baz\" + documentName);
+            engine.EnableDocumentNameTracking();
+            engine.Execute(new DocumentInfo(documentUri), "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsTrue(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Execute_DocumentInfo_WithDocumentUri_Relative()
+        {
+            const string documentName = "DoTheMath";
+            var documentUri = new Uri(documentName, UriKind.Relative);
+            engine.EnableDocumentNameTracking();
+            engine.Execute(new DocumentInfo(documentUri), "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsTrue(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Execute_DocumentInfo_DiscardDocument()
+        {
+            const string documentName = "DoTheMath";
+            engine.EnableDocumentNameTracking();
+            engine.Execute(new DocumentInfo(documentName) { Flags = DocumentFlags.IsTransient }, "epi = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
+            Assert.IsFalse(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Execute_DocumentInfo_RetainDocument()
+        {
+            const string documentName = "DoTheMath";
+            engine.EnableDocumentNameTracking();
+            engine.Execute(new DocumentInfo(documentName) { Flags = DocumentFlags.None }, "epi = Math.E * Math.PI");
             Assert.AreEqual(Math.E * Math.PI, engine.Script.epi);
             Assert.IsTrue(engine.GetDocumentNames().Any(name => name.StartsWith(documentName, StringComparison.Ordinal)));
         }
@@ -661,12 +760,17 @@ namespace Microsoft.ClearScript.Test
         {
             // ReSharper disable RedundantAssignment
 
-            var x = new object();
-            var wr = new WeakReference(x);
-            engine.Script.x = x;
+            WeakReference wr = null;
 
-            x = null;
-            engine.Script.x = null;
+            new Action(() =>
+            {
+                var x = new object();
+                wr = new WeakReference(x);
+                engine.Script.x = x;
+
+                x = null;
+                engine.Script.x = null;
+            })();
 
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
@@ -892,6 +996,8 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_General_ParserCache()
         {
+            #pragma warning disable CS0618 // Type or member is obsolete (V8CacheKind.Parser)
+
             engine.Dispose();
             engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
 
@@ -904,7 +1010,7 @@ namespace Microsoft.ClearScript.Test
             }
 
             Assert.IsNotNull(cacheBytes);
-            Assert.IsTrue((cacheBytes.Length > 50) && (cacheBytes.Length < 2000)); // typical size is ~100
+            Assert.IsTrue(cacheBytes.Length > 2000); // typical size is ~4K
 
             bool cacheAccepted;
             using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out cacheAccepted))
@@ -928,11 +1034,15 @@ namespace Microsoft.ClearScript.Test
                     Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
                 }
             }
+
+            #pragma warning restore CS0618 // Type or member is obsolete (V8CacheKind.Parser)
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_General_ParserCache_BadData()
         {
+            #pragma warning disable CS0618 // Type or member is obsolete (V8CacheKind.Parser)
+
             engine.Dispose();
             engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
 
@@ -945,7 +1055,7 @@ namespace Microsoft.ClearScript.Test
             }
 
             Assert.IsNotNull(cacheBytes);
-            Assert.IsTrue((cacheBytes.Length > 50) && (cacheBytes.Length < 2000)); // typical size is ~100
+            Assert.IsTrue(cacheBytes.Length > 2000); // typical size is ~4K
 
             cacheBytes = cacheBytes.Take(cacheBytes.Length - 1).ToArray();
 
@@ -971,11 +1081,15 @@ namespace Microsoft.ClearScript.Test
                     Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
                 }
             }
+
+            #pragma warning restore CS0618 // Type or member is obsolete (V8CacheKind.Parser)
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_General_ParserCache_DebuggingEnabled()
         {
+            #pragma warning disable CS0618 // Type or member is obsolete (V8CacheKind.Parser)
+
             byte[] cacheBytes;
             using (var tempEngine = new V8ScriptEngine())
             {
@@ -985,7 +1099,7 @@ namespace Microsoft.ClearScript.Test
             }
 
             Assert.IsNotNull(cacheBytes);
-            Assert.IsTrue((cacheBytes.Length > 50) && (cacheBytes.Length < 2000)); // typical size is ~100
+            Assert.IsTrue(cacheBytes.Length > 2000); // typical size is ~4K
 
             bool cacheAccepted;
             using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out cacheAccepted))
@@ -1009,6 +1123,8 @@ namespace Microsoft.ClearScript.Test
                     Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
                 }
             }
+
+            #pragma warning restore CS0618 // Type or member is obsolete (V8CacheKind.Parser)
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -1609,6 +1725,14 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DynamicHostObject_StaticType_Invoke()
+        {
+            engine.Script.testObject = new DynamicTestObject();
+            engine.Script.host = new HostFunctions();
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("host.toStaticType(testObject)('foo', 'bar', 'baz', 'qux')"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_DynamicHostObject_Property()
         {
             engine.Script.testObject = new DynamicTestObject();
@@ -1691,6 +1815,15 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue((bool)engine.Evaluate("delete testObject['foo']"));
             Assert.IsInstanceOfType(engine.Evaluate("testObject['foo']"), typeof(Undefined));
             Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 'foo')"), typeof(Undefined));
+
+            Assert.IsInstanceOfType(engine.Evaluate("testObject('foo', 'bar', 'baz')"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 'foo', 'bar', 'baz')"), typeof(Undefined));
+            Assert.AreEqual("qux", engine.Evaluate("host.setElement(testObject, 'qux', 'foo', 'bar', 'baz')"));
+            Assert.AreEqual("qux", engine.Evaluate("testObject('foo', 'bar', 'baz')"));
+            Assert.AreEqual("qux", engine.Evaluate("host.getElement(testObject, 'foo', 'bar', 'baz')"));
+            Assert.IsInstanceOfType(engine.Evaluate("host.setElement(testObject, undefined, 'foo', 'bar', 'baz')"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("testObject('foo', 'bar', 'baz')"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("host.getElement(testObject, 'foo', 'bar', 'baz')"), typeof(Undefined));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -2706,6 +2839,71 @@ namespace Microsoft.ClearScript.Test
             Assert.IsInstanceOfType(utcNowObj, typeof(DateTime));
             Assert.AreEqual(DateTimeKind.Utc, ((DateTime)utcNowObj).Kind);
             Assert.IsTrue(Math.Abs(((DateTime)utcNowObj - utcEpoch).TotalMilliseconds - Convert.ToDouble(engine.Evaluate("now.valueOf()"))) <= 1.0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_typeof()
+        {
+            engine.Script.foo = new Random();
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.AreEqual("function", engine.Evaluate("typeof foo.ToString"));
+
+            engine.Script.foo = Enumerable.Range(0, 5).ToArray();
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+
+            engine.Script.foo = new ArrayList();
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+
+            engine.Script.foo = new BitArray(100);
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+
+            engine.Script.foo = new Hashtable();
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+
+            engine.Script.foo = new Queue();
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+
+            engine.Script.foo = new SortedList();
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+
+            engine.Script.foo = new Stack();
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+
+            engine.Script.foo = new List<string>();
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.AreEqual("function", engine.Evaluate("typeof foo.Item"));
+
+            engine.Script.foo = new ExpandoObject();
+            engine.Script.host = new HostFunctions();
+            Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.AreEqual("object", engine.Evaluate("typeof host.toStaticType(foo)"));
+        }
+        
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ArrayInvocability()
+        {
+            engine.Script.foo = Enumerable.Range(123, 5).ToArray();
+            Assert.AreEqual(124, engine.Evaluate("foo(1)"));
+
+            engine.Script.foo = new IConvertible[] { "bar" };
+            Assert.AreEqual("bar", engine.Evaluate("foo(0)"));
+
+            engine.Script.bar = new List<string>();
+            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("bar.Add(foo(0))"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_PropertyBagInvocability()
+        {
+            engine.Script.lib = new HostTypeCollection("mscorlib", "System", "System.Core");
+            Assert.IsInstanceOfType(engine.Evaluate("lib('System')"), typeof(PropertyBag));
+            Assert.IsInstanceOfType(engine.Evaluate("lib.System('Collections')"), typeof(PropertyBag));
+            Assert.IsInstanceOfType(engine.Evaluate("lib('Bogus')"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("lib.System('Heinous')"), typeof(Undefined));
+
+            engine.Script.foo = new PropertyBag { { "Null", null } };
+            Assert.IsNull(engine.Evaluate("foo.Null"));
+            TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("foo.Null(123)"));
         }
 
         // ReSharper restore InconsistentNaming

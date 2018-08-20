@@ -26,13 +26,13 @@ namespace Microsoft.ClearScript.V8
 
         public abstract void AwaitDebuggerAndPause();
 
-        public abstract object Execute(string documentName, string code, bool evaluate, bool discard);
+        public abstract object Execute(DocumentInfo documentInfo, string code, bool evaluate);
 
-        public abstract V8Script Compile(string documentName, string code);
+        public abstract V8Script Compile(DocumentInfo documentInfo, string code);
 
-        public abstract V8Script Compile(string documentName, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
+        public abstract V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
 
-        public abstract V8Script Compile(string documentName, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
+        public abstract V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
 
         public abstract object Execute(V8Script script, bool evaluate);
 

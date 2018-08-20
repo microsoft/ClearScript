@@ -4,23 +4,6 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
-// SharedPtrTraits<v8::Task>
-//-----------------------------------------------------------------------------
-
-template<>
-class SharedPtrTraits<v8::Task>
-{
-    PROHIBIT_CONSTRUCT(SharedPtrTraits)
-
-public:
-
-    static void Destroy(v8::Task* pTarget)
-    {
-        pTarget->Delete();
-    }
-};
-
-//-----------------------------------------------------------------------------
 // V8Platform
 //-----------------------------------------------------------------------------
 
@@ -31,12 +14,12 @@ public:
     static V8Platform& GetInstance();
     static void EnsureInstalled();
 
-    virtual size_t NumberOfAvailableBackgroundThreads() override;
-    virtual void CallOnBackgroundThread(v8::Task* pTask, ExpectedRuntime runtime) override;
+    virtual int NumberOfWorkerThreads() override;
+    virtual std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner(v8::Isolate* pIsolate) override;
+    virtual void CallOnWorkerThread(std::unique_ptr<v8::Task> spTask) override;
+    virtual void CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> spTask, double delayInSeconds) override;
     virtual void CallOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask) override;
     virtual void CallDelayedOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask, double delayInSeconds) override;
-    virtual void CallIdleOnForegroundThread(v8::Isolate* pIsolate, v8::IdleTask* pTask) override;
-    virtual bool IdleTasksEnabled(v8::Isolate* pIsolate) override;
     virtual double MonotonicallyIncreasingTime() override;
     virtual double CurrentClockTimeMillis() override;
     virtual v8::TracingController* GetTracingController() override;
@@ -70,24 +53,41 @@ void V8Platform::EnsureInstalled()
 
 //-----------------------------------------------------------------------------
 
-size_t V8Platform::NumberOfAvailableBackgroundThreads()
+int V8Platform::NumberOfWorkerThreads()
 {
-    return HighResolutionClock::GetHardwareConcurrency();
+    return static_cast<int>(HighResolutionClock::GetHardwareConcurrency());
 }
 
 //-----------------------------------------------------------------------------
 
-void V8Platform::CallOnBackgroundThread(v8::Task* pTask, ExpectedRuntime /*runtime*/)
+std::shared_ptr<v8::TaskRunner> V8Platform::GetForegroundTaskRunner(v8::Isolate* pIsolate)
+{
+    return static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->GetForegroundTaskRunner();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8Platform::CallOnWorkerThread(std::unique_ptr<v8::Task> spTask)
 {
     auto pIsolate = v8::Isolate::GetCurrent();
     if (pIsolate == nullptr)
     {
-        pTask->Run();
-        pTask->Delete();
+        spTask->Run();
     }
     else
     {
-        static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskAsync(pTask);
+        static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskAsync(spTask.release());
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8Platform::CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> spTask, double delayInSeconds)
+{
+    auto pIsolate = v8::Isolate::GetCurrent();
+    if (pIsolate != nullptr)
+    {
+        static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskDelayed(spTask.release(), delayInSeconds);
     }
 }
 
@@ -103,21 +103,6 @@ void V8Platform::CallOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask)
 void V8Platform::CallDelayedOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask, double delayInSeconds)
 {
     static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskWithLockDelayed(pTask, delayInSeconds);
-}
-
-//-----------------------------------------------------------------------------
-
-void V8Platform::CallIdleOnForegroundThread(v8::Isolate* /*pIsolate*/, v8::IdleTask* /*pTask*/)
-{
-    // unexpected call to unsupported method
-    std::terminate();
-}
-
-//-----------------------------------------------------------------------------
-
-bool V8Platform::IdleTasksEnabled(v8::Isolate* /*pIsolate*/)
-{
-    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -151,6 +136,78 @@ V8Platform::V8Platform()
 
 V8Platform V8Platform::ms_Instance;
 OnceFlag V8Platform::ms_InstallationFlag;
+
+//-----------------------------------------------------------------------------
+// V8ForegroundTaskRunner
+//-----------------------------------------------------------------------------
+
+class V8ForegroundTaskRunner: public v8::TaskRunner
+{
+    PROHIBIT_COPY(V8ForegroundTaskRunner)
+
+public:
+
+    V8ForegroundTaskRunner(V8IsolateImpl* pIsolateImpl);
+
+    virtual void PostTask(std::unique_ptr<v8::Task> spTask) override;
+    virtual void PostDelayedTask(std::unique_ptr<v8::Task> spTask, double delayInSeconds) override;
+    virtual void PostIdleTask(std::unique_ptr<v8::IdleTask> spTask) override;
+    virtual bool IdleTasksEnabled() override;
+
+private:
+
+    V8IsolateImpl* m_pIsolateImpl;
+    WeakRef<V8Isolate> m_wrIsolate;
+};
+
+//-----------------------------------------------------------------------------
+
+V8ForegroundTaskRunner::V8ForegroundTaskRunner(V8IsolateImpl* pIsolateImpl):
+    m_pIsolateImpl(pIsolateImpl),
+    m_wrIsolate(pIsolateImpl->CreateWeakRef())
+{
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ForegroundTaskRunner::PostTask(std::unique_ptr<v8::Task> spTask)
+{
+    auto spIsolate = m_wrIsolate.GetTarget();
+    if (spIsolate.IsEmpty())
+    {
+        spTask->Run();
+    }
+    else
+    {
+        m_pIsolateImpl->RunTaskWithLockAsync(spTask.release());
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ForegroundTaskRunner::PostDelayedTask(std::unique_ptr<v8::Task> spTask, double delayInSeconds)
+{
+    auto spIsolate = m_wrIsolate.GetTarget();
+    if (!spIsolate.IsEmpty())
+    {
+        m_pIsolateImpl->RunTaskWithLockDelayed(spTask.release(), delayInSeconds);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ForegroundTaskRunner::PostIdleTask(std::unique_ptr<v8::IdleTask> spTask)
+{
+    // unexpected call to unsupported method
+    std::terminate();
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8ForegroundTaskRunner::IdleTasksEnabled()
+{
+    return false;
+}
 
 //-----------------------------------------------------------------------------
 // V8ArrayBufferAllocator
@@ -465,36 +522,36 @@ void V8IsolateImpl::AwaitDebuggerAndPause()
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdString& code)
+V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const StdString& code)
 {
     BEGIN_ISOLATE_SCOPE
 
         SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this));
-        return spContextImpl->Compile(documentName, code);
+        return spContextImpl->Compile(documentInfo, code);
 
     END_ISOLATE_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes)
+V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes)
 {
     BEGIN_ISOLATE_SCOPE
 
         SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this));
-        return spContextImpl->Compile(documentName, code, cacheType, cacheBytes);
+        return spContextImpl->Compile(documentInfo, code, cacheType, cacheBytes);
 
     END_ISOLATE_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8IsolateImpl::Compile(const StdString& documentName, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted)
+V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted)
 {
     BEGIN_ISOLATE_SCOPE
 
         SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this));
-        return spContextImpl->Compile(documentName, code, cacheType, cacheBytes, cacheAccepted);
+        return spContextImpl->Compile(documentInfo, code, cacheType, cacheBytes, cacheAccepted);
 
     END_ISOLATE_SCOPE
 }
@@ -657,11 +714,11 @@ void V8IsolateImpl::RunTaskAsync(v8::Task* pTask)
     if (m_Released)
     {
         pTask->Run();
-        pTask->Delete();
+        delete pTask;
     }
     else
     {
-        std::shared_ptr<v8::Task> spTask(pTask, [] (v8::Task* pTask) { pTask->Delete(); });
+        std::shared_ptr<v8::Task> spTask(pTask);
         std::weak_ptr<v8::Task> wpTask(spTask);
 
         BEGIN_MUTEX_SCOPE(m_DataMutex)
@@ -680,7 +737,8 @@ void V8IsolateImpl::RunTaskAsync(v8::Task* pTask)
                     spTask->Run();
 
                     BEGIN_MUTEX_SCOPE(m_DataMutex)
-                        m_AsyncTasks.erase(std::remove(m_AsyncTasks.begin(), m_AsyncTasks.end(), spTask), m_AsyncTasks.end());
+                        auto it = std::remove(m_AsyncTasks.begin(), m_AsyncTasks.end(), spTask);
+                        m_AsyncTasks.erase(it, m_AsyncTasks.end());
                     END_MUTEX_SCOPE
                 }
             }
@@ -690,34 +748,15 @@ void V8IsolateImpl::RunTaskAsync(v8::Task* pTask)
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::RunTaskWithLockAsync(v8::Task* pTask)
+void V8IsolateImpl::RunTaskDelayed(v8::Task* pTask, double delayInSeconds)
 {
     if (m_Released)
     {
-        pTask->Run();
-        pTask->Delete();
+        delete pTask;
     }
     else
     {
-        std::shared_ptr<v8::Task> spTask(pTask, [] (v8::Task* pTask) { pTask->Delete(); });
-        CallWithLockAsync([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
-        {
-            spTask->Run();
-        });
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void V8IsolateImpl::RunTaskWithLockDelayed(v8::Task* pTask, double delayInSeconds)
-{
-    if (m_Released)
-    {
-        pTask->Delete();
-    }
-    else
-    {
-        std::shared_ptr<v8::Task> spTask(pTask, [] (v8::Task* pTask) { pTask->Delete(); });
+        std::shared_ptr<v8::Task> spTask(pTask);
 
         auto wrIsolate = CreateWeakRef();
         SharedPtr<Timer> spTimer(new Timer(static_cast<int>(delayInSeconds * 1000), -1, [this, wrIsolate, spTask] (Timer* pTimer) mutable
@@ -727,10 +766,7 @@ void V8IsolateImpl::RunTaskWithLockDelayed(v8::Task* pTask, double delayInSecond
                 auto spIsolate = wrIsolate.GetTarget();
                 if (!spIsolate.IsEmpty())
                 {
-                    CallWithLockNoWait([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
-                    {
-                        spTask->Run();
-                    });
+                    spTask->Run();
 
                     // Release the timer's strong task reference. Doing so avoids a deadlock when
                     // spIsolate's implicit destruction below triggers immediate isolate teardown.
@@ -740,7 +776,8 @@ void V8IsolateImpl::RunTaskWithLockDelayed(v8::Task* pTask, double delayInSecond
                     // the timer has fired; discard it
 
                     BEGIN_MUTEX_SCOPE(m_DataMutex)
-                        m_TaskTimers.erase(std::remove(m_TaskTimers.begin(), m_TaskTimers.end(), pTimer), m_TaskTimers.end());
+                        auto it = std::remove(m_TaskTimers.begin(), m_TaskTimers.end(), pTimer);
+                        m_TaskTimers.erase(it, m_TaskTimers.end());
                     END_MUTEX_SCOPE
                 }
                 else
@@ -768,6 +805,105 @@ void V8IsolateImpl::RunTaskWithLockDelayed(v8::Task* pTask, double delayInSecond
 
         spTimer->Start();
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::RunTaskWithLockAsync(v8::Task* pTask)
+{
+    if (m_Released)
+    {
+        pTask->Run();
+        delete pTask;
+    }
+    else
+    {
+        std::shared_ptr<v8::Task> spTask(pTask);
+        CallWithLockAsync([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
+        {
+            spTask->Run();
+        });
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::RunTaskWithLockDelayed(v8::Task* pTask, double delayInSeconds)
+{
+    if (m_Released)
+    {
+        delete pTask;
+    }
+    else
+    {
+        std::shared_ptr<v8::Task> spTask(pTask);
+
+        auto wrIsolate = CreateWeakRef();
+        SharedPtr<Timer> spTimer(new Timer(static_cast<int>(delayInSeconds * 1000), -1, [this, wrIsolate, spTask] (Timer* pTimer) mutable
+        {
+            if (spTask)
+            {
+                auto spIsolate = wrIsolate.GetTarget();
+                if (!spIsolate.IsEmpty())
+                {
+                    CallWithLockNoWait([spTask] (V8IsolateImpl* /*pIsolateImpl*/)
+                    {
+                        spTask->Run();
+                    });
+
+                    // Release the timer's strong task reference. Doing so avoids a deadlock when
+                    // spIsolate's implicit destruction below triggers immediate isolate teardown.
+
+                    spTask.reset();
+
+                    // the timer has fired; discard it
+
+                    BEGIN_MUTEX_SCOPE(m_DataMutex)
+                        auto it = std::remove(m_TaskTimers.begin(), m_TaskTimers.end(), pTimer);
+                        m_TaskTimers.erase(it, m_TaskTimers.end());
+                    END_MUTEX_SCOPE
+                }
+                else
+                {
+                    // Release the timer's strong task reference. Doing so avoids a deadlock if the
+                    // isolate is awaiting task completion on the managed finalization thread.
+
+                    spTask.reset();
+                }
+            }
+        }));
+
+        // hold on to the timer to ensure callback execution
+
+        BEGIN_MUTEX_SCOPE(m_DataMutex)
+            m_TaskTimers.push_back(spTimer);
+        END_MUTEX_SCOPE
+
+        // Release the local task reference explicitly. Doing so avoids a deadlock if the callback is
+        // executed synchronously. That shouldn't happen given the current timer implementation.
+
+        spTask.reset();
+
+        // now it's safe to start the timer
+
+        spTimer->Start();
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+std::shared_ptr<v8::TaskRunner> V8IsolateImpl::GetForegroundTaskRunner()
+{
+    BEGIN_MUTEX_SCOPE(m_DataMutex)
+
+        if (!m_spForegroundTaskRunner)
+        {
+            m_spForegroundTaskRunner = std::make_shared<V8ForegroundTaskRunner>(this);
+        }
+
+        return m_spForegroundTaskRunner;
+
+    END_MUTEX_SCOPE
 }
 
 //-----------------------------------------------------------------------------

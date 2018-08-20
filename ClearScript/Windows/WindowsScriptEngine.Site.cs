@@ -99,7 +99,7 @@ namespace Microsoft.ClearScript.Windows
                     if (engine.debugDocumentMap.TryGetValue(new UIntPtr(sourceContext), out document))
                     {
                         string documentName;
-                        document.GetName(DocumentNameType.Title, out documentName);
+                        document.GetName(DocumentNameType.UniqueTitle, out documentName);
 
                         int position;
                         if (lineNumber > 0)

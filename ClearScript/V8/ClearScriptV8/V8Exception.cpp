@@ -3,9 +3,6 @@
 
 #include "ClearScriptV8Managed.h"
 
-using namespace Microsoft::ClearScript;
-using namespace Microsoft::ClearScript::V8;
-
 //-----------------------------------------------------------------------------
 // V8Exception implementation
 //-----------------------------------------------------------------------------

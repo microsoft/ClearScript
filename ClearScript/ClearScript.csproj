@@ -64,6 +64,9 @@
   <ItemGroup>
     <Compile Include="CanonicalRefTable.cs" />
     <Compile Include="ContinuationCallback.cs" />
+    <Compile Include="DocumentFlags.cs" />
+    <Compile Include="DocumentInfo.cs" />
+    <Compile Include="Invocability.cs" />
     <Compile Include="ImmutableValueAttribute.cs" />
     <Compile Include="HostItemCollateral.cs" />
     <Compile Include="HostItemFlags.cs" />

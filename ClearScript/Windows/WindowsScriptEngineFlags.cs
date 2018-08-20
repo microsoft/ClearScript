@@ -58,7 +58,7 @@ namespace Microsoft.ClearScript.Windows
         /// converted to script arrays and marshaled as variants of type <c>VT_ARRAY</c>. In
         /// VBScript these objects are the native array type. JScript code can use the
         /// <see href="http://msdn.microsoft.com/en-us/library/y39d47w8(v=vs.84).aspx">VBArray</see>
-        /// object to to access them.
+        /// object to access them.
         /// </summary>
         MarshalArraysByValue = 0x00000040,
 
