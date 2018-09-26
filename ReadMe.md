@@ -23,3 +23,6 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
 * [API reference](https://microsoft.github.io/ClearScript/Reference/index.html)
 * [Building, integrating, and deploying ClearScript](https://microsoft.github.io/ClearScript/Details/Build.html)
 * [Old project site on CodePlex](https://clearscript.codeplex.com/)
+
+# Installation
+* [NuGet package](https://www.nuget.org/packages/Microsoft.ClearScript)
