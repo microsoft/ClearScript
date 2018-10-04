@@ -1132,7 +1132,7 @@ namespace Microsoft.ClearScript.Test
         {
             const int maxNewSpaceSize = 16;
             const int maxOldSpaceSize = 512;
-			const double tolerance = .05;
+            const double tolerance = .05;
 
             var constraints = new V8RuntimeConstraints
             {
@@ -1143,10 +1143,10 @@ namespace Microsoft.ClearScript.Test
             using (var tempEngine = new V8ScriptEngine(constraints))
             {
                 Assert.AreEqual(Math.PI, tempEngine.Evaluate("Math.PI"));
-				var expected = Convert.ToDouble(maxNewSpaceSize * 2 + maxOldSpaceSize);
-				var actual = Convert.ToDouble(tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
-				var ratio = actual / expected;
-				Assert.IsTrue((ratio >= 1 - tolerance) && (ratio <= 1 + tolerance));
+                var expected = Convert.ToDouble(maxNewSpaceSize * 2 + maxOldSpaceSize);
+                var actual = Convert.ToDouble(tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
+                var ratio = actual / expected;
+                Assert.IsTrue((ratio >= 1 - tolerance) && (ratio <= 1 + tolerance));
             }
 
             constraints = new V8RuntimeConstraints
@@ -1158,12 +1158,12 @@ namespace Microsoft.ClearScript.Test
             using (var tempEngine = new V8ScriptEngine(constraints))
             {
                 Assert.AreEqual(Math.E, tempEngine.Evaluate("Math.E"));
-				var expected = Convert.ToDouble(maxNewSpaceSize * 2 + maxOldSpaceSize);
-				var actual = Convert.ToDouble(tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
-				var ratio = actual / expected;
-				Assert.IsTrue((ratio >= 1 - tolerance) && (ratio <= 1 + tolerance));
-			}
-		}
+                var expected = Convert.ToDouble(maxNewSpaceSize * 2 + maxOldSpaceSize);
+                var actual = Convert.ToDouble(tempEngine.GetRuntimeHeapInfo().HeapSizeLimit / (1024 * 1024));
+                var ratio = actual / expected;
+                Assert.IsTrue((ratio >= 1 - tolerance) && (ratio <= 1 + tolerance));
+            }
+        }
 
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_TooManyDebugApplications()
@@ -2355,6 +2355,15 @@ namespace Microsoft.ClearScript.Test
         {
             var obj = engine.Evaluate("({foo:123,bar:'baz'})");
             Assert.AreEqual("{\"foo\":123,\"bar\":\"baz\"}", JsonConvert.SerializeObject(obj));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_RuntimeCompileException()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                TestUtil.AssertException<ScriptEngineException>(() => runtime.Compile("function foo bar () {}"));
+            }
         }
 
         // ReSharper restore InconsistentNaming

@@ -12,7 +12,8 @@ void DECLSPEC_NORETURN V8Exception::ThrowScriptEngineException() const
     auto gcEngineName = m_EngineName.ToManagedString();
     auto gcMessage = m_Message.ToManagedString();
     auto gcStackTrace = m_StackTrace.ToManagedString();
-    auto gcScriptException = ScriptEngine::Current->MarshalToHost(V8ContextProxyImpl::ExportValue(m_ScriptException), false);
+    auto gcEngine = ScriptEngine::Current;
+    auto gcScriptException = (gcEngine != nullptr) ? gcEngine->MarshalToHost(V8ContextProxyImpl::ExportValue(m_ScriptException), false) : nullptr;
     auto gcInnerException = V8ProxyHelpers::MarshalExceptionToHost(V8ContextProxyImpl::ExportValue(m_InnerException));
 
     switch (m_Type)
