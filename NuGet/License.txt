@@ -4,7 +4,6 @@ ClearScript
 
 MIT License
 
-ClearScript
 Copyright (c) Microsoft Corporation
 All rights reserved.
 
