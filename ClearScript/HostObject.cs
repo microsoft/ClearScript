@@ -126,9 +126,9 @@ namespace Microsoft.ClearScript
             get { return HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods; }
         }
 
-        public override Invocability GetInvocability(BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
         {
-            return type.GetInvocability(bindFlags, defaultAccess, ignoreDynamic);
+            return type.GetInvocability(bindFlags, accessContext, defaultAccess, ignoreDynamic);
         }
 
         #endregion

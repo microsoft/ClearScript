@@ -41,7 +41,7 @@ namespace Microsoft.ClearScript.V8
             var implType = GetAssembly().GetType(name + "Impl");
             if (implType == null)
             {
-                throw new TypeLoadException("Cannot find " + name + " implementation type in V8 interface assembly.");
+                throw new TypeLoadException("Cannot find " + name + " implementation type in V8 interface assembly");
             }
 
             return implType;

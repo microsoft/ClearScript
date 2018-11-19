@@ -22,6 +22,7 @@ namespace Microsoft.ClearScript.Test
 {
     [TestClass]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
+    [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class VBScriptEngineTest : ClearScriptTest
     {
         #region setup / teardown
@@ -2423,13 +2424,29 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(456, Convert.ToInt32(engine.Evaluate("foo(empty)")));
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_EnforceAnonymousTypeAccess()
+        {
+            engine.Script.foo = new { bar = 123, baz = "qux" };
+            Assert.AreEqual(123, engine.Evaluate("foo.bar"));
+            Assert.AreEqual("qux", engine.Evaluate("foo.baz"));
+
+            engine.EnforceAnonymousTypeAccess = true;
+            Assert.IsInstanceOfType(engine.Evaluate("foo.bar"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("foo.baz"), typeof(Undefined));
+
+            engine.AccessContext = GetType();
+            Assert.AreEqual(123, engine.Evaluate("foo.bar"));
+            Assert.AreEqual("qux", engine.Evaluate("foo.baz"));
+        }
+
         // ReSharper restore InconsistentNaming
 
-        #endregion
+		#endregion
 
-        #region miscellaneous
+		#region miscellaneous
 
-        public class ReflectionBindFallbackTest
+		public class ReflectionBindFallbackTest
         {
             public string Property { get { return "qux"; } }
 

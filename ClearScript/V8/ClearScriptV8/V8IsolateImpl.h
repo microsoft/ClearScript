@@ -117,6 +117,8 @@ public:
     };
 
     V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, const Options& options);
+
+	static V8IsolateImpl* GetInstanceFromIsolate(v8::Isolate* pIsolate);
     static size_t GetInstanceCount();
 
     const StdString& GetName() const { return m_Name; }
@@ -312,7 +314,12 @@ public:
         m_pIsolate->LowMemoryNotification();
     }
 
-    void RequestInterrupt(v8::InterruptCallback callback, void* pvData)
+	v8::Local<v8::StackFrame> GetStackFrame(v8::Local<v8::StackTrace> hStackTrace, uint32_t index)
+	{
+		return hStackTrace->GetFrame(m_pIsolate, index);
+	}
+
+	void RequestInterrupt(v8::InterruptCallback callback, void* pvData)
     {
         m_pIsolate->RequestInterrupt(callback, pvData);
     }

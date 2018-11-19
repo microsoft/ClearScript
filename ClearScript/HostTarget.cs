@@ -41,6 +41,6 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public abstract Invocability GetInvocability(BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic);
+        public abstract Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic);
     }
 }

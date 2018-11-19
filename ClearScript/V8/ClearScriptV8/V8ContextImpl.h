@@ -269,7 +269,12 @@ private:
         m_spIsolateImpl->LowMemoryNotification();
     }
 
-    v8::Local<v8::String> GetTypeOf(v8::Local<v8::Value> hValue)
+	v8::Local<v8::StackFrame> GetStackFrame(v8::Local<v8::StackTrace> hStackTrace, uint32_t index)
+	{
+		return m_spIsolateImpl->GetStackFrame(hStackTrace, index);
+	}
+
+	v8::Local<v8::String> GetTypeOf(v8::Local<v8::Value> hValue)
     {
         return m_spIsolateImpl->GetTypeOf(hValue);
     }

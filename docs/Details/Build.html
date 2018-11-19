@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
 <meta name=Generator content="Microsoft Word 15 (filtered)">
 <title>Building, Integrating, and Deploying ClearScript</title>
 <style>
@@ -14,11 +14,11 @@
 	{font-family:Calibri;
 	panose-1:2 15 5 2 2 2 4 3 2 4;}
 @font-face
-	{font-family:Cambria;
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
 	{font-family:Consolas;
 	panose-1:2 11 6 9 2 2 4 3 2 4;}
+@font-face
+	{font-family:Cambria;
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
  /* Style Definitions */
  p.MsoNormal, li.MsoNormal, div.MsoNormal
 	{margin-top:6.0pt;
@@ -106,6 +106,12 @@ a:link, span.MsoHyperlink
 a:visited, span.MsoHyperlinkFollowed
 	{color:purple;
 	text-decoration:underline;}
+pre
+	{mso-style-link:"HTML Preformatted Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:10.0pt;
+	font-family:"Courier New";}
 p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
 	{margin-top:6.0pt;
 	margin-right:0in;
@@ -160,6 +166,18 @@ span.HeaderChar
 span.FooterChar
 	{mso-style-name:"Footer Char";
 	mso-style-link:Footer;}
+span.HTMLPreformattedChar
+	{mso-style-name:"HTML Preformatted Char";
+	mso-style-link:"HTML Preformatted";
+	font-family:"Courier New";}
+span.pl-ent
+	{mso-style-name:pl-ent;}
+span.pl-e
+	{mso-style-name:pl-e;}
+span.pl-s
+	{mso-style-name:pl-s;}
+span.pl-pds
+	{mso-style-name:pl-pds;}
 .MsoChpDefault
 	{font-family:"Calibri",sans-serif;}
 .MsoPapDefault
@@ -216,7 +234,78 @@ applications and asynchronous server-side scripting.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'><span style='font:7.0pt "Times New Roman"'> </span>II.
-Building ClearScript</h1>
+ClearScript NuGet package</h1>
+
+<p class=MsoNormal style='margin-left:.25in'>Now that an <span
+class=MsoHyperlink><a
+href="https://www.nuget.org/packages/Microsoft.ClearScript">official
+ClearScript NuGet package</a></span> is available, you can simply add it to
+your project and skip to Section <a href="#_Debugging_with_ClearScript">VI</a>
+below.</p>
+
+<p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:</span></b>
+If you’re adding the ClearScript NuGet package to an ASP.NET project, you must exclude
+ClearScript’s mixed-mode assemblies from ASP.NET compilation. To do so, merge
+the following into your <b>Web.config</b> files:</p>
+
+<p class=MsoNormal style='margin-top:10.0pt;margin-right:0in;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F6F8FA'><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>&lt;</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#22863A'>system.web</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>&gt;</span></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
+margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F6F8FA'><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>  &lt;</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#22863A'>compilation</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>&gt;</span></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
+margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F6F8FA'><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>    &lt;</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#22863A'>assemblies</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>&gt;</span></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
+margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F6F8FA'><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>      &lt;</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#22863A'>remove</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'> </span><span
+style='font-size:10.0pt;font-family:Consolas;color:#6F42C1'>assembly</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>=</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#032F62'>&quot;ClearScriptV8-64&quot;</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'> /&gt;</span></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
+margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F6F8FA'><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>      &lt;</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#22863A'>remove</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'> </span><span
+style='font-size:10.0pt;font-family:Consolas;color:#6F42C1'>assembly</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>=</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#032F62'>&quot;ClearScriptV8-32&quot;</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'> /&gt;</span></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
+margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F6F8FA'><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>    &lt;/</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#22863A'>assemblies</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>&gt;</span></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:0in;
+margin-left:.5in;margin-bottom:.0001pt;line-height:normal;background:#F6F8FA'><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>  &lt;/</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#22863A'>compilation</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>&gt;</span></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:14.0pt;
+margin-left:.5in;line-height:normal;background:#F6F8FA'><span style='font-size:
+10.0pt;font-family:Consolas;color:#24292E'>&lt;/</span><span style='font-size:
+10.0pt;font-family:Consolas;color:#22863A'>system.web</span><span
+style='font-size:10.0pt;font-family:Consolas;color:#24292E'>&gt;</span></p>
+
+<h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
+.5in;margin-bottom:.0001pt;text-indent:-.5in'>III. Building ClearScript</h1>
 
 <p class=MsoNormal style='margin-left:.25in'><a name="OLE_LINK13"></a><a
 name="OLE_LINK20"></a><a name="OLE_LINK15"></a><a name="OLE_LINK19">The ClearScript
@@ -385,7 +474,7 @@ with the provided project files (<b><span style='font-size:10.0pt;line-height:
 115%;font-family:Consolas'>ClearScript\doc\[Web]Reference.shfbproj</span></b>).</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-.5in;margin-bottom:.0001pt;text-indent:-.5in'>III. Building strong-named
+.5in;margin-bottom:.0001pt;text-indent:-.5in'>IV. Building strong-named
 ClearScript assemblies (optional)</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>ClearScript now includes optional
@@ -421,8 +510,8 @@ the solution.</p>
 the ClearScript assemblies you build will have strong names.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-.5in;margin-bottom:.0001pt;text-indent:-.5in'>IV. Integrating and deploying
-ClearScript with your application</h1>
+.5in;margin-bottom:.0001pt;text-indent:-.5in'><span style='font:7.0pt "Times New Roman"'>&nbsp;
+</span>V. Integrating and deploying ClearScript with your application</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript,
 here's how to add it to your application:</p>
@@ -488,8 +577,8 @@ href="https://go.microsoft.com/fwlink/?LinkId=746572">[x64]</a></span> <span
 class=MsoHyperlink><a href="https://go.microsoft.com/fwlink/?LinkId=746571">[x86]</a></span></p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-.5in;margin-bottom:.0001pt;text-indent:-.5in'><span style='font:7.0pt "Times New Roman"'>&nbsp;
-</span>V. Debugging with ClearScript and V8</h1>
+.5in;margin-bottom:.0001pt;text-indent:-.5in'><a
+name="_Debugging_with_ClearScript"></a>VI. Debugging with ClearScript and V8</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>V8 does not support standard
 Windows script debugging. Instead, it implements its own WebSocket-based
@@ -667,7 +756,7 @@ You can also attach Visual Studio to your application for simultaneous
 debugging of script, managed, and native code.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-.5in;margin-bottom:.0001pt;text-indent:-.5in'>VI. Acknowledgments</h1>
+.5in;margin-bottom:.0001pt;text-indent:-.5in'>VII. Acknowledgments</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>We’d like to thank:</p>
 

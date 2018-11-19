@@ -4,10 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Microsoft.ClearScript.Util
 {
+    [SuppressMessage("ReSharper", "CommentTypo")]
     internal abstract class VTablePatcher
     {
         private static readonly object dataLock = new object();

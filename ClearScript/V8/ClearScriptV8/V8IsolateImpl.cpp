@@ -62,7 +62,7 @@ int V8Platform::NumberOfWorkerThreads()
 
 std::shared_ptr<v8::TaskRunner> V8Platform::GetForegroundTaskRunner(v8::Isolate* pIsolate)
 {
-    return static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->GetForegroundTaskRunner();
+    return V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->GetForegroundTaskRunner();
 }
 
 //-----------------------------------------------------------------------------
@@ -76,7 +76,7 @@ void V8Platform::CallOnWorkerThread(std::unique_ptr<v8::Task> spTask)
     }
     else
     {
-        static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskAsync(spTask.release());
+		V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskAsync(spTask.release());
     }
 }
 
@@ -87,7 +87,7 @@ void V8Platform::CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> spTask, dou
     auto pIsolate = v8::Isolate::GetCurrent();
     if (pIsolate != nullptr)
     {
-        static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskDelayed(spTask.release(), delayInSeconds);
+		V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskDelayed(spTask.release(), delayInSeconds);
     }
 }
 
@@ -95,14 +95,14 @@ void V8Platform::CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> spTask, dou
 
 void V8Platform::CallOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask)
 {
-    static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskWithLockAsync(pTask);
+	V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskWithLockAsync(pTask);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8Platform::CallDelayedOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask, double delayInSeconds)
 {
-    static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->RunTaskWithLockDelayed(pTask, delayInSeconds);
+	V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskWithLockDelayed(pTask, delayInSeconds);
 }
 
 //-----------------------------------------------------------------------------
@@ -298,6 +298,7 @@ static const int s_ContextGroupId = 1;
 static const size_t s_StackBreathingRoom = static_cast<size_t>(16 * 1024);
 static size_t* const s_pMinStackLimit = reinterpret_cast<size_t*>(sizeof(size_t));
 static std::atomic<size_t> s_InstanceCount(0);
+static thread_local V8IsolateImpl* s_pInstanceInConstructor = nullptr;
 
 //-----------------------------------------------------------------------------
 
@@ -328,7 +329,10 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
         params.constraints.set_max_old_space_size(pConstraints->GetMaxOldSpaceSize());
     }
 
-    m_pIsolate = v8::Isolate::New(params);
+	BEGIN_PULSE_VALUE_SCOPE(&s_pInstanceInConstructor, this)
+		m_pIsolate = v8::Isolate::New(params);
+	END_PULSE_VALUE_SCOPE
+
     m_pIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
 
     BEGIN_ADDREF_SCOPE
@@ -348,6 +352,14 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     END_ADDREF_SCOPE
 
     ++s_InstanceCount;
+}
+
+//-----------------------------------------------------------------------------
+
+V8IsolateImpl* V8IsolateImpl::GetInstanceFromIsolate(v8::Isolate* pIsolate)
+{
+	auto pInstance = static_cast<V8IsolateImpl*>(pIsolate->GetData(0));
+	return (pInstance != nullptr) ? pInstance : s_pInstanceInConstructor;
 }
 
 //-----------------------------------------------------------------------------
@@ -1320,7 +1332,7 @@ void V8IsolateImpl::CheckHeapSize(size_t maxHeapSize)
 
 void V8IsolateImpl::OnBeforeCallEntered(v8::Isolate* pIsolate)
 {
-    static_cast<V8IsolateImpl*>(pIsolate->GetData(0))->OnBeforeCallEntered();
+    GetInstanceFromIsolate(pIsolate)->OnBeforeCallEntered();
 }
 
 //-----------------------------------------------------------------------------

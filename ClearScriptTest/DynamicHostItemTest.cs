@@ -16,6 +16,7 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("v8-base-x64.dll")]
     [DeploymentItem("v8-base-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
+    [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class DynamicHostItemTest : ClearScriptTest
     {
         #region setup / teardown

@@ -170,7 +170,7 @@ namespace Microsoft.ClearScript
             var type = GetSpecificTypeNoThrow();
             if (type != null)
             {
-                return type.GetScriptableNestedTypes(bindFlags, context.DefaultAccess).Select(testType => testType.GetRootName()).Distinct().ToArray();
+                return type.GetScriptableNestedTypes(bindFlags, context.AccessContext, context.DefaultAccess).Select(testType => testType.GetRootName()).Distinct().ToArray();
             }
 
             return ArrayHelpers.GetEmptyArray<string>();
@@ -181,7 +181,7 @@ namespace Microsoft.ClearScript
             var type = GetSpecificTypeNoThrow();
             if (type != null)
             {
-                var nestedTypes = type.GetScriptableNestedTypes(invokeFlags, context.DefaultAccess).Where(testType => testType.GetRootName() == name).ToIList();
+                var nestedTypes = type.GetScriptableNestedTypes(invokeFlags, context.AccessContext, context.DefaultAccess).Where(testType => testType.GetRootName() == name).ToIList();
                 if (nestedTypes.Count > 0)
                 {
                     var tempResult = Wrap(nestedTypes.Select(testType => testType.ApplyTypeArguments(type.GetGenericArguments())).ToArray());
@@ -233,7 +233,7 @@ namespace Microsoft.ClearScript
             return true;
         }
 
-        public override Invocability GetInvocability(BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
         {
             return Invocability.Delegate;
         }

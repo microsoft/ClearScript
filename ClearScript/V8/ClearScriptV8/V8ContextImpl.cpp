@@ -2481,7 +2481,7 @@ void V8ContextImpl::Verify(const V8IsolateImpl::ExecutionScope& isolateExecution
 
                 for (int index = 0; index < frameCount; index++)
                 {
-                    auto hFrame = hMessageStackTrace->GetFrame(index);
+                    auto hFrame = GetStackFrame(hMessageStackTrace, index);
                     stackTrace += L"\n    at ";
 
                     auto hFunctionName = hFrame->GetFunctionName();

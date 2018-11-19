@@ -62,6 +62,10 @@
   <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
     <LinkKeyFile>$(SolutionDir)ClearScript.snk</LinkKeyFile>
   </PropertyGroup>
+  <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+    <LinkKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</LinkKeyFile>
+    <LinkDelaySign>true</LinkDelaySign>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>

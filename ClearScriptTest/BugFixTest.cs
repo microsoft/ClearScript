@@ -30,6 +30,8 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("v8-base-x64.dll")]
     [DeploymentItem("v8-base-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
+    [SuppressMessage("ReSharper", "StringLiteralTypo")]
+    [SuppressMessage("ReSharper", "IdentifierTypo")]
     public class BugFixTest : ClearScriptTest
     {
         #region setup / teardown
@@ -2362,6 +2364,7 @@ namespace Microsoft.ClearScript.Test
         {
             using (var runtime = new V8Runtime())
             {
+                // ReSharper disable once AccessToDisposedClosure
                 TestUtil.AssertException<ScriptEngineException>(() => runtime.Compile("function foo bar () {}"));
             }
         }

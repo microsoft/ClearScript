@@ -160,9 +160,9 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public override Invocability GetInvocability(BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
         {
-            return typeof(T).GetInvocability(bindFlags, defaultAccess, ignoreDynamic);
+            return typeof(T).GetInvocability(bindFlags, accessContext, defaultAccess, ignoreDynamic);
         }
 
         #endregion

@@ -18,12 +18,16 @@ namespace Microsoft.ClearScript.Util
     {
         private static readonly string[] importBlackList =
         {
+            // ReSharper disable StringLiteralTypo
+
             "FXAssembly",
             "ThisAssembly",
             "AssemblyRef",
             "SRETW",
             "MatchState",
             "__DynamicallyInvokableAttribute"
+
+            // ReSharper restore StringLiteralTypo
         };
 
         private static readonly HashSet<Type> nullableNumericTypes = new HashSet<Type>
@@ -42,7 +46,7 @@ namespace Microsoft.ClearScript.Util
             typeof(decimal?)
         };
 
-        private static readonly ConcurrentDictionary<Tuple<Type, BindingFlags, ScriptAccess, bool>, Invocability> invocabilityMap = new ConcurrentDictionary<Tuple<Type, BindingFlags, ScriptAccess, bool>, Invocability>();
+        private static readonly ConcurrentDictionary<Tuple<Type, BindingFlags, Type, ScriptAccess, bool>, Invocability> invocabilityMap = new ConcurrentDictionary<Tuple<Type, BindingFlags, Type, ScriptAccess, bool>, Invocability>();
 
         public static bool IsStatic(this Type type)
         {
@@ -73,6 +77,38 @@ namespace Microsoft.ClearScript.Util
             }
 
             return false;
+        }
+
+        public static bool IsAnonymous(this Type type)
+        {
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            if ((type.Attributes & TypeAttributes.VisibilityMask) != TypeAttributes.NotPublic)
+            {
+                return false;
+            }
+
+            var name = type.Name;
+
+            if (!name.StartsWith("<>", StringComparison.Ordinal) && !name.StartsWith("VB$", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (!name.Contains("AnonymousType"))
+            {
+                return false;
+            }
+
+            if (!Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public static bool IsIntegral(this Type type)
@@ -248,6 +284,37 @@ namespace Microsoft.ClearScript.Util
             return type.IsDefined(typeof(ExtensionAttribute), false);
         }
 
+        public static bool EqualsOrDeclares(this Type type, Type thatType)
+        {
+            for (; thatType != null; thatType = thatType.DeclaringType)
+            {
+                if (thatType == type)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool IsFamilyOf(this Type type, Type thatType)
+        {
+            for (; type != null; type = type.DeclaringType)
+            {
+                if ((type == thatType) || type.IsSubclassOf(thatType))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool IsFriendOf(this Type type, Type thatType)
+        {
+            return type.Assembly.IsFriendOf(thatType.Assembly);
+        }
+
         public static string GetRootName(this Type type)
         {
             return StripGenericSuffix(type.Name);
@@ -279,61 +346,61 @@ namespace Microsoft.ClearScript.Util
             return type.GetGenericArguments().Count(typeArg => typeArg.IsGenericParameter);
         }
 
-        public static IEnumerable<EventInfo> GetScriptableEvents(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static IEnumerable<EventInfo> GetScriptableEvents(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
             var events = type.GetEvents(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                events = events.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableEvents(bindFlags, defaultAccess)));
+                events = events.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableEvents(bindFlags, accessContext, defaultAccess)));
             }
 
-            return events.Where(eventInfo => eventInfo.IsScriptable(defaultAccess));
+            return events.Where(eventInfo => eventInfo.IsScriptable(accessContext, defaultAccess));
         }
 
-        public static EventInfo GetScriptableEvent(this Type type, string name, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static EventInfo GetScriptableEvent(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableEvents(bindFlags, defaultAccess).FirstOrDefault(eventInfo => eventInfo.GetScriptName() == name);
+            return type.GetScriptableEvents(bindFlags, accessContext, defaultAccess).FirstOrDefault(eventInfo => eventInfo.GetScriptName() == name);
         }
 
-        public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
-            return type.GetFields(bindFlags).Where(field => field.IsScriptable(defaultAccess));
+            return type.GetFields(bindFlags).Where(field => field.IsScriptable(accessContext, defaultAccess));
         }
 
-        public static FieldInfo GetScriptableField(this Type type, string name, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static FieldInfo GetScriptableField(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableFields(bindFlags, defaultAccess).FirstOrDefault(field => field.GetScriptName() == name);
+            return type.GetScriptableFields(bindFlags, accessContext, defaultAccess).FirstOrDefault(field => field.GetScriptName() == name);
         }
 
-        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
             var methods = type.GetMethods(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                methods = methods.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableMethods(bindFlags, defaultAccess)));
-                methods = methods.Concat(typeof(object).GetScriptableMethods(bindFlags, defaultAccess));
+                methods = methods.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableMethods(bindFlags, accessContext, defaultAccess)));
+                methods = methods.Concat(typeof(object).GetScriptableMethods(bindFlags, accessContext, defaultAccess));
             }
 
-            return methods.Where(method => method.IsScriptable(defaultAccess));
+            return methods.Where(method => method.IsScriptable(accessContext, defaultAccess));
         }
 
-        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, string name, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableMethods(bindFlags, defaultAccess).Where(method => method.GetScriptName() == name);
+            return type.GetScriptableMethods(bindFlags, accessContext, defaultAccess).Where(method => method.GetScriptName() == name);
         }
 
-        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
             var properties = type.GetProperties(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags, defaultAccess)));
+                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags, accessContext, defaultAccess)));
             }
 
-            return properties.Where(property => property.IsScriptable(defaultAccess));
+            return properties.Where(property => property.IsScriptable(accessContext, defaultAccess));
         }
 
-        public static IEnumerable<PropertyInfo> GetScriptableDefaultProperties(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static IEnumerable<PropertyInfo> GetScriptableDefaultProperties(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
             if (type.IsArray)
             {
@@ -344,38 +411,38 @@ namespace Microsoft.ClearScript.Util
             var properties = type.GetProperties(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags, defaultAccess)));
+                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags, accessContext, defaultAccess)));
             }
 
             var defaultMembers = type.GetDefaultMembers();
-            return properties.Where(property => property.IsScriptable(defaultAccess) && (defaultMembers.Contains(property) || property.IsDispID(SpecialDispIDs.Default)));
+            return properties.Where(property => property.IsScriptable(accessContext, defaultAccess) && (defaultMembers.Contains(property) || property.IsDispID(SpecialDispIDs.Default)));
         }
 
-        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, string name, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableProperties(bindFlags, defaultAccess).Where(property => property.GetScriptName() == name);
+            return type.GetScriptableProperties(bindFlags, accessContext, defaultAccess).Where(property => property.GetScriptName() == name);
         }
 
-        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] bindArgs, ScriptAccess defaultAccess)
+        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
         {
-            var candidates = type.GetScriptableProperties(name, bindFlags, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
+            var candidates = type.GetScriptableProperties(name, bindFlags, accessContext, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
             return SelectProperty(candidates, bindFlags, bindArgs);
         }
 
-        public static PropertyInfo GetScriptableDefaultProperty(this Type type, BindingFlags bindFlags, object[] bindArgs, ScriptAccess defaultAccess)
+        public static PropertyInfo GetScriptableDefaultProperty(this Type type, BindingFlags bindFlags, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
         {
-            var candidates = type.GetScriptableDefaultProperties(bindFlags, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
+            var candidates = type.GetScriptableDefaultProperties(bindFlags, accessContext, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
             return SelectProperty(candidates, bindFlags, bindArgs);
         }
 
-        public static IEnumerable<Type> GetScriptableNestedTypes(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess)
+        public static IEnumerable<Type> GetScriptableNestedTypes(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
-            return type.GetNestedTypes(bindFlags).Where(nestedType => nestedType.IsScriptable(defaultAccess));
+            return type.GetNestedTypes(bindFlags).Where(nestedType => nestedType.IsScriptable(accessContext, defaultAccess));
         }
 
-        public static Invocability GetInvocability(this Type type, BindingFlags bindFlags, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public static Invocability GetInvocability(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
         {
-            return invocabilityMap.GetOrAdd(Tuple.Create(type, bindFlags, defaultAccess, ignoreDynamic), GetInvocabilityInternal);
+            return invocabilityMap.GetOrAdd(Tuple.Create(type, bindFlags, accessContext, defaultAccess, ignoreDynamic), GetInvocabilityInternal);
         }
 
         public static object CreateInstance(this Type type, params object[] args)
@@ -385,7 +452,46 @@ namespace Microsoft.ClearScript.Util
 
         public static object CreateInstance(this Type type, BindingFlags flags, params object[] args)
         {
-            return type.InvokeMember(null, BindingFlags.CreateInstance | BindingFlags.Instance | flags, null, null, args, CultureInfo.InvariantCulture);
+            return type.InvokeMember(null, BindingFlags.CreateInstance | BindingFlags.Instance | (flags & ~BindingFlags.Static), null, null, args, CultureInfo.InvariantCulture);
+        }
+
+        public static object CreateInstance(this Type type, Type accessContext, ScriptAccess defaultAccess, params object[] args)
+        {
+            // ReSharper disable CoVariantArrayConversion
+            // ReSharper disable PossibleNullReferenceException
+
+            if (type.IsCOMObject || (type.IsValueType && (args.Length < 1)))
+            {
+                return type.CreateInstance(args);
+            }
+
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var candidates = type.GetConstructors(flags).Where(testConstructor => testConstructor.IsAccessible(accessContext) && !testConstructor.IsBlockedFromScript(defaultAccess)).ToArray();
+            if (candidates.Length < 1)
+            {
+                throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
+            }
+
+            ConstructorInfo constructor = null;
+
+            try
+            {
+                object state;
+                constructor = Type.DefaultBinder.BindToMethod(flags, candidates, ref args, null, null, null, out state) as ConstructorInfo;
+            }
+            catch (MissingMethodException)
+            {
+            }
+
+            if (constructor == null)
+            {
+                throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
+            }
+
+            return constructor.Invoke(args);
+
+            // ReSharper restore PossibleNullReferenceException
+            // ReSharper restore CoVariantArrayConversion
         }
 
         public static Type MakeSpecificType(this Type template, params Type[] typeArgs)
@@ -523,6 +629,7 @@ namespace Microsoft.ClearScript.Util
                 var parentType = type.DeclaringType.MakeSpecificType(typeArgs);
                 parentPrefix = parentType.GetFriendlyName(getBaseName) + ".";
                 typeArgs = typeArgs.Skip(parentType.GetGenericArguments().Length).ToArray();
+                getBaseName = GetRootName;
             }
 
             if (typeArgs.Length < 1)
@@ -552,19 +659,19 @@ namespace Microsoft.ClearScript.Util
             return fullTypeName;
         }
 
-        private static Invocability GetInvocabilityInternal(Tuple<Type, BindingFlags, ScriptAccess, bool> args)
+        private static Invocability GetInvocabilityInternal(Tuple<Type, BindingFlags, Type, ScriptAccess, bool> args)
         {
             if (typeof(Delegate).IsAssignableFrom(args.Item1))
             {
                 return Invocability.Delegate;
             }
 
-            if (!args.Item4 && typeof(IDynamicMetaObjectProvider).IsAssignableFrom(args.Item1))
+            if (!args.Item5 && typeof(IDynamicMetaObjectProvider).IsAssignableFrom(args.Item1))
             {
                 return Invocability.Dynamic;
             }
 
-            if (args.Item1.GetScriptableDefaultProperties(args.Item2, args.Item3).Any())
+            if (args.Item1.GetScriptableDefaultProperties(args.Item2, args.Item3, args.Item4).Any())
             {
                 return Invocability.DefaultProperty;
             }

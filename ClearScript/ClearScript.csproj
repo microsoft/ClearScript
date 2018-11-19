@@ -53,6 +53,11 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>true</DelaySign>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CustomMarshalers" />
     <Reference Include="System" />
@@ -114,6 +119,7 @@
     <Compile Include="Util\Scope.cs" />
     <Compile Include="Util\SocketHelpers.cs" />
     <Compile Include="Util\SpecialDispIDs.cs" />
+    <Compile Include="Util\Test\AccessContextTestObject.cs" />
     <Compile Include="Util\Web\WebContext.cs" />
     <Compile Include="Util\Web\WebRequest.cs" />
     <Compile Include="Util\Web\WebResponse.cs" />
@@ -213,16 +219,16 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Exports\CallbackManager.h">
+    <None Include="Exports\CallbackManager.h">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>CallbackManager.tt</DependentUpon>
-    </Content>
-    <Content Include="Exports\VersionSymbols.h">
+    </None>
+    <None Include="Exports\VersionSymbols.h">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>VersionSymbols.tt</DependentUpon>
-    </Content>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

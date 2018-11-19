@@ -96,6 +96,7 @@
     <HelpKINode Title="V8ScriptEngineFlags Enumeration" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
   </HelpKINode>
   <HelpKINode Title="EnableStandardsMode enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
+  <HelpKINode Title="EnforceAnonymousTypeAccess property" Url="html/P_Microsoft_ClearScript_ScriptEngine_EnforceAnonymousTypeAccess.htm" />
   <HelpKINode Title="Engine property" Url="html/P_Microsoft_ClearScript_ScriptObject_Engine.htm" />
   <HelpKINode Title="EngineName property">
     <HelpKINode Title="IScriptEngineException.EngineName Property " Url="html/P_Microsoft_ClearScript_IScriptEngineException_EngineName.htm" />
@@ -537,6 +538,7 @@
   <HelpKINode Title="ScriptEngine.Dispose method" Url="html/Overload_Microsoft_ClearScript_ScriptEngine_Dispose.htm" />
   <HelpKINode Title="ScriptEngine.EnableAutoHostVariables property" Url="html/P_Microsoft_ClearScript_ScriptEngine_EnableAutoHostVariables.htm" />
   <HelpKINode Title="ScriptEngine.EnableNullResultWrapping property" Url="html/P_Microsoft_ClearScript_ScriptEngine_EnableNullResultWrapping.htm" />
+  <HelpKINode Title="ScriptEngine.EnforceAnonymousTypeAccess property" Url="html/P_Microsoft_ClearScript_ScriptEngine_EnforceAnonymousTypeAccess.htm" />
   <HelpKINode Title="ScriptEngine.Evaluate method" Url="html/Overload_Microsoft_ClearScript_ScriptEngine_Evaluate.htm" />
   <HelpKINode Title="ScriptEngine.Execute method" Url="html/Overload_Microsoft_ClearScript_ScriptEngine_Execute.htm" />
   <HelpKINode Title="ScriptEngine.ExecuteCommand method" Url="html/M_Microsoft_ClearScript_ScriptEngine_ExecuteCommand.htm" />

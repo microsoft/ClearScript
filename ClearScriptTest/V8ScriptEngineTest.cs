@@ -28,6 +28,7 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("v8-base-x64.dll")]
     [DeploymentItem("v8-base-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
+    [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class V8ScriptEngineTest : ClearScriptTest
     {
         #region setup / teardown
@@ -2906,13 +2907,29 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("foo.Null(123)"));
         }
 
-        // ReSharper restore InconsistentNaming
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EnforceAnonymousTypeAccess()
+        {
+            engine.Script.foo = new { bar = 123, baz = "qux" };
+            Assert.AreEqual(123, engine.Evaluate("foo.bar"));
+            Assert.AreEqual("qux", engine.Evaluate("foo.baz"));
 
-        #endregion
+            engine.EnforceAnonymousTypeAccess = true;
+            Assert.IsInstanceOfType(engine.Evaluate("foo.bar"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("foo.baz"), typeof(Undefined));
 
-        #region miscellaneous
+            engine.AccessContext = GetType();
+            Assert.AreEqual(123, engine.Evaluate("foo.bar"));
+            Assert.AreEqual("qux", engine.Evaluate("foo.baz"));
+        }
 
-        private const string generalScript =
+		// ReSharper restore InconsistentNaming
+
+		#endregion
+
+		#region miscellaneous
+
+		private const string generalScript =
         @"
             System = clr.System;
 

@@ -21,6 +21,7 @@ namespace Microsoft.ClearScript
 
         private Type accessContext;
         private ScriptAccess defaultAccess;
+        private bool enforceAnonymousTypeAccess;
 
         private static readonly IUniqueNameManager nameManager = new UniqueNameManager();
         private static readonly object nullHostObjectProxy = new object();
@@ -105,6 +106,29 @@ namespace Microsoft.ClearScript
             set
             {
                 defaultAccess = value;
+                OnAccessSettingsChanged();
+            }
+        }
+
+        /// <summary>
+        /// Enables or disables access restrictions for anonymous types.
+        /// </summary>
+        /// <remarks>
+        /// Anonymous types are
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/internal">internal</see>
+        /// and therefore accessible only within the same assembly, but ClearScript 5.5.3 and
+        /// earlier permitted access to the public properties of an object even if its type was
+        /// internal. Newer versions strictly enforce <see cref="AccessContext"/>, but because
+        /// anonymous types are particularly useful for scripting, ClearScript by default continues
+        /// to expose their properties to external contexts. To override this behavior and enable
+        /// normal access restrictions for anonymous types, set this property to <c>true</c>.
+        /// </remarks>
+        public bool EnforceAnonymousTypeAccess
+        {
+            get { return enforceAnonymousTypeAccess; }
+            set
+            {
+                enforceAnonymousTypeAccess = value;
                 OnAccessSettingsChanged();
             }
         }
@@ -1438,7 +1462,7 @@ namespace Microsoft.ClearScript
 
         internal void ProcessExtensionMethodType(Type type)
         {
-            if (extensionMethodTable.ProcessType(type, DefaultAccess))
+            if (extensionMethodTable.ProcessType(type, AccessContext, DefaultAccess))
             {
                 bindCache.Clear();
             }

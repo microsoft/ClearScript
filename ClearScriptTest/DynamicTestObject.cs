@@ -3,11 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Linq;
 
 namespace Microsoft.ClearScript.Test
 {
+    [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public sealed class DynamicTestObject : DynamicObject
     {
         private readonly Dictionary<string, object> memberMap = new Dictionary<string, object>();

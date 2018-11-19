@@ -64,7 +64,6 @@ namespace Microsoft.ClearScript.Windows
         protected WindowsScriptEngine(string progID, string name, WindowsScriptEngineFlags flags)
             : base(name)
         {
-            AccessContext = typeof(ScriptEngine);
             script = base.ScriptInvoke(() =>
             {
                 activeScript = ActiveScriptWrapper.Create(progID, flags);

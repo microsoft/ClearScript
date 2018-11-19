@@ -21,13 +21,13 @@ namespace Microsoft.ClearScript
             get { return summary; }
         }
 
-        public bool ProcessType(Type type, ScriptAccess defaultAccess)
+        public bool ProcessType(Type type, Type accessContext, ScriptAccess defaultAccess)
         {
             Debug.Assert(type.IsSpecific());
             if (!table.ContainsKey(type) && type.HasExtensionMethods())
             {
                 const BindingFlags bindFlags = BindingFlags.Public | BindingFlags.Static;
-                table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(method, defaultAccess)).ToArray();
+                table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(method, accessContext, defaultAccess)).ToArray();
                 RebuildSummary();
                 return true;
             }
@@ -40,9 +40,9 @@ namespace Microsoft.ClearScript
             summary = new ExtensionMethodSummary(table);
         }
 
-        private static bool IsScriptableExtensionMethod(MethodInfo method, ScriptAccess defaultAccess)
+        private static bool IsScriptableExtensionMethod(MethodInfo method, Type accessContext, ScriptAccess defaultAccess)
         {
-            return method.IsScriptable(defaultAccess) && method.IsDefined(typeof(ExtensionAttribute), false);
+            return method.IsScriptable(accessContext, defaultAccess) && method.IsDefined(typeof(ExtensionAttribute), false);
         }
     }
 

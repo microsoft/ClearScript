@@ -12,9 +12,11 @@
 
 <#
 var dte = (DTE)((IServiceProvider)Host).GetService(typeof(DTE));
-var keyFilePath = Path.Combine(Path.GetDirectoryName(dte.Solution.FullName), "ClearScript.snk");
+var solutionPath = Path.GetDirectoryName(dte.Solution.FullName);
+var keyFilePath = Path.Combine(solutionPath, "ClearScript.snk");
+var delaySignKeyFilePath = Path.Combine(solutionPath, "ClearScript.DelaySign.snk");
 var publicKeySpec = string.Empty;
-try
+if (File.Exists(keyFilePath))
 {
     using (var stream = new FileStream(keyFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
     {
@@ -22,8 +24,9 @@ try
         publicKeySpec = ", PublicKey=" + BitConverter.ToString(keyPair.PublicKey).Replace("-", string.Empty);
     }
 }
-catch (Exception)
+else if (File.Exists(delaySignKeyFilePath))
 {
+    publicKeySpec = ", PublicKey=" + BitConverter.ToString(File.ReadAllBytes(delaySignKeyFilePath)).Replace("-", string.Empty);
 }
 #>
 
