@@ -41,6 +41,8 @@ namespace V8 {
         virtual V8Script^ Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted) override;
         virtual V8RuntimeHeapInfo^ GetHeapInfo() override;
         virtual void CollectGarbage(bool exhaustive) override;
+        virtual void StartCpuProfiler(String ^gcTitle, bool recordSamples) override;
+        virtual String^ StopCpuProfiler(String ^gcTitle) override;
 
         SharedPtr<V8Isolate> GetIsolate();
 

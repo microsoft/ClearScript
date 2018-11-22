@@ -608,6 +608,180 @@ void V8IsolateImpl::CollectGarbage(bool exhaustive)
 
 //-----------------------------------------------------------------------------
 
+bool V8IsolateImpl::StartCpuProfiler(const StdString& title, bool recordSamples)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        auto maybeLocal = CreateString(title);
+        v8::Local<v8::String> value;
+
+        if (maybeLocal.ToLocal(&value))
+        {
+            if (!m_pProfiler)
+            {
+                m_pProfiler = v8::CpuProfiler::New(m_pIsolate);
+            }
+            m_pProfiler->StartProfiling(value, recordSamples);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void writeEscapedString(std::basic_ostringstream<wchar_t>& stream, const char* string)
+{
+    for (int i = 0; string[i]; i++)
+    {
+        switch (string[i])
+        {
+            case '\"':
+                stream << "\\\"";
+                break;
+            case '\\':
+                stream << "\\\\";
+                break;
+            default:
+                stream << string[i];
+                break;
+        }
+    }
+}
+
+StdString* V8IsolateImpl::StopCpuProfiler(const StdString& title)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        if (!m_pProfiler)
+        {
+            return nullptr;
+        }
+
+        auto maybeLocal = CreateString(title);
+        v8::Local<v8::String> value;
+
+        if (!maybeLocal.ToLocal(&value))
+        {
+            return nullptr;
+        }
+
+        if (!m_pProfiler)
+        {
+            m_pProfiler = v8::CpuProfiler::New(m_pIsolate);
+        }
+        auto profile = m_pProfiler->StopProfiling(value);
+
+        std::queue<const v8::CpuProfileNode*> nodes;
+        nodes.push(profile->GetTopDownRoot());
+
+        std::vector<v8::CpuProfileNode::LineTick> lineTickBuffer;
+        lineTickBuffer.resize(100);
+
+        std::basic_ostringstream<wchar_t> stream;
+
+        stream << L"{\"nodes\":[";
+        while (!nodes.empty())
+        {
+            auto node = nodes.front();
+            nodes.pop();
+            stream << L"{\"id\":" << node->GetNodeId()
+                   << L",\"callFrame\":{\"functionName\":\"";
+
+            writeEscapedString(stream, node->GetFunctionNameStr());
+
+            stream << L"\",\"scriptId\":\""
+                   << node->GetScriptId() << L"\",\"url\":\"";
+
+            writeEscapedString(stream, node->GetScriptResourceNameStr());
+
+            stream << L"\",\"lineNumber\":"
+                   << (node->GetLineNumber() - 1) << L",\"columnNumber\":"
+                   << (node->GetColumnNumber() - 1) << L"},\"hitCount\":"
+                   << node->GetHitCount() << L",\"children\":[";
+
+            for (int i = 0; i < node->GetChildrenCount(); i++)
+            {
+                auto child = node->GetChild(i);
+                if (i > 0)
+                {
+                    stream << L",";
+                }
+                stream << child->GetNodeId();
+                nodes.push(child);
+            }
+            stream << "]";
+
+            auto bailoutReason = node->GetBailoutReason();
+            if (bailoutReason)
+            {
+                stream << L",\"deoptReason\":\"";
+                writeEscapedString(stream, bailoutReason);
+                stream << L"\"";
+            }
+
+            unsigned int lineHitCount = node->GetHitLineCount();
+            if (lineHitCount > 0)
+            {
+                stream << L",\"positionTicks\":[";
+                if (lineHitCount > lineTickBuffer.size())
+                {
+                    lineTickBuffer.resize(lineHitCount);
+                }
+                node->GetLineTicks(&lineTickBuffer[0], (unsigned int)lineTickBuffer.size());
+                for (unsigned int i = 0; i < lineHitCount; i++)
+                {
+                    if (i > 0)
+                    {
+                        stream << L",";
+                    }
+                    stream << L"{\"line\":" << lineTickBuffer[i].line << L",\"ticks\":" << lineTickBuffer[i].hit_count << L"}";
+                }
+                stream << L"]";
+            }
+            stream << L"}";
+            if (!nodes.empty())
+            {
+                stream << L",";
+            }
+        }
+
+        stream << L"],\"startTime\":" << profile->GetStartTime() << L",\"endTime\":" << profile->GetEndTime();
+
+        int sampleCount = profile->GetSamplesCount();
+        if (sampleCount > 0)
+        {
+            stream << L",\"samples\":[";
+            for (int i = 0; i < sampleCount; i++)
+            {
+                if (i > 0)
+                {
+                    stream << L",";
+                }
+                stream << profile->GetSample(i)->GetNodeId();
+            }
+            stream << L"],\"timeDeltas\":[" << (profile->GetSampleTimestamp(0) - profile->GetStartTime());
+            for (int i = 1; i < sampleCount; i++)
+            {
+                stream << L"," << (profile->GetSampleTimestamp(i) - profile->GetSampleTimestamp(i - 1));
+            }
+            stream << L"]";
+        }
+        stream << L"}";
+
+        profile->Delete();
+
+        return new StdString(stream.str());
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
 void V8IsolateImpl::runMessageLoopOnPause(int /*contextGroupId*/)
 {
     RunMessageLoop(false);
@@ -978,6 +1152,10 @@ V8IsolateImpl::~V8IsolateImpl()
     Dispose(m_hHostObjectHolderKey);
 
     m_pIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
+    if (m_pProfiler)
+    {
+        m_pProfiler->Dispose();
+    }
     m_pIsolate->Dispose();
 }
 

@@ -15,6 +15,7 @@
 #include "v8.h"
 #include "v8-platform.h"
 #include "v8-inspector.h"
+#include "v8-profiler.h"
 
 #pragma warning(pop)
 

@@ -29,5 +29,8 @@ namespace Microsoft.ClearScript.V8
         public abstract V8RuntimeHeapInfo GetHeapInfo();
 
         public abstract void CollectGarbage(bool exhaustive);
+
+        public abstract void StartCpuProfiler(string title, bool recordSamples);
+        public abstract string StopCpuProfiler(string title);
     }
 }

@@ -17,6 +17,8 @@ using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -2905,6 +2907,65 @@ namespace Microsoft.ClearScript.Test
             engine.Script.foo = new PropertyBag { { "Null", null } };
             Assert.IsNull(engine.Evaluate("foo.Null"));
             TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("foo.Null(123)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CpuProfiler()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var engine1 = runtime.CreateScriptEngine())
+                {
+                    runtime.StartCpuProfiler(null, true);
+                    engine1.Evaluate(@"
+                        function loop() {
+                            for (var i = 0; i < 10000000; i++) {
+                                for (var j = 0; j < 1000000; j++) {
+                                    if (Math.random() > 0.999 && Math.random() > 0.999) {
+                                        return j;
+                                    }
+                                }
+                            }
+                        }
+                        function f1() {
+                            function f11() {
+                                return loop();
+                            }
+                            function f12() {
+                                function f121() {
+                                    return loop();
+                                }
+                                function f122() {
+                                    return loop();
+                                }
+                                return f121() + f122() + loop();
+                            }
+                            function f13() {
+                                return loop();
+                            }
+                            return f11() + f12() + f13() + loop();
+                        }
+                        function f2() {
+                            function f21() {
+                                return loop();
+                            }
+                            function f22() {
+                                return loop();
+                            }
+                            return f21() + f22() + loop();
+                        }
+                        f1() + f2() + loop();
+                    ");
+                    var result = runtime.StopCpuProfiler(null);
+
+                    var deserialized = JsonConvert.DeserializeObject<dynamic>(result);
+                    Assert.IsInstanceOfType(deserialized["nodes"], typeof(JArray));
+                    Assert.IsInstanceOfType(deserialized["startTime"], typeof(JValue));
+                    Assert.IsInstanceOfType(deserialized["endTime"], typeof(JValue));
+                    Assert.IsInstanceOfType(deserialized["samples"], typeof(JArray));
+                    Assert.IsInstanceOfType(deserialized["timeDeltas"], typeof(JArray));
+                }
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]

@@ -207,6 +207,32 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    void V8IsolateProxyImpl::StartCpuProfiler(String^ gcTitle, bool recordSamples)
+    {
+        if (!GetIsolate()->StartCpuProfiler(StdString(gcTitle), recordSamples))
+        {
+            throw gcnew ScriptEngineException("The profiler could not be started");
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    String^ V8IsolateProxyImpl::StopCpuProfiler(String^ gcTitle)
+    {
+        StdString* output = GetIsolate()->StopCpuProfiler(StdString(gcTitle));
+        if (output == nullptr)
+        {
+            throw gcnew ScriptEngineException("The profiler could not be stopped");
+        }
+
+        auto result = output->ToManagedString();
+        delete output;
+
+        return result;
+    }
+
+    //-------------------------------------------------------------------------
+
     SharedPtr<V8Isolate> V8IsolateProxyImpl::GetIsolate()
     {
         BEGIN_LOCK_SCOPE(m_gcLock)

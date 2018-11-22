@@ -364,6 +364,8 @@ public:
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
     virtual void GetHeapInfo(V8IsolateHeapInfo& heapInfo) override;
     virtual void CollectGarbage(bool exhaustive) override;
+    virtual bool StartCpuProfiler(const StdString& title, bool recordSamples) override;
+    virtual StdString* StopCpuProfiler(const StdString& title) override;
 
     virtual void runMessageLoopOnPause(int contextGroupId) override;
     virtual void quitMessageLoopOnPause() override;
@@ -417,6 +419,7 @@ private:
 
     StdString m_Name;
     v8::Isolate* m_pIsolate;
+    v8::CpuProfiler* m_pProfiler;
     Persistent<v8::Private> m_hHostObjectHolderKey;
     RecursiveMutex m_Mutex;
     std::list<V8ContextImpl*> m_ContextPtrs;

@@ -544,6 +544,24 @@ namespace Microsoft.ClearScript.V8
             proxy.CollectGarbage(exhaustive);
         }
 
+        /// <summary>
+        /// Starts a CPU profiler
+        /// </summary>
+        public void StartCpuProfiler(string title, bool recordSamples)
+        {
+            VerifyNotDisposed();
+            proxy.StartCpuProfiler(title ?? "", recordSamples);
+        }
+
+        /// <summary>
+        /// Stops a CPU profiler and returns the profile
+        /// </summary>
+        public string StopCpuProfiler(string title)
+        {
+            VerifyNotDisposed();
+            return proxy.StopCpuProfiler(title ?? "");
+        }
+
         #endregion
 
         #region internal members

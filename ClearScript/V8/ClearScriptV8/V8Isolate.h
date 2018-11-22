@@ -35,6 +35,8 @@ public:
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
     virtual void GetHeapInfo(V8IsolateHeapInfo& heapInfo) = 0;
     virtual void CollectGarbage(bool exhaustive) = 0;
+    virtual bool StartCpuProfiler(const StdString& title, bool recordSamples) = 0;
+    virtual StdString* StopCpuProfiler(const StdString& title) = 0;
 
     virtual ~V8Isolate() {}
 };
