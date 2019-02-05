@@ -23,7 +23,7 @@ public:
     static bool DeleteProperty(V8ObjectHolder* pHolder, int index);
     static void GetPropertyIndices(V8ObjectHolder* pHolder, std::vector<int>& indices);
 
-    static V8Value Invoke(V8ObjectHolder* pHolder, const std::vector<V8Value>& args, bool asConstructor);
+    static V8Value Invoke(V8ObjectHolder* pHolder, bool asConstructor, const std::vector<V8Value>& args);
     static V8Value InvokeMethod(V8ObjectHolder* pHolder, const StdString& name, const std::vector<V8Value>& args);
 
     typedef void ArrayBufferOrViewDataCallbackT(void* pvData, void* pvArg);

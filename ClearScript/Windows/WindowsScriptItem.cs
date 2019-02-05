@@ -13,7 +13,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.Windows
 {
-    internal class WindowsScriptItem : ScriptItem, IDisposable
+    internal class WindowsScriptItem : ScriptItem, IWindowsScriptObject, IDisposable
     {
         private readonly WindowsScriptEngine engine;
         private readonly IExpando target;
@@ -178,11 +178,23 @@ namespace Microsoft.ClearScript.Windows
             return ((engine is JScriptEngine) && (args.Length < 1)) ? new object[] { Undefined.Value } : args;
         }
 
+        public override string[] GetPropertyNames()
+        {
+            VerifyNotDisposed();
+            return engine.ScriptInvoke(() => target.GetProperties(BindingFlags.Default).Select(property => property.Name).ExcludeIndices().ToArray());
+        }
+
+        public override int[] GetPropertyIndices()
+        {
+            VerifyNotDisposed();
+            return engine.ScriptInvoke(() => target.GetProperties(BindingFlags.Default).Select(property => property.Name).GetIndices().ToArray());
+        }
+
         #endregion
 
-        #region IDynamic implementation
+        #region ScriptObject overrides
 
-        public override object GetProperty(string name, object[] args)
+        public override object GetProperty(string name, params object[] args)
         {
             VerifyNotDisposed();
 
@@ -215,7 +227,7 @@ namespace Microsoft.ClearScript.Windows
             return result;
         }
 
-        public override void SetProperty(string name, object[] args)
+        public override void SetProperty(string name, params object[] args)
         {
             VerifyNotDisposed();
 
@@ -288,12 +300,6 @@ namespace Microsoft.ClearScript.Windows
             });
         }
 
-        public override string[] GetPropertyNames()
-        {
-            VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetProperties(BindingFlags.Default).Select(property => property.Name).ExcludeIndices().ToArray());
-        }
-
         public override object GetProperty(int index)
         {
             VerifyNotDisposed();
@@ -303,7 +309,7 @@ namespace Microsoft.ClearScript.Windows
         public override void SetProperty(int index, object value)
         {
             VerifyNotDisposed();
-            SetProperty(index.ToString(CultureInfo.InvariantCulture), new[] { value });
+            SetProperty(index.ToString(CultureInfo.InvariantCulture), value);
         }
 
         public override bool DeleteProperty(int index)
@@ -312,13 +318,7 @@ namespace Microsoft.ClearScript.Windows
             return DeleteProperty(index.ToString(CultureInfo.InvariantCulture));
         }
 
-        public override int[] GetPropertyIndices()
-        {
-            VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetProperties(BindingFlags.Default).Select(property => property.Name).GetIndices().ToArray());
-        }
-
-        public override object Invoke(object[] args, bool asConstructor)
+        public override object Invoke(bool asConstructor, params object[] args)
         {
             VerifyNotDisposed();
 
@@ -330,7 +330,7 @@ namespace Microsoft.ClearScript.Windows
             return engine.Script.EngineInternal.invokeMethod(holder, this, args);
         }
 
-        public override object InvokeMethod(string name, object[] args)
+        public override object InvokeMethod(string name, params object[] args)
         {
             VerifyNotDisposed();
 
@@ -380,6 +380,18 @@ namespace Microsoft.ClearScript.Windows
         public override object Unwrap()
         {
             return target;
+        }
+
+        #endregion
+
+        #region IWindowsScriptObject implementation
+
+        object IWindowsScriptObject.GetUnderlyingObject()
+        {
+            var pUnkTarget = Marshal.GetIUnknownForObject(target);
+            var clone = Marshal.GetObjectForIUnknown(pUnkTarget);
+            Marshal.Release(pUnkTarget);
+            return clone;
         }
 
         #endregion

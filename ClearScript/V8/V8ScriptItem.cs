@@ -147,7 +147,7 @@ namespace Microsoft.ClearScript.V8
                 var invokeBinder = binder as InvokeBinder;
                 if (invokeBinder != null)
                 {
-                    result = target.Invoke(args, false);
+                    result = target.Invoke(false, args);
                     return true;
                 }
 
@@ -183,11 +183,23 @@ namespace Microsoft.ClearScript.V8
             return false;
         }
 
+        public override string[] GetPropertyNames()
+        {
+            VerifyNotDisposed();
+            return engine.ScriptInvoke(() => target.GetPropertyNames());
+        }
+
+        public override int[] GetPropertyIndices()
+        {
+            VerifyNotDisposed();
+            return engine.ScriptInvoke(() => target.GetPropertyIndices());
+        }
+
         #endregion
 
-        #region IDynamic implementation
+        #region ScriptObject overrides
 
-        public override object GetProperty(string name, object[] args)
+        public override object GetProperty(string name, params object[] args)
         {
             VerifyNotDisposed();
             if ((args != null) && (args.Length != 0))
@@ -206,7 +218,7 @@ namespace Microsoft.ClearScript.V8
             return result;
         }
 
-        public override void SetProperty(string name, object[] args)
+        public override void SetProperty(string name, params object[] args)
         {
             VerifyNotDisposed();
             if ((args == null) || (args.Length != 1))
@@ -221,12 +233,6 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
             return engine.ScriptInvoke(() => target.DeleteProperty(name));
-        }
-
-        public override string[] GetPropertyNames()
-        {
-            VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetPropertyNames());
         }
 
         public override object GetProperty(int index)
@@ -247,25 +253,19 @@ namespace Microsoft.ClearScript.V8
             return engine.ScriptInvoke(() => target.DeleteProperty(index));
         }
 
-        public override int[] GetPropertyIndices()
-        {
-            VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetPropertyIndices());
-        }
-
-        public override object Invoke(object[] args, bool asConstructor)
+        public override object Invoke(bool asConstructor, params object[] args)
         {
             VerifyNotDisposed();
 
             if (asConstructor || (holder == null))
             {
-                return engine.MarshalToHost(engine.ScriptInvoke(() => target.Invoke(engine.MarshalToScript(args), asConstructor)), false);
+                return engine.MarshalToHost(engine.ScriptInvoke(() => target.Invoke(asConstructor, engine.MarshalToScript(args))), false);
             }
 
             return engine.Script.EngineInternal.invokeMethod(holder, this, args);
         }
 
-        public override object InvokeMethod(string name, object[] args)
+        public override object InvokeMethod(string name, params object[] args)
         {
             VerifyNotDisposed();
             return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMethod(name, engine.MarshalToScript(args))), false);

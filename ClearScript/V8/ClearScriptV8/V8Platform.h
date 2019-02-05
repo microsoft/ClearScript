@@ -9,8 +9,8 @@
 
 #pragma warning(push, 3)
 
-//#define V8_DEPRECATION_WARNINGS
-#define V8_IMMINENT_DEPRECATION_WARNINGS
+#define V8_DEPRECATION_WARNINGS
+//#define V8_IMMINENT_DEPRECATION_WARNINGS
 
 #include "v8.h"
 #include "v8-platform.h"

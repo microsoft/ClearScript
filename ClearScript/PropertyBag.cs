@@ -161,16 +161,20 @@ namespace Microsoft.ClearScript
 
         #endregion
 
-        #region IEnumerable<KeyValuePair<string, object>> implementation
+        #region IEnumerable implementation
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation to resolve ambiguity.")]
-        IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
             return dictionary.GetEnumerator();
         }
 
+        #endregion
+
+        #region IEnumerable<KeyValuePair<string, object>> implementation
+
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation to resolve ambiguity.")]
-        IEnumerator IEnumerable.GetEnumerator()
+        IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator()
         {
             return dictionary.GetEnumerator();
         }

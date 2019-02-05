@@ -968,7 +968,7 @@ namespace Microsoft.ClearScript
             {
                 if (name == SpecialMemberNames.Default)
                 {
-                    return TargetDynamic.Invoke(args, true);
+                    return TargetDynamic.Invoke(true, args);
                 }
 
                 throw new InvalidOperationException("Invalid constructor invocation");
@@ -980,7 +980,7 @@ namespace Microsoft.ClearScript
                 {
                     try
                     {
-                        return TargetDynamic.Invoke(args, false);
+                        return TargetDynamic.Invoke(false, args);
                     }
                     catch (Exception)
                     {
@@ -1302,7 +1302,7 @@ namespace Microsoft.ClearScript
                             var enumerableHelpersHostItem = Wrap(engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
                             try
                             {
-                                return ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", new object[] { this });
+                                return ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this);
                             }
                             catch (MissingMemberException)
                             {
@@ -1542,7 +1542,7 @@ namespace Microsoft.ClearScript
             }
 
             var getMethod = property.GetMethod;
-            if ((getMethod == null) || !getMethod.IsAccessible(accessContext) || getMethod.IsBlockedFromScript(defaultAccess))
+            if ((getMethod == null) || !getMethod.IsAccessible(accessContext) || getMethod.IsBlockedFromScript(defaultAccess, false))
             {
                 throw new UnauthorizedAccessException("Property get method is unavailable or inaccessible");
             }
@@ -1655,7 +1655,7 @@ namespace Microsoft.ClearScript
             }
 
             var setMethod = property.SetMethod;
-            if ((setMethod == null) || !setMethod.IsAccessible(accessContext) || setMethod.IsBlockedFromScript(defaultAccess))
+            if ((setMethod == null) || !setMethod.IsAccessible(accessContext) || setMethod.IsBlockedFromScript(defaultAccess, false))
             {
                 throw new UnauthorizedAccessException("Property set method is unavailable or inaccessible");
             }
@@ -1697,7 +1697,7 @@ namespace Microsoft.ClearScript
 
         public override bool TryCreateInstance(CreateInstanceBinder binder, object[] args, out object result)
         {
-            result = ThisDynamic.Invoke(args, true).ToDynamicResult(engine);
+            result = ThisDynamic.Invoke(true, args).ToDynamicResult(engine);
             return true;
         }
 
@@ -1709,7 +1709,7 @@ namespace Microsoft.ClearScript
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            ThisDynamic.SetProperty(binder.Name, new[] { value });
+            ThisDynamic.SetProperty(binder.Name, value);
             return true;
         }
 
@@ -1730,7 +1730,7 @@ namespace Microsoft.ClearScript
 
             if (indices.Length > 1)
             {
-                result = ThisDynamic.GetProperty(SpecialMemberNames.Default, indices);
+                result = ThisDynamic.GetProperty(SpecialMemberNames.Default, indices).ToDynamicResult(engine);
                 return true;
             }
 
@@ -1748,7 +1748,7 @@ namespace Microsoft.ClearScript
                     return true;
                 }
 
-                ThisDynamic.SetProperty(indices[0].ToString(), new[] { value });
+                ThisDynamic.SetProperty(indices[0].ToString(), value);
                 return true;
             }
 
@@ -1762,7 +1762,7 @@ namespace Microsoft.ClearScript
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
         {
-            result = ThisDynamic.Invoke(args, false).ToDynamicResult(engine);
+            result = ThisDynamic.Invoke(false, args).ToDynamicResult(engine);
             return true;
         }
 
@@ -1930,12 +1930,12 @@ namespace Microsoft.ClearScript
 
         #region IDynamic implementation
 
-        object IDynamic.GetProperty(string name, object[] args)
+        object IDynamic.GetProperty(string name, params object[] args)
         {
             return InvokeReflectMember(name, BindingFlags.GetProperty, args, CultureInfo.InvariantCulture, null);
         }
 
-        object IDynamic.GetProperty(string name, object[] args, out bool isCacheable)
+        object IDynamic.GetProperty(string name, out bool isCacheable, params object[] args)
         {
             return InvokeReflectMember(name, BindingFlags.GetProperty, args, CultureInfo.InvariantCulture, null, out isCacheable);
         }
@@ -2011,7 +2011,7 @@ namespace Microsoft.ClearScript
 
         void IDynamic.SetProperty(int index, object value)
         {
-            ThisDynamic.SetProperty(index.ToString(CultureInfo.InvariantCulture), new[] { value });
+            ThisDynamic.SetProperty(index.ToString(CultureInfo.InvariantCulture), value);
         }
 
         bool IDynamic.DeleteProperty(int index)
@@ -2064,12 +2064,12 @@ namespace Microsoft.ClearScript
             });
         }
 
-        object IDynamic.Invoke(object[] args, bool asConstructor)
+        object IDynamic.Invoke(bool asConstructor, params object[] args)
         {
             return ThisReflect.InvokeMember(SpecialMemberNames.Default, asConstructor ? BindingFlags.CreateInstance : ((args.Length < 1) ? BindingFlags.InvokeMethod : BindingFlags.InvokeMethod | BindingFlags.GetProperty), null, ThisReflect, args, null, CultureInfo.InvariantCulture, null);
         }
 
-        object IDynamic.InvokeMethod(string name, object[] args)
+        object IDynamic.InvokeMethod(string name, params object[] args)
         {
             return ThisReflect.InvokeMember(name, BindingFlags.InvokeMethod, null, ThisReflect, args, null, CultureInfo.InvariantCulture, null);
         }

@@ -91,7 +91,7 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
-        public static object Invoke(this IDispatchEx dispatchEx, object[] args, bool asConstructor)
+        public static object Invoke(this IDispatchEx dispatchEx, bool asConstructor, object[] args)
         {
             using (var argVariantArrayBlock = new CoTaskMemVariantArgsByRefBlock(args))
             {
@@ -132,19 +132,19 @@ namespace Microsoft.ClearScript.Util
             this.dispatchEx = dispatchEx;
         }
 
-        public object GetProperty(string name, object[] args)
+        public object GetProperty(string name, params object[] args)
         {
             bool isCacheable;
-            return GetProperty(name, args, out isCacheable);
+            return GetProperty(name, out isCacheable, args);
         }
 
-        public object GetProperty(string name, object[] args, out bool isCacheable)
+        public object GetProperty(string name, out bool isCacheable, params object[] args)
         {
             isCacheable = false;
             return dispatchEx.GetProperty(name, false, args);
         }
 
-        public void SetProperty(string name, object[] args)
+        public void SetProperty(string name, params object[] args)
         {
             dispatchEx.SetProperty(name, false, args);
         }
@@ -179,12 +179,12 @@ namespace Microsoft.ClearScript.Util
             return dispatchEx.GetPropertyNames().GetIndices().ToArray();
         }
 
-        public object Invoke(object[] args, bool asConstructor)
+        public object Invoke(bool asConstructor, params object[] args)
         {
-            return dispatchEx.Invoke(args, asConstructor);
+            return dispatchEx.Invoke(asConstructor, args);
         }
 
-        public object InvokeMethod(string name, object[] args)
+        public object InvokeMethod(string name, params object[] args)
         {
             return dispatchEx.InvokeMethod(name, false, args);
         }

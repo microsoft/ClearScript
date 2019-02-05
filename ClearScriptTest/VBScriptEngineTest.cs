@@ -11,11 +11,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Threading;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
+using Microsoft.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -2440,13 +2442,81 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("qux", engine.Evaluate("foo.baz"));
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_UnderlyingObject()
+        {
+            engine.Execute("class Foo : end class : set bar = new Foo");
+
+            var bar = (IWindowsScriptObject)(((ScriptObject)engine.Script)["bar"]);
+            var underlyingObject = bar.GetUnderlyingObject();
+
+            Assert.AreEqual("Foo", Information.TypeName(underlyingObject));
+
+            ((IDisposable)bar).Dispose();
+            Assert.AreEqual(0, Marshal.ReleaseComObject(underlyingObject));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ScriptObjectMembers()
+        {
+            engine.Execute(@"
+                class Foo
+                    public Bar
+                    public Baz
+                    private wix(10, 10, 10)
+                    public sub Qux(x)
+                        Bar = x
+                    end sub
+                    public function Xuq()
+                        Xuq = Baz
+                    end function
+                    public property let Zip(a, b, c, d)
+                        wix(a, b, c) = d
+                    end property
+                    public property get Zip(a, b, c)
+                        Zip = wix(a, b, c)
+                    end property
+                end class
+            ");
+
+            var foo = (ScriptObject)engine.Evaluate("new Foo");
+
+            foo.SetProperty("Bar", 123);
+            Assert.AreEqual(123, foo.GetProperty("Bar"));
+
+            foo["Baz"] = "abc";
+            Assert.AreEqual("abc", foo.GetProperty("Baz"));
+
+            foo.InvokeMethod("Qux", DayOfWeek.Wednesday);
+            Assert.AreEqual(DayOfWeek.Wednesday, foo.GetProperty("Bar"));
+
+            foo["Baz"] = BindingFlags.ExactBinding;
+            Assert.AreEqual(BindingFlags.ExactBinding, foo.InvokeMethod("Xuq"));
+
+            foo["Zip", 1, 2, 3] = new HostFunctions();
+            Assert.IsInstanceOfType(foo["Zip", 1, 2, 3], typeof(HostFunctions));
+            Assert.IsInstanceOfType(foo["Zip", 1, 2, 4], typeof(Undefined));
+
+            var names = foo.PropertyNames.ToArray();
+            Assert.AreEqual(6, names.Length);
+            Assert.IsTrue(names.Contains("Bar"));
+            Assert.IsTrue(names.Contains("Baz"));
+            Assert.IsTrue(names.Contains("Qux"));
+            Assert.IsTrue(names.Contains("Xuq"));
+            Assert.IsTrue(names.Contains("Zip"));
+            Assert.IsTrue(names.Contains("wix"));
+
+            var indices = foo.PropertyIndices.ToArray();
+            Assert.AreEqual(0, indices.Length);
+        }
+
         // ReSharper restore InconsistentNaming
 
-		#endregion
+        #endregion
 
-		#region miscellaneous
+        #region miscellaneous
 
-		public class ReflectionBindFallbackTest
+        public class ReflectionBindFallbackTest
         {
             public string Property { get { return "qux"; } }
 

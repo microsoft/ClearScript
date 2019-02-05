@@ -214,8 +214,7 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
     m_spIsolateImpl(pIsolateImpl),
     m_DateTimeConversionEnabled(options.EnableDateTimeConversion),
     m_pvV8ObjectCache(nullptr),
-    m_AllowHostObjectConstructorCall(false),
-    m_DisableHostObjectInterception(false)
+    m_AllowHostObjectConstructorCall(false)
 {
     VerifyNotOutOfMemory();
 
@@ -789,7 +788,7 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(void* pvObject, std::vector<int>&
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::InvokeV8Object(void* pvObject, const std::vector<V8Value>& args, bool asConstructor)
+V8Value V8ContextImpl::InvokeV8Object(void* pvObject, bool asConstructor, const std::vector<V8Value>& args)
 {
     BEGIN_CONTEXT_SCOPE
     BEGIN_EXECUTION_SCOPE
@@ -1116,11 +1115,6 @@ bool V8ContextImpl::CheckContextImplForGlobalObjectCallback(V8ContextImpl* pCont
 bool V8ContextImpl::CheckContextImplForHostObjectCallback(V8ContextImpl* pContextImpl)
 {
     if (pContextImpl == nullptr)
-    {
-        return false;
-    }
-
-    if (pContextImpl->m_DisableHostObjectInterception)
     {
         return false;
     }
@@ -1715,61 +1709,33 @@ void V8ContextImpl::GetHostObjectProperty(v8::Local<v8::Name> hKey, const v8::Pr
             {
                 try
                 {
-                    auto cacheCleared = false;
-
                     auto hAccessToken = FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hAccessTokenKey));
                     if (pContextImpl->m_hAccessToken != hAccessToken)
                     {
-                        BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
-
-                            auto hCache = ::ValueAsObject(FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey)));
-                            if (!hCache.IsEmpty())
-                            {
-                                auto hNames = FROM_MAYBE(hCache->GetOwnPropertyNames(pContextImpl->m_hContext));
-                                for (auto index = hNames->Length(); index > 0; index--)
-                                {
-                                    ASSERT_EVAL(FROM_MAYBE(hHolder->Delete(pContextImpl->m_hContext, FROM_MAYBE(hNames->Get(pContextImpl->m_hContext, index - 1)))));
-                                }
-
-                                ASSERT_EVAL(FROM_MAYBE(hHolder->DeletePrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey)));
-                            }
-
-                            ASSERT_EVAL(FROM_MAYBE(hHolder->SetPrivate(pContextImpl->m_hContext, pContextImpl->m_hAccessTokenKey, pContextImpl->m_hAccessToken)));
-                            cacheCleared = true;
-
-                        END_PULSE_VALUE_SCOPE
+                        ASSERT_EVAL(FROM_MAYBE(hHolder->DeletePrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey)));
+                        ASSERT_EVAL(FROM_MAYBE(hHolder->SetPrivate(pContextImpl->m_hContext, pContextImpl->m_hAccessTokenKey, pContextImpl->m_hAccessToken)));
                     }
-
-                    v8::Local<v8::Value> hResult;
-                    if (!cacheCleared)
+                    else
                     {
-                        BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
-
-                            if (FROM_MAYBE(hHolder->HasOwnProperty(pContextImpl->m_hContext, hName)))
-                            {
-                                CALLBACK_RETURN(hResult);
-                            }
-
-                        END_PULSE_VALUE_SCOPE
+                        auto hCache = ::ValueAsObject(FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey)));
+                        if (!hCache.IsEmpty() && FROM_MAYBE(hCache->HasOwnProperty(pContextImpl->m_hContext, hName)))
+                        {
+                            CALLBACK_RETURN(FROM_MAYBE(hCache->Get(pContextImpl->m_hContext, hName)));
+                        }
                     }
 
                     bool isCacheable;
-                    hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(pvObject, pContextImpl->CreateStdString(hName), isCacheable));
-                    if (isCacheable)
+                    auto hResult = pContextImpl->ImportValue(HostObjectHelpers::GetProperty(pvObject, pContextImpl->CreateStdString(hName), isCacheable));
+                    if (isCacheable && !hResult.IsEmpty())
                     {
-                        BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_DisableHostObjectInterception, true)
+                        auto hCache = ::ValueAsObject(FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey)));
+                        if (hCache.IsEmpty())
+                        {
+                            hCache = pContextImpl->CreateObject();
+                            ASSERT_EVAL(FROM_MAYBE(hHolder->SetPrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey, hCache)));
+                        }
 
-                            auto hCache = ::ValueAsObject(FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey)));
-                            if (hCache.IsEmpty())
-                            {
-                                hCache = pContextImpl->CreateObject();
-                                ASSERT_EVAL(FROM_MAYBE(hHolder->SetPrivate(pContextImpl->m_hContext, pContextImpl->m_hCacheKey, hCache)));
-                            }
-
-                            ASSERT_EVAL(FROM_MAYBE(hCache->Set(pContextImpl->m_hContext, hName, hResult)));
-                            ASSERT_EVAL(FROM_MAYBE(hHolder->DefineOwnProperty(pContextImpl->m_hContext, hName, hResult, v8::DontEnum)));
-
-                        END_PULSE_VALUE_SCOPE
+                        ASSERT_EVAL(FROM_MAYBE(hCache->Set(pContextImpl->m_hContext, hName, hResult)));
                     }
 
                     CALLBACK_RETURN(hResult);
@@ -2071,7 +2037,7 @@ void V8ContextImpl::InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& 
                     exportedArgs.push_back(pContextImpl->ExportValue(info[index]));
                 }
 
-                CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::Invoke(pvObject, exportedArgs, info.IsConstructCall())));
+                CALLBACK_RETURN(pContextImpl->ImportValue(HostObjectHelpers::Invoke(pvObject, info.IsConstructCall(), exportedArgs)));
             }
             catch (const HostException& exception)
             {
@@ -2240,7 +2206,7 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
 
         if (hValue->IsBoolean())
         {
-            return V8Value(FROM_MAYBE(hValue->BooleanValue(m_hContext)));
+            return V8Value(m_spIsolateImpl->BooleanValue(hValue));
         }
 
         if (hValue->IsNumber())

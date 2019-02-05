@@ -143,6 +143,32 @@ namespace Microsoft.ClearScript
             return new DynamicMetaObject(Expression.TryCatchFinally(result.Expression, Expression.Call(clearLastScriptErrorMethod), Expression.Catch(typeof(Exception), catchBody)), result.Restrictions);
         }
 
+        #region ScriptObject overrides
+
+        public override IEnumerable<string> PropertyNames
+        {
+            get { return GetPropertyNames(); }
+        }
+
+        public override IEnumerable<int> PropertyIndices
+        {
+            get { return GetPropertyIndices(); }
+        }
+
+        public new object this[string name, params object[] args]
+        {
+            get { return GetProperty(name, args).ToDynamicResult(Engine); }
+            set { SetProperty(name, args.Concat(new[] { value }).ToArray()); }
+        }
+
+        public new object this[int index]
+        {
+            get { return GetProperty(index).ToDynamicResult(Engine); }
+            set { SetProperty(index, value); }
+        }
+
+        #endregion
+
         #region DynamicObject overrides
 
         public override DynamicMetaObject GetMetaObject(Expression param)
@@ -263,7 +289,7 @@ namespace Microsoft.ClearScript
             {
                 if (name == SpecialMemberNames.Default)
                 {
-                    return Invoke(args, false);
+                    return Invoke(false, args);
                 }
 
                 return InvokeMethod(name, args);
@@ -336,7 +362,7 @@ namespace Microsoft.ClearScript
 
         #region IDynamic implementation
 
-        public object GetProperty(string name, object[] args, out bool isCacheable)
+        public object GetProperty(string name, out bool isCacheable, params object[] args)
         {
             isCacheable = false;
             return GetProperty(name, args);
@@ -346,16 +372,8 @@ namespace Microsoft.ClearScript
 
         #region IDynamic implementation (abstract)
 
-        public abstract object GetProperty(string name, object[] args);
-        public abstract void SetProperty(string name, object[] args);
-        public abstract bool DeleteProperty(string name);
         public abstract string[] GetPropertyNames();
-        public abstract object GetProperty(int index);
-        public abstract void SetProperty(int index, object value);
-        public abstract bool DeleteProperty(int index);
         public abstract int[] GetPropertyIndices();
-        public abstract object Invoke(object[] args, bool asConstructor);
-        public abstract object InvokeMethod(string name, object[] args);
 
         #endregion
 

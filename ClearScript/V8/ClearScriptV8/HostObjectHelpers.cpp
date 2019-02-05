@@ -170,7 +170,7 @@ void HostObjectHelpers::GetPropertyIndices(void* pvObject, std::vector<int>& ind
 
 //-----------------------------------------------------------------------------
 
-V8Value HostObjectHelpers::Invoke(void* pvObject, const std::vector<V8Value>& args, bool asConstructor)
+V8Value HostObjectHelpers::Invoke(void* pvObject, bool asConstructor, const std::vector<V8Value>& args)
 {
     try
     {
@@ -182,7 +182,7 @@ V8Value HostObjectHelpers::Invoke(void* pvObject, const std::vector<V8Value>& ar
             exportedArgs[index] = V8ContextProxyImpl::ExportValue(args[index]);
         }
 
-        return V8ContextProxyImpl::ImportValue(V8ProxyHelpers::InvokeHostObject(pvObject, exportedArgs, asConstructor));
+        return V8ContextProxyImpl::ImportValue(V8ProxyHelpers::InvokeHostObject(pvObject, asConstructor, exportedArgs));
     }
     catch (Exception^ gcException)
     {

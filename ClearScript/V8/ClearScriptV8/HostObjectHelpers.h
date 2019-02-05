@@ -27,7 +27,7 @@ public:
     static bool DeleteProperty(void* pvObject, int index);
     static void GetPropertyIndices(void* pvObject, std::vector<int>& indices);
 
-    static V8Value Invoke(void* pvObject, const std::vector<V8Value>& args, bool asConstructor);
+    static V8Value Invoke(void* pvObject, bool asConstructor, const std::vector<V8Value>& args);
     static V8Value InvokeMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
 
     enum class V8Invocability { None, Delegate, Other };

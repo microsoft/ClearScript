@@ -141,6 +141,7 @@
     <Compile Include="V8\V8RuntimeFlags.cs" />
     <Compile Include="V8\V8TestProxy.cs" />
     <Compile Include="Windows\IHostWindow.cs" />
+    <Compile Include="Windows\IWindowsScriptObject.cs" />
     <Compile Include="Windows\WindowsScriptEngineFlags.cs" />
     <Compile Include="Util\IDynamic.cs" />
     <Compile Include="Util\SpecialMemberNames.cs" />

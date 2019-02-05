@@ -149,6 +149,11 @@ public:
         return v8::False(m_pIsolate);
     }
 
+	bool BooleanValue(v8::Local<v8::Value> hValue)
+	{
+		return hValue->BooleanValue(m_pIsolate);
+	}
+
     v8::Local<v8::Symbol> GetIteratorSymbol()
     {
         return v8::Symbol::GetIterator(m_pIsolate);

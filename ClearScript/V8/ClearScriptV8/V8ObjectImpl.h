@@ -18,7 +18,6 @@ namespace V8 {
         V8ObjectImpl(V8ObjectHolder* pHolder, V8Value::Subtype subtype);
 
         virtual Object^ GetProperty(String^ gcName);
-        virtual Object^ GetProperty(String^ gcName, [Out] Boolean% isCacheable);
         virtual void SetProperty(String^ gcName, Object^ gcValue);
         virtual bool DeleteProperty(String^ gcName);
         virtual array<String^>^ GetPropertyNames();
@@ -28,7 +27,7 @@ namespace V8 {
         virtual bool DeleteProperty(int index);
         virtual array<int>^ GetPropertyIndices();
 
-        virtual Object^ Invoke(array<Object^>^ gcArgs, bool asConstructor);
+        virtual Object^ Invoke(bool asConstructor, array<Object^>^ gcArgs);
         virtual Object^ InvokeMethod(String^ gcName, array<Object^>^ gcArgs);
 
         virtual bool IsArrayBufferOrView();

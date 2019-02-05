@@ -2369,13 +2369,35 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
-        // ReSharper restore InconsistentNaming
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_PropertyAccessorScriptability()
+        {
+            engine.Script.testObject = new PropertyAccessorScriptability();
+            engine.Execute("testObject.Foo = 123");
+            Assert.AreEqual(123, engine.Evaluate("testObject.Foo"));
 
-        #endregion
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.Bar = 123"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("testObject.Bar"));
+        }
 
-        #region miscellaneous
+		[TestMethod, TestCategory("BugFix")]
+        public void BugFix_PropertyAccessorScriptability_Static()
+        {
+            engine.AddHostType("TestObject", typeof(PropertyAccessorScriptabilityStatic));
+            engine.Execute("TestObject.Foo = 123");
+            Assert.AreEqual(123, engine.Evaluate("TestObject.Foo"));
 
-        private static void VariantClearTestHelper(object x)
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("TestObject.Bar = 123"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("TestObject.Bar"));
+        }
+
+		// ReSharper restore InconsistentNaming
+
+		#endregion
+
+		#region miscellaneous
+
+		private static void VariantClearTestHelper(object x)
         {
             using (var engine = new JScriptEngine())
             {
@@ -2528,7 +2550,27 @@ namespace Microsoft.ClearScript.Test
             // ReSharper restore UnusedMember.Local
         }
 
-        public class DynamicMethodArgTest : DynamicObject
+        [NoDefaultScriptAccess]
+        public class PropertyAccessorScriptability
+        {
+            [ScriptMember]
+            public int Foo { get; set; }
+
+            [ScriptMember]
+            public int Bar { [NoScriptAccess] get; [NoScriptAccess] set; }
+		}
+
+		[NoDefaultScriptAccess]
+        public static class PropertyAccessorScriptabilityStatic
+        {
+            [ScriptMember]
+            public static int Foo { get; set; }
+
+            [ScriptMember]
+            public static int Bar { [NoScriptAccess] get; [NoScriptAccess] set; }
+        }
+
+		public class DynamicMethodArgTest : DynamicObject
         {
             public override IEnumerable<string> GetDynamicMemberNames()
             {

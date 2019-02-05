@@ -126,7 +126,7 @@ OnceFlag::OnceFlag():
 
 void OnceFlag::CallOnce(const std::function<void()>& func)
 {
-    m_pImpl->CallOnce(std::move(func));
+    m_pImpl->CallOnce(func);
 }
 
 //-----------------------------------------------------------------------------

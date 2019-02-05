@@ -220,9 +220,9 @@ namespace Microsoft.ClearScript.Util
             return ((attribute != null) && (attribute.Name != null)) ? attribute.Name : member.GetShortName();
         }
 
-        public static bool IsBlockedFromScript(this MemberInfo member, ScriptAccess defaultAccess)
+        public static bool IsBlockedFromScript(this MemberInfo member, ScriptAccess defaultAccess, bool chain = true)
         {
-            return member.GetScriptAccess(defaultAccess) == ScriptAccess.None;
+            return member.GetScriptAccess(defaultAccess, chain) == ScriptAccess.None;
         }
 
         public static bool IsReadOnlyForScript(this MemberInfo member, ScriptAccess defaultAccess)
@@ -230,7 +230,7 @@ namespace Microsoft.ClearScript.Util
             return member.GetScriptAccess(defaultAccess) == ScriptAccess.ReadOnly;
         }
 
-        public static ScriptAccess GetScriptAccess(this MemberInfo member, ScriptAccess defaultValue)
+        public static ScriptAccess GetScriptAccess(this MemberInfo member, ScriptAccess defaultValue, bool chain = true)
         {
             var attribute = member.GetAttribute<ScriptUsageAttribute>(true);
             if (attribute != null)
@@ -238,35 +238,38 @@ namespace Microsoft.ClearScript.Util
                 return attribute.Access;
             }
 
-            var declaringType = member.DeclaringType;
-            if (declaringType != null)
+            if (chain)
             {
-                var testType = declaringType;
-                do
+                var declaringType = member.DeclaringType;
+                if (declaringType != null)
                 {
-                    if (testType.IsNested)
+                    var testType = declaringType;
+                    do
                     {
-                        var nestedTypeAttribute = testType.GetAttribute<ScriptUsageAttribute>(true);
-                        if (nestedTypeAttribute != null)
+                        if (testType.IsNested)
                         {
-                            return nestedTypeAttribute.Access;
+                            var nestedTypeAttribute = testType.GetAttribute<ScriptUsageAttribute>(true);
+                            if (nestedTypeAttribute != null)
+                            {
+                                return nestedTypeAttribute.Access;
+                            }
                         }
-                    }
 
-                    var typeAttribute = testType.GetAttribute<DefaultScriptUsageAttribute>(true);
-                    if (typeAttribute != null)
+                        var typeAttribute = testType.GetAttribute<DefaultScriptUsageAttribute>(true);
+                        if (typeAttribute != null)
+                        {
+                            return typeAttribute.Access;
+                        }
+
+                        testType = testType.DeclaringType;
+
+                    } while (testType != null);
+
+                    var assemblyAttribute = declaringType.Assembly.GetAttribute<DefaultScriptUsageAttribute>(true);
+                    if (assemblyAttribute != null)
                     {
-                        return typeAttribute.Access;
+                        return assemblyAttribute.Access;
                     }
-
-                    testType = testType.DeclaringType;
-
-                } while (testType != null);
-
-                var assemblyAttribute = declaringType.Assembly.GetAttribute<DefaultScriptUsageAttribute>(true);
-                if (assemblyAttribute != null)
-                {
-                    return assemblyAttribute.Access;
                 }
             }
 

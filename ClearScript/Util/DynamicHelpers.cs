@@ -278,7 +278,7 @@ namespace Microsoft.ClearScript.Util
                 // creates for the invocation arguments. This issue has been reported. In the
                 // meantime we'll bypass this facility and interface with IDispatchEx directly.
 
-                result = dispatchEx.Invoke(args, true);
+                result = dispatchEx.Invoke(true, args);
                 return true;
             }
 
@@ -311,7 +311,7 @@ namespace Microsoft.ClearScript.Util
                 // creates for the invocation arguments. This issue has been reported. In the
                 // meantime we'll bypass this facility and interface with IDispatchEx directly.
 
-                result = dispatchEx.Invoke(args, false);
+                result = dispatchEx.Invoke(false, args);
                 return true;
             }
 

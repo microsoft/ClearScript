@@ -2923,13 +2923,53 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("qux", engine.Evaluate("foo.baz"));
         }
 
-		// ReSharper restore InconsistentNaming
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ScriptObjectMembers()
+        {
+            engine.Execute(@"
+                function Foo() {
+                    this.Qux = x => this.Bar = x;
+                    this.Xuq = () => this.Baz;
+                }
+            ");
 
-		#endregion
+            var foo = (ScriptObject)engine.Evaluate("new Foo");
 
-		#region miscellaneous
+            foo.SetProperty("Bar", 123);
+            Assert.AreEqual(123, foo.GetProperty("Bar"));
 
-		private const string generalScript =
+            foo["Baz"] = "abc";
+            Assert.AreEqual("abc", foo.GetProperty("Baz"));
+
+            foo.InvokeMethod("Qux", DayOfWeek.Wednesday);
+            Assert.AreEqual(DayOfWeek.Wednesday, foo.GetProperty("Bar"));
+
+            foo["Baz"] = BindingFlags.ExactBinding;
+            Assert.AreEqual(BindingFlags.ExactBinding, foo.InvokeMethod("Xuq"));
+
+            foo[1] = new HostFunctions();
+            Assert.IsInstanceOfType(foo[1], typeof(HostFunctions));
+            Assert.IsInstanceOfType(foo[2], typeof(Undefined));
+
+            var names = foo.PropertyNames.ToArray();
+            Assert.AreEqual(4, names.Length);
+            Assert.IsTrue(names.Contains("Bar"));
+            Assert.IsTrue(names.Contains("Baz"));
+            Assert.IsTrue(names.Contains("Qux"));
+            Assert.IsTrue(names.Contains("Xuq"));
+
+            var indices = foo.PropertyIndices.ToArray();
+            Assert.AreEqual(1, indices.Length);
+            Assert.IsTrue(indices.Contains(1));
+        }
+
+        // ReSharper restore InconsistentNaming
+
+        #endregion
+
+        #region miscellaneous
+
+        private const string generalScript =
         @"
             System = clr.System;
 

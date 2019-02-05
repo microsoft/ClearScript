@@ -28,7 +28,7 @@ public:
     bool DeleteProperty(int index) const;
     void GetPropertyIndices(std::vector<int>& indices) const;
 
-    V8Value Invoke(const std::vector<V8Value>& args, bool asConstructor) const;
+    V8Value Invoke(bool asConstructor, const std::vector<V8Value>& args) const;
     V8Value InvokeMethod(const StdString& name, const std::vector<V8Value>& args) const;
 
     void GetArrayBufferOrViewInfo(V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length) const;

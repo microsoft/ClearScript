@@ -11,11 +11,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Threading;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
+using Microsoft.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -2270,13 +2272,67 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("qux", engine.Evaluate("foo.baz"));
         }
 
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_UnderlyingObject()
+        {
+            engine.Execute("function Foo() {}; bar = new Foo();");
+
+            var bar = (IWindowsScriptObject)(((ScriptObject)engine.Script)["bar"]);
+            var underlyingObject = bar.GetUnderlyingObject();
+
+            Assert.AreEqual("JScriptTypeInfo", Information.TypeName(underlyingObject));
+
+            ((IDisposable)bar).Dispose();
+            Assert.AreEqual(0, Marshal.ReleaseComObject(underlyingObject));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ScriptObjectMembers()
+        {
+            engine.Execute(@"
+                function Foo() {
+                    this.Qux = function (x) { this.Bar = x; };
+                    this.Xuq = function () { return this.Baz; }
+                }
+            ");
+
+            var foo = (ScriptObject)engine.Evaluate("new Foo");
+
+            foo.SetProperty("Bar", 123);
+            Assert.AreEqual(123, foo.GetProperty("Bar"));
+
+            foo["Baz"] = "abc";
+            Assert.AreEqual("abc", foo.GetProperty("Baz"));
+
+            foo.InvokeMethod("Qux", DayOfWeek.Wednesday);
+            Assert.AreEqual(DayOfWeek.Wednesday, foo.GetProperty("Bar"));
+
+            foo["Baz"] = BindingFlags.ExactBinding;
+            Assert.AreEqual(BindingFlags.ExactBinding, foo.InvokeMethod("Xuq"));
+
+            foo[1] = new HostFunctions();
+            Assert.IsInstanceOfType(foo[1], typeof(HostFunctions));
+            Assert.IsInstanceOfType(foo[2], typeof(Undefined));
+
+            var names = foo.PropertyNames.ToArray();
+            Assert.AreEqual(4, names.Length);
+            Assert.IsTrue(names.Contains("Bar"));
+            Assert.IsTrue(names.Contains("Baz"));
+            Assert.IsTrue(names.Contains("Qux"));
+            Assert.IsTrue(names.Contains("Xuq"));
+
+            var indices = foo.PropertyIndices.ToArray();
+            Assert.AreEqual(1, indices.Length);
+            Assert.IsTrue(indices.Contains(1));
+        }
+
         // ReSharper restore InconsistentNaming
 
-		#endregion
+        #endregion
 
-		#region miscellaneous
+        #region miscellaneous
 
-		private const string generalScript =
+        private const string generalScript =
         @"
             System = clr.System;
 

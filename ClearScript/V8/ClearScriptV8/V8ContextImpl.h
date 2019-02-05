@@ -65,7 +65,7 @@ public:
     bool DeleteV8ObjectProperty(void* pvObject, int index);
     void GetV8ObjectPropertyIndices(void* pvObject, std::vector<int>& indices);
 
-    V8Value InvokeV8Object(void* pvObject, const std::vector<V8Value>& args, bool asConstructor);
+    V8Value InvokeV8Object(void* pvObject, bool asConstructor, const std::vector<V8Value>& args);
     V8Value InvokeV8ObjectMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args);
 
     void GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length);
@@ -269,12 +269,12 @@ private:
         m_spIsolateImpl->LowMemoryNotification();
     }
 
-	v8::Local<v8::StackFrame> GetStackFrame(v8::Local<v8::StackTrace> hStackTrace, uint32_t index)
-	{
-		return m_spIsolateImpl->GetStackFrame(hStackTrace, index);
-	}
+    v8::Local<v8::StackFrame> GetStackFrame(v8::Local<v8::StackTrace> hStackTrace, uint32_t index)
+    {
+        return m_spIsolateImpl->GetStackFrame(hStackTrace, index);
+    }
 
-	v8::Local<v8::String> GetTypeOf(v8::Local<v8::Value> hValue)
+    v8::Local<v8::String> GetTypeOf(v8::Local<v8::Value> hValue)
     {
         return m_spIsolateImpl->GetTypeOf(hValue);
     }
@@ -366,7 +366,6 @@ private:
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     void* m_pvV8ObjectCache;
     bool m_AllowHostObjectConstructorCall;
-    bool m_DisableHostObjectInterception;
 };
 
 //-----------------------------------------------------------------------------

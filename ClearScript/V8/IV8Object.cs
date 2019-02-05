@@ -8,7 +8,6 @@ namespace Microsoft.ClearScript.V8
     internal interface IV8Object : IDisposable
     {
         object GetProperty(string name);
-        object GetProperty(string name, out bool isCacheable);
         void SetProperty(string name, object value);
         bool DeleteProperty(string name);
         string[] GetPropertyNames();
@@ -18,7 +17,7 @@ namespace Microsoft.ClearScript.V8
         bool DeleteProperty(int index);
         int[] GetPropertyIndices();
 
-        object Invoke(object[] args, bool asConstructor);
+        object Invoke(bool asConstructor, object[] args);
         object InvokeMethod(string name, object[] args);
 
         bool IsArrayBufferOrView();

@@ -85,9 +85,9 @@ void V8ObjectHolderImpl::GetPropertyIndices(std::vector<int>& indices) const
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ObjectHolderImpl::Invoke(const std::vector<V8Value>& args, bool asConstructor) const
+V8Value V8ObjectHolderImpl::Invoke(bool asConstructor, const std::vector<V8Value>& args) const
 {
-    return m_spBinding->GetContextImpl()->InvokeV8Object(m_pvObject, args, asConstructor);
+    return m_spBinding->GetContextImpl()->InvokeV8Object(m_pvObject, asConstructor, args);
 }
 
 //-----------------------------------------------------------------------------

@@ -1,9 +1,9 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 0b354468a6..2809799baf 100644
+index 3c03942827..34fae38417 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -166,6 +166,12 @@ declare_args() {
-   v8_check_header_includes = false
+@@ -194,6 +194,12 @@ if (host_cpu == "x64" &&
+   v8_generator_toolchain = "//build/toolchain/linux:clang_x64"
  }
  
 +if (v8_current_cpu == "x86") {
@@ -15,15 +15,15 @@ index 0b354468a6..2809799baf 100644
  # Derived defaults.
  if (v8_enable_verify_heap == "") {
    v8_enable_verify_heap = v8_enable_debugging_features
-@@ -2957,6 +2963,7 @@ v8_source_set("torque_base") {
+@@ -3153,6 +3159,7 @@ v8_source_set("torque_base") {
  }
  
  v8_component("v8_libbase") {
 +  output_name = "v8-base-${clearscript_v8_platform}"
    sources = [
      "src/base/adapters.h",
-     "src/base/atomic-utils.h",
-@@ -3132,6 +3139,7 @@ v8_component("v8_libbase") {
+     "src/base/address-region.h",
+@@ -3343,6 +3350,7 @@ v8_component("v8_libbase") {
  }
  
  v8_component("v8_libplatform") {
@@ -31,7 +31,7 @@ index 0b354468a6..2809799baf 100644
    sources = [
      "//base/trace_event/common/trace_event_common.h",
      "include/libplatform/libplatform-export.h",
-@@ -3355,6 +3363,7 @@ group("v8_fuzzers") {
+@@ -3616,6 +3624,7 @@ group("v8_fuzzers") {
  
  if (is_component_build) {
    v8_component("v8") {
@@ -40,10 +40,10 @@ index 0b354468a6..2809799baf 100644
        "src/v8dll-main.cc",
      ]
 diff --git a/include/v8.h b/include/v8.h
-index a83305560c..f024cb3a4a 100644
+index 03677d7af2..0d991b1588 100644
 --- a/include/v8.h
 +++ b/include/v8.h
-@@ -1404,6 +1404,7 @@ class V8_EXPORT ScriptCompiler {
+@@ -1275,6 +1275,7 @@ class V8_EXPORT ScriptCompiler {
      // (with delete[]) when the CachedData object is destroyed.
      CachedData(const uint8_t* data, int length,
                 BufferPolicy buffer_policy = BufferNotOwned);
@@ -51,23 +51,11 @@ index a83305560c..f024cb3a4a 100644
      ~CachedData();
      // TODO(marja): Async compilation; add constructors which take a callback
      // which will be called when V8 no longer needs the data.
-diff --git a/src/api-natives.cc b/src/api-natives.cc
-index 977d6cdafc..97983f7e7b 100644
---- a/src/api-natives.cc
-+++ b/src/api-natives.cc
-@@ -731,6 +731,7 @@ Handle<JSFunction> ApiNatives::CreateApiFunction(
-   // Mark instance as callable in the map.
-   if (!obj->instance_call_handler()->IsUndefined(isolate)) {
-     map->set_is_callable(true);
-+    map->set_is_constructor(true);
-   }
- 
-   if (immutable_proto) map->set_is_immutable_proto(true);
 diff --git a/src/api.cc b/src/api.cc
-index 4eb31a447c..d37f4975bb 100644
+index 1d993044db..1324eb4961 100644
 --- a/src/api.cc
 +++ b/src/api.cc
-@@ -2017,6 +2017,11 @@ ScriptCompiler::CachedData::CachedData(const uint8_t* data_, int length_,
+@@ -2011,6 +2011,11 @@ ScriptCompiler::CachedData::CachedData(const uint8_t* data_, int length_,
        buffer_policy(buffer_policy_) {}
  
  
@@ -80,10 +68,10 @@ index 4eb31a447c..d37f4975bb 100644
    if (buffer_policy == BufferOwned) {
      delete[] data;
 diff --git a/src/code-stub-assembler.cc b/src/code-stub-assembler.cc
-index 2527e89a25..04a9b3fb3c 100644
+index 501dad9cea..73c352bb68 100644
 --- a/src/code-stub-assembler.cc
 +++ b/src/code-stub-assembler.cc
-@@ -11547,6 +11547,11 @@ Node* CodeStubAssembler::Typeof(Node* value) {
+@@ -12457,6 +12457,11 @@ Node* CodeStubAssembler::Typeof(Node* value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -96,10 +84,10 @@ index 2527e89a25..04a9b3fb3c 100644
        LoadMapBitField(map),
        Int32Constant(Map::IsCallableBit::kMask | Map::IsUndetectableBit::kMask));
 diff --git a/src/objects.cc b/src/objects.cc
-index 811656ad9a..97248e7d8a 100644
+index e88a8a2c2d..9cd4d01de7 100644
 --- a/src/objects.cc
 +++ b/src/objects.cc
-@@ -724,6 +724,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -746,6 +746,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();
@@ -113,10 +101,10 @@ index 811656ad9a..97248e7d8a 100644
    return isolate->factory()->object_string();
  }
 diff --git a/src/v8.cc b/src/v8.cc
-index 4d152d4d4e..7f5bad931e 100644
+index 98a807963c..4493d80780 100644
 --- a/src/v8.cc
 +++ b/src/v8.cc
-@@ -96,7 +96,6 @@ void V8::InitializeOncePerProcess() {
+@@ -104,7 +104,6 @@ void V8::InitializeOncePerProcess() {
  
  
  void V8::InitializePlatform(v8::Platform* platform) {

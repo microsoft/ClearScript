@@ -43,14 +43,6 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    Object^ V8ObjectImpl::GetProperty(String^ gcName, [Out] Boolean% isCacheable)
-    {
-        isCacheable = false;
-        return GetProperty(gcName);
-    }
-
-    //-------------------------------------------------------------------------
-
     void V8ObjectImpl::SetProperty(String^ gcName, Object^ gcValue)
     {
         try
@@ -169,14 +161,14 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    Object^ V8ObjectImpl::Invoke(array<Object^>^ gcArgs, bool asConstructor)
+    Object^ V8ObjectImpl::Invoke(bool asConstructor, array<Object^>^ gcArgs)
     {
         try
         {
             std::vector<V8Value> importedArgs;
             ImportValues(gcArgs, importedArgs);
 
-            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::Invoke(GetHolder(), importedArgs, asConstructor));
+            return V8ContextProxyImpl::ExportValue(V8ObjectHelpers::Invoke(GetHolder(), asConstructor, importedArgs));
         }
         catch (const V8Exception& exception)
         {

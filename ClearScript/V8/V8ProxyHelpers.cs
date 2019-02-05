@@ -69,7 +69,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object GetHostObjectProperty(object obj, string name, out bool isCacheable)
         {
-            return ((IDynamic)obj).GetProperty(name, ArrayHelpers.GetEmptyArray<object>(), out isCacheable);
+            return ((IDynamic)obj).GetProperty(name, out isCacheable, ArrayHelpers.GetEmptyArray<object>());
         }
 
         public static unsafe void SetHostObjectProperty(void* pObject, string name, object value)
@@ -79,7 +79,7 @@ namespace Microsoft.ClearScript.V8
 
         public static void SetHostObjectProperty(object obj, string name, object value)
         {
-            ((IDynamic)obj).SetProperty(name, new[] { value });
+            ((IDynamic)obj).SetProperty(name, value);
         }
 
         public static unsafe bool DeleteHostObjectProperty(void* pObject, string name)
@@ -142,14 +142,14 @@ namespace Microsoft.ClearScript.V8
             return ((IDynamic)obj).GetPropertyIndices();
         }
 
-        public static unsafe object InvokeHostObject(void* pObject, object[] args, bool asConstructor)
+        public static unsafe object InvokeHostObject(void* pObject, bool asConstructor, object[] args)
         {
-            return InvokeHostObject(GetHostObject(pObject), args, asConstructor);
+            return InvokeHostObject(GetHostObject(pObject), asConstructor, args);
         }
 
-        public static object InvokeHostObject(object obj, object[] args, bool asConstructor)
+        public static object InvokeHostObject(object obj, bool asConstructor, object[] args)
         {
-            return ((IDynamic)obj).Invoke(args, asConstructor);
+            return ((IDynamic)obj).Invoke(asConstructor, args);
         }
 
         public static unsafe object InvokeHostObjectMethod(void* pObject, string name, object[] args)
