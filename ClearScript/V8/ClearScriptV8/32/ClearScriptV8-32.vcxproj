@@ -231,6 +231,8 @@
     <ClInclude Include="..\HostObjectHelpers.h" />
     <ClInclude Include="..\HostObjectHolder.h" />
     <ClInclude Include="..\HostObjectHolderImpl.h" />
+    <ClInclude Include="..\IV8Entity.h" />
+    <ClInclude Include="..\IV8EntityProxy.h" />
     <ClInclude Include="..\ManagedPlatform.h" />
     <ClInclude Include="..\Mutex.h" />
     <ClInclude Include="..\NativeCallbackImpl.h" />
@@ -247,8 +249,6 @@
     <ClInclude Include="..\V8DocumentInfo.h" />
     <ClInclude Include="..\V8Exception.h" />
     <ClInclude Include="..\V8Isolate.h" />
-    <ClInclude Include="..\V8IsolateConstraints.h" />
-    <ClInclude Include="..\V8IsolateHeapInfo.h" />
     <ClInclude Include="..\V8IsolateImpl.h" />
     <ClInclude Include="..\V8IsolateProxyImpl.h" />
     <ClInclude Include="..\V8ObjectHelpers.h" />

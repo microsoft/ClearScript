@@ -196,7 +196,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: VTablePatch
 
-        private class VTablePatch
+        private sealed class VTablePatch
         {
             public int SlotIndex;
             public byte[] ThunkBytes;

@@ -130,6 +130,8 @@
     <Compile Include="V8\V8ArrayBufferOrViewInfo.cs" />
     <Compile Include="V8\V8ArrayBufferOrViewKind.cs" />
     <Compile Include="V8\V8CacheKind.cs" />
+    <Compile Include="V8\V8CpuProfile.cs" />
+    <Compile Include="V8\V8CpuProfileFlags.cs" />
     <Compile Include="V8\V8DebugAgent.cs" />
     <Compile Include="V8\V8DebugClient.cs" />
     <Compile Include="V8\V8RuntimeHeapInfo.cs" />
@@ -142,6 +144,7 @@
     <Compile Include="V8\V8TestProxy.cs" />
     <Compile Include="Windows\IHostWindow.cs" />
     <Compile Include="Windows\IWindowsScriptObject.cs" />
+    <Compile Include="Windows\Nothing.cs" />
     <Compile Include="Windows\WindowsScriptEngineFlags.cs" />
     <Compile Include="Util\IDynamic.cs" />
     <Compile Include="Util\SpecialMemberNames.cs" />

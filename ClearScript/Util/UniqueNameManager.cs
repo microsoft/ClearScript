@@ -11,7 +11,7 @@ namespace Microsoft.ClearScript.Util
         string GetUniqueName(string inputName, string alternate);
     }
 
-    internal class UniqueNameManager : IUniqueNameManager
+    internal sealed class UniqueNameManager : IUniqueNameManager
     {
         private readonly object mapLock = new object();
         private readonly Dictionary<string, uint> map = new Dictionary<string, uint>();
@@ -35,7 +35,7 @@ namespace Microsoft.ClearScript.Util
         #endregion
     }
 
-    internal class UniqueFileNameManager : IUniqueNameManager
+    internal sealed class UniqueFileNameManager : IUniqueNameManager
     {
         private readonly object mapLock = new object();
         private readonly Dictionary<string, uint> map = new Dictionary<string, uint>();

@@ -36,7 +36,7 @@ namespace Microsoft.ClearScript.Util
         }
     }
 
-    internal class CoTaskMemArrayBlock : CoTaskMemBlock
+    internal sealed class CoTaskMemArrayBlock : CoTaskMemBlock
     {
         private readonly int elementSize;
         private readonly int length;
@@ -69,7 +69,7 @@ namespace Microsoft.ClearScript.Util
         }
     }
 
-    internal class CoTaskMemVariantBlock : CoTaskMemBlock
+    internal sealed class CoTaskMemVariantBlock : CoTaskMemBlock
     {
         public CoTaskMemVariantBlock()
             : base(RawCOMHelpers.VariantSize)
@@ -98,7 +98,7 @@ namespace Microsoft.ClearScript.Util
         #endregion
     }
 
-    internal class CoTaskMemVariantArgsBlock : CoTaskMemBlock
+    internal sealed class CoTaskMemVariantArgsBlock : CoTaskMemBlock
     {
         private readonly int length;
 
@@ -150,7 +150,7 @@ namespace Microsoft.ClearScript.Util
         #endregion
     }
 
-    internal class CoTaskMemVariantArgsByRefBlock : CoTaskMemBlock
+    internal sealed class CoTaskMemVariantArgsByRefBlock : CoTaskMemBlock
     {
         private readonly object[] args;
 

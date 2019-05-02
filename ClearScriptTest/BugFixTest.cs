@@ -2380,7 +2380,7 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("testObject.Bar"));
         }
 
-		[TestMethod, TestCategory("BugFix")]
+        [TestMethod, TestCategory("BugFix")]
         public void BugFix_PropertyAccessorScriptability_Static()
         {
             engine.AddHostType("TestObject", typeof(PropertyAccessorScriptabilityStatic));
@@ -2391,13 +2391,13 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("TestObject.Bar"));
         }
 
-		// ReSharper restore InconsistentNaming
+        // ReSharper restore InconsistentNaming
 
-		#endregion
+        #endregion
 
-		#region miscellaneous
+        #region miscellaneous
 
-		private static void VariantClearTestHelper(object x)
+        private static void VariantClearTestHelper(object x)
         {
             using (var engine = new JScriptEngine())
             {
@@ -2558,9 +2558,9 @@ namespace Microsoft.ClearScript.Test
 
             [ScriptMember]
             public int Bar { [NoScriptAccess] get; [NoScriptAccess] set; }
-		}
+        }
 
-		[NoDefaultScriptAccess]
+        [NoDefaultScriptAccess]
         public static class PropertyAccessorScriptabilityStatic
         {
             [ScriptMember]
@@ -2570,7 +2570,7 @@ namespace Microsoft.ClearScript.Test
             public static int Bar { [NoScriptAccess] get; [NoScriptAccess] set; }
         }
 
-		public class DynamicMethodArgTest : DynamicObject
+        public class DynamicMethodArgTest : DynamicObject
         {
             public override IEnumerable<string> GetDynamicMemberNames()
             {

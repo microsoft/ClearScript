@@ -15,7 +15,7 @@ namespace Microsoft.ClearScript.Windows
     {
         #region Nested type: ScriptSite
 
-        private class ScriptSite : IActiveScriptSite, IActiveScriptSiteInterruptPoll, IActiveScriptSiteWindow, IActiveScriptSiteDebug32, IActiveScriptSiteDebug64, IActiveScriptSiteDebugEx, ICustomQueryInterface
+        private sealed class ScriptSite : IActiveScriptSite, IActiveScriptSiteInterruptPoll, IActiveScriptSiteWindow, IActiveScriptSiteDebug32, IActiveScriptSiteDebug64, IActiveScriptSiteDebugEx, ICustomQueryInterface
         {
             private readonly WindowsScriptEngine engine;
 

@@ -7,7 +7,7 @@
 // FromMaybeScope
 //-----------------------------------------------------------------------------
 
-class FromMaybeScope
+class FromMaybeScope final
 {
 };
 
@@ -15,7 +15,7 @@ class FromMaybeScope
 // FromMaybeFailure
 //-----------------------------------------------------------------------------
 
-class FromMaybeFailure
+class FromMaybeFailure final
 {
 };
 
@@ -265,6 +265,7 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name,
             hToFunctionFunction = CreateFunctionTemplate(CreateFunctionForHostDelegate, hContextImpl);
             hNextFunction = CreateFunctionTemplate(AdvanceHostObjectIterator, hContextImpl);
             m_hAccessToken = CreatePersistent(CreateObject());
+            m_hFlushFunction = CreatePersistent(FROM_MAYBE(v8::Function::New(m_hContext, FlushCallback)));
             m_hTerminationException = CreatePersistent(v8::Exception::Error(FROM_MAYBE(CreateString(StdString(L"Script execution was interrupted")))));
 
         END_CONTEXT_SCOPE
@@ -618,9 +619,9 @@ void V8ContextImpl::Interrupt()
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo)
+void V8ContextImpl::GetIsolateHeapStatistics(v8::HeapStatistics& heapStatistics)
 {
-    m_spIsolateImpl->GetHeapInfo(heapInfo);
+    m_spIsolateImpl->GetHeapStatistics(heapStatistics);
 }
 
 //-----------------------------------------------------------------------------
@@ -639,6 +640,54 @@ void V8ContextImpl::OnAccessSettingsChanged()
 
         Dispose(m_hAccessToken);
         m_hAccessToken = CreatePersistent(CreateObject());
+
+    END_EXECUTION_SCOPE
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8ContextImpl::BeginCpuProfile(const StdString& name, v8::CpuProfilingMode mode, bool recordSamples)
+{
+    return m_spIsolateImpl->BeginCpuProfile(name, mode, recordSamples);
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8ContextImpl::EndCpuProfile(const StdString& name, V8Isolate::CpuProfileCallbackT* pCallback, void* pvArg)
+{
+    return m_spIsolateImpl->EndCpuProfile(name, pCallback, pvArg);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::CollectCpuProfileSample()
+{
+    return m_spIsolateImpl->CollectCpuProfileSample();
+}
+
+//-----------------------------------------------------------------------------
+
+uint32_t V8ContextImpl::GetCpuProfileSampleInterval()
+{
+    return m_spIsolateImpl->GetCpuProfileSampleInterval();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::SetCpuProfileSampleInterval(uint32_t value)
+{
+    m_spIsolateImpl->SetCpuProfileSampleInterval(value);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::Flush()
+{
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_EXECUTION_SCOPE
+
+        m_hFlushFunction->Call(m_hContext, GetUndefined(), 0, nullptr);
 
     END_EXECUTION_SCOPE
     END_CONTEXT_SCOPE
@@ -1004,6 +1053,7 @@ void V8ContextImpl::Teardown()
     Dispose(m_hHostInvocableTemplate);
     Dispose(m_hHostObjectTemplate);
     Dispose(m_hTerminationException);
+    Dispose(m_hFlushFunction);
     Dispose(m_hInternalUseOnly);
     Dispose(m_hAccessToken);
     Dispose(m_hAccessTokenKey);
@@ -2045,6 +2095,12 @@ void V8ContextImpl::InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& 
             }
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::FlushCallback(const v8::FunctionCallbackInfo<v8::Value>& /*info*/)
+{
 }
 
 //-----------------------------------------------------------------------------

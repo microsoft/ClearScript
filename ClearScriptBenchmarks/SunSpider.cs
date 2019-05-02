@@ -120,7 +120,7 @@ namespace Microsoft.ClearScript.Test
         // ReSharper disable UnusedMember.Local
         // ReSharper disable UnusedParameter.Local
 
-        private class MockDOM
+        private sealed class MockDOM
         {
             public Action<int> RecordAction { private get; set; }
 

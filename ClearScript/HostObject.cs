@@ -7,7 +7,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class HostObject : HostTarget
+    internal sealed class HostObject : HostTarget
     {
         #region data
 

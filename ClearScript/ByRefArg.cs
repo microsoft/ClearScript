@@ -101,7 +101,7 @@ namespace Microsoft.ClearScript
         #endregion
     }
 
-    internal class OutArg<T> : ByRefArg<T>, IOutArg
+    internal sealed class OutArg<T> : ByRefArg<T>, IOutArg
     {
         public OutArg(HostVariable<T> target)
             : base(target)
@@ -123,7 +123,7 @@ namespace Microsoft.ClearScript
         #endregion
     }
 
-    internal class RefArg<T> : ByRefArg<T>, IRefArg
+    internal sealed class RefArg<T> : ByRefArg<T>, IRefArg
     {
         public RefArg(HostVariable<T> target)
             : base(target)

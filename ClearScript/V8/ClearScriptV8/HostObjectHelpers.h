@@ -7,7 +7,7 @@
 // HostObjectHelpers
 //-----------------------------------------------------------------------------
 
-class HostObjectHelpers
+class HostObjectHelpers final
 {
     PROHIBIT_CONSTRUCT(HostObjectHelpers)
 

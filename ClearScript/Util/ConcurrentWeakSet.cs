@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Microsoft.ClearScript.Util
 {
-    internal class ConcurrentWeakSet<T> where T : class
+    internal sealed class ConcurrentWeakSet<T> where T : class
     {
         private readonly object dataLock = new object();
         private List<WeakReference> weakRefs = new List<WeakReference>();

@@ -11,7 +11,7 @@ namespace V8 {
     // NativeCallbackImpl
     //-------------------------------------------------------------------------
 
-    private ref class NativeCallbackImpl : INativeCallback
+    private ref class NativeCallbackImpl sealed : INativeCallback
     {
     public:
 

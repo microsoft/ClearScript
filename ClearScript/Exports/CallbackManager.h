@@ -17,7 +17,7 @@
     DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, TYPE, RecursiveMutex)
 
 #define DEFINE_CALLBACK_MANAGER_INTERNAL(NAME, CALLBACK_TYPE, MUTEX_TYPE) \
-    struct NAME##CallbackTraits: public CallbackTraits<NAME##CallbackTraits, CALLBACK_TYPE, MUTEX_TYPE> {};
+    struct NAME##CallbackTraits final: public CallbackTraits<NAME##CallbackTraits, CALLBACK_TYPE, MUTEX_TYPE> {};
 
 #define CALLBACK_MANAGER(NAME) \
     CallbackManager<NAME##CallbackTraits>
@@ -27,7 +27,7 @@
 //-----------------------------------------------------------------------------
 
 template <typename TTraits, typename TCallback, typename TMutex>
-class CallbackTraits
+class CallbackTraits final
 {
     PROHIBIT_CONSTRUCT(CallbackTraits)
 
@@ -61,7 +61,7 @@ TMutex* CallbackTraits<TTraits, TCallback, TMutex>::ms_pMutex = new TMutex;
 //-----------------------------------------------------------------------------
 
 template <typename TTraits, size_t NIndex, typename TCallback>
-class CallbackSlot
+class CallbackSlot final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 };
@@ -72,7 +72,7 @@ class CallbackSlot
 
 
 template <typename TTraits, size_t NIndex, typename TResult>
-class CallbackSlot<TTraits, NIndex, TResult()>
+class CallbackSlot<TTraits, NIndex, TResult()> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -134,7 +134,7 @@ template <typename TTraits, size_t NIndex, typename TResult>
 std::function<TResult()>* CallbackSlot<TTraits, NIndex, TResult()>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0>
-class CallbackSlot<TTraits, NIndex, TResult(T0)>
+class CallbackSlot<TTraits, NIndex, TResult(T0)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -196,7 +196,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0>
 std::function<TResult(T0)>* CallbackSlot<TTraits, NIndex, TResult(T0)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -258,7 +258,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -320,7 +320,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -382,7 +382,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -444,7 +444,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -506,7 +506,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -568,7 +568,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5, T6)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -630,7 +630,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -692,7 +692,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -754,7 +754,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -816,7 +816,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -878,7 +878,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -940,7 +940,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12, typename T13>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -1002,7 +1002,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12, typename T13, typename T14>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -1064,7 +1064,7 @@ template <typename TTraits, size_t NIndex, typename TResult, typename T0, typena
 std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)>* CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)>::ms_pFunction = nullptr;
 
 template <typename TTraits, size_t NIndex, typename TResult, typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11, typename T12, typename T13, typename T14, typename T15>
-class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)>
+class CallbackSlot<TTraits, NIndex, TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)> final
 {
     PROHIBIT_CONSTRUCT(CallbackSlot)
 
@@ -1130,7 +1130,7 @@ std::function<TResult(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13
 //-----------------------------------------------------------------------------
 
 template <typename TTraits>
-class CallbackManager
+class CallbackManager final
 {
     PROHIBIT_CONSTRUCT(CallbackManager)
 

@@ -15,6 +15,7 @@
 #include "v8.h"
 #include "v8-platform.h"
 #include "v8-inspector.h"
+#include "v8-profiler.h"
 
 #pragma warning(pop)
 
@@ -26,7 +27,7 @@
 //-----------------------------------------------------------------------------
 
 template <typename T>
-class V8FastPersistent
+class V8FastPersistent final
 {
     template <typename TOther>
     friend class V8FastPersistent;
@@ -53,25 +54,25 @@ public:
     }
 
     template <typename TOther>
-    bool operator==(const v8::Local<TOther>& hValue)
+    bool operator==(const v8::Local<TOther>& hValue) const
     {
         return AsPersistent() == hValue;
     }
 
     template <typename TOther>
-    bool operator==(const V8FastPersistent<TOther>& hValue)
+    bool operator==(const V8FastPersistent<TOther>& hValue) const
     {
         return AsPersistent() == hValue.AsPersistent();
     }
 
     template <typename TOther>
-    bool operator!=(const v8::Local<TOther>& hValue)
+    bool operator!=(const v8::Local<TOther>& hValue) const
     {
         return AsPersistent() != hValue;
     }
 
     template <typename TOther>
-    bool operator!=(const V8FastPersistent<TOther>& hValue)
+    bool operator!=(const V8FastPersistent<TOther>& hValue) const
     {
         return AsPersistent() != hValue.AsPersistent();
     }
@@ -173,7 +174,7 @@ private:
     };
 
     template <typename TArg1, typename TArg2>
-    class WeakCallbackContext: public WeakCallbackContextBase
+    class WeakCallbackContext final: public WeakCallbackContextBase
     {
     public:
 
@@ -216,7 +217,7 @@ private:
 //-----------------------------------------------------------------------------
 
 template <typename T>
-class V8SafePersistent
+class V8SafePersistent final
 {
     template <typename TOther>
     friend class V8SafePersistent;
@@ -241,25 +242,25 @@ public:
     }
 
     template <typename TOther>
-    bool operator==(const v8::Local<TOther>& hValue)
+    bool operator==(const v8::Local<TOther>& hValue) const
     {
         return GetImpl() == hValue;
     }
 
     template <typename TOther>
-    bool operator==(const V8SafePersistent<TOther>& hValue)
+    bool operator==(const V8SafePersistent<TOther>& hValue) const
     {
         return GetImpl() == hValue.GetImpl();
     }
 
     template <typename TOther>
-    bool operator!=(const v8::Local<TOther>& hValue)
+    bool operator!=(const v8::Local<TOther>& hValue) const
     {
         return GetImpl() != hValue;
     }
 
     template <typename TOther>
-    bool operator!=(const V8SafePersistent<TOther>& hValue)
+    bool operator!=(const V8SafePersistent<TOther>& hValue) const
     {
         return GetImpl() != hValue.GetImpl();
     }
@@ -352,7 +353,7 @@ private:
     };
 
     template <typename TArg1, typename TArg2>
-    class WeakCallbackContext: public WeakCallbackContextBase
+    class WeakCallbackContext final: public WeakCallbackContextBase
     {
     public:
 

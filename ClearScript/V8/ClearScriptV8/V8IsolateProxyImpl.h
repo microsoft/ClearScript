@@ -11,7 +11,7 @@ namespace V8 {
     // V8IsolateProxyImpl
     //-------------------------------------------------------------------------
 
-    private ref class V8IsolateProxyImpl : V8IsolateProxy
+    private ref class V8IsolateProxyImpl sealed : V8IsolateProxy, IV8EntityProxy
     {
     public:
 
@@ -41,14 +41,27 @@ namespace V8 {
         virtual V8Script^ Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted) override;
         virtual V8RuntimeHeapInfo^ GetHeapInfo() override;
         virtual void CollectGarbage(bool exhaustive) override;
+        virtual bool BeginCpuProfile(String^ gcName, V8CpuProfileFlags flags) override;
+        virtual V8CpuProfile^ EndCpuProfile(String^ gcName) override;
+        virtual void CollectCpuProfileSample() override;
 
-        SharedPtr<V8Isolate> GetIsolate();
+        property UInt32 CpuProfileSampleInterval
+        {
+            virtual UInt32 get() override;
+            virtual void set(UInt32 value) override;
+        }
+
+        virtual String^ CreateManagedString(v8::Local<v8::Value> hValue);
+        V8Context* CreateContext(const StdString& name, const V8Context::Options& options);
 
         ~V8IsolateProxyImpl();
         !V8IsolateProxyImpl();
 
+        static V8Isolate::CpuProfileCallbackT* GetCpuProfileCallback();
+
     private:
 
+        SharedPtr<V8Isolate> GetIsolate();
         static int AdjustConstraint(int value);
 
         Object^ m_gcLock;

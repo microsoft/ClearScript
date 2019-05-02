@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 3c03942827..34fae38417 100644
+index fddd525297..76b2cd90bf 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -194,6 +194,12 @@ if (host_cpu == "x64" &&
+@@ -182,6 +182,12 @@ if (host_cpu == "x64" &&
    v8_generator_toolchain = "//build/toolchain/linux:clang_x64"
  }
  
@@ -15,7 +15,7 @@ index 3c03942827..34fae38417 100644
  # Derived defaults.
  if (v8_enable_verify_heap == "") {
    v8_enable_verify_heap = v8_enable_debugging_features
-@@ -3153,6 +3159,7 @@ v8_source_set("torque_base") {
+@@ -3194,6 +3200,7 @@ v8_source_set("torque_ls_base") {
  }
  
  v8_component("v8_libbase") {
@@ -23,7 +23,7 @@ index 3c03942827..34fae38417 100644
    sources = [
      "src/base/adapters.h",
      "src/base/address-region.h",
-@@ -3343,6 +3350,7 @@ v8_component("v8_libbase") {
+@@ -3391,6 +3398,7 @@ v8_component("v8_libbase") {
  }
  
  v8_component("v8_libplatform") {
@@ -31,7 +31,7 @@ index 3c03942827..34fae38417 100644
    sources = [
      "//base/trace_event/common/trace_event_common.h",
      "include/libplatform/libplatform-export.h",
-@@ -3616,6 +3624,7 @@ group("v8_fuzzers") {
+@@ -3681,6 +3689,7 @@ group("v8_fuzzers") {
  
  if (is_component_build) {
    v8_component("v8") {
@@ -40,10 +40,10 @@ index 3c03942827..34fae38417 100644
        "src/v8dll-main.cc",
      ]
 diff --git a/include/v8.h b/include/v8.h
-index 03677d7af2..0d991b1588 100644
+index 6ecc48af33..7f75db7b3a 100644
 --- a/include/v8.h
 +++ b/include/v8.h
-@@ -1275,6 +1275,7 @@ class V8_EXPORT ScriptCompiler {
+@@ -1421,6 +1421,7 @@ class V8_EXPORT ScriptCompiler {
      // (with delete[]) when the CachedData object is destroyed.
      CachedData(const uint8_t* data, int length,
                 BufferPolicy buffer_policy = BufferNotOwned);
@@ -52,10 +52,10 @@ index 03677d7af2..0d991b1588 100644
      // TODO(marja): Async compilation; add constructors which take a callback
      // which will be called when V8 no longer needs the data.
 diff --git a/src/api.cc b/src/api.cc
-index 1d993044db..1324eb4961 100644
+index 704c46aa68..95742bf141 100644
 --- a/src/api.cc
 +++ b/src/api.cc
-@@ -2011,6 +2011,11 @@ ScriptCompiler::CachedData::CachedData(const uint8_t* data_, int length_,
+@@ -2071,6 +2071,11 @@ ScriptCompiler::CachedData::CachedData(const uint8_t* data_, int length_,
        buffer_policy(buffer_policy_) {}
  
  
@@ -68,10 +68,10 @@ index 1d993044db..1324eb4961 100644
    if (buffer_policy == BufferOwned) {
      delete[] data;
 diff --git a/src/code-stub-assembler.cc b/src/code-stub-assembler.cc
-index 501dad9cea..73c352bb68 100644
+index e4dba15750..2186219015 100644
 --- a/src/code-stub-assembler.cc
 +++ b/src/code-stub-assembler.cc
-@@ -12457,6 +12457,11 @@ Node* CodeStubAssembler::Typeof(Node* value) {
+@@ -12574,6 +12574,11 @@ Node* CodeStubAssembler::Typeof(Node* value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -83,11 +83,36 @@ index 501dad9cea..73c352bb68 100644
    Node* callable_or_undetectable_mask = Word32And(
        LoadMapBitField(map),
        Int32Constant(Map::IsCallableBit::kMask | Map::IsUndetectableBit::kMask));
+diff --git a/src/compiler/js-heap-broker.cc b/src/compiler/js-heap-broker.cc
+index 5628e0d337..520503f5e2 100644
+--- a/src/compiler/js-heap-broker.cc
++++ b/src/compiler/js-heap-broker.cc
+@@ -1583,7 +1583,7 @@ JSHeapBroker::JSHeapBroker(Isolate* isolate, Zone* broker_zone)
+ }
+ 
+ std::ostream& JSHeapBroker::Trace() {
+-  return trace_out_ << "[" << this << "] "
++  return std::cout << "[" << this << "] "
+                     << std::string(trace_indentation_ * 2, ' ');
+ }
+ 
+diff --git a/src/compiler/js-heap-broker.h b/src/compiler/js-heap-broker.h
+index 4b87d81ea1..c166e09920 100644
+--- a/src/compiler/js-heap-broker.h
++++ b/src/compiler/js-heap-broker.h
+@@ -690,7 +690,6 @@ class V8_EXPORT_PRIVATE JSHeapBroker : public NON_EXPORTED_BASE(ZoneObject) {
+                    Handle<JSObject>::equal_to>
+       array_and_object_prototypes_;
+   BrokerMode mode_ = kDisabled;
+-  StdoutStream trace_out_;
+   unsigned trace_indentation_ = 0;
+   PerIsolateCompilerCache* compiler_cache_;
+   ZoneUnorderedMap<FeedbackNexus, ProcessedFeedback, FeedbackNexusHash,
 diff --git a/src/objects.cc b/src/objects.cc
-index e88a8a2c2d..9cd4d01de7 100644
+index 8337b3d4cf..b92280d991 100644
 --- a/src/objects.cc
 +++ b/src/objects.cc
-@@ -746,6 +746,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -798,6 +798,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();
@@ -101,10 +126,10 @@ index e88a8a2c2d..9cd4d01de7 100644
    return isolate->factory()->object_string();
  }
 diff --git a/src/v8.cc b/src/v8.cc
-index 98a807963c..4493d80780 100644
+index 318e846d61..fd545f4341 100644
 --- a/src/v8.cc
 +++ b/src/v8.cc
-@@ -104,7 +104,6 @@ void V8::InitializeOncePerProcess() {
+@@ -115,7 +115,6 @@ void V8::InitializeOncePerProcess() {
  
  
  void V8::InitializePlatform(v8::Platform* platform) {

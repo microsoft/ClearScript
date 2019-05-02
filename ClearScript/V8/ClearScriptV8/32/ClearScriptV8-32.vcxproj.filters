@@ -141,9 +141,6 @@
     <ClInclude Include="..\V8Isolate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\V8IsolateConstraints.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\V8IsolateImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -180,9 +177,6 @@
     <ClInclude Include="..\V8ScriptHolderImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\V8IsolateHeapInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\StdString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -208,6 +202,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\V8DocumentInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\IV8EntityProxy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\IV8Entity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

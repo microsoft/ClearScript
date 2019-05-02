@@ -11,12 +11,16 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Windows.Threading;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
+using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -2963,6 +2967,73 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(indices.Contains(1));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Nothing()
+        {
+            engine.Script.foo = new Func<object>(() => Nothing.Value);
+            Assert.IsTrue((bool)engine.Evaluate("foo() == undefined"));
+            Assert.IsTrue((bool)engine.Evaluate("foo() === undefined"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CpuProfileSampleInterval_Plumbing()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var engine1 = runtime.CreateScriptEngine())
+                {
+                    using (var engine2 = runtime.CreateScriptEngine())
+                    {
+                        var value = 123456789U;
+                        engine1.CpuProfileSampleInterval = value;
+                        Assert.AreEqual(value, engine1.CpuProfileSampleInterval);
+                        Assert.AreEqual(value, engine2.CpuProfileSampleInterval);
+                        Assert.AreEqual(value, runtime.CpuProfileSampleInterval);
+
+                        value = 987654321U;
+                        runtime.CpuProfileSampleInterval = value;
+                        Assert.AreEqual(value, engine1.CpuProfileSampleInterval);
+                        Assert.AreEqual(value, engine2.CpuProfileSampleInterval);
+                        Assert.AreEqual(value, runtime.CpuProfileSampleInterval);
+                    }
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CpuProfile()
+        {
+            const string name = "foo";
+            engine.BeginCpuProfile(name, V8CpuProfileFlags.EnableSampleCollection);
+            engine.Execute(CreateCpuProfileTestScript());
+            var profile = engine.EndCpuProfile(name);
+
+            Assert.AreEqual(engine.Name + ":" + name, profile.Name);
+            Assert.IsTrue(profile.StartTimestamp > 0);
+            Assert.IsTrue(profile.EndTimestamp > 0);
+            Assert.IsNotNull(profile.RootNode);
+            Assert.IsNotNull(profile.Samples);
+            Assert.IsTrue(profile.Samples.Count > 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CpuProfile_Json()
+        {
+            const string name = "foo";
+            engine.BeginCpuProfile(name, V8CpuProfileFlags.EnableSampleCollection);
+            engine.Execute(CreateCpuProfileTestScript());
+            var profile = engine.EndCpuProfile(name);
+
+            var json = profile.ToJson();
+            var result = JsonConvert.DeserializeObject<JObject>(json);
+
+            Assert.IsInstanceOfType(result["nodes"], typeof(JArray));
+            Assert.IsInstanceOfType(result["startTime"], typeof(JValue));
+            Assert.IsInstanceOfType(result["endTime"], typeof(JValue));
+            Assert.IsInstanceOfType(result["samples"], typeof(JArray));
+            Assert.IsInstanceOfType(result["timeDeltas"], typeof(JArray));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -3030,6 +3101,53 @@ namespace Microsoft.ClearScript.Test
             Property changed: Name; new value: Eóin (static event)
             Property changed: Name; new value: Shane (static event)
         ";
+
+        private string CreateCpuProfileTestScript()
+        {
+            var builder = new StringBuilder();
+
+            builder.Append(@"
+                function loop() {
+                    for (var i = 0; i < 10000000; i++) {
+                        for (var j = 0; j < 10000000; j++) {
+                            if (Math.random() > 0.999 && Math.random() > 0.999) {
+                                return i + '-' + j;
+                            }
+                        }
+                    }
+                }
+                (function () {");
+
+            builder.AppendLine();
+            AppendCpuProfileTestSequence(builder, 4, MiscHelpers.CreateSeededRandom(), new List<int>());
+            builder.Append(@"                })()");
+            builder.AppendLine();
+
+            return builder.ToString();
+        }
+
+        private void AppendCpuProfileTestSequence(StringBuilder builder, int count, Random random, List<int> indices)
+        {
+            const string separator = "_";
+            var indent = new string(Enumerable.Repeat(' ', indices.Count * 4 + 20).ToArray());
+
+            count = (count < 0) ? random.Next(4) : count;
+            count = (indices.Count >= 4) ? 0 : count;
+
+            for (var index = 0; index < count; index++)
+            {
+                builder.AppendFormat("{0}function f{1}{2}() {{", indent, separator, string.Join(separator, indices.Concat(index.ToEnumerable())));
+                builder.AppendLine();
+
+                AppendCpuProfileTestSequence(builder, -1, random, indices.Concat(index.ToEnumerable()).ToList());
+
+                builder.AppendFormat("{0}}}", indent);
+                builder.AppendLine();
+            }
+
+            builder.AppendFormat("{0}return {1}loop();", indent, string.Join(string.Empty, Enumerable.Range(0, count).Select(index => "f" + separator + string.Join(separator, indices.Concat(index.ToEnumerable())) + "() + '-' + ")));
+            builder.AppendLine();
+        }
 
         public object TestProperty { get; set; }
 

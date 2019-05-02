@@ -14,7 +14,7 @@ namespace Microsoft.ClearScript
         object this[int index] { get; set; }
     }
 
-    internal class HostList : IHostList
+    internal sealed class HostList : IHostList
     {
         private readonly ScriptEngine engine;
         private readonly IList list;
@@ -43,7 +43,7 @@ namespace Microsoft.ClearScript
         #endregion
     }
 
-    internal class HostList<T> : IHostList
+    internal sealed class HostList<T> : IHostList
     {
         private readonly ScriptEngine engine;
         private readonly IList<T> list;

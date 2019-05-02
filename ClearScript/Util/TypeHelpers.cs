@@ -405,7 +405,7 @@ namespace Microsoft.ClearScript.Util
             if (type.IsArray)
             {
                 var property = typeof(IList<>).MakeSpecificType(type.GetElementType()).GetProperty("Item");
-                return (property != null) ? new[] { property } : ArrayHelpers.GetEmptyArray<PropertyInfo>();
+                return (property != null) ? property.ToEnumerable() : ArrayHelpers.GetEmptyArray<PropertyInfo>();
             }
 
             var properties = type.GetProperties(bindFlags).AsEnumerable();
@@ -591,7 +591,7 @@ namespace Microsoft.ClearScript.Util
                 return HostType.Wrap(templates);
             }
 
-            return HostType.Wrap(new[] { type }.Concat(templates).ToArray());
+            return HostType.Wrap(type.ToEnumerable().Concat(templates).ToArray());
         }
 
         private static Type ImportType(string typeName, string assemblyName, bool useAssemblyName, int typeArgCount)
@@ -736,7 +736,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: PropertySignatureComparer
 
-        private class PropertySignatureComparer : IEqualityComparer<PropertyInfo>
+        private sealed class PropertySignatureComparer : IEqualityComparer<PropertyInfo>
         {
             private static readonly PropertySignatureComparer instance = new PropertySignatureComparer();
 

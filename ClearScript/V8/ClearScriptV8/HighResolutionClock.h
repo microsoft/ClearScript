@@ -7,7 +7,7 @@
 // HighResolutionClock
 //-----------------------------------------------------------------------------
 
-class HighResolutionClock
+class HighResolutionClock final
 {
     PROHIBIT_CONSTRUCT(HighResolutionClock)
 

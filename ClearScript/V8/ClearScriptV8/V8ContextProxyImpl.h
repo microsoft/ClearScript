@@ -11,7 +11,7 @@ namespace V8 {
     // V8ContextProxyImpl
     //-------------------------------------------------------------------------
 
-    private ref class V8ContextProxyImpl : V8ContextProxy
+    private ref class V8ContextProxyImpl sealed : V8ContextProxy, IV8EntityProxy
     {
     public:
 
@@ -48,6 +48,17 @@ namespace V8 {
         virtual V8RuntimeHeapInfo^ GetRuntimeHeapInfo() override;
         virtual void CollectGarbage(bool exhaustive) override;
         virtual void OnAccessSettingsChanged() override;
+        virtual bool BeginCpuProfile(String^ gcName, V8CpuProfileFlags flags) override;
+        virtual V8CpuProfile^ EndCpuProfile(String^ gcName) override;
+        virtual void CollectCpuProfileSample() override;
+
+        property UInt32 CpuProfileSampleInterval
+        {
+            virtual UInt32 get() override;
+            virtual void set(UInt32 value) override;
+        }
+
+        virtual String^ CreateManagedString(v8::Local<v8::Value> hValue);
 
         ~V8ContextProxyImpl();
         !V8ContextProxyImpl();

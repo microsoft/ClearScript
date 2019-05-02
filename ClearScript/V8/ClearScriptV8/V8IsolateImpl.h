@@ -13,11 +13,11 @@ class V8ContextImpl;
 // V8IsolateImpl
 //-----------------------------------------------------------------------------
 
-class V8IsolateImpl: public V8Isolate, public v8_inspector::V8InspectorClient, public v8_inspector::V8Inspector::Channel
+class V8IsolateImpl final: public V8Isolate, public v8_inspector::V8InspectorClient, public v8_inspector::V8Inspector::Channel
 {
     PROHIBIT_COPY(V8IsolateImpl)
 
-    class NativeScope
+    class NativeScope final
     {
         PROHIBIT_COPY(NativeScope)
         PROHIBIT_HEAP(NativeScope)
@@ -26,9 +26,9 @@ class V8IsolateImpl: public V8Isolate, public v8_inspector::V8InspectorClient, p
 
         explicit NativeScope(V8IsolateImpl* pIsolateImpl):
             m_pIsolateImpl(pIsolateImpl),
-            m_LockScope(m_pIsolateImpl->m_pIsolate),
-            m_IsolateScope(m_pIsolateImpl->m_pIsolate),
-            m_HandleScope(m_pIsolateImpl->m_pIsolate)
+            m_LockScope(m_pIsolateImpl->m_spIsolate.get()),
+            m_IsolateScope(m_pIsolateImpl->m_spIsolate.get()),
+            m_HandleScope(m_pIsolateImpl->m_spIsolate.get())
         {
             m_pIsolateImpl->ProcessCallWithLockQueue();
         }
@@ -48,7 +48,7 @@ class V8IsolateImpl: public V8Isolate, public v8_inspector::V8InspectorClient, p
 
 public:
 
-    class Scope
+    class Scope final
     {
         PROHIBIT_COPY(Scope)
         PROHIBIT_HEAP(Scope)
@@ -67,7 +67,7 @@ public:
         NativeScope m_NativeScope;
     };
 
-    class ExecutionScope
+    class ExecutionScope final
     {
         PROHIBIT_COPY(ExecutionScope)
         PROHIBIT_HEAP(ExecutionScope)
@@ -103,7 +103,7 @@ public:
         bool m_ExecutionStarted;
     };
 
-    class TryCatch: public v8::TryCatch
+    class TryCatch final: public v8::TryCatch
     {
         PROHIBIT_COPY(TryCatch)
         PROHIBIT_HEAP(TryCatch)
@@ -111,14 +111,14 @@ public:
     public:
 
         explicit TryCatch(V8IsolateImpl* pIsolateImpl):
-            v8::TryCatch(pIsolateImpl->m_pIsolate)
+            v8::TryCatch(pIsolateImpl->m_spIsolate.get())
         {
         }
     };
 
-    V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, const Options& options);
+    V8IsolateImpl(const StdString& name, const v8::ResourceConstraints* pConstraints, const Options& options);
 
-	static V8IsolateImpl* GetInstanceFromIsolate(v8::Isolate* pIsolate);
+    static V8IsolateImpl* GetInstanceFromIsolate(v8::Isolate* pIsolate);
     static size_t GetInstanceCount();
 
     const StdString& GetName() const { return m_Name; }
@@ -126,132 +126,132 @@ public:
 
     v8::Local<v8::Context> CreateContext(v8::ExtensionConfiguration* pExtensionConfiguation = nullptr, v8::Local<v8::ObjectTemplate> hGlobalTemplate = v8::Local<v8::ObjectTemplate>(), v8::Local<v8::Value> hGlobalObject = v8::Local<v8::Value>())
     {
-        return v8::Context::New(m_pIsolate, pExtensionConfiguation, hGlobalTemplate, hGlobalObject);
+        return v8::Context::New(m_spIsolate.get(), pExtensionConfiguation, hGlobalTemplate, hGlobalObject);
     }
 
     v8::Local<v8::Primitive> GetUndefined()
     {
-        return v8::Undefined(m_pIsolate);
+        return v8::Undefined(m_spIsolate.get());
     }
 
     v8::Local<v8::Primitive> GetNull()
     {
-        return v8::Null(m_pIsolate);
+        return v8::Null(m_spIsolate.get());
     }
 
     v8::Local<v8::Boolean> GetTrue()
     {
-        return v8::True(m_pIsolate);
+        return v8::True(m_spIsolate.get());
     }
 
     v8::Local<v8::Boolean> GetFalse()
     {
-        return v8::False(m_pIsolate);
+        return v8::False(m_spIsolate.get());
     }
 
-	bool BooleanValue(v8::Local<v8::Value> hValue)
-	{
-		return hValue->BooleanValue(m_pIsolate);
-	}
+    bool BooleanValue(v8::Local<v8::Value> hValue)
+    {
+        return hValue->BooleanValue(m_spIsolate.get());
+    }
 
     v8::Local<v8::Symbol> GetIteratorSymbol()
     {
-        return v8::Symbol::GetIterator(m_pIsolate);
+        return v8::Symbol::GetIterator(m_spIsolate.get());
     }
 
     v8::Local<v8::Object> CreateObject()
     {
-        return v8::Object::New(m_pIsolate);
+        return v8::Object::New(m_spIsolate.get());
     }
 
     v8::Local<v8::Number> CreateNumber(double value)
     {
-        return v8::Number::New(m_pIsolate, value);
+        return v8::Number::New(m_spIsolate.get(), value);
     }
 
     v8::Local<v8::Integer> CreateInteger(std::int32_t value)
     {
-        return v8::Int32::New(m_pIsolate, value);
+        return v8::Int32::New(m_spIsolate.get(), value);
     }
 
     v8::Local<v8::Integer> CreateInteger(std::uint32_t value)
     {
-        return v8::Uint32::NewFromUnsigned(m_pIsolate, value);
+        return v8::Uint32::NewFromUnsigned(m_spIsolate.get(), value);
     }
 
     v8::MaybeLocal<v8::String> CreateString(const StdString& value)
     {
-        return value.ToV8String(m_pIsolate);
+        return value.ToV8String(m_spIsolate.get());
     }
 
     StdString CreateStdString(v8::Local<v8::Value> hValue)
     {
-        return StdString(m_pIsolate, hValue);
+        return StdString(m_spIsolate.get(), hValue);
     }
 
     v8::Local<v8::Symbol> CreateSymbol(v8::Local<v8::String> hName = v8::Local<v8::String>())
     {
-        return v8::Symbol::New(m_pIsolate, hName);
+        return v8::Symbol::New(m_spIsolate.get(), hName);
     }
 
     v8::Local<v8::Private> CreatePrivate(v8::Local<v8::String> hName = v8::Local<v8::String>())
     {
-        return v8::Private::New(m_pIsolate, hName);
+        return v8::Private::New(m_spIsolate.get(), hName);
     }
 
     v8::Local<v8::Array> CreateArray(int length = 0)
     {
-        return v8::Array::New(m_pIsolate, length);
+        return v8::Array::New(m_spIsolate.get(), length);
     }
 
     v8::Local<v8::External> CreateExternal(void* pvValue)
     {
-        return v8::External::New(m_pIsolate, pvValue);
+        return v8::External::New(m_spIsolate.get(), pvValue);
     }
 
     v8::Local<v8::ObjectTemplate> CreateObjectTemplate()
     {
-        return v8::ObjectTemplate::New(m_pIsolate);
+        return v8::ObjectTemplate::New(m_spIsolate.get());
     }
 
     v8::Local<v8::FunctionTemplate> CreateFunctionTemplate(v8::FunctionCallback callback = 0, v8::Local<v8::Value> data = v8::Local<v8::Value>(), v8::Local<v8::Signature> signature = v8::Local<v8::Signature>(), int length = 0)
     {
-        return v8::FunctionTemplate::New(m_pIsolate, callback, data, signature, length);
+        return v8::FunctionTemplate::New(m_spIsolate.get(), callback, data, signature, length);
     }
 
     v8::MaybeLocal<v8::UnboundScript> CreateUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
     {
-        return v8::ScriptCompiler::CompileUnboundScript(m_pIsolate, pSource, options);
+        return v8::ScriptCompiler::CompileUnboundScript(m_spIsolate.get(), pSource, options);
     }
 
     template <typename T>
     v8::Local<T> CreateLocal(v8::Local<T> hTarget)
     {
-        return v8::Local<T>::New(m_pIsolate, hTarget);
+        return v8::Local<T>::New(m_spIsolate.get(), hTarget);
     }
 
     template <typename T>
     v8::Local<T> CreateLocal(Persistent<T> hTarget)
     {
-        return hTarget.CreateLocal(m_pIsolate);
+        return hTarget.CreateLocal(m_spIsolate.get());
     }
 
     template <typename T>
     Persistent<T> CreatePersistent(v8::Local<T> hTarget)
     {
-        return Persistent<T>::New(m_pIsolate, hTarget);
+        return Persistent<T>::New(m_spIsolate.get(), hTarget);
     }
 
     template <typename T>
     Persistent<T> CreatePersistent(Persistent<T> hTarget)
     {
-        return Persistent<T>::New(m_pIsolate, hTarget);
+        return Persistent<T>::New(m_spIsolate.get(), hTarget);
     }
 
     template <typename T, typename TArg1, typename TArg2>
     Persistent<T> MakeWeak(Persistent<T> hTarget, TArg1* pArg1, TArg2* pArg2, void (*pCallback)(v8::Isolate*, Persistent<T>*, TArg1*, TArg2*))
     {
-        return hTarget.MakeWeak(m_pIsolate, pArg1, pArg2, pCallback);
+        return hTarget.MakeWeak(m_spIsolate.get(), pArg1, pArg2, pCallback);
     }
 
     template <typename T>
@@ -268,7 +268,7 @@ public:
 
     v8::Local<v8::Value> ThrowException(v8::Local<v8::Value> hException)
     {
-        return m_pIsolate->ThrowException(hException);
+        return m_spIsolate->ThrowException(hException);
     }
 
     bool IsDebuggingEnabled()
@@ -289,59 +289,59 @@ public:
 
         END_MUTEX_SCOPE
 
-        m_pIsolate->TerminateExecution();
+        m_spIsolate->TerminateExecution();
         m_IsExecutionTerminating = true;
     }
 
     bool IsExecutionTerminating()
     {
-        return m_pIsolate->IsExecutionTerminating() || m_IsExecutionTerminating;
+        return m_spIsolate->IsExecutionTerminating() || m_IsExecutionTerminating;
     }
 
     void CancelTerminateExecution()
     {
-        m_pIsolate->CancelTerminateExecution();
+        m_spIsolate->CancelTerminateExecution();
         m_IsExecutionTerminating = false;
     }
 
     int ContextDisposedNotification()
     {
-        return m_pIsolate->ContextDisposedNotification();
+        return m_spIsolate->ContextDisposedNotification();
     }
 
     bool IdleNotificationDeadline(double deadlineInSeconds)
     {
-        return m_pIsolate->IdleNotificationDeadline(deadlineInSeconds);
+        return m_spIsolate->IdleNotificationDeadline(deadlineInSeconds);
     }
 
     void LowMemoryNotification()
     {
-        m_pIsolate->LowMemoryNotification();
+        m_spIsolate->LowMemoryNotification();
     }
 
-	v8::Local<v8::StackFrame> GetStackFrame(v8::Local<v8::StackTrace> hStackTrace, uint32_t index)
-	{
-		return hStackTrace->GetFrame(m_pIsolate, index);
-	}
-
-	void RequestInterrupt(v8::InterruptCallback callback, void* pvData)
+    v8::Local<v8::StackFrame> GetStackFrame(v8::Local<v8::StackTrace> hStackTrace, uint32_t index)
     {
-        m_pIsolate->RequestInterrupt(callback, pvData);
+        return hStackTrace->GetFrame(m_spIsolate.get(), index);
+    }
+
+    void RequestInterrupt(v8::InterruptCallback callback, void* pvData)
+    {
+        m_spIsolate->RequestInterrupt(callback, pvData);
     }
 
     bool IsCurrent() const
     {
-        return m_pIsolate == v8::Isolate::GetCurrent();
+        return m_spIsolate.get() == v8::Isolate::GetCurrent();
     }
 
     bool IsLocked() const
     {
-        return v8::Locker::IsLocked(m_pIsolate);
+        return v8::Locker::IsLocked(m_spIsolate.get());
     }
 
     v8::Local<v8::String> GetTypeOf(v8::Local<v8::Value> hValue)
     {
-        return !hValue.IsEmpty() ? hValue->TypeOf(m_pIsolate) : GetUndefined()->TypeOf(m_pIsolate);
+        return !hValue.IsEmpty() ? hValue->TypeOf(m_spIsolate.get()) : GetUndefined()->TypeOf(m_spIsolate.get());
     }
 
     bool IsOutOfMemory() const
@@ -367,8 +367,14 @@ public:
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
-    virtual void GetHeapInfo(V8IsolateHeapInfo& heapInfo) override;
+    virtual void GetHeapStatistics(v8::HeapStatistics& heapStatistics) override;
     virtual void CollectGarbage(bool exhaustive) override;
+
+    virtual bool BeginCpuProfile(const StdString& name, v8::CpuProfilingMode mode, bool recordSamples) override;
+    virtual bool EndCpuProfile(const StdString& name, CpuProfileCallbackT* pCallback, void* pvArg) override;
+    virtual void CollectCpuProfileSample() override;
+    virtual uint32_t GetCpuProfileSampleInterval() override;
+    virtual void SetCpuProfileSampleInterval(uint32_t value) override;
 
     virtual void runMessageLoopOnPause(int contextGroupId) override;
     virtual void quitMessageLoopOnPause() override;
@@ -399,6 +405,18 @@ public:
 
 private:
 
+    struct ContextEntry final
+    {
+        V8ContextImpl* pContextImpl;
+        std::atomic<bool> FlushPending;
+
+        ContextEntry(V8ContextImpl* pContextImplArg):
+            pContextImpl(pContextImplArg),
+            FlushPending(false)
+        {
+        }
+    };
+
     bool RunMessageLoop(bool awaitingDebugger);
 
     void CallWithLockAsync(std::function<void(V8IsolateImpl*)>&& callback);
@@ -420,11 +438,18 @@ private:
     static void OnBeforeCallEntered(v8::Isolate* pIsolate);
     void OnBeforeCallEntered();
 
+    static void PromiseHook(v8::PromiseHookType type, v8::Local<v8::Promise> hPromise, v8::Local<v8::Value> hParent);
+
+    void FlushContextAsync(v8::Local<v8::Context> hContext);
+    void FlushContextAsync(ContextEntry& contextEntry);
+    void FlushContext(V8ContextImpl* pContextImpl);
+
     StdString m_Name;
-    v8::Isolate* m_pIsolate;
+    UniqueDisposePtr<v8::Isolate> m_spIsolate;
+    UniqueDisposePtr<v8::CpuProfiler> m_spCpuProfiler;
     Persistent<v8::Private> m_hHostObjectHolderKey;
     RecursiveMutex m_Mutex;
-    std::list<V8ContextImpl*> m_ContextPtrs;
+    std::list<ContextEntry> m_ContextEntries;
     SimpleMutex m_DataMutex;
     std::shared_ptr<v8::TaskRunner> m_spForegroundTaskRunner;
     std::vector<std::shared_ptr<v8::Task>> m_AsyncTasks;
@@ -445,6 +470,7 @@ private:
     size_t m_HeapWatchLevel;
     SharedPtr<Timer> m_spHeapWatchTimer;
     std::atomic<size_t> m_MaxStackUsage;
+    std::atomic<uint32_t> m_CpuProfileSampleInterval;
     size_t m_StackWatchLevel;
     size_t* m_pStackLimit;
     ExecutionScope* m_pExecutionScope;

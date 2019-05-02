@@ -35,6 +35,35 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
+        public static IEnumerable<T> ToSafeEnumerable<T>(this IEnumerable<T> source)
+        {
+            if (source != null)
+            {
+                foreach (var element in source)
+                {
+                    yield return element;
+                }
+            }
+        }
+
+        public static IEnumerable<T> Flatten<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> selector)
+        {
+            foreach (var element in source)
+            {
+                yield return element;
+
+                foreach (var descendant in selector(element).Flatten(selector))
+                {
+                    yield return descendant;
+                }
+            }
+        }
+
+        public static IEnumerable<T> ToEnumerable<T>(this T element)
+        {
+            yield return element;
+        }
+
         public static IEnumerable<string> ExcludeIndices(this IEnumerable<string> names)
         {
             foreach (var name in names)

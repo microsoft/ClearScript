@@ -3,7 +3,7 @@
 
 namespace Microsoft.ClearScript.V8
 {
-    internal class V8ArrayBufferOrViewInfo
+    internal sealed class V8ArrayBufferOrViewInfo
     {
         public V8ArrayBufferOrViewInfo(V8ArrayBufferOrViewKind kind, IV8Object arrayBuffer, ulong offset, ulong size, ulong length)
         {

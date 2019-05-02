@@ -7,7 +7,7 @@
 // V8Platform
 //-----------------------------------------------------------------------------
 
-class V8Platform: public v8::Platform
+class V8Platform final: public v8::Platform
 {
 public:
 
@@ -76,7 +76,7 @@ void V8Platform::CallOnWorkerThread(std::unique_ptr<v8::Task> spTask)
     }
     else
     {
-		V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskAsync(spTask.release());
+        V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskAsync(spTask.release());
     }
 }
 
@@ -87,7 +87,7 @@ void V8Platform::CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> spTask, dou
     auto pIsolate = v8::Isolate::GetCurrent();
     if (pIsolate != nullptr)
     {
-		V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskDelayed(spTask.release(), delayInSeconds);
+        V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskDelayed(spTask.release(), delayInSeconds);
     }
 }
 
@@ -95,14 +95,14 @@ void V8Platform::CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> spTask, dou
 
 void V8Platform::CallOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask)
 {
-	V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskWithLockAsync(pTask);
+    V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskWithLockAsync(pTask);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8Platform::CallDelayedOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask, double delayInSeconds)
 {
-	V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskWithLockDelayed(pTask, delayInSeconds);
+    V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskWithLockDelayed(pTask, delayInSeconds);
 }
 
 //-----------------------------------------------------------------------------
@@ -141,7 +141,7 @@ OnceFlag V8Platform::ms_InstallationFlag;
 // V8ForegroundTaskRunner
 //-----------------------------------------------------------------------------
 
-class V8ForegroundTaskRunner: public v8::TaskRunner
+class V8ForegroundTaskRunner final: public v8::TaskRunner
 {
     PROHIBIT_COPY(V8ForegroundTaskRunner)
 
@@ -213,7 +213,7 @@ bool V8ForegroundTaskRunner::IdleTasksEnabled()
 // V8ArrayBufferAllocator
 //-----------------------------------------------------------------------------
 
-class V8ArrayBufferAllocator: public v8::ArrayBuffer::Allocator
+class V8ArrayBufferAllocator final: public v8::ArrayBuffer::Allocator
 {
 public:
 
@@ -302,7 +302,7 @@ static thread_local V8IsolateImpl* s_pInstanceInConstructor = nullptr;
 
 //-----------------------------------------------------------------------------
 
-V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* pConstraints, const Options& options):
+V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraints* pConstraints, const Options& options):
     m_Name(name),
     m_DebuggingEnabled(false),
     m_AwaitingDebugger(false),
@@ -312,6 +312,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     m_MaxHeapSize(0),
     m_HeapWatchLevel(0),
     m_MaxStackUsage(0),
+    m_CpuProfileSampleInterval(1000U),
     m_StackWatchLevel(0),
     m_pStackLimit(nullptr),
     m_pExecutionScope(nullptr),
@@ -325,21 +326,22 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
     params.array_buffer_allocator = &V8ArrayBufferAllocator::GetInstance();
     if (pConstraints != nullptr)
     {
-        params.constraints.set_max_semi_space_size_in_kb(static_cast<size_t>(pConstraints->GetMaxNewSpaceSize()) * 1024);
-        params.constraints.set_max_old_space_size(pConstraints->GetMaxOldSpaceSize());
+        params.constraints.set_max_semi_space_size_in_kb(pConstraints->max_semi_space_size_in_kb());
+        params.constraints.set_max_old_space_size(pConstraints->max_old_space_size());
     }
 
-	BEGIN_PULSE_VALUE_SCOPE(&s_pInstanceInConstructor, this)
-		m_pIsolate = v8::Isolate::New(params);
-	END_PULSE_VALUE_SCOPE
+    BEGIN_PULSE_VALUE_SCOPE(&s_pInstanceInConstructor, this)
+        m_spIsolate.reset(v8::Isolate::New(params));
+    END_PULSE_VALUE_SCOPE
 
-    m_pIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
+    m_spIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
+    m_spIsolate->SetPromiseHook(PromiseHook);
 
     BEGIN_ADDREF_SCOPE
     BEGIN_ISOLATE_SCOPE
 
-        m_pIsolate->SetData(0, this);
-        m_pIsolate->SetCaptureStackTraceForUncaughtExceptions(true, 64, v8::StackTrace::kDetailed);
+        m_spIsolate->SetData(0, this);
+        m_spIsolate->SetCaptureStackTraceForUncaughtExceptions(true, 64, v8::StackTrace::kDetailed);
 
         m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
 
@@ -358,8 +360,8 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const V8IsolateConstraints* 
 
 V8IsolateImpl* V8IsolateImpl::GetInstanceFromIsolate(v8::Isolate* pIsolate)
 {
-	auto pInstance = static_cast<V8IsolateImpl*>(pIsolate->GetData(0));
-	return (pInstance != nullptr) ? pInstance : s_pInstanceInConstructor;
+    auto pInstance = static_cast<V8IsolateImpl*>(pIsolate->GetData(0));
+    return (pInstance != nullptr) ? pInstance : s_pInstanceInConstructor;
 }
 
 //-----------------------------------------------------------------------------
@@ -377,11 +379,11 @@ void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, const V8Context::Opt
 
     if (!options.EnableDebugging)
     {
-        m_ContextPtrs.push_back(pContextImpl);
+        m_ContextEntries.emplace_back(pContextImpl);
     }
     else
     {
-        m_ContextPtrs.push_front(pContextImpl);
+        m_ContextEntries.emplace_front(pContextImpl);
         EnableDebugging(options.DebugPort, options.EnableRemoteDebugging);
     }
 
@@ -402,7 +404,10 @@ void V8IsolateImpl::RemoveContext(V8ContextImpl* pContextImpl)
         m_spInspector->contextDestroyed(pContextImpl->GetContext());
     }
 
-    m_ContextPtrs.remove(pContextImpl);
+    m_ContextEntries.remove_if([pContextImpl] (const ContextEntry& contextEntry)
+    {
+        return contextEntry.pContextImpl == pContextImpl;
+    });
 }
 
 //-----------------------------------------------------------------------------
@@ -442,7 +447,7 @@ void V8IsolateImpl::EnableDebugging(int port, bool remote)
             }
         });
 
-        m_spInspector = v8_inspector::V8Inspector::create(m_pIsolate, this);
+        m_spInspector = v8_inspector::V8Inspector::create(m_spIsolate.get(), this);
 
         m_DebuggingEnabled = true;
         m_DebugPort = port;
@@ -538,7 +543,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this));
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this));
         return spContextImpl->Compile(documentInfo, code);
 
     END_ISOLATE_SCOPE
@@ -550,7 +555,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this));
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this));
         return spContextImpl->Compile(documentInfo, code, cacheType, cacheBytes);
 
     END_ISOLATE_SCOPE
@@ -562,7 +567,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextPtrs.size() > 0) ? m_ContextPtrs.front() : new V8ContextImpl(this));
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this));
         return spContextImpl->Compile(documentInfo, code, cacheType, cacheBytes, cacheAccepted);
 
     END_ISOLATE_SCOPE
@@ -570,20 +575,11 @@ V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::GetHeapInfo(V8IsolateHeapInfo& heapInfo)
+void V8IsolateImpl::GetHeapStatistics(v8::HeapStatistics& heapStatistics)
 {
     BEGIN_ISOLATE_SCOPE
 
-    v8::HeapStatistics heapStatistics;
-    m_pIsolate->GetHeapStatistics(&heapStatistics);
-
-    heapInfo.Set(
-        heapStatistics.total_heap_size(),
-        heapStatistics.total_heap_size_executable(),
-        heapStatistics.total_physical_size(),
-        heapStatistics.used_heap_size(),
-        heapStatistics.heap_size_limit()
-    );
+        m_spIsolate->GetHeapStatistics(&heapStatistics);
 
     END_ISOLATE_SCOPE
 }
@@ -594,14 +590,109 @@ void V8IsolateImpl::CollectGarbage(bool exhaustive)
 {
     BEGIN_ISOLATE_SCOPE
 
-    if (exhaustive)
-    {
-        LowMemoryNotification();
-    }
-    else
-    {
-        while (!IdleNotificationDeadline(V8Platform::GetInstance().MonotonicallyIncreasingTime() + 0.1));
-    }
+        if (exhaustive)
+        {
+            LowMemoryNotification();
+        }
+        else
+        {
+            while (!IdleNotificationDeadline(V8Platform::GetInstance().MonotonicallyIncreasingTime() + 0.1));
+        }
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8IsolateImpl::BeginCpuProfile(const StdString& name, v8::CpuProfilingMode mode, bool recordSamples)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        if (!m_spCpuProfiler)
+        {
+            m_spCpuProfiler.reset(v8::CpuProfiler::New(m_spIsolate.get()));
+        }
+
+        v8::Local<v8::String> hName;
+        if (!CreateString(name).ToLocal(&hName))
+        {
+            return false;
+        }
+
+        m_spCpuProfiler->StartProfiling(hName, mode, recordSamples);
+        return true;
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8IsolateImpl::EndCpuProfile(const StdString& name, CpuProfileCallbackT* pCallback, void* pvArg)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        if (!m_spCpuProfiler)
+        {
+            return false;
+        }
+
+        v8::Local<v8::String> hName;
+        if (!CreateString(name).ToLocal(&hName))
+        {
+            return false;
+        }
+
+        UniqueDeletePtr<v8::CpuProfile> spProfile(m_spCpuProfiler->StopProfiling(hName));
+        if (!spProfile)
+        {
+            return false;
+        }
+
+        if (pCallback)
+        {
+            pCallback(*spProfile, pvArg);
+        }
+
+        return true;
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::CollectCpuProfileSample()
+{
+    BEGIN_ISOLATE_SCOPE
+
+        v8::CpuProfiler::CollectSample(m_spIsolate.get());
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+uint32_t V8IsolateImpl::GetCpuProfileSampleInterval()
+{
+    return m_CpuProfileSampleInterval;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SetCpuProfileSampleInterval(uint32_t value)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        if (value != m_CpuProfileSampleInterval)
+        {
+            m_CpuProfileSampleInterval = std::min(std::max(value, 250U), static_cast<uint32_t>(INT_MAX));
+
+            if (!m_spCpuProfiler)
+            {
+                m_spCpuProfiler.reset(v8::CpuProfiler::New(m_spIsolate.get()));
+            }
+
+            m_spCpuProfiler->SetSamplingInterval(static_cast<int>(m_CpuProfileSampleInterval));
+        }
 
     END_ISOLATE_SCOPE
 }
@@ -637,9 +728,9 @@ v8::Local<v8::Context> V8IsolateImpl::ensureDefaultContextInGroup(int contextGro
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    if (m_ContextPtrs.size() > 0)
+    if (m_ContextEntries.size() > 0)
     {
-        return m_ContextPtrs.front()->GetContext();
+        return m_ContextEntries.front().pContextImpl->GetContext();
     }
 
     return v8_inspector::V8InspectorClient::ensureDefaultContextInGroup(contextGroupId);
@@ -976,9 +1067,8 @@ V8IsolateImpl::~V8IsolateImpl()
     }
 
     Dispose(m_hHostObjectHolderKey);
-
-    m_pIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
-    m_pIsolate->Dispose();
+    m_spIsolate->SetPromiseHook(nullptr);
+    m_spIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
 }
 
 //-----------------------------------------------------------------------------
@@ -1026,8 +1116,6 @@ void V8IsolateImpl::CallWithLockAsync(std::function<void(V8IsolateImpl*)>&& call
 {
     if (callback)
     {
-        auto requestInterrupt = false;
-
         BEGIN_MUTEX_SCOPE(m_DataMutex)
 
             m_CallWithLockQueue.push(std::move(callback));
@@ -1035,18 +1123,40 @@ void V8IsolateImpl::CallWithLockAsync(std::function<void(V8IsolateImpl*)>&& call
             if (m_InMessageLoop)
             {
                 m_CallWithLockQueueChanged.notify_one();
+                return;
             }
-            else
+
+            if (m_CallWithLockQueue.size() > 1)
             {
-                requestInterrupt = m_CallWithLockQueue.size() == 1;
+                return;
             }
 
         END_MUTEX_SCOPE
 
-        if (requestInterrupt)
+        // trigger asynchronous queue processing
+
+        auto wrIsolate = CreateWeakRef();
+        HostObjectHelpers::QueueNativeCallback([this, wrIsolate] ()
         {
-            RequestInterrupt(ProcessCallWithLockQueue, this);
-        }
+            auto spIsolate = wrIsolate.GetTarget();
+            if (!spIsolate.IsEmpty())
+            {
+                if (m_Mutex.TryLock())
+                {
+                    MutexLock<RecursiveMutex> lock(m_Mutex, false);
+                    BEGIN_ISOLATE_NATIVE_SCOPE
+                        // do nothing; scope entry triggers automatic queue processing
+                    END_ISOLATE_NATIVE_SCOPE
+                }
+                else
+                {
+                    // The isolate is active on another thread, and the queue will be processed automatically
+                    // at scope exit, but an interrupt ensures relatively timely processing.
+
+                    RequestInterrupt(ProcessCallWithLockQueue, this);
+                }
+            }
+        });
     }
 }
 
@@ -1063,11 +1173,20 @@ void V8IsolateImpl::ProcessCallWithLockQueue()
 {
     std::queue<std::function<void(V8IsolateImpl*)>> callWithLockQueue;
 
-    BEGIN_MUTEX_SCOPE(m_DataMutex)
-        std::swap(callWithLockQueue, m_CallWithLockQueue);
-    END_MUTEX_SCOPE
+    while (true)
+    {
+        BEGIN_MUTEX_SCOPE(m_DataMutex)
+            std::swap(callWithLockQueue, m_CallWithLockQueue);
+        END_MUTEX_SCOPE
 
-    ProcessCallWithLockQueue(callWithLockQueue);
+        if (callWithLockQueue.size() > 0)
+        {
+            ProcessCallWithLockQueue(callWithLockQueue);
+            continue;
+        }
+
+        break;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1091,6 +1210,8 @@ void V8IsolateImpl::ProcessCallWithLockQueue(std::unique_lock<std::mutex>& lock)
 
 void V8IsolateImpl::ProcessCallWithLockQueue(std::queue<std::function<void(V8IsolateImpl*)>>& callWithLockQueue)
 {
+    _ASSERTE(IsCurrent() && IsLocked());
+
     while (callWithLockQueue.size() > 0)
     {
         try
@@ -1197,7 +1318,7 @@ V8IsolateImpl::ExecutionScope* V8IsolateImpl::EnterExecutionScope(ExecutionScope
             }
 
             // set and record stack address limit
-            m_pIsolate->SetStackLimit(reinterpret_cast<std::uintptr_t>(pStackLimit));
+            m_spIsolate->SetStackLimit(reinterpret_cast<std::uintptr_t>(pStackLimit));
             m_pStackLimit = pStackLimit;
 
             // enter outermost stack usage monitoring scope
@@ -1248,7 +1369,7 @@ void V8IsolateImpl::ExitExecutionScope(ExecutionScope* pPreviousExecutionScope)
             if (m_pStackLimit != nullptr)
             {
                 // V8 has no API for removing a stack address limit
-                m_pIsolate->SetStackLimit(reinterpret_cast<std::uintptr_t>(s_pMinStackLimit));
+                m_spIsolate->SetStackLimit(reinterpret_cast<std::uintptr_t>(s_pMinStackLimit));
                 m_pStackLimit = nullptr;
             }
         }
@@ -1306,16 +1427,16 @@ void V8IsolateImpl::CheckHeapSize(size_t maxHeapSize)
     _ASSERTE(IsCurrent() && IsLocked());
 
     // is the total heap size over the limit?
-    V8IsolateHeapInfo heapInfo;
-    GetHeapInfo(heapInfo);
-    if (heapInfo.GetTotalHeapSize() > maxHeapSize)
+    v8::HeapStatistics heapStatistics;
+    GetHeapStatistics(heapStatistics);
+    if (heapStatistics.total_heap_size() > maxHeapSize)
     {
         // yes; collect garbage
         LowMemoryNotification();
 
         // is the total heap size still over the limit?
-        GetHeapInfo(heapInfo);
-        if (heapInfo.GetTotalHeapSize() > maxHeapSize)
+        GetHeapStatistics(heapStatistics);
+        if (heapStatistics.total_heap_size() > maxHeapSize)
         {
             // yes; the isolate is out of memory; request script termination
             m_IsOutOfMemory = true;
@@ -1345,4 +1466,71 @@ void V8IsolateImpl::OnBeforeCallEntered()
     {
         m_pExecutionScope->OnExecutionStarted();
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::PromiseHook(v8::PromiseHookType type, v8::Local<v8::Promise> hPromise, v8::Local<v8::Value> /*hParent*/)
+{
+    if ((type == v8::PromiseHookType::kResolve) && !hPromise.IsEmpty())
+    {
+        auto hContext = hPromise->CreationContext();
+        if (!hContext.IsEmpty())
+        {
+            GetInstanceFromIsolate(hContext->GetIsolate())->FlushContextAsync(hContext);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::FlushContextAsync(v8::Local<v8::Context> hContext)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    for (auto& contextEntry : m_ContextEntries)
+    {
+        if (contextEntry.pContextImpl->GetContext() == hContext)
+        {
+            FlushContextAsync(contextEntry);
+            break;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::FlushContextAsync(ContextEntry& contextEntry)
+{
+    auto expected = false;
+    if (contextEntry.FlushPending.compare_exchange_strong(expected, true))
+    {
+        auto wrContext = contextEntry.pContextImpl->CreateWeakRef();
+        CallWithLockAsync([wrContext] (V8IsolateImpl* pIsolateImpl)
+        {
+            auto spContext = wrContext.GetTarget();
+            if (!spContext.IsEmpty())
+            {
+                pIsolateImpl->FlushContext(static_cast<V8ContextImpl*>(spContext.GetRawPtr()));
+            }
+        });
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::FlushContext(V8ContextImpl* pContextImpl)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    for (auto& contextEntry : m_ContextEntries)
+    {
+        if (contextEntry.pContextImpl == pContextImpl)
+        {
+            contextEntry.FlushPending = false;
+            break;
+        }
+    }
+
+    pContextImpl->Flush();
 }

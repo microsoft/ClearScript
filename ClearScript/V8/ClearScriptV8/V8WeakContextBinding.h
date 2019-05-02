@@ -7,7 +7,7 @@
 // V8WeakContextBinding
 //-----------------------------------------------------------------------------
 
-class V8WeakContextBinding: public SharedPtrTarget
+class V8WeakContextBinding final: public SharedPtrTarget
 {
 public:
 

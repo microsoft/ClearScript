@@ -7,7 +7,7 @@
 // HostException
 //-----------------------------------------------------------------------------
 
-class HostException
+class HostException final
 {
 public:
 

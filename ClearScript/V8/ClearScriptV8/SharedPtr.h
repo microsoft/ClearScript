@@ -20,7 +20,7 @@ public:
 
 protected:
 
-    class AddRefScope
+    class AddRefScope final
     {
         PROHIBIT_COPY(AddRefScope)
         PROHIBIT_HEAP(AddRefScope)
@@ -76,7 +76,7 @@ private:
 //-----------------------------------------------------------------------------
 
 template <typename T>
-class SharedPtrTraits
+class SharedPtrTraits final
 {
     PROHIBIT_CONSTRUCT(SharedPtrTraits)
 
@@ -93,7 +93,7 @@ public:
 //-----------------------------------------------------------------------------
 
 template <typename T>
-class SharedPtr
+class SharedPtr final
 {
 public:
 

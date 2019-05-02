@@ -11,7 +11,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class ExtensionMethodTable
+    internal sealed class ExtensionMethodTable
     {
         private readonly Dictionary<Type, MethodInfo[]> table = new Dictionary<Type, MethodInfo[]>();
         private ExtensionMethodSummary summary = new ExtensionMethodSummary();
@@ -46,7 +46,7 @@ namespace Microsoft.ClearScript
         }
     }
 
-    internal class ExtensionMethodSummary
+    internal sealed class ExtensionMethodSummary
     {
         public ExtensionMethodSummary()
         {

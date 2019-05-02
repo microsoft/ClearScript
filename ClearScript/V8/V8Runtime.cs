@@ -544,6 +544,83 @@ namespace Microsoft.ClearScript.V8
             proxy.CollectGarbage(exhaustive);
         }
 
+        // ReSharper disable ParameterHidesMember
+
+        /// <summary>
+        /// Begins collecting a new CPU profile.
+        /// </summary>
+        /// <param name="name">A name for the profile.</param>
+        /// <returns><c>True</c> if the profile was created successfully, <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// A V8 runtime can collect multiple CPU profiles simultaneously.
+        /// </remarks>
+        public bool BeginCpuProfile(string name)
+        {
+            return BeginCpuProfile(name, V8CpuProfileFlags.None);
+        }
+
+        /// <summary>
+        /// Begins collecting a new CPU profile with the specified options.
+        /// </summary>
+        /// <param name="name">A name for the profile.</param>
+        /// <param name="flags">Options for creating the profile.</param>
+        /// <returns><c>True</c> if the profile was created successfully, <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// A V8 runtime can collect multiple CPU profiles simultaneously.
+        /// </remarks>
+        public bool BeginCpuProfile(string name, V8CpuProfileFlags flags)
+        {
+            VerifyNotDisposed();
+            return proxy.BeginCpuProfile(name, flags);
+        }
+
+        /// <summary>
+        /// Completes and returns a CPU profile.
+        /// </summary>
+        /// <param name="name">The name of the profile.</param>
+        /// <returns>The profile if it was found and completed successfully, <c>null</c> otherwise.</returns>
+        /// <remarks>
+        /// An empty <paramref name="name"/> argument selects the most recently created CPU profile.
+        /// </remarks>
+        public V8CpuProfile EndCpuProfile(string name)
+        {
+            VerifyNotDisposed();
+            return proxy.EndCpuProfile(name);
+        }
+
+        /// <summary>
+        /// Collects a sample in all CPU profiles active in the V8 runtime.
+        /// </summary>
+        public void CollectCpuProfileSample()
+        {
+            VerifyNotDisposed();
+            proxy.CollectCpuProfileSample();
+        }
+
+        /// <summary>
+        /// Gets or sets the time interval between automatic CPU profile samples, in microseconds.
+        /// </summary>
+        /// <remarks>
+        /// Assigning this property has no effect on CPU profiles already active in the V8 runtime.
+        /// The default value is 1000.
+        /// </remarks>
+        public uint CpuProfileSampleInterval
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.CpuProfileSampleInterval;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                proxy.CpuProfileSampleInterval = value;
+            }
+        }
+
+        // ReSharper restore ParameterHidesMember
+
         #endregion
 
         #region internal members

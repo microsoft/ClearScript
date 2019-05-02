@@ -158,7 +158,7 @@ namespace Microsoft.ClearScript
         public new object this[string name, params object[] args]
         {
             get { return GetProperty(name, args).ToDynamicResult(Engine); }
-            set { SetProperty(name, args.Concat(new[] { value }).ToArray()); }
+            set { SetProperty(name, args.Concat(value.ToEnumerable()).ToArray()); }
         }
 
         public new object this[int index]
@@ -200,7 +200,7 @@ namespace Microsoft.ClearScript
         public override bool TrySetIndex(SetIndexBinder binder, object[] indices, object value)
         {
             object ignoredResult;
-            return TryWrappedBindAndInvoke(binder, indices.Concat(new[] { value }).ToArray(), out ignoredResult);
+            return TryWrappedBindAndInvoke(binder, indices.Concat(value.ToEnumerable()).ToArray(), out ignoredResult);
         }
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
@@ -385,7 +385,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: MetaScriptItem
 
-        private class MetaScriptItem : DynamicMetaObject
+        private sealed class MetaScriptItem : DynamicMetaObject
         {
             private readonly ScriptItem scriptItem;
             private readonly DynamicMetaObject metaDynamic;

@@ -2326,6 +2326,14 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(indices.Contains(1));
         }
 
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Nothing()
+        {
+            engine.Script.foo = new Func<object>(() => Nothing.Value);
+            Assert.IsTrue((bool)engine.Evaluate("foo() == undefined"));
+            Assert.IsFalse((bool)engine.Evaluate("foo() === undefined"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

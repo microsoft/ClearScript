@@ -461,6 +461,11 @@ namespace Microsoft.ClearScript.Windows
                 return null;
             }
 
+            if (obj is Nothing)
+            {
+                return nullDispatch;
+            }
+
             if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalDecimalAsCurrency) && (obj is decimal))
             {
                 return new CurrencyWrapper(obj);
@@ -799,7 +804,7 @@ namespace Microsoft.ClearScript.Windows
 
         #region Nested type: HostItemMap
 
-        private class HostItemMap : Dictionary<string, object>
+        private sealed class HostItemMap : Dictionary<string, object>
         {
         }
 

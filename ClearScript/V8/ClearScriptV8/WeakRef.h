@@ -18,7 +18,7 @@ class WeakRefImpl;
 //-----------------------------------------------------------------------------
 
 template <typename T>
-class WeakRef
+class WeakRef final
 {
     friend class WeakRefTarget<T>;
 
@@ -97,7 +97,7 @@ private:
 //-----------------------------------------------------------------------------
 
 template <typename T>
-class WeakRefImpl: public SharedPtrTarget
+class WeakRefImpl final: public SharedPtrTarget
 {
     friend class WeakRef<T>;
     friend class WeakRefTarget<T>;

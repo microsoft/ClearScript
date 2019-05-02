@@ -7,7 +7,7 @@
 // V8ObjectHolderImpl
 //-----------------------------------------------------------------------------
 
-class V8ObjectHolderImpl: public V8ObjectHolder
+class V8ObjectHolderImpl final: public V8ObjectHolder
 {
     PROHIBIT_COPY(V8ObjectHolderImpl)
 

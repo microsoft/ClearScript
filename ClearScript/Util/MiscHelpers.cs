@@ -177,6 +177,33 @@ namespace Microsoft.ClearScript.Util
             return uri.AbsoluteUri;
         }
 
+        public static string ToQuotedJson(this string value)
+        {
+            var builder = new StringBuilder();
+            builder.Append('\"');
+
+            foreach (var ch in value)
+            {
+                switch (ch)
+                {
+                    case '\"':
+                        builder.Append("\\\"");
+                        break;
+
+                    case '\\':
+                        builder.Append("\\\\");
+                        break;
+
+                    default:
+                        builder.Append(ch);
+                        break;
+                }
+            }
+
+            builder.Append('\"');
+            return builder.ToString();
+        }
+
         #endregion
 
         #region index helpers

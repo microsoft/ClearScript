@@ -7,7 +7,7 @@
 // V8Isolate implementation
 //-----------------------------------------------------------------------------
 
-V8Isolate* V8Isolate::Create(const StdString& name, const V8IsolateConstraints* pConstraints, const Options& options)
+V8Isolate* V8Isolate::Create(const StdString& name, const v8::ResourceConstraints* pConstraints, const Options& options)
 {
     return new V8IsolateImpl(name, pConstraints, options);
 }

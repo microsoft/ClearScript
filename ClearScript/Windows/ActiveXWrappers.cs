@@ -77,7 +77,7 @@ namespace Microsoft.ClearScript.Windows
         #endregion
     }
 
-    internal class ActiveScriptWrapper32 : ActiveScriptWrapper
+    internal sealed class ActiveScriptWrapper32 : ActiveScriptWrapper
     {
         // ReSharper disable NotAccessedField.Local
 
@@ -235,7 +235,7 @@ namespace Microsoft.ClearScript.Windows
         }
     }
 
-    internal class ActiveScriptWrapper64 : ActiveScriptWrapper
+    internal sealed class ActiveScriptWrapper64 : ActiveScriptWrapper
     {
         // ReSharper disable NotAccessedField.Local
 
@@ -416,7 +416,7 @@ namespace Microsoft.ClearScript.Windows
         public abstract void RemoveApplication(uint cookie);
     }
 
-    internal class ProcessDebugManagerWrapper32 : ProcessDebugManagerWrapper
+    internal sealed class ProcessDebugManagerWrapper32 : ProcessDebugManagerWrapper
     {
         private readonly IProcessDebugManager32 processDebugManager;
 
@@ -456,7 +456,7 @@ namespace Microsoft.ClearScript.Windows
         }
     }
 
-    internal class ProcessDebugManagerWrapper64 : ProcessDebugManagerWrapper
+    internal sealed class ProcessDebugManagerWrapper64 : ProcessDebugManagerWrapper
     {
         private readonly IProcessDebugManager64 processDebugManager;
 
@@ -523,7 +523,7 @@ namespace Microsoft.ClearScript.Windows
         public abstract void Close();
     }
 
-    internal class DebugApplicationWrapper32 : DebugApplicationWrapper
+    internal sealed class DebugApplicationWrapper32 : DebugApplicationWrapper
     {
         private readonly IDebugApplication32 debugApplication;
 
@@ -564,7 +564,7 @@ namespace Microsoft.ClearScript.Windows
         }
     }
 
-    internal class DebugApplicationWrapper64 : DebugApplicationWrapper
+    internal sealed class DebugApplicationWrapper64 : DebugApplicationWrapper
     {
         private readonly IDebugApplication64 debugApplication;
 

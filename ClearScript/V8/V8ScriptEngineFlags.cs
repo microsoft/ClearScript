@@ -45,7 +45,7 @@ namespace Microsoft.ClearScript.V8
         /// .NET <see cref="DateTime"/> objects and JavaScript
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</see>
         /// objects. This conversion is bidirectional. A <c>DateTime</c> object constructed from
-        /// a JavaScript <c>Date</c> object always represents a Coordinated Universal Time (UTC)
+        /// a JavaScript <c>Date</c> object always represents a Coordinated Universal Timestamp (UTC)
         /// and has its <see cref="DateTime.Kind"/> property set to <see cref="DateTimeKind.Utc"/>.
         /// </summary>
         EnableDateTimeConversion = 0x00000010

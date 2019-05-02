@@ -22,22 +22,19 @@
 //-----------------------------------------------------------------------------
 
 #define PROHIBIT_CONSTRUCT(CLASS) \
-    private: \
-        CLASS();
+    CLASS() = delete;
 
 //-----------------------------------------------------------------------------
 
 #define PROHIBIT_HEAP(CLASS) \
-    private: \
-        void* operator new(size_t size); \
-        void operator delete(void*, size_t);
+    void* operator new(size_t size) = delete; \
+    void operator delete(void*, size_t) = delete;
 
 //-----------------------------------------------------------------------------
 
 #define PROHIBIT_COPY(CLASS) \
-    private: \
-        CLASS(const CLASS& that); \
-        const CLASS& operator=(const CLASS& that);
+    CLASS(const CLASS& that) = delete; \
+    const CLASS& operator=(const CLASS& that) = delete;
 
 //-----------------------------------------------------------------------------
 
@@ -89,11 +86,53 @@ inline TFlag CombineFlags(TFlag flag1, TFlag flag2, TOthers... others)
 }
 
 //-----------------------------------------------------------------------------
+// Disposer
+//-----------------------------------------------------------------------------
+
+template <typename T>
+struct Disposer final
+{
+    void operator()(T* pObject) const
+    {
+        if (pObject != nullptr)
+        {
+            pObject->Dispose();
+        }
+    }
+};
+
+//-----------------------------------------------------------------------------
+
+template <typename T>
+using UniqueDisposePtr = std::unique_ptr<T, Disposer<T>>;
+
+//-----------------------------------------------------------------------------
+// Deleter
+//-----------------------------------------------------------------------------
+
+template <typename T>
+struct Deleter final
+{
+    void operator()(T* pObject) const
+    {
+        if (pObject != nullptr)
+        {
+            pObject->Delete();
+        }
+    }
+};
+
+//-----------------------------------------------------------------------------
+
+template <typename T>
+using UniqueDeletePtr = std::unique_ptr<T, Deleter<T>>;
+
+//-----------------------------------------------------------------------------
 // PulseValueScope
 //-----------------------------------------------------------------------------
 
 template <typename T>
-class PulseValueScope
+class PulseValueScope final
 {
     PROHIBIT_COPY(PulseValueScope)
     PROHIBIT_HEAP(PulseValueScope)

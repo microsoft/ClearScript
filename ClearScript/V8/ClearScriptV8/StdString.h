@@ -9,7 +9,7 @@
 // StringToUniPtr
 //-----------------------------------------------------------------------------
 
-class StringToUniPtr
+class StringToUniPtr final
 {
 public:
 
@@ -39,7 +39,7 @@ private:
 // StdString
 //-----------------------------------------------------------------------------
 
-class StdString
+class StdString final
 {
 public:
 
@@ -184,17 +184,18 @@ public:
         return m_Value.c_str();
     }
 
-#ifdef _M_CEE
-
     //-------------------------------------------------------------------------
     // managed extensions
     //-------------------------------------------------------------------------
 
-public:
+#ifdef _M_CEE
 
-    explicit StdString(String^ gcValue):
-        m_Value(StringToUniPtr(gcValue), gcValue->Length)
+    explicit StdString(String^ gcValue)
     {
+        if (gcValue != nullptr)
+        {
+            m_Value = std::wstring(StringToUniPtr(gcValue), gcValue->Length);
+        }
     }
 
     String^ ToManagedString() const
@@ -202,13 +203,11 @@ public:
         return gcnew String(ToCString(), 0, GetLength());
     }
 
-#else // !_M_CEE
+#endif // _M_CEE
 
     //-------------------------------------------------------------------------
     // V8 extensions
     //-------------------------------------------------------------------------
-
-public:
 
     StdString(v8::Isolate* pIsolate, v8::Local<v8::Value> hValue):
         m_Value(GetValue(pIsolate, hValue))
@@ -235,6 +234,10 @@ public:
 
 private:
 
+    //-------------------------------------------------------------------------
+    // internals
+    //-------------------------------------------------------------------------
+
     static std::wstring GetValue(v8::Isolate* pIsolate, v8::Local<v8::Value> hValue)
     {
         v8::String::Value value(pIsolate, hValue);
@@ -242,14 +245,6 @@ private:
     }
 
     static std::wstring GetValue(const v8_inspector::StringView& stringView);
-
-#endif // !_M_CEE
-
-private:
-
-    //-------------------------------------------------------------------------
-    // internals
-    //-------------------------------------------------------------------------
 
     static const wchar_t* EnsureNonNull(const wchar_t* pValue)
     {

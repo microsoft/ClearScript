@@ -254,7 +254,7 @@ namespace Microsoft.ClearScript
             var hostType = value as HostType;
             if (hostType != null)
             {
-                var types = new[] { type }.Concat(hostType.Types).ToArray();
+                var types = type.ToEnumerable().Concat(hostType.Types).ToArray();
 
                 var groups = types.GroupBy(testType => testType.GetGenericParamCount()).ToIList();
                 if (groups.Any(group => group.Count() > 1))

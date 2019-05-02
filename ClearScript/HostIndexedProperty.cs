@@ -7,7 +7,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class HostIndexedProperty : HostTarget
+    internal sealed class HostIndexedProperty : HostTarget
     {
         private static readonly string[] auxMethodNames = { "get", "set" };
 

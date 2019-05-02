@@ -3,7 +3,7 @@
 
 namespace Microsoft.ClearScript.Util
 {
-    internal class Nonexistent
+    internal sealed class Nonexistent
     {
         public static readonly Nonexistent Value = new Nonexistent();
 

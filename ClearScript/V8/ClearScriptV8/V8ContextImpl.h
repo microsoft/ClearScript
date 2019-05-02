@@ -13,7 +13,7 @@ class V8WeakContextBinding;
 // V8ContextImpl
 //-----------------------------------------------------------------------------
 
-class V8ContextImpl: public V8Context
+class V8ContextImpl final: public V8Context
 {
     PROHIBIT_COPY(V8ContextImpl)
 
@@ -49,10 +49,17 @@ public:
     virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) override;
 
     virtual void Interrupt() override;
-    virtual void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo) override;
+    virtual void GetIsolateHeapStatistics(v8::HeapStatistics& heapStatistics) override;
     virtual void CollectGarbage(bool exhaustive) override;
     virtual void OnAccessSettingsChanged() override;
 
+    virtual bool BeginCpuProfile(const StdString& name, v8::CpuProfilingMode mode, bool recordSamples) override;
+    virtual bool EndCpuProfile(const StdString& name, V8Isolate::CpuProfileCallbackT* pCallback, void* pvArg) override;
+    virtual void CollectCpuProfileSample() override;
+    virtual uint32_t GetCpuProfileSampleInterval() override;
+    virtual void SetCpuProfileSampleInterval(uint32_t value) override;
+
+    virtual void Flush() override;
     virtual void Destroy() override;
 
     V8Value GetV8ObjectProperty(void* pvObject, const StdString& name);
@@ -75,7 +82,7 @@ public:
 
 private:
 
-    class Scope
+    class Scope final
     {
         PROHIBIT_COPY(Scope)
         PROHIBIT_HEAP(Scope)
@@ -332,6 +339,8 @@ private:
     static void GetHostObjectPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info);
 
     static void InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void FlushCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
+
     static void DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, HostObjectHolder* pHolder, void* pvV8ObjectCache);
 
     v8::Local<v8::Value> ImportValue(const V8Value& value);
@@ -362,6 +371,7 @@ private:
     Persistent<v8::FunctionTemplate> m_hHostInvocableTemplate;
     Persistent<v8::FunctionTemplate> m_hHostDelegateTemplate;
     Persistent<v8::FunctionTemplate> m_hHostIteratorTemplate;
+    Persistent<v8::Function> m_hFlushFunction;
     Persistent<v8::Value> m_hTerminationException;
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     void* m_pvV8ObjectCache;
@@ -372,8 +382,8 @@ private:
 // SharedPtrTraits<V8ContextImpl>
 //-----------------------------------------------------------------------------
 
-template<>
-class SharedPtrTraits<V8ContextImpl>
+template <>
+class SharedPtrTraits<V8ContextImpl> final
 {
     PROHIBIT_CONSTRUCT(SharedPtrTraits)
 

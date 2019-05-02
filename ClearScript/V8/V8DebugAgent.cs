@@ -152,6 +152,8 @@ namespace Microsoft.ClearScript.V8
             if (webContext.Request.RawUrl.Equals("/json", StringComparison.OrdinalIgnoreCase) ||
                 webContext.Request.RawUrl.Equals("/json/list", StringComparison.OrdinalIgnoreCase))
             {
+                // ReSharper disable PossibleNullReferenceException
+
                 if (activeClient != null)
                 {
                     SendWebResponse(webContext, MiscHelpers.FormatInvariant(
@@ -192,6 +194,8 @@ namespace Microsoft.ClearScript.V8
                         faviconUrl
                     ));
                 }
+
+                // ReSharper restore PossibleNullReferenceException
             }
             else if (webContext.Request.RawUrl.Equals("/json/version", StringComparison.OrdinalIgnoreCase))
             {

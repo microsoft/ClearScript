@@ -11,7 +11,7 @@ namespace V8 {
     // V8ScriptImpl
     //-------------------------------------------------------------------------
 
-    private ref class V8ScriptImpl : V8Script
+    private ref class V8ScriptImpl sealed : V8Script
     {
     public:
 

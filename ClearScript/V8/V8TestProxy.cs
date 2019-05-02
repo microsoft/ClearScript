@@ -3,7 +3,7 @@
 
 namespace Microsoft.ClearScript.V8
 {
-    internal class V8ProxyCounters
+    internal sealed class V8ProxyCounters
     {
         public ulong IsolateCount { get; set; }
 

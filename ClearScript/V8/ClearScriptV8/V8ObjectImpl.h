@@ -11,7 +11,7 @@ namespace V8 {
     // V8ObjectImpl
     //-------------------------------------------------------------------------
 
-    private ref class V8ObjectImpl : IV8Object
+    private ref class V8ObjectImpl sealed : IV8Object
     {
     public:
 

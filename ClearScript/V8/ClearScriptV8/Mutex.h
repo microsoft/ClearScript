@@ -7,7 +7,7 @@
 // SimpleMutex
 //-----------------------------------------------------------------------------
 
-class SimpleMutex
+class SimpleMutex final
 {
     PROHIBIT_COPY(SimpleMutex)
 
@@ -39,7 +39,7 @@ private:
 // RecursiveMutex
 //-----------------------------------------------------------------------------
 
-class RecursiveMutex
+class RecursiveMutex final
 {
     PROHIBIT_COPY(RecursiveMutex)
 
@@ -71,7 +71,7 @@ private:
 // NullMutex
 //-----------------------------------------------------------------------------
 
-class NullMutex
+class NullMutex final
 {
     PROHIBIT_COPY(NullMutex)
 
@@ -88,7 +88,7 @@ public:
 // MutexLock
 //-----------------------------------------------------------------------------
 
-template <class TMutex> class MutexLock
+template <class TMutex> class MutexLock final
 {
     PROHIBIT_COPY(MutexLock)
     PROHIBIT_HEAP(MutexLock)
@@ -138,7 +138,7 @@ private:
 // OnceFlag
 //-----------------------------------------------------------------------------
 
-class OnceFlag
+class OnceFlag final
 {
     PROHIBIT_COPY(OnceFlag)
 

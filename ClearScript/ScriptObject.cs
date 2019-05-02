@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
@@ -59,7 +60,7 @@ namespace Microsoft.ClearScript
         public object this[string name, params object[] args]
         {
             get { return GetProperty(name, args); }
-            set { SetProperty(name, args.Concat(new[] { value }).ToArray()); }
+            set { SetProperty(name, args.Concat(value.ToEnumerable()).ToArray()); }
         }
 
         /// <summary>

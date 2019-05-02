@@ -5,7 +5,7 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=7.2.502.25
+set v8testedrev=7.4.288.26
 
 :ProcessArgs
 

@@ -29,6 +29,7 @@ namespace Microsoft.ClearScript.Test
             try
             {
                 // ReSharper disable AssignNullToNotNullAttribute
+                // ReSharper disable PossibleNullReferenceException
 
                 var fileName = Path.ChangeExtension("Startup", engine.FileNameExtension);
                 var filePath = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), fileName);
@@ -37,6 +38,7 @@ namespace Microsoft.ClearScript.Test
                     engine.Execute(new DocumentInfo(new Uri(filePath)), File.ReadAllText(filePath));
                 }
 
+                // ReSharper restore PossibleNullReferenceException
                 // ReSharper restore AssignNullToNotNullAttribute
             }
             catch (Exception exception)

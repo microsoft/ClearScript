@@ -1754,7 +1754,7 @@ namespace Microsoft.ClearScript
 
             if (indices.Length > 1)
             {
-                ThisDynamic.SetProperty(SpecialMemberNames.Default, indices.Concat(new[] { value }).ToArray());
+                ThisDynamic.SetProperty(SpecialMemberNames.Default, indices.Concat(value.ToEnumerable()).ToArray());
             }
 
             throw new InvalidOperationException("Invalid argument or index count");
@@ -2199,7 +2199,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: ExpandoHostItem
 
-        private class ExpandoHostItem : HostItem, IExpando
+        private sealed class ExpandoHostItem : HostItem, IExpando
         {
             #region constructors
 

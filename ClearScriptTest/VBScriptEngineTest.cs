@@ -2510,11 +2510,18 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(0, indices.Length);
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_Nothing()
+        {
+            engine.Script.foo = new Func<object>(() => Nothing.Value);
+            Assert.IsTrue((bool)engine.Evaluate("foo() is nothing"));
+        }
+
         // ReSharper restore InconsistentNaming
 
-        #endregion
+            #endregion
 
-        #region miscellaneous
+            #region miscellaneous
 
         public class ReflectionBindFallbackTest
         {

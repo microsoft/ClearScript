@@ -79,8 +79,8 @@ namespace Microsoft.ClearScript.Windows
         Title,
         FileTail,
         URL,
-		UniqueTitle,
-		SourceMapURL
+        UniqueTitle,
+        SourceMapURL
     }
 
     internal enum BreakpointState

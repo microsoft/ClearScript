@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Microsoft.ClearScript.Util.Test
 {
@@ -22,7 +22,7 @@ namespace Microsoft.ClearScript.Util.Test
         protected internal event EventHandler ProtectedInternalEvent;
         private event EventHandler PrivateEvent;
 
-		public string PublicField;
+        public string PublicField;
         internal string InternalField;
         protected string ProtectedField;
         protected internal string ProtectedInternalField;
@@ -41,10 +41,10 @@ namespace Microsoft.ClearScript.Util.Test
         private string PrivateProperty { get; set; }
 
         public class PublicNestedType { }
-        internal class InternalNestedType { }
+        internal sealed class InternalNestedType { }
         protected class ProtectedNestedType { }
-        protected internal class ProtectedInternalNestedType { }
-        private class PrivateNestedType { }
+        protected internal sealed class ProtectedInternalNestedType { }
+        private sealed class PrivateNestedType { }
 
         // ReSharper restore EventNeverSubscribedTo.Local
         // ReSharper restore UnusedParameter.Local
@@ -53,7 +53,7 @@ namespace Microsoft.ClearScript.Util.Test
         #pragma warning restore 169 // The field 'abc' is never used
     }
 
-    internal class AccessContextTestObject : AccessContextTestBase
+    internal sealed class AccessContextTestObject : AccessContextTestBase
     {
     }
 }

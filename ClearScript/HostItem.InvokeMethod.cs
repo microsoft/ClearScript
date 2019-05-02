@@ -56,7 +56,7 @@ namespace Microsoft.ClearScript
             var bindResult = BindMethod(name, typeArgs, args, bindArgs);
             if ((bindResult is MethodBindFailure) && target.Flags.HasFlag(HostTargetFlags.AllowExtensionMethods))
             {
-                var targetArg = new[] { target.Target };
+                var targetArg = target.Target.ToEnumerable();
                 var extensionArgs = targetArg.Concat(args).ToArray();
 
                 var targetBindArg = new object[] { target };
@@ -450,7 +450,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: MethodBindSuccess
 
-        private class MethodBindSuccess : MethodBindResult
+        private sealed class MethodBindSuccess : MethodBindResult
         {
             private static readonly MethodInfo[] reflectionMethods =
             {
@@ -504,7 +504,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: MethodBindFailure
 
-        private class MethodBindFailure : MethodBindResult
+        private sealed class MethodBindFailure : MethodBindResult
         {
             private readonly Func<Exception> exceptionFactory;
 

@@ -7,11 +7,11 @@
 // V8Context
 //-----------------------------------------------------------------------------
 
-class V8Context: public WeakRefTarget<V8Context>
+class V8Context: public WeakRefTarget<V8Context>, public IV8Entity
 {
 public:
 
-    struct Options
+    struct Options final
     {
         bool EnableDebugging = false;
         bool EnableRemoteDebugging = false;
@@ -47,10 +47,17 @@ public:
     virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) = 0;
 
     virtual void Interrupt() = 0;
-    virtual void GetIsolateHeapInfo(V8IsolateHeapInfo& heapInfo) = 0;
+    virtual void GetIsolateHeapStatistics(v8::HeapStatistics& heapStatistics) = 0;
     virtual void CollectGarbage(bool exhaustive) = 0;
     virtual void OnAccessSettingsChanged() = 0;
 
+    virtual bool BeginCpuProfile(const StdString& name, v8::CpuProfilingMode mode, bool recordSamples) = 0;
+    virtual bool EndCpuProfile(const StdString& name, V8Isolate::CpuProfileCallbackT* pCallback, void* pvArg) = 0;
+    virtual void CollectCpuProfileSample() = 0;
+    virtual uint32_t GetCpuProfileSampleInterval() = 0;
+    virtual void SetCpuProfileSampleInterval(uint32_t value) = 0;
+
+    virtual void Flush() = 0;
     virtual void Destroy() = 0;
 
 protected:
@@ -62,8 +69,8 @@ protected:
 // SharedPtrTraits<V8Context>
 //-----------------------------------------------------------------------------
 
-template<>
-class SharedPtrTraits<V8Context>
+template <>
+class SharedPtrTraits<V8Context> final
 {
     PROHIBIT_CONSTRUCT(SharedPtrTraits)
 

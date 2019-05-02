@@ -4,10 +4,10 @@
 #pragma once
 
 #include "NativePlatform.h"
+#include "CallbackManager.h"
 #include "V8Platform.h"
 #include "StdString.h"
 #include "Mutex.h"
-#include "CallbackManager.h"
 #include "RefCount.h"
 #include "SharedPtr.h"
 #include "WeakRef.h"
@@ -17,10 +17,9 @@
 #include "V8Value.h"
 #include "HostException.h"
 #include "V8Exception.h"
-#include "V8IsolateConstraints.h"
-#include "V8IsolateHeapInfo.h"
 #include "V8DocumentInfo.h"
 #include "V8CacheType.h"
+#include "IV8Entity.h"
 #include "V8Isolate.h"
 #include "V8Context.h"
 #include "HostObjectHolderImpl.h"

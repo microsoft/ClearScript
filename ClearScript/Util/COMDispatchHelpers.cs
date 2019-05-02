@@ -123,7 +123,7 @@ namespace Microsoft.ClearScript.Util
         }
     }
 
-    internal class DynamicDispatchExWrapper : IDynamic
+    internal sealed class DynamicDispatchExWrapper : IDynamic
     {
         private readonly IDispatchEx dispatchEx;
 

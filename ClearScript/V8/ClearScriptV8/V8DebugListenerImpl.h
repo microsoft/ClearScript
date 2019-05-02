@@ -11,7 +11,7 @@ namespace V8 {
     // V8DebugListenerImpl
     //-------------------------------------------------------------------------
 
-    private ref class V8DebugListenerImpl : IV8DebugListener
+    private ref class V8DebugListenerImpl sealed : IV8DebugListener
     {
     public:
 

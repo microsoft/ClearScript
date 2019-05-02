@@ -33,7 +33,7 @@ namespace V8 {
         try
         {
             auto gcIsolateProxyImpl = dynamic_cast<V8IsolateProxyImpl^>(gcIsolateProxy);
-            m_pspContext = new SharedPtr<V8Context>(V8Context::Create(gcIsolateProxyImpl->GetIsolate(), StdString(gcName), options));
+            m_pspContext = new SharedPtr<V8Context>(gcIsolateProxyImpl->CreateContext(StdString(gcName), options));
         }
         catch (const V8Exception& exception)
         {
@@ -279,15 +279,15 @@ namespace V8 {
 
     V8RuntimeHeapInfo^ V8ContextProxyImpl::GetRuntimeHeapInfo()
     {
-        V8IsolateHeapInfo heapInfo;
-        GetContext()->GetIsolateHeapInfo(heapInfo);
+        v8::HeapStatistics heapStatistics;
+        GetContext()->GetIsolateHeapStatistics(heapStatistics);
 
         auto gcHeapInfo = gcnew V8RuntimeHeapInfo();
-        gcHeapInfo->TotalHeapSize = heapInfo.GetTotalHeapSize();
-        gcHeapInfo->TotalHeapSizeExecutable = heapInfo.GetTotalHeapSizeExecutable();
-        gcHeapInfo->TotalPhysicalSize = heapInfo.GetTotalPhysicalSize();
-        gcHeapInfo->UsedHeapSize = heapInfo.GetUsedHeapSize();
-        gcHeapInfo->HeapSizeLimit = heapInfo.GetHeapSizeLimit();
+        gcHeapInfo->TotalHeapSize = heapStatistics.total_heap_size();
+        gcHeapInfo->TotalHeapSizeExecutable = heapStatistics.total_heap_size_executable();
+        gcHeapInfo->TotalPhysicalSize = heapStatistics.total_physical_size();
+        gcHeapInfo->UsedHeapSize = heapStatistics.used_heap_size();
+        gcHeapInfo->HeapSizeLimit = heapStatistics.heap_size_limit();
         return gcHeapInfo;
     }
 
@@ -303,6 +303,49 @@ namespace V8 {
     void V8ContextProxyImpl::OnAccessSettingsChanged()
     {
         GetContext()->OnAccessSettingsChanged();
+    }
+
+    //-------------------------------------------------------------------------
+
+    bool V8ContextProxyImpl::BeginCpuProfile(String^ gcName, V8CpuProfileFlags flags)
+    {
+        return GetContext()->BeginCpuProfile(StdString(gcName), v8::kLeafNodeLineNumbers, flags.HasFlag(V8CpuProfileFlags::EnableSampleCollection));
+    }
+
+    //-------------------------------------------------------------------------
+
+    V8CpuProfile^ V8ContextProxyImpl::EndCpuProfile(String^ gcName)
+    {
+        auto gcContext = Tuple::Create<IV8EntityProxy^, V8CpuProfile^>(this, gcnew V8CpuProfile);
+        return GetContext()->EndCpuProfile(StdString(gcName), V8IsolateProxyImpl::GetCpuProfileCallback(), &gcContext) ? gcContext->Item2 : nullptr;
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8ContextProxyImpl::CollectCpuProfileSample()
+    {
+        GetContext()->CollectCpuProfileSample();
+    }
+
+    //-------------------------------------------------------------------------
+
+    UInt32 V8ContextProxyImpl::CpuProfileSampleInterval::get()
+    {
+        return GetContext()->GetCpuProfileSampleInterval();
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8ContextProxyImpl::CpuProfileSampleInterval::set(UInt32 value)
+    {
+        GetContext()->SetCpuProfileSampleInterval(value);
+    }
+
+    //-------------------------------------------------------------------------
+
+    String^ V8ContextProxyImpl::CreateManagedString(v8::Local<v8::Value> hValue)
+    {
+        return GetContext()->CreateStdString(hValue).ToManagedString();
     }
 
     //-------------------------------------------------------------------------

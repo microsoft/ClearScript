@@ -7,7 +7,7 @@
 // V8ObjectHelpers
 //-----------------------------------------------------------------------------
 
-class V8ObjectHelpers
+class V8ObjectHelpers final
 {
     PROHIBIT_CONSTRUCT(V8ObjectHelpers)
 

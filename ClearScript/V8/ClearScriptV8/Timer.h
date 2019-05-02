@@ -7,7 +7,7 @@
 // Timer
 //-----------------------------------------------------------------------------
 
-class Timer: public WeakRefTarget<Timer>
+class Timer final: public WeakRefTarget<Timer>
 {
 public:
 

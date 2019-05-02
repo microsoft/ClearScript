@@ -594,7 +594,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: DynamicCreateInstanceBinder
 
-        private class DynamicCreateInstanceBinder : CreateInstanceBinder
+        private sealed class DynamicCreateInstanceBinder : CreateInstanceBinder
         {
             public DynamicCreateInstanceBinder(string[] paramNames)
                 : base(new CallInfo(paramNames.Length, paramNames))
@@ -619,7 +619,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: DynamicInvokeBinder
 
-        private class DynamicInvokeBinder : InvokeBinder
+        private sealed class DynamicInvokeBinder : InvokeBinder
         {
             public DynamicInvokeBinder(string[] paramNames)
                 : base(new CallInfo(paramNames.Length, paramNames))
@@ -644,7 +644,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: DynamicGetMemberBinder
 
-        private class DynamicGetMemberBinder : GetMemberBinder
+        private sealed class DynamicGetMemberBinder : GetMemberBinder
         {
             public DynamicGetMemberBinder(string name)
                 : base(name, false)
@@ -669,7 +669,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: DynamicSetMemberBinder
 
-        private class DynamicSetMemberBinder : SetMemberBinder
+        private sealed class DynamicSetMemberBinder : SetMemberBinder
         {
             public DynamicSetMemberBinder(string name)
                 : base(name, false)
@@ -694,7 +694,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: DynamicInvokeMemberBinder
 
-        private class DynamicInvokeMemberBinder : InvokeMemberBinder
+        private sealed class DynamicInvokeMemberBinder : InvokeMemberBinder
         {
             private static readonly MethodInfo invokeMemberValueMethod = typeof(DynamicInvokeMemberBinder).GetMethod("InvokeMemberValue", BindingFlags.NonPublic | BindingFlags.Static);
             private readonly IHostInvokeContext context;
@@ -764,7 +764,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: DynamicDeleteMemberBinder
         
-        private class DynamicDeleteMemberBinder : DeleteMemberBinder
+        private sealed class DynamicDeleteMemberBinder : DeleteMemberBinder
         {
             public DynamicDeleteMemberBinder(string name)
                 : base(name, false)
@@ -788,7 +788,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: DynamicGetIndexBinder
 
-        private class DynamicGetIndexBinder : GetIndexBinder
+        private sealed class DynamicGetIndexBinder : GetIndexBinder
         {
             public DynamicGetIndexBinder(string[] paramNames)
                 : base(new CallInfo(paramNames.Length, paramNames))
@@ -813,7 +813,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: DynamicSetIndexBinder
 
-        private class DynamicSetIndexBinder : SetIndexBinder
+        private sealed class DynamicSetIndexBinder : SetIndexBinder
         {
             public DynamicSetIndexBinder(string[] paramNames)
                 : base(new CallInfo(paramNames.Length, paramNames))
@@ -838,7 +838,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: DynamicDeleteIndexBinder
 
-        private class DynamicDeleteIndexBinder : DeleteIndexBinder
+        private sealed class DynamicDeleteIndexBinder : DeleteIndexBinder
         {
             public DynamicDeleteIndexBinder(string[] paramNames)
                 : base(new CallInfo(paramNames.Length, paramNames))

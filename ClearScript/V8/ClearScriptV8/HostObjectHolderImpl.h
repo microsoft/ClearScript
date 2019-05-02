@@ -7,7 +7,7 @@
 // HostObjectHolderImpl
 //-----------------------------------------------------------------------------
 
-class HostObjectHolderImpl: public HostObjectHolder
+class HostObjectHolderImpl final: public HostObjectHolder
 {
     PROHIBIT_COPY(HostObjectHolderImpl)
 

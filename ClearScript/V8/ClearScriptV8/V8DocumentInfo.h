@@ -3,7 +3,7 @@
 
 #pragma once
 
-struct V8DocumentInfo
+struct V8DocumentInfo final
 {
     StdString ResourceName;
     StdString SourceMapUrl;
@@ -11,9 +11,9 @@ struct V8DocumentInfo
 #ifdef _M_CEE
 
     explicit V8DocumentInfo(DocumentInfo documentInfo):
-		ResourceName(MiscHelpers::GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName)),
-		SourceMapUrl(MiscHelpers::GetUrlOrPath(documentInfo.SourceMapUri, String::Empty))
-	{
+        ResourceName(MiscHelpers::GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName)),
+        SourceMapUrl(MiscHelpers::GetUrlOrPath(documentInfo.SourceMapUri, String::Empty))
+    {
     }
 
 #endif // _M_CEE

@@ -8,7 +8,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class HostItemCollateral
+    internal sealed class HostItemCollateral
     {
         #region special targets
 

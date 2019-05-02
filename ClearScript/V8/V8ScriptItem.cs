@@ -424,7 +424,7 @@ namespace Microsoft.ClearScript.V8
 
         #region Nested type: V8ArrayBuffer
 
-        private class V8ArrayBuffer : V8ArrayBufferOrView, IArrayBuffer
+        private sealed class V8ArrayBuffer : V8ArrayBufferOrView, IArrayBuffer
         {
             public V8ArrayBuffer(V8ScriptEngine engine, IV8Object target)
                 : base(engine, target)
@@ -506,7 +506,7 @@ namespace Microsoft.ClearScript.V8
 
         #region Nested type: V8DataView
 
-        private class V8DataView : V8ArrayBufferView, IDataView
+        private sealed class V8DataView : V8ArrayBufferView, IDataView
         {
             public V8DataView(V8ScriptEngine engine, IV8Object target)
                 : base(engine, target)
@@ -617,7 +617,7 @@ namespace Microsoft.ClearScript.V8
 
         // special case to support both ITypedArray<ushort> and ITypedArray<char>
 
-        private class V8UInt16Array : V8TypedArray<ushort>, ITypedArray<char>
+        private sealed class V8UInt16Array : V8TypedArray<ushort>, ITypedArray<char>
         {
             public V8UInt16Array(V8ScriptEngine engine, IV8Object target)
                 : base(engine, target)

@@ -190,9 +190,9 @@ namespace Microsoft.ClearScript
         /// When this property is set to <c>true</c>, all field, property, and method return values
         /// are marshaled with full .NET type information even if they are <c>null</c>. Note that
         /// such values will always fail equality comparison with JavaScript's
-        /// <see href="https://msdn.microsoft.com/en-us/library/ie/fhcc96d6(v=vs.94).aspx">null</see>,
+        /// <c><see href="https://msdn.microsoft.com/en-us/library/ie/fhcc96d6(v=vs.94).aspx">null</see></c>,
         /// VBScript's
-        /// <see href="https://msdn.microsoft.com/en-us/library/f8tbc79x(v=vs.85).aspx">Nothing</see>,
+        /// <c><see href="https://msdn.microsoft.com/en-us/library/f8tbc79x(v=vs.85).aspx">Nothing</see></c>,
         /// and other similar values. Instead, use <see cref="HostFunctions.isNull"/> or
         /// <see cref="object.Equals(object, object)"/> to perform such a comparison.
         /// </remarks>
@@ -1742,7 +1742,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: ScriptFrame
 
-        internal class ScriptFrame
+        internal sealed class ScriptFrame
         {
             public Exception HostException { get; set; }
 

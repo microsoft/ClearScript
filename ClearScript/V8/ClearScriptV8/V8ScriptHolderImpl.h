@@ -7,7 +7,7 @@
 // V8ScriptHolderImpl
 //-----------------------------------------------------------------------------
 
-class V8ScriptHolderImpl: public V8ScriptHolder
+class V8ScriptHolderImpl final: public V8ScriptHolder
 {
     PROHIBIT_COPY(V8ScriptHolderImpl)
 

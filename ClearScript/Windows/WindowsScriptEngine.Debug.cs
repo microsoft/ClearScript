@@ -14,7 +14,7 @@ namespace Microsoft.ClearScript.Windows
     {
         #region Nested type: DebugDocument
 
-        private class DebugDocument : IDebugDocumentInfo, IDebugDocumentProvider, IDebugDocument, IDebugDocumentText
+        private sealed class DebugDocument : IDebugDocumentInfo, IDebugDocumentProvider, IDebugDocument, IDebugDocumentText
         {
             private readonly WindowsScriptEngine engine;
             private readonly UIntPtr sourceContext;
@@ -223,7 +223,7 @@ namespace Microsoft.ClearScript.Windows
 
         #region Nested type: DebugDocumentMap
 
-        private class DebugDocumentMap : Dictionary<UIntPtr, DebugDocument>
+        private sealed class DebugDocumentMap : Dictionary<UIntPtr, DebugDocument>
         {
         }
 
@@ -231,7 +231,7 @@ namespace Microsoft.ClearScript.Windows
 
         #region Nested type: DebugDocumentContext
 
-        private class DebugDocumentContext : IDebugDocumentContext
+        private sealed class DebugDocumentContext : IDebugDocumentContext
         {
             private readonly DebugDocument document;
             private readonly uint position;

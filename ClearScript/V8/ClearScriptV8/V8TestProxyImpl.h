@@ -11,7 +11,7 @@ namespace V8 {
     // V8TestProxyImpl
     //-------------------------------------------------------------------------
 
-    private ref class V8TestProxyImpl : V8TestProxy
+    private ref class V8TestProxyImpl sealed : V8TestProxy
     {
     public:
 

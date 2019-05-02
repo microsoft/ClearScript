@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Microsoft.ClearScript
 {
-    internal class BindSignature : IEquatable<BindSignature>
+    internal sealed class BindSignature : IEquatable<BindSignature>
     {
         private readonly Type context;
         private readonly BindingFlags flags;
@@ -134,7 +134,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: TargetInfo
 
-        private class TargetInfo : IEquatable<TargetInfo>
+        private sealed class TargetInfo : IEquatable<TargetInfo>
         {
             private readonly TargetKind kind;
             private readonly Type targetType;
@@ -214,7 +214,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: ArgInfo
 
-        private class ArgInfo : IEquatable<ArgInfo>
+        private sealed class ArgInfo : IEquatable<ArgInfo>
         {
             private readonly ArgKind kind;
             private readonly Type type;

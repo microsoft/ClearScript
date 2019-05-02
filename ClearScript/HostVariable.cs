@@ -24,7 +24,7 @@ namespace Microsoft.ClearScript
         }
     }
 
-    internal class HostVariable<T> : HostVariableBase, IHostVariable
+    internal sealed class HostVariable<T> : HostVariableBase, IHostVariable
     {
         private T value;
 

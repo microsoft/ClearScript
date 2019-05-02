@@ -29,7 +29,7 @@ namespace Microsoft.ClearScript
                 throw new ArgumentException("Invalid argument count", "argCount");
             }
 
-            var typeArgs = Enumerable.Repeat(typeof(object), argCount).Concat(new[] { typeof(TResult) }).ToArray();
+            var typeArgs = Enumerable.Repeat(typeof(object), argCount).Concat(typeof(TResult).ToEnumerable()).ToArray();
             return CreateDelegate(engine, target, funcTemplates[argCount].MakeSpecificType(typeArgs));
         }
 
@@ -77,7 +77,7 @@ namespace Microsoft.ClearScript
             Type shimType;
             if (method.ReturnType == typeof(void))
             {
-                var typeArgs = paramTypes.Concat(new[] { delegateType }).ToArray();
+                var typeArgs = paramTypes.Concat(delegateType.ToEnumerable()).ToArray();
                 shimType = procShimTemplates[paramTypes.Length].MakeSpecificType(typeArgs);
             }
             else
@@ -127,7 +127,7 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                var typeArgs = innerParamTypes.Concat(new[] { method.ReturnType }).ToArray();
+                var typeArgs = innerParamTypes.Concat(method.ReturnType.ToEnumerable()).ToArray();
                 innerDelegateType = funcTemplates[innerParamTypes.Length].MakeSpecificType(typeArgs);
             }
 

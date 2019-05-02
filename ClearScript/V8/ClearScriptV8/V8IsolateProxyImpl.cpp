@@ -8,18 +8,152 @@ namespace ClearScript {
 namespace V8 {
 
     //-------------------------------------------------------------------------
+    // local helper functions
+    //-------------------------------------------------------------------------
+
+    static V8CpuProfile::Node^ CreateCpuProfileNode(const v8::CpuProfileNode& node);
+
+    //-------------------------------------------------------------------------
+
+    static String^ CreateManagedString(const char* pValue)
+    {
+        if (pValue != nullptr)
+        {
+            return gcnew String(pValue, 0, static_cast<int>(strlen(pValue)), Encoding::UTF8);
+        }
+
+        return nullptr;
+    }
+
+    //-------------------------------------------------------------------------
+
+    static V8CpuProfile::Node^ CreateCpuProfileNode(const v8::CpuProfileNode& node)
+    {
+        auto gcNode = gcnew V8CpuProfile::Node;
+
+        gcNode->NodeId = node.GetNodeId();
+        gcNode->ScriptId = node.GetScriptId();
+
+        gcNode->ScriptName = CreateManagedString(node.GetScriptResourceNameStr());
+        gcNode->FunctionName = CreateManagedString(node.GetFunctionNameStr());
+        gcNode->BailoutReason = CreateManagedString(node.GetBailoutReason());
+
+        gcNode->LineNumber = node.GetLineNumber();
+        gcNode->ColumnNumber = node.GetColumnNumber();
+        gcNode->HitCount = node.GetHitCount();
+
+        auto hitLineCount = node.GetHitLineCount();
+        if (hitLineCount > 0)
+        {
+            std::vector<v8::CpuProfileNode::LineTick> hitLines(hitLineCount);
+            if (node.GetLineTicks(&hitLines[0], static_cast<unsigned>(hitLines.size())))
+            {
+                auto gcHitLines = gcnew array<V8CpuProfile::Node::HitLine>(hitLineCount);
+
+                for (auto index = 0U; index < hitLineCount; ++index)
+                {
+                    gcHitLines[index].LineNumber = hitLines[index].line;
+                    gcHitLines[index].HitCount = hitLines[index].hit_count;
+                }
+
+                gcNode->HitLines = gcnew ReadOnlyCollection<V8CpuProfile::Node::HitLine>(dynamic_cast<IList<V8CpuProfile::Node::HitLine>^>(gcHitLines));
+            }
+        }
+
+        auto childCount = node.GetChildrenCount();
+        if (childCount > 0)
+        {
+            auto gcChildNodes = gcnew List<V8CpuProfile::Node^>(childCount);
+
+            for (auto index = 0; index < childCount; ++index)
+            {
+                auto pChildNode = node.GetChild(index);
+                if (pChildNode != nullptr)
+                {
+                    gcChildNodes->Add(CreateCpuProfileNode(*pChildNode));
+                }
+            }
+
+            if (gcChildNodes->Count > 0)
+            {
+                gcNode->ChildNodes = gcnew ReadOnlyCollection<V8CpuProfile::Node^>(gcChildNodes);
+            }
+        }
+
+        return gcNode;
+    }
+
+    //-------------------------------------------------------------------------
+
+    static V8CpuProfile::Sample^ CreateCpuProfileSample(V8CpuProfile::Node^ gcNode, uint64_t time)
+    {
+        auto gcSample = gcnew V8CpuProfile::Sample;
+
+        gcSample->Node = gcNode;
+        gcSample->Timestamp = time;
+
+        return gcSample;
+    }
+
+    //-------------------------------------------------------------------------
+
+    static void CpuProfileCallback(const v8::CpuProfile& profile, void* pvArg)
+    {
+        auto pContext = static_cast<Tuple<IV8EntityProxy^, V8CpuProfile^>^*>(pvArg);
+        auto gcProxy = (*pContext)->Item1;
+        auto gcProfile = (*pContext)->Item2;
+
+        gcProfile->Name = gcProxy->CreateManagedString(profile.GetTitle());
+        gcProfile->StartTimestamp = profile.GetStartTime();
+        gcProfile->EndTimestamp = profile.GetEndTime();
+
+        auto pNode = profile.GetTopDownRoot();
+        if (pNode != nullptr)
+        {
+            gcProfile->RootNode = CreateCpuProfileNode(*pNode);
+        }
+
+        auto sampleCount = profile.GetSamplesCount();
+        if (sampleCount > 0)
+        {
+            auto gcSamples = gcnew List<V8CpuProfile::Sample^>(sampleCount);
+            
+            for (auto index = 0; index < sampleCount; ++index)
+            {
+                pNode = profile.GetSample(index);
+                if (pNode != nullptr)
+                {
+                    auto gcNode = gcProfile->FindNode(pNode->GetNodeId());
+                    _ASSERTE(gcNode != nullptr);
+
+                    if (gcNode != nullptr)
+                    {
+                        gcSamples->Add(CreateCpuProfileSample(gcNode, profile.GetSampleTimestamp(index)));
+                    }
+                }
+            }
+
+            if (gcSamples->Count > 0)
+            {
+                gcProfile->Samples = gcnew ReadOnlyCollection<V8CpuProfile::Sample^>(gcSamples);
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
     // V8IsolateProxyImpl implementation
     //-------------------------------------------------------------------------
 
     V8IsolateProxyImpl::V8IsolateProxyImpl(String^ gcName, V8RuntimeConstraints^ gcConstraints, V8RuntimeFlags flags, Int32 debugPort):
         m_gcLock(gcnew Object)
     {
-        const V8IsolateConstraints* pConstraints = nullptr;
+        const v8::ResourceConstraints* pConstraints = nullptr;
 
-        V8IsolateConstraints constraints;
+        v8::ResourceConstraints constraints;
         if (gcConstraints != nullptr)
         {
-            constraints.Set(AdjustConstraint(gcConstraints->MaxNewSpaceSize), AdjustConstraint(gcConstraints->MaxOldSpaceSize), AdjustConstraint(gcConstraints->MaxExecutableSize));
+            constraints.set_max_semi_space_size_in_kb(AdjustConstraint(gcConstraints->MaxNewSpaceSize) * 1024);
+            constraints.set_max_old_space_size(AdjustConstraint(gcConstraints->MaxOldSpaceSize));
             pConstraints = &constraints;
         }
 
@@ -186,15 +320,15 @@ namespace V8 {
 
     V8RuntimeHeapInfo^ V8IsolateProxyImpl::GetHeapInfo()
     {
-        V8IsolateHeapInfo heapInfo;
-        GetIsolate()->GetHeapInfo(heapInfo);
+        v8::HeapStatistics heapStatistics;
+        GetIsolate()->GetHeapStatistics(heapStatistics);
 
         auto gcHeapInfo = gcnew V8RuntimeHeapInfo();
-        gcHeapInfo->TotalHeapSize = heapInfo.GetTotalHeapSize();
-        gcHeapInfo->TotalHeapSizeExecutable = heapInfo.GetTotalHeapSizeExecutable();
-        gcHeapInfo->TotalPhysicalSize = heapInfo.GetTotalPhysicalSize();
-        gcHeapInfo->UsedHeapSize = heapInfo.GetUsedHeapSize();
-        gcHeapInfo->HeapSizeLimit = heapInfo.GetHeapSizeLimit();
+        gcHeapInfo->TotalHeapSize = heapStatistics.total_heap_size();
+        gcHeapInfo->TotalHeapSizeExecutable = heapStatistics.total_heap_size_executable();
+        gcHeapInfo->TotalPhysicalSize = heapStatistics.total_physical_size();
+        gcHeapInfo->UsedHeapSize = heapStatistics.used_heap_size();
+        gcHeapInfo->HeapSizeLimit = heapStatistics.heap_size_limit();
         return gcHeapInfo;
     }
 
@@ -203,6 +337,56 @@ namespace V8 {
     void V8IsolateProxyImpl::CollectGarbage(bool exhaustive)
     {
         GetIsolate()->CollectGarbage(exhaustive);
+    }
+
+    //-------------------------------------------------------------------------
+
+    bool V8IsolateProxyImpl::BeginCpuProfile(String^ gcName, V8CpuProfileFlags flags)
+    {
+        return GetIsolate()->BeginCpuProfile(StdString(gcName), v8::kLeafNodeLineNumbers, flags.HasFlag(V8CpuProfileFlags::EnableSampleCollection));
+    }
+
+    //-------------------------------------------------------------------------
+
+    V8CpuProfile^ V8IsolateProxyImpl::EndCpuProfile(String^ gcName)
+    {
+        auto gcContext = Tuple::Create<IV8EntityProxy^, V8CpuProfile^>(this, gcnew V8CpuProfile);
+        return GetIsolate()->EndCpuProfile(StdString(gcName), CpuProfileCallback, &gcContext) ? gcContext->Item2 : nullptr;
+    }
+    
+    //-------------------------------------------------------------------------
+
+    void V8IsolateProxyImpl::CollectCpuProfileSample()
+    {
+        return GetIsolate()->CollectCpuProfileSample();
+    }
+
+    //-------------------------------------------------------------------------
+
+    UInt32 V8IsolateProxyImpl::CpuProfileSampleInterval::get()
+    {
+        return GetIsolate()->GetCpuProfileSampleInterval();
+    }
+
+    //-------------------------------------------------------------------------
+
+    void V8IsolateProxyImpl::CpuProfileSampleInterval::set(UInt32 value)
+    {
+        GetIsolate()->SetCpuProfileSampleInterval(value);
+    }
+
+    //-------------------------------------------------------------------------
+
+    String^ V8IsolateProxyImpl::CreateManagedString(v8::Local<v8::Value> hValue)
+    {
+        return GetIsolate()->CreateStdString(hValue).ToManagedString();
+    }
+
+    //-------------------------------------------------------------------------
+
+    V8Context* V8IsolateProxyImpl::CreateContext(const StdString& name, const V8Context::Options& options)
+    {
+        return V8Context::Create(GetIsolate(), name, options);
     }
 
     //-------------------------------------------------------------------------
@@ -254,6 +438,13 @@ namespace V8 {
             delete m_pspIsolate;
             m_pspIsolate = nullptr;
         }
+    }
+
+    //-------------------------------------------------------------------------
+
+    V8Isolate::CpuProfileCallbackT* V8IsolateProxyImpl::GetCpuProfileCallback()
+    {
+        return CpuProfileCallback;
     }
 
     //-------------------------------------------------------------------------

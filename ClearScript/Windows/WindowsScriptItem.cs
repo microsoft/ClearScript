@@ -13,7 +13,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.Windows
 {
-    internal class WindowsScriptItem : ScriptItem, IWindowsScriptObject, IDisposable
+    internal sealed class WindowsScriptItem : ScriptItem, IWindowsScriptObject, IDisposable
     {
         private readonly WindowsScriptEngine engine;
         private readonly IExpando target;

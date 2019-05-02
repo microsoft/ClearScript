@@ -7,7 +7,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class HostMethod : HostTarget
+    internal sealed class HostMethod : HostTarget
     {
         private readonly HostItem target;
         private readonly string name;

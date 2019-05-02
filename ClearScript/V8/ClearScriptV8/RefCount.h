@@ -7,7 +7,7 @@
 // RefCount
 //-----------------------------------------------------------------------------
 
-class RefCount
+class RefCount final
 {
     PROHIBIT_COPY(RefCount)
 

@@ -7,7 +7,7 @@
 // V8Exception
 //-----------------------------------------------------------------------------
 
-class V8Exception
+class V8Exception final
 {
 public:
 

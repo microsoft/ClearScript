@@ -79,7 +79,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: CanonicalRefMap<T>
 
-        private class CanonicalRefMap<T> : CanonicalRefMapBase
+        private sealed class CanonicalRefMap<T> : CanonicalRefMapBase
         {
             private readonly object mapLock = new object();
             private readonly Dictionary<T, WeakReference> map = new Dictionary<T, WeakReference>();

@@ -196,7 +196,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: ByRefArgItem
 
-        private class ByRefArgItem
+        private sealed class ByRefArgItem
         {
             public IByRefArg ByRefArg { get; private set; }
 

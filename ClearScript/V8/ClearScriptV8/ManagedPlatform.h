@@ -16,6 +16,13 @@
 #include <msclr\all.h>
 
 //-----------------------------------------------------------------------------
+// undefine legacy macros
+//-----------------------------------------------------------------------------
+
+#undef min
+#undef max
+
+//-----------------------------------------------------------------------------
 // assembly references
 //-----------------------------------------------------------------------------
 
@@ -26,8 +33,11 @@
 //-----------------------------------------------------------------------------
 
 using namespace System;
+using namespace System::Collections::Generic;
+using namespace System::Collections::ObjectModel;
 using namespace System::Globalization;
 using namespace System::Runtime::InteropServices;
+using namespace System::Text;
 using namespace System::Threading;
 using namespace Microsoft::ClearScript;
 using namespace Microsoft::ClearScript::JavaScript;
@@ -51,7 +61,7 @@ using namespace Microsoft::ClearScript::V8;
 //-----------------------------------------------------------------------------
 
 #define ENSURE_INTERNAL_CLASS(NAME) \
-    public ref class NAME##Anchor \
+    public ref class NAME##Anchor sealed \
     { \
     private: \
         static String^ m_gcName = NAME::typeid->Name; \

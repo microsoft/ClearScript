@@ -22,7 +22,7 @@ namespace Microsoft.ClearScript.Windows
         EnableDebugging = 0x00000001,
 
         /// <summary>
-        /// Specifies that Just-In-Time script debugging is to be enabled. This option is ignored
+        /// Specifies that Just-In-Timestamp script debugging is to be enabled. This option is ignored
         /// if <see cref="EnableDebugging"/> is not specified.
         /// </summary>
         EnableJITDebugging = 0x00000002,

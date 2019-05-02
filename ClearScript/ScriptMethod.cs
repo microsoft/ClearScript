@@ -8,7 +8,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class ScriptMethod : HostTarget, IReflect
+    internal sealed class ScriptMethod : HostTarget, IReflect
     {
         private readonly ScriptItem target;
         private readonly string name;

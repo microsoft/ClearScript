@@ -9,7 +9,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
-    internal class HostType : HostTarget, IScriptableObject
+    internal sealed class HostType : HostTarget, IScriptableObject
     {
         private readonly Type[] types;
 

@@ -55,7 +55,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: Field
 
-        private class Field : FieldInfo
+        private sealed class Field : FieldInfo
         {
             private readonly string name;
 
@@ -178,7 +178,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: Method
 
-        private class Method : MethodInfo
+        private sealed class Method : MethodInfo
         {
             private readonly string name;
 
@@ -261,7 +261,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: Property
 
-        private class Property : PropertyInfo
+        private sealed class Property : PropertyInfo
         {
             private readonly string name;
 
@@ -371,7 +371,7 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: MemberMapImpl<T>
 
-        private class MemberMapImpl<T> : MemberMapBase where T : MemberInfo
+        private sealed class MemberMapImpl<T> : MemberMapBase where T : MemberInfo
         {
             private readonly object dataLock = new object();
             private readonly Dictionary<string, WeakReference> map = new Dictionary<string, WeakReference>();
