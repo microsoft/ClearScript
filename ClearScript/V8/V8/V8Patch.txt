@@ -108,6 +108,22 @@ index 4b87d81ea1..c166e09920 100644
    unsigned trace_indentation_ = 0;
    PerIsolateCompilerCache* compiler_cache_;
    ZoneUnorderedMap<FeedbackNexus, ProcessedFeedback, FeedbackNexusHash,
+diff --git a/src/execution.cc b/src/execution.cc
+index 69f9e1e2d7..d37ba55ebf 100644
+--- a/src/execution.cc
++++ b/src/execution.cc
+@@ -590,8 +590,10 @@ bool StackGuard::ThreadLocal::Initialize(Isolate* isolate) {
+   bool should_set_stack_limits = false;
+   if (real_climit_ == kIllegalLimit) {
+     const uintptr_t kLimitSize = FLAG_stack_size * KB;
+-    DCHECK_GT(GetCurrentStackPosition(), kLimitSize);
+     uintptr_t limit = GetCurrentStackPosition() - kLimitSize;
++    if (GetCurrentStackPosition() < kLimitSize) {
++      limit = 0;
++    }
+     real_jslimit_ = SimulatorStack::JsLimitFromCLimit(isolate, limit);
+     set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
+     real_climit_ = limit;
 diff --git a/src/objects.cc b/src/objects.cc
 index 8337b3d4cf..b92280d991 100644
 --- a/src/objects.cc
