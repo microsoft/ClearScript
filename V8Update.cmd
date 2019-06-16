@@ -73,11 +73,11 @@ goto Exit
 :CheckOSDone
 
 :CheckMSVS
-if "%VisualStudioVersion%"=="15.0" goto UseMSVS2017
-echo Error: This script requires a Visual Studio 2017 Developer Command Prompt.
+if "%VisualStudioVersion%"=="15.0" goto CheckMSVSDone
+if "%VisualStudioVersion%"=="16.0" goto CheckMSVSDone
+echo Error: This script requires a Visual Studio 2017 or 2019 Developer Command Prompt.
 echo Browse to http://www.visualstudio.com for more information.
 goto Exit
-:UseMSVS2017
 :CheckMSVSDone
 
 ::-----------------------------------------------------------------------------
