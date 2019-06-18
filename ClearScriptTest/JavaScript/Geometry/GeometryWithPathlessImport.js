@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import * as Arithmetic from 'Arithmetic.js';
+import * as Self from 'Geometry.js';
 
 export class Rectangle {
     constructor(width, height) {
@@ -9,7 +10,10 @@ export class Rectangle {
         this.height = height;
     }
     get Area() {
-        return Arithmetic.Multiply(this.width, this.height);
+        return Self.Rectangle.CalculateArea(this.width, this.height);
+    }
+    static CalculateArea(width, height) {
+        return Arithmetic.Multiply(width, height);
     }
 }
 
