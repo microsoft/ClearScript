@@ -1,13 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-let Arithmetic;
-(async function() {
-    // ReSharper disable once UseOfImplicitGlobalInFunctionScope
-    Arithmetic = await import('../Arithmetic/Arithmetic.js');
-})();
-
+import * as Arithmetic from '../Arithmetic/Arithmetic.js';
 import * as Self from 'Geometry.js';
+
+export const Meta = import.meta;
 
 export class Rectangle {
     constructor(width, height) {

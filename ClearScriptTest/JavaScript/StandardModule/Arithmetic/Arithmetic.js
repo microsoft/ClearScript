@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+export const Meta = import.meta;
+
 export function Add(a, b) {
     return a + b;
 }

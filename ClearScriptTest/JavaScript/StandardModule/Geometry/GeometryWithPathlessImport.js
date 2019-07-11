@@ -4,6 +4,8 @@
 import * as Arithmetic from 'Arithmetic.js';
 import * as Self from 'Geometry.js';
 
+export const Meta = import.meta;
+
 export class Rectangle {
     constructor(width, height) {
         this.width = width;
