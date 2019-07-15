@@ -4,7 +4,6 @@
 let Arithmetic = require("Arithmetic");
 let Self = require("Geometry");
 
-// ReSharper disable once PossiblyUnassignedProperty
 exports.Meta = module.getContext();
 
 exports.Rectangle = class {
