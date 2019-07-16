@@ -4,7 +4,8 @@
 let Arithmetic = require("Arithmetic");
 let Self = require("Geometry");
 
-exports.Meta = module.getContext();
+exports.Module = module;
+exports.Meta = module.meta;
 
 exports.Rectangle = class {
     constructor(width, height) {

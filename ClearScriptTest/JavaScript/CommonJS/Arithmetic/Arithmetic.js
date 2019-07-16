@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-exports.Meta = module.getContext();
+exports.Module = module;
+exports.Meta = module.meta;
 
 exports.Add = function (a, b) {
     return a + b;
