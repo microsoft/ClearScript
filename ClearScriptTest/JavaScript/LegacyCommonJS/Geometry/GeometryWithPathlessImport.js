@@ -5,7 +5,7 @@ var Arithmetic = require("Arithmetic");
 var Self = require("Geometry");
 
 exports.Module = module;
-exports.Meta = module.getContext();
+exports.Meta = module.meta;
 
 exports.Rectangle = function (width, height) {
     this.width = width;

@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 exports.Module = module;
-exports.Meta = module.getContext();
+exports.Meta = module.meta;
 
 exports.Add = function (a, b) {
     return a + b;
