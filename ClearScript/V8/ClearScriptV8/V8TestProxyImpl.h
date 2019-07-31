@@ -15,7 +15,9 @@ namespace V8 {
     {
     public:
 
-        virtual V8ProxyCounters^ GetCounters() override;
+        virtual UIntPtr GetNativeDigest(String^ gcValue) override;
+
+        virtual Statistics^ GetStatistics() override;
 
         ~V8TestProxyImpl() {}
     };

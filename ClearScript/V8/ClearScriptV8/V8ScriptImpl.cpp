@@ -11,8 +11,8 @@ namespace V8 {
     // V8ScriptImpl implementation
     //-------------------------------------------------------------------------
 
-    V8ScriptImpl::V8ScriptImpl(ClearScript::DocumentInfo documentInfo, V8ScriptHolder* pHolder):
-        V8Script(documentInfo),
+    V8ScriptImpl::V8ScriptImpl(ClearScript::UniqueDocumentInfo^ documentInfo, V8ScriptHolder* pHolder):
+        V8Script(documentInfo, (UIntPtr)pHolder->GetCodeDigest()),
         m_gcLock(gcnew Object),
         m_pspHolder(new SharedPtr<V8ScriptHolder>(pHolder))
     {

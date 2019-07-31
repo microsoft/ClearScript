@@ -4,14 +4,22 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using Microsoft.ClearScript.V8;
 
 namespace Microsoft.ClearScript.Test
 {
     internal static class ClearScriptConsole
     {
-        public static void Main()
+        public static void Main(string[] args)
         {
+            if ((args.Length == 2) && (args[0] == "-t"))
+            {
+                RunTest(args[1]);
+                return;
+            }
+
             using (var engine = new V8ScriptEngine(typeof(ClearScriptConsole).Name, V8ScriptEngineFlags.EnableDebugging))
             {
                 engine.AddHostObject("host", new ExtendedHostFunctions());
@@ -77,6 +85,11 @@ namespace Microsoft.ClearScript.Test
                     Console.WriteLine("Error: {0}", exception.GetBaseException().Message);
                 }
             }
+        }
+
+        private static void RunTest(string name)
+        {
+            typeof(ConsoleTest).InvokeMember(name, BindingFlags.InvokeMethod, null, null, Enumerable.Empty<object>().ToArray());
         }
     }
 }

@@ -296,5 +296,54 @@ namespace Microsoft.ClearScript.V8
         }
 
         #endregion
+
+        #region module support
+
+        public static unsafe string LoadModule(void* pSourceDocumentInfo, string specifier, DocumentCategory category, out UniqueDocumentInfo documentInfo)
+        {
+            var engine = ScriptEngine.Current;
+            if (engine == null)
+            {
+                throw new InvalidOperationException("Module loading requires a script engine");
+            }
+
+            var settings = engine.DocumentSettings;
+            var document = settings.Loader.LoadDocument(settings, ((UniqueDocumentInfo)GetHostObject(pSourceDocumentInfo)).Info, specifier, category, null);
+            var code = document.GetTextContents();
+
+            documentInfo = document.Info.MakeUnique(engine);
+            return code;
+        }
+
+        public static unsafe IDictionary<string, object> CreateModuleContext(void* pDocumentInfo)
+        {
+            var engine = ScriptEngine.Current;
+            if (engine == null)
+            {
+                throw new InvalidOperationException("Module context construction requires a script engine");
+            }
+
+            var documentInfo = (UniqueDocumentInfo)GetHostObject(pDocumentInfo);
+
+            var callback = documentInfo.ContextCallback ?? engine.DocumentSettings.ContextCallback;
+            if (callback != null)
+            {
+                var sharedContext = callback(documentInfo.Info);
+                if (sharedContext != null)
+                {
+                    var context = new Dictionary<string, object>(sharedContext.Count);
+                    foreach (var pair in sharedContext)
+                    {
+                        context.Add(pair.Key, engine.MarshalToScript(pair.Value));
+                    }
+
+                    return context;
+                }
+            }
+
+            return null;
+        }
+
+        #endregion
     }
 }

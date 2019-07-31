@@ -160,6 +160,7 @@ namespace V8 {
         V8Isolate::Options options;
         options.EnableDebugging = flags.HasFlag(V8RuntimeFlags::EnableDebugging);
         options.EnableRemoteDebugging = flags.HasFlag(V8RuntimeFlags::EnableRemoteDebugging);
+        options.EnableDynamicModuleImports = flags.HasFlag(V8RuntimeFlags::EnableDynamicModuleImports);
         options.DebugPort = debugPort;
 
         try
@@ -230,7 +231,7 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    V8Script^ V8IsolateProxyImpl::Compile(DocumentInfo documentInfo, String^ gcCode)
+    V8Script^ V8IsolateProxyImpl::Compile(UniqueDocumentInfo^ documentInfo, String^ gcCode)
     {
         try
         {
@@ -244,7 +245,7 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    V8Script^ V8IsolateProxyImpl::Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes)
+    V8Script^ V8IsolateProxyImpl::Compile(UniqueDocumentInfo^ documentInfo, String^ gcCode, V8CacheKind cacheKind, [Out] array<Byte>^% gcCacheBytes)
     {
         #pragma warning(push)
         #pragma warning(disable:4947) /* 'Microsoft::ClearScript::V8::V8CacheKind::Parser': marked as obsolete */
@@ -257,7 +258,7 @@ namespace V8 {
 
         try
         {
-            std::vector<std::uint8_t> cacheBytes;
+            std::vector<uint8_t> cacheBytes;
             auto cacheType = (cacheKind == V8CacheKind::Parser) ? V8CacheType::Parser : V8CacheType::Code;
             auto gcScript = gcnew V8ScriptImpl(documentInfo, GetIsolate()->Compile(V8DocumentInfo(documentInfo), StdString(gcCode), cacheType, cacheBytes));
 
@@ -284,7 +285,7 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    V8Script^ V8IsolateProxyImpl::Compile(DocumentInfo documentInfo, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted)
+    V8Script^ V8IsolateProxyImpl::Compile(UniqueDocumentInfo^ documentInfo, String^ gcCode, V8CacheKind cacheKind, array<Byte>^ gcCacheBytes, [Out] Boolean% cacheAccepted)
     {
         #pragma warning(push)
         #pragma warning(disable:4947) /* 'Microsoft::ClearScript::V8::V8CacheKind::Parser': marked as obsolete */
@@ -298,7 +299,7 @@ namespace V8 {
         try
         {
             auto length = gcCacheBytes->Length;
-            std::vector<std::uint8_t> cacheBytes(length);
+            std::vector<uint8_t> cacheBytes(length);
             Marshal::Copy(gcCacheBytes, 0, (IntPtr)&cacheBytes[0], length);
 
             bool tempCacheAccepted;
@@ -330,6 +331,19 @@ namespace V8 {
         gcHeapInfo->UsedHeapSize = heapStatistics.used_heap_size();
         gcHeapInfo->HeapSizeLimit = heapStatistics.heap_size_limit();
         return gcHeapInfo;
+    }
+
+    //-------------------------------------------------------------------------
+
+    V8Runtime::Statistics^ V8IsolateProxyImpl::GetStatistics()
+    {
+        auto statistics = GetIsolate()->GetStatistics();
+
+        auto gcStatistics = gcnew V8Runtime::Statistics;
+        gcStatistics->ScriptCount = statistics.ScriptCount;
+        gcStatistics->ScriptCacheSize = statistics.ScriptCacheSize;
+        gcStatistics->ModuleCount = statistics.ModuleCount;
+        return gcStatistics;
     }
 
     //-------------------------------------------------------------------------

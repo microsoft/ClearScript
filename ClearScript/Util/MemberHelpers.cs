@@ -138,6 +138,11 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
+        public static bool IsAccessible(this MethodInfo method, Type accessContext)
+        {
+            return ((MethodBase)method.GetBaseDefinition()).IsAccessible(accessContext);
+        }
+
         public static bool IsAccessible(this PropertyInfo property, Type accessContext)
         {
             var getMethod = property.GetMethod;

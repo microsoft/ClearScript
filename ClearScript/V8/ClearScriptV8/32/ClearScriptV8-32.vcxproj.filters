@@ -211,4 +211,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\V8\lib\v8-libcpp-ia32.dll" />
+    <None Include="..\..\V8\lib\v8-libcpp-ia32.dll.pdb" />
+  </ItemGroup>
 </Project>

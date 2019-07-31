@@ -7,7 +7,7 @@
 // RefCount::Impl
 //-----------------------------------------------------------------------------
 
-class RefCount final::Impl
+class RefCount::Impl final
 {
     PROHIBIT_COPY(Impl)
 

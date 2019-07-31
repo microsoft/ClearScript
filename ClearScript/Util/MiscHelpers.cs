@@ -2,8 +2,10 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -117,6 +119,8 @@ namespace Microsoft.ClearScript.Util
 
         #region string helpers
 
+        private static readonly char[] searchPathSeparators = { ';' };
+
         public static string EnsureNonBlank(string input, string alternate)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(alternate));
@@ -204,11 +208,54 @@ namespace Microsoft.ClearScript.Util
             return builder.ToString();
         }
 
+        public static UIntPtr GetDigest(this string code)
+        {
+            return (UIntPtr.Size == 4) ? (UIntPtr)code.GetDigestAsUInt32() : (UIntPtr)code.GetDigestAsUInt64();
+        }
+
+        public static uint GetDigestAsUInt32(this string code)
+        {
+            var digest = 2166136261U;
+            const uint prime = 16777619U;
+
+            unchecked
+            {
+                var bytes = Encoding.Unicode.GetBytes(code);
+                for (var index = 0; index < bytes.Length; index++)
+                {
+                    digest ^= bytes[index];
+                    digest *= prime;
+                }
+            }
+
+            return digest;
+        }
+
+        public static ulong GetDigestAsUInt64(this string code)
+        {
+            var digest = 14695981039346656037UL;
+            const ulong prime = 1099511628211UL;
+
+            var bytes = Encoding.Unicode.GetBytes(code);
+            for (var index = 0; index < bytes.Length; index++)
+            {
+                digest ^= bytes[index];
+                digest *= prime;
+            }
+
+            return digest;
+        }
+
+        public static IEnumerable<string> SplitSearchPath(this string searchPath)
+        {
+            return searchPath.Split(searchPathSeparators, StringSplitOptions.RemoveEmptyEntries).Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+
         #endregion
 
-        #region index helpers
+        #region numeric index helpers
 
-        public static bool TryGetIndex(object arg, out int index)
+        public static bool TryGetNumericIndex(object arg, out int index)
         {
             if (arg != null)
             {
@@ -228,7 +275,7 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        public static bool TryGetIndex(object arg, out long index)
+        public static bool TryGetNumericIndex(object arg, out long index)
         {
             if (arg != null)
             {
@@ -277,6 +324,32 @@ namespace Microsoft.ClearScript.Util
             catch (Exception)
             {
                 result = default(T);
+                return false;
+            }
+        }
+
+        public static async Task<bool> TryAsync(Task task)
+        {
+            try
+            {
+                await task.ConfigureAwait(false);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public static async Task<bool> TryAsync<T>(Holder<T> holder, Task<T> task)
+        {
+            try
+            {
+                holder.Value = await task.ConfigureAwait(false);
+                return true;
+            }
+            catch (Exception)
+            {
                 return false;
             }
         }
@@ -401,6 +474,28 @@ namespace Microsoft.ClearScript.Util
         {
             await semaphore.WaitAsync().ConfigureAwait(false);
             return Scope.Create(null, () => semaphore.Release());
+        }
+
+        public static byte[] ReadToEnd(this Stream stream)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                stream.CopyTo(memoryStream);
+                return memoryStream.ToArray();
+            }
+        }
+
+        public static string GetTextContents(this Document document)
+        {
+            using (var reader = new StreamReader(document.Contents, document.Encoding ?? Encoding.UTF8))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+
+        public static void AssertUnreachable()
+        {
+            Debug.Assert(false, "Entered code block presumed unreachable.");
         }
 
         #endregion

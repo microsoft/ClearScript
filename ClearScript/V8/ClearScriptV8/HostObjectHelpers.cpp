@@ -7,6 +7,13 @@
 // local helper functions
 //-----------------------------------------------------------------------------
 
+static void DECLSPEC_NORETURN ThrowHostException(ScriptEngine^ gcEngine, Exception^ gcException)
+{
+    throw HostException(StdString(gcException->GetBaseException()->Message), (gcEngine != nullptr) ? V8ContextProxyImpl::ImportValue(gcEngine->MarshalToScript(gcException)) : V8Value(V8Value::Null));
+}
+
+//-----------------------------------------------------------------------------
+
 static void DECLSPEC_NORETURN ThrowHostException(void* pvSource, Exception^ gcException)
 {
     throw HostException(StdString(gcException->GetBaseException()->Message), V8ContextProxyImpl::ImportValue(V8ProxyHelpers::MarshalExceptionToScript(pvSource, gcException)));
@@ -360,6 +367,51 @@ bool HostObjectHelpers::ChangeNativeCallbackTimer(void* pvTimer, int dueTime, in
 void HostObjectHelpers::DestroyNativeCallbackTimer(void* pvTimer)
 {
     V8ProxyHelpers::DestroyNativeCallbackTimer(pvTimer);
+}
+
+//-----------------------------------------------------------------------------
+
+StdString HostObjectHelpers::LoadModule(const V8DocumentInfo& sourceDocumentInfo, const StdString& specifier, V8DocumentInfo& documentInfo)
+{
+    try
+    {
+        UniqueDocumentInfo^ uniqueDocumentInfo;
+        StdString code(V8ProxyHelpers::LoadModule(sourceDocumentInfo.GetDocumentInfo(), specifier.ToManagedString(), ModuleCategory::Standard, uniqueDocumentInfo));
+        documentInfo = V8DocumentInfo(uniqueDocumentInfo);
+        return code;
+    }
+    catch (Exception^ gcException)
+    {
+        ThrowHostException(ScriptEngine::Current, gcException);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+std::vector<std::pair<StdString, V8Value>> HostObjectHelpers::CreateModuleContext(const V8DocumentInfo& documentInfo)
+{
+    try
+    {
+        std::vector<std::pair<StdString, V8Value>> context;
+
+        auto gcContext = V8ProxyHelpers::CreateModuleContext(documentInfo.GetDocumentInfo());
+        if (gcContext != nullptr)
+        {
+            context.reserve(gcContext->Count);
+
+            auto gcEnumerator = gcContext->GetEnumerator();
+            while (gcEnumerator->MoveNext())
+            {
+                context.push_back(std::make_pair(StdString(gcEnumerator->Current.Key), V8ContextProxyImpl::ImportValue(gcEnumerator->Current.Value)));
+            }
+        }
+
+        return context;
+    }
+    catch (Exception^ gcException)
+    {
+        ThrowHostException(ScriptEngine::Current, gcException);
+    }
 }
 
 //-----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <ItemGroup>
         <None Include="$(MSBuildThisFileDirectory)\..\v8\ClearScriptV8-32.dll">
@@ -9,12 +9,20 @@
             <Link>ClearScriptV8-64.dll</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Include="$(MSBuildThisFileDirectory)\..\v8\v8-libcpp-ia32.dll">
+            <Link>v8-libcpp-ia32.dll</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Include="$(MSBuildThisFileDirectory)\..\v8\v8-base-ia32.dll">
             <Link>v8-base-ia32.dll</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="$(MSBuildThisFileDirectory)\..\v8\v8-ia32.dll">
             <Link>v8-ia32.dll</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="$(MSBuildThisFileDirectory)\..\v8\v8-libcpp-x64.dll">
+            <Link>v8-libcpp-x64.dll</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="$(MSBuildThisFileDirectory)\..\v8\v8-base-x64.dll">

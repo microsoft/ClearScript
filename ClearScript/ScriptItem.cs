@@ -137,7 +137,7 @@ namespace Microsoft.ClearScript
             return GetPropertyNames().Concat(GetPropertyIndices().Select(index => index.ToString(CultureInfo.InvariantCulture))).ToArray();
         }
 
-        private DynamicMetaObject PostProcessBindResult(DynamicMetaObject result)
+        private static DynamicMetaObject PostProcessBindResult(DynamicMetaObject result)
         {
             var catchBody = Expression.Block(Expression.Call(throwLastScriptErrorMethod), Expression.Rethrow(), Expression.Default(result.Expression.Type));
             return new DynamicMetaObject(Expression.TryCatchFinally(result.Expression, Expression.Call(clearLastScriptErrorMethod), Expression.Catch(typeof(Exception), catchBody)), result.Restrictions);
@@ -173,7 +173,7 @@ namespace Microsoft.ClearScript
 
         public override DynamicMetaObject GetMetaObject(Expression param)
         {
-            return new MetaScriptItem(this, base.GetMetaObject(param));
+            return new MetaScriptItem(base.GetMetaObject(param));
         }
 
         public override IEnumerable<string> GetDynamicMemberNames()
@@ -387,13 +387,11 @@ namespace Microsoft.ClearScript
 
         private sealed class MetaScriptItem : DynamicMetaObject
         {
-            private readonly ScriptItem scriptItem;
             private readonly DynamicMetaObject metaDynamic;
 
-            public MetaScriptItem(ScriptItem scriptItem, DynamicMetaObject metaDynamic)
+            public MetaScriptItem(DynamicMetaObject metaDynamic)
                 : base(metaDynamic.Expression, metaDynamic.Restrictions, metaDynamic.Value)
             {
-                this.scriptItem = scriptItem;
                 this.metaDynamic = metaDynamic;
             }
 
@@ -406,62 +404,62 @@ namespace Microsoft.ClearScript
 
             public override DynamicMetaObject BindBinaryOperation(BinaryOperationBinder binder, DynamicMetaObject arg)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindBinaryOperation(binder, arg));
+                return PostProcessBindResult(metaDynamic.BindBinaryOperation(binder, arg));
             }
 
             public override DynamicMetaObject BindConvert(ConvertBinder binder)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindConvert(binder));
+                return PostProcessBindResult(metaDynamic.BindConvert(binder));
             }
 
             public override DynamicMetaObject BindCreateInstance(CreateInstanceBinder binder, DynamicMetaObject[] args)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindCreateInstance(binder, args));
+                return PostProcessBindResult(metaDynamic.BindCreateInstance(binder, args));
             }
 
             public override DynamicMetaObject BindDeleteIndex(DeleteIndexBinder binder, DynamicMetaObject[] indexes)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindDeleteIndex(binder, indexes));
+                return PostProcessBindResult(metaDynamic.BindDeleteIndex(binder, indexes));
             }
 
             public override DynamicMetaObject BindDeleteMember(DeleteMemberBinder binder)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindDeleteMember(binder));
+                return PostProcessBindResult(metaDynamic.BindDeleteMember(binder));
             }
 
             public override DynamicMetaObject BindGetIndex(GetIndexBinder binder, DynamicMetaObject[] indexes)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindGetIndex(binder, indexes));
+                return PostProcessBindResult(metaDynamic.BindGetIndex(binder, indexes));
             }
 
             public override DynamicMetaObject BindGetMember(GetMemberBinder binder)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindGetMember(binder));
+                return PostProcessBindResult(metaDynamic.BindGetMember(binder));
             }
 
             public override DynamicMetaObject BindInvoke(InvokeBinder binder, DynamicMetaObject[] args)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindInvoke(binder, args));
+                return PostProcessBindResult(metaDynamic.BindInvoke(binder, args));
             }
 
             public override DynamicMetaObject BindInvokeMember(InvokeMemberBinder binder, DynamicMetaObject[] args)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindInvokeMember(binder, args));
+                return PostProcessBindResult(metaDynamic.BindInvokeMember(binder, args));
             }
 
             public override DynamicMetaObject BindSetIndex(SetIndexBinder binder, DynamicMetaObject[] indexes, DynamicMetaObject value)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindSetIndex(binder, indexes, value));
+                return PostProcessBindResult(metaDynamic.BindSetIndex(binder, indexes, value));
             }
 
             public override DynamicMetaObject BindSetMember(SetMemberBinder binder, DynamicMetaObject value)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindSetMember(binder, value));
+                return PostProcessBindResult(metaDynamic.BindSetMember(binder, value));
             }
 
             public override DynamicMetaObject BindUnaryOperation(UnaryOperationBinder binder)
             {
-                return scriptItem.PostProcessBindResult(metaDynamic.BindUnaryOperation(binder));
+                return PostProcessBindResult(metaDynamic.BindUnaryOperation(binder));
             }
 
             #endregion

@@ -14,25 +14,27 @@ namespace Microsoft.ClearScript.Test
 
         public void BaseTestCleanup()
         {
+            DocumentLoader.Default.DiscardCachedDocuments();
+
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
             var proxy = V8TestProxy.Create();
-            var counters = proxy.GetCounters();
+            var statistics = proxy.GetStatistics();
 
             for (var attempts = 0; attempts < 10; attempts++)
             {
-                if ((counters.ContextCount == 0UL) && (counters.IsolateCount == 0UL))
+                if ((statistics.ContextCount == 0UL) && (statistics.IsolateCount == 0UL))
                 {
                     return;
                 }
 
                 Thread.Sleep(100);
-                counters = proxy.GetCounters();
+                statistics = proxy.GetStatistics();
             }
 
-            Assert.AreEqual(0UL, counters.ContextCount, "Not all V8 contexts were destroyed.");
-            Assert.AreEqual(0UL, counters.IsolateCount, "Not all V8 isolates were destroyed.");
+            Assert.AreEqual(0UL, statistics.ContextCount, "Not all V8 contexts were destroyed.");
+            Assert.AreEqual(0UL, statistics.IsolateCount, "Not all V8 isolates were destroyed.");
         }
     }
 }

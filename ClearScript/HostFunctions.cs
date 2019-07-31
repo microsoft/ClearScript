@@ -1282,11 +1282,11 @@ namespace Microsoft.ClearScript
         /// // import types
         /// var ConsoleT = host.type("System.Console");
         /// var WebClientT = host.type("System.Net.WebClient", "System");
-        /// // create a web client
+        /// // create a Web client
         /// var webClient = host.newObj(WebClientT);
         /// host.tryCatch(
         ///     function () {
-        ///         // download web document
+        ///         // download Web document
         ///         ConsoleT.WriteLine(webClient.DownloadString("http://cnn.com"));
         ///     },
         ///     function (exception) {

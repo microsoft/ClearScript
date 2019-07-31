@@ -25,6 +25,13 @@ namespace Microsoft.ClearScript.V8
         /// Specifies that remote script debugging is to be enabled. This option is ignored if
         /// <see cref="EnableDebugging"/> is not specified.
         /// </summary>
-        EnableRemoteDebugging = 0x00000002
+        EnableRemoteDebugging = 0x00000002,
+
+        /// <summary>
+        /// Specifies that
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#Dynamic_Imports">dynamic module imports</see>
+        /// are to be enabled. This is an experimental feature and may be removed in a future release.
+        /// </summary>
+        EnableDynamicModuleImports = 0x00000004
     }
 }

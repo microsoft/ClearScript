@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Microsoft.ClearScript.Properties;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8
@@ -67,40 +68,66 @@ namespace Microsoft.ClearScript.V8
             {
             }
 
-            var hBaseLibrary = LoadNativeLibrary("v8-base");
+            var hCppLibrary = LoadNativeLibrary("v8-libcpp");
             try
             {
-                var hLibrary = LoadNativeLibrary("v8");
+                var hBaseLibrary = LoadNativeLibrary("v8-base");
                 try
                 {
-                    var suffix = Environment.Is64BitProcess ? "64" : "32";
-                    var fileName = "ClearScriptV8-" + suffix + ".dll";
-                    var messageBuilder = new StringBuilder();
-
-                    var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
-                    foreach (var path in paths)
+                    var hLibrary = LoadNativeLibrary("v8");
+                    try
                     {
-                        try
-                        {
-                            return Assembly.LoadFrom(path);
-                        }
-                        catch (Exception exception)
-                        {
-                            messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
-                        }
-                    }
+                        var suffix = Environment.Is64BitProcess ? "64" : "32";
+                        var assemblyName = "ClearScriptV8-" + suffix;
+                        var fileName = assemblyName + ".dll";
+                        var messageBuilder = new StringBuilder();
 
-                    var message = MiscHelpers.FormatInvariant("Cannot load V8 interface assembly. Load failure information for {0}:{1}", fileName, messageBuilder);
-                    throw new TypeLoadException(message);
+                        var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
+                        foreach (var path in paths)
+                        {
+                            try
+                            {
+                                return Assembly.LoadFrom(path);
+                            }
+                            catch (Exception exception)
+                            {
+                                messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(deploymentDirName))
+                        {
+                            var publicKeyToken = typeof(V8Proxy).Assembly.GetName().GetPublicKeyToken();
+                            if ((publicKeyToken != null) && (publicKeyToken.Length > 0))
+                            {
+                                var assemblyFullName = MiscHelpers.FormatInvariant("{0}, Version={1}, Culture=neutral, PublicKeyToken={2}", assemblyName, ClearScriptVersion.Value, BitConverter.ToString(publicKeyToken).Replace("-", string.Empty));
+                                try
+                                {
+                                    return Assembly.Load(assemblyFullName);
+                                }
+                                catch (Exception exception)
+                                {
+                                    messageBuilder.AppendInvariant("\n{0}: {1}", assemblyFullName, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
+                                }
+                            }
+                        }
+
+                        var message = MiscHelpers.FormatInvariant("Cannot load V8 interface assembly. Load failure information for {0}:{1}", fileName, messageBuilder);
+                        throw new TypeLoadException(message);
+                    }
+                    finally
+                    {
+                        NativeMethods.FreeLibrary(hLibrary);
+                    }
                 }
                 finally
                 {
-                    NativeMethods.FreeLibrary(hLibrary);
+                    NativeMethods.FreeLibrary(hBaseLibrary);
                 }
             }
             finally
             {
-                NativeMethods.FreeLibrary(hBaseLibrary);
+                NativeMethods.FreeLibrary(hCppLibrary);
             }
         }
 
@@ -110,17 +137,33 @@ namespace Microsoft.ClearScript.V8
             var fileName = baseFileName + suffix + ".dll";
             var messageBuilder = new StringBuilder();
 
+            IntPtr hLibrary;
+            Win32Exception exception;
+
             var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
             foreach (var path in paths)
             {
-                var hLibrary = NativeMethods.LoadLibraryW(path);
+                hLibrary = NativeMethods.LoadLibraryW(path);
                 if (hLibrary != IntPtr.Zero)
                 {
                     return hLibrary;
                 }
 
-                var exception = new Win32Exception();
+                exception = new Win32Exception();
                 messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
+            }
+
+            if (string.IsNullOrEmpty(deploymentDirName))
+            {
+                var systemPath = Path.Combine(Environment.SystemDirectory, fileName);
+                hLibrary = NativeMethods.LoadLibraryW(systemPath);
+                if (hLibrary != IntPtr.Zero)
+                {
+                    return hLibrary;
+                }
+
+                exception = new Win32Exception();
+                messageBuilder.AppendInvariant("\n{0}: {1}", systemPath, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
             }
 
             var message = MiscHelpers.FormatInvariant("Cannot load V8 interface assembly. Load failure information for {0}:{1}", fileName, messageBuilder);
@@ -144,7 +187,7 @@ namespace Microsoft.ClearScript.V8
             var searchPath = appDomain.RelativeSearchPath;
             if (!string.IsNullOrWhiteSpace(searchPath))
             {
-                foreach (var dirPath in searchPath.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                foreach (var dirPath in searchPath.SplitSearchPath())
                 {
                     yield return dirPath;
                 }

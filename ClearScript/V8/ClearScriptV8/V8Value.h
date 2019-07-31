@@ -31,7 +31,7 @@ public:
         DateTime
     };
 
-    enum class Subtype: std::uint16_t
+    enum class Subtype: uint16_t
     {
         None,
         ArrayBuffer,
@@ -79,14 +79,14 @@ public:
         m_Data.DoubleValue = value;
     }
 
-    explicit V8Value(std::int32_t value):
+    explicit V8Value(int32_t value):
         m_Type(Type::Int32),
         m_Subtype(Subtype::None)
     {
         m_Data.Int32Value = value;
     }
 
-    explicit V8Value(std::uint32_t value):
+    explicit V8Value(uint32_t value):
         m_Type(Type::UInt32),
         m_Subtype(Subtype::None)
     {
@@ -126,7 +126,7 @@ public:
         Copy(that);
     }
 
-    V8Value(V8Value&& that)
+    V8Value(V8Value&& that) noexcept
     {
         Move(that);
     }
@@ -138,7 +138,7 @@ public:
         return *this;
     }
 
-    const V8Value& operator=(V8Value&& that)
+    const V8Value& operator=(V8Value&& that) noexcept
     {
         Dispose();
         Move(that);
@@ -182,7 +182,7 @@ public:
         return false;
     }
 
-    bool AsInt32(std::int32_t& result) const
+    bool AsInt32(int32_t& result) const
     {
         if (m_Type == Type::Int32)
         {
@@ -193,7 +193,7 @@ public:
         return false;
     }
 
-    bool AsUInt32(std::uint32_t& result) const
+    bool AsUInt32(uint32_t& result) const
     {
         if (m_Type == Type::UInt32)
         {
@@ -256,7 +256,7 @@ public:
 
 private:
 
-    enum class Type: std::uint16_t
+    enum class Type: uint16_t
     {
         Nonexistent,
         Undefined,
@@ -275,8 +275,8 @@ private:
     {
         bool BooleanValue;
         double DoubleValue;
-        std::int32_t Int32Value;
-        std::uint32_t UInt32Value;
+        int32_t Int32Value;
+        uint32_t UInt32Value;
         const StdString* pString;
         V8ObjectHolder* pV8ObjectHolder;
         HostObjectHolder* pHostObjectHolder;
@@ -343,5 +343,5 @@ private:
 
     Type m_Type;
     Subtype m_Subtype;
-    Data m_Data;
+    Data m_Data {};
 };

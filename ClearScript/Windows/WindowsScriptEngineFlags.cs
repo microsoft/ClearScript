@@ -71,6 +71,6 @@ namespace Microsoft.ClearScript.Windows
         /// that virtual method table patching is not to be enabled on behalf of the current
         /// <see cref="JScriptEngine"/> instance.
         /// </summary>
-        DoNotEnableVTablePatching = 0x00000080,
+        DoNotEnableVTablePatching = 0x00000080
     }
 }

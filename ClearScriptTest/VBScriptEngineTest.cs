@@ -23,6 +23,15 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
+    [DeploymentItem("ClearScriptV8-64.dll")]
+    [DeploymentItem("ClearScriptV8-32.dll")]
+    [DeploymentItem("v8-x64.dll")]
+    [DeploymentItem("v8-ia32.dll")]
+    [DeploymentItem("v8-base-x64.dll")]
+    [DeploymentItem("v8-base-ia32.dll")]
+    [DeploymentItem("v8-libcpp-x64.dll")]
+    [DeploymentItem("v8-libcpp-ia32.dll")]
+    [DeploymentItem("VBScript", "VBScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class VBScriptEngineTest : ClearScriptTest
@@ -1118,8 +1127,8 @@ namespace Microsoft.ClearScript.Test
                 function foo():foo = bar():end function
             ");
 
-            Assert.AreEqual("    at baz (Script Document [3]:1:31) -> baz = qux()\n    at bar (Script Document [3]:2:31) -> bar = baz()\n    at foo (Script Document [3]:3:31) -> foo = bar()\n    at VBScript global code (Script Document [4] [temp]:0:0) -> foo()", engine.Evaluate("foo()"));
-            Assert.AreEqual("    at baz (Script Document [3]:1:31) -> baz = qux()\n    at bar (Script Document [3]:2:31) -> bar = baz()\n    at foo (Script Document [3]:3:31) -> foo = bar()", engine.Script.foo());
+            Assert.AreEqual("    at baz (Script [3]:1:31) -> baz = qux()\n    at bar (Script [3]:2:31) -> bar = baz()\n    at foo (Script [3]:3:31) -> foo = bar()\n    at VBScript global code (Script [4] [temp]:0:0) -> foo()", engine.Evaluate("foo()"));
+            Assert.AreEqual("    at baz (Script [3]:1:31) -> baz = qux()\n    at bar (Script [3]:2:31) -> bar = baz()\n    at foo (Script [3]:3:31) -> foo = bar()", engine.Script.foo());
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
@@ -1883,7 +1892,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_AddCOMType_XMLHTTP()
         {
-            int status = 0;
+            var status = 0;
             string data = null;
 
             var thread = new Thread(() =>
@@ -2517,11 +2526,46 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue((bool)engine.Evaluate("foo() is nothing"));
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExecuteDocument_Script()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+
+            using (var console = new StringWriter())
+            {
+                var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                engine.AddHostObject("host", new ExtendedHostFunctions());
+                engine.AddHostObject("clr", clr);
+
+                engine.ExecuteDocument("VBScript/General.vbs");
+                Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_EvaluateDocument_Script()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+
+            using (var console = new StringWriter())
+            {
+                var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                engine.AddHostObject("host", new ExtendedHostFunctions());
+                engine.AddHostObject("clr", clr);
+
+                Assert.AreEqual((int)Math.Round(Math.Sin(Math.PI) * 1000e16), engine.EvaluateDocument("VBScript/Expression.vbs"));
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
-            #endregion
+        #endregion
 
-            #region miscellaneous
+        #region miscellaneous
 
         public class ReflectionBindFallbackTest
         {

@@ -4,7 +4,7 @@
 namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Represents the method that specifies to a script engine whether script execution should continue.
+    /// Represents a method that specifies to a script engine whether script execution should continue.
     /// </summary>
     /// <returns><c>True</c> to continue script execution, <c>false</c> to interrupt it.</returns>
     /// <seealso cref="ScriptEngine.ContinuationCallback"/>

@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Threading;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
@@ -31,6 +32,9 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("v8-ia32.dll")]
     [DeploymentItem("v8-base-x64.dll")]
     [DeploymentItem("v8-base-ia32.dll")]
+    [DeploymentItem("v8-libcpp-x64.dll")]
+    [DeploymentItem("v8-libcpp-ia32.dll")]
+    [DeploymentItem("JavaScript", "JavaScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class V8ScriptEngineTest : ClearScriptTest
@@ -1004,7 +1008,7 @@ namespace Microsoft.ClearScript.Test
             #pragma warning disable CS0618 // Type or member is obsolete (V8CacheKind.Parser)
 
             engine.Dispose();
-            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
+            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
 
             byte[] cacheBytes;
             using (var tempEngine = new V8ScriptEngine())
@@ -1049,7 +1053,7 @@ namespace Microsoft.ClearScript.Test
             #pragma warning disable CS0618 // Type or member is obsolete (V8CacheKind.Parser)
 
             engine.Dispose();
-            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
+            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
 
             byte[] cacheBytes;
             using (var tempEngine = new V8ScriptEngine())
@@ -1109,7 +1113,7 @@ namespace Microsoft.ClearScript.Test
             bool cacheAccepted;
             using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out cacheAccepted))
             {
-                Assert.IsFalse(cacheAccepted);
+                Assert.IsTrue(cacheAccepted);
                 using (var console = new StringWriter())
                 {
                     var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
@@ -1136,7 +1140,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_General_CodeCache()
         {
             engine.Dispose();
-            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
+            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
 
             byte[] cacheBytes;
             using (var tempEngine = new V8ScriptEngine())
@@ -1177,7 +1181,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_General_CodeCache_BadData()
         {
             engine.Dispose();
-            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching
+            engine = new V8ScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
 
             byte[] cacheBytes;
             using (var tempEngine = new V8ScriptEngine())
@@ -1233,7 +1237,7 @@ namespace Microsoft.ClearScript.Test
             bool cacheAccepted;
             using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out cacheAccepted))
             {
-                Assert.IsFalse(cacheAccepted);
+                Assert.IsTrue(cacheAccepted);
                 using (var console = new StringWriter())
                 {
                     var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
@@ -1896,8 +1900,8 @@ namespace Microsoft.ClearScript.Test
                 function foo() { return bar(); }
             ");
 
-            Assert.AreEqual("    at baz (Script Document:2:41)\n    at bar (Script Document:3:41)\n    at foo (Script Document:4:41)\n    at Script Document [2] [temp]:1:1", engine.Evaluate("foo()"));
-            Assert.AreEqual("    at baz (Script Document:2:41)\n    at bar (Script Document:3:41)\n    at foo (Script Document:4:41)", engine.Script.foo());
+            Assert.IsTrue(((string)engine.Evaluate("foo()")).EndsWith("    at baz (Script:2:41)\n    at bar (Script:3:41)\n    at foo (Script:4:41)\n    at Script [2] [temp]:1:1", StringComparison.Ordinal));
+            Assert.IsTrue(((string)engine.Script.foo()).EndsWith("    at baz (Script:2:41)\n    at bar (Script:3:41)\n    at foo (Script:4:41)", StringComparison.Ordinal));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -2294,7 +2298,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_AddCOMType_XMLHTTP()
         {
-            int status = 0;
+            var status = 0;
             string data = null;
 
             var thread = new Thread(() =>
@@ -3034,6 +3038,155 @@ namespace Microsoft.ClearScript.Test
             Assert.IsInstanceOfType(result["timeDeltas"], typeof(JArray));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ExecuteDocument_Script()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+
+            using (var console = new StringWriter())
+            {
+                var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                engine.AddHostObject("host", new ExtendedHostFunctions());
+                engine.AddHostObject("clr", clr);
+
+                engine.ExecuteDocument("JavaScript/General.js");
+                Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EvaluateDocument_Script()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+
+            using (var console = new StringWriter())
+            {
+                var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                engine.AddHostObject("host", new ExtendedHostFunctions());
+                engine.AddHostObject("clr", clr);
+
+                Assert.AreEqual((int)Math.Round(Math.Sin(Math.PI) * 1000e16), engine.EvaluateDocument("JavaScript/General.js"));
+                Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CompileDocument_Script()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+
+            using (var console = new StringWriter())
+            {
+                var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                engine.AddHostObject("host", new ExtendedHostFunctions());
+                engine.AddHostObject("clr", clr);
+
+                var script = engine.CompileDocument("JavaScript/General.js");
+                Assert.AreEqual((int)Math.Round(Math.Sin(Math.PI) * 1000e16), engine.Evaluate(script));
+                Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EvaluateDocument_Module_Standard()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(25 * 25, engine.EvaluateDocument("JavaScript/StandardModule/Module.js", ModuleCategory.Standard));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CompileDocument_Module_Standard()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+
+            var module = engine.CompileDocument("JavaScript/StandardModule/Module.js", ModuleCategory.Standard);
+            Assert.AreEqual(25 * 25, engine.Evaluate(module));
+
+            // re-evaluating a module is a no-op
+            Assert.IsInstanceOfType(engine.Evaluate(module), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EvaluateDocument_Module_CommonJS()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(25 * 25, engine.EvaluateDocument("JavaScript/CommonJS/Module.js", ModuleCategory.CommonJS));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CompileDocument_Module_CommonJS()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+
+            var module = engine.CompileDocument("JavaScript/CommonJS/Module.js", ModuleCategory.CommonJS);
+            Assert.AreEqual(25 * 25, engine.Evaluate(module));
+
+            // re-evaluating a module is a no-op
+            Assert.IsInstanceOfType(engine.Evaluate(module), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DocumentSettings_EnforceRelativePrefix()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.EnforceRelativePrefix;
+            TestUtil.AssertException<FileNotFoundException>(() => engine.EvaluateDocument("JavaScript/CommonJS/Module.js", ModuleCategory.CommonJS));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ScriptCaching()
+        {
+            Assert.AreEqual(1UL, engine.GetRuntimeStatistics().ScriptCount);
+
+            Assert.AreEqual(Math.PI, engine.Evaluate("Math.PI"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("Math.PI"));
+            Assert.AreEqual(3UL, engine.GetRuntimeStatistics().ScriptCount);
+
+            var info = new DocumentInfo("Test");
+
+            Assert.AreEqual(Math.E, engine.Evaluate(info, "Math.E"));
+            Assert.AreEqual(Math.E, engine.Evaluate(info, "Math.E"));
+            Assert.AreEqual(4UL, engine.GetRuntimeStatistics().ScriptCount);
+
+            Assert.AreEqual(Math.PI, engine.Evaluate(info, "Math.PI"));
+            Assert.AreEqual(Math.PI, engine.Evaluate(info, "Math.PI"));
+            Assert.AreEqual(5UL, engine.GetRuntimeStatistics().ScriptCount);
+
+            using (var runtime = new V8Runtime())
+            {
+                for (var i = 0; i < 10; i++)
+                {
+                    using (var testEngine = runtime.CreateScriptEngine())
+                    {
+                        Assert.AreEqual(Math.PI, testEngine.Evaluate(info, "Math.PI"));
+                        Assert.AreEqual(Math.E, testEngine.Evaluate(info, "Math.E"));
+                        Assert.AreEqual((i < 1) ? 3UL : 0UL, testEngine.GetStatistics().ScriptCount);
+                    }
+                }
+
+                Assert.AreEqual(3UL, runtime.GetStatistics().ScriptCount);
+            }
+
+            using (var runtime = new V8Runtime())
+            {
+                for (var i = 0; i < 300; i++)
+                {
+                    using (var testEngine = runtime.CreateScriptEngine())
+                    {
+                        Assert.AreEqual(Math.PI + i, testEngine.Evaluate(info, "Math.PI" + "+" + i));
+                    }
+                }
+
+                Assert.AreEqual(301UL, runtime.GetStatistics().ScriptCount);
+                Assert.AreEqual(256UL, runtime.GetStatistics().ScriptCacheSize);
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -3102,7 +3255,7 @@ namespace Microsoft.ClearScript.Test
             Property changed: Name; new value: Shane (static event)
         ";
 
-        private string CreateCpuProfileTestScript()
+        private static string CreateCpuProfileTestScript()
         {
             var builder = new StringBuilder();
 
@@ -3126,7 +3279,7 @@ namespace Microsoft.ClearScript.Test
             return builder.ToString();
         }
 
-        private void AppendCpuProfileTestSequence(StringBuilder builder, int count, Random random, List<int> indices)
+        private static void AppendCpuProfileTestSequence(StringBuilder builder, int count, Random random, List<int> indices)
         {
             const string separator = "_";
             var indent = new string(Enumerable.Repeat(' ', indices.Count * 4 + 20).ToArray());

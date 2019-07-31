@@ -14,11 +14,14 @@
 	{font-family:Calibri;
 	panose-1:2 15 5 2 2 2 4 3 2 4;}
 @font-face
-	{font-family:Consolas;
-	panose-1:2 11 6 9 2 2 4 3 2 4;}
-@font-face
 	{font-family:Cambria;
 	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:"Segoe UI";
+	panose-1:2 11 5 2 4 2 4 2 2 3;}
+@font-face
+	{font-family:Consolas;
+	panose-1:2 11 6 9 2 2 4 3 2 4;}
  /* Style Definitions */
  p.MsoNormal, li.MsoNormal, div.MsoNormal
 	{margin-top:6.0pt;
@@ -41,6 +44,15 @@ h1
 	font-size:14.0pt;
 	font-family:"Cambria",serif;
 	color:#365F91;}
+p.MsoCommentText, li.MsoCommentText, div.MsoCommentText
+	{mso-style-link:"Comment Text Char";
+	margin-top:6.0pt;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:0in;
+	margin-bottom:.0001pt;
+	font-size:10.0pt;
+	font-family:"Calibri",sans-serif;}
 p.MsoHeader, li.MsoHeader, div.MsoHeader
 	{mso-style-link:"Header Char";
 	margin:0in;
@@ -112,6 +124,22 @@ pre
 	margin-bottom:.0001pt;
 	font-size:10.0pt;
 	font-family:"Courier New";}
+p.MsoCommentSubject, li.MsoCommentSubject, div.MsoCommentSubject
+	{mso-style-link:"Comment Subject Char";
+	margin-top:6.0pt;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:0in;
+	margin-bottom:.0001pt;
+	font-size:10.0pt;
+	font-family:"Calibri",sans-serif;
+	font-weight:bold;}
+p.MsoAcetate, li.MsoAcetate, div.MsoAcetate
+	{mso-style-link:"Balloon Text Char";
+	margin:0in;
+	margin-bottom:.0001pt;
+	font-size:9.0pt;
+	font-family:"Segoe UI",sans-serif;}
 p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
 	{margin-top:6.0pt;
 	margin-right:0in;
@@ -178,6 +206,17 @@ span.pl-s
 	{mso-style-name:pl-s;}
 span.pl-pds
 	{mso-style-name:pl-pds;}
+span.CommentTextChar
+	{mso-style-name:"Comment Text Char";
+	mso-style-link:"Comment Text";}
+span.CommentSubjectChar
+	{mso-style-name:"Comment Subject Char";
+	mso-style-link:"Comment Subject";
+	font-weight:bold;}
+span.BalloonTextChar
+	{mso-style-name:"Balloon Text Char";
+	mso-style-link:"Balloon Text";
+	font-family:"Segoe UI",sans-serif;}
 .MsoChpDefault
 	{font-family:"Calibri",sans-serif;}
 .MsoPapDefault
@@ -216,32 +255,35 @@ Integrating, and Deploying ClearScript</a></p>
 <p class=MsoNormal style='margin-left:.25in'>Welcome to ClearScript!</p>
 
 <p class=MsoNormal style='margin-left:.25in'>ClearScript is a library that
-allows you to add scripting to your .NET applications. It supports <span
-class=MsoHyperlink><a
-href="https://msdn.microsoft.com/en-us/library/hbxc2t98(v=vs.84).aspx">JScript</a></span>
-and <span class=MsoHyperlink><a
-href="https://msdn.microsoft.com/en-us/library/t0aew7h6(v=vs.84).aspx">VBScript</a></span>
-out of the box and in theory can work with other <span class=MsoHyperlink><a
-href="http://msdn.microsoft.com/en-us/library/bb871518.aspx">Windows Script</a></span>
+allows you to add scripting to your .NET applications. It supports <a
+href="https://msdn.microsoft.com/en-us/library/hbxc2t98(v=vs.84).aspx">JScript</a>
+and <a href="https://msdn.microsoft.com/en-us/library/t0aew7h6(v=vs.84).aspx">VBScript</a>
+out of the box and in theory can work with other <a
+href="http://msdn.microsoft.com/en-us/library/bb871518.aspx">Windows Script</a>
 engines.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>ClearScript 5 adds support for the
-<span class=MsoHyperlink><a href="https://developers.google.com/v8/">V8</a></span>
-high-performance open-source JavaScript engine. It allows you to use V8 with
-the same managed API and host integration features as JScript and VBScript. V8
-provides better performance, however, and is more suitable for multi-threaded
-applications and asynchronous server-side scripting.</p>
+<a href="https://developers.google.com/v8/">V8</a> high-performance open-source
+JavaScript engine. It allows you to use V8 with the same managed API and host
+integration features as JScript and VBScript. V8 provides better performance,
+however, and is more suitable for multi-threaded applications and asynchronous
+server-side scripting.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'><span style='font:7.0pt "Times New Roman"'> </span>II.
 ClearScript NuGet package</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>Now that an <span
-class=MsoHyperlink><a
+<p class=MsoNormal style='margin-left:.25in'>Now that an <a
 href="https://www.nuget.org/packages/Microsoft.ClearScript">official
-ClearScript NuGet package</a></span> is available, you can simply add it to
-your project and skip to Section <a href="#_Debugging_with_ClearScript">VI</a>
+ClearScript NuGet package</a> is available, you can simply add it to your
+project and skip to <a href="#_Debugging_with_ClearScript_2">Section VII</a>
 below.</p>
+
+<p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:</span></b>
+The ClearScript NuGet package requires the Visual C++ Redistributable
+libraries. Download and install both the 32-bit and 64-bit versions: <a
+href="https://aka.ms/vs/16/release/vc_redist.x86.exe">[x86]</a> <a
+href="https://aka.ms/vs/16/release/vc_redist.x64.exe">[x64]</a></p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:</span></b>
 If you’re adding the ClearScript NuGet package to an ASP.NET project, you must exclude
@@ -327,11 +369,11 @@ href="https://github.com/Microsoft/ClearScript">ClearScript source code</a>
 into a convenient directory.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>The provided project and solution
-files support Visual Studio <span class=MsoHyperlink><a
-href="https://www.visualstudio.com/vs/older-downloads/">2015</a></span> and <span
-class=MsoHyperlink><a href="https://www.visualstudio.com/downloads/">2017</a></span>.
-They produce architecture-neutral managed libraries that target .NET Framework
-4.5. ClearScript does not support older environments. The output directory is <b><span
+files support Visual Studio <a
+href="https://www.visualstudio.com/vs/older-downloads/">2017</a> and <a
+href="https://www.visualstudio.com/downloads/">2019</a>. They produce
+architecture-neutral managed libraries that target .NET Framework 4.5.
+ClearScript does not support older environments. The output directory is <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin\[Debug|Release]</span></b>.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>There are two ways to build
@@ -359,19 +401,12 @@ ClearScript root directory does not contain spaces or non-ASCII characters.</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> The V8 build now requires Visual Studio
-2017 and a 64-bit operating system. Your Visual Studio installation must
-include the <b>.NET desktop development</b> and <b>Desktop development with C++</b>
-workloads. Once built, ClearScript can still be deployed in a 32-bit
+2017 or later and a 64-bit operating system. Your Visual Studio installation
+must include the <b>.NET desktop development</b> and <b>Desktop development
+with C++</b> workloads. Once built, ClearScript can still be deployed in a 32-bit
 environment.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
-style='color:#00B050'>Recommended:</span></b> To avoid V8 build issues, we
-recommend that you install the latest version of the <span class=MsoHyperlink><a
-href="https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk">Windows
-10 SDK</a></span> and uninstall all earlier versions.</p>
-
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> Your Windows SDK installation must
 include the <b>Debugging Tools for Windows</b> feature. Here’s how to add it to
@@ -390,41 +425,22 @@ style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span
 <b>Next</b>, check <b>Debugging</b> <b>Tools</b> <b>for</b> <b>Windows</b>, and
 click <b>Change</b>.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>6.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
-style='color:red'>Important:</span></b> The V8Update script downloads
-executables that Windows Defender may incorrectly identify as containers of
-malware. To prevent this from interfering with your build, ensure that
-real-time malware protection is turned off while the script is running:</p>
-
-<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>a.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Launch
-Windows Defender Security Center.</p>
-
-<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>b.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Navigate
-to <b>Virus &amp; threat protection</b> → <b>Virus &amp; threat protection
-settings</b>.</p>
-
-<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>c.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Switch
-<b>Real-time protection</b> off.</p>
-
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>7.<span
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Open
-a <span class=MsoHyperlink><a href="https://www.visualstudio.com/downloads/">Visual
-Studio 2017</a></span> developer command prompt and run the <b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8Update</span></b>
-script from your ClearScript root directory:</p>
+a Visual Studio <a href="https://www.visualstudio.com/vs/older-downloads/">2017</a>
+or <a href="https://www.visualstudio.com/downloads/">2019</a> developer command
+prompt and run the <b><span style='font-size:10.0pt;line-height:115%;
+font-family:Consolas'>V8Update</span></b> script from your ClearScript root
+directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><b><span style='font-size:10.0pt;
-line-height:115%;font-family:Consolas'>C:\ClearScript&gt; V8Update [/N] [Debug|<a
-name="OLE_LINK16">Release</a>] [Latest|Tested|&lt;Revision&gt;]</span></b></p>
+line-height:115%;font-family:Consolas;color:black'>C:\ClearScript&gt; V8Update
+[/N] [Debug|<a name="OLE_LINK16">Release</a>] [Latest|Tested|&lt;Revision&gt;]</span></b></p>
 
 <p class=MsoNormal style='margin-left:.75in'>This script downloads the V8
 source code and its dependencies, builds 32-bit and 64-bit V8 shared libraries,
-and imports the results into ClearScript. It requires approximately 6GB of
+and imports the results into ClearScript. It requires approximately 8GB of
 additional disk space and does not perform any permanent software installation
 on your machine.</p>
 
@@ -447,12 +463,12 @@ builds a V8 revision that has been tested with the current version of
 ClearScript. If you'd like to use a specific revision instead, place the
 desired branch name, commit ID, or tag on the <b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas'>V8Update</span></b> command line. Browse
-<span class=MsoHyperlink><a href="https://chromium.googlesource.com/v8/v8.git">here</a></span>
-to view V8's revision history.</p>
+<a href="https://chromium.googlesource.com/v8/v8.git">here</a> to view V8's
+revision history.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>You are now ready to build the full
 <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScript</span></b>
-solution using Visual Studio 2015 or 2017.</p>
+solution using Visual Studio 2017 or 2019.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Note:</span></b>
 The first time you open the solution, Visual Studio may prompt you to upgrade
@@ -465,16 +481,16 @@ ensure that their <b>Windows SDK Version</b> properties are set to an installed
 version of the Windows SDK.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Optional:</span></b>
-The ClearScript repository includes the <span class=MsoHyperlink><a
+The ClearScript repository includes the <a
 href="https://microsoft.github.io/ClearScript/Reference/html/R_Project_Reference.htm">ClearScript
-Library Reference</a></span> in HTML and Compiled HTML (.CHM) formats. If you'd
-like to rebuild these files, use <span class=MsoHyperlink><a
-href="https://github.com/EWSoftware/SHFB">Sandcastle Help File Builder</a></span>
-with the provided project files (<b><span style='font-size:10.0pt;line-height:
-115%;font-family:Consolas'>ClearScript\doc\[Web]Reference.shfbproj</span></b>).</p>
+Library Reference</a> in HTML and Compiled HTML (.CHM) formats. If you'd like
+to rebuild these files, use <a href="https://github.com/EWSoftware/SHFB">Sandcastle
+Help File Builder</a> with the provided project files (<b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScript\doc\[Web]Reference.shfbproj</span></b>).</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-.5in;margin-bottom:.0001pt;text-indent:-.5in'>IV. Building strong-named
+.5in;margin-bottom:.0001pt;text-indent:-.5in'><a
+name="_Building_strong-named_ClearScript"></a>IV. Building strong-named
 ClearScript assemblies (optional)</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>ClearScript now includes optional
@@ -491,7 +507,7 @@ a cryptographic key pair in your ClearScript root directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><a name="OLE_LINK5"><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>C:\ClearScript&gt;
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>C:\ClearScript&gt;
 sn -k ClearScript.snk</span></b></a></p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
@@ -534,51 +550,116 @@ application's directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-32.dll</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScriptV8-32.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-64.dll</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScriptV8-64.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>v8-base-ia32.dll</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>v8-ia32.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>v8-base-x64.dll</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>v8-x64.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>v8-ia32.dll</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>v8-base-ia32.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>v8-base-x64.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>v8-libcpp-ia32.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><b><span style='font-size:10.0pt;
-line-height:115%;font-family:Consolas'>v8-x64.dll</span></b></p>
+line-height:115%;font-family:Consolas;color:black'>v8-libcpp-x64.dll</span></b></p>
 
-<p class=MsoNormal style='margin-left:.75in'>For ASP.NET projects, we recommend
-that you add these assemblies as content files at the root of your web
-application and set their <b>Copy to Output Directory</b> properties to <b>Do
-not copy</b>.</p>
+<p class=MsoNormal style='margin-left:.75in'><a name="_Hlk14465584">For ASP.NET
+projects, we recommend that you add these assemblies as content files at the
+root of your web application and set their <b>Copy to Output Directory</b>
+properties to <b>Do not copy</b>.</a></p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'><a
 name="OLE_LINK4"></a><a name="OLE_LINK3">4.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 </span><b><span style='color:red'>Important:</span></b> </a>If Visual Studio is
-not installed on your deployment machine, you must install 32-bit and 64-bit
-Visual C++ Redistributable packages:</p>
-
-<p class=MsoListParagraph style='margin-left:1.0in'><span class=MsoHyperlink><a
-href="https://www.microsoft.com/en-us/download/details.aspx?id=48145">Visual
-C++ Redistributable for Visual Studio 2015</a></span></p>
+not installed on your deployment machine, you must install both 32-bit and
+64-bit Visual C++ Redistributable packages:</p>
 
 <p class=MsoListParagraph style='margin-left:1.0in'>Visual C++ Redistributable
-for Visual Studio 2017 <span class=MsoHyperlink><a
-href="https://go.microsoft.com/fwlink/?LinkId=746572">[x64]</a></span> <span
-class=MsoHyperlink><a href="https://go.microsoft.com/fwlink/?LinkId=746571">[x86]</a></span></p>
+for Visual Studio 2015, 2017 and 2019: <a
+href="https://aka.ms/vs/16/release/vc_redist.x86.exe">[x86]</a> <a
+href="https://aka.ms/vs/16/release/vc_redist.x64.exe">[x64]</a> </p>
+
+<h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
+.5in;margin-bottom:.0001pt;text-indent:-.5in'>VI. Machine-level (global) deployment</h1>
+
+<p class=MsoNormal style='margin-left:.25in'><a
+name="_Debugging_with_ClearScript_1"></a>You can now deploy ClearScript at the
+machine level, making it available to all locally installed applications. For
+this to work, your ClearScript assemblies must have strong names. If you’re
+building ClearScript yourself, see <a href="#_Building_strong-named_ClearScript">Section
+IV</a> for more information. The <a
+href="https://www.nuget.org/packages/Microsoft.ClearScript">official
+ClearScript NuGet package</a> contains strong-named assemblies.</p>
+
+<p class=MsoNormal style='margin-left:.25in'>To deploy ClearScript globally,
+install its managed assemblies in the <a
+href="https://docs.microsoft.com/en-us/dotnet/framework/app-domains/gac">Global
+Assembly Cache</a>:</p>
+
+<p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><a
+name="_Hlk14466261"><b><span style='font-size:10.0pt;line-height:115%;
+font-family:Consolas;color:black'>C:\ClearScript\bin\Release&gt;</span></b></a><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'> gacutil
+/i ClearScript.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>C:\ClearScript\bin\Release&gt;
+gacutil /i ClearScriptV8-32.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+14.0pt;margin-left:.5in;background:#F2F2F2'><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:black'>C:\ClearScript\bin\Release&gt;
+gacutil /i ClearScriptV8-64.dll</span></b></p>
+
+<p class=MsoNormal style='margin-left:.25in'>Additionally, you must copy
+ClearScript’s V8 assemblies to the system folder:</p>
+
+<p class=MsoNormal style='margin-left:.5in'>On 32-bit Windows:</p>
+
+<p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
+14.0pt;margin-left:1.0in;background:#F2F2F2'><a name="_Hlk14466280"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>C:\ClearScript\bin\Release&gt;</span></b></a><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'> <a
+name="_Hlk14466717">copy v8*-ia32.dll %SystemRoot%\System32</a></span></b></p>
+
+<p class=MsoNormal style='margin-left:.5in'>On 64-bit Windows:</p>
+
+<p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
+0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>C:\ClearScript\bin\Release&gt;
+copy v8*-x64.dll %SystemRoot%\System32</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+14.0pt;margin-left:1.0in;background:#F2F2F2'><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:black'>C:\ClearScript\bin\Release&gt;
+copy v8*-ia32.dll %SystemRoot%\SysWOW64</span></b></p>
+
+<p class=MsoNormal style='margin-left:.25in'><a
+name="_Debugging_with_ClearScript"></a><b><span style='color:red'>Important:</span></b>
+The commands above require an elevated command prompt.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'><a
-name="_Debugging_with_ClearScript"></a>VI. Debugging with ClearScript and V8</h1>
+name="_Debugging_with_ClearScript_2"></a>VII. Debugging with ClearScript and V8</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>V8 does not support standard
 Windows script debugging. Instead, it implements its own WebSocket-based
@@ -587,8 +668,7 @@ to use the Visual Studio Code IDE:</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
-and launch <span class=MsoHyperlink><a href="https://code.visualstudio.com/">Visual
-Studio Code</a></span>.</p>
+and launch <a href="https://code.visualstudio.com/">Visual Studio Code</a>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Set
@@ -597,9 +677,13 @@ up one or more ClearScript V8 debug configurations:</p>
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'><a
 name="OLE_LINK18">a.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 </span>Click <b>File</b> </a>→ <b>Preferences </b>→<b> Settings </b>to open
-your User Settings file.</p>
+your user settings.</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>b.<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Locate
+or search for the <b>Launch</b> configuration and click <b>Edit in settings.json</b>.</p>
+
+<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>c.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Add
 the following section to the file:</p>
 
@@ -698,22 +782,22 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:#D4D4D4'> �
 14.0pt;margin-left:1.5in;background:#1E1E1E'><b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas;color:#D4D4D4'>}</span></b></p>
 
-<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>c.<span
+<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>d.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>You
 can specify additional configurations for different hosts, port numbers, and
-other options. See <span class=MsoHyperlink><a
-href="https://code.visualstudio.com/docs/nodejs/nodejs-debugging">here</a></span>
-for more information.</p>
+other options. See <a
+href="https://code.visualstudio.com/docs/nodejs/nodejs-debugging">here</a> for
+more information.</p>
 
-<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>d.<span
+<p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>e.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Click
 <b>File</b> → <b>Save</b>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Enable
-script debugging in your application by invoking the <span class=MsoHyperlink><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'><a
-href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngine.htm">V8ScriptEngine</a></span></b></span>
+script debugging in your application by invoking the <a
+href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngine.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8ScriptEngine</span></b></a>
 constructor with <a name="OLE_LINK2"></a><a
 href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8ScriptEngineFlags.EnableDebugging</span></b></a>
@@ -726,9 +810,9 @@ you’d like to debug your application remotely, you must also do the following:
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>a.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Construct
-your script engine with the additional flag <span class=MsoHyperlink><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'><a
-href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm">V8ScriptEngineFlags.EnableRemoteDebugging</a></span></b></span>.</p>
+your script engine with the additional flag <a
+href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8ScriptEngineFlags.EnableRemoteDebugging</span></b></a>.</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>b.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
@@ -756,21 +840,19 @@ You can also attach Visual Studio to your application for simultaneous
 debugging of script, managed, and native code.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-.5in;margin-bottom:.0001pt;text-indent:-.5in'>VII. Acknowledgments</h1>
+.5in;margin-bottom:.0001pt;text-indent:-.5in'>VIII. Acknowledgments</h1>
 
 <p class=MsoNormal style='margin-left:.25in'>We’d like to thank:</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
-class=MsoHyperlink><a href="https://code.google.com/p/v8/people/list">The V8
-team</a></span>.</p>
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><a
+href="https://code.google.com/p/v8/people/list">The V8 team</a>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
-class=MsoHyperlink><a href="http://kennethreitz.org">Kenneth Reitz</a></span>
-for generously providing the <span class=MsoHyperlink><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'><a
-href="http://httpbin.org">Httpbin</a></span></b></span> service.</p>
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><a
+href="http://kennethreitz.org">Kenneth Reitz</a> for generously providing the <a
+href="http://httpbin.org"><b><span style='font-size:10.0pt;line-height:115%;
+font-family:Consolas'>Httpbin</span></b></a> service.</p>
 
 </div>
 

@@ -164,9 +164,11 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsAssignableFrom(this Type type, ref object value)
         {
+            var isByRef = false;
             if (type.IsByRef)
             {
                 type = type.GetElementType();
+                isByRef = true;
             }
 
             if (type.IsNullable())
@@ -183,6 +185,11 @@ namespace Microsoft.ClearScript.Util
 
             var valueType = value.GetType();
             if (valueType == type)
+            {
+                return true;
+            }
+
+            if (!isByRef && type.IsImplicitlyConvertibleFrom(valueType, ref value))
             {
                 return true;
             }
@@ -732,6 +739,26 @@ namespace Microsoft.ClearScript.Util
             }
 
             return null;
+        }
+
+        private static bool IsImplicitlyConvertibleFrom(this Type type, Type sourceType, ref object value)
+        {
+            return IsImplicitlyConvertibleInternal(type, sourceType, type, ref value) || IsImplicitlyConvertibleInternal(sourceType, sourceType, type, ref value);
+        }
+
+        private static bool IsImplicitlyConvertibleInternal(Type definingType, Type sourceType, Type targetType, ref object value)
+        {
+            foreach (var converter in definingType.GetMethods(BindingFlags.Public | BindingFlags.Static).Where(method => method.Name == "op_Implicit"))
+            {
+                var parameters = converter.GetParameters();
+                if ((parameters.Length == 1) && parameters[0].ParameterType.IsAssignableFrom(sourceType) && targetType.IsAssignableFrom(converter.ReturnType))
+                {
+                    value = converter.Invoke(null, new [] { value });
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         #region Nested type: PropertySignatureComparer

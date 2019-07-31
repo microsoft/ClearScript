@@ -294,11 +294,11 @@ V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
 
 //-----------------------------------------------------------------------------
 
+static std::atomic<size_t> s_InstanceCount(0);
 static const int s_ContextGroupId = 1;
 static const size_t s_StackBreathingRoom = static_cast<size_t>(16 * 1024);
 static size_t* const s_pMinStackLimit = reinterpret_cast<size_t*>(sizeof(size_t));
-static std::atomic<size_t> s_InstanceCount(0);
-static thread_local V8IsolateImpl* s_pInstanceInConstructor = nullptr;
+static const size_t s_MaxScriptCacheSize = 256;
 
 //-----------------------------------------------------------------------------
 
@@ -316,6 +316,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     m_StackWatchLevel(0),
     m_pStackLimit(nullptr),
     m_pExecutionScope(nullptr),
+    m_pDocumentInfo(nullptr),
     m_IsOutOfMemory(false),
     m_IsExecutionTerminating(false),
     m_Released(false)
@@ -330,9 +331,9 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
         params.constraints.set_max_old_space_size(pConstraints->max_old_space_size());
     }
 
-    BEGIN_PULSE_VALUE_SCOPE(&s_pInstanceInConstructor, this)
-        m_spIsolate.reset(v8::Isolate::New(params));
-    END_PULSE_VALUE_SCOPE
+    m_spIsolate.reset(v8::Isolate::Allocate());
+    m_spIsolate->SetData(0, this);
+    v8::Isolate::Initialize(m_spIsolate.get(), params);
 
     m_spIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
     m_spIsolate->SetPromiseHook(PromiseHook);
@@ -340,7 +341,6 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     BEGIN_ADDREF_SCOPE
     BEGIN_ISOLATE_SCOPE
 
-        m_spIsolate->SetData(0, this);
         m_spIsolate->SetCaptureStackTraceForUncaughtExceptions(true, 64, v8::StackTrace::kDetailed);
 
         m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
@@ -348,6 +348,12 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
         if (options.EnableDebugging)
         {
             EnableDebugging(options.DebugPort, options.EnableRemoteDebugging);
+        }
+
+        m_spIsolate->SetHostInitializeImportMetaObjectCallback(ImportMetaInitializeCallback);
+        if (options.EnableDynamicModuleImports)
+        {
+            m_spIsolate->SetHostImportModuleDynamicallyCallback(ModuleImportCallback);
         }
 
     END_ISOLATE_SCOPE
@@ -360,8 +366,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
 
 V8IsolateImpl* V8IsolateImpl::GetInstanceFromIsolate(v8::Isolate* pIsolate)
 {
-    auto pInstance = static_cast<V8IsolateImpl*>(pIsolate->GetData(0));
-    return (pInstance != nullptr) ? pInstance : s_pInstanceInConstructor;
+    return static_cast<V8IsolateImpl*>(pIsolate->GetData(0));
 }
 
 //-----------------------------------------------------------------------------
@@ -387,6 +392,11 @@ void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, const V8Context::Opt
         EnableDebugging(options.DebugPort, options.EnableRemoteDebugging);
     }
 
+    if (options.EnableDynamicModuleImports)
+    {
+        m_spIsolate->SetHostImportModuleDynamicallyCallback(ModuleImportCallback);
+    }
+
     if (m_spInspector)
     {
         m_spInspector->contextCreated(v8_inspector::V8ContextInfo(pContextImpl->GetContext(), s_ContextGroupId, pContextImpl->GetName().GetStringView()));
@@ -408,6 +418,23 @@ void V8IsolateImpl::RemoveContext(V8ContextImpl* pContextImpl)
     {
         return contextEntry.pContextImpl == pContextImpl;
     });
+}
+
+//-----------------------------------------------------------------------------
+
+V8ContextImpl* V8IsolateImpl::FindContext(v8::Local<v8::Context> hContext)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    for (const auto& entry : m_ContextEntries)
+    {
+        if (entry.pContextImpl->GetContext() == hContext)
+        {
+            return entry.pContextImpl;
+        }
+    }
+
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -447,7 +474,7 @@ void V8IsolateImpl::EnableDebugging(int port, bool remote)
             }
         });
 
-        m_spInspector = v8_inspector::V8Inspector::create(m_spIsolate.get(), this);
+        m_spInspector.reset(v8_inspector::V8Inspector::createPtr(m_spIsolate.get(), this));
 
         m_DebuggingEnabled = true;
         m_DebugPort = port;
@@ -539,36 +566,36 @@ void V8IsolateImpl::AwaitDebuggerAndPause()
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const StdString& code)
+V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code)
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this));
-        return spContextImpl->Compile(documentInfo, code);
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
+        return spContextImpl->Compile(documentInfo, std::move(code));
 
     END_ISOLATE_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes)
+V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes)
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this));
-        return spContextImpl->Compile(documentInfo, code, cacheType, cacheBytes);
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
+        return spContextImpl->Compile(documentInfo, std::move(code), cacheType, cacheBytes);
 
     END_ISOLATE_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted)
+V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted)
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this));
-        return spContextImpl->Compile(documentInfo, code, cacheType, cacheBytes, cacheAccepted);
+        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
+        return spContextImpl->Compile(documentInfo, std::move(code), cacheType, cacheBytes, cacheAccepted);
 
     END_ISOLATE_SCOPE
 }
@@ -586,12 +613,24 @@ void V8IsolateImpl::GetHeapStatistics(v8::HeapStatistics& heapStatistics)
 
 //-----------------------------------------------------------------------------
 
+V8Isolate::Statistics V8IsolateImpl::GetStatistics()
+{
+    BEGIN_ISOLATE_SCOPE
+
+        return m_Statistics;
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
 void V8IsolateImpl::CollectGarbage(bool exhaustive)
 {
     BEGIN_ISOLATE_SCOPE
 
         if (exhaustive)
         {
+            ClearScriptCache();
             LowMemoryNotification();
         }
         else
@@ -1039,6 +1078,127 @@ void DECLSPEC_NORETURN V8IsolateImpl::ThrowOutOfMemoryException()
 
 //-----------------------------------------------------------------------------
 
+void V8IsolateImpl::ImportMetaInitializeCallback(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta)
+{
+    GetInstanceFromIsolate(hContext->GetIsolate())->InitializeImportMeta(hContext, hModule, hMeta);
+}
+
+//-----------------------------------------------------------------------------
+
+v8::MaybeLocal<v8::Promise> V8IsolateImpl::ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier)
+{
+    return GetInstanceFromIsolate(hContext->GetIsolate())->ImportModule(hContext, hReferrer, hSpecifier);
+}
+
+//-----------------------------------------------------------------------------
+
+v8::MaybeLocal<v8::Module> V8IsolateImpl::ModuleResolveCallback(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer)
+{
+    return GetInstanceFromIsolate(hContext->GetIsolate())->ResolveModule(hContext, hSpecifier, hReferrer);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    auto pContextImpl = FindContext(hContext);
+    if (pContextImpl)
+    {
+        return pContextImpl->InitializeImportMeta(hContext, hModule, hMeta);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+v8::MaybeLocal<v8::Promise> V8IsolateImpl::ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    auto pContextImpl = FindContext(hContext);
+    if (pContextImpl)
+    {
+        return pContextImpl->ImportModule(hReferrer, hSpecifier);
+    }
+
+    return v8::MaybeLocal<v8::Promise>();
+}
+
+//-----------------------------------------------------------------------------
+
+v8::MaybeLocal<v8::Module> V8IsolateImpl::ResolveModule(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    auto pContextImpl = FindContext(hContext);
+    if (pContextImpl)
+    {
+        return pContextImpl->ResolveModule(hSpecifier, hReferrer);
+    }
+
+    return v8::MaybeLocal<v8::Module>();
+}
+
+//-----------------------------------------------------------------------------
+
+v8::Local<v8::UnboundScript> V8IsolateImpl::GetCachedScript(const V8DocumentInfo& documentInfo, size_t codeDigest)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    for (auto it = m_ScriptCache.begin(); it != m_ScriptCache.end(); ++it)
+    {
+        if ((it->DocumentInfo.GetUniqueId() == documentInfo.GetUniqueId()) && (it->CodeDigest == codeDigest))
+        {
+            m_ScriptCache.splice(m_ScriptCache.begin(), m_ScriptCache, it);
+            return it->hScript;
+        }
+    }
+
+    return v8::Local<v8::UnboundScript>();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    while (m_ScriptCache.size() >= s_MaxScriptCacheSize)
+    {
+        Dispose(m_ScriptCache.back().hScript);
+        m_ScriptCache.pop_back();
+    }
+
+    _ASSERTE(std::none_of(m_ScriptCache.begin(), m_ScriptCache.end(),
+        [&documentInfo, codeDigest] (const ScriptCacheEntry& entry)
+    {
+        return (entry.DocumentInfo.GetUniqueId() == documentInfo.GetUniqueId()) && (entry.CodeDigest == codeDigest);
+    }));
+
+    ScriptCacheEntry entry { documentInfo, codeDigest, CreatePersistent(hScript) };
+    m_ScriptCache.push_front(std::move(entry));
+
+    m_Statistics.ScriptCacheSize = m_ScriptCache.size();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::ClearScriptCache()
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    while (m_ScriptCache.size() > 0)
+    {
+        Dispose(m_ScriptCache.front().hScript);
+        m_ScriptCache.pop_front();
+    }
+
+    m_Statistics.ScriptCacheSize = m_ScriptCache.size();
+}
+
+//-----------------------------------------------------------------------------
+
 V8IsolateImpl::~V8IsolateImpl()
 {
     --s_InstanceCount;
@@ -1049,6 +1209,7 @@ V8IsolateImpl::~V8IsolateImpl()
 
     BEGIN_ISOLATE_SCOPE
         DisableDebugging();
+        ClearScriptCache();
     END_ISOLATE_SCOPE
 
     {
@@ -1067,6 +1228,8 @@ V8IsolateImpl::~V8IsolateImpl()
     }
 
     Dispose(m_hHostObjectHolderKey);
+    m_spIsolate->SetHostImportModuleDynamicallyCallback(nullptr);
+    m_spIsolate->SetHostInitializeImportMetaObjectCallback(nullptr);
     m_spIsolate->SetPromiseHook(nullptr);
     m_spIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
 }
@@ -1318,7 +1481,7 @@ V8IsolateImpl::ExecutionScope* V8IsolateImpl::EnterExecutionScope(ExecutionScope
             }
 
             // set and record stack address limit
-            m_spIsolate->SetStackLimit(reinterpret_cast<std::uintptr_t>(pStackLimit));
+            m_spIsolate->SetStackLimit(reinterpret_cast<uintptr_t>(pStackLimit));
             m_pStackLimit = pStackLimit;
 
             // enter outermost stack usage monitoring scope
@@ -1369,7 +1532,7 @@ void V8IsolateImpl::ExitExecutionScope(ExecutionScope* pPreviousExecutionScope)
             if (m_pStackLimit != nullptr)
             {
                 // V8 has no API for removing a stack address limit
-                m_spIsolate->SetStackLimit(reinterpret_cast<std::uintptr_t>(s_pMinStackLimit));
+                m_spIsolate->SetStackLimit(reinterpret_cast<uintptr_t>(s_pMinStackLimit));
                 m_pStackLimit = nullptr;
             }
         }

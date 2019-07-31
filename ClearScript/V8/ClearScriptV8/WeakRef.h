@@ -29,7 +29,7 @@ public:
     {
     }
 
-    WeakRef<T>(WeakRef<T>&& that):
+    WeakRef<T>(WeakRef<T>&& that) noexcept:
         m_spImpl(std::move(that.m_spImpl))
     {
     }
@@ -40,7 +40,7 @@ public:
         return *this;
     }
 
-    const WeakRef<T>& operator=(WeakRef<T>&& that)
+    const WeakRef<T>& operator=(WeakRef<T>&& that) noexcept
     {
         m_spImpl = std::move(that.m_spImpl);
         return *this;

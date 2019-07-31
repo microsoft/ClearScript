@@ -1,0 +1,25 @@
+diff --git a/third_party/libc++/BUILD.gn b/third_party/libc++/BUILD.gn
+index a021562..54c8de7 100644
+--- a/third_party/libc++/BUILD.gn
++++ b/third_party/libc++/BUILD.gn
+@@ -29,6 +29,12 @@ config("winver") {
+   ]
+ }
+ 
++if (current_cpu == "x86") {
++  clearscript_v8_platform = "ia32"
++} else {
++  clearscript_v8_platform = current_cpu
++}
++
+ if (libcxx_is_shared) {
+   _libcxx_target_type = "shared_library"
+ } else {
+@@ -51,6 +57,7 @@ target(_libcxx_target_type, "libc++") {
+   if (libcxx_is_shared) {
+     no_default_deps = true
+   }
++  output_name = "v8-libcpp-${clearscript_v8_platform}"
+   sources = [
+     "trunk/src/algorithm.cpp",
+     "trunk/src/any.cpp",

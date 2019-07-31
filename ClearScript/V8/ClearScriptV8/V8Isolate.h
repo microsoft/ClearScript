@@ -15,7 +15,15 @@ public:
     {
         bool EnableDebugging = false;
         bool EnableRemoteDebugging = false;
+        bool EnableDynamicModuleImports = false;
         int DebugPort = 0;
+    };
+
+    struct Statistics final
+    {
+        size_t ScriptCount = 0;
+        size_t ScriptCacheSize = 0;
+        size_t ModuleCount = 0;
     };
 
     static V8Isolate* Create(const StdString& name, const v8::ResourceConstraints* pConstraints, const Options& options);
@@ -30,10 +38,11 @@ public:
     virtual void SetMaxStackUsage(size_t value) = 0;
 
     virtual void AwaitDebuggerAndPause() = 0;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code) = 0;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) = 0;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
     virtual void GetHeapStatistics(v8::HeapStatistics& heapStatistics) = 0;
+    virtual Statistics GetStatistics() = 0;
     virtual void CollectGarbage(bool exhaustive) = 0;
 
     typedef void CpuProfileCallbackT(const v8::CpuProfile& profile, void* pvArg);

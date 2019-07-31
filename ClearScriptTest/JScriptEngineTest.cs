@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Threading;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
@@ -23,6 +24,15 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
+    [DeploymentItem("ClearScriptV8-64.dll")]
+    [DeploymentItem("ClearScriptV8-32.dll")]
+    [DeploymentItem("v8-x64.dll")]
+    [DeploymentItem("v8-ia32.dll")]
+    [DeploymentItem("v8-base-x64.dll")]
+    [DeploymentItem("v8-base-ia32.dll")]
+    [DeploymentItem("v8-libcpp-x64.dll")]
+    [DeploymentItem("v8-libcpp-ia32.dll")]
+    [DeploymentItem("JavaScript", "JavaScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class JScriptEngineTest : ClearScriptTest
@@ -1199,8 +1209,8 @@ namespace Microsoft.ClearScript.Test
                 function foo() { return bar(); }
             ");
 
-            Assert.AreEqual("    at baz (Script Document:1:33) -> return qux()\n    at bar (Script Document:2:33) -> return baz()\n    at foo (Script Document:3:33) -> return bar()\n    at JScript global code (Script Document [2] [temp]:0:0) -> foo()", engine.Evaluate("foo()"));
-            Assert.AreEqual("    at baz (Script Document:1:33) -> return qux()\n    at bar (Script Document:2:33) -> return baz()\n    at foo (Script Document:3:33) -> return bar()", engine.Script.foo());
+            Assert.AreEqual("    at baz (Script:1:33) -> return qux()\n    at bar (Script:2:33) -> return baz()\n    at foo (Script:3:33) -> return bar()\n    at JScript global code (Script [2] [temp]:0:0) -> foo()", engine.Evaluate("foo()"));
+            Assert.AreEqual("    at baz (Script:1:33) -> return qux()\n    at bar (Script:2:33) -> return baz()\n    at foo (Script:3:33) -> return bar()", engine.Script.foo());
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -1752,7 +1762,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_AddCOMType_XMLHTTP()
         {
-            int status = 0;
+            var status = 0;
             string data = null;
 
             var thread = new Thread(() =>
@@ -2332,6 +2342,56 @@ namespace Microsoft.ClearScript.Test
             engine.Script.foo = new Func<object>(() => Nothing.Value);
             Assert.IsTrue((bool)engine.Evaluate("foo() == undefined"));
             Assert.IsFalse((bool)engine.Evaluate("foo() === undefined"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ExecuteDocument_Script()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+
+            using (var console = new StringWriter())
+            {
+                var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                engine.AddHostObject("host", new ExtendedHostFunctions());
+                engine.AddHostObject("clr", clr);
+
+                engine.ExecuteDocument("JavaScript/General.js");
+                Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+            }
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_EvaluateDocument_Script()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+
+            using (var console = new StringWriter())
+            {
+                var clr = new HostTypeCollection(type => type != typeof(Console), "mscorlib", "System", "System.Core");
+                clr.GetNamespaceNode("System").SetPropertyNoCheck("Console", console);
+
+                engine.AddHostObject("host", new ExtendedHostFunctions());
+                engine.AddHostObject("clr", clr);
+
+                Assert.AreEqual((int)Math.Round(Math.Sin(Math.PI) * 1000e16), engine.EvaluateDocument("JavaScript/General.js"));
+                Assert.AreEqual(MiscHelpers.FormatCode(generalScriptOutput), console.ToString().Replace("\r\n", "\n"));
+            }
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_EvaluateDocument_Module_CommonJS()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(25 * 25, engine.EvaluateDocument("JavaScript/LegacyCommonJS/Module", ModuleCategory.CommonJS));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DocumentSettings_EnforceRelativePrefix()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.EnforceRelativePrefix;
+            TestUtil.AssertException<FileNotFoundException>(() => engine.EvaluateDocument("JavaScript/LegacyCommonJS/Module", ModuleCategory.CommonJS));
         }
 
         // ReSharper restore InconsistentNaming

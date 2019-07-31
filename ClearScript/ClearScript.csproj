@@ -63,11 +63,20 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Web" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CanonicalRefTable.cs" />
+    <Compile Include="Document.cs" />
+    <Compile Include="DocumentCategory.cs" />
+    <Compile Include="DocumentContextCallback.cs" />
+    <Compile Include="DocumentLoadCallback.cs" />
+    <Compile Include="DocumentSettings.cs" />
+    <Compile Include="DocumentLoader.cs" />
+    <Compile Include="DocumentAccessFlags.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="ContinuationCallback.cs" />
     <Compile Include="DocumentFlags.cs" />
     <Compile Include="DocumentInfo.cs" />
@@ -81,10 +90,15 @@
     <Compile Include="BindSignature.cs" />
     <Compile Include="IScriptEngineException.cs" />
     <Compile Include="DefaultScriptUsageAttribute.cs" />
+    <Compile Include="JavaScript\CommonJSManager.cs" />
+    <Compile Include="JavaScript\CommonJSLegacyModule.cs" />
+    <Compile Include="JavaScript\IJavaScriptEngine.cs" />
+    <Compile Include="JavaScript\JavaScriptExtensions.cs" />
     <Compile Include="JavaScript\IArrayBuffer.cs" />
     <Compile Include="JavaScript\IArrayBufferView.cs" />
     <Compile Include="JavaScript\IDataView.cs" />
     <Compile Include="JavaScript\ITypedArray.cs" />
+    <Compile Include="JavaScript\ModuleCategory.cs" />
     <Compile Include="NoDefaultScriptAccessAttribute.cs" />
     <Compile Include="NoScriptAccessAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -100,11 +114,14 @@
     <Compile Include="ScriptMemberAttribute.cs" />
     <Compile Include="ScriptObject.cs" />
     <Compile Include="ScriptUsageAttribute.cs" />
+    <Compile Include="StringDocument.cs" />
+    <Compile Include="UniqueDocumentInfo.cs" />
     <Compile Include="Util\AssemblyHelpers.cs" />
     <Compile Include="Util\BitwiseHelpers.cs" />
     <Compile Include="Util\Collateral.cs" />
     <Compile Include="Util\COMDispatchHelpers.cs" />
     <Compile Include="Util\CoTaskMemBlock.cs" />
+    <Compile Include="Util\Holder.cs" />
     <Compile Include="Util\OneWayFlag.cs" />
     <Compile Include="HostList.cs" />
     <Compile Include="Util\INativeCallback.cs" />

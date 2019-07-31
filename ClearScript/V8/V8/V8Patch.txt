@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index fddd525297..76b2cd90bf 100644
+index 8640517ae5..d002d67cc4 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -182,6 +182,12 @@ if (host_cpu == "x64" &&
+@@ -198,6 +198,12 @@ if (host_cpu == "x64" &&
    v8_generator_toolchain = "//build/toolchain/linux:clang_x64"
  }
  
@@ -15,7 +15,7 @@ index fddd525297..76b2cd90bf 100644
  # Derived defaults.
  if (v8_enable_verify_heap == "") {
    v8_enable_verify_heap = v8_enable_debugging_features
-@@ -3194,6 +3200,7 @@ v8_source_set("torque_ls_base") {
+@@ -3438,6 +3444,7 @@ v8_source_set("torque_ls_base") {
  }
  
  v8_component("v8_libbase") {
@@ -23,7 +23,7 @@ index fddd525297..76b2cd90bf 100644
    sources = [
      "src/base/adapters.h",
      "src/base/address-region.h",
-@@ -3391,6 +3398,7 @@ v8_component("v8_libbase") {
+@@ -3629,6 +3636,7 @@ v8_component("v8_libbase") {
  }
  
  v8_component("v8_libplatform") {
@@ -31,19 +31,31 @@ index fddd525297..76b2cd90bf 100644
    sources = [
      "//base/trace_event/common/trace_event_common.h",
      "include/libplatform/libplatform-export.h",
-@@ -3681,6 +3689,7 @@ group("v8_fuzzers") {
+@@ -4039,6 +4047,7 @@ group("v8_fuzzers") {
  
  if (is_component_build) {
    v8_component("v8") {
 +    output_name = "v8-${clearscript_v8_platform}"
      sources = [
-       "src/v8dll-main.cc",
+       "src/utils/v8dll-main.cc",
      ]
+diff --git a/include/v8-inspector.h b/include/v8-inspector.h
+index b96a6e29ac..22453501e1 100644
+--- a/include/v8-inspector.h
++++ b/include/v8-inspector.h
+@@ -242,6 +242,7 @@ struct V8_EXPORT V8StackTraceId {
+ class V8_EXPORT V8Inspector {
+  public:
+   static std::unique_ptr<V8Inspector> create(v8::Isolate*, V8InspectorClient*);
++  static V8Inspector* createPtr(v8::Isolate*, V8InspectorClient*);
+   virtual ~V8Inspector() = default;
+ 
+   // Contexts instrumentation.
 diff --git a/include/v8.h b/include/v8.h
-index 6ecc48af33..7f75db7b3a 100644
+index c54b088404..3ceacf76d8 100644
 --- a/include/v8.h
 +++ b/include/v8.h
-@@ -1421,6 +1421,7 @@ class V8_EXPORT ScriptCompiler {
+@@ -1385,6 +1385,7 @@ class V8_EXPORT ScriptCompiler {
      // (with delete[]) when the CachedData object is destroyed.
      CachedData(const uint8_t* data, int length,
                 BufferPolicy buffer_policy = BufferNotOwned);
@@ -51,27 +63,26 @@ index 6ecc48af33..7f75db7b3a 100644
      ~CachedData();
      // TODO(marja): Async compilation; add constructors which take a callback
      // which will be called when V8 no longer needs the data.
-diff --git a/src/api.cc b/src/api.cc
-index 704c46aa68..95742bf141 100644
---- a/src/api.cc
-+++ b/src/api.cc
-@@ -2071,6 +2071,11 @@ ScriptCompiler::CachedData::CachedData(const uint8_t* data_, int length_,
+diff --git a/src/api/api.cc b/src/api/api.cc
+index 399aca7eb6..3458466b4f 100644
+--- a/src/api/api.cc
++++ b/src/api/api.cc
+@@ -2017,6 +2017,10 @@ ScriptCompiler::CachedData::CachedData(const uint8_t* data_, int length_,
+       rejected(false),
        buffer_policy(buffer_policy_) {}
- 
  
 +void ScriptCompiler::CachedData::Delete() {
 +  delete this;
 +}
 +
-+
  ScriptCompiler::CachedData::~CachedData() {
    if (buffer_policy == BufferOwned) {
      delete[] data;
-diff --git a/src/code-stub-assembler.cc b/src/code-stub-assembler.cc
-index e4dba15750..2186219015 100644
---- a/src/code-stub-assembler.cc
-+++ b/src/code-stub-assembler.cc
-@@ -12574,6 +12574,11 @@ Node* CodeStubAssembler::Typeof(Node* value) {
+diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
+index d967d84874..dc0af2e13a 100644
+--- a/src/codegen/code-stub-assembler.cc
++++ b/src/codegen/code-stub-assembler.cc
+@@ -12710,6 +12710,11 @@ Node* CodeStubAssembler::Typeof(Node* value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -83,36 +94,11 @@ index e4dba15750..2186219015 100644
    Node* callable_or_undetectable_mask = Word32And(
        LoadMapBitField(map),
        Int32Constant(Map::IsCallableBit::kMask | Map::IsUndetectableBit::kMask));
-diff --git a/src/compiler/js-heap-broker.cc b/src/compiler/js-heap-broker.cc
-index 5628e0d337..520503f5e2 100644
---- a/src/compiler/js-heap-broker.cc
-+++ b/src/compiler/js-heap-broker.cc
-@@ -1583,7 +1583,7 @@ JSHeapBroker::JSHeapBroker(Isolate* isolate, Zone* broker_zone)
- }
- 
- std::ostream& JSHeapBroker::Trace() {
--  return trace_out_ << "[" << this << "] "
-+  return std::cout << "[" << this << "] "
-                     << std::string(trace_indentation_ * 2, ' ');
- }
- 
-diff --git a/src/compiler/js-heap-broker.h b/src/compiler/js-heap-broker.h
-index 4b87d81ea1..c166e09920 100644
---- a/src/compiler/js-heap-broker.h
-+++ b/src/compiler/js-heap-broker.h
-@@ -690,7 +690,6 @@ class V8_EXPORT_PRIVATE JSHeapBroker : public NON_EXPORTED_BASE(ZoneObject) {
-                    Handle<JSObject>::equal_to>
-       array_and_object_prototypes_;
-   BrokerMode mode_ = kDisabled;
--  StdoutStream trace_out_;
-   unsigned trace_indentation_ = 0;
-   PerIsolateCompilerCache* compiler_cache_;
-   ZoneUnorderedMap<FeedbackNexus, ProcessedFeedback, FeedbackNexusHash,
-diff --git a/src/execution.cc b/src/execution.cc
-index 69f9e1e2d7..d37ba55ebf 100644
---- a/src/execution.cc
-+++ b/src/execution.cc
-@@ -590,8 +590,10 @@ bool StackGuard::ThreadLocal::Initialize(Isolate* isolate) {
+diff --git a/src/execution/execution.cc b/src/execution/execution.cc
+index 285b4b2134..edb2e6c9c2 100644
+--- a/src/execution/execution.cc
++++ b/src/execution/execution.cc
+@@ -581,8 +581,10 @@ bool StackGuard::ThreadLocal::Initialize(Isolate* isolate) {
    bool should_set_stack_limits = false;
    if (real_climit_ == kIllegalLimit) {
      const uintptr_t kLimitSize = FLAG_stack_size * KB;
@@ -124,48 +110,48 @@ index 69f9e1e2d7..d37ba55ebf 100644
      real_jslimit_ = SimulatorStack::JsLimitFromCLimit(isolate, limit);
      set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
      real_climit_ = limit;
-diff --git a/src/objects.cc b/src/objects.cc
-index 8337b3d4cf..b92280d991 100644
---- a/src/objects.cc
-+++ b/src/objects.cc
-@@ -798,6 +798,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
-   if (object->IsString()) return isolate->factory()->string_string();
-   if (object->IsSymbol()) return isolate->factory()->symbol_string();
-   if (object->IsBigInt()) return isolate->factory()->bigint_string();
-+  if (object->IsJSObject()) {
-+    Handle<JSObject> obj = Handle<JSObject>::cast(object);
-+    if (obj->HasNamedInterceptor()) {
-+      return obj->map()->is_immutable_proto() ? isolate->factory()->function_string() : isolate->factory()->object_string();
-+    }
-+  }
-   if (object->IsCallable()) return isolate->factory()->function_string();
-   return isolate->factory()->object_string();
+diff --git a/src/init/v8.cc b/src/init/v8.cc
+index 19ad57038f..80e7f09100 100644
+--- a/src/init/v8.cc
++++ b/src/init/v8.cc
+@@ -111,7 +111,6 @@ void V8::InitializeOncePerProcess() {
  }
-diff --git a/src/v8.cc b/src/v8.cc
-index 318e846d61..fd545f4341 100644
---- a/src/v8.cc
-+++ b/src/v8.cc
-@@ -115,7 +115,6 @@ void V8::InitializeOncePerProcess() {
- 
  
  void V8::InitializePlatform(v8::Platform* platform) {
 -  CHECK(!platform_);
    CHECK(platform);
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
-diff --git a/src/v8dll-main.cc b/src/v8dll-main.cc
-index 6250b3e341..be3854a352 100644
---- a/src/v8dll-main.cc
-+++ b/src/v8dll-main.cc
-@@ -10,6 +10,11 @@
- #if V8_OS_WIN
- #include "src/base/win32-headers.h"
+diff --git a/src/inspector/v8-inspector-impl.cc b/src/inspector/v8-inspector-impl.cc
+index b764118079..658b7dfcec 100644
+--- a/src/inspector/v8-inspector-impl.cc
++++ b/src/inspector/v8-inspector-impl.cc
+@@ -54,6 +54,11 @@ std::unique_ptr<V8Inspector> V8Inspector::create(v8::Isolate* isolate,
+   return std::unique_ptr<V8Inspector>(new V8InspectorImpl(isolate, client));
+ }
  
-+#include "include/v8-inspector.h"
-+PVOID forceExports[] = {
-+  reinterpret_cast<PVOID>(v8_inspector::V8Inspector::create)
-+};
++V8Inspector* V8Inspector::createPtr(v8::Isolate* isolate,
++                                    V8InspectorClient* client) {
++  return create(isolate, client).release();
++}
 +
- extern "C" {
- BOOL WINAPI DllMain(HANDLE hinstDLL,
-                     DWORD dwReason,
+ V8InspectorImpl::V8InspectorImpl(v8::Isolate* isolate,
+                                  V8InspectorClient* client)
+     : m_isolate(isolate),
+diff --git a/src/objects/objects.cc b/src/objects/objects.cc
+index 8cc22fa0e5..3ee28d9e3b 100644
+--- a/src/objects/objects.cc
++++ b/src/objects/objects.cc
+@@ -806,6 +806,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+   if (object->IsString()) return isolate->factory()->string_string();
+   if (object->IsSymbol()) return isolate->factory()->symbol_string();
+   if (object->IsBigInt()) return isolate->factory()->bigint_string();
++  if (object->IsJSObject()) {
++    Handle<JSObject> obj = Handle<JSObject>::cast(object);
++    if (obj->HasNamedInterceptor()) {
++      return obj->map().is_immutable_proto() ? isolate->factory()->function_string() : isolate->factory()->object_string();
++    }
++  }
+   if (object->IsCallable()) return isolate->factory()->function_string();
+   return isolate->factory()->object_string();
+ }

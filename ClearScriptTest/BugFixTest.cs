@@ -12,6 +12,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
+using System.Xml.Linq;
 using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
@@ -29,6 +30,10 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("v8-ia32.dll")]
     [DeploymentItem("v8-base-x64.dll")]
     [DeploymentItem("v8-base-ia32.dll")]
+    [DeploymentItem("v8-libcpp-x64.dll")]
+    [DeploymentItem("v8-libcpp-ia32.dll")]
+    [DeploymentItem("ClearScriptConsole.exe")]
+    [DeploymentItem("Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
     [SuppressMessage("ReSharper", "IdentifierTypo")]
@@ -1756,7 +1761,8 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_ScriptObjectInHostVariable()
         {
             engine.Script.host = new HostFunctions();
-            Assert.IsTrue(engine.Evaluate(new DocumentInfo("Expresion") { Flags = DocumentFlags.IsTransient }, "host.newVar({})", false).ToString().StartsWith("[HostVariable:", StringComparison.Ordinal));
+            var documentInfo = new DocumentInfo("Expression") { Flags = DocumentFlags.IsTransient };
+            Assert.IsTrue(engine.Evaluate(documentInfo.MakeUnique(engine), "host.newVar({})", false).ToString().StartsWith("[HostVariable:", StringComparison.Ordinal));
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -2391,6 +2397,54 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("TestObject.Bar"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_PublicOverrideInInternalClass()
+        {
+            engine.Script.foo = new PublicOverrideTest();
+            Assert.AreEqual(789, engine.Evaluate("foo.AbstractMethod()"));
+            Assert.AreEqual(456, engine.Evaluate("foo.VirtualMethod()"));
+            Assert.AreEqual("baz", engine.Evaluate("foo.AbstractProperty"));
+            Assert.AreEqual("bar", engine.Evaluate("foo.VirtualProperty"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_ImplicitConversionOperators()
+        {
+            engine.Script.doc = XDocument.Parse("<doc><foo>bar</foo><baz>qux</baz></doc>");
+            engine.AddHostType(typeof(Enumerable));
+            engine.AddHostType(typeof(XmlName));
+            Assert.AreEqual(1, engine.Evaluate("doc.Root.Elements('foo').Count()"));
+            Assert.AreEqual("<foo>bar</foo>", engine.Evaluate("doc.Root.Elements('foo').First().ToString()"));
+            Assert.AreEqual(1, engine.Evaluate("doc.Root.Elements(new XmlName('foo')).Count()"));
+            Assert.AreEqual("<foo>bar</foo>", engine.Evaluate("doc.Root.Elements(new XmlName('foo')).First().ToString()"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8StackLimitIntegerOverflow()
+        {
+            TestUtil.InvokeConsoleTest("BugFix_V8StackLimitIntegerOverflow");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_TextDigest()
+        {
+            const string allChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+
+            var proxy = V8TestProxy.Create();
+            for (var i = 0; i < 1024; i++)
+            {
+                var chars = new char[random.Next(8, 256)];
+                for (var j = 0; j < chars.Length; j++)
+                {
+                    chars[j] = allChars[random.Next(allChars.Length - 1)];
+                }
+
+                var value = new string(chars);
+                Assert.AreEqual(value.GetDigest(), proxy.GetNativeDigest(value));
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2646,6 +2700,61 @@ namespace Microsoft.ClearScript.Test
             public enum NestedType
             {
                 Foo, Bar, Baz, Qux
+            }
+        }
+
+        public abstract class PublicOverrideTestBase
+        {
+            public abstract int AbstractMethod();
+
+            public virtual int VirtualMethod()
+            {
+                return 123;
+            }
+
+            public abstract string AbstractProperty { get; }
+
+            public virtual string VirtualProperty
+            {
+                get { return "foo"; }
+            }
+        }
+
+        internal class PublicOverrideTest : PublicOverrideTestBase
+        {
+            public override int AbstractMethod()
+            {
+                return 789;
+            }
+
+            public override int VirtualMethod()
+            {
+                return 456;
+            }
+
+            public override string AbstractProperty
+            {
+                get { return "baz"; }
+            }
+
+            public override string VirtualProperty
+            {
+                get { return "bar"; }
+            }
+        }
+
+        public class XmlName
+        {
+            private readonly string name;
+
+            public XmlName(string name)
+            {
+                this.name = name;
+            }
+
+            public static implicit operator XName(XmlName xmlName)
+            {
+                return xmlName.name;
             }
         }
 

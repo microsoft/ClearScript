@@ -78,11 +78,15 @@ namespace Microsoft.ClearScript
 
         private static object Wrap(ScriptEngine engine, object obj, Type type, HostItemFlags flags)
         {
-            Debug.Assert(!(obj is HostItem));
-
             if (obj == null)
             {
                 return null;
+            }
+
+            var hostItem = obj as HostItem;
+            if (hostItem != null)
+            {
+                obj = hostItem.Target;
             }
 
             var hostTarget = obj as HostTarget;
@@ -1718,7 +1722,7 @@ namespace Microsoft.ClearScript
             if (indices.Length == 1)
             {
                 int index;
-                if (MiscHelpers.TryGetIndex(indices[0], out index))
+                if (MiscHelpers.TryGetNumericIndex(indices[0], out index))
                 {
                     result = ThisDynamic.GetProperty(index).ToDynamicResult(engine);
                     return true;
@@ -1742,7 +1746,7 @@ namespace Microsoft.ClearScript
             if (indices.Length == 1)
             {
                 int index;
-                if (MiscHelpers.TryGetIndex(indices[0], out index))
+                if (MiscHelpers.TryGetNumericIndex(indices[0], out index))
                 {
                     ThisDynamic.SetProperty(index, value);
                     return true;

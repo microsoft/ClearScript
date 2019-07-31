@@ -117,7 +117,7 @@ public:
         CopyInitialize(that);
     }
 
-    SharedPtr<T>(SharedPtr<T>&& that)
+    SharedPtr<T>(SharedPtr<T>&& that) noexcept
     {
         MoveInitialize(that);
     }
@@ -153,7 +153,7 @@ public:
         return *this;
     }
 
-    const SharedPtr<T>& operator=(SharedPtr<T>&& that)
+    const SharedPtr<T>& operator=(SharedPtr<T>&& that) noexcept
     {
         Move(that);
         return *this;

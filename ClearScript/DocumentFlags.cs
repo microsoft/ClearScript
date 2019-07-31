@@ -6,7 +6,7 @@ using System;
 namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Defines script document attributes.
+    /// Defines document attributes.
     /// </summary>
     [Flags]
     public enum DocumentFlags
@@ -17,8 +17,8 @@ namespace Microsoft.ClearScript
         None = 0,
 
         /// <summary>
-        /// Indicates that the script document is temporary and can be discarded after execution.
-        /// Only Windows Script engines honor this attribute.
+        /// Indicates that the document is temporary and can be discarded after use. Only Windows
+        /// Script engines honor this attribute.
         /// </summary>
         IsTransient = 0x00000001
     }

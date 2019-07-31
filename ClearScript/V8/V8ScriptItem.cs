@@ -107,7 +107,7 @@ namespace Microsoft.ClearScript.V8
                     if ((args != null) && (args.Length == 1))
                     {
                         int index;
-                        if (MiscHelpers.TryGetIndex(args[0], out index))
+                        if (MiscHelpers.TryGetNumericIndex(args[0], out index))
                         {
                             result = target.GetProperty(index);
                         }
@@ -128,7 +128,7 @@ namespace Microsoft.ClearScript.V8
                     if ((args != null) && (args.Length == 2))
                     {
                         int index;
-                        if (MiscHelpers.TryGetIndex(args[0], out index))
+                        if (MiscHelpers.TryGetNumericIndex(args[0], out index))
                         {
                             target.SetProperty(index, args[1]);
                         }

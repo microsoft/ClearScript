@@ -48,6 +48,13 @@ namespace Microsoft.ClearScript.V8
         /// a JavaScript <c>Date</c> object always represents a Coordinated Universal Timestamp (UTC)
         /// and has its <see cref="DateTime.Kind"/> property set to <see cref="DateTimeKind.Utc"/>.
         /// </summary>
-        EnableDateTimeConversion = 0x00000010
+        EnableDateTimeConversion = 0x00000010,
+
+        /// <summary>
+        /// Specifies that
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#Dynamic_Imports">dynamic module imports</see>
+        /// are to be enabled. This is an experimental feature and may be removed in a future release.
+        /// </summary>
+        EnableDynamicModuleImports = 0x00000020
     }
 }

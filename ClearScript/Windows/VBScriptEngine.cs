@@ -167,7 +167,24 @@ namespace Microsoft.ClearScript.Windows
         /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
         /// </remarks>
         protected VBScriptEngine(string progID, string name, WindowsScriptEngineFlags flags)
-            : base(progID, name, flags)
+            : this(progID, name, "vbs", flags)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new VBScript engine instance with the specified programmatic
+        /// identifier, name, list of supported file name extensions, and options.
+        /// </summary>
+        /// <param name="progID">The programmatic identifier (ProgID) of the VBScript engine class.</param>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
+        /// </remarks>
+        protected VBScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags)
+            : base(progID, name, fileNameExtensions, flags)
         {
             Execute(
                 MiscHelpers.FormatInvariant("{0} [internal]", GetType().Name),
@@ -339,7 +356,8 @@ namespace Microsoft.ClearScript.Windows
             if (trimmedCommand.StartsWith("eval ", StringComparison.OrdinalIgnoreCase))
             {
                 var expression = MiscHelpers.FormatInvariant("EngineInternal.getCommandResult({0})", trimmedCommand.Substring(5));
-                return GetCommandResultString(Evaluate(new DocumentInfo("Expression") { Flags = DocumentFlags.IsTransient }, expression, false));
+                var documentInfo = new DocumentInfo("Expression") { Flags = DocumentFlags.IsTransient };
+                return GetCommandResultString(Evaluate(documentInfo.MakeUnique(this), expression, false));
             }
 
             Execute("Command", true, trimmedCommand);
@@ -354,6 +372,21 @@ namespace Microsoft.ClearScript.Windows
         internal override IDictionary<int, string> SyntaxErrorMap
         {
             get { return syntaxErrorMap; }
+        }
+
+        internal override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
+        {
+            if (FormatCode)
+            {
+                code = MiscHelpers.FormatCode(code);
+            }
+
+            if (documentInfo.Category != DocumentCategory.Script)
+            {
+                throw new NotSupportedException("Engine cannot execute documents of type '" + documentInfo.Category + "'");
+            }
+
+            return base.Execute(documentInfo, code, evaluate);
         }
 
         #endregion

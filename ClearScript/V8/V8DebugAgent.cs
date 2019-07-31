@@ -101,7 +101,7 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
-        #region web endpoint
+        #region Web endpoint
 
         private void StartAcceptWebClient()
         {

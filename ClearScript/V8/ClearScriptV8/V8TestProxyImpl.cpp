@@ -11,12 +11,20 @@ namespace V8 {
     // V8TestProxyImpl implementation
     //-------------------------------------------------------------------------
 
-    V8ProxyCounters^ V8TestProxyImpl::GetCounters()
+    UIntPtr V8TestProxyImpl::GetNativeDigest(String^ gcValue)
     {
-        auto gcCounters = gcnew V8ProxyCounters();
-        gcCounters->IsolateCount = V8Isolate::GetInstanceCount();
-        gcCounters->ContextCount = V8Context::GetInstanceCount();
-        return gcCounters;
+        StdString value(gcValue);
+        return (UIntPtr)value.GetDigest();
+    }
+
+    //-------------------------------------------------------------------------
+
+    V8TestProxy::Statistics^ V8TestProxyImpl::GetStatistics()
+    {
+        auto gcStatistics = gcnew Statistics;
+        gcStatistics->IsolateCount = V8Isolate::GetInstanceCount();
+        gcStatistics->ContextCount = V8Context::GetInstanceCount();
+        return gcStatistics;
     }
 
     //-------------------------------------------------------------------------

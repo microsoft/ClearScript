@@ -61,8 +61,25 @@ namespace Microsoft.ClearScript.Windows
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
         /// </remarks>
+        [Obsolete("Use WindowsScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags) instead.")]
         protected WindowsScriptEngine(string progID, string name, WindowsScriptEngineFlags flags)
-            : base(name)
+            : this(progID, name, null, flags)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new Windows Script engine instance with the specified list of supported file name extensions.
+        /// </summary>
+        /// <param name="progID">The programmatic identifier (ProgID) of the Windows Script engine class.</param>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
+        /// </remarks>
+        protected WindowsScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags)
+            : base(name, fileNameExtensions)
         {
             script = base.ScriptInvoke(() =>
             {
@@ -148,12 +165,10 @@ namespace Microsoft.ClearScript.Windows
             return scriptDispatch;
         }
 
-        private void Parse(DocumentInfo documentInfo, string code, ScriptTextFlags flags, IntPtr pVarResult, out EXCEPINFO excepInfo)
+        private void Parse(UniqueDocumentInfo documentInfo, string code, ScriptTextFlags flags, IntPtr pVarResult, out EXCEPINFO excepInfo)
         {
-            var formattedCode = FormatCode ? MiscHelpers.FormatCode(code) : code;
-
             DebugDocument debugDocument;
-            var sourceContext = CreateDebugDocument(documentInfo, formattedCode, out debugDocument);
+            var sourceContext = CreateDebugDocument(documentInfo, code, out debugDocument);
             if (sourceContext != UIntPtr.Zero)
             {
                 flags |= ScriptTextFlags.HostManagesSource;
@@ -161,7 +176,7 @@ namespace Microsoft.ClearScript.Windows
 
             try
             {
-                activeScript.ParseScriptText(formattedCode, null, null, null, sourceContext, 0, flags, pVarResult, out excepInfo);
+                activeScript.ParseScriptText(code, null, null, null, sourceContext, 0, flags, pVarResult, out excepInfo);
             }
             finally
             {
@@ -173,7 +188,7 @@ namespace Microsoft.ClearScript.Windows
             }
         }
 
-        private UIntPtr CreateDebugDocument(DocumentInfo documentInfo, string code, out DebugDocument document)
+        private UIntPtr CreateDebugDocument(UniqueDocumentInfo documentInfo, string code, out DebugDocument document)
         {
             UIntPtr sourceContext;
             if (!sourceManagement)
@@ -184,8 +199,6 @@ namespace Microsoft.ClearScript.Windows
             else
             {
                 sourceContext = new UIntPtr(nextSourceContext++);
-                documentInfo.UniqueName = debugDocumentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
-                documentInfo.UniqueName += documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient) ? " [temp]" : "";
                 document = new DebugDocument(this, sourceContext, documentInfo, code);
                 debugDocumentMap[sourceContext] = document;
             }
@@ -272,123 +285,6 @@ namespace Microsoft.ClearScript.Windows
             }
         }
 
-        #endregion
-
-        #region ScriptEngine overrides (public members)
-
-        /// <summary>
-        /// Allows the host to access script resources directly.
-        /// </summary>
-        /// <remarks>
-        /// The value of this property is an object that is bound to the script engine's root
-        /// namespace. It dynamically supports properties and methods that correspond to global
-        /// script objects and functions.
-        /// </remarks>
-        public override dynamic Script
-        {
-            get
-            {
-                VerifyNotDisposed();
-                return script;
-            }
-        }
-
-        /// <summary>
-        /// Gets a string representation of the script call stack.
-        /// </summary>
-        /// <returns>The script call stack formatted as a string.</returns>
-        /// <remarks>
-        /// <para>
-        /// This method returns an empty string if the script engine is not executing script code.
-        /// The stack trace text format is defined by the script engine.
-        /// </para>
-        /// <para>
-        /// The <see cref="WindowsScriptEngine"/> version of this method returns the empty string
-        /// if script debugging features have not been enabled for the instance.
-        /// </para>
-        /// </remarks>
-        public override string GetStackTrace()
-        {
-            VerifyNotDisposed();
-            return (processDebugManager != null) ? ScriptInvoke(() => GetStackTraceInternal()) : string.Empty;
-        }
-
-        /// <summary>
-        /// Interrupts script execution and causes the script engine to throw an exception.
-        /// </summary>
-        /// <remarks>
-        /// This method can be called safely from any thread.
-        /// </remarks>
-        public override void Interrupt()
-        {
-            VerifyNotDisposed();
-
-            var excepInfo = new EXCEPINFO { scode = RawCOMHelpers.HResult.E_ABORT };
-            activeScript.InterruptScriptThread(ScriptThreadID.Base, ref excepInfo, ScriptInterruptFlags.None);
-        }
-
-        /// <summary>
-        /// Performs garbage collection.
-        /// </summary>
-        /// <param name="exhaustive"><c>True</c> to perform exhaustive garbage collection, <c>false</c> to favor speed over completeness.</param>
-        public override void CollectGarbage(bool exhaustive)
-        {
-            VerifyNotDisposed();
-            ScriptInvoke(() => activeScript.CollectGarbage(exhaustive ? ScriptGCType.Exhaustive : ScriptGCType.Normal));
-        }
-
-        #endregion
-
-        #region ScriptEngine overrides (internal members)
-
-        internal override void AddHostItem(string itemName, HostItemFlags flags, object item)
-        {
-            VerifyNotDisposed();
-
-            MiscHelpers.VerifyNonNullArgument(itemName, "itemName");
-            Debug.Assert(item != null);
-
-            ScriptInvoke(() =>
-            {
-                object marshaledItem;
-                if (!flags.HasFlag(HostItemFlags.DirectAccess) || !GetDirectAccessItem(item, out marshaledItem))
-                {
-                    marshaledItem = MarshalToScript(item, flags);
-                    if (!(marshaledItem is HostItem))
-                    {
-                        throw new InvalidOperationException("Invalid host item");
-                    }
-                }
-
-                var oldItem = ((IDictionary)hostItemMap)[itemName];
-                hostItemMap[itemName] = marshaledItem;
-
-                var nativeFlags = ScriptItemFlags.IsVisible;
-                if (flags.HasFlag(HostItemFlags.GlobalMembers))
-                {
-                    nativeFlags |= ScriptItemFlags.GlobalMembers;
-                }
-
-                try
-                {
-                    activeScript.AddNamedItem(itemName, nativeFlags);
-                }
-                catch (Exception)
-                {
-                    if (oldItem != null)
-                    {
-                        hostItemMap[itemName] = oldItem;
-                    }
-                    else
-                    {
-                        hostItemMap.Remove(itemName);
-                    }
-
-                    throw;
-                }
-            });
-        }
-
         private static bool GetDirectAccessItem(object item, out object directAccessItem)
         {
             while (true)
@@ -416,27 +312,6 @@ namespace Microsoft.ClearScript.Windows
                 directAccessItem = null;
                 return false;
             }
-        }
-
-        internal override object PrepareResult(object result, Type type, ScriptMemberFlags flags, bool isListIndexResult)
-        {
-            var tempResult = base.PrepareResult(result, type, flags, isListIndexResult);
-            if ((tempResult != null) || !engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
-            {
-                return tempResult;
-            }
-
-            if ((type == typeof(object)) || (type == typeof(string)) || type == typeof(bool?) || type.IsNullableNumeric())
-            {
-                return DBNull.Value;
-            }
-
-            return null;
-        }
-
-        internal override object MarshalToScript(object obj, HostItemFlags flags)
-        {
-            return MarshalToScriptInternal(obj, flags, null);
         }
 
         private object MarshalToScriptInternal(object obj, HostItemFlags flags, HashSet<Array> marshaledArraySet)
@@ -530,11 +405,6 @@ namespace Microsoft.ClearScript.Windows
             return HostItem.Wrap(this, hostTarget ?? obj, flags);
         }
 
-        internal override object MarshalToHost(object obj, bool preserveHostTarget)
-        {
-            return MarshalToHostInternal(obj, preserveHostTarget, null);
-        }
-
         private object MarshalToHostInternal(object obj, bool preserveHostTarget, HashSet<Array> marshaledArraySet)
         {
             if (obj == null)
@@ -598,27 +468,215 @@ namespace Microsoft.ClearScript.Windows
             return WindowsScriptItem.Wrap(this, obj);
         }
 
-        internal override object Execute(DocumentInfo documentInfo, string code, bool evaluate)
+        private void ThrowHostException(Exception exception)
+        {
+            if (CurrentScriptFrame != null)
+            {
+                // Record the host exception in the script frame and throw an easily recognizable
+                // surrogate across the COM boundary. Recording the host exception enables
+                // downstream chaining. The surrogate exception indicates to the site that the
+                // reported script error actually corresponds to the host exception in the frame.
+
+                CurrentScriptFrame.HostException = exception;
+                throw new COMException(exception.Message, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION);
+            }
+        }
+
+        private void ThrowScriptError(Exception exception)
+        {
+            var comException = exception as COMException;
+            if (comException != null)
+            {
+                if (comException.ErrorCode == RawCOMHelpers.HResult.SCRIPT_E_REPORTED)
+                {
+                    // a script error was reported; the corresponding exception should be in the script frame
+                    ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
+                }
+                else if (comException.ErrorCode == RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
+                {
+                    // A host exception surrogate passed through the COM boundary; this happens
+                    // when some script engines are invoked via script item access rather than
+                    // script execution. Chain the host exception to a new script exception.
+
+                    var hostException = CurrentScriptFrame.HostException;
+                    if (hostException != null)
+                    {
+                        throw new ScriptEngineException(Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
+                    }
+                }
+            }
+        }
+
+        #endregion
+
+        #region ScriptEngine overrides (public members)
+
+        /// <summary>
+        /// Allows the host to access script resources directly.
+        /// </summary>
+        /// <remarks>
+        /// The value of this property is an object that is bound to the script engine's root
+        /// namespace. It dynamically supports properties and methods that correspond to global
+        /// script objects and functions.
+        /// </remarks>
+        public override dynamic Script
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return script;
+            }
+        }
+
+        /// <summary>
+        /// Gets a string representation of the script call stack.
+        /// </summary>
+        /// <returns>The script call stack formatted as a string.</returns>
+        /// <remarks>
+        /// <para>
+        /// This method returns an empty string if the script engine is not executing script code.
+        /// The stack trace text format is defined by the script engine.
+        /// </para>
+        /// <para>
+        /// The <see cref="WindowsScriptEngine"/> version of this method returns the empty string
+        /// if script debugging features have not been enabled for the instance.
+        /// </para>
+        /// </remarks>
+        public override string GetStackTrace()
+        {
+            VerifyNotDisposed();
+            return (processDebugManager != null) ? ScriptInvoke(() => GetStackTraceInternal()) : string.Empty;
+        }
+
+        /// <summary>
+        /// Interrupts script execution and causes the script engine to throw an exception.
+        /// </summary>
+        /// <remarks>
+        /// This method can be called safely from any thread.
+        /// </remarks>
+        public override void Interrupt()
         {
             VerifyNotDisposed();
 
-            return ScriptInvoke(() =>
+            var excepInfo = new EXCEPINFO { scode = RawCOMHelpers.HResult.E_ABORT };
+            activeScript.InterruptScriptThread(ScriptThreadID.Base, ref excepInfo, ScriptInterruptFlags.None);
+        }
+
+        /// <summary>
+        /// Performs garbage collection.
+        /// </summary>
+        /// <param name="exhaustive"><c>True</c> to perform exhaustive garbage collection, <c>false</c> to favor speed over completeness.</param>
+        public override void CollectGarbage(bool exhaustive)
+        {
+            VerifyNotDisposed();
+            ScriptInvoke(() => activeScript.CollectGarbage(exhaustive ? ScriptGCType.Exhaustive : ScriptGCType.Normal));
+        }
+
+        #endregion
+
+        #region ScriptEngine overrides (internal members)
+
+        internal override IUniqueNameManager DocumentNameManager
+        {
+            get { return debugDocumentNameManager; }
+        }
+
+        internal override void AddHostItem(string itemName, HostItemFlags flags, object item)
+        {
+            VerifyNotDisposed();
+
+            MiscHelpers.VerifyNonNullArgument(itemName, "itemName");
+            Debug.Assert(item != null);
+
+            ScriptInvoke(() =>
             {
-                EXCEPINFO excepInfo;
-                if (!evaluate)
+                object marshaledItem;
+                if (!flags.HasFlag(HostItemFlags.DirectAccess) || !GetDirectAccessItem(item, out marshaledItem))
                 {
-                    const ScriptTextFlags flags = ScriptTextFlags.IsVisible;
-                    Parse(documentInfo, code, flags, IntPtr.Zero, out excepInfo);
-                    return null;
+                    marshaledItem = MarshalToScript(item, flags);
+                    if (!(marshaledItem is HostItem))
+                    {
+                        throw new InvalidOperationException("Invalid host item");
+                    }
                 }
 
-                using (var resultVariantBlock = new CoTaskMemVariantBlock())
+                var oldItem = ((IDictionary)hostItemMap)[itemName];
+                hostItemMap[itemName] = marshaledItem;
+
+                var nativeFlags = ScriptItemFlags.IsVisible;
+                if (flags.HasFlag(HostItemFlags.GlobalMembers))
                 {
-                    const ScriptTextFlags flags = ScriptTextFlags.IsExpression;
-                    Parse(documentInfo, code, flags, resultVariantBlock.Addr, out excepInfo);
-                    return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+                    nativeFlags |= ScriptItemFlags.GlobalMembers;
+                }
+
+                try
+                {
+                    activeScript.AddNamedItem(itemName, nativeFlags);
+                }
+                catch (Exception)
+                {
+                    if (oldItem != null)
+                    {
+                        hostItemMap[itemName] = oldItem;
+                    }
+                    else
+                    {
+                        hostItemMap.Remove(itemName);
+                    }
+
+                    throw;
                 }
             });
+        }
+
+        internal override object PrepareResult(object result, Type type, ScriptMemberFlags flags, bool isListIndexResult)
+        {
+            var tempResult = base.PrepareResult(result, type, flags, isListIndexResult);
+            if ((tempResult != null) || !engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
+            {
+                return tempResult;
+            }
+
+            if ((type == typeof(object)) || (type == typeof(string)) || type == typeof(bool?) || type.IsNullableNumeric())
+            {
+                return DBNull.Value;
+            }
+
+            return null;
+        }
+
+        internal override object MarshalToScript(object obj, HostItemFlags flags)
+        {
+            return MarshalToScriptInternal(obj, flags, null);
+        }
+
+        internal override object MarshalToHost(object obj, bool preserveHostTarget)
+        {
+            return MarshalToHostInternal(obj, preserveHostTarget, null);
+        }
+
+        internal override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
+        {
+            VerifyNotDisposed();
+            return ScriptInvoke(() => ExecuteRaw(documentInfo, code, evaluate));
+        }
+
+        internal sealed override object ExecuteRaw(UniqueDocumentInfo documentInfo, string code, bool evaluate)
+        {
+            EXCEPINFO excepInfo;
+            if (!evaluate)
+            {
+                const ScriptTextFlags flags = ScriptTextFlags.IsVisible;
+                Parse(documentInfo, code, flags, IntPtr.Zero, out excepInfo);
+                return null;
+            }
+
+            using (var resultVariantBlock = new CoTaskMemVariantBlock())
+            {
+                const ScriptTextFlags flags = ScriptTextFlags.IsExpression;
+                Parse(documentInfo, code, flags, resultVariantBlock.Addr, out excepInfo);
+                return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+            }
         }
 
         internal override HostItemCollateral HostItemCollateral
@@ -653,20 +711,6 @@ namespace Microsoft.ClearScript.Windows
             {
                 ThrowHostException(exception);
                 throw;
-            }
-        }
-
-        private void ThrowHostException(Exception exception)
-        {
-            if (CurrentScriptFrame != null)
-            {
-                // Record the host exception in the script frame and throw an easily recognizable
-                // surrogate across the COM boundary. Recording the host exception enables
-                // downstream chaining. The surrogate exception indicates to the site that the
-                // reported script error actually corresponds to the host exception in the frame.
-
-                CurrentScriptFrame.HostException = exception;
-                throw new COMException(exception.Message, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION);
             }
         }
 
@@ -706,31 +750,6 @@ namespace Microsoft.ClearScript.Windows
                     throw;
                 }
             });
-        }
-
-        private void ThrowScriptError(Exception exception)
-        {
-            var comException = exception as COMException;
-            if (comException != null)
-            {
-                if (comException.ErrorCode == RawCOMHelpers.HResult.SCRIPT_E_REPORTED)
-                {
-                    // a script error was reported; the corresponding exception should be in the script frame
-                    ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
-                }
-                else if (comException.ErrorCode == RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
-                {
-                    // A host exception surrogate passed through the COM boundary; this happens
-                    // when some script engines are invoked via script item access rather than
-                    // script execution. Chain the host exception to a new script exception.
-
-                    var hostException = CurrentScriptFrame.HostException;
-                    if (hostException != null)
-                    {
-                        throw new ScriptEngineException(Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
-                    }
-                }
-            }
         }
 
         #endregion

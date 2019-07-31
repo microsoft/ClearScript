@@ -81,7 +81,7 @@ RecursiveMutex::~RecursiveMutex()
 // OnceFlag::Impl
 //-----------------------------------------------------------------------------
 
-class OnceFlag final::Impl
+class OnceFlag::Impl final
 {
     PROHIBIT_COPY(Impl)
 

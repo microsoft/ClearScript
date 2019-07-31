@@ -20,13 +20,15 @@ namespace Microsoft.ClearScript.V8
 
         public abstract void AwaitDebuggerAndPause();
 
-        public abstract V8Script Compile(DocumentInfo documentInfo, string code);
+        public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code);
 
-        public abstract V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
+        public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
 
-        public abstract V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
+        public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
 
         public abstract V8RuntimeHeapInfo GetHeapInfo();
+
+        public abstract V8Runtime.Statistics GetStatistics();
 
         public abstract void CollectGarbage(bool exhaustive);
 

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
 
@@ -21,9 +22,11 @@ namespace Microsoft.ClearScript.V8
     /// instance. Script delegates and event handlers are invoked on the calling thread without
     /// marshaling.
     /// </remarks>
-    public sealed class V8ScriptEngine : ScriptEngine
+    public sealed class V8ScriptEngine : ScriptEngine, IJavaScriptEngine
     {
         #region data
+
+        private static readonly DocumentInfo initScriptInfo = new DocumentInfo(MiscHelpers.FormatInvariant("{0} [internal]", typeof(V8ScriptEngine).Name));
 
         private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
@@ -35,10 +38,12 @@ namespace Microsoft.ClearScript.V8
         private bool awaitDebuggerAndPause;
 
         private readonly HostItemCollateral hostItemCollateral;
-        private readonly IUniqueNameManager documentNameManager = new UniqueFileNameManager();
+        private readonly IUniqueNameManager documentNameManager;
         private List<string> documentNames;
         private bool suppressInstanceMethodEnumeration;
         private bool suppressExtensionMethodEnumeration;
+
+        private CommonJSManager commonJSManager;
 
         #endregion
 
@@ -201,20 +206,19 @@ namespace Microsoft.ClearScript.V8
         }
 
         internal V8ScriptEngine(V8Runtime runtime, string name, V8RuntimeConstraints constraints, V8ScriptEngineFlags flags, int debugPort)
-            : base((runtime != null) ? runtime.Name + ":" + name : name)
+            : base((runtime != null) ? runtime.Name + ":" + name : name, "js")
         {
             using (var localRuntime = (runtime != null) ? null : new V8Runtime(name, constraints))
             {
                 var activeRuntime = runtime ?? localRuntime;
+                documentNameManager = activeRuntime.DocumentNameManager;
                 hostItemCollateral = activeRuntime.HostItemCollateral;
 
                 engineFlags = flags;
                 proxy = V8ContextProxy.Create(activeRuntime.IsolateProxy, Name, flags, debugPort);
                 script = GetRootItem();
 
-                var engineInternal = Evaluate(
-                    MiscHelpers.FormatInvariant("{0} [internal]", GetType().Name),
-                    false,
+                Execute(initScriptInfo,
                     @"
                         EngineInternal = (function () {
 
@@ -241,6 +245,9 @@ namespace Microsoft.ClearScript.V8
                                         return value;
                                     }
                                     if (typeof(value.hasOwnProperty) != 'function') {
+                                        if (value[Symbol.toStringTag] == 'Module') {
+                                            return '[module]';
+                                        }
                                         return '[external]';
                                     }
                                     if (value[isHostObjectKey] === true) {
@@ -279,8 +286,6 @@ namespace Microsoft.ClearScript.V8
                         })();
                     "
                 );
-
-                ((IDisposable)engineInternal).Dispose();
 
                 if (flags.HasFlag(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart))
                 {
@@ -449,20 +454,15 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
-        /// Creates a compiled script with the specified document information.
+        /// Creates a compiled script with the specified document meta-information.
         /// </summary>
-        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="documentInfo">A structure containing meta-information for the script document.</param>
         /// <param name="code">The script code to compile.</param>
         /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
         public V8Script Compile(DocumentInfo documentInfo, string code)
         {
             VerifyNotDisposed();
-
-            return ScriptInvoke(() =>
-            {
-                documentInfo.UniqueName = documentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
-                return proxy.Compile(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code);
-            });
+            return ScriptInvoke(() => CompileInternal(documentInfo.MakeUnique(this), code));
         }
 
         /// <summary>
@@ -474,8 +474,7 @@ namespace Microsoft.ClearScript.V8
         /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
         /// <remarks>
         /// The generated cache data can be stored externally and is usable in other V8 script
-        /// engines and application processes. V8 script engines with debugging enabled cannot
-        /// generate cache data.
+        /// engines and application processes.
         /// </remarks>
         /// <seealso cref="Compile(string, V8CacheKind, byte[], out bool)"/>
         public V8Script Compile(string code, V8CacheKind cacheKind, out byte[] cacheBytes)
@@ -493,8 +492,7 @@ namespace Microsoft.ClearScript.V8
         /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
         /// <remarks>
         /// The generated cache data can be stored externally and is usable in other V8 script
-        /// engines and application processes. V8 script engines with debugging enabled cannot
-        /// generate cache data.
+        /// engines and application processes.
         /// </remarks>
         /// <seealso cref="Compile(string, string, V8CacheKind, byte[], out bool)"/>
         public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
@@ -503,17 +501,16 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
-        /// Creates a compiled script with the specified document information, generating cache data for accelerated recompilation.
+        /// Creates a compiled script with the specified document meta-information, generating cache data for accelerated recompilation.
         /// </summary>
-        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="documentInfo">A structure containing meta-information for the script document.</param>
         /// <param name="code">The script code to compile.</param>
         /// <param name="cacheKind">The kind of cache data to be generated.</param>
         /// <param name="cacheBytes">Cache data for accelerated recompilation.</param>
         /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
         /// <remarks>
         /// The generated cache data can be stored externally and is usable in other V8 script
-        /// engines and application processes. V8 script engines with debugging enabled cannot
-        /// generate cache data.
+        /// engines and application processes.
         /// </remarks>
         /// <seealso cref="Compile(DocumentInfo, string, V8CacheKind, byte[], out bool)"/>
         public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
@@ -524,8 +521,7 @@ namespace Microsoft.ClearScript.V8
             cacheBytes = ScriptInvoke(() =>
             {
                 byte[] tempCacheBytes;
-                documentInfo.UniqueName = documentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
-                tempScript = proxy.Compile(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code, cacheKind, out tempCacheBytes);
+                tempScript = CompileInternal(documentInfo.MakeUnique(this), code, cacheKind, out tempCacheBytes);
                 return tempCacheBytes;
             });
 
@@ -542,7 +538,7 @@ namespace Microsoft.ClearScript.V8
         /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
         /// <remarks>
         /// To be accepted, the cache data must have been generated for identical script code by
-        /// the same V8 build. V8 script engines with debugging enabled cannot consume cache data.
+        /// the same V8 build.
         /// </remarks>
         /// <seealso cref="Compile(string, V8CacheKind, out byte[])"/>
         public V8Script Compile(string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
@@ -561,7 +557,7 @@ namespace Microsoft.ClearScript.V8
         /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
         /// <remarks>
         /// To be accepted, the cache data must have been generated for identical script code by
-        /// the same V8 build. V8 script engines with debugging enabled cannot consume cache data.
+        /// the same V8 build.
         /// </remarks>
         /// <seealso cref="Compile(string, string, V8CacheKind, out byte[])"/>
         public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
@@ -572,7 +568,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Creates a compiled script with an associated document name, consuming previously generated cache data.
         /// </summary>
-        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="documentInfo">A structure containing meta-information for the script document.</param>
         /// <param name="code">The script code to compile.</param>
         /// <param name="cacheKind">The kind of cache data to be consumed.</param>
         /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
@@ -580,7 +576,7 @@ namespace Microsoft.ClearScript.V8
         /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
         /// <remarks>
         /// To be accepted, the cache data must have been generated for identical script code by
-        /// the same V8 build. V8 script engines with debugging enabled cannot consume cache data.
+        /// the same V8 build.
         /// </remarks>
         /// <seealso cref="Compile(DocumentInfo, string, V8CacheKind, out byte[])"/>
         public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
@@ -591,12 +587,155 @@ namespace Microsoft.ClearScript.V8
             cacheAccepted = ScriptInvoke(() =>
             {
                 bool tempCacheAccepted;
-                documentInfo.UniqueName = documentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
-                tempScript = proxy.Compile(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code, cacheKind, cacheBytes, out tempCacheAccepted);
+                tempScript = CompileInternal(documentInfo.MakeUnique(this), code, cacheKind, cacheBytes, out tempCacheAccepted);
                 return tempCacheAccepted;
             });
 
             return tempScript;
+        }
+
+        /// <summary>
+        /// Loads and compiles a script document.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        public V8Script CompileDocument(string specifier)
+        {
+            return CompileDocument(specifier, null);
+        }
+
+        /// <summary>
+        /// Loads and compiles a document with the specified category.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        public V8Script CompileDocument(string specifier, DocumentCategory category)
+        {
+            return CompileDocument(specifier, category, null);
+        }
+
+        /// <summary>
+        /// Loads and compiles a document with the specified category and context callback.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <param name="contextCallback">An optional context callback for the requested document.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
+        {
+            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            return Compile(document.Info, document.GetTextContents());
+        }
+
+        /// <summary>
+        /// Loads and compiles a script document, generating cache data for accelerated recompilation.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="cacheKind">The kind of cache data to be generated.</param>
+        /// <param name="cacheBytes">Cache data for accelerated recompilation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// The generated cache data can be stored externally and is usable in other V8 runtimes
+        /// and application processes.
+        /// </remarks>
+        public V8Script CompileDocument(string specifier, V8CacheKind cacheKind, out byte[] cacheBytes)
+        {
+            return CompileDocument(specifier, null, cacheKind, out cacheBytes);
+        }
+
+        /// <summary>
+        /// Loads and compiles a document with the specified category, generating cache data for accelerated recompilation.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <param name="cacheKind">The kind of cache data to be generated.</param>
+        /// <param name="cacheBytes">Cache data for accelerated recompilation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// The generated cache data can be stored externally and is usable in other V8 runtimes
+        /// and application processes.
+        /// </remarks>
+        public V8Script CompileDocument(string specifier, DocumentCategory category, V8CacheKind cacheKind, out byte[] cacheBytes)
+        {
+            return CompileDocument(specifier, category, null, cacheKind, out cacheBytes);
+        }
+
+        /// <summary>
+        /// Loads and compiles a document with the specified category and context callback, generating cache data for accelerated recompilation.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <param name="contextCallback">An optional context callback for the requested document.</param>
+        /// <param name="cacheKind">The kind of cache data to be generated.</param>
+        /// <param name="cacheBytes">Cache data for accelerated recompilation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// The generated cache data can be stored externally and is usable in other V8 runtimes
+        /// and application processes.
+        /// </remarks>
+        public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, out byte[] cacheBytes)
+        {
+            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            return Compile(document.Info, document.GetTextContents(), cacheKind, out cacheBytes);
+        }
+
+        /// <summary>
+        /// Loads and compiles a script document, consuming previously generated cache data.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="cacheKind">The kind of cache data to be consumed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build.
+        /// </remarks>
+        public V8Script CompileDocument(string specifier, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+        {
+            return CompileDocument(specifier, null, cacheKind, cacheBytes, out cacheAccepted);
+        }
+
+        /// <summary>
+        /// Loads and compiles a document with the specified category, consuming previously generated cache data.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <param name="cacheKind">The kind of cache data to be consumed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build.
+        /// </remarks>
+        public V8Script CompileDocument(string specifier, DocumentCategory category, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+        {
+            return CompileDocument(specifier, category, null, cacheKind, cacheBytes, out cacheAccepted);
+        }
+
+        /// <summary>
+        /// Loads and compiles a document with the specified category and context callback, consuming previously generated cache data.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <param name="contextCallback">An optional context callback for the requested document.</param>
+        /// <param name="cacheKind">The kind of cache data to be consumed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build.
+        /// </remarks>
+        public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+        {
+            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            return Compile(document.Info, document.GetTextContents(), cacheKind, cacheBytes, out cacheAccepted);
         }
 
         // ReSharper disable ParameterHidesMember
@@ -718,6 +857,41 @@ namespace Microsoft.ClearScript.V8
 
         #region internal members
 
+        internal V8Runtime.Statistics GetRuntimeStatistics()
+        {
+            VerifyNotDisposed();
+            return proxy.GetRuntimeStatistics();
+        }
+
+        internal Statistics GetStatistics()
+        {
+            VerifyNotDisposed();
+            return ScriptInvoke(() =>
+            {
+                var statistics = proxy.GetStatistics();
+
+                if (commonJSManager != null)
+                {
+                    statistics.CommonJSModuleCacheSize = CommonJSManager.ModuleCacheSize;
+                }
+                
+                return statistics;
+            });
+        }
+
+        private CommonJSManager CommonJSManager
+        {
+            get
+            {
+                if (commonJSManager == null)
+                {
+                    commonJSManager = new CommonJSManager(this);
+                }
+
+                return commonJSManager;
+            }
+        }
+
         private object GetRootItem()
         {
             return MarshalToHost(ScriptInvoke(() => proxy.GetRootItem()), false);
@@ -747,7 +921,7 @@ namespace Microsoft.ClearScript.V8
                         proxy.AwaitDebuggerAndPause();
                     }
 
-                    return proxy.Execute(script, evaluate);
+                    return ExecuteInternal(script, evaluate);
                 }
 
                 var state = new Timer[] { null };
@@ -763,7 +937,7 @@ namespace Microsoft.ClearScript.V8
                             proxy.AwaitDebuggerAndPause();
                         }
 
-                        return proxy.Execute(script, evaluate);
+                        return ExecuteInternal(script, evaluate);
                     }
                     finally
                     {
@@ -771,6 +945,109 @@ namespace Microsoft.ClearScript.V8
                     }
                 }
             }), false);
+        }
+
+        // ReSharper restore ParameterHidesMember
+
+        private V8Script CompileInternal(UniqueDocumentInfo documentInfo, string code)
+        {
+            if (FormatCode)
+            {
+                code = MiscHelpers.FormatCode(code);
+            }
+
+            CommonJSManager.Module module = null;
+            if (documentInfo.Category == ModuleCategory.CommonJS)
+            {
+                module = CommonJSManager.GetOrCreateModule(documentInfo, code);
+                code = CommonJSManager.Module.GetAugmentedCode(code);
+            }
+
+            // ReSharper disable once LocalVariableHidesMember
+            var script = proxy.Compile(documentInfo, code);
+            if (module != null)
+            {
+                module.Evaluator = () => proxy.Execute(script, true);
+            }
+
+            return script;
+        }
+
+        private V8Script CompileInternal(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+        {
+            if (FormatCode)
+            {
+                code = MiscHelpers.FormatCode(code);
+            }
+
+            CommonJSManager.Module module = null;
+            if (documentInfo.Category == ModuleCategory.CommonJS)
+            {
+                module = CommonJSManager.GetOrCreateModule(documentInfo, code);
+                code = CommonJSManager.Module.GetAugmentedCode(code);
+            }
+
+            // ReSharper disable once LocalVariableHidesMember
+            var script = proxy.Compile(documentInfo, code, cacheKind, out cacheBytes);
+            if (module != null)
+            {
+                module.Evaluator = () => proxy.Execute(script, true);
+            }
+
+            return script;
+        }
+
+        private V8Script CompileInternal(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+        {
+            if (FormatCode)
+            {
+                code = MiscHelpers.FormatCode(code);
+            }
+
+            CommonJSManager.Module module = null;
+            if (documentInfo.Category == ModuleCategory.CommonJS)
+            {
+                module = CommonJSManager.GetOrCreateModule(documentInfo, code);
+                code = CommonJSManager.Module.GetAugmentedCode(code);
+            }
+
+            // ReSharper disable once LocalVariableHidesMember
+            var script = proxy.Compile(documentInfo, code, cacheKind, cacheBytes, out cacheAccepted);
+            if (module != null)
+            {
+                module.Evaluator = () => proxy.Execute(script, true);
+            }
+
+            return script;
+        }
+
+        private object ExecuteInternal(UniqueDocumentInfo documentInfo, string code, bool evaluate)
+        {
+            if (FormatCode)
+            {
+                code = MiscHelpers.FormatCode(code);
+            }
+
+            if (documentInfo.Category == ModuleCategory.CommonJS)
+            {
+                var module = CommonJSManager.GetOrCreateModule(documentInfo, code);
+                return module.Process();
+            }
+
+            return ExecuteRaw(documentInfo, code, evaluate);
+        }
+
+        // ReSharper disable ParameterHidesMember
+
+        private object ExecuteInternal(V8Script script, bool evaluate)
+        {
+            if (script.UniqueDocumentInfo.Category == ModuleCategory.CommonJS)
+            {
+                var module = CommonJSManager.GetOrCreateModule(script.UniqueDocumentInfo, script.CodeDigest, () => proxy.Execute(script, evaluate));
+                return module.Process();
+            }
+
+            return proxy.Execute(script, evaluate);
         }
 
         // ReSharper restore ParameterHidesMember
@@ -893,6 +1170,11 @@ namespace Microsoft.ClearScript.V8
         #endregion
 
         #region ScriptEngine overrides (internal members)
+
+        internal override IUniqueNameManager DocumentNameManager
+        {
+            get { return documentNameManager; }
+        }
 
         internal override bool EnumerateInstanceMethods
         {
@@ -1023,18 +1305,13 @@ namespace Microsoft.ClearScript.V8
             return V8ScriptItem.Wrap(this, obj);
         }
 
-        internal override object Execute(DocumentInfo documentInfo, string code, bool evaluate)
+        internal override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
         {
             VerifyNotDisposed();
 
             return ScriptInvoke(() =>
             {
-                documentInfo.UniqueName = documentNameManager.GetUniqueName(documentInfo.Name, DocumentInfo.DefaultName);
-                if (documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient))
-                {
-                    documentInfo.UniqueName += " [temp]";
-                }
-                else if (documentNames != null)
+                if ((documentNames != null) && !documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient))
                 {
                     documentNames.Add(documentInfo.UniqueName);
                 }
@@ -1046,7 +1323,7 @@ namespace Microsoft.ClearScript.V8
                         proxy.AwaitDebuggerAndPause();
                     }
 
-                    return proxy.Execute(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate);
+                    return ExecuteInternal(documentInfo, code, evaluate);
                 }
 
                 var state = new Timer[] { null };
@@ -1062,7 +1339,7 @@ namespace Microsoft.ClearScript.V8
                             proxy.AwaitDebuggerAndPause();
                         }
 
-                        return proxy.Execute(documentInfo, FormatCode ? MiscHelpers.FormatCode(code) : code, evaluate);
+                        return ExecuteInternal(documentInfo, code, evaluate);
                     }
                     finally
                     {
@@ -1070,6 +1347,11 @@ namespace Microsoft.ClearScript.V8
                     }
                 }
             });
+        }
+
+        internal override object ExecuteRaw(UniqueDocumentInfo documentInfo, string code, bool evaluate)
+        {
+            return proxy.Execute(documentInfo, code, evaluate);
         }
 
         internal override HostItemCollateral HostItemCollateral
@@ -1137,6 +1419,15 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region IJavaScriptEngine implementation
+
+        uint IJavaScriptEngine.BaseLanguageVersion
+        {
+            get { return 8; }
+        }
+
+        #endregion
+
         #region unit test support
 
         internal void EnableDocumentNameTracking()
@@ -1151,5 +1442,16 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region Nested type: Statistics
+
+        internal sealed class Statistics
+        {
+            public ulong ScriptCount;
+            public ulong ModuleCount;
+            public ulong ModuleCacheSize;
+            public int CommonJSModuleCacheSize;
+        }
+
+        #endregion
     }
 }

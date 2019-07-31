@@ -58,6 +58,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
@@ -77,6 +78,7 @@
     <Compile Include="BaseInterfaceMemberAccessTest.cs" />
     <Compile Include="BaseMemberAccessTest.cs" />
     <Compile Include="ExplicitInterfaceMemberAccessTest.cs" />
+    <Compile Include="ExtensionsTest.cs" />
     <Compile Include="GeneralTestObject.cs" />
     <Compile Include="HostListTest.cs" />
     <Compile Include="HostVariableTest.cs" />
@@ -90,6 +92,7 @@
     <Compile Include="InterfaceMemberAccessTest.cs" />
     <Compile Include="ITestInterface.cs" />
     <Compile Include="JScriptEngineTest.cs" />
+    <Compile Include="JScriptModuleTest.cs" />
     <Compile Include="ScriptAccessTest.cs" />
     <Compile Include="Misc.cs" />
     <None Include="packages.config" />
@@ -105,6 +108,7 @@
     </Compile>
     <Compile Include="PropertyBagTest.cs" />
     <Compile Include="MemberAccessTest.cs" />
+    <Compile Include="V8ModuleTest.cs" />
     <Compile Include="StaticMemberAccessTest.cs" />
     <Compile Include="StaticTestClass.cs" />
     <Compile Include="TestObject.cs" />
@@ -142,6 +146,69 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Content Include="JavaScript\CommonJS\Arithmetic\Arithmetic.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\CommonJS\Geometry\Geometry.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\CommonJS\Geometry\GeometryWithPathlessImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\CommonJS\Module.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\CommonJS\ModuleWithSideEffects.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\CommonJS\NewMath.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\LegacyCommonJS\Geometry\Geometry.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\LegacyCommonJS\Geometry\GeometryWithPathlessImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\LegacyCommonJS\Module.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\LegacyCommonJS\ModuleWithSideEffects.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\StandardModule\Module.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\StandardModule\ModuleWithSideEffects.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="VBScript\Expression.vbs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="VBScript\General.vbs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\StandardModule\Arithmetic\Arithmetic.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\General.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\StandardModule\Geometry\GeometryWithDynamicImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\StandardModule\Geometry\Geometry.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="JavaScript\StandardModule\Geometry\GeometryWithPathlessImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

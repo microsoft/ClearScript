@@ -5,7 +5,7 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=7.4.288.26
+set v8testedrev=7.6.303.28
 
 :ProcessArgs
 
@@ -75,8 +75,9 @@ goto Exit
 :CheckMSVS
 if "%VisualStudioVersion%"=="15.0" goto CheckMSVSDone
 if "%VisualStudioVersion%"=="16.0" goto CheckMSVSDone
-echo Error: This script requires a Visual Studio 2017 or 2019 Developer Command Prompt.
-echo Browse to http://www.visualstudio.com for more information.
+echo Error: This script requires a Visual Studio 2017 or Visual Studio 2019
+echo Developer Command Prompt. Browse to http://www.visualstudio.com for more
+echo information.
 goto Exit
 :CheckMSVSDone
 
@@ -167,19 +168,26 @@ call gclient sync -r %v8rev% >sync.log
 if errorlevel 1 goto Error
 :SyncClientDone
 
-cd v8
 
-:PatchV8
-echo Patching V8 ...
+:ApplyPatches
+echo Applying patches ...
+cd v8
 call git config user.name ClearScript
 if errorlevel 1 goto Error
 call git config user.email "ClearScript@microsoft.com"
 if errorlevel 1 goto Error
-call git apply --ignore-whitespace ..\..\V8Patch.txt 2>applyPatch.log
+call git apply --ignore-whitespace ..\..\V8Patch.txt 2>applyV8Patch.log
 if errorlevel 1 goto Error
-:PatchV8Done
-
+cd buildtools
+call git config user.name ClearScript
+if errorlevel 1 goto Error
+call git config user.email "ClearScript@microsoft.com"
+if errorlevel 1 goto Error
+call git apply --ignore-whitespace ..\..\..\BuildToolsPatch.txt 2>..\applyBuildToolsPatch.log
+if errorlevel 1 goto Error
 cd ..
+cd ..
+:ApplyPatchesDone
 
 :DownloadDone
 
@@ -189,13 +197,17 @@ cd ..
 
 :Build
 
-:CreatePatchFile
-echo Creating patch file ...
+:CreatePatchFiles
+echo Creating patch files ...
 cd v8
-call git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createPatch.log
+call git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createV8Patch.log
+if errorlevel 1 goto Error
+cd buildtools
+call git diff --ignore-space-change --ignore-space-at-eol >..\BuildToolsPatch.txt 2>..\createBuildToolsPatch.log
 if errorlevel 1 goto Error
 cd ..
-:CreatePatchFileDone
+cd ..
+:CreatePatchFilesDone
 
 :Build32Bit
 echo Building 32-bit V8 ...
@@ -243,6 +255,10 @@ if errorlevel 1 goto Error
 
 :ImportLibs
 echo Importing V8 libraries ...
+copy build\v8\out\ia32\%mode%\v8-libcpp-ia32.dll lib\ >nul
+if errorlevel 1 goto Error
+copy build\v8\out\ia32\%mode%\v8-libcpp-ia32.dll.pdb lib\ >nul
+if errorlevel 1 goto Error
 copy build\v8\out\ia32\%mode%\v8-base-ia32.dll lib\ >nul
 if errorlevel 1 goto Error
 copy build\v8\out\ia32\%mode%\v8-base-ia32.dll.pdb lib\ >nul
@@ -252,6 +268,10 @@ if errorlevel 1 goto Error
 copy build\v8\out\ia32\%mode%\v8-ia32.dll.pdb lib\ >nul
 if errorlevel 1 goto Error
 copy build\v8\out\ia32\%mode%\v8-ia32.dll.lib lib\ >nul
+if errorlevel 1 goto Error
+copy build\v8\out\x64\%mode%\v8-libcpp-x64.dll lib\ >nul
+if errorlevel 1 goto Error
+copy build\v8\out\x64\%mode%\v8-libcpp-x64.dll.pdb lib\ >nul
 if errorlevel 1 goto Error
 copy build\v8\out\x64\%mode%\v8-base-x64.dll lib\ >nul
 if errorlevel 1 goto Error
@@ -281,11 +301,12 @@ copy build\v8\include\*.* include\ >nul
 if errorlevel 1 goto Error
 :ImportHeadersDone
 
-:ImportPatchFile
-echo Importing patch file ...
+:ImportPatchFiles
+echo Importing patch files ...
 copy build\v8\V8Patch.txt .\ >nul
+copy build\v8\BuildToolsPatch.txt .\ >nul
 if errorlevel 1 goto Error
-:ImportPatchFileDone
+:ImportPatchFilesDone
 
 :ImportDone
 

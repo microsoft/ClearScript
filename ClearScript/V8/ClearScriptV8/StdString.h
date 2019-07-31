@@ -56,7 +56,7 @@ public:
     {
     }
 
-    StdString(StdString&& that):
+    StdString(StdString&& that) noexcept:
         m_Value(std::move(that.m_Value))
     {
     }
@@ -86,7 +86,7 @@ public:
         return *this;
     }
 
-    const StdString& operator=(StdString&& that)
+    const StdString& operator=(StdString&& that) noexcept
     {
         m_Value = std::move(that.m_Value);
         return *this;
@@ -179,6 +179,11 @@ public:
         return static_cast<int>(m_Value.length());
     }
 
+    size_t GetDigest() const
+    {
+        return std::hash<std::wstring>()(m_Value);
+    }
+
     const wchar_t* ToCString() const
     {
         return m_Value.c_str();
@@ -219,9 +224,9 @@ public:
     {
     }
 
-    v8::MaybeLocal<v8::String> ToV8String(v8::Isolate* pIsolate) const
+    v8::MaybeLocal<v8::String> ToV8String(v8::Isolate* pIsolate, v8::NewStringType type) const
     {
-        return v8::String::NewFromTwoByte(pIsolate, reinterpret_cast<const uint16_t*>(ToCString()), v8::NewStringType::kNormal, GetLength());
+        return v8::String::NewFromTwoByte(pIsolate, reinterpret_cast<const uint16_t*>(ToCString()), type, GetLength());
     }
 
     v8_inspector::StringView GetStringView(size_t index = 0, size_t length = SIZE_MAX) const

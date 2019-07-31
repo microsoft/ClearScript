@@ -5,6 +5,8 @@ using System;
 using System.CodeDom.Compiler;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -181,6 +183,23 @@ namespace Microsoft.ClearScript.Test
             return results.CompiledAssembly.GetType("TestModule").InvokeMember("TestFunction", BindingFlags.InvokeMethod, null, null, ArrayHelpers.GetEmptyArray<object>());
         }
 
+        public static void InvokeConsoleTest(string name)
+        {
+            var startInfo = new ProcessStartInfo("ClearScriptConsole.exe", "-t " + name)
+            {
+                WindowStyle = ProcessWindowStyle.Hidden,
+                UseShellExecute = false,
+                RedirectStandardError = true
+            };
+
+            using (var process = Process.Start(startInfo))
+            {
+                Assert.IsNotNull(process);
+                process.WaitForExit();
+                Assert.AreEqual(0, process.ExitCode, process.StandardError.ReadToEnd());
+            }
+        }
+
         public static void Iterate(Array array, Action<int[]> action)
         {
             array.Iterate(action);
@@ -231,16 +250,20 @@ namespace Microsoft.ClearScript.Test
         public static void AssertValidException(Exception exception)
         {
             Assert.IsFalse(string.IsNullOrWhiteSpace(exception.Message));
-            Assert.IsFalse(exception.Message.Contains("COM"));
-            Assert.IsFalse(exception.Message.Contains("HRESULT"));
-            Assert.IsFalse(exception.Message.Contains("0x"));
             Assert.IsFalse(string.IsNullOrWhiteSpace(exception.StackTrace));
+            Assert.IsFalse(exception.Message.Contains("COM"));
+
+            if (!(exception is IOException))
+            {
+                Assert.IsFalse(exception.Message.Contains("HRESULT"));
+                Assert.IsFalse(exception.Message.Contains("0x"));
+            }
         }
 
         public static void AssertValidException(IScriptEngineException exception, bool checkScriptStackTrace = true)
         {
             AssertValidException((Exception)exception);
-            if ((exception is ScriptEngineException) && !exception.IsFatal && (exception.HResult != RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION))
+            if ((exception is ScriptEngineException) && !exception.IsFatal)
             {
                 Assert.IsTrue(exception.ErrorDetails.StartsWith(exception.Message, StringComparison.Ordinal));
                 if (checkScriptStackTrace)

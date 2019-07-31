@@ -103,6 +103,31 @@ public:
         bool m_ExecutionStarted;
     };
 
+    class DocumentScope final
+    {
+        PROHIBIT_COPY(DocumentScope)
+        PROHIBIT_HEAP(DocumentScope)
+
+    public:
+
+        DocumentScope(V8IsolateImpl* pIsolateImpl, const V8DocumentInfo& documentInfo):
+            m_pIsolateImpl(pIsolateImpl)
+        {
+            m_pPreviousDocumentInfo = m_pIsolateImpl->m_pDocumentInfo;
+            m_pIsolateImpl->m_pDocumentInfo = &documentInfo;
+        }
+
+        ~DocumentScope()
+        {
+            m_pIsolateImpl->m_pDocumentInfo = m_pPreviousDocumentInfo;
+        }
+
+    private:
+
+        V8IsolateImpl* m_pIsolateImpl;
+        const V8DocumentInfo* m_pPreviousDocumentInfo;
+    };
+
     class TryCatch final: public v8::TryCatch
     {
         PROHIBIT_COPY(TryCatch)
@@ -123,6 +148,7 @@ public:
 
     const StdString& GetName() const { return m_Name; }
     const Persistent<v8::Private>& GetHostObjectHolderKey() const { return m_hHostObjectHolderKey; }
+    const V8DocumentInfo* GetDocumentInfo() const { return m_pDocumentInfo; }
 
     v8::Local<v8::Context> CreateContext(v8::ExtensionConfiguration* pExtensionConfiguation = nullptr, v8::Local<v8::ObjectTemplate> hGlobalTemplate = v8::Local<v8::ObjectTemplate>(), v8::Local<v8::Value> hGlobalObject = v8::Local<v8::Value>())
     {
@@ -169,19 +195,19 @@ public:
         return v8::Number::New(m_spIsolate.get(), value);
     }
 
-    v8::Local<v8::Integer> CreateInteger(std::int32_t value)
+    v8::Local<v8::Integer> CreateInteger(int32_t value)
     {
         return v8::Int32::New(m_spIsolate.get(), value);
     }
 
-    v8::Local<v8::Integer> CreateInteger(std::uint32_t value)
+    v8::Local<v8::Integer> CreateInteger(uint32_t value)
     {
         return v8::Uint32::NewFromUnsigned(m_spIsolate.get(), value);
     }
 
-    v8::MaybeLocal<v8::String> CreateString(const StdString& value)
+    v8::MaybeLocal<v8::String> CreateString(const StdString& value, v8::NewStringType type = v8::NewStringType::kNormal)
     {
-        return value.ToV8String(m_spIsolate.get());
+        return value.ToV8String(m_spIsolate.get(), type);
     }
 
     StdString CreateStdString(v8::Local<v8::Value> hValue)
@@ -219,9 +245,28 @@ public:
         return v8::FunctionTemplate::New(m_spIsolate.get(), callback, data, signature, length);
     }
 
-    v8::MaybeLocal<v8::UnboundScript> CreateUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions)
+    v8::MaybeLocal<v8::UnboundScript> CompileUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions, v8::ScriptCompiler::NoCacheReason noCacheReason = v8::ScriptCompiler::kNoCacheNoReason)
     {
-        return v8::ScriptCompiler::CompileUnboundScript(m_spIsolate.get(), pSource, options);
+        auto result = v8::ScriptCompiler::CompileUnboundScript(m_spIsolate.get(), pSource, options, noCacheReason);
+
+        if (!result.IsEmpty())
+        {
+            ++m_Statistics.ScriptCount;
+        }
+
+        return result;
+    }
+
+    v8::MaybeLocal<v8::Module> CompileModule(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions, v8::ScriptCompiler::NoCacheReason noCacheReason = v8::ScriptCompiler::kNoCacheNoReason)
+    {
+        auto result = v8::ScriptCompiler::CompileModule(m_spIsolate.get(), pSource, options, noCacheReason);
+
+        if (!result.IsEmpty())
+        {
+            ++m_Statistics.ModuleCount;
+        }
+
+        return result;
     }
 
     template <typename T>
@@ -351,6 +396,7 @@ public:
 
     void AddContext(V8ContextImpl* pContextImpl, const V8Context::Options& options);
     void RemoveContext(V8ContextImpl* pContextImpl);
+    V8ContextImpl* FindContext(v8::Local<v8::Context> hContext);
 
     void EnableDebugging(int port, bool remote);
     void DisableDebugging();
@@ -364,10 +410,11 @@ public:
     virtual void SetMaxStackUsage(size_t value) override;
 
     virtual void AwaitDebuggerAndPause() override;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code) override;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) override;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
     virtual void GetHeapStatistics(v8::HeapStatistics& heapStatistics) override;
+    virtual Statistics GetStatistics() override;
     virtual void CollectGarbage(bool exhaustive) override;
 
     virtual bool BeginCpuProfile(const StdString& name, v8::CpuProfilingMode mode, bool recordSamples) override;
@@ -401,6 +448,18 @@ public:
     void CallWithLockNoWait(std::function<void(V8IsolateImpl*)>&& callback);
     void DECLSPEC_NORETURN ThrowOutOfMemoryException();
 
+    static void ImportMetaInitializeCallback(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);
+    static v8::MaybeLocal<v8::Promise> ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier);
+    static v8::MaybeLocal<v8::Module> ModuleResolveCallback(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer);
+
+    void InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);
+    v8::MaybeLocal<v8::Promise> ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier);
+    v8::MaybeLocal<v8::Module> ResolveModule(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer);
+
+    v8::Local<v8::UnboundScript> GetCachedScript(const V8DocumentInfo& documentInfo, size_t codeDigest);
+    void CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript);
+    void ClearScriptCache();
+
     ~V8IsolateImpl();
 
 private:
@@ -415,6 +474,13 @@ private:
             FlushPending(false)
         {
         }
+    };
+
+    struct ScriptCacheEntry final
+    {
+        V8DocumentInfo DocumentInfo;
+        size_t CodeDigest;
+        Persistent<v8::UnboundScript> hScript;
     };
 
     bool RunMessageLoop(bool awaitingDebugger);
@@ -456,6 +522,7 @@ private:
     std::queue<std::function<void(V8IsolateImpl*)>> m_CallWithLockQueue;
     std::condition_variable m_CallWithLockQueueChanged;
     std::vector<SharedPtr<Timer>> m_TaskTimers;
+    std::list<ScriptCacheEntry> m_ScriptCache;
     bool m_DebuggingEnabled;
     int m_DebugPort;
     void* m_pvDebugAgent;
@@ -474,7 +541,9 @@ private:
     size_t m_StackWatchLevel;
     size_t* m_pStackLimit;
     ExecutionScope* m_pExecutionScope;
+    const V8DocumentInfo* m_pDocumentInfo;
     std::atomic<bool> m_IsOutOfMemory;
     std::atomic<bool> m_IsExecutionTerminating;
     std::atomic<bool> m_Released;
+    Statistics m_Statistics;
 };

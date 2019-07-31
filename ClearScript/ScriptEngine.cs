@@ -23,6 +23,9 @@ namespace Microsoft.ClearScript
         private ScriptAccess defaultAccess;
         private bool enforceAnonymousTypeAccess;
 
+        private DocumentSettings documentSettings;
+        private readonly DocumentSettings defaultDocumentSettings = new DocumentSettings();
+
         private static readonly IUniqueNameManager nameManager = new UniqueNameManager();
         private static readonly object nullHostObjectProxy = new object();
         [ThreadStatic] private static ScriptEngine currentEngine;
@@ -35,9 +38,21 @@ namespace Microsoft.ClearScript
         /// Initializes a new script engine instance.
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        [Obsolete("Use ScriptEngine(string name, string fileNameExtensions) instead.")]
         protected ScriptEngine(string name)
+            : this(name, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new script engine instance with the specified list of supported file name extensions.
+        /// </summary>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
+        protected ScriptEngine(string name, string fileNameExtensions)
         {
             this.name = nameManager.GetUniqueName(name, GetType().GetRootName());
+            defaultDocumentSettings.FileNameExtensions = fileNameExtensions;
         }
 
         #endregion
@@ -241,6 +256,15 @@ namespace Microsoft.ClearScript
         /// script objects and functions.
         /// </remarks>
         public abstract dynamic Script { get; }
+
+        /// <summary>
+        /// Gets or sets the script engine's document settings.
+        /// </summary>
+        public DocumentSettings DocumentSettings
+        {
+            get { return documentSettings ?? defaultDocumentSettings; }
+            set { documentSettings = value; }
+        }
 
         /// <summary>
         /// Exposes a host object to script code.
@@ -954,9 +978,9 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Executes script code with the specified document information.
+        /// Executes script code with the specified document meta-information.
         /// </summary>
-        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="documentInfo">A structure containing meta-information for the script document.</param>
         /// <param name="code">The script code to execute.</param>
         /// <remarks>
         /// In some script languages the distinction between statements and expressions is
@@ -965,7 +989,54 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public void Execute(DocumentInfo documentInfo, string code)
         {
-            Execute(documentInfo, code, false);
+            Execute(documentInfo.MakeUnique(this), code, false);
+        }
+
+        /// <summary>
+        /// Loads and executes a script document.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and executed.</param>
+        /// <remarks>
+        /// In some script languages the distinction between statements and expressions is
+        /// significant but ambiguous for certain syntactic elements. This method always
+        /// interprets script code loaded from the specified document as a statement.
+        /// </remarks>
+        public void ExecuteDocument(string specifier)
+        {
+            ExecuteDocument(specifier, null);
+        }
+
+        /// <summary>
+        /// Loads and executes a document with the specified category.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and executed.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <remarks>
+        /// In some script languages the distinction between statements and expressions is
+        /// significant but ambiguous for certain syntactic elements. This method always
+        /// interprets script code loaded from the specified document as a statement.
+        /// </remarks>
+        public void ExecuteDocument(string specifier, DocumentCategory category)
+        {
+            ExecuteDocument(specifier, category, null);
+        }
+
+        /// <summary>
+        /// Loads and executes a document with the specified category and context callback.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and executed.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <param name="contextCallback">An optional context callback for the requested document.</param>
+        /// <remarks>
+        /// In some script languages the distinction between statements and expressions is
+        /// significant but ambiguous for certain syntactic elements. This method always
+        /// interprets script code loaded from the specified document as a statement.
+        /// </remarks>
+        public void ExecuteDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
+        {
+            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            Execute(document.Info, document.GetTextContents());
         }
 
         /// <summary>
@@ -981,7 +1052,8 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public virtual string ExecuteCommand(string command)
         {
-            return GetCommandResultString(Evaluate(new DocumentInfo("Command") { Flags = DocumentFlags.IsTransient }, command, false));
+            var documentInfo = new DocumentInfo("Command") { Flags = DocumentFlags.IsTransient };
+            return GetCommandResultString(Evaluate(documentInfo.MakeUnique(this), command, false));
         }
 
         /// <summary>
@@ -1140,9 +1212,9 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Evaluates script code with the specified document information.
+        /// Evaluates script code with the specified document meta-information.
         /// </summary>
-        /// <param name="documentInfo">A structure containing information about the script document.</param>
+        /// <param name="documentInfo">A structure containing meta-information for the script document.</param>
         /// <param name="code">The script code to evaluate.</param>
         /// <returns>The result value.</returns>
         /// <remarks>
@@ -1158,7 +1230,75 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object Evaluate(DocumentInfo documentInfo, string code)
         {
-            return Evaluate(documentInfo, code, true);
+            return Evaluate(documentInfo.MakeUnique(this, DocumentFlags.IsTransient), code, true);
+        }
+
+        /// <summary>
+        /// Loads and evaluates a script document.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and evaluated.</param>
+        /// <returns>The result value.</returns>
+        /// <remarks>
+        /// <para>
+        /// In some script languages the distinction between statements and expressions is
+        /// significant but ambiguous for certain syntactic elements. This method always
+        /// interprets script code loaded from the specified document as an expression.
+        /// </para>
+        /// <para>
+        /// For information about the types of result values that script code can return, see
+        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// </para>
+        /// </remarks>
+        public object EvaluateDocument(string specifier)
+        {
+            return EvaluateDocument(specifier, null);
+        }
+
+        /// <summary>
+        /// Loads and evaluates a document with the specified category.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and evaluated.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <returns>The result value.</returns>
+        /// <remarks>
+        /// <para>
+        /// In some script languages the distinction between statements and expressions is
+        /// significant but ambiguous for certain syntactic elements. This method always
+        /// interprets script code loaded from the specified document as an expression.
+        /// </para>
+        /// <para>
+        /// For information about the types of result values that script code can return, see
+        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// </para>
+        /// </remarks>
+        public object EvaluateDocument(string specifier, DocumentCategory category)
+        {
+            return EvaluateDocument(specifier, category, null);
+        }
+
+        /// <summary>
+        /// Loads and evaluates a document with the specified category and context callback.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and evaluated.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <param name="contextCallback">An optional context callback for the requested document.</param>
+        /// <returns>The result value.</returns>
+        /// <remarks>
+        /// <para>
+        /// In some script languages the distinction between statements and expressions is
+        /// significant but ambiguous for certain syntactic elements. This method always
+        /// interprets script code loaded from the specified document as an expression.
+        /// </para>
+        /// <para>
+        /// For information about the types of result values that script code can return, see
+        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// </para>
+        /// </remarks>
+        public object EvaluateDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
+        {
+            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            return Evaluate(document.Info, document.GetTextContents());
         }
 
         /// <summary>
@@ -1200,6 +1340,8 @@ namespace Microsoft.ClearScript
         #endregion
 
         #region internal members
+
+        internal abstract IUniqueNameManager DocumentNameManager { get; }
 
         internal virtual bool EnumerateInstanceMethods
         {
@@ -1254,15 +1396,12 @@ namespace Microsoft.ClearScript
             return args.Select(arg => MarshalToHost(arg, preserveHostTargets)).ToArray();
         }
 
-        internal abstract object Execute(DocumentInfo documentInfo, string code, bool evaluate);
+        internal abstract object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate);
 
-        internal object Evaluate(DocumentInfo documentInfo, string code, bool marshalResult)
+        internal abstract object ExecuteRaw(UniqueDocumentInfo documentInfo, string code, bool evaluate);
+
+        internal object Evaluate(UniqueDocumentInfo documentInfo, string code, bool marshalResult)
         {
-            if (!documentInfo.Flags.HasValue)
-            {
-                documentInfo.Flags = DocumentFlags.IsTransient;
-            }
-
             var result = Execute(documentInfo, code, true);
             if (marshalResult)
             {

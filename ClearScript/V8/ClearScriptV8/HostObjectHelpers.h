@@ -4,6 +4,12 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
+// forward declarations
+//-----------------------------------------------------------------------------
+
+struct V8DocumentInfo;
+
+//-----------------------------------------------------------------------------
 // HostObjectHelpers
 //-----------------------------------------------------------------------------
 
@@ -53,6 +59,9 @@ public:
     static void* CreateNativeCallbackTimer(int dueTime, int period, NativeCallback&& callback);
     static bool ChangeNativeCallbackTimer(void* pvTimer, int dueTime, int period);
     static void DestroyNativeCallbackTimer(void* pvTimer);
+
+    static StdString LoadModule(const V8DocumentInfo& sourceDocumentInfo, const StdString& specifier, V8DocumentInfo& documentInfo);
+    static std::vector<std::pair<StdString, V8Value>> CreateModuleContext(const V8DocumentInfo& documentInfo);
 
     static bool TryParseInt32(const StdString& text, int& result);
 };

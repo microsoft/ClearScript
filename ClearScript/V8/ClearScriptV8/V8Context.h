@@ -17,7 +17,15 @@ public:
         bool EnableRemoteDebugging = false;
         bool DisableGlobalMembers = true;
         bool EnableDateTimeConversion = false;
+        bool EnableDynamicModuleImports = false;
         int DebugPort = 0;
+    };
+
+    struct Statistics final
+    {
+        size_t ScriptCount = 0;
+        size_t ModuleCount = 0;
+        size_t ModuleCacheSize = 0;
     };
 
     static V8Context* Create(const SharedPtr<V8Isolate>& spIsolate, const StdString& name, const Options& options);
@@ -40,14 +48,16 @@ public:
     virtual void AwaitDebuggerAndPause() = 0;
     virtual V8Value Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate) = 0;
 
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code) = 0;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, std::vector<std::uint8_t>& cacheBytes) = 0;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, const StdString& code, V8CacheType cacheType, const std::vector<std::uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
     virtual bool CanExecute(V8ScriptHolder* pHolder) = 0;
     virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) = 0;
 
     virtual void Interrupt() = 0;
     virtual void GetIsolateHeapStatistics(v8::HeapStatistics& heapStatistics) = 0;
+    virtual V8Isolate::Statistics GetIsolateStatistics() = 0;
+    virtual Statistics GetStatistics() = 0;
     virtual void CollectGarbage(bool exhaustive) = 0;
     virtual void OnAccessSettingsChanged() = 0;
 

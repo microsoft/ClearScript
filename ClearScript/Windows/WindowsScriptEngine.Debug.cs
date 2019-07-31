@@ -18,13 +18,13 @@ namespace Microsoft.ClearScript.Windows
         {
             private readonly WindowsScriptEngine engine;
             private readonly UIntPtr sourceContext;
-            private readonly DocumentInfo documentInfo;
+            private readonly UniqueDocumentInfo documentInfo;
             private readonly string code;
 
             private string[] codeLines;
             private IDebugApplicationNode node;
 
-            public DebugDocument(WindowsScriptEngine engine, UIntPtr sourceContext, DocumentInfo documentInfo, string code)
+            public DebugDocument(WindowsScriptEngine engine, UIntPtr sourceContext, UniqueDocumentInfo documentInfo, string code)
             {
                 this.engine = engine;
                 this.sourceContext = sourceContext;
@@ -90,7 +90,6 @@ namespace Microsoft.ClearScript.Windows
             {
                 switch (type)
                 {
-                    case DocumentNameType.AppNode:
                     case DocumentNameType.Title:
                         documentName = documentInfo.Name;
                         return RawCOMHelpers.HResult.S_OK;
@@ -103,6 +102,7 @@ namespace Microsoft.ClearScript.Windows
                         documentName = GetUrl();
                         return RawCOMHelpers.HResult.S_OK;
 
+                    case DocumentNameType.AppNode:
                     case DocumentNameType.UniqueTitle:
                         documentName = documentInfo.UniqueName;
                         return RawCOMHelpers.HResult.S_OK;
