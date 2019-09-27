@@ -16,6 +16,9 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
 * Optional support for importing types and assemblies from script code
 * The host can invoke script functions and access script objects directly
 * Full support for script debugging
+* (V8) Support for fast data transfer to and from [JavaScript typed arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays)
+* :new: (V8) Support for [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
+* :new: (JavaScript) Support for [CommonJS modules](http://wiki.commonjs.org/wiki/Modules)
 
 # Installation
 * [NuGet package](https://www.nuget.org/packages/Microsoft.ClearScript)
