@@ -21,7 +21,7 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
 * :new: (JavaScript) Support for [CommonJS modules](http://wiki.commonjs.org/wiki/Modules)
 
 # Installation
-* [NuGet package](https://www.nuget.org/packages/Microsoft.ClearScript)
+* ![Nuget](https://img.shields.io/nuget/v/Microsoft.ClearScript)
 
 # Documentation
 * [Examples](https://microsoft.github.io/ClearScript/Examples/Examples.html)
