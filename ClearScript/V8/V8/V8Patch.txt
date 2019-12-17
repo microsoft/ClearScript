@@ -1,9 +1,9 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 8640517ae5..d002d67cc4 100644
+index 5df0619b1d..66e318705e 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -198,6 +198,12 @@ if (host_cpu == "x64" &&
-   v8_generator_toolchain = "//build/toolchain/linux:clang_x64"
+@@ -211,6 +211,12 @@ if (v8_multi_arch_build &&
+   v8_enable_pointer_compression = !v8_enable_pointer_compression
  }
  
 +if (v8_current_cpu == "x86") {
@@ -15,15 +15,15 @@ index 8640517ae5..d002d67cc4 100644
  # Derived defaults.
  if (v8_enable_verify_heap == "") {
    v8_enable_verify_heap = v8_enable_debugging_features
-@@ -3438,6 +3444,7 @@ v8_source_set("torque_ls_base") {
+@@ -3533,6 +3539,7 @@ v8_source_set("torque_ls_base") {
  }
  
  v8_component("v8_libbase") {
 +  output_name = "v8-base-${clearscript_v8_platform}"
    sources = [
-     "src/base/adapters.h",
      "src/base/address-region.h",
-@@ -3629,6 +3636,7 @@ v8_component("v8_libbase") {
+     "src/base/atomic-utils.h",
+@@ -3733,6 +3740,7 @@ v8_component("v8_libbase") {
  }
  
  v8_component("v8_libplatform") {
@@ -31,7 +31,7 @@ index 8640517ae5..d002d67cc4 100644
    sources = [
      "//base/trace_event/common/trace_event_common.h",
      "include/libplatform/libplatform-export.h",
-@@ -4039,6 +4047,7 @@ group("v8_fuzzers") {
+@@ -4147,6 +4155,7 @@ group("v8_fuzzers") {
  
  if (is_component_build) {
    v8_component("v8") {
@@ -40,10 +40,10 @@ index 8640517ae5..d002d67cc4 100644
        "src/utils/v8dll-main.cc",
      ]
 diff --git a/include/v8-inspector.h b/include/v8-inspector.h
-index b96a6e29ac..22453501e1 100644
+index 5f53f21d55..1e575d2abe 100644
 --- a/include/v8-inspector.h
 +++ b/include/v8-inspector.h
-@@ -242,6 +242,7 @@ struct V8_EXPORT V8StackTraceId {
+@@ -249,6 +249,7 @@ struct V8_EXPORT V8StackTraceId {
  class V8_EXPORT V8Inspector {
   public:
    static std::unique_ptr<V8Inspector> create(v8::Isolate*, V8InspectorClient*);
@@ -51,11 +51,35 @@ index b96a6e29ac..22453501e1 100644
    virtual ~V8Inspector() = default;
  
    // Contexts instrumentation.
+diff --git a/include/v8-platform.h b/include/v8-platform.h
+index c6e78f2381..217e2bff08 100644
+--- a/include/v8-platform.h
++++ b/include/v8-platform.h
+@@ -444,6 +444,19 @@ class Platform {
+   V8_EXPORT static double SystemClockTimeMillis();
+ };
+ 
++class SafePlatform {
++ public:
++  virtual int NumberOfWorkerThreads() = 0;
++  virtual TaskRunner* CreateForegroundTaskRunner(Isolate* isolate) = 0;
++  virtual void CallOnWorkerThread(std::unique_ptr<Task> task) = 0;
++  virtual void CallDelayedOnWorkerThread(std::unique_ptr<Task> task, double delay_in_seconds) = 0;
++  virtual void CallOnForegroundThread(Isolate* isolate, Task* task) = 0;
++  virtual void CallDelayedOnForegroundThread(Isolate* isolate, Task* task, double delay_in_seconds) = 0;
++  virtual double MonotonicallyIncreasingTime() = 0;
++  virtual double CurrentClockTimeMillis() = 0;
++  virtual TracingController* GetTracingController() = 0;
++  V8_EXPORT static void Initialize(SafePlatform& impl);
++};
+ }  // namespace v8
+ 
+ #endif  // V8_V8_PLATFORM_H_
 diff --git a/include/v8.h b/include/v8.h
-index c54b088404..3ceacf76d8 100644
+index 1387f74715..8a03fc9320 100644
 --- a/include/v8.h
 +++ b/include/v8.h
-@@ -1385,6 +1385,7 @@ class V8_EXPORT ScriptCompiler {
+@@ -1624,6 +1624,7 @@ class V8_EXPORT ScriptCompiler {
      // (with delete[]) when the CachedData object is destroyed.
      CachedData(const uint8_t* data, int length,
                 BufferPolicy buffer_policy = BufferNotOwned);
@@ -64,10 +88,10 @@ index c54b088404..3ceacf76d8 100644
      // TODO(marja): Async compilation; add constructors which take a callback
      // which will be called when V8 no longer needs the data.
 diff --git a/src/api/api.cc b/src/api/api.cc
-index 399aca7eb6..3458466b4f 100644
+index 0d80f986f1..e1ac3ead27 100644
 --- a/src/api/api.cc
 +++ b/src/api/api.cc
-@@ -2017,6 +2017,10 @@ ScriptCompiler::CachedData::CachedData(const uint8_t* data_, int length_,
+@@ -2047,6 +2047,10 @@ ScriptCompiler::CachedData::CachedData(const uint8_t* data_, int length_,
        rejected(false),
        buffer_policy(buffer_policy_) {}
  
@@ -79,42 +103,42 @@ index 399aca7eb6..3458466b4f 100644
    if (buffer_policy == BufferOwned) {
      delete[] data;
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index d967d84874..dc0af2e13a 100644
+index 3051ce3662..713ba80688 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -12710,6 +12710,11 @@ Node* CodeStubAssembler::Typeof(Node* value) {
+@@ -12460,6 +12460,11 @@ TNode<String> CodeStubAssembler::Typeof(SloppyTNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
 +  Label resume_default(this);
 +  GotoIfNot(Word32And(LoadMapBitField(map), Int32Constant(Map::HasNamedInterceptorBit::kMask)), &resume_default);
-+  Branch(Word32And(LoadMapBitField3(map), Int32Constant(Map::IsImmutablePrototypeBit::kMask)), &return_function, &return_object);
++  Branch(Word32And(LoadMapBitField2(map), Int32Constant(Map::IsImmutablePrototypeBit::kMask)), &return_function, &return_object);
 +  BIND(&resume_default);
 +
-   Node* callable_or_undetectable_mask = Word32And(
+   TNode<Int32T> callable_or_undetectable_mask = Word32And(
        LoadMapBitField(map),
        Int32Constant(Map::IsCallableBit::kMask | Map::IsUndetectableBit::kMask));
-diff --git a/src/execution/execution.cc b/src/execution/execution.cc
-index 285b4b2134..edb2e6c9c2 100644
---- a/src/execution/execution.cc
-+++ b/src/execution/execution.cc
-@@ -581,8 +581,10 @@ bool StackGuard::ThreadLocal::Initialize(Isolate* isolate) {
-   bool should_set_stack_limits = false;
-   if (real_climit_ == kIllegalLimit) {
-     const uintptr_t kLimitSize = FLAG_stack_size * KB;
--    DCHECK_GT(GetCurrentStackPosition(), kLimitSize);
-     uintptr_t limit = GetCurrentStackPosition() - kLimitSize;
-+    if (GetCurrentStackPosition() < kLimitSize) {
-+      limit = 0;
-+    }
-     real_jslimit_ = SimulatorStack::JsLimitFromCLimit(isolate, limit);
-     set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
-     real_climit_ = limit;
+diff --git a/src/execution/stack-guard.cc b/src/execution/stack-guard.cc
+index d37327f1c3..4f063b7bab 100644
+--- a/src/execution/stack-guard.cc
++++ b/src/execution/stack-guard.cc
+@@ -200,8 +200,10 @@ void StackGuard::FreeThreadResources() {
+ void StackGuard::ThreadLocal::Initialize(Isolate* isolate,
+                                          const ExecutionAccess& lock) {
+   const uintptr_t kLimitSize = FLAG_stack_size * KB;
+-  DCHECK_GT(GetCurrentStackPosition(), kLimitSize);
+   uintptr_t limit = GetCurrentStackPosition() - kLimitSize;
++  if (GetCurrentStackPosition() < kLimitSize) {
++    limit = 0;
++  }
+   real_jslimit_ = SimulatorStack::JsLimitFromCLimit(isolate, limit);
+   set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
+   real_climit_ = limit;
 diff --git a/src/init/v8.cc b/src/init/v8.cc
-index 19ad57038f..80e7f09100 100644
+index fd26c60848..a2081f5211 100644
 --- a/src/init/v8.cc
 +++ b/src/init/v8.cc
-@@ -111,7 +111,6 @@ void V8::InitializeOncePerProcess() {
+@@ -124,7 +124,6 @@ void V8::InitializeOncePerProcess() {
  }
  
  void V8::InitializePlatform(v8::Platform* platform) {
@@ -122,16 +146,65 @@ index 19ad57038f..80e7f09100 100644
    CHECK(platform);
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
+@@ -171,4 +170,49 @@ void V8::SetSnapshotBlob(StartupData* snapshot_blob) {
+ double Platform::SystemClockTimeMillis() {
+   return base::OS::TimeCurrentMillis();
+ }
++
++class SafePlatformImpl final: public Platform {
++ public:
++  void SetImpl(SafePlatform& impl) {
++    impl_.store(&impl);
++  }
++  virtual int NumberOfWorkerThreads() override {
++    return impl_.load()->NumberOfWorkerThreads();
++  }
++  virtual std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner(Isolate* isolate) override {
++    return std::shared_ptr<v8::TaskRunner>(impl_.load()->CreateForegroundTaskRunner(isolate));
++  }
++  virtual void CallOnWorkerThread(std::unique_ptr<Task> task) override {
++    impl_.load()->CallOnWorkerThread(std::move(task));
++  }
++  virtual void CallDelayedOnWorkerThread(std::unique_ptr<Task> task, double delay_in_seconds) override {
++    impl_.load()->CallDelayedOnWorkerThread(std::move(task), delay_in_seconds);
++  }
++  virtual void CallOnForegroundThread(Isolate* isolate, Task* task) override {
++    impl_.load()->CallOnForegroundThread(isolate, task);
++  }
++  virtual void CallDelayedOnForegroundThread(Isolate* isolate, Task* task, double delay_in_seconds) override {
++    impl_.load()->CallDelayedOnForegroundThread(isolate, task, delay_in_seconds);
++  }
++  virtual double MonotonicallyIncreasingTime() override {
++    return impl_.load()->MonotonicallyIncreasingTime();
++  }
++  virtual double CurrentClockTimeMillis() override {
++    return impl_.load()->CurrentClockTimeMillis();
++  }
++  virtual TracingController* GetTracingController() override {
++    return impl_.load()->GetTracingController();
++  }
++ private:
++  std::atomic<SafePlatform*> impl_;
++};
++
++void SafePlatform::Initialize(SafePlatform& impl) {
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wexit-time-destructors"
++  static SafePlatformImpl platform;
++#pragma clang diagnostic pop
++  platform.SetImpl(impl);
++  V8::InitializePlatform(&platform);
++}
+ }  // namespace v8
 diff --git a/src/inspector/v8-inspector-impl.cc b/src/inspector/v8-inspector-impl.cc
-index b764118079..658b7dfcec 100644
+index e91dd7f7f4..762b050add 100644
 --- a/src/inspector/v8-inspector-impl.cc
 +++ b/src/inspector/v8-inspector-impl.cc
-@@ -54,6 +54,11 @@ std::unique_ptr<V8Inspector> V8Inspector::create(v8::Isolate* isolate,
+@@ -54,6 +54,10 @@ std::unique_ptr<V8Inspector> V8Inspector::create(v8::Isolate* isolate,
    return std::unique_ptr<V8Inspector>(new V8InspectorImpl(isolate, client));
  }
  
-+V8Inspector* V8Inspector::createPtr(v8::Isolate* isolate,
-+                                    V8InspectorClient* client) {
++V8Inspector* V8Inspector::createPtr(v8::Isolate* isolate, V8InspectorClient* client) {
 +  return create(isolate, client).release();
 +}
 +
@@ -139,10 +212,10 @@ index b764118079..658b7dfcec 100644
                                   V8InspectorClient* client)
      : m_isolate(isolate),
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index 8cc22fa0e5..3ee28d9e3b 100644
+index 227cff8da4..828bf57e31 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
-@@ -806,6 +806,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -811,6 +811,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();

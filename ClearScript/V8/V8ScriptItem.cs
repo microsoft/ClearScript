@@ -2,10 +2,12 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Dynamic;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -34,6 +36,11 @@ namespace Microsoft.ClearScript.V8
             var target = obj as IV8Object;
             if (target != null)
             {
+                if (target.IsArray())
+                {
+                    return new V8Array(engine, target);
+                }
+
                 if (!target.IsArrayBufferOrView())
                 {
                     return new V8ScriptItem(engine, target);
@@ -174,7 +181,7 @@ namespace Microsoft.ClearScript.V8
                     }
                     else
                     {
-                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception);
+                        engine.CurrentScriptFrame.ScriptError = new ScriptEngineException(engine.Name, exception.Message, null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception);
                     }
                 }
             }
@@ -295,6 +302,149 @@ namespace Microsoft.ClearScript.V8
             {
                 target.Dispose();
             }
+        }
+
+        #endregion
+
+        #region Nested type: V8Array
+
+        private sealed class V8Array : V8ScriptItem, IList
+        {
+            public V8Array(V8ScriptEngine engine, IV8Object target)
+                : base(engine, target)
+            {
+            }
+
+            #region IList implementation
+
+            public IEnumerator GetEnumerator()
+            {
+                return new Enumerator(this);
+            }
+
+            public void CopyTo(Array array, int index)
+            {
+                MiscHelpers.VerifyNonNullArgument(array, "array");
+
+                if (array.Rank > 1)
+                {
+                    throw new ArgumentException("Invalid target array", "array");
+                }
+
+                if (index < 0)
+                {
+                    throw new ArgumentOutOfRangeException("index");
+                }
+
+                var length = Count;
+                if ((index + length) > array.Length)
+                {
+                    throw new ArgumentException("Insufficient space in target array", "array");
+                }
+
+                for (var sourceIndex = 0; sourceIndex < length; sourceIndex++)
+                {
+                    array.SetValue(this[sourceIndex], index + sourceIndex);
+                }
+            }
+
+            public int Count
+            {
+                get { return Convert.ToInt32(GetProperty("length")); }
+            }
+
+            public object SyncRoot { get { return this; } }
+
+            public bool IsSynchronized { get { return false; } }
+
+            public int Add(object value)
+            {
+                return Convert.ToInt32(InvokeMethod("push", value)) - 1;
+            }
+
+            public bool Contains(object value)
+            {
+                return IndexOf(value) >= 0;
+            }
+
+            public void Clear()
+            {
+                InvokeMethod("splice", 0, Count);
+            }
+
+            public int IndexOf(object value)
+            {
+                return Convert.ToInt32(InvokeMethod("indexOf", value));
+            }
+
+            public void Insert(int index, object value)
+            {
+                InvokeMethod("splice", index, 0, value);
+            }
+
+            public void Remove(object value)
+            {
+                var index = IndexOf(value);
+                if (index >= 0)
+                {
+                    RemoveAt(index);
+                }
+            }
+
+            public void RemoveAt(int index)
+            {
+                InvokeMethod("splice", index, 1);
+            }
+
+            public bool IsReadOnly
+            {
+                get { return false; }
+            }
+
+            public bool IsFixedSize
+            {
+                get { return false; }
+            }
+
+            #region Nested type: Enumerator
+
+            private class Enumerator : IEnumerator
+            {
+                private readonly V8Array array;
+                private readonly int count;
+                private int index = -1;
+
+                public Enumerator(V8Array array)
+                {
+                    this.array = array;
+                    count = array.Count;
+                }
+
+                public bool MoveNext()
+                {
+                    if (index >= (count - 1))
+                    {
+                        return false;
+                    }
+
+                    ++index;
+                    return true;
+                }
+
+                public void Reset()
+                {
+                    index = -1;
+                }
+
+                public object Current
+                {
+                    get { return array[index]; }
+                }
+            }
+
+            #endregion
+
+            #endregion
         }
 
         #endregion

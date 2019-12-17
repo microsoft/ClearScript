@@ -25,7 +25,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputPath>..\bin\Debug\</OutputPath>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETFRAMEWORK</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <DebugType>full</DebugType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -37,7 +37,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputPath>..\bin\Release\</OutputPath>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;NETFRAMEWORK</DefineConstants>
     <Optimize>true</Optimize>
     <ErrorReport>prompt</ErrorReport>
     <DebugType>pdbonly</DebugType>

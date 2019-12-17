@@ -4,6 +4,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.COM;
 using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
 
 namespace Microsoft.ClearScript.Windows
@@ -114,11 +115,11 @@ namespace Microsoft.ClearScript.Windows
         {
             // ReSharper disable SuspiciousTypeConversion.Global
 
-            pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
-            pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse32>(pActiveScript);
-            pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug32>(pActiveScript);
-            pActiveScriptGarbageCollector = RawCOMHelpers.QueryInterfaceNoThrow<IActiveScriptGarbageCollector>(pActiveScript);
-            pDebugStackFrameSniffer = RawCOMHelpers.QueryInterfaceNoThrow<IDebugStackFrameSnifferEx32>(pActiveScript);
+            pActiveScript = ActivationHelpers.CreateInstance<IActiveScript>(progID);
+            pActiveScriptParse = UnknownHelpers.QueryInterface<IActiveScriptParse32>(pActiveScript);
+            pActiveScriptDebug = UnknownHelpers.QueryInterface<IActiveScriptDebug32>(pActiveScript);
+            pActiveScriptGarbageCollector = UnknownHelpers.QueryInterfaceNoThrow<IActiveScriptGarbageCollector>(pActiveScript);
+            pDebugStackFrameSniffer = UnknownHelpers.QueryInterfaceNoThrow<IDebugStackFrameSnifferEx32>(pActiveScript);
 
             activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pActiveScript);
             activeScriptParse = (IActiveScriptParse32)activeScript;
@@ -186,14 +187,14 @@ namespace Microsoft.ClearScript.Windows
 
         public override void InterruptScriptThread(uint scriptThreadID, ref EXCEPINFO excepInfo, ScriptInterruptFlags flags)
         {
-            var del = RawCOMHelpers.GetMethodDelegate<RawInterruptScriptThread>(pActiveScript, 14);
+            var del = VTableHelpers.GetMethodDelegate<RawInterruptScriptThread>(pActiveScript, 14);
             del(pActiveScript, scriptThreadID, ref excepInfo, flags);
         }
 
         public override void EnumCodeContextsOfPosition(UIntPtr sourceContext, uint offset, uint length, out IEnumDebugCodeContexts enumContexts)
         {
-            var del = RawCOMHelpers.GetMethodDelegate<RawEnumCodeContextsOfPosition>(pActiveScriptDebug, 5);
-            RawCOMHelpers.HResult.Check(del(pActiveScriptDebug, sourceContext.ToUInt32(), offset, length, out enumContexts));
+            var del = VTableHelpers.GetMethodDelegate<RawEnumCodeContextsOfPosition>(pActiveScriptDebug, 5);
+            HResult.Check(del(pActiveScriptDebug, sourceContext.ToUInt32(), offset, length, out enumContexts));
         }
 
         public override void EnumStackFrames(out IEnumDebugStackFrames enumFrames)
@@ -223,11 +224,11 @@ namespace Microsoft.ClearScript.Windows
             activeScriptDebug = null;
             activeScriptParse = null;
 
-            RawCOMHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
-            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptGarbageCollector);
-            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
-            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
-            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScript);
+            UnknownHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
+            UnknownHelpers.ReleaseAndEmpty(ref pActiveScriptGarbageCollector);
+            UnknownHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
+            UnknownHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
+            UnknownHelpers.ReleaseAndEmpty(ref pActiveScript);
 
             activeScript.Close();
             Marshal.FinalReleaseComObject(activeScript);
@@ -272,11 +273,11 @@ namespace Microsoft.ClearScript.Windows
         {
             // ReSharper disable SuspiciousTypeConversion.Global
 
-            pActiveScript = RawCOMHelpers.CreateInstance<IActiveScript>(progID);
-            pActiveScriptParse = RawCOMHelpers.QueryInterface<IActiveScriptParse64>(pActiveScript);
-            pActiveScriptDebug = RawCOMHelpers.QueryInterface<IActiveScriptDebug64>(pActiveScript);
-            pActiveScriptGarbageCollector = RawCOMHelpers.QueryInterfaceNoThrow<IActiveScriptGarbageCollector>(pActiveScript);
-            pDebugStackFrameSniffer = RawCOMHelpers.QueryInterfaceNoThrow<IDebugStackFrameSnifferEx64>(pActiveScript);
+            pActiveScript = ActivationHelpers.CreateInstance<IActiveScript>(progID);
+            pActiveScriptParse = UnknownHelpers.QueryInterface<IActiveScriptParse64>(pActiveScript);
+            pActiveScriptDebug = UnknownHelpers.QueryInterface<IActiveScriptDebug64>(pActiveScript);
+            pActiveScriptGarbageCollector = UnknownHelpers.QueryInterfaceNoThrow<IActiveScriptGarbageCollector>(pActiveScript);
+            pDebugStackFrameSniffer = UnknownHelpers.QueryInterfaceNoThrow<IDebugStackFrameSnifferEx64>(pActiveScript);
 
             activeScript = (IActiveScript)Marshal.GetObjectForIUnknown(pActiveScript);
             activeScriptParse = (IActiveScriptParse64)activeScript;
@@ -344,14 +345,14 @@ namespace Microsoft.ClearScript.Windows
 
         public override void InterruptScriptThread(uint scriptThreadID, ref EXCEPINFO excepInfo, ScriptInterruptFlags flags)
         {
-            var del = RawCOMHelpers.GetMethodDelegate<RawInterruptScriptThread>(pActiveScript, 14);
+            var del = VTableHelpers.GetMethodDelegate<RawInterruptScriptThread>(pActiveScript, 14);
             del(pActiveScript, scriptThreadID, ref excepInfo, flags);
         }
 
         public override void EnumCodeContextsOfPosition(UIntPtr sourceContext, uint offset, uint length, out IEnumDebugCodeContexts enumContexts)
         {
-            var del = RawCOMHelpers.GetMethodDelegate<RawEnumCodeContextsOfPosition>(pActiveScriptDebug, 5);
-            RawCOMHelpers.HResult.Check(del(pActiveScriptDebug, sourceContext.ToUInt64(), offset, length, out enumContexts));
+            var del = VTableHelpers.GetMethodDelegate<RawEnumCodeContextsOfPosition>(pActiveScriptDebug, 5);
+            HResult.Check(del(pActiveScriptDebug, sourceContext.ToUInt64(), offset, length, out enumContexts));
         }
 
         public override void EnumStackFrames(out IEnumDebugStackFrames enumFrames)
@@ -381,11 +382,11 @@ namespace Microsoft.ClearScript.Windows
             activeScriptDebug = null;
             activeScriptParse = null;
 
-            RawCOMHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
-            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptGarbageCollector);
-            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
-            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
-            RawCOMHelpers.ReleaseAndEmpty(ref pActiveScript);
+            UnknownHelpers.ReleaseAndEmpty(ref pDebugStackFrameSniffer);
+            UnknownHelpers.ReleaseAndEmpty(ref pActiveScriptGarbageCollector);
+            UnknownHelpers.ReleaseAndEmpty(ref pActiveScriptDebug);
+            UnknownHelpers.ReleaseAndEmpty(ref pActiveScriptParse);
+            UnknownHelpers.ReleaseAndEmpty(ref pActiveScript);
 
             activeScript.Close();
             Marshal.FinalReleaseComObject(activeScript);
@@ -447,7 +448,7 @@ namespace Microsoft.ClearScript.Windows
 
         public override bool TryAddApplication(DebugApplicationWrapper applicationWrapper, out uint cookie)
         {
-            return RawCOMHelpers.HResult.Succeeded(processDebugManager.AddApplication(DebugApplicationWrapper32.Unwrap(applicationWrapper), out cookie));
+            return HResult.Succeeded(processDebugManager.AddApplication(DebugApplicationWrapper32.Unwrap(applicationWrapper), out cookie));
         }
 
         public override void RemoveApplication(uint cookie)
@@ -487,7 +488,7 @@ namespace Microsoft.ClearScript.Windows
 
         public override bool TryAddApplication(DebugApplicationWrapper applicationWrapper, out uint cookie)
         {
-            return RawCOMHelpers.HResult.Succeeded(processDebugManager.AddApplication(DebugApplicationWrapper64.Unwrap(applicationWrapper), out cookie));
+            return HResult.Succeeded(processDebugManager.AddApplication(DebugApplicationWrapper64.Unwrap(applicationWrapper), out cookie));
         }
 
         public override void RemoveApplication(uint cookie)

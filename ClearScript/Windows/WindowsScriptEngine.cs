@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.COM;
 using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
 
 namespace Microsoft.ClearScript.Windows
@@ -293,6 +294,11 @@ namespace Microsoft.ClearScript.Windows
                 if (scriptMarshalWrapper != null)
                 {
                     item = scriptMarshalWrapper.Unwrap();
+                    if (ReferenceEquals(item, scriptMarshalWrapper))
+                    {
+                        break;
+                    }
+
                     continue;
                 }
 
@@ -300,6 +306,11 @@ namespace Microsoft.ClearScript.Windows
                 if (hostTarget != null)
                 {
                     item = hostTarget.Target;
+                    if (ReferenceEquals(item, hostTarget))
+                    {
+                        break;
+                    }
+
                     continue;
                 }
 
@@ -309,9 +320,11 @@ namespace Microsoft.ClearScript.Windows
                     return true;
                 }
 
-                directAccessItem = null;
-                return false;
+                break;
             }
+
+            directAccessItem = null;
+            return false;
         }
 
         private object MarshalToScriptInternal(object obj, HostItemFlags flags, HashSet<Array> marshaledArraySet)
@@ -339,6 +352,11 @@ namespace Microsoft.ClearScript.Windows
             if (obj is Nothing)
             {
                 return nullDispatch;
+            }
+
+            if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalDateTimeAsDate) && (obj is DateTime))
+            {
+                return obj;
             }
 
             if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalDecimalAsCurrency) && (obj is decimal))
@@ -478,7 +496,7 @@ namespace Microsoft.ClearScript.Windows
                 // reported script error actually corresponds to the host exception in the frame.
 
                 CurrentScriptFrame.HostException = exception;
-                throw new COMException(exception.Message, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION);
+                throw new COMException(exception.Message, HResult.CLEARSCRIPT_E_HOSTEXCEPTION);
             }
         }
 
@@ -487,12 +505,12 @@ namespace Microsoft.ClearScript.Windows
             var comException = exception as COMException;
             if (comException != null)
             {
-                if (comException.ErrorCode == RawCOMHelpers.HResult.SCRIPT_E_REPORTED)
+                if (comException.ErrorCode == HResult.SCRIPT_E_REPORTED)
                 {
                     // a script error was reported; the corresponding exception should be in the script frame
                     ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
                 }
-                else if (comException.ErrorCode == RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
+                else if (comException.ErrorCode == HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
                 {
                     // A host exception surrogate passed through the COM boundary; this happens
                     // when some script engines are invoked via script item access rather than
@@ -501,7 +519,7 @@ namespace Microsoft.ClearScript.Windows
                     var hostException = CurrentScriptFrame.HostException;
                     if (hostException != null)
                     {
-                        throw new ScriptEngineException(Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
+                        throw new ScriptEngineException(Name, hostException.Message, null, HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
                     }
                 }
             }
@@ -558,7 +576,7 @@ namespace Microsoft.ClearScript.Windows
         {
             VerifyNotDisposed();
 
-            var excepInfo = new EXCEPINFO { scode = RawCOMHelpers.HResult.E_ABORT };
+            var excepInfo = new EXCEPINFO { scode = HResult.E_ABORT };
             activeScript.InterruptScriptThread(ScriptThreadID.Base, ref excepInfo, ScriptInterruptFlags.None);
         }
 

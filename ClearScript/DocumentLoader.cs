@@ -310,7 +310,7 @@ namespace Microsoft.ClearScript
                 {
                     if (!flags.HasFlag(DocumentAccessFlags.EnableFileLoading))
                     {
-                        throw new UnauthorizedAccessException("This script engine is not configured for loading documents from the file system.");
+                        throw new UnauthorizedAccessException("This script engine is not configured for loading documents from the file system");
                     }
 
                     using (var reader = new StreamReader(uri.LocalPath))
@@ -322,7 +322,7 @@ namespace Microsoft.ClearScript
                 {
                     if (!flags.HasFlag(DocumentAccessFlags.EnableWebLoading))
                     {
-                        throw new UnauthorizedAccessException("This script engine is not configured for downloading documents from the Web.");
+                        throw new UnauthorizedAccessException("This script engine is not configured for downloading documents from the Web");
                     }
 
                     using (var client = new WebClient())
@@ -386,11 +386,12 @@ namespace Microsoft.ClearScript
 
             public override async Task<Document> LoadDocumentAsync(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
             {
+                MiscHelpers.VerifyNonNullArgument(settings, "settings");
                 MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
 
                 if ((settings.AccessFlags & DocumentAccessFlags.EnableAllLoading) == DocumentAccessFlags.None)
                 {
-                    throw new UnauthorizedAccessException("This script engine is not configured for loading documents.");
+                    throw new UnauthorizedAccessException("This script engine is not configured for loading documents");
                 }
 
                 if (category == null)

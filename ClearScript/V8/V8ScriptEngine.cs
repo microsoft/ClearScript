@@ -625,7 +625,7 @@ namespace Microsoft.ClearScript.V8
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
             MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
-            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents());
         }
 
@@ -678,7 +678,7 @@ namespace Microsoft.ClearScript.V8
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
             MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
-            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents(), cacheKind, out cacheBytes);
         }
 
@@ -734,7 +734,7 @@ namespace Microsoft.ClearScript.V8
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
-            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents(), cacheKind, cacheBytes, out cacheAccepted);
         }
 
@@ -1117,7 +1117,7 @@ namespace Microsoft.ClearScript.V8
         /// </para>
         /// <para>
         /// The <see cref="V8ScriptEngine"/> version of this method attempts to use
-        /// <see href="http://msdn.microsoft.com/en-us/library/k6xhc6yc(VS.85).aspx">toString</see>
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/tostring">toString</see>
         /// to convert the return value.
         /// </para>
         /// </remarks>

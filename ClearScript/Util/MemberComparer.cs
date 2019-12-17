@@ -13,6 +13,10 @@ namespace Microsoft.ClearScript.Util
 
         public static MemberComparer<T> Instance { get { return instance; } }
 
+        private MemberComparer()
+        {
+        }
+
         public override bool Equals(T x, T y)
         {
             // ReSharper disable PossibleNullReferenceException
@@ -31,6 +35,7 @@ namespace Microsoft.ClearScript.Util
 
         public override int GetHashCode(T obj)
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             return (obj == null) ? 0 : obj.GetHashCode();
         }
     }

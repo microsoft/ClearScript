@@ -13,6 +13,8 @@ using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+// ReSharper disable HeuristicUnreachableCode
+
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
@@ -903,7 +905,7 @@ namespace Microsoft.ClearScript.Test
         public enum UnsignedFlags : byte
         {
             None = 0,
-            First = 1 << 0,
+            First = 1,
             Second = 1 << 1,
             Third = 1 << 2,
             Fourth = 1 << 3,
@@ -917,7 +919,7 @@ namespace Microsoft.ClearScript.Test
         public enum SignedFlags : sbyte
         {
             None = 0,
-            First = 1 << 0,
+            First = 1,
             Second = 1 << 1,
             Third = 1 << 2,
             Fourth = 1 << 3,
@@ -931,7 +933,7 @@ namespace Microsoft.ClearScript.Test
         public enum NonFlags
         {
             None = 0,
-            First = 1 << 0,
+            First = 1,
             Second = 1 << 1,
             Third = 1 << 2,
             Fourth = 1 << 3,

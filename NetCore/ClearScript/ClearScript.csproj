@@ -1,0 +1,219 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Microsoft.ClearScript</RootNamespace>
+    <AssemblyName>ClearScript</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>CS0618</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <OutputPath>..\..\bin\Debug</OutputPath>
+    <WarningsAsErrors />
+    <DocumentationFile>..\..\bin\Debug\ClearScript.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>CS0618</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DefineConstants>TRACE</DefineConstants>
+    <OutputPath>..\..\bin\Release</OutputPath>
+    <WarningsAsErrors />
+    <DocumentationFile>..\..\bin\Release\ClearScript.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>true</DelaySign>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="V8\ClearScriptV8\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\ClearScript\BindSignature.cs" Link="BindSignature.cs" />
+    <Compile Include="..\..\ClearScript\ByRefArg.cs" Link="ByRefArg.cs" />
+    <Compile Include="..\..\ClearScript\CanonicalRefTable.cs" Link="CanonicalRefTable.cs" />
+    <Compile Include="..\..\ClearScript\ContinuationCallback.cs" Link="ContinuationCallback.cs" />
+    <Compile Include="..\..\ClearScript\DefaultScriptUsageAttribute.cs" Link="DefaultScriptUsageAttribute.cs" />
+    <Compile Include="..\..\ClearScript\DelegateFactory.cs" Link="DelegateFactory.cs" />
+    <Compile Include="..\..\ClearScript\DelegateFactory.Generated.cs" Link="DelegateFactory.Generated.cs" />
+    <Compile Include="..\..\ClearScript\Document.cs" Link="Document.cs" />
+    <Compile Include="..\..\ClearScript\DocumentAccessFlags.cs" Link="DocumentAccessFlags.cs" />
+    <Compile Include="..\..\ClearScript\DocumentCategory.cs" Link="DocumentCategory.cs" />
+    <Compile Include="..\..\ClearScript\DocumentContextCallback.cs" Link="DocumentContextCallback.cs" />
+    <Compile Include="..\..\ClearScript\DocumentFlags.cs" Link="DocumentFlags.cs" />
+    <Compile Include="..\..\ClearScript\DocumentInfo.cs" Link="DocumentInfo.cs" />
+    <Compile Include="..\..\ClearScript\DocumentLoadCallback.cs" Link="DocumentLoadCallback.cs" />
+    <Compile Include="..\..\ClearScript\DocumentLoader.cs" Link="DocumentLoader.cs" />
+    <Compile Include="..\..\ClearScript\DocumentSettings.cs" Link="DocumentSettings.cs" />
+    <Compile Include="..\..\ClearScript\ExtensionMethods.cs" Link="ExtensionMethods.cs" />
+    <Compile Include="..\..\ClearScript\Extensions.cs" Link="Extensions.cs" />
+    <Compile Include="..\..\ClearScript\HostEvent.cs" Link="HostEvent.cs" />
+    <Compile Include="..\..\ClearScript\HostFunctions.cs" Link="HostFunctions.cs" />
+    <Compile Include="..\..\ClearScript\HostIndexedProperty.cs" Link="HostIndexedProperty.cs" />
+    <Compile Include="..\..\ClearScript\HostItem.cs" Link="HostItem.cs" />
+    <Compile Include="..\..\ClearScript\HostItem.InvokeMethod.cs" Link="HostItem.InvokeMethod.cs" />
+    <Compile Include="..\..\ClearScript\HostItem.NetCore.cs" Link="HostItem.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\HostItemCollateral.cs" Link="HostItemCollateral.cs" />
+    <Compile Include="..\..\ClearScript\HostItemFlags.cs" Link="HostItemFlags.cs" />
+    <Compile Include="..\..\ClearScript\HostList.cs" Link="HostList.cs" />
+    <Compile Include="..\..\ClearScript\HostMethod.cs" Link="HostMethod.cs" />
+    <Compile Include="..\..\ClearScript\HostObject.cs" Link="HostObject.cs" />
+    <Compile Include="..\..\ClearScript\HostSettings.cs" Link="HostSettings.cs" />
+    <Compile Include="..\..\ClearScript\HostTarget.cs" Link="HostTarget.cs" />
+    <Compile Include="..\..\ClearScript\HostTargetFlags.cs" Link="HostTargetFlags.cs" />
+    <Compile Include="..\..\ClearScript\HostTargetMemberData.cs" Link="HostTargetMemberData.cs" />
+    <Compile Include="..\..\ClearScript\HostType.cs" Link="HostType.cs" />
+    <Compile Include="..\..\ClearScript\HostTypeCollection.cs" Link="HostTypeCollection.cs" />
+    <Compile Include="..\..\ClearScript\HostVariable.cs" Link="HostVariable.cs" />
+    <Compile Include="..\..\ClearScript\ImmutableValueAttribute.cs" Link="ImmutableValueAttribute.cs" />
+    <Compile Include="..\..\ClearScript\Invocability.cs" Link="Invocability.cs" />
+    <Compile Include="..\..\ClearScript\IScriptableObject.cs" Link="IScriptableObject.cs" />
+    <Compile Include="..\..\ClearScript\IScriptEngineException.cs" Link="IScriptEngineException.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\CommonJSLegacyModule.cs" Link="JavaScript\CommonJSLegacyModule.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\CommonJSManager.cs" Link="JavaScript\CommonJSManager.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\IArrayBuffer.cs" Link="JavaScript\IArrayBuffer.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\IArrayBufferView.cs" Link="JavaScript\IArrayBufferView.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\IDataView.cs" Link="JavaScript\IDataView.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\IJavaScriptEngine.cs" Link="JavaScript\IJavaScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\ITypedArray.cs" Link="JavaScript\ITypedArray.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\JavaScriptExtensions.cs" Link="JavaScript\JavaScriptExtensions.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\ModuleCategory.cs" Link="JavaScript\ModuleCategory.cs" />
+    <Compile Include="..\..\ClearScript\NoDefaultScriptAccessAttribute.cs" Link="NoDefaultScriptAccessAttribute.cs" />
+    <Compile Include="..\..\ClearScript\NoScriptAccessAttribute.cs" Link="NoScriptAccessAttribute.cs" />
+    <Compile Include="..\..\ClearScript\Properties\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\..\ClearScript\PropertyBag.cs" Link="PropertyBag.cs" />
+    <Compile Include="..\..\ClearScript\ScriptAccess.cs" Link="ScriptAccess.cs" />
+    <Compile Include="..\..\ClearScript\ScriptEngine.cs" Link="ScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\ScriptEngineException.cs" Link="ScriptEngineException.cs" />
+    <Compile Include="..\..\ClearScript\ScriptInterruptedException.cs" Link="ScriptInterruptedException.cs" />
+    <Compile Include="..\..\ClearScript\ScriptItem.cs" Link="ScriptItem.cs" />
+    <Compile Include="..\..\ClearScript\ScriptMemberAttribute.cs" Link="ScriptMemberAttribute.cs" />
+    <Compile Include="..\..\ClearScript\ScriptMemberFlags.cs" Link="ScriptMemberFlags.cs" />
+    <Compile Include="..\..\ClearScript\ScriptMethod.cs" Link="ScriptMethod.cs" />
+    <Compile Include="..\..\ClearScript\ScriptObject.cs" Link="ScriptObject.cs" />
+    <Compile Include="..\..\ClearScript\ScriptUsageAttribute.cs" Link="ScriptUsageAttribute.cs" />
+    <Compile Include="..\..\ClearScript\StringDocument.cs" Link="StringDocument.cs" />
+    <Compile Include="..\..\ClearScript\Undefined.cs" Link="Undefined.cs" />
+    <Compile Include="..\..\ClearScript\UniqueDocumentInfo.cs" Link="UniqueDocumentInfo.cs" />
+    <Compile Include="..\..\ClearScript\Util\ArrayHelpers.cs" Link="Util\ArrayHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.cs" Link="Util\AssemblyHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.NetCore.cs" Link="Util\AssemblyHelpers.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\AssemblyTable.NetCore.cs" Link="Util\AssemblyTable.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\BitwiseHelpers.cs" Link="Util\BitwiseHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\Collateral.cs" Link="Util\Collateral.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\ActivationHelpers.cs" Link="Util\COM\ActivationHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\Dispatch.cs" Link="Util\COM\Dispatch.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\DispatchHelpers.cs" Link="Util\COM\DispatchHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\DispatchMember.cs" Link="Util\COM\DispatchMember.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\DispatchWrappers.cs" Link="Util\COM\DispatchWrappers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\HResult.cs" Link="Util\COM\HResult.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\TypeInfoHelpers.cs" Link="Util\COM\TypeInfoHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\TypeInfoHelpers.NetCore.cs" Link="Util\COM\TypeInfoHelpers.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\TypeLibHelpers.cs" Link="Util\COM\TypeLibHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\UnknownHelpers.cs" Link="Util\COM\UnknownHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\ConcurrentWeakSet.cs" Link="Util\ConcurrentWeakSet.cs" />
+    <Compile Include="..\..\ClearScript\Util\CoTaskMemBlock.cs" Link="Util\CoTaskMemBlock.cs" />
+    <Compile Include="..\..\ClearScript\Util\DynamicHelpers.cs" Link="Util\DynamicHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.cs" Link="Util\EnumerableHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\Holder.cs" Link="Util\Holder.cs" />
+    <Compile Include="..\..\ClearScript\Util\IDynamic.cs" Link="Util\IDynamic.cs" />
+    <Compile Include="..\..\ClearScript\Util\IExpando.cs" Link="Util\IExpando.cs" />
+    <Compile Include="..\..\ClearScript\Util\IHostInvokeContext.cs" Link="Util\IHostInvokeContext.cs" />
+    <Compile Include="..\..\ClearScript\Util\INativeCallback.cs" Link="Util\INativeCallback.cs" />
+    <Compile Include="..\..\ClearScript\Util\InvokeHelpers.cs" Link="Util\InvokeHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\IScriptMarshalWrapper.cs" Link="Util\IScriptMarshalWrapper.cs" />
+    <Compile Include="..\..\ClearScript\Util\MemberComparer.cs" Link="Util\MemberComparer.cs" />
+    <Compile Include="..\..\ClearScript\Util\MemberHelpers.cs" Link="Util\MemberHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\MemberMap.cs" Link="Util\MemberMap.cs" />
+    <Compile Include="..\..\ClearScript\Util\MiscHelpers.cs" Link="Util\MiscHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\NativeCallbackTimer.cs" Link="Util\NativeCallbackTimer.cs" />
+    <Compile Include="..\..\ClearScript\Util\NativeMethods.cs" Link="Util\NativeMethods.cs" />
+    <Compile Include="..\..\ClearScript\Util\Nonexistent.cs" Link="Util\Nonexistent.cs" />
+    <Compile Include="..\..\ClearScript\Util\ObjectHelpers.cs" Link="Util\ObjectHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\OneWayFlag.cs" Link="Util\OneWayFlag.cs" />
+    <Compile Include="..\..\ClearScript\Util\Scope.cs" Link="Util\Scope.cs" />
+    <Compile Include="..\..\ClearScript\Util\SocketHelpers.cs" Link="Util\SocketHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\SpecialDispIDs.cs" Link="Util\SpecialDispIDs.cs" />
+    <Compile Include="..\..\ClearScript\Util\SpecialMemberNames.cs" Link="Util\SpecialMemberNames.cs" />
+    <Compile Include="..\..\ClearScript\Util\SpecialParamNames.cs" Link="Util\SpecialParamNames.cs" />
+    <Compile Include="..\..\ClearScript\Util\Test\AccessContextTestObject.cs" Link="Util\Test\AccessContextTestObject.cs" />
+    <Compile Include="..\..\ClearScript\Util\TypeHelpers.cs" Link="Util\TypeHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\TypeHelpers.NetCore.cs" Link="Util\TypeHelpers.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\UniqueNameManager.cs" Link="Util\UniqueNameManager.cs" />
+    <Compile Include="..\..\ClearScript\Util\UnmanagedMemoryHelpers.cs" Link="Util\UnmanagedMemoryHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\VTableHelpers.cs" Link="Util\VTableHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\VTablePatcher.cs" Link="Util\VTablePatcher.cs" />
+    <Compile Include="..\..\ClearScript\Util\Web\WebContext.cs" Link="Util\Web\WebContext.cs" />
+    <Compile Include="..\..\ClearScript\Util\Web\WebRequest.cs" Link="Util\Web\WebRequest.cs" />
+    <Compile Include="..\..\ClearScript\Util\Web\WebResponse.cs" Link="Util\Web\WebResponse.cs" />
+    <Compile Include="..\..\ClearScript\Util\Web\WebSocket.cs" Link="Util\Web\WebSocket.cs" />
+    <Compile Include="..\..\ClearScript\Util\_Exception.cs" Link="Util\_Exception.cs" />
+    <Compile Include="..\..\ClearScript\V8\IV8DebugListener.cs" Link="V8\IV8DebugListener.cs" />
+    <Compile Include="..\..\ClearScript\V8\IV8Object.cs" Link="V8\IV8Object.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ArrayBufferOrViewInfo.cs" Link="V8\V8ArrayBufferOrViewInfo.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ArrayBufferOrViewKind.cs" Link="V8\V8ArrayBufferOrViewKind.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8CacheKind.cs" Link="V8\V8CacheKind.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ContextProxy.cs" Link="V8\V8ContextProxy.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8CpuProfile.cs" Link="V8\V8CpuProfile.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8CpuProfileFlags.cs" Link="V8\V8CpuProfileFlags.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8DebugAgent.cs" Link="V8\V8DebugAgent.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8DebugClient.cs" Link="V8\V8DebugClient.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8IsolateProxy.cs" Link="V8\V8IsolateProxy.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8Proxy.cs" Link="V8\V8Proxy.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8Proxy.NetCore.cs" Link="V8\V8Proxy.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ProxyHelpers.cs" Link="V8\V8ProxyHelpers.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8Runtime.cs" Link="V8\V8Runtime.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8RuntimeConstraints.cs" Link="V8\V8RuntimeConstraints.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8RuntimeFlags.cs" Link="V8\V8RuntimeFlags.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8RuntimeHeapInfo.cs" Link="V8\V8RuntimeHeapInfo.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8Script.cs" Link="V8\V8Script.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.cs" Link="V8\V8ScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ScriptEngineFlags.cs" Link="V8\V8ScriptEngineFlags.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ScriptItem.cs" Link="V8\V8ScriptItem.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8TestProxy.cs" Link="V8\V8TestProxy.cs" />
+    <Compile Include="..\..\ClearScript\VoidResult.cs" Link="VoidResult.cs" />
+    <Compile Include="..\..\ClearScript\Windows\ActiveXDebugging.cs" Link="Windows\ActiveXDebugging.cs" />
+    <Compile Include="..\..\ClearScript\Windows\ActiveXScripting.cs" Link="Windows\ActiveXScripting.cs" />
+    <Compile Include="..\..\ClearScript\Windows\ActiveXWrappers.cs" Link="Windows\ActiveXWrappers.cs" />
+    <Compile Include="..\..\ClearScript\Windows\IHostWindow.cs" Link="Windows\IHostWindow.cs" />
+    <Compile Include="..\..\ClearScript\Windows\IWindowsScriptObject.cs" Link="Windows\IWindowsScriptObject.cs" />
+    <Compile Include="..\..\ClearScript\Windows\JScriptEngine.cs" Link="Windows\JScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\Windows\Nothing.cs" Link="Windows\Nothing.cs" />
+    <Compile Include="..\..\ClearScript\Windows\VBScriptEngine.cs" Link="Windows\VBScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.cs" Link="Windows\WindowsScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.Debug.cs" Link="Windows\WindowsScriptEngine.Debug.cs" />
+    <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.Site.cs" Link="Windows\WindowsScriptEngine.Site.cs" />
+    <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngineFlags.cs" Link="Windows\WindowsScriptEngineFlags.cs" />
+    <Compile Include="..\..\ClearScript\Windows\WindowsScriptItem.cs" Link="Windows\WindowsScriptItem.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="JavaScript\" />
+    <Folder Include="Properties\" />
+    <Folder Include="Util\COM\" />
+    <Folder Include="Util\Test\" />
+    <Folder Include="Util\Web\" />
+    <Folder Include="V8\" />
+    <Folder Include="Windows\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(NetCoreTargetingPackRoot)\Microsoft.NETCore.App.Host.win-x86\$(BundledNETCoreAppPackageVersion)\runtimes\win-x86\native\ijwhost.dll" Link="Util\IJW\ijwhost-32.dll" />
+    <EmbeddedResource Include="$(NetCoreTargetingPackRoot)\Microsoft.NETCore.App.Host.win-x64\$(BundledNETCoreAppPackageVersion)\runtimes\win-x64\native\ijwhost.dll" Link="Util\IJW\ijwhost-64.dll" />
+  </ItemGroup>
+
+</Project>

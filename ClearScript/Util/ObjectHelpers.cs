@@ -2,11 +2,13 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
-using TYPEATTR = System.Runtime.InteropServices.ComTypes.TYPEATTR;
+using Microsoft.ClearScript.Util.COM;
+using Microsoft.Win32;
 using TYPEFLAGS = System.Runtime.InteropServices.ComTypes.TYPEFLAGS;
 using TYPEKIND = System.Runtime.InteropServices.ComTypes.TYPEKIND;
 using TYPELIBATTR = System.Runtime.InteropServices.ComTypes.TYPELIBATTR;
@@ -35,16 +37,12 @@ namespace Microsoft.ClearScript.Util
                 dispatch = value as IDispatch;
                 if (dispatch != null)
                 {
-                    uint count;
-                    if (RawCOMHelpers.HResult.Succeeded(dispatch.GetTypeInfoCount(out count)) && (count > 0))
+                    var tempTypeInfo = dispatch.GetTypeInfo();
+                    if (tempTypeInfo != null)
                     {
-                        ITypeInfo tempTypeInfo;
-                        if (RawCOMHelpers.HResult.Succeeded(dispatch.GetTypeInfo(0, 0, out tempTypeInfo)))
-                        {
-                            typeInfo = GetTypeForTypeInfo(tempTypeInfo);
-                            typeInfoKind = GetTypeInfoKind(tempTypeInfo);
-                            typeInfoFlags = GetTypeInfoFlags(tempTypeInfo);
-                        }
+                        typeInfo = GetTypeForTypeInfo(tempTypeInfo);
+                        typeInfoKind = tempTypeInfo.GetKind();
+                        typeInfoFlags = tempTypeInfo.GetFlags();
                     }
                 }
 
@@ -54,11 +52,11 @@ namespace Microsoft.ClearScript.Util
                     if (provideClassInfo != null)
                     {
                         ITypeInfo tempTypeInfo;
-                        if (RawCOMHelpers.HResult.Succeeded(provideClassInfo.GetClassInfo(out tempTypeInfo)))
+                        if (HResult.Succeeded(provideClassInfo.GetClassInfo(out tempTypeInfo)))
                         {
                             typeInfo = GetTypeForTypeInfo(tempTypeInfo);
-                            typeInfoKind = GetTypeInfoKind(tempTypeInfo);
-                            typeInfoFlags = GetTypeInfoFlags(tempTypeInfo);
+                            typeInfoKind = tempTypeInfo.GetKind();
+                            typeInfoFlags = tempTypeInfo.GetFlags();
                         }
                     }
                 }
@@ -115,8 +113,21 @@ namespace Microsoft.ClearScript.Util
             {
                 var array = (Array)value;
                 var dimensions = Enumerable.Range(0, type.GetArrayRank());
-                var lengths = String.Join(",", dimensions.Select(array.GetLength));
+                var lengths = string.Join(",", dimensions.Select(array.GetLength));
                 return MiscHelpers.FormatInvariant("{0}[{1}]", type.GetElementType().GetFriendlyName(), lengths);
+            }
+
+            if (type.IsUnknownCOMObject())
+            {
+                var dispatch = value as IDispatch;
+                if (dispatch != null)
+                {
+                    var typeInfo = dispatch.GetTypeInfo();
+                    if (typeInfo != null)
+                    {
+                        return typeInfo.GetName();
+                    }
+                }
             }
 
             return type.GetFriendlyName();
@@ -159,15 +170,14 @@ namespace Microsoft.ClearScript.Util
 
             try
             {
-                ITypeLib typeLib;
                 int index;
-                typeInfo.GetContainingTypeLib(out typeLib, out index);
+                var typeLib = typeInfo.GetContainingTypeLib(out index);
 
                 var assembly = LoadPrimaryInteropAssembly(typeLib);
                 if (assembly != null)
                 {
                     var name = GetManagedTypeInfoName(typeInfo, typeLib);
-                    var guid = GetTypeInfoGuid(typeInfo);
+                    var guid = typeInfo.GetGuid();
 
                     var type = assembly.GetType(name, false, true);
                     if ((type != null) && (type.GUID == guid))
@@ -193,15 +203,7 @@ namespace Microsoft.ClearScript.Util
                     }
                 }
 
-                var pTypeInfo = Marshal.GetComInterfaceForObject(typeInfo, typeof(ITypeInfo));
-                try
-                {
-                    return Marshal.GetTypeForITypeInfo(pTypeInfo);
-                }
-                finally
-                {
-                    Marshal.Release(pTypeInfo);
-                }
+                return typeInfo.GetManagedType();
             }
             catch (Exception)
             {
@@ -216,24 +218,29 @@ namespace Microsoft.ClearScript.Util
         {
             // ReSharper disable EmptyGeneralCatchClause
 
+            if (typeLib == null)
+            {
+                return null;
+            }
+
             try
             {
-                IntPtr pAttr;
-                typeLib.GetLibAttr(out pAttr);
+                IntPtr pLibAttr;
+                typeLib.GetLibAttr(out pLibAttr);
                 try
                 {
-                    var attr = (TYPELIBATTR)Marshal.PtrToStructure(pAttr, typeof(TYPELIBATTR));
+                    var typeLibAttr = (TYPELIBATTR)Marshal.PtrToStructure(pLibAttr, typeof(TYPELIBATTR));
 
                     string name;
                     string codeBase;
-                    if (new TypeLibConverter().GetPrimaryInteropAssembly(attr.guid, attr.wMajorVerNum, attr.wMinorVerNum, attr.lcid, out name, out codeBase))
+                    if (GetPrimaryInteropAssembly(typeLibAttr.guid, typeLibAttr.wMajorVerNum, typeLibAttr.wMinorVerNum, out name, out codeBase))
                     {
                         return Assembly.Load(new AssemblyName(name) { CodeBase = codeBase });
                     }
                 }
                 finally
                 {
-                    typeLib.ReleaseTLibAttr(pAttr);
+                    typeLib.ReleaseTLibAttr(pLibAttr);
                 }
             }
             catch (Exception)
@@ -243,6 +250,37 @@ namespace Microsoft.ClearScript.Util
             return null;
 
             // ReSharper restore EmptyGeneralCatchClause
+        }
+
+        private static bool GetPrimaryInteropAssembly(Guid libid, int major, int minor, out string name, out string codeBase)
+        {
+            name = null;
+            codeBase = null;
+
+            using (var containerKey = Registry.ClassesRoot.OpenSubKey("TypeLib", false))
+            {
+                if (containerKey != null)
+                {
+                    var typeLibName = "{" + libid.ToString().ToUpper(CultureInfo.InvariantCulture) + "}";
+                    using (var typeLibKey = containerKey.OpenSubKey(typeLibName))
+                    {
+                        if (typeLibKey != null)
+                        {
+                            var versionName = major.ToString("x", CultureInfo.InvariantCulture) + "." + minor.ToString("x", CultureInfo.InvariantCulture);
+                            using (var versionKey = typeLibKey.OpenSubKey(versionName, false))
+                            {
+                                if (versionKey != null)
+                                {
+                                    name = (string)versionKey.GetValue("PrimaryInteropAssemblyName");
+                                    codeBase = (string)versionKey.GetValue("PrimaryInteropAssemblyCodeBase");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return name != null;
         }
 
         private static string GetManagedTypeInfoName(ITypeInfo typeInfo, ITypeLib typeLib)
@@ -306,52 +344,7 @@ namespace Microsoft.ClearScript.Util
                 // ReSharper restore EmptyGeneralCatchClause
             }
 
-            return Marshal.GetTypeLibName(typeLib);
-        }
-
-        private static Guid GetTypeInfoGuid(ITypeInfo typeInfo)
-        {
-            IntPtr pAttr;
-            typeInfo.GetTypeAttr(out pAttr);
-            try
-            {
-                var attr = (TYPEATTR)Marshal.PtrToStructure(pAttr, typeof(TYPEATTR));
-                return attr.guid;
-            }
-            finally
-            {
-                typeInfo.ReleaseTypeAttr(pAttr);
-            }
-        }
-
-        private static TYPEKIND GetTypeInfoKind(ITypeInfo typeInfo)
-        {
-            IntPtr pAttr;
-            typeInfo.GetTypeAttr(out pAttr);
-            try
-            {
-                var attr = (TYPEATTR)Marshal.PtrToStructure(pAttr, typeof(TYPEATTR));
-                return attr.typekind;
-            }
-            finally
-            {
-                typeInfo.ReleaseTypeAttr(pAttr);
-            }
-        }
-
-        private static TYPEFLAGS GetTypeInfoFlags(ITypeInfo typeInfo)
-        {
-            IntPtr pAttr;
-            typeInfo.GetTypeAttr(out pAttr);
-            try
-            {
-                var attr = (TYPEATTR)Marshal.PtrToStructure(pAttr, typeof(TYPEATTR));
-                return attr.wTypeFlags;
-            }
-            finally
-            {
-                typeInfo.ReleaseTypeAttr(pAttr);
-            }
+            return typeLib.GetName();
         }
 
         #region Nested type: IProvideClassInfo

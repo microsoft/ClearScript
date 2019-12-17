@@ -7,6 +7,8 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+// ReSharper disable HeuristicUnreachableCode
+
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]

@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript
 {
@@ -155,7 +156,9 @@ namespace Microsoft.ClearScript
 
         public object InvokeMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture, bool bypassTunneling, out bool isCacheable)
         {
+            name = AdjustInvokeName(name);
             AdjustInvokeFlags(ref invokeFlags);
+
             isCacheable = false;
 
             object result;
@@ -415,11 +418,6 @@ namespace Microsoft.ClearScript
             return engine.GetOrCreateHostItem(target, flags, Create);
         }
 
-        private static HostItem Create(ScriptEngine engine, HostTarget target, HostItemFlags flags)
-        {
-            return TargetSupportsExpandoMembers(target, flags) ? new ExpandoHostItem(engine, target, flags) : new HostItem(engine, target, flags);
-        }
-
         private void BindSpecialTarget()
         {
             if (TargetSupportsSpecialTargets(target))
@@ -475,12 +473,19 @@ namespace Microsoft.ClearScript
 
             if (typeof(T) == typeof(IDynamic))
             {
-                // provide fully dynamic behavior for exposed IDispatchEx implementations
+                // provide fully dynamic behavior for exposed IDispatch[Ex] implementations
 
                 var dispatchEx = target.InvokeTarget as IDispatchEx;
-                if ((dispatchEx != null) && dispatchEx.GetType().IsCOMObject)
+                if ((dispatchEx != null) && target.Type.IsUnknownCOMObject())
                 {
-                    specialTarget = (T)(object)(new DynamicDispatchExWrapper(dispatchEx));
+                    specialTarget = (T)(object)(new DynamicDispatchExWrapper(this, dispatchEx));
+                    return true;
+                }
+
+                var dispatch = target.InvokeTarget as IDispatch;
+                if ((dispatch != null) && target.Type.IsUnknownCOMObject())
+                {
+                    specialTarget = (T)(object)(new DynamicDispatchWrapper(this, dispatch));
                     return true;
                 }
             }
@@ -810,7 +815,7 @@ namespace Microsoft.ClearScript
             }
         }
 
-        private void AddExpandoMemberName(string name)
+        protected virtual void AddExpandoMemberName(string name)
         {
             if (ExpandoMemberNames == null)
             {
@@ -820,7 +825,7 @@ namespace Microsoft.ClearScript
             ExpandoMemberNames.Add(name);
         }
 
-        private void RemoveExpandoMemberName(string name)
+        protected virtual void RemoveExpandoMemberName(string name)
         {
             if (ExpandoMemberNames != null)
             {
@@ -831,12 +836,6 @@ namespace Microsoft.ClearScript
         #endregion
 
         #region member invocation
-
-        private void HostInvoke(Action action)
-        {
-            BindTargetMemberData();
-            engine.HostInvoke(action);
-        }
 
         private T HostInvoke<T>(Func<T> func)
         {
@@ -864,6 +863,11 @@ namespace Microsoft.ClearScript
         private BindingFlags GetMethodBindFlags()
         {
             return GetCommonBindFlags() | BindingFlags.OptionalParamBinding;
+        }
+
+        protected virtual string AdjustInvokeName(string name)
+        {
+            return name;
         }
 
         private void AdjustInvokeFlags(ref BindingFlags invokeFlags)
@@ -990,7 +994,7 @@ namespace Microsoft.ClearScript
                     {
                         if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                         {
-                            return TargetDynamic;
+                            return target;
                         }
 
                         throw;
@@ -1003,7 +1007,7 @@ namespace Microsoft.ClearScript
                 }
                 catch (Exception)
                 {
-                    if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
+                    if (invokeFlags.HasFlag(BindingFlags.GetField))
                     {
                         return TargetDynamic.GetProperty(name, args);
                     }
@@ -1102,6 +1106,11 @@ namespace Microsoft.ClearScript
                     }
 
                     throw new InvalidOperationException("Invalid argument count");
+                }
+
+                if (name == SpecialMemberNames.NewEnum)
+                {
+                    return HostObject.Wrap(TargetPropertyBag.GetEnumerator(), typeof(IEnumerator));
                 }
 
                 if (args.Length < 1)
@@ -1303,13 +1312,11 @@ namespace Microsoft.ClearScript
                         IEnumerable enumerable;
                         if (BindSpecialTarget(out enumerable))
                         {
+                            object enumerator;
                             var enumerableHelpersHostItem = Wrap(engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
-                            try
+                            if (MiscHelpers.Try(out enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this)))
                             {
-                                return ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this);
-                            }
-                            catch (MissingMemberException)
-                            {
+                                return enumerator;
                             }
                         }
                     }
@@ -1408,6 +1415,25 @@ namespace Microsoft.ClearScript
                 }
 
                 return Nonexistent.Value;
+            }
+
+            if (name == SpecialMemberNames.NewEnum)
+            {
+                if ((target is HostObject) || (target is IHostVariable) || (target is IByRefArg))
+                {
+                    IEnumerable enumerable;
+                    if (BindSpecialTarget(out enumerable))
+                    {
+                        object enumerator;
+                        var enumerableHelpersHostItem = Wrap(engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
+                        if (MiscHelpers.Try(out enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this)))
+                        {
+                            return enumerator;
+                        }
+                    }
+                }
+
+                throw new NotSupportedException("Object is not enumerable");
             }
 
             if ((TargetDynamicMetaObject != null) && (args.Length < 1))
@@ -1707,7 +1733,7 @@ namespace Microsoft.ClearScript
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            result = ThisDynamic.GetProperty(binder.Name, ArrayHelpers.GetEmptyArray<object>()).ToDynamicResult(engine);
+            result = ThisDynamic.GetProperty(binder.Name).ToDynamicResult(engine);
             return true;
         }
 
@@ -1728,7 +1754,7 @@ namespace Microsoft.ClearScript
                     return true;
                 }
 
-                result = ThisDynamic.GetProperty(indices[0].ToString(), ArrayHelpers.GetEmptyArray<object>()).ToDynamicResult(engine);
+                result = ThisDynamic.GetProperty(indices[0].ToString()).ToDynamicResult(engine);
                 return true;
             }
 
@@ -2010,7 +2036,7 @@ namespace Microsoft.ClearScript
 
         object IDynamic.GetProperty(int index)
         {
-            return ThisDynamic.GetProperty(index.ToString(CultureInfo.InvariantCulture), ArrayHelpers.GetEmptyArray<object>());
+            return ThisDynamic.GetProperty(index.ToString(CultureInfo.InvariantCulture));
         }
 
         void IDynamic.SetProperty(int index, object value)
@@ -2092,7 +2118,7 @@ namespace Microsoft.ClearScript
                     var maxCount = Math.Min(count, elements.Length);
                     while ((index < maxCount) && TargetEnumerator.MoveNext())
                     {
-                        elements[index++] = ThisDynamic.GetProperty("Current", ArrayHelpers.GetEmptyArray<object>());
+                        elements[index++] = ThisDynamic.GetProperty("Current");
                     }
                 }
 
@@ -2101,7 +2127,7 @@ namespace Microsoft.ClearScript
                     Marshal.WriteInt32(pCountFetched, index);
                 }
 
-                return (index == count) ? RawCOMHelpers.HResult.S_OK : RawCOMHelpers.HResult.S_FALSE;
+                return (index == count) ? HResult.S_OK : HResult.S_FALSE;
             });
         }
 
@@ -2115,7 +2141,7 @@ namespace Microsoft.ClearScript
                     index++;
                 }
 
-                return (index == count) ? RawCOMHelpers.HResult.S_OK : RawCOMHelpers.HResult.S_FALSE;
+                return (index == count) ? HResult.S_OK : HResult.S_FALSE;
             });
         }
 
@@ -2124,7 +2150,7 @@ namespace Microsoft.ClearScript
             return HostInvoke(() =>
             {
                 TargetEnumerator.Reset();
-                return RawCOMHelpers.HResult.S_OK;
+                return HResult.S_OK;
             });
         }
 
@@ -2154,7 +2180,7 @@ namespace Microsoft.ClearScript
                     var pUnknown = Marshal.GetIUnknownForObject(this);
 
                     bypassVTablePatching = true;
-                    pInterface = RawCOMHelpers.QueryInterfaceNoThrow<IDispatchEx>(pUnknown);
+                    pInterface = UnknownHelpers.QueryInterfaceNoThrow<IDispatchEx>(pUnknown);
                     bypassVTablePatching = false;
 
                     Marshal.Release(pUnknown);
@@ -2203,14 +2229,18 @@ namespace Microsoft.ClearScript
 
         #region Nested type: ExpandoHostItem
 
-        private sealed class ExpandoHostItem : HostItem, IExpando
+        private class ExpandoHostItem : HostItem, IExpando
         {
             #region constructors
+
+            // ReSharper disable MemberCanBeProtected.Local
 
             public ExpandoHostItem(ScriptEngine engine, HostTarget target, HostItemFlags flags)
                 : base(engine, target, flags)
             {
             }
+
+            // ReSharper restore MemberCanBeProtected.Local
 
             #endregion
 
@@ -2251,54 +2281,66 @@ namespace Microsoft.ClearScript
 
             void IExpando.RemoveMember(MemberInfo member)
             {
-                HostInvoke(() =>
+                RemoveMember(member.Name);
+            }
+
+            protected virtual bool RemoveMember(string name)
+            {
+                return HostInvoke(() =>
                 {
                     if (TargetDynamic != null)
                     {
                         int index;
-                        if (int.TryParse(member.Name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                        if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
                         {
                             if (TargetDynamic.DeleteProperty(index))
                             {
                                 RemoveExpandoMemberName(index.ToString(CultureInfo.InvariantCulture));
+                                return true;
                             }
                         }
-                        else if (TargetDynamic.DeleteProperty(member.Name))
+                        else if (TargetDynamic.DeleteProperty(name))
                         {
-                            RemoveExpandoMemberName(member.Name);
+                            RemoveExpandoMemberName(name);
+                            return true;
                         }
                     }
                     else if (TargetPropertyBag != null)
                     {
-                        if (TargetPropertyBag.Remove(member.Name))
+                        if (TargetPropertyBag.Remove(name))
                         {
-                            RemoveExpandoMemberName(member.Name);
+                            RemoveExpandoMemberName(name);
+                            return true;
                         }
                     }
                     else if (TargetDynamicMetaObject != null)
                     {
                         bool result;
-                        if (TargetDynamicMetaObject.TryDeleteMember(member.Name, out result) && result)
+                        if (TargetDynamicMetaObject.TryDeleteMember(name, out result) && result)
                         {
-                            RemoveExpandoMemberName(member.Name);
+                            RemoveExpandoMemberName(name);
+                            return true;
                         }
-                        else
+
+                        int index;
+                        if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index) && TargetDynamicMetaObject.TryDeleteIndex(new object[] { index }, out result))
                         {
-                            int index;
-                            if (int.TryParse(member.Name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index) && TargetDynamicMetaObject.TryDeleteIndex(new object[] { index }, out result))
-                            {
-                                RemoveExpandoMemberName(index.ToString(CultureInfo.InvariantCulture));
-                            }
-                            else if (TargetDynamicMetaObject.TryDeleteIndex(new object[] { member.Name }, out result))
-                            {
-                                RemoveExpandoMemberName(member.Name);
-                            }
+                            RemoveExpandoMemberName(index.ToString(CultureInfo.InvariantCulture));
+                            return true;
+                        }
+
+                        if (TargetDynamicMetaObject.TryDeleteIndex(new object[] { name }, out result))
+                        {
+                            RemoveExpandoMemberName(name);
+                            return true;
                         }
                     }
                     else
                     {
                         throw new NotSupportedException("Object does not support dynamic members");
                     }
+
+                    return false;
                 });
             }
 

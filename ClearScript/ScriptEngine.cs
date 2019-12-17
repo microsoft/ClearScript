@@ -205,9 +205,9 @@ namespace Microsoft.ClearScript
         /// When this property is set to <c>true</c>, all field, property, and method return values
         /// are marshaled with full .NET type information even if they are <c>null</c>. Note that
         /// such values will always fail equality comparison with JavaScript's
-        /// <c><see href="https://msdn.microsoft.com/en-us/library/ie/fhcc96d6(v=vs.94).aspx">null</see></c>,
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null">null</see></c>,
         /// VBScript's
-        /// <c><see href="https://msdn.microsoft.com/en-us/library/f8tbc79x(v=vs.85).aspx">Nothing</see></c>,
+        /// <c><see href="https://docs.microsoft.com/en-us/previous-versions//f8tbc79x(v=vs.85)">Nothing</see></c>,
         /// and other similar values. Instead, use <see cref="HostFunctions.isNull"/> or
         /// <see cref="object.Equals(object, object)"/> to perform such a comparison.
         /// </remarks>
@@ -349,9 +349,9 @@ namespace Microsoft.ClearScript
         ///         properties with numeric names that match their valid indices. This includes
         ///         one-dimensional host arrays and other collections. Multidimensional host arrays
         ///         do not expose functional indexers; you must use
-        ///         <see href="http://msdn.microsoft.com/en-us/library/system.array.getvalue.aspx">Array.GetValue</see>
+        ///         <see href="https://docs.microsoft.com/en-us/dotnet/api/system.array.getvalue">Array.GetValue</see>
         ///         and
-        ///         <see href="http://msdn.microsoft.com/en-us/library/system.array.setvalue.aspx">Array.SetValue</see>
+        ///         <see href="https://docs.microsoft.com/en-us/dotnet/api/system.array.setvalue">Array.SetValue</see>
         ///         instead.
         ///         </description>
         ///     </item>
@@ -1035,7 +1035,7 @@ namespace Microsoft.ClearScript
         public void ExecuteDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
             MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
-            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             Execute(document.Info, document.GetTextContents());
         }
 
@@ -1136,17 +1136,17 @@ namespace Microsoft.ClearScript
         ///     </listheader>
         ///     <item>
         ///         <term><b>String</b></term>
-        ///         <term><see href="http://msdn.microsoft.com/en-us/library/system.string.aspx">System.String</see></term>
+        ///         <term><see href="https://docs.microsoft.com/en-us/dotnet/api/system.string">System.String</see></term>
         ///         <description>N/A</description>
         ///     </item>
         ///     <item>
         ///         <term><b>Boolean</b></term>
-        ///         <term><see href="http://msdn.microsoft.com/en-us/library/system.boolean.aspx">System.Boolean</see></term>
+        ///         <term><see href="https://docs.microsoft.com/en-us/dotnet/api/system.boolean">System.Boolean</see></term>
         ///         <description>N/A</description>
         ///     </item>
         ///     <item>
         ///         <term><b>Number</b></term>
-        ///         <term><see href="http://msdn.microsoft.com/en-us/library/system.int32.aspx">System.Int32</see>&#xA0;or&#xA0;<see href="http://msdn.microsoft.com/en-us/library/system.double.aspx">System.Double</see></term>
+        ///         <term><see href="https://docs.microsoft.com/en-us/dotnet/api/system.int32">System.Int32</see>&#xA0;or&#xA0;<see href="https://docs.microsoft.com/en-us/dotnet/api/system.double">System.Double</see></term>
         ///         <description>
         ///         Other numeric types are possible. The exact conversions between script and .NET
         ///         numeric types are defined by the script engine.
@@ -1162,9 +1162,9 @@ namespace Microsoft.ClearScript
         ///         <term><see cref="Undefined"/></term>
         ///         <description>
         ///         This represents JavaScript's
-        ///         <see href="http://msdn.microsoft.com/en-us/library/ie/dae3sbk5(v=vs.94).aspx">undefined</see>,
+        ///         <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined">undefined</see>,
         ///         VBScript's
-        ///         <see href="http://msdn.microsoft.com/en-us/library/f8tbc79x(v=vs.85).aspx">Empty</see>,
+        ///         <see href="https://docs.microsoft.com/en-us/previous-versions//f8tbc79x(v=vs.85)">Empty</see>,
         ///         etc.
         ///         </description>
         ///     </item>
@@ -1190,7 +1190,7 @@ namespace Microsoft.ClearScript
         ///         <term><see cref="ScriptObject"/></term>
         ///         <description>
         ///         This includes all native script objects that have no .NET representation. C#'s
-        ///         <see href="http://msdn.microsoft.com/en-us/library/dd264741.aspx">dynamic</see>
+        ///         <see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/reference-types#the-dynamic-type">dynamic</see>
         ///         keyword provides a convenient way to access them.
         ///         </description>
         ///     </item>
@@ -1297,7 +1297,7 @@ namespace Microsoft.ClearScript
         public object EvaluateDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
             MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
-            var document = DocumentSettings.Loader.LoadDocument(DocumentSettings, null, specifier, category, contextCallback);
+            var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Evaluate(document.Info, document.GetTextContents());
         }
 

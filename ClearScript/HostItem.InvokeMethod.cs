@@ -9,7 +9,6 @@ using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
@@ -455,7 +454,7 @@ namespace Microsoft.ClearScript
             private static readonly MethodInfo[] reflectionMethods =
             {
                 typeof(object).GetMethod("GetType"),
-                typeof(_Exception).GetMethod("GetType"),
+                typeof(System.Runtime.InteropServices._Exception).GetMethod("GetType"),
                 typeof(Exception).GetMethod("GetType")
             };
 

@@ -19,6 +19,7 @@ Thumbs.db
 *.cache
 *.ilk
 *.log
+*.snk
 [Bb]in
 [Dd]ebug*/
 *.sbr
@@ -36,3 +37,4 @@ ClearScript/V8/V8/lib/
 ClearScript/V8/V8/include/
 .vs/
 packages/
+NuGet/Private/

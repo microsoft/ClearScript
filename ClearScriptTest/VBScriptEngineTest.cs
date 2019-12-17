@@ -17,8 +17,9 @@ using System.Windows.Threading;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
-using Microsoft.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+// ReSharper disable HeuristicUnreachableCode
 
 namespace Microsoft.ClearScript.Test
 {
@@ -1497,6 +1498,45 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_COMObject_FileSystemObject_TypeLibEnums()
+        {
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Execute(@"
+                fso = host.newComObj(""Scripting.FileSystemObject"")
+                enums = host.typeLibEnums(fso)
+            ");
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.BinaryCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.BinaryCompare)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.DatabaseCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.DatabaseCompare)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.TextCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.TextCompare)"));
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForAppending), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForAppending)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForReading), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForReading)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForWriting), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForWriting)"));
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateFalse), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateFalse)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateMixed), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateMixed)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateTrue), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateTrue)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateUseDefault), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateUseDefault)"));
+
+            engine.Execute(@"
+                function writeFile(contents)
+                    name = fso.GetTempName()
+                    path = fso.GetSpecialFolder(enums.Scripting.SpecialFolderConst.TemporaryFolder).Path + ""\\"" + name
+                    stream = fso.OpenTextFile(path, enums.Scripting.IOMode.ForWriting, true, enums.Scripting.Tristate.TristateTrue)
+                    stream.Write(contents)
+                    stream.Close()
+                    writeFile = path
+                end function
+            ");
+
+            var contents = Guid.NewGuid().ToString();
+            var path = engine.Script.writeFile(contents);
+            Assert.IsTrue(new FileInfo(path).Length >= (contents.Length * 2));
+            Assert.AreEqual(contents, File.ReadAllText(path));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_COMObject_Dictionary()
         {
             engine.Script.host = new ExtendedHostFunctions();
@@ -1611,6 +1651,46 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_COMType_FileSystemObject_TypeLibEnums()
+        {
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Execute(@"
+                FSOT = host.comType(""Scripting.FileSystemObject"")
+                fso = host.newObj(FSOT)
+                enums = host.typeLibEnums(fso)
+            ");
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.BinaryCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.BinaryCompare)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.DatabaseCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.DatabaseCompare)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.TextCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.TextCompare)"));
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForAppending), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForAppending)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForReading), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForReading)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForWriting), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForWriting)"));
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateFalse), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateFalse)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateMixed), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateMixed)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateTrue), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateTrue)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateUseDefault), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateUseDefault)"));
+
+            engine.Execute(@"
+                function writeFile(contents)
+                    name = fso.GetTempName()
+                    path = fso.GetSpecialFolder(enums.Scripting.SpecialFolderConst.TemporaryFolder).Path + ""\\"" + name
+                    stream = fso.OpenTextFile(path, enums.Scripting.IOMode.ForWriting, true, enums.Scripting.Tristate.TristateTrue)
+                    stream.Write(contents)
+                    stream.Close()
+                    writeFile = path
+                end function
+            ");
+
+            var contents = Guid.NewGuid().ToString();
+            var path = engine.Script.writeFile(contents);
+            Assert.IsTrue(new FileInfo(path).Length >= (contents.Length * 2));
+            Assert.AreEqual(contents, File.ReadAllText(path));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_COMType_Dictionary()
         {
             engine.Script.host = new ExtendedHostFunctions();
@@ -1702,6 +1782,64 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
 
             Assert.AreEqual("Object", engine.Evaluate("TypeName(fso)"));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMObject_FileSystemObject_ForEach()
+        {
+            var list = new ArrayList();
+
+            engine.Script.list = list;
+            engine.AddCOMObject("fso", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                drives = fso.Drives
+                for each drive in drives
+                    list.Add(drive.Path)
+                next
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMObject_FileSystemObject_TypeLibEnums()
+        {
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.AddCOMObject("fso", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                enums = host.typeLibEnums(fso)
+            ");
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.BinaryCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.BinaryCompare)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.DatabaseCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.DatabaseCompare)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.TextCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.TextCompare)"));
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForAppending), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForAppending)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForReading), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForReading)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForWriting), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForWriting)"));
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateFalse), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateFalse)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateMixed), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateMixed)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateTrue), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateTrue)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateUseDefault), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateUseDefault)"));
+
+            engine.Execute(@"
+                function writeFile(contents)
+                    name = fso.GetTempName()
+                    path = fso.GetSpecialFolder(enums.Scripting.SpecialFolderConst.TemporaryFolder).Path + ""\\"" + name
+                    stream = fso.OpenTextFile(path, enums.Scripting.IOMode.ForWriting, true, enums.Scripting.Tristate.TristateTrue)
+                    stream.Write(contents)
+                    stream.Close()
+                    writeFile = path
+                end function
+            ");
+
+            var contents = Guid.NewGuid().ToString();
+            var path = engine.Script.writeFile(contents);
+            Assert.IsTrue(new FileInfo(path).Length >= (contents.Length * 2));
+            Assert.AreEqual(contents, File.ReadAllText(path));
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
@@ -1815,6 +1953,67 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMType_FileSystemObject_ForEach()
+        {
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.AddCOMType("FSOT", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                fso = host.newObj(FSOT)
+                drives = fso.Drives
+                for each drive in drives
+                    list.Add(drive.Path)
+                next
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMType_FileSystemObject_TypeLibEnums()
+        {
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.AddCOMType("FSOT", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                fso = host.newObj(FSOT)
+                enums = host.typeLibEnums(fso)
+            ");
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.BinaryCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.BinaryCompare)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.DatabaseCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.DatabaseCompare)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.TextCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.TextCompare)"));
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForAppending), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForAppending)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForReading), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForReading)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForWriting), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForWriting)"));
+
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateFalse), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateFalse)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateMixed), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateMixed)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateTrue), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateTrue)"));
+            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateUseDefault), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateUseDefault)"));
+
+            engine.Execute(@"
+                function writeFile(contents)
+                    name = fso.GetTempName()
+                    path = fso.GetSpecialFolder(enums.Scripting.SpecialFolderConst.TemporaryFolder).Path + ""\\"" + name
+                    stream = fso.OpenTextFile(path, enums.Scripting.IOMode.ForWriting, true, enums.Scripting.Tristate.TristateTrue)
+                    stream.Write(contents)
+                    stream.Close()
+                    writeFile = path
+                end function
+            ");
+
+            var contents = Guid.NewGuid().ToString();
+            var path = engine.Script.writeFile(contents);
+            Assert.IsTrue(new FileInfo(path).Length >= (contents.Length * 2));
+            Assert.AreEqual(contents, File.ReadAllText(path));
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
@@ -2459,7 +2658,7 @@ namespace Microsoft.ClearScript.Test
             var bar = (IWindowsScriptObject)(((ScriptObject)engine.Script)["bar"]);
             var underlyingObject = bar.GetUnderlyingObject();
 
-            Assert.AreEqual("Foo", Information.TypeName(underlyingObject));
+            Assert.AreEqual("Foo", TestUtil.GetCOMObjectTypeName(underlyingObject));
 
             ((IDisposable)bar).Dispose();
             Assert.AreEqual(0, Marshal.ReleaseComObject(underlyingObject));

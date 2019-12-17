@@ -26,9 +26,9 @@ namespace Microsoft.ClearScript
         /// Specifies that the field, property, or method return value is to be marshaled with full
         /// .NET type information even if it is <c>null</c>. Note that such a value will always
         /// fail equality comparison with JavaScript's
-        /// <c><see href="https://msdn.microsoft.com/en-us/library/ie/fhcc96d6(v=vs.94).aspx">null</see></c>,
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null">null</see></c>,
         /// VBScript's
-        /// <c><see href="https://msdn.microsoft.com/en-us/library/f8tbc79x(v=vs.85).aspx">Nothing</see></c>,
+        /// <c><see href="https://docs.microsoft.com/en-us/previous-versions//f8tbc79x(v=vs.85)">Nothing</see></c>,
         /// and other similar values. Instead, use <see cref="HostFunctions.isNull"/> or
         /// <see cref="object.Equals(object, object)"/> to perform such a comparison.
         /// </summary>

@@ -2,12 +2,16 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript
 {
@@ -86,7 +90,7 @@ namespace Microsoft.ClearScript
         /// <example>
         /// The following code imports the <see cref="System.Random"/> class, creates an
         /// instance using the
-        /// <see href="http://msdn.microsoft.com/en-us/library/ctssatww.aspx">Random(Int32)</see>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.random.-ctor#System_Random__ctor_System_Int32_">Random(Int32)</see>
         /// constructor, and calls the <see cref="System.Random.NextDouble"/> method.
         /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
         /// the name "host"
@@ -1422,7 +1426,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code imports the
-        /// <see href="http://msdn.microsoft.com/en-us/library/xfhwa508.aspx">Dictionary</see>
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2">Dictionary</see>
         /// generic type and uses it to create a string dictionary.
         /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
         /// the name "host"
@@ -1594,7 +1598,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code imports the
-        /// <see href="http://msdn.microsoft.com/en-us/library/x4k5wbx4(v=vs.84).aspx">Scripting.Dictionary</see>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/x4k5wbx4(v=vs.84)">Scripting.Dictionary</see>
         /// class and uses it to create and populate an instance.
         /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
         /// the name "host"
@@ -1624,7 +1628,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code creates a 
-        /// <see href="http://msdn.microsoft.com/en-us/library/6kxy1a51(v=vs.84).aspx">Scripting.FileSystemObject</see>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/6kxy1a51(v=vs.84)">Scripting.FileSystemObject</see>
         /// instance and uses it to list the drives on the local machine.
         /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
         /// the name "host"
@@ -1640,6 +1644,50 @@ namespace Microsoft.ClearScript
         public object newComObj(string progID, string serverName = null)
         {
             return MiscHelpers.CreateCOMObject(progID, serverName);
+        }
+
+        /// <summary>
+        /// Imports enumerations from a type library.
+        /// </summary>
+        /// <typeparam name="T">The imported type whose parent library is to be searched for enumerations.</typeparam>
+        /// <param name="obj">An instance of the representative type.</param>
+        /// <returns>A collection of imported enumerations.</returns>
+        public IPropertyBag typeLibEnums<T>(T obj) where T : class
+        {
+            var type = typeof(T);
+            if (type.IsUnknownCOMObject())
+            {
+                var dispatch = obj as IDispatch;
+                if (dispatch != null)
+                {
+                    var typeInfo = dispatch.GetTypeInfo();
+                    if (typeInfo != null)
+                    {
+                        return typeInfo.GetTypeLibEnums();
+                    }
+                }
+
+                throw new ArgumentException("Object type is not imported", "obj");
+            }
+
+            if (!type.IsImport)
+            {
+                throw new ArgumentException("Object type is not imported", "obj");
+            }
+
+            var typeCollection = new HostTypeCollection();
+
+            var assembly = type.Assembly;
+            Debug.Assert(assembly.GetCustomAttribute(typeof(ImportedFromTypeLibAttribute)) != null);
+            foreach (var assemblyType in assembly.GetTypes())
+            {
+                if (assemblyType.IsPublic && assemblyType.IsEnum)
+                {
+                    typeCollection.AddType(assemblyType);
+                }
+            }
+
+            return typeCollection;
         }
 
         // ReSharper restore InconsistentNaming

@@ -200,7 +200,7 @@ namespace Microsoft.ClearScript.JavaScript
             private object Require(string specifier)
             {
                 var settings = engine.DocumentSettings;
-                var document = settings.Loader.LoadDocument(settings, DocumentInfo.Info, specifier, ModuleCategory.CommonJS, null);
+                var document = settings.LoadDocument(DocumentInfo.Info, specifier, ModuleCategory.CommonJS, null);
 
                 var code = document.GetTextContents();
                 if (engine.FormatCode)

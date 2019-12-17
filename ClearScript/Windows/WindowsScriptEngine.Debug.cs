@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Windows
 {
@@ -92,27 +93,27 @@ namespace Microsoft.ClearScript.Windows
                 {
                     case DocumentNameType.Title:
                         documentName = documentInfo.Name;
-                        return RawCOMHelpers.HResult.S_OK;
+                        return HResult.S_OK;
 
                     case DocumentNameType.FileTail:
                         documentName = GetFileName();
-                        return RawCOMHelpers.HResult.S_OK;
+                        return HResult.S_OK;
 
                     case DocumentNameType.URL:
                         documentName = GetUrl();
-                        return RawCOMHelpers.HResult.S_OK;
+                        return HResult.S_OK;
 
                     case DocumentNameType.AppNode:
                     case DocumentNameType.UniqueTitle:
                         documentName = documentInfo.UniqueName;
-                        return RawCOMHelpers.HResult.S_OK;
+                        return HResult.S_OK;
 
                     case DocumentNameType.SourceMapURL:
-                        return TryGetSourceMapUrl(out documentName) ? RawCOMHelpers.HResult.S_OK : RawCOMHelpers.HResult.E_FAIL.ToUnsigned();
+                        return TryGetSourceMapUrl(out documentName) ? HResult.S_OK : HResult.E_FAIL.ToUnsigned();
                 }
 
                 documentName = null;
-                return RawCOMHelpers.HResult.E_FAIL.ToUnsigned();
+                return HResult.E_FAIL.ToUnsigned();
             }
 
             public void GetDocumentClassId(out Guid clsid)

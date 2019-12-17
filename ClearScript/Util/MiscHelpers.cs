@@ -8,14 +8,18 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.ClearScript.Properties;
 
 namespace Microsoft.ClearScript.Util
 {
     internal static class MiscHelpers
     {
         #region COM helpers
+
+        private static readonly Regex dispIDNameRegex = new Regex(@"^\[DISPID=(-?[0-9]+)\]$");
 
         public static object CreateCOMObject(string progID, string serverName)
         {
@@ -93,6 +97,18 @@ namespace Microsoft.ClearScript.Util
         public static string GetDispIDName(int dispid)
         {
             return FormatInvariant("[DISPID={0}]", dispid);
+        }
+
+        public static bool IsDispIDName(this string name, out int dispid)
+        {
+            var match = dispIDNameRegex.Match(name);
+            if (match.Success && int.TryParse(match.Groups[1].Value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out dispid))
+            {
+                return true;
+            }
+
+            dispid = 0;
+            return false;
         }
 
         #endregion
@@ -496,6 +512,11 @@ namespace Microsoft.ClearScript.Util
         public static void AssertUnreachable()
         {
             Debug.Assert(false, "Entered code block presumed unreachable.");
+        }
+
+        public static string GetLocalDataRootPath()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "ClearScript", ClearScriptVersion.Triad, Environment.Is64BitProcess ? "x64" : "x86");
         }
 
         #endregion

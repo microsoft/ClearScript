@@ -1,9 +1,9 @@
 # Description
-ClearScript is a library that makes it easy to add scripting to your .NET applications. It currently supports JavaScript (via [V8](https://developers.google.com/v8/) and [JScript](http://msdn.microsoft.com/en-us/library/hbxc2t98.aspx)) and [VBScript](http://msdn.microsoft.com/en-us/library/t0aew7h6.aspx).
+ClearScript is a library that makes it easy to add scripting to your .NET applications. It currently supports JavaScript (via [V8](https://developers.google.com/v8/) and [JScript](https://docs.microsoft.com/en-us/previous-versions//hbxc2t98(v=vs.85))) and [VBScript](https://docs.microsoft.com/en-us/previous-versions//t0aew7h6(v=vs.85)).
 
 # Features
 * Simple usage; create a script engine, add your objects and/or types, run scripts
-* Support for several script engines: [Google's V8](https://developers.google.com/v8/), [Microsoft's JScript](https://msdn.microsoft.com/en-us/library/hbxc2t98.aspx) and [VBScript](http://msdn.microsoft.com/en-us/library/t0aew7h6.aspx)
+* Support for several script engines: [Google's V8](https://developers.google.com/v8/), [Microsoft's JScript](https://docs.microsoft.com/en-us/previous-versions//hbxc2t98(v=vs.85)) and [VBScript](https://docs.microsoft.com/en-us/previous-versions//t0aew7h6(v=vs.85))
 * Exposed resources require no modification, decoration, or special coding of any kind
 * Scripts get simple access to most of the features of exposed objects and types:
   * Methods, properties, fields, events

@@ -5,7 +5,7 @@ namespace Microsoft.ClearScript.JavaScript
 {
     /// <summary>
     /// Defines properties and methods common to all
-    /// <see href="https://msdn.microsoft.com/en-us/library/br212474(v=vs.94).aspx">ArrayBuffer</see>
+    /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see>
     /// views.
     /// </summary>
     public interface IArrayBufferView

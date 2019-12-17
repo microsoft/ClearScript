@@ -87,10 +87,7 @@ namespace Microsoft.ClearScript
         public void AddAssembly(Assembly assembly)
         {
             MiscHelpers.VerifyNonNullArgument(assembly, "assembly");
-            foreach (var type in assembly.GetTypes().Where(type => type.IsImportable()))
-            {
-                AddType(type);
-            }
+            assembly.GetAllTypes().Where(type => type.IsImportable()).ForEach(AddType);
         }
 
         /// <summary>
@@ -111,12 +108,8 @@ namespace Microsoft.ClearScript
         public void AddAssembly(Assembly assembly, Predicate<Type> filter)
         {
             MiscHelpers.VerifyNonNullArgument(assembly, "assembly");
-
             var activeFilter = filter ?? defaultFilter;
-            foreach (var type in assembly.GetTypes().Where(type => type.IsImportable() && activeFilter(type)))
-            {
-                AddType(type);
-            }
+            assembly.GetAllTypes().Where(type => type.IsImportable() && activeFilter(type)).ForEach(AddType);
         }
 
         /// <summary>
@@ -276,7 +269,7 @@ namespace Microsoft.ClearScript
 
         private static Type ResolveTypeConflict(IEnumerable<Type> types)
         {
-            var typeList = types.ToIList();
+            var typeList = types.Distinct().ToIList();
             return typeList.SingleOrDefault(type => type.IsPublic) ?? typeList[0];
         }
     }

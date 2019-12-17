@@ -13,6 +13,7 @@
   <HelpKINode Title="AddHostObject method" Url="html/Overload_Microsoft_ClearScript_ScriptEngine_AddHostObject.htm" />
   <HelpKINode Title="AddHostType method" Url="html/Overload_Microsoft_ClearScript_ScriptEngine_AddHostType.htm" />
   <HelpKINode Title="AddRestrictedHostObject method" Url="html/Overload_Microsoft_ClearScript_ScriptEngine_AddRestrictedHostObject.htm" />
+  <HelpKINode Title="AddSystemDocument method" Url="html/Overload_Microsoft_ClearScript_DocumentSettings_AddSystemDocument.htm" />
   <HelpKINode Title="AddType method" Url="html/Overload_Microsoft_ClearScript_HostTypeCollection_AddType.htm" />
   <HelpKINode Title="AllowReflection property" Url="html/P_Microsoft_ClearScript_ScriptEngine_AllowReflection.htm" />
   <HelpKINode Title="ArrayBuffer property" Url="html/P_Microsoft_ClearScript_JavaScript_IArrayBufferView_ArrayBuffer.htm" />
@@ -156,6 +157,7 @@
     <HelpKINode Title="V8Runtime.DocumentSettings Property " Url="html/P_Microsoft_ClearScript_V8_V8Runtime_DocumentSettings.htm" />
   </HelpKINode>
   <HelpKINode Title="DocumentSettings.AccessFlags property" Url="html/P_Microsoft_ClearScript_DocumentSettings_AccessFlags.htm" />
+  <HelpKINode Title="DocumentSettings.AddSystemDocument method" Url="html/Overload_Microsoft_ClearScript_DocumentSettings_AddSystemDocument.htm" />
   <HelpKINode Title="DocumentSettings.ContextCallback property" Url="html/P_Microsoft_ClearScript_DocumentSettings_ContextCallback.htm" />
   <HelpKINode Title="DocumentSettings.DocumentSettings constructor" Url="html/M_Microsoft_ClearScript_DocumentSettings__ctor.htm" />
   <HelpKINode Title="DocumentSettings.FileNameExtensions property" Url="html/P_Microsoft_ClearScript_DocumentSettings_FileNameExtensions.htm" />
@@ -262,6 +264,8 @@
   <HelpKINode Title="ExtendedHostFunctions.lib method" Url="html/Overload_Microsoft_ClearScript_ExtendedHostFunctions_lib.htm" />
   <HelpKINode Title="ExtendedHostFunctions.newComObj method" Url="html/M_Microsoft_ClearScript_ExtendedHostFunctions_newComObj.htm" />
   <HelpKINode Title="ExtendedHostFunctions.type method" Url="html/Overload_Microsoft_ClearScript_ExtendedHostFunctions_type.htm" />
+  <HelpKINode Title="ExtendedHostFunctions.typeLibEnums(Of T) method" Url="html/M_Microsoft_ClearScript_ExtendedHostFunctions_typeLibEnums__1.htm" />
+  <HelpKINode Title="ExtendedHostFunctions.typeLibEnums&lt;T&gt; method" Url="html/M_Microsoft_ClearScript_ExtendedHostFunctions_typeLibEnums__1.htm" />
   <HelpKINode Title="Extensions class">
     <HelpKINode Title="Extensions Class" Url="html/T_Microsoft_ClearScript_Extensions.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_Extensions.htm" />
@@ -366,6 +370,11 @@
   <HelpKINode Title="HostFunctions.tryCatch method" Url="html/M_Microsoft_ClearScript_HostFunctions_tryCatch.htm" />
   <HelpKINode Title="HostFunctions.typeOf method" Url="html/Overload_Microsoft_ClearScript_HostFunctions_typeOf.htm" />
   <HelpKINode Title="HostItemFlags enumeration" Url="html/T_Microsoft_ClearScript_HostItemFlags.htm" />
+  <HelpKINode Title="HostSettings class">
+    <HelpKINode Title="HostSettings Class" Url="html/T_Microsoft_ClearScript_HostSettings.htm" />
+    <HelpKINode Title="properties" Url="html/Properties_T_Microsoft_ClearScript_HostSettings.htm" />
+  </HelpKINode>
+  <HelpKINode Title="HostSettings.UseAssemblyTable property" Url="html/P_Microsoft_ClearScript_HostSettings_UseAssemblyTable.htm" />
   <HelpKINode Title="HostTypeCollection class">
     <HelpKINode Title="HostTypeCollection Class" Url="html/T_Microsoft_ClearScript_HostTypeCollection.htm" />
     <HelpKINode Title="constructor" Url="html/Overload_Microsoft_ClearScript_HostTypeCollection__ctor.htm" />
@@ -520,6 +529,7 @@
   <HelpKINode Title="LoadDocumentAsync method" Url="html/M_Microsoft_ClearScript_DocumentLoader_LoadDocumentAsync.htm" />
   <HelpKINode Title="Loader property" Url="html/P_Microsoft_ClearScript_DocumentSettings_Loader.htm" />
   <HelpKINode Title="MarshalArraysByValue enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
+  <HelpKINode Title="MarshalDateTimeAsDate enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
   <HelpKINode Title="MarshalDecimalAsCurrency enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
   <HelpKINode Title="MarshalNullAsDispatch enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
   <HelpKINode Title="MaxExecutableSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeConstraints_MaxExecutableSize.htm" />
@@ -551,6 +561,7 @@
   <HelpKINode Title="Microsoft.ClearScript.Extensions class" Url="html/T_Microsoft_ClearScript_Extensions.htm" />
   <HelpKINode Title="Microsoft.ClearScript.HostFunctions class" Url="html/T_Microsoft_ClearScript_HostFunctions.htm" />
   <HelpKINode Title="Microsoft.ClearScript.HostItemFlags enumeration" Url="html/T_Microsoft_ClearScript_HostItemFlags.htm" />
+  <HelpKINode Title="Microsoft.ClearScript.HostSettings class" Url="html/T_Microsoft_ClearScript_HostSettings.htm" />
   <HelpKINode Title="Microsoft.ClearScript.HostTypeCollection class" Url="html/T_Microsoft_ClearScript_HostTypeCollection.htm" />
   <HelpKINode Title="Microsoft.ClearScript.ImmutableValueAttribute class" Url="html/T_Microsoft_ClearScript_ImmutableValueAttribute.htm" />
   <HelpKINode Title="Microsoft.ClearScript.IPropertyBag interface" Url="html/T_Microsoft_ClearScript_IPropertyBag.htm" />
@@ -874,6 +885,8 @@
   <HelpKINode Title="tryCatch method" Url="html/M_Microsoft_ClearScript_HostFunctions_tryCatch.htm" />
   <HelpKINode Title="TryGetValue method" Url="html/M_Microsoft_ClearScript_PropertyBag_TryGetValue.htm" />
   <HelpKINode Title="type method" Url="html/Overload_Microsoft_ClearScript_ExtendedHostFunctions_type.htm" />
+  <HelpKINode Title="typeLibEnums(Of T) method" Url="html/M_Microsoft_ClearScript_ExtendedHostFunctions_typeLibEnums__1.htm" />
+  <HelpKINode Title="typeLibEnums&lt;T&gt; method" Url="html/M_Microsoft_ClearScript_ExtendedHostFunctions_typeLibEnums__1.htm" />
   <HelpKINode Title="typeOf method" Url="html/Overload_Microsoft_ClearScript_HostFunctions_typeOf.htm" />
   <HelpKINode Title="Undefined class">
     <HelpKINode Title="Undefined Class" Url="html/T_Microsoft_ClearScript_Undefined.htm" />
@@ -881,6 +894,7 @@
   </HelpKINode>
   <HelpKINode Title="Undefined.ToString method" Url="html/M_Microsoft_ClearScript_Undefined_ToString.htm" />
   <HelpKINode Title="Uri property" Url="html/P_Microsoft_ClearScript_DocumentInfo_Uri.htm" />
+  <HelpKINode Title="UseAssemblyTable property" Url="html/P_Microsoft_ClearScript_HostSettings_UseAssemblyTable.htm" />
   <HelpKINode Title="UsedHeapSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_UsedHeapSize.htm" />
   <HelpKINode Title="UseReflectionBindFallback property" Url="html/P_Microsoft_ClearScript_ScriptEngine_UseReflectionBindFallback.htm" />
   <HelpKINode Title="V8CacheKind enumeration" Url="html/T_Microsoft_ClearScript_V8_V8CacheKind.htm" />

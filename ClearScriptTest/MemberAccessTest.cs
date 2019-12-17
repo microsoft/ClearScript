@@ -4,7 +4,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -319,14 +319,14 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("MemberAccess")]
         public void MemberAccess_Method_GetType_Blocked_Exception_Interface()
         {
-            engine.AddHostType(typeof(_Exception));
+            engine.AddHostType(typeof(ISerializable));
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute(@"
                 try {
                     testObject.GetType();
                 }
                 catch (exception)
                 {
-                    host.cast(_Exception, exception.hostException).GetType();
+                    host.cast(ISerializable, exception.hostException).GetType();
                 }
             "));
         }

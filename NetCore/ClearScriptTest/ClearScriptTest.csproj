@@ -1,0 +1,189 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <OutputPath>..\..\bin\Debug</OutputPath>
+    <WarningsAsErrors />
+    <NoWarn />
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE</DefineConstants>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <OutputPath>..\..\bin\Release</OutputPath>
+    <WarningsAsErrors />
+    <NoWarn />
+  </PropertyGroup>
+
+  <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>true</DelaySign>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\ClearScriptTest\AccessContextTest.cs" Link="AccessContextTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\BaseInterfaceMemberAccessTest.cs" Link="BaseInterfaceMemberAccessTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\BaseMemberAccessTest.cs" Link="BaseMemberAccessTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\BaseTestObject.cs" Link="BaseTestObject.cs" />
+    <Compile Include="..\..\ClearScriptTest\BindSignatureTest.cs" Link="BindSignatureTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\BugFixTest.cs" Link="BugFixTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\BugFixTest.NetCore.cs" Link="BugFixTest.NetCore.cs" />
+    <Compile Include="..\..\ClearScriptTest\ClearScriptTest.cs" Link="ClearScriptTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\CrossEngineTest.cs" Link="CrossEngineTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\DynamicHostItemTest.cs" Link="DynamicHostItemTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\DynamicTestObject.cs" Link="DynamicTestObject.cs" />
+    <Compile Include="..\..\ClearScriptTest\ExplicitBaseInterfaceMemberAccessTest.cs" Link="ExplicitBaseInterfaceMemberAccessTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\ExplicitInterfaceMemberAccessTest.cs" Link="ExplicitInterfaceMemberAccessTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\ExtendedHostFunctionsTest.cs" Link="ExtendedHostFunctionsTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\ExtensionsTest.cs" Link="ExtensionsTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\GeneralTestObject.cs" Link="GeneralTestObject.cs" />
+    <Compile Include="..\..\ClearScriptTest\HostFunctionsTest.cs" Link="HostFunctionsTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\HostListTest.cs" Link="HostListTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\HostTypeCollectionTest.cs" Link="HostTypeCollectionTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\HostVariableTest.cs" Link="HostVariableTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\IBaseTestInterface.cs" Link="IBaseTestInterface.cs" />
+    <Compile Include="..\..\ClearScriptTest\IExplicitBaseTestInterface.cs" Link="IExplicitBaseTestInterface.cs" />
+    <Compile Include="..\..\ClearScriptTest\IExplicitTestInterface.cs" Link="IExplicitTestInterface.cs" />
+    <Compile Include="..\..\ClearScriptTest\InterfaceMemberAccessTest.cs" Link="InterfaceMemberAccessTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\ITestInterface.cs" Link="ITestInterface.cs" />
+    <Compile Include="..\..\ClearScriptTest\JScriptEngineTest.cs" Link="JScriptEngineTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\JScriptModuleTest.cs" Link="JScriptModuleTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\MemberAccessTest.cs" Link="MemberAccessTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\Misc.cs" Link="Misc.cs" />
+    <Compile Include="..\..\ClearScriptTest\Misc.NetCore.cs" Link="Misc.NetCore.cs" />
+    <Compile Include="..\..\ClearScriptTest\Properties\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\..\ClearScriptTest\PropertyBagTest.cs" Link="PropertyBagTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\ScriptAccessTest.cs" Link="ScriptAccessTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\StaticMemberAccessTest.cs" Link="StaticMemberAccessTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\StaticTestClass.cs" Link="StaticTestClass.cs" />
+    <Compile Include="..\..\ClearScriptTest\TestObject.cs" Link="TestObject.cs" />
+    <Compile Include="..\..\ClearScriptTest\TypeRestrictionTest.cs" Link="TypeRestrictionTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\V8ArrayBufferOrViewTest.cs" Link="V8ArrayBufferOrViewTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\V8ModuleTest.cs" Link="V8ModuleTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.cs" Link="V8ScriptEngineTest.cs" />
+    <Compile Include="..\..\ClearScriptTest\VBScriptEngineTest.cs" Link="VBScriptEngineTest.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <COMReference Include="Scripting.dll">
+      <Guid>420b2830-e718-11cf-893d-00a0c9054228</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="ADODB.dll">
+      <Guid>b691e011-1797-432e-907a-4d8c69339129</Guid>
+      <VersionMajor>6</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="UIAutomationClient.dll">
+      <Guid>944de083-8fb8-45cf-bcb7-c477acb2f897</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>false</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.0.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.4.0-beta2-final" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ClearScript\ClearScript.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\Arithmetic\Arithmetic.js" Link="JavaScript\CommonJS\Arithmetic\Arithmetic.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\Geometry\Geometry.js" Link="JavaScript\CommonJS\Geometry\Geometry.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\Geometry\GeometryWithPathlessImport.js" Link="JavaScript\CommonJS\Geometry\GeometryWithPathlessImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\Module.js" Link="JavaScript\CommonJS\Module.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\ModuleWithSideEffects.js" Link="JavaScript\CommonJS\ModuleWithSideEffects.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\NewMath.js" Link="JavaScript\CommonJS\NewMath.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\General.js" Link="JavaScript\General.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js" Link="JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Geometry\Geometry.js" Link="JavaScript\LegacyCommonJS\Geometry\Geometry.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Geometry\GeometryWithPathlessImport.js" Link="JavaScript\LegacyCommonJS\Geometry\GeometryWithPathlessImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Module.js" Link="JavaScript\LegacyCommonJS\Module.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\ModuleWithSideEffects.js" Link="JavaScript\LegacyCommonJS\ModuleWithSideEffects.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\Arithmetic\Arithmetic.js" Link="JavaScript\StandardModule\Arithmetic\Arithmetic.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\Geometry\Geometry.js" Link="JavaScript\StandardModule\Geometry\Geometry.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\Geometry\GeometryWithDynamicImport.js" Link="JavaScript\StandardModule\Geometry\GeometryWithDynamicImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\Geometry\GeometryWithPathlessImport.js" Link="JavaScript\StandardModule\Geometry\GeometryWithPathlessImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\Module.js" Link="JavaScript\StandardModule\Module.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\ModuleWithSideEffects.js" Link="JavaScript\StandardModule\ModuleWithSideEffects.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\VBScript\Expression.vbs" Link="VBScript\Expression.vbs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\VBScript\General.vbs" Link="VBScript\General.vbs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+</Project>

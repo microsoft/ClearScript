@@ -287,6 +287,22 @@ namespace Microsoft.ClearScript.Test
             "));
         }
 
+        [TestMethod, TestCategory("JScriptModule")]
+        public void JScriptModule_CommonJS_SystemDocument()
+        {
+            engine.DocumentSettings.AddSystemDocument("test", ModuleCategory.CommonJS, @"
+                exports.Add = function (a, b) {
+                    return a + b;
+                }
+            ");
+
+            dynamic add = engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"
+                return require('test').Add
+            ");
+
+            Assert.AreEqual(579, add(123, 456));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -325,7 +341,7 @@ namespace Microsoft.ClearScript.Test
                         };
                     }
 
-                    throw new UnauthorizedAccessException("Module context access is prohibited in this module.");
+                    throw new UnauthorizedAccessException("Module context access is prohibited in this module");
                 }
 
                 return null;

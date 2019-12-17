@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
+    <AssemblyName>ClearScriptConsole</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <OutputPath>..\..\bin\Debug</OutputPath>
+    <NoWarn />
+    <WarningsAsErrors />
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE</DefineConstants>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <OutputPath>..\..\bin\Release</OutputPath>
+    <NoWarn />
+    <WarningsAsErrors />
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\ClearScriptConsole\ClearScriptConsole.cs" Link="ClearScriptConsole.cs" />
+    <Compile Include="..\..\ClearScriptConsole\ConsoleTest.cs" Link="ConsoleTest.cs" />
+    <Compile Include="..\..\ClearScriptConsole\Properties\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ClearScript\ClearScript.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -20,7 +20,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETFRAMEWORK</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -31,7 +31,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;NETFRAMEWORK</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -71,6 +71,7 @@
     <Compile Include="BadV8DeploymentTest.cs" />
     <Compile Include="BindSignatureTest.cs" />
     <Compile Include="BugFixTest.cs" />
+    <Compile Include="BugFixTest.NetFramework.cs" />
     <Compile Include="CrossEngineTest.cs" />
     <Compile Include="DynamicHostItemTest.cs" />
     <Compile Include="DynamicTestObject.cs" />
@@ -93,6 +94,7 @@
     <Compile Include="ITestInterface.cs" />
     <Compile Include="JScriptEngineTest.cs" />
     <Compile Include="JScriptModuleTest.cs" />
+    <Compile Include="Misc.NetFramework.cs" />
     <Compile Include="ScriptAccessTest.cs" />
     <Compile Include="Misc.cs" />
     <None Include="packages.config" />
@@ -131,6 +133,15 @@
     <COMReference Include="ADODB">
       <Guid>{B691E011-1797-432E-907A-4D8C69339129}</Guid>
       <VersionMajor>6</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="Scripting">
+      <Guid>{420B2830-E718-11CF-893D-00A0C9054228}</Guid>
+      <VersionMajor>1</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>

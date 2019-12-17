@@ -2,7 +2,9 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
 using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
@@ -21,8 +23,24 @@ namespace Microsoft.ClearScript
 
         private HostObject(object target, Type type)
         {
-            this.target = CanonicalRefTable.GetCanonicalRef(target);
-            this.type = type ?? target.GetType();
+            target = CanonicalRefTable.GetCanonicalRef(target);
+            if (type == null)
+            {
+                type = target.GetType();
+            }
+
+            if (type.IsUnknownCOMObject())
+            {
+                var enumVariant = target as IEnumVARIANT;
+                if (enumVariant != null)
+                {
+                    target = new EnumeratorWrapper(enumVariant);
+                    type = typeof(IEnumerator);
+                }
+            }
+
+            this.target = target;
+            this.type = type;
         }
 
         #endregion

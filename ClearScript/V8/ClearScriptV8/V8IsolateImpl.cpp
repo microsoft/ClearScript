@@ -7,7 +7,7 @@
 // V8Platform
 //-----------------------------------------------------------------------------
 
-class V8Platform final: public v8::Platform
+class V8Platform final: public v8::SafePlatform
 {
 public:
 
@@ -15,7 +15,7 @@ public:
     static void EnsureInstalled();
 
     virtual int NumberOfWorkerThreads() override;
-    virtual std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner(v8::Isolate* pIsolate) override;
+    virtual v8::TaskRunner* CreateForegroundTaskRunner(v8::Isolate* pIsolate) override;
     virtual void CallOnWorkerThread(std::unique_ptr<v8::Task> spTask) override;
     virtual void CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> spTask, double delayInSeconds) override;
     virtual void CallOnForegroundThread(v8::Isolate* pIsolate, v8::Task* pTask) override;
@@ -46,7 +46,7 @@ void V8Platform::EnsureInstalled()
 {
     ms_InstallationFlag.CallOnce([]
     {
-        v8::V8::InitializePlatform(&ms_Instance);
+        v8::SafePlatform::Initialize(ms_Instance);
         ASSERT_EVAL(v8::V8::Initialize());
     });
 }
@@ -60,9 +60,9 @@ int V8Platform::NumberOfWorkerThreads()
 
 //-----------------------------------------------------------------------------
 
-std::shared_ptr<v8::TaskRunner> V8Platform::GetForegroundTaskRunner(v8::Isolate* pIsolate)
+v8::TaskRunner* V8Platform::CreateForegroundTaskRunner(v8::Isolate* pIsolate)
 {
-    return V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->GetForegroundTaskRunner();
+    return V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->CreateForegroundTaskRunner();
 }
 
 //-----------------------------------------------------------------------------
@@ -333,30 +333,33 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
 
     m_spIsolate.reset(v8::Isolate::Allocate());
     m_spIsolate->SetData(0, this);
-    v8::Isolate::Initialize(m_spIsolate.get(), params);
-
-    m_spIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
-    m_spIsolate->SetPromiseHook(PromiseHook);
 
     BEGIN_ADDREF_SCOPE
-    BEGIN_ISOLATE_SCOPE
 
-        m_spIsolate->SetCaptureStackTraceForUncaughtExceptions(true, 64, v8::StackTrace::kDetailed);
+        v8::Isolate::Initialize(m_spIsolate.get(), params);
 
-        m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
+        m_spIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
+        m_spIsolate->SetPromiseHook(PromiseHook);
 
-        if (options.EnableDebugging)
-        {
-            EnableDebugging(options.DebugPort, options.EnableRemoteDebugging);
-        }
+        BEGIN_ISOLATE_SCOPE
 
-        m_spIsolate->SetHostInitializeImportMetaObjectCallback(ImportMetaInitializeCallback);
-        if (options.EnableDynamicModuleImports)
-        {
-            m_spIsolate->SetHostImportModuleDynamicallyCallback(ModuleImportCallback);
-        }
+            m_spIsolate->SetCaptureStackTraceForUncaughtExceptions(true, 64, v8::StackTrace::kDetailed);
 
-    END_ISOLATE_SCOPE
+            m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
+
+            if (options.EnableDebugging)
+            {
+                EnableDebugging(options.DebugPort, options.EnableRemoteDebugging);
+            }
+
+            m_spIsolate->SetHostInitializeImportMetaObjectCallback(ImportMetaInitializeCallback);
+            if (options.EnableDynamicModuleImports)
+            {
+                m_spIsolate->SetHostImportModuleDynamicallyCallback(ModuleImportCallback);
+            }
+
+        END_ISOLATE_SCOPE
+
     END_ADDREF_SCOPE
 
     ++s_InstanceCount;
@@ -1034,18 +1037,9 @@ void V8IsolateImpl::RunTaskWithLockDelayed(v8::Task* pTask, double delayInSecond
 
 //-----------------------------------------------------------------------------
 
-std::shared_ptr<v8::TaskRunner> V8IsolateImpl::GetForegroundTaskRunner()
+v8::TaskRunner* V8IsolateImpl::CreateForegroundTaskRunner()
 {
-    BEGIN_MUTEX_SCOPE(m_DataMutex)
-
-        if (!m_spForegroundTaskRunner)
-        {
-            m_spForegroundTaskRunner = std::make_shared<V8ForegroundTaskRunner>(this);
-        }
-
-        return m_spForegroundTaskRunner;
-
-    END_MUTEX_SCOPE
+    return new V8ForegroundTaskRunner(this);
 }
 
 //-----------------------------------------------------------------------------

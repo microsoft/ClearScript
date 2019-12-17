@@ -50,5 +50,6 @@ namespace Microsoft.ClearScript.Properties
     internal static class ClearScriptVersion
     {
         public const string Value = "<#= version #>";
+        public const string Triad = "<#= version.ToString(3) #>";
     }
 }

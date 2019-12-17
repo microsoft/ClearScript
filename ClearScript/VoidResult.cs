@@ -9,7 +9,7 @@ namespace Microsoft.ClearScript
     /// <remarks>
     /// Some script languages expect every subroutine call to return a value. When script code
     /// written in such a language invokes a host method that explicitly returns no value (such as
-    /// a C# <see href="http://msdn.microsoft.com/en-us/library/yah0tteb.aspx">void</see> method),
+    /// a C# <see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/void">void</see> method),
     /// the ClearScript library provides an instance of this class as a dummy return value.
     /// </remarks>
     public class VoidResult

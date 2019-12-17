@@ -7,7 +7,7 @@ using System.Runtime.InteropServices.ComTypes;
 using DISPPARAMS = System.Runtime.InteropServices.ComTypes.DISPPARAMS;
 using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
 
-namespace Microsoft.ClearScript.Util
+namespace Microsoft.ClearScript.Util.COM
 {
     #region enums
 
@@ -83,7 +83,8 @@ namespace Microsoft.ClearScript.Util
             [Out] [MarshalAs(UnmanagedType.Interface)] out ITypeInfo typeInfo
         );
 
-        void GetIDsOfNames(
+        [PreserveSig]
+        int GetIDsOfNames(
             [In] ref Guid iid,
             [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr, SizeParamIndex = 2)] string[] names,
             [In] uint count,
@@ -91,7 +92,8 @@ namespace Microsoft.ClearScript.Util
             [Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] int[] dispids
         );
 
-        void Invoke(
+        [PreserveSig]
+        int Invoke(
             [In] int dispid,
             [In] ref Guid iid,
             [In] int lcid,
@@ -122,7 +124,8 @@ namespace Microsoft.ClearScript.Util
             [Out] [MarshalAs(UnmanagedType.Interface)] out ITypeInfo typeInfo
         );
 
-        void GetIDsOfNames(
+        [PreserveSig]
+        int GetIDsOfNames(
             [In] ref Guid iid,
             [In] [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr, SizeParamIndex = 2)] string[] names,
             [In] uint count,
@@ -130,7 +133,8 @@ namespace Microsoft.ClearScript.Util
             [Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] int[] dispids
         );
 
-        void Invoke(
+        [PreserveSig]
+        int Invoke(
             [In] int dispid,
             [In] ref Guid iid,
             [In] int lcid,
@@ -167,11 +171,13 @@ namespace Microsoft.ClearScript.Util
             [In] DispatchNameFlags flags
         );
 
-        void DeleteMemberByDispID(
+        [PreserveSig]
+        int DeleteMemberByDispID(
             [In] int dispid
         );
 
-        void GetMemberProperties(
+        [PreserveSig]
+        int GetMemberProperties(
             [In] int dispid,
             [In] DispatchPropFlags fetchFlags,
             [Out] out DispatchPropFlags flags
@@ -190,7 +196,8 @@ namespace Microsoft.ClearScript.Util
             [Out] out int dispidNext
         );
 
-        void GetNameSpaceParent(
+        [PreserveSig]
+        int GetNameSpaceParent(
             [Out] [MarshalAs(UnmanagedType.IUnknown)] out object parent
         );
     }

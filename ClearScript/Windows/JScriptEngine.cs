@@ -17,7 +17,7 @@ namespace Microsoft.ClearScript.Windows
 
         private static readonly Dictionary<int, string> runtimeErrorMap = new Dictionary<int, string>
         {
-            // https://msdn.microsoft.com/en-us/library/1dk3k160(v=vs.84).aspx
+            // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/1dk3k160(v=vs.84)
             { 5029, "Array length must be a finite positive integer" },
             { 5030, "Array length must be assigned a finite positive number" },
             { 5028, "Array or arguments object expected" },
@@ -53,7 +53,7 @@ namespace Microsoft.ClearScript.Windows
 
         private static readonly Dictionary<int, string> syntaxErrorMap = new Dictionary<int, string>
         {
-            // https://msdn.microsoft.com/en-us/library/6bby3x2e(v=vs.84).aspx
+            // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/6bby3x2e(v=vs.84)
             { 1019, "Can't have 'break' outside of loop" },
             { 1020, "Can't have 'continue' outside of loop" },
             { 1030, "Conditional compilation is turned off" },
@@ -263,7 +263,7 @@ namespace Microsoft.ClearScript.Windows
         /// </para>
         /// <para>
         /// The <see cref="JScriptEngine"/> version of this method attempts to use
-        /// <see href="http://msdn.microsoft.com/en-us/library/k6xhc6yc(VS.85).aspx">toString</see>
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/tostring">toString</see>
         /// to convert the return value.
         /// </para>
         /// </remarks>

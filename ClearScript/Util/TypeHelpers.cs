@@ -7,14 +7,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Util
 {
-    internal static class TypeHelpers
+    internal static partial class TypeHelpers
     {
         private static readonly string[] importBlackList =
         {
@@ -211,7 +213,7 @@ namespace Microsoft.ClearScript.Util
                     if (iid != Guid.Empty)
                     {
                         IntPtr pInterface;
-                        if (RawCOMHelpers.HResult.Succeeded(Marshal.QueryInterface(pUnknown, ref iid, out pInterface)))
+                        if (HResult.Succeeded(Marshal.QueryInterface(pUnknown, ref iid, out pInterface)))
                         {
                             Marshal.Release(pInterface);
                             result = true;
@@ -334,11 +336,31 @@ namespace Microsoft.ClearScript.Util
 
         public static string GetFriendlyName(this Type type)
         {
+            if (type.IsUnknownCOMObject())
+            {
+                string progID;
+                var clsid = type.GUID;
+                if (HResult.Succeeded(NativeMethods.ProgIDFromCLSID(ref clsid, out progID)))
+                {
+                    return progID;
+                }
+            }
+
             return type.GetFriendlyName(GetRootName);
         }
 
         public static string GetFullFriendlyName(this Type type)
         {
+            if (type.IsUnknownCOMObject())
+            {
+                string progID;
+                var clsid = type.GUID;
+                if (HResult.Succeeded(NativeMethods.ProgIDFromCLSID(ref clsid, out progID)))
+                {
+                    return progID;
+                }
+            }
+
             return type.GetFriendlyName(GetFullRootName);
         }
 
@@ -616,6 +638,9 @@ namespace Microsoft.ClearScript.Util
             catch (TypeLoadException)
             {
             }
+            catch (FileLoadException)
+            {
+            }
 
             return ((type != null) && useAssemblyName && (type.AssemblyQualifiedName != assemblyQualifiedName)) ? null : type;
         }
@@ -647,23 +672,6 @@ namespace Microsoft.ClearScript.Util
             var name = getBaseName(type.GetGenericTypeDefinition());
             var paramList = string.Join(",", typeArgs.Select(typeArg => typeArg.GetFriendlyName(getBaseName)));
             return MiscHelpers.FormatInvariant("{0}{1}<{2}>", parentPrefix, name, paramList);
-        }
-
-        private static string GetFullTypeName(string name, string assemblyName, bool useAssemblyName, int typeArgCount)
-        {
-            var fullTypeName = name;
-
-            if (typeArgCount > 0)
-            {
-                fullTypeName += MiscHelpers.FormatInvariant("`{0}", typeArgCount);
-            }
-
-            if (useAssemblyName)
-            {
-                fullTypeName += MiscHelpers.FormatInvariant(", {0}", AssemblyTable.GetFullAssemblyName(assemblyName));
-            }
-
-            return fullTypeName;
         }
 
         private static Invocability GetInvocabilityInternal(Tuple<Type, BindingFlags, Type, ScriptAccess, bool> args)
@@ -753,8 +761,17 @@ namespace Microsoft.ClearScript.Util
                 var parameters = converter.GetParameters();
                 if ((parameters.Length == 1) && parameters[0].ParameterType.IsAssignableFrom(sourceType) && targetType.IsAssignableFrom(converter.ReturnType))
                 {
-                    value = converter.Invoke(null, new [] { value });
-                    return true;
+                    // ReSharper disable AccessToForEachVariableInClosure
+
+                    var args = new[] { value };
+                    object result;
+                    if (MiscHelpers.Try(out result, () => converter.Invoke(null, args)))
+                    {
+                        value = result;
+                        return true;
+                    }
+
+                    // ReSharper restore AccessToForEachVariableInClosure
                 }
             }
 

@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.COM;
 using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
 
 namespace Microsoft.ClearScript.Windows
@@ -37,9 +38,9 @@ namespace Microsoft.ClearScript.Windows
                         {
                             EXCEPINFO excepInfo;
                             scriptError.GetExceptionInfo(out excepInfo);
-                            if (RawCOMHelpers.HResult.GetFacility(excepInfo.scode) == RawCOMHelpers.HResult.FACILITY_CONTROL)
+                            if (HResult.GetFacility(excepInfo.scode) == HResult.FACILITY_CONTROL)
                             {
-                                syntaxError = engine.SyntaxErrorMap.ContainsKey(RawCOMHelpers.HResult.GetCode(excepInfo.scode));
+                                syntaxError = engine.SyntaxErrorMap.ContainsKey(HResult.GetCode(excepInfo.scode));
                             }
                         }
 
@@ -134,12 +135,12 @@ namespace Microsoft.ClearScript.Windows
 
                 if (mask.HasFlag(ScriptInfoFlags.IUnknown))
                 {
-                    pUnkItem = Marshal.GetIDispatchForObject(item);
+                    pUnkItem = Marshal.GetIUnknownForObject(item);
                 }
 
                 if (mask.HasFlag(ScriptInfoFlags.ITypeInfo))
                 {
-                    pTypeInfo = Marshal.GetITypeInfoForType(item.GetType());
+                    pTypeInfo = item.GetType().GetITypeInfo();
                 }
             }
 
@@ -162,7 +163,7 @@ namespace Microsoft.ClearScript.Windows
                 {
                     EXCEPINFO excepInfo;
                     error.GetExceptionInfo(out excepInfo);
-                    if (excepInfo.scode == RawCOMHelpers.HResult.E_ABORT)
+                    if (excepInfo.scode == HResult.E_ABORT)
                     {
                         // Script execution was interrupted explicitly. At this point the script
                         // engine might be in an odd state; the following call seems to get it back
@@ -178,7 +179,7 @@ namespace Microsoft.ClearScript.Windows
                         var description = excepInfo.bstrDescription;
 
                         Exception innerException;
-                        if (excepInfo.scode != RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
+                        if (excepInfo.scode != HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
                         {
                             innerException = null;
                         }
@@ -218,7 +219,7 @@ namespace Microsoft.ClearScript.Windows
                     keepGoing = keepGoing && !engine.CurrentScriptFrame.InterruptRequested;
                 }
 
-                return keepGoing ? RawCOMHelpers.HResult.S_OK : RawCOMHelpers.HResult.E_ABORT.ToUnsigned();
+                return keepGoing ? HResult.S_OK : HResult.E_ABORT.ToUnsigned();
             }
 
             #endregion
@@ -268,7 +269,7 @@ namespace Microsoft.ClearScript.Windows
                 {
                     EXCEPINFO excepInfo;
                     errorDebug.GetExceptionInfo(out excepInfo);
-                    if (excepInfo.scode == RawCOMHelpers.HResult.E_ABORT)
+                    if (excepInfo.scode == HResult.E_ABORT)
                     {
                         var description = excepInfo.bstrDescription ?? "Script execution interrupted by host";
                         engine.CurrentScriptFrame.PendingScriptError = new ScriptInterruptedException(engine.Name, description, GetDetails(errorDebug, description), excepInfo.scode, false, true, null, null);
@@ -278,7 +279,7 @@ namespace Microsoft.ClearScript.Windows
                         var description = excepInfo.bstrDescription;
 
                         Exception innerException;
-                        if (excepInfo.scode != RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
+                        if (excepInfo.scode != HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
                         {
                             innerException = null;
                         }

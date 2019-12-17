@@ -12,7 +12,7 @@ namespace Microsoft.ClearScript.Util
     [SuppressMessage("ReSharper", "CommentTypo")]
     internal abstract class VTablePatcher
     {
-        private static readonly object dataLock = new object();
+        private static readonly object patchLock = new object();
         private static readonly HashSet<IntPtr> patchedVTables = new HashSet<IntPtr>();
         private static IntPtr hHeap;
 
@@ -21,11 +21,16 @@ namespace Microsoft.ClearScript.Util
             return Environment.Is64BitProcess ? VTablePatcher64.Instance : VTablePatcher32.Instance;
         }
 
+        public static object PatchLock
+        {
+            get { return patchLock; }
+        }
+
         public abstract void PatchDispatchEx(IntPtr pDispatchEx);
 
         private static void ApplyVTablePatches(IntPtr pInterface, params VTablePatch[] patches)
         {
-            lock (dataLock)
+            lock (patchLock)
             {
                 var pVTable = Marshal.ReadIntPtr(pInterface);
                 if (!patchedVTables.Contains(pVTable))
@@ -36,7 +41,7 @@ namespace Microsoft.ClearScript.Util
                     foreach (var patch in patches)
                     {
                         var pSlot = pVTable + patch.SlotIndex * IntPtr.Size;
-                        var pTarget = Marshal.ReadIntPtr(pSlot);
+                        var pTarget = VTableHelpers.ReadMethodPtr(pSlot);
 
                         var thunkSize = patch.ThunkBytes.Length;
                         var pThunk = NativeMethods.HeapAlloc(hHeap, 0, (UIntPtr)thunkSize);
@@ -48,14 +53,7 @@ namespace Microsoft.ClearScript.Util
                             }
 
                             Marshal.WriteIntPtr(pThunk + patch.TargetOffset, pTarget);
-
-                            uint oldProtect;
-                            if (NativeMethods.VirtualProtect(pSlot, (UIntPtr)IntPtr.Size, 0x04 /*PAGE_READWRITE*/, out oldProtect))
-                            {
-                                Marshal.WriteIntPtr(pSlot, pThunk);
-                                NativeMethods.VirtualProtect(pSlot, (UIntPtr)IntPtr.Size, oldProtect, out oldProtect);
-                            }
-                            else
+                            if (!VTableHelpers.WriteMethodPtr(pSlot, pThunk))
                             {
                                 NativeMethods.HeapFree(hHeap, 0, pThunk);
                             }

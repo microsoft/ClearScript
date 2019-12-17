@@ -1,6 +1,6 @@
 
 -----------------------------
-ClearScript 5.x NuGet Package
+ClearScript 6.x NuGet Package
 -----------------------------
 
 IMPORTANT: This package requires the Visual C++ Redistributable libraries.

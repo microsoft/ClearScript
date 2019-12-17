@@ -8,19 +8,19 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Windows
 {
     internal sealed class WindowsScriptItem : ScriptItem, IWindowsScriptObject, IDisposable
     {
         private readonly WindowsScriptEngine engine;
-        private readonly IExpando target;
+        private readonly IDispatchEx target;
         private WindowsScriptItem holder;
         private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
-        private WindowsScriptItem(WindowsScriptEngine engine, IExpando target)
+        private WindowsScriptItem(WindowsScriptEngine engine, IDispatchEx target)
         {
             this.engine = engine;
             this.target = target;
@@ -35,10 +35,10 @@ namespace Microsoft.ClearScript.Windows
                 return null;
             }
 
-            var expando = obj as IExpando;
-            if ((expando != null) && (obj.GetType().IsCOMObject))
+            var target = obj as IDispatchEx;
+            if ((target != null) && (obj.GetType().IsCOMObject))
             {
-                return new WindowsScriptItem(engine, expando);
+                return new WindowsScriptItem(engine, target);
             }
 
             return obj;
@@ -52,7 +52,7 @@ namespace Microsoft.ClearScript.Windows
                 return scriptError;
             }
 
-            return new ScriptEngineException(engine.Name, exception.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception);
+            return new ScriptEngineException(engine.Name, exception.Message, null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception);
         }
 
         private bool TryGetScriptError(Exception exception, out IScriptEngineException scriptError)
@@ -75,7 +75,7 @@ namespace Microsoft.ClearScript.Windows
             if (comException != null)
             {
                 var result = comException.ErrorCode;
-                if (((result == RawCOMHelpers.HResult.SCRIPT_E_REPORTED) || (result == RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION)) && (engine.CurrentScriptFrame != null))
+                if (((result == HResult.SCRIPT_E_REPORTED) || (result == HResult.CLEARSCRIPT_E_HOSTEXCEPTION)) && (engine.CurrentScriptFrame != null))
                 {
                     scriptError = engine.CurrentScriptFrame.ScriptError ?? engine.CurrentScriptFrame.PendingScriptError;
                     if (scriptError != null)
@@ -86,33 +86,33 @@ namespace Microsoft.ClearScript.Windows
                     var hostException = engine.CurrentScriptFrame.HostException;
                     if (hostException != null)
                     {
-                        scriptError = new ScriptEngineException(engine.Name, hostException.Message, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
+                        scriptError = new ScriptEngineException(engine.Name, hostException.Message, null, HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
                         return true;
                     }
                 }
-                else if (RawCOMHelpers.HResult.GetFacility(result) == RawCOMHelpers.HResult.FACILITY_CONTROL)
+                else if (HResult.GetFacility(result) == HResult.FACILITY_CONTROL)
                 {
                     // These exceptions often have awful messages that include COM error codes.
                     // The engine itself may be able to provide a better message.
 
                     string runtimeErrorMessage;
-                    if (engine.RuntimeErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out runtimeErrorMessage) && (runtimeErrorMessage != exception.Message))
+                    if (engine.RuntimeErrorMap.TryGetValue(HResult.GetCode(result), out runtimeErrorMessage) && (runtimeErrorMessage != exception.Message))
                     {
-                        scriptError = new ScriptEngineException(engine.Name, runtimeErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
+                        scriptError = new ScriptEngineException(engine.Name, runtimeErrorMessage, null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                         return true;
                     }
 
                     string syntaxErrorMessage;
-                    if (engine.SyntaxErrorMap.TryGetValue(RawCOMHelpers.HResult.GetCode(result), out syntaxErrorMessage) && (syntaxErrorMessage != exception.Message))
+                    if (engine.SyntaxErrorMap.TryGetValue(HResult.GetCode(result), out syntaxErrorMessage) && (syntaxErrorMessage != exception.Message))
                     {
-                        scriptError = new ScriptEngineException(engine.Name, syntaxErrorMessage, null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
+                        scriptError = new ScriptEngineException(engine.Name, syntaxErrorMessage, null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                         return true;
                     }
                 }
-                else if ((result == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND) || (result == RawCOMHelpers.HResult.DISP_E_UNKNOWNNAME))
+                else if ((result == HResult.DISP_E_MEMBERNOTFOUND) || (result == HResult.DISP_E_UNKNOWNNAME))
                 {
                     // this usually indicates invalid object or property access in JScript
-                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                     return true;
                 }
             }
@@ -122,7 +122,7 @@ namespace Microsoft.ClearScript.Windows
                 if ((argumentException != null) && (argumentException.ParamName == null))
                 {
                     // this usually indicates invalid object or property access in VBScript
-                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, RawCOMHelpers.HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
+                    scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                     return true;
                 }
             }
@@ -157,7 +157,7 @@ namespace Microsoft.ClearScript.Windows
                         scriptError = GetScriptError(exception);
                     }
 
-                    if (scriptError.ExecutionStarted)
+                    if (scriptError.ExecutionStarted && (binder.GetType().FullName != "Microsoft.VisualBasic.CompilerServices.VBGetBinder"))
                     {
                         throw (Exception)scriptError;
                     }
@@ -181,13 +181,13 @@ namespace Microsoft.ClearScript.Windows
         public override string[] GetPropertyNames()
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetProperties(BindingFlags.Default).Select(property => property.Name).ExcludeIndices().ToArray());
+            return engine.ScriptInvoke(() => target.GetPropertyNames().ExcludeIndices().ToArray());
         }
 
         public override int[] GetPropertyIndices()
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetProperties(BindingFlags.Default).Select(property => property.Name).GetIndices().ToArray());
+            return engine.ScriptInvoke(() => target.GetPropertyNames().GetIndices().ToArray());
         }
 
         #endregion
@@ -202,11 +202,12 @@ namespace Microsoft.ClearScript.Windows
             {
                 try
                 {
-                    return target.InvokeMember(name, BindingFlags.GetProperty, null, target, engine.MarshalToScript(args), null, CultureInfo.InvariantCulture, null);
+                    var value = target.GetProperty(name, false, engine.MarshalToScript(args));
+                    return (value is Nonexistent) ? Undefined.Value : value;
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
-                    if (target.GetMethod(name, BindingFlags.GetProperty) != null)
+                    if (exception.HResult != HResult.DISP_E_UNKNOWNNAME)
                     {
                         // Property retrieval failed, but a method with the given name exists;
                         // create a tear-off method. This currently applies only to VBScript.
@@ -230,80 +231,19 @@ namespace Microsoft.ClearScript.Windows
         public override void SetProperty(string name, params object[] args)
         {
             VerifyNotDisposed();
-
-            engine.ScriptInvoke(() =>
-            {
-                var marshaledArgs = engine.MarshalToScript(args);
-                try
-                {
-                    try
-                    {
-                        target.InvokeMember(name, BindingFlags.SetProperty, null, target, marshaledArgs, null, CultureInfo.InvariantCulture, null);
-                    }
-                    catch (COMException primaryException)
-                    {
-                        // VBScript objects can be finicky about property-put dispatch flags
-
-                        if (primaryException.ErrorCode == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
-                        {
-                            try
-                            {
-                                target.InvokeMember(name, BindingFlags.SetProperty | BindingFlags.PutDispProperty, null, target, marshaledArgs, null, CultureInfo.InvariantCulture, null);
-                            }
-                            catch (COMException secondaryException)
-                            {
-                                if (secondaryException.ErrorCode == RawCOMHelpers.HResult.DISP_E_MEMBERNOTFOUND)
-                                {
-                                    target.InvokeMember(name, BindingFlags.SetProperty | BindingFlags.PutRefDispProperty, null, target, marshaledArgs, null, CultureInfo.InvariantCulture, null);
-                                }
-                                else
-                                {
-                                    throw;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            throw;
-                        }
-                    }
-                }
-                catch (MissingMemberException)
-                {
-                    target.AddProperty(name);
-                    target.InvokeMember(name, BindingFlags.SetProperty, null, target, marshaledArgs, null, CultureInfo.InvariantCulture, null);
-                }
-            });
+            engine.ScriptInvoke(() => target.SetProperty(name, false, engine.MarshalToScript(args)));
         }
 
         public override bool DeleteProperty(string name)
         {
             VerifyNotDisposed();
-
-            return engine.ScriptInvoke(() =>
-            {
-                var field = target.GetField(name, BindingFlags.Default);
-                if (field != null)
-                {
-                    target.RemoveMember(field);
-                    return true;
-                }
-
-                var property = target.GetProperty(name, BindingFlags.Default);
-                if (property != null)
-                {
-                    target.RemoveMember(property);
-                    return true;
-                }
-
-                return false;
-            });
+            return engine.ScriptInvoke(() => target.DeleteProperty(name, false));
         }
 
         public override object GetProperty(int index)
         {
             VerifyNotDisposed();
-            return GetProperty(index.ToString(CultureInfo.InvariantCulture), ArrayHelpers.GetEmptyArray<object>());
+            return GetProperty(index.ToString(CultureInfo.InvariantCulture));
         }
 
         public override void SetProperty(int index, object value)
@@ -336,25 +276,7 @@ namespace Microsoft.ClearScript.Windows
 
             try
             {
-                return engine.MarshalToHost(engine.ScriptInvoke(() =>
-                {
-                    // ReSharper disable SuspiciousTypeConversion.Global
-
-                    var dispatchEx = target as IDispatchEx;
-                    if (dispatchEx != null)
-                    {
-                        // Standard IExpando-over-IDispatchEx support appears to repeat failing
-                        // invocations. This issue has been reported. In the meantime we'll bypass
-                        // this facility and interface with IDispatchEx directly.
-
-                        return dispatchEx.InvokeMethod(name, false, engine.MarshalToScript(args));
-                    }
-
-                    // ReSharper restore SuspiciousTypeConversion.Global
-
-                    return target.InvokeMember(name, BindingFlags.InvokeMethod, null, target, engine.MarshalToScript(args), null, CultureInfo.InvariantCulture, null);
-
-                }), false);
+                return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMethod(name, false, engine.MarshalToScript(args))), false);
             }
             catch (Exception exception)
             {

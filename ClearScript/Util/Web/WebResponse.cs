@@ -3,12 +3,12 @@
 
 using System;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace Microsoft.ClearScript.Util.Web
 {
@@ -73,7 +73,7 @@ namespace Microsoft.ClearScript.Util.Web
             using (var writer = new StreamWriter(stream, Encoding.ASCII, 16 * 1024, true))
             {
                 var statusCode = overrideStatusCode ?? StatusCode;
-                writer.Write("HTTP/1.1 {0} {1}\r\n", statusCode, HttpWorkerRequest.GetStatusDescription(statusCode));
+                writer.Write("HTTP/1.1 {0} {1}\r\n", statusCode, Enum.GetName(typeof(HttpStatusCode), statusCode) ?? string.Empty);
 
                 if (!string.IsNullOrWhiteSpace(ContentType))
                 {
@@ -107,7 +107,7 @@ namespace Microsoft.ClearScript.Util.Web
             using (var writer = new StreamWriter(stream, Encoding.ASCII, 16 * 1024, true))
             {
                 const int statusCode = 101;
-                writer.Write("HTTP/1.1 {0} {1}\r\n", statusCode, HttpWorkerRequest.GetStatusDescription(statusCode));
+                writer.Write("HTTP/1.1 {0} {1}\r\n", statusCode, Enum.GetName(typeof(HttpStatusCode), statusCode) ?? string.Empty);
 
                 writer.Write("Connection: Upgrade\r\n");
                 writer.Write("Upgrade: websocket\r\n");

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{E72210BD-B937-4B03-BCFC-A15541C8DC12}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>ClearScriptV864</RootNamespace>
+    <WindowsTargetPlatformVersion>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>NetCore</CLRSupport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>NetCore</CLRSupport>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\$(TargetFramework)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\$(TargetFramework)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
+    <LinkKeyFile>$(SolutionDir)ClearScript.snk</LinkKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+    <LinkKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</LinkKeyFile>
+    <LinkDelaySign>true</LinkDelaySign>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <AdditionalUsingDirectories>$(OutDir)</AdditionalUsingDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(SolutionDir)ClearScript\V8\V8\build\v8\include;$(SolutionDir)ClearScript\Exports;$(IncludePath)</AdditionalIncludeDirectories>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
+      <DisableSpecificWarnings>4564</DisableSpecificWarnings>
+      <OmitFramePointers>false</OmitFramePointers>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(SolutionDir)ClearScript\V8\V8\lib\v8-x64.dll.lib</AdditionalDependencies>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <AdditionalUsingDirectories>$(OutDir)</AdditionalUsingDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(SolutionDir)ClearScript\V8\V8\build\v8\include;$(SolutionDir)ClearScript\Exports;$(IncludePath)</AdditionalIncludeDirectories>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <PrecompiledHeaderFile />
+      <PrecompiledHeaderOutputFile />
+      <DisableSpecificWarnings>4564</DisableSpecificWarnings>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>$(SolutionDir)ClearScript\V8\V8\lib\v8-x64.dll.lib</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-base-x64.dll">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-base-x64.dll.pdb">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-libcpp-x64.dll">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-libcpp-x64.dll.pdb">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-x64.dll">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-x64.dll.pdb">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\ClearScriptV8Managed.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\ClearScriptV8Native.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\CommonPlatform.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\HighResolutionClock.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\HostException.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\HostObjectHelpers.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\HostObjectHolder.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\HostObjectHolderImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\IV8Entity.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\IV8EntityProxy.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\ManagedPlatform.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\Mutex.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\NativeCallbackImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\NativePlatform.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\RefCount.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\SharedPtr.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\StdString.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\Timer.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8CacheType.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8Context.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ContextImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ContextProxyImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8DebugListenerImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8DocumentInfo.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8Exception.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8Isolate.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8IsolateImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8IsolateProxyImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ObjectHelpers.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ObjectHolder.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ObjectHolderImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ObjectImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8Platform.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ScriptHolder.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ScriptHolderImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ScriptImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8TestProxyImpl.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8Value.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8WeakContextBinding.h" />
+    <ClInclude Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\WeakRef.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\64\AssemblyInfo.cpp" />
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\HighResolutionClock.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\HostObjectHelpers.cpp" />
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\HostObjectHolderImpl.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\Mutex.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\NativeCallbackImpl.cpp" />
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\RefCount.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\StdString.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8Context.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ContextImpl.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ContextProxyImpl.cpp" />
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8DebugListenerImpl.cpp" />
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8Exception.cpp" />
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8Isolate.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8IsolateImpl.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8IsolateProxyImpl.cpp" />
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ObjectHelpers.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ObjectHolderImpl.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ObjectImpl.cpp" />
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ScriptHolderImpl.cpp">
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
+      <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</CompileAsManaged>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8ScriptImpl.cpp" />
+    <ClCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\V8TestProxyImpl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\..\..\..\ClearScript\V8\ClearScriptV8\64\Resource.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

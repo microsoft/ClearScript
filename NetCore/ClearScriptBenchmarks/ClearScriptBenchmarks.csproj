@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <NoWarn />
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <OutputPath>..\..\bin\Debug</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn />
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <OutputPath>..\..\bin\Release</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\ClearScriptBenchmarks\ClearScriptBenchmarks.cs" Link="ClearScriptBenchmarks.cs" />
+    <Compile Include="..\..\ClearScriptBenchmarks\Properties\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\..\ClearScriptBenchmarks\SunSpider.cs" Link="SunSpider.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ClearScript\ClearScript.csproj" />
+  </ItemGroup>
+
+</Project>

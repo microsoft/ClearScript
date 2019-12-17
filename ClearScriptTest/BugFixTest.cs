@@ -21,6 +21,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using UIAutomationClient;
 
+// ReSharper disable HeuristicUnreachableCode
+
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
@@ -37,7 +39,7 @@ namespace Microsoft.ClearScript.Test
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
     [SuppressMessage("ReSharper", "IdentifierTypo")]
-    public class BugFixTest : ClearScriptTest
+    public partial class BugFixTest : ClearScriptTest
     {
         #region setup / teardown
 
@@ -487,12 +489,14 @@ namespace Microsoft.ClearScript.Test
             engine.Dispose();
             engine = new JScriptEngine();
 
-            object x = Guid.NewGuid();
-            var wr = new WeakReference(x);
+            WeakReference wr = null;
 
             new Action(() =>
             {
                 // ReSharper disable AccessToModifiedClosure
+
+                object x = Guid.NewGuid();
+                wr = new WeakReference(x);
 
                 var result = x.ToString();
                 engine.Script.x = x;
@@ -524,12 +528,14 @@ namespace Microsoft.ClearScript.Test
             engine.Dispose();
             engine = new VBScriptEngine();
 
-            object x = Guid.NewGuid();
-            var wr = new WeakReference(x);
+            WeakReference wr = null;
 
             new Action(() =>
             {
                 // ReSharper disable AccessToModifiedClosure
+
+                object x = Guid.NewGuid();
+                wr = new WeakReference(x);
 
                 var result = x.ToString();
                 engine.Script.x = x;
@@ -561,14 +567,17 @@ namespace Microsoft.ClearScript.Test
             engine.Dispose();
             engine = new VBScriptEngine();
 
-            object x1 = Guid.NewGuid();
-            var wr1 = new WeakReference(x1);
-            object x2 = Guid.NewGuid();
-            var wr2 = new WeakReference(x2);
+            WeakReference wr1 = null;
+            WeakReference wr2 = null;
 
             new Action(() =>
             {
                 // ReSharper disable AccessToModifiedClosure
+
+                object x1 = Guid.NewGuid();
+                wr1 = new WeakReference(x1);
+                object x2 = Guid.NewGuid();
+                wr2 = new WeakReference(x2);
 
                 engine.Execute(@"
                     class MyClass
@@ -588,8 +597,6 @@ namespace Microsoft.ClearScript.Test
                 // ReSharper restore AccessToModifiedClosure
             })();
 
-            x1 = null;
-            x2 = null;
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
             Assert.IsFalse(wr1.IsAlive);
@@ -606,14 +613,17 @@ namespace Microsoft.ClearScript.Test
             engine.Dispose();
             engine = new JScriptEngine();
 
-            object x1 = Guid.NewGuid();
-            var wr1 = new WeakReference(x1);
-            object x2 = Guid.NewGuid();
-            var wr2 = new WeakReference(x2);
+            WeakReference wr1 = null;
+            WeakReference wr2 = null;
 
             new Action(() =>
             {
                 // ReSharper disable AccessToModifiedClosure
+
+                object x1 = Guid.NewGuid();
+                wr1 = new WeakReference(x1);
+                object x2 = Guid.NewGuid();
+                wr2 = new WeakReference(x2);
 
                 engine.Execute("function foo(x1, x2) { return x1.ToString() + x2.ToString(); }");
                 Assert.AreEqual(x1.ToString() + x2, engine.Script.foo(x1, x2));
@@ -623,8 +633,6 @@ namespace Microsoft.ClearScript.Test
                 // ReSharper restore AccessToModifiedClosure
             })();
 
-            x1 = null;
-            x2 = null;
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
             Assert.IsFalse(wr1.IsAlive);
@@ -641,14 +649,17 @@ namespace Microsoft.ClearScript.Test
             engine.Dispose();
             engine = new VBScriptEngine();
 
-            object x1 = Guid.NewGuid();
-            var wr1 = new WeakReference(x1);
-            object x2 = Guid.NewGuid();
-            var wr2 = new WeakReference(x2);
+            WeakReference wr1 = null;
+            WeakReference wr2 = null;
 
             new Action(() =>
             {
                 // ReSharper disable AccessToModifiedClosure
+
+                object x1 = Guid.NewGuid();
+                wr1 = new WeakReference(x1);
+                object x2 = Guid.NewGuid();
+                wr2 = new WeakReference(x2);
 
                 engine.Execute("function foo(x1, x2):foo = x1.ToString() & x2.ToString():end function");
                 Assert.AreEqual(x1.ToString() + x2, engine.Script.foo(x1, x2));
@@ -658,8 +669,6 @@ namespace Microsoft.ClearScript.Test
                 // ReSharper restore AccessToModifiedClosure
             })();
 
-            x1 = null;
-            x2 = null;
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
             GC.WaitForPendingFinalizers();
             Assert.IsFalse(wr1.IsAlive);
@@ -1078,27 +1087,6 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_AmbiguousIndexer_ADODB()
-        {
-            engine.Dispose();
-            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging);
-
-            var recordSet = new ADODB.Recordset();
-            recordSet.Fields.Append("foo", ADODB.DataTypeEnum.adVarChar, 20);
-            recordSet.Open(Missing.Value, Missing.Value, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic, 0);
-            recordSet.AddNew(Missing.Value, Missing.Value);
-            recordSet.Fields["foo"].Value = "bar";
-
-            engine.AddHostObject("recordSet", recordSet);
-            Assert.AreEqual("bar", engine.Evaluate("recordSet.Fields.Item(\"foo\").Value"));
-
-            engine.Execute("recordSet.Fields.Item(\"foo\").Value = \"qux\"");
-            Assert.AreEqual("qux", engine.Evaluate("recordSet.Fields.Item(\"foo\").Value"));
-
-            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("recordSet.Fields.Item(\"baz\")"));
-        }
-
-        [TestMethod, TestCategory("BugFix")]
         public void BugFix_InaccessiblePropertyAccessors()
         {
             engine.Script.foo = new InaccessiblePropertyAccessors();
@@ -1177,17 +1165,6 @@ namespace Microsoft.ClearScript.Test
         {
             var engines = Enumerable.Range(0, 2048).Select(index => new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging)).ToArray();
             Array.ForEach(engines, tempEngine => tempEngine.Dispose());
-        }
-
-        [TestMethod, TestCategory("BugFix")]
-        public void BugFix_AssemblyTableClass()
-        {
-            Assert.IsTrue(typeof(AssemblyTable).IsStatic());
-            Assert.IsNotNull(typeof(AssemblyTable).TypeInitializer);
-
-            var methods = typeof(AssemblyTable).GetMethods(BindingFlags.Static | BindingFlags.Public);
-            Assert.AreEqual(1, methods.Length);
-            Assert.AreEqual("GetFullAssemblyName", methods[0].Name);
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -2162,36 +2139,6 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_InteropMethodCallWithInteropArg()
-        {
-            engine.AddHostObject("host", new HostFunctions());
-            engine.AddHostType("Automation", typeof(CUIAutomationClass));
-            engine.AddHostType(typeof(UIA_PropertyIds));
-            engine.AddHostType(typeof(UIA_ControlTypeIds));
-            engine.AddHostType(typeof(IUIAutomationCondition));
-            engine.Execute(@"
-                    automation = new Automation();
-                    condition1 = automation.CreatePropertyCondition(UIA_PropertyIds.UIA_ControlTypePropertyId, UIA_ControlTypeIds.UIA_CustomControlTypeId);
-                    condition2 = automation.CreatePropertyCondition(UIA_PropertyIds.UIA_ControlTypePropertyId, UIA_ControlTypeIds.UIA_CustomControlTypeId);
-                    condition3 = automation.CreatePropertyCondition(UIA_PropertyIds.UIA_ControlTypePropertyId, UIA_ControlTypeIds.UIA_CustomControlTypeId);
-                    conditions = host.newArr(IUIAutomationCondition, 3);
-                    conditions[0] = condition1;
-                    conditions[1] = condition2;
-                    conditions[2] = condition3;
-                    andCondition = automation.CreateAndCondition(condition1, condition2);
-                    andAndCondition = automation.CreateAndConditionFromArray(conditions);
-                ");
-        }
-
-        [TestMethod, TestCategory("BugFix")]
-        public void BugFix_InteropMethodCallWithInteropArg_JScript()
-        {
-            engine.Dispose();
-            engine = new JScriptEngine();
-            BugFix_InteropMethodCallWithInteropArg();
-        }
-
-        [TestMethod, TestCategory("BugFix")]
         public void BugFix_NestedType()
         {
             engine.AddHostType(typeof(NestedTypeTest));
@@ -2420,12 +2367,6 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_V8StackLimitIntegerOverflow()
-        {
-            TestUtil.InvokeConsoleTest("BugFix_V8StackLimitIntegerOverflow");
-        }
-
-        [TestMethod, TestCategory("BugFix")]
         public void BugFix_TextDigest()
         {
             const string allChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -2443,6 +2384,81 @@ namespace Microsoft.ClearScript.Test
                 var value = new string(chars);
                 Assert.AreEqual(value.GetDigest(), proxy.GetNativeDigest(value));
             }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_WindowsScriptItem_SetPropertyLeak()
+        {
+            WeakReference wr = null;
+
+            var proc = new Action(() =>
+            {
+                using (var vbs = new VBScriptEngine())
+                {
+                    wr = new WeakReference(vbs);
+
+                    vbs.AddHostType(typeof(Console));
+                    vbs.Script["foo"] = "bar";
+                }
+            });
+
+            proc();
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            Assert.IsFalse(wr.IsAlive);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_InteropMethodCallWithInteropArg()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+            engine.AddHostType("Automation", typeof(CUIAutomationClass));
+            engine.AddHostType(typeof(UIA_PropertyIds));
+            engine.AddHostType(typeof(UIA_ControlTypeIds));
+            engine.AddHostType(typeof(IUIAutomationCondition));
+            engine.Execute(@"
+                automation = new Automation();
+                condition1 = automation.CreatePropertyCondition(UIA_PropertyIds.UIA_ControlTypePropertyId, UIA_ControlTypeIds.UIA_CustomControlTypeId);
+                condition2 = automation.CreatePropertyCondition(UIA_PropertyIds.UIA_ControlTypePropertyId, UIA_ControlTypeIds.UIA_CustomControlTypeId);
+                condition3 = automation.CreatePropertyCondition(UIA_PropertyIds.UIA_ControlTypePropertyId, UIA_ControlTypeIds.UIA_CustomControlTypeId);
+                conditions = host.newArr(IUIAutomationCondition, 3);
+                conditions[0] = condition1;
+                conditions[1] = condition2;
+                conditions[2] = condition3;
+                andCondition = automation.CreateAndCondition(condition1, condition2);
+                andAndCondition = automation.CreateAndConditionFromArray(conditions);
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_InteropMethodCallWithInteropArg_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+            BugFix_InteropMethodCallWithInteropArg();
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AmbiguousIndexer_ADODB()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging);
+
+            var recordSet = new ADODB.Recordset();
+            recordSet.Fields.Append("foo", ADODB.DataTypeEnum.adVarChar, 20);
+            recordSet.Open(Missing.Value, Missing.Value, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic, 0);
+            recordSet.AddNew(Missing.Value, Missing.Value);
+            recordSet.Fields["foo"].Value = "bar";
+
+            engine.AddHostObject("recordSet", recordSet);
+            Assert.AreEqual("bar", engine.Evaluate("recordSet.Fields.Item(\"foo\").Value"));
+
+            engine.Execute("recordSet.Fields.Item(\"foo\").Value = \"qux\"");
+            Assert.AreEqual("qux", engine.Evaluate("recordSet.Fields.Item(\"foo\").Value"));
+
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("recordSet.Fields.Item(\"baz\")"));
         }
 
         // ReSharper restore InconsistentNaming
@@ -2519,10 +2535,14 @@ namespace Microsoft.ClearScript.Test
             object this[DayOfWeek d] { get; set; }
         }
 
+        // ReSharper disable PossibleInterfaceMemberAmbiguity
+
         public interface IAmbiguousIndexer : IAmbiguousIndexerBase1, IAmbiguousIndexerBase2
         {
             new object this[int i] { get; set; }
         }
+
+        // ReSharper restore PossibleInterfaceMemberAmbiguity
 
         public class AmbiguousIndexer : IAmbiguousIndexer
         {

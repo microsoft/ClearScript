@@ -25,7 +25,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputPath>..\bin\Debug\</OutputPath>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETFRAMEWORK</DefineConstants>
     <DocumentationFile>bin\Debug\ClearScript.XML</DocumentationFile>
     <ErrorReport>prompt</ErrorReport>
     <DebugType>full</DebugType>
@@ -39,7 +39,7 @@
     <OutputPath>..\bin\Release\</OutputPath>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <DocumentationFile>bin\Release\ClearScript.XML</DocumentationFile>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;NETFRAMEWORK</DefineConstants>
     <Optimize>true</Optimize>
     <ErrorReport>prompt</ErrorReport>
     <DebugType>pdbonly</DebugType>
@@ -64,11 +64,12 @@
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Net.Http" />
-    <Reference Include="System.Web" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CanonicalRefTable.cs" />
+    <Compile Include="HostItem.NetFramework.cs" />
+    <Compile Include="HostSettings.cs" />
     <Compile Include="Document.cs" />
     <Compile Include="DocumentCategory.cs" />
     <Compile Include="DocumentContextCallback.cs" />
@@ -117,9 +118,18 @@
     <Compile Include="StringDocument.cs" />
     <Compile Include="UniqueDocumentInfo.cs" />
     <Compile Include="Util\AssemblyHelpers.cs" />
+    <Compile Include="Util\AssemblyHelpers.NetFramework.cs" />
     <Compile Include="Util\BitwiseHelpers.cs" />
     <Compile Include="Util\Collateral.cs" />
-    <Compile Include="Util\COMDispatchHelpers.cs" />
+    <Compile Include="Util\COM\ActivationHelpers.cs" />
+    <Compile Include="Util\COM\DispatchHelpers.cs" />
+    <Compile Include="Util\COM\DispatchMember.cs" />
+    <Compile Include="Util\COM\DispatchWrappers.cs" />
+    <Compile Include="Util\COM\HResult.cs" />
+    <Compile Include="Util\COM\TypeInfoHelpers.cs" />
+    <Compile Include="Util\COM\TypeInfoHelpers.NetFramework.cs" />
+    <Compile Include="Util\COM\TypeLibHelpers.cs" />
+    <Compile Include="Util\VTableHelpers.cs" />
     <Compile Include="Util\CoTaskMemBlock.cs" />
     <Compile Include="Util\Holder.cs" />
     <Compile Include="Util\OneWayFlag.cs" />
@@ -129,7 +139,7 @@
     <Compile Include="Util\MemberComparer.cs" />
     <Compile Include="Util\NativeCallbackTimer.cs" />
     <Compile Include="Util\NativeMethods.cs" />
-    <Compile Include="Util\COMDispatch.cs" />
+    <Compile Include="Util\COM\Dispatch.cs" />
     <Compile Include="Util\IScriptMarshalWrapper.cs" />
     <Compile Include="Util\MemberHelpers.cs" />
     <Compile Include="Util\MemberMap.cs" />
@@ -137,6 +147,7 @@
     <Compile Include="Util\SocketHelpers.cs" />
     <Compile Include="Util\SpecialDispIDs.cs" />
     <Compile Include="Util\Test\AccessContextTestObject.cs" />
+    <Compile Include="Util\TypeHelpers.NetFramework.cs" />
     <Compile Include="Util\Web\WebContext.cs" />
     <Compile Include="Util\Web\WebRequest.cs" />
     <Compile Include="Util\Web\WebResponse.cs" />
@@ -151,6 +162,7 @@
     <Compile Include="V8\V8CpuProfileFlags.cs" />
     <Compile Include="V8\V8DebugAgent.cs" />
     <Compile Include="V8\V8DebugClient.cs" />
+    <Compile Include="V8\V8Proxy.NetFramework.cs" />
     <Compile Include="V8\V8RuntimeHeapInfo.cs" />
     <Compile Include="V8\V8Script.cs" />
     <Compile Include="V8\V8IsolateProxy.cs" />
@@ -180,7 +192,7 @@
     </Compile>
     <Compile Include="HostTypeCollection.cs" />
     <Compile Include="Util\ArrayHelpers.cs" />
-    <Compile Include="Util\AssemblyTable.cs" />
+    <Compile Include="Util\AssemblyTable.NetFramework.cs" />
     <Compile Include="Util\DynamicHelpers.cs" />
     <Compile Include="Util\EnumerableHelpers.cs" />
     <Compile Include="Util\InvokeHelpers.cs" />
@@ -213,7 +225,7 @@
     <Compile Include="Util\MiscHelpers.cs" />
     <Compile Include="Util\Nonexistent.cs" />
     <Compile Include="Util\ObjectHelpers.cs" />
-    <Compile Include="Util\RawCOMHelpers.cs" />
+    <Compile Include="Util\COM\UnknownHelpers.cs" />
     <Compile Include="Util\TypeHelpers.cs" />
     <Compile Include="Undefined.cs" />
     <Compile Include="Util\UniqueNameManager.cs" />
@@ -251,6 +263,7 @@
       <DependentUpon>VersionSymbols.tt</DependentUpon>
     </None>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.

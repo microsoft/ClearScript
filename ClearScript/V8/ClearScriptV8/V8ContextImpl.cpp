@@ -2728,7 +2728,9 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
             }
 
             auto subtype = V8Value::Subtype::None;
-            if (hObject->IsArrayBuffer())
+            if (hObject->IsArray())
+                subtype = V8Value::Subtype::Array;
+            else if (hObject->IsArrayBuffer())
                 subtype = V8Value::Subtype::ArrayBuffer;
             else if (hObject->IsArrayBufferView())
                 if (hObject->IsDataView())

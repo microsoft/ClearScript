@@ -28,6 +28,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <CLRSupport>true</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)'=='16.0'">
     <PlatformToolset>v142</PlatformToolset>
@@ -54,9 +55,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
     <CodeAnalysisRuleSet>MixedRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -75,7 +76,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\V8\include;..\..\..\Exports;$(IncludePath)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ClearScript\V8\V8\build\v8\include;$(SolutionDir)ClearScript\Exports;$(IncludePath)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>
@@ -90,17 +91,17 @@
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='14.0'">true</GenerateDebugInformation>
-      <AdditionalDependencies>..\..\V8\lib\v8-ia32.dll.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)ClearScript\V8\V8\lib\v8-ia32.dll.lib</AdditionalDependencies>
     </Link>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\..\Exports</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\V8\include;..\..\..\Exports;$(IncludePath)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ClearScript\V8\V8\build\v8\include;$(SolutionDir)ClearScript\Exports;$(IncludePath)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>
@@ -121,13 +122,13 @@
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='14.0'">true</GenerateDebugInformation>
-      <AdditionalDependencies>..\..\V8\lib\v8-ia32.dll.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)ClearScript\V8\V8\lib\v8-ia32.dll.lib</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\..\Exports</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -205,7 +206,7 @@
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\V8\lib\v8-ia32.dll">
+    <CopyFileToFolders Include="..\..\V8\lib\v8-ia32.dll">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -213,10 +214,10 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying %(Filename)%(Extension) to "$(OutDir)"</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\V8\lib\v8-ia32.dll.pdb">
+    <CopyFileToFolders Include="..\..\V8\lib\v8-ia32.dll.pdb">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -224,7 +225,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying %(Filename)%(Extension) to "$(OutDir)"</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ClearScriptV8Managed.h" />
@@ -269,7 +270,7 @@
     <ClInclude Include="..\WeakRef.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\V8\lib\v8-base-ia32.dll">
+    <CopyFileToFolders Include="..\..\V8\lib\v8-base-ia32.dll">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -277,8 +278,8 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying %(Filename)%(Extension) to "$(OutDir)"</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="..\..\V8\lib\v8-base-ia32.dll.pdb">
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\..\V8\lib\v8-base-ia32.dll.pdb">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -286,13 +287,13 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying %(Filename)%(Extension) to "$(OutDir)"</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\V8\lib\v8-libcpp-ia32.dll">
+    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-ia32.dll">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -300,8 +301,8 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying %(Filename)%(Extension) to "$(OutDir)"</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="..\..\V8\lib\v8-libcpp-ia32.dll.pdb">
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-ia32.dll.pdb">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -309,7 +310,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying %(Filename)%(Extension) to "$(OutDir)"</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
-    </CustomBuild>
+    </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

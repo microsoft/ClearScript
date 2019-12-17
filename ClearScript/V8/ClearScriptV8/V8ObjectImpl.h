@@ -30,6 +30,8 @@ namespace V8 {
         virtual Object^ Invoke(bool asConstructor, array<Object^>^ gcArgs);
         virtual Object^ InvokeMethod(String^ gcName, array<Object^>^ gcArgs);
 
+        virtual bool IsArray();
+
         virtual bool IsArrayBufferOrView();
         virtual V8ArrayBufferOrViewKind GetArrayBufferOrViewKind();
         virtual V8ArrayBufferOrViewInfo^ GetArrayBufferOrViewInfo();

@@ -6,6 +6,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
+using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Util
 {
@@ -97,5 +99,39 @@ namespace Microsoft.ClearScript.Util
         {
             return source.GetEnumerator();
         }
+
+        public static IEnumerator GetEnumerator(object source)
+        {
+            return ((IEnumerable)source).GetEnumerator();
+        }
+    }
+
+    internal sealed class EnumeratorWrapper : IEnumerator
+    {
+        private readonly IEnumVARIANT enumVariant;
+
+        public EnumeratorWrapper(IEnumVARIANT enumVariant)
+        {
+            this.enumVariant = enumVariant;
+        }
+
+        public bool MoveNext()
+        {
+            var items = new object[1];
+            if (enumVariant.Next(1, items, IntPtr.Zero) == HResult.S_OK)
+            {
+                Current = items[0];
+                return true;
+            }
+
+            return false;
+        }
+
+        public void Reset()
+        {
+            enumVariant.Reset();
+        }
+
+        public object Current { get; private set; }
     }
 }

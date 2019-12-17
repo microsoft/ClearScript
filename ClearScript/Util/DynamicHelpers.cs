@@ -11,6 +11,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.Expando;
+using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Util
 {
@@ -196,7 +197,8 @@ namespace Microsoft.ClearScript.Util
                 // creates for the invocation arguments. This issue has been reported. In the
                 // meantime we'll bypass this facility and interface with IDispatchEx directly.
 
-                result = dispatchEx.GetProperty(name, ignoreCase, args);
+                var value = dispatchEx.GetProperty(name, ignoreCase, args);
+                result = (value is Nonexistent) ? Undefined.Value : value;
                 return true;
             }
 
@@ -554,7 +556,14 @@ namespace Microsoft.ClearScript.Util
             }
             catch (ArgumentException)
             {
-                return CreateDynamicMetaObject(arg, Expression.Constant(arg));
+                try
+                {
+                    return CreateDynamicMetaObject(arg, Expression.Convert(Expression.Constant(arg), type));
+                }
+                catch (InvalidOperationException)
+                {
+                    return CreateDynamicMetaObject(arg, Expression.Constant(arg));
+                }
             }
         }
 

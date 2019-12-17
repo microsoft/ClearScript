@@ -195,9 +195,16 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
+    bool V8ObjectImpl::IsArray()
+    {
+        return m_Subtype == V8Value::Subtype::Array;
+    }
+
+    //-------------------------------------------------------------------------
+
     bool V8ObjectImpl::IsArrayBufferOrView()
     {
-        return m_Subtype != V8Value::Subtype::None;
+        return (m_Subtype != V8Value::Subtype::None) && (m_Subtype != V8Value::Subtype::Array);
     }
 
     //-------------------------------------------------------------------------

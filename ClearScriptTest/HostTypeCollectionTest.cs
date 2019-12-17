@@ -91,7 +91,7 @@ namespace Microsoft.ClearScript.Test
         {
             var assemblies = assemblyNames.Select(assemblyName => Assembly.Load(AssemblyTable.GetFullAssemblyName(assemblyName)));
             var activeFilter = filter ?? defaultFilter;
-            return assemblies.SelectMany(assembly => assembly.GetTypes().Where(type => type.IsImportable() && activeFilter(type)));
+            return assemblies.SelectMany(assembly => assembly.GetAllTypes().Where(type => type.IsImportable() && activeFilter(type)));
         }
 
         private static IEnumerable<HostType> GetLeafNodes(PropertyBag container)

@@ -16,7 +16,7 @@ namespace Microsoft.ClearScript.Windows
 
         private static readonly Dictionary<int, string> runtimeErrorMap = new Dictionary<int, string>
         {
-            // https://msdn.microsoft.com/en-us/library/xe43cc8d(v=vs.84).aspx
+            // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/xe43cc8d(v=vs.84)
             { 429, "ActiveX component can't create object" },
             { 507, "An exception occurred" },
             { 449, "Argument not optional" },
@@ -64,7 +64,7 @@ namespace Microsoft.ClearScript.Windows
 
         private static readonly Dictionary<int, string> syntaxErrorMap = new Dictionary<int, string>
         {
-            // https://msdn.microsoft.com/en-us/library/2z84dwk8(v=vs.84).aspx
+            // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/2z84dwk8(v=vs.84)
             { 1052, "Cannot have multiple default property/method in a Class" },
             { 1044, "Cannot use parentheses when calling a Sub" },
             { 1053, "Class initialize or terminate do not have arguments" },
@@ -345,7 +345,7 @@ namespace Microsoft.ClearScript.Windows
         /// The <see cref="VBScriptEngine"/> version of this method supports both expressions and
         /// statements. If the specified command begins with "eval " (not case-sensitive), the
         /// engine executes the remainder as an expression and attempts to use
-        /// <see href="http://msdn.microsoft.com/en-us/library/0zk841e9(VS.85).aspx">CStr</see>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions//0zk841e9(v=vs.85)">CStr</see>
         /// to convert the result value. Otherwise, it executes the command as a statement and does
         /// not return a value.
         /// </para>

@@ -57,7 +57,7 @@ namespace Microsoft.ClearScript.Windows
         /// Specifies that managed arrays that are passed or returned to script code are to be
         /// converted to script arrays and marshaled as variants of type <c>VT_ARRAY</c>. In
         /// VBScript these objects are the native array type. JScript code can use the
-        /// <see href="http://msdn.microsoft.com/en-us/library/y39d47w8(v=vs.84).aspx">VBArray</see>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/y39d47w8(v=vs.84)">VBArray</see>
         /// object to access them.
         /// </summary>
         MarshalArraysByValue = 0x00000040,
@@ -65,12 +65,21 @@ namespace Microsoft.ClearScript.Windows
         /// <summary>
         /// When <see cref="EnableStandardsMode"/> is specified, the ClearScript library uses
         /// virtual method table patching to support JScript-specific
-        /// <see href="https://msdn.microsoft.com/en-us/library/sky96ah7(VS.94).aspx">IDispatchEx</see>
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/sky96ah7(v=vs.94)">IDispatchEx</see>
         /// extensions that otherwise interfere with some host object functionality. Virtual method
         /// table patching is a very low-level mechanism with global effect. This option specifies
         /// that virtual method table patching is not to be enabled on behalf of the current
         /// <see cref="JScriptEngine"/> instance.
         /// </summary>
-        DoNotEnableVTablePatching = 0x00000080
+        DoNotEnableVTablePatching = 0x00000080,
+
+        /// <summary>
+        /// Specifies that <see cref="DateTime"/> values are to be marshaled as variants of type
+        /// <c>VT_DATE</c>. In VBScript these objects are the native date-time type. JScript code
+        /// can pass them to the
+        /// <see href="https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2010/dca21baa(v=vs.100)">Date</see>
+        /// constructor for property access.
+        /// </summary>
+        MarshalDateTimeAsDate = 0x00000100
     }
 }

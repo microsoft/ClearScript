@@ -84,12 +84,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\V8\lib\v8-ia32.dll" />
-    <CustomBuild Include="..\..\V8\lib\v8-ia32.dll.pdb" />
-    <CustomBuild Include="..\..\V8\lib\v8-base-ia32.dll" />
-    <CustomBuild Include="..\..\V8\lib\v8-base-ia32.dll.pdb" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\ClearScriptV8Managed.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -212,7 +206,11 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\V8\lib\v8-libcpp-ia32.dll" />
-    <None Include="..\..\V8\lib\v8-libcpp-ia32.dll.pdb" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-ia32.dll" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-ia32.dll.pdb" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-base-ia32.dll" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-base-ia32.dll.pdb" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-ia32.dll" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-ia32.dll.pdb" />
   </ItemGroup>
 </Project>

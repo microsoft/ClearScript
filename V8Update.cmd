@@ -5,7 +5,7 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=7.6.303.28
+set v8testedrev=7.9.317.32
 
 :ProcessArgs
 
@@ -176,14 +176,14 @@ call git config user.name ClearScript
 if errorlevel 1 goto Error
 call git config user.email "ClearScript@microsoft.com"
 if errorlevel 1 goto Error
-call git apply --ignore-whitespace ..\..\V8Patch.txt 2>applyV8Patch.log
+call git apply --reject --ignore-whitespace ..\..\V8Patch.txt 2>applyV8Patch.log
 if errorlevel 1 goto Error
 cd buildtools
 call git config user.name ClearScript
 if errorlevel 1 goto Error
 call git config user.email "ClearScript@microsoft.com"
 if errorlevel 1 goto Error
-call git apply --ignore-whitespace ..\..\..\BuildToolsPatch.txt 2>..\applyBuildToolsPatch.log
+call git apply --reject --ignore-whitespace ..\..\..\BuildToolsPatch.txt 2>..\applyBuildToolsPatch.log
 if errorlevel 1 goto Error
 cd ..
 cd ..
@@ -214,7 +214,7 @@ echo Building 32-bit V8 ...
 cd v8
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x86 >nul
 if errorlevel 1 goto Error
-call gn gen out\ia32\%mode% --args="fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" v8_enable_i18n_support=false v8_target_cpu=\"x86\" v8_use_external_startup_data=false v8_use_snapshot=true enable_precompiled_headers=false" >gn.log
+call gn gen out\ia32\%mode% --args="fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" v8_enable_i18n_support=false v8_target_cpu=\"x86\" v8_use_external_startup_data=false enable_precompiled_headers=false" >gn.log
 if errorlevel 1 goto Error
 ninja -C out\ia32\%mode% v8-ia32.dll >build-ia32.log
 if errorlevel 1 goto Error
@@ -226,7 +226,7 @@ echo Building 64-bit V8 ...
 cd v8
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64 >nul
 if errorlevel 1 goto Error
-call gn gen out\x64\%mode% --args="fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" v8_enable_i18n_support=false v8_target_cpu=\"x64\" v8_use_external_startup_data=false v8_use_snapshot=true enable_precompiled_headers=false" >gn.log
+call gn gen out\x64\%mode% --args="fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" v8_enable_i18n_support=false v8_target_cpu=\"x64\" v8_use_external_startup_data=false enable_precompiled_headers=false" >gn.log
 if errorlevel 1 goto Error
 ninja -C out\x64\%mode% v8-x64.dll >build-x64.log
 if errorlevel 1 goto Error
@@ -284,22 +284,6 @@ if errorlevel 1 goto Error
 copy build\v8\out\x64\%mode%\v8-x64.dll.lib lib\ >nul
 if errorlevel 1 goto Error
 :ImportLibsDone
-
-:EnsureIncludeDir
-if not exist include\ goto CreateIncludeDir
-echo Removing old include directory ...
-rd /s /q include
-:CreateIncludeDir
-echo Creating include directory ...
-md include
-if errorlevel 1 goto Error
-:EnsureIncludeDirDone
-
-:ImportHeaders
-echo Importing V8 header files ...
-copy build\v8\include\*.* include\ >nul
-if errorlevel 1 goto Error
-:ImportHeadersDone
 
 :ImportPatchFiles
 echo Importing patch files ...

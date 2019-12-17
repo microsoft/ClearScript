@@ -59,7 +59,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object GetHostObjectProperty(object obj, string name)
         {
-            return ((IDynamic)obj).GetProperty(name, ArrayHelpers.GetEmptyArray<object>());
+            return ((IDynamic)obj).GetProperty(name);
         }
 
         public static unsafe object GetHostObjectProperty(void* pObject, string name, out bool isCacheable)
@@ -69,7 +69,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object GetHostObjectProperty(object obj, string name, out bool isCacheable)
         {
-            return ((IDynamic)obj).GetProperty(name, out isCacheable, ArrayHelpers.GetEmptyArray<object>());
+            return ((IDynamic)obj).GetProperty(name, out isCacheable);
         }
 
         public static unsafe void SetHostObjectProperty(void* pObject, string name, object value)
@@ -185,7 +185,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object GetEnumeratorForHostObject(object obj)
         {
-            return ((IDynamic)obj).InvokeMethod(SpecialMemberNames.NewEnum, ArrayHelpers.GetEmptyArray<object>());
+            return ((IDynamic)obj).GetProperty(SpecialMemberNames.NewEnum);
         }
 
         public static unsafe bool AdvanceEnumerator(void* pEnumerator, out object value)
@@ -198,7 +198,7 @@ namespace Microsoft.ClearScript.V8
             var wrapper = (IScriptMarshalWrapper)enumerator;
             if (((IEnumerator)wrapper.Unwrap()).MoveNext())
             {
-                value = ((IDynamic)enumerator).GetProperty("Current", ArrayHelpers.GetEmptyArray<object>());
+                value = ((IDynamic)enumerator).GetProperty("Current");
                 return true;
             }
 
@@ -308,7 +308,7 @@ namespace Microsoft.ClearScript.V8
             }
 
             var settings = engine.DocumentSettings;
-            var document = settings.Loader.LoadDocument(settings, ((UniqueDocumentInfo)GetHostObject(pSourceDocumentInfo)).Info, specifier, category, null);
+            var document = settings.LoadDocument(((UniqueDocumentInfo)GetHostObject(pSourceDocumentInfo)).Info, specifier, category, null);
             var code = document.GetTextContents();
 
             documentInfo = document.Info.MakeUnique(engine);

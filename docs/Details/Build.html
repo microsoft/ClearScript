@@ -44,27 +44,6 @@ h1
 	font-size:14.0pt;
 	font-family:"Cambria",serif;
 	color:#365F91;}
-p.MsoCommentText, li.MsoCommentText, div.MsoCommentText
-	{mso-style-link:"Comment Text Char";
-	margin-top:6.0pt;
-	margin-right:0in;
-	margin-bottom:0in;
-	margin-left:0in;
-	margin-bottom:.0001pt;
-	font-size:10.0pt;
-	font-family:"Calibri",sans-serif;}
-p.MsoHeader, li.MsoHeader, div.MsoHeader
-	{mso-style-link:"Header Char";
-	margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
-p.MsoFooter, li.MsoFooter, div.MsoFooter
-	{mso-style-link:"Footer Char";
-	margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri",sans-serif;}
 p.MsoTitle, li.MsoTitle, div.MsoTitle
 	{mso-style-link:"Title Char";
 	margin-top:6.0pt;
@@ -115,31 +94,6 @@ p.MsoTitleCxSpLast, li.MsoTitleCxSpLast, div.MsoTitleCxSpLast
 a:link, span.MsoHyperlink
 	{color:blue;
 	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-pre
-	{mso-style-link:"HTML Preformatted Char";
-	margin:0in;
-	margin-bottom:.0001pt;
-	font-size:10.0pt;
-	font-family:"Courier New";}
-p.MsoCommentSubject, li.MsoCommentSubject, div.MsoCommentSubject
-	{mso-style-link:"Comment Subject Char";
-	margin-top:6.0pt;
-	margin-right:0in;
-	margin-bottom:0in;
-	margin-left:0in;
-	margin-bottom:.0001pt;
-	font-size:10.0pt;
-	font-family:"Calibri",sans-serif;
-	font-weight:bold;}
-p.MsoAcetate, li.MsoAcetate, div.MsoAcetate
-	{mso-style-link:"Balloon Text Char";
-	margin:0in;
-	margin-bottom:.0001pt;
-	font-size:9.0pt;
-	font-family:"Segoe UI",sans-serif;}
 p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
 	{margin-top:6.0pt;
 	margin-right:0in;
@@ -188,35 +142,6 @@ span.Heading1Char
 	font-family:"Cambria",serif;
 	color:#365F91;
 	font-weight:bold;}
-span.HeaderChar
-	{mso-style-name:"Header Char";
-	mso-style-link:Header;}
-span.FooterChar
-	{mso-style-name:"Footer Char";
-	mso-style-link:Footer;}
-span.HTMLPreformattedChar
-	{mso-style-name:"HTML Preformatted Char";
-	mso-style-link:"HTML Preformatted";
-	font-family:"Courier New";}
-span.pl-ent
-	{mso-style-name:pl-ent;}
-span.pl-e
-	{mso-style-name:pl-e;}
-span.pl-s
-	{mso-style-name:pl-s;}
-span.pl-pds
-	{mso-style-name:pl-pds;}
-span.CommentTextChar
-	{mso-style-name:"Comment Text Char";
-	mso-style-link:"Comment Text";}
-span.CommentSubjectChar
-	{mso-style-name:"Comment Subject Char";
-	mso-style-link:"Comment Subject";
-	font-weight:bold;}
-span.BalloonTextChar
-	{mso-style-name:"Balloon Text Char";
-	mso-style-link:"Balloon Text";
-	font-family:"Segoe UI",sans-serif;}
 .MsoChpDefault
 	{font-family:"Calibri",sans-serif;}
 .MsoPapDefault
@@ -369,12 +294,12 @@ href="https://github.com/Microsoft/ClearScript">ClearScript source code</a>
 into a convenient directory.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>The provided project and solution
-files support Visual Studio <a
-href="https://www.visualstudio.com/vs/older-downloads/">2017</a> and <a
-href="https://www.visualstudio.com/downloads/">2019</a>. They produce
-architecture-neutral managed libraries that target .NET Framework 4.5.
-ClearScript does not support older environments. The output directory is <b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin\[Debug|Release]</span></b>.</p>
+files support <a href="https://www.visualstudio.com/downloads/">Visual Studio 2019</a>
+Version 16.4 or later. They produce architecture-neutral managed libraries that
+target .NET Framework 4.5 and .NET Core 3.1. ClearScript does not support older
+environments. The output directories are <b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas'>bin\[Debug|Release]</span></b> and <b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin\[Debug|Release]\netcoreapp3.1</span></b>.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>There are two ways to build
 ClearScript – with and without V8 support. If you don't need V8 support, simply
@@ -400,11 +325,10 @@ ClearScript root directory does not contain spaces or non-ASCII characters.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
-style='color:red'>Important:</span></b> The V8 build now requires Visual Studio
-2017 or later and a 64-bit operating system. Your Visual Studio installation
-must include the <b>.NET desktop development</b> and <b>Desktop development
-with C++</b> workloads. Once built, ClearScript can still be deployed in a 32-bit
-environment.</p>
+style='color:red'>Important:</span></b> The V8 build now requires a 64-bit
+operating system. Your Visual Studio installation must include the <b>.NET
+desktop development</b> and <b>Desktop development with C++</b> workloads. Once
+built, ClearScript can still be deployed in a 32-bit environment.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
@@ -427,9 +351,8 @@ click <b>Change</b>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Open
-a Visual Studio <a href="https://www.visualstudio.com/vs/older-downloads/">2017</a>
-or <a href="https://www.visualstudio.com/downloads/">2019</a> developer command
-prompt and run the <b><span style='font-size:10.0pt;line-height:115%;
+a <a href="https://www.visualstudio.com/downloads/">Visual Studio 2019</a> developer
+command prompt and run the <b><span style='font-size:10.0pt;line-height:115%;
 font-family:Consolas'>V8Update</span></b> script from your ClearScript root
 directory:</p>
 
@@ -473,10 +396,10 @@ solution using Visual Studio 2017 or 2019.</p>
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Note:</span></b>
 The first time you open the solution, Visual Studio may prompt you to upgrade
 one or more projects to the latest platform toolset or .NET Framework. We
-recommend that you select <b>Cancel</b> or <b>Don't Upgrade</b>. If you
-encounter issues building ClearScript’s unmanaged projects (<b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-32</span></b>
-and <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-64</span></b>),
+recommend that you select <b>Cancel</b> or <b>Don't Upgrade</b>. If you encounter
+issues building ClearScript’s unmanaged projects (<b><span style='font-size:
+10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-32</span></b> and <b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-64</span></b>),
 ensure that their <b>Windows SDK Version</b> properties are set to an installed
 version of the Windows SDK.</p>
 
@@ -597,7 +520,8 @@ href="https://aka.ms/vs/16/release/vc_redist.x86.exe">[x86]</a> <a
 href="https://aka.ms/vs/16/release/vc_redist.x64.exe">[x64]</a> </p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-.5in;margin-bottom:.0001pt;text-indent:-.5in'>VI. Machine-level (global) deployment</h1>
+.5in;margin-bottom:.0001pt;text-indent:-.5in'>VI. Machine-level (global) deployment
+(.NET Framework only)</h1>
 
 <p class=MsoNormal style='margin-left:.25in'><a
 name="_Debugging_with_ClearScript_1"></a>You can now deploy ClearScript at the

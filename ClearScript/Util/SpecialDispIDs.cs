@@ -11,5 +11,6 @@ namespace Microsoft.ClearScript.Util
         public const int PropertyPut = -3;
         public const int NewEnum = -4;
         public const int This = -613;
+        public const int GetEnumerator = -1024 * 96;
     }
 }

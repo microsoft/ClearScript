@@ -34,6 +34,7 @@ public:
     enum class Subtype: uint16_t
     {
         None,
+        Array,
         ArrayBuffer,
         DataView,
         Uint8Array,

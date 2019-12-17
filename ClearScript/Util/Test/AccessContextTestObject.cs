@@ -9,6 +9,7 @@ namespace Microsoft.ClearScript.Util.Test
         // ReSharper disable UnusedMember.Local
         // ReSharper disable UnusedParameter.Local
         // ReSharper disable EventNeverSubscribedTo.Local
+        // ReSharper disable UnusedType.Local
 
         public AccessContextTestBase() { }
         internal AccessContextTestBase(int arg) { }
@@ -46,6 +47,7 @@ namespace Microsoft.ClearScript.Util.Test
         protected internal sealed class ProtectedInternalNestedType { }
         private sealed class PrivateNestedType { }
 
+        // ReSharper restore UnusedType.Local
         // ReSharper restore EventNeverSubscribedTo.Local
         // ReSharper restore UnusedParameter.Local
         // ReSharper restore UnusedMember.Local

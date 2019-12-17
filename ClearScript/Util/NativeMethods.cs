@@ -41,6 +41,12 @@ namespace Microsoft.ClearScript.Util
             [Out] out Guid clsid
         );
 
+        [DllImport("ole32.dll")]
+        public static extern uint ProgIDFromCLSID(
+            [In] ref Guid clsid,
+            [Out] [MarshalAs(UnmanagedType.LPWStr)] out string progID
+        );
+        
         [DllImport("ole32.dll", ExactSpelling = true)]
         public static extern uint CoCreateInstance(
             [In] ref Guid clsid,

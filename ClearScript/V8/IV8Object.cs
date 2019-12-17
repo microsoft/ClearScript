@@ -20,6 +20,8 @@ namespace Microsoft.ClearScript.V8
         object Invoke(bool asConstructor, object[] args);
         object InvokeMethod(string name, object[] args);
 
+        bool IsArray();
+
         bool IsArrayBufferOrView();
         V8ArrayBufferOrViewKind GetArrayBufferOrViewKind();
         V8ArrayBufferOrViewInfo GetArrayBufferOrViewInfo();

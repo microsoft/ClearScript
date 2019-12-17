@@ -443,7 +443,7 @@ public:
     void RunTaskDelayed(v8::Task* pTask, double delayInSeconds);
     void RunTaskWithLockAsync(v8::Task* pTask);
     void RunTaskWithLockDelayed(v8::Task* pTask, double delayInSeconds);
-    std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner();
+    v8::TaskRunner* CreateForegroundTaskRunner();
 
     void CallWithLockNoWait(std::function<void(V8IsolateImpl*)>&& callback);
     void DECLSPEC_NORETURN ThrowOutOfMemoryException();
@@ -517,7 +517,6 @@ private:
     RecursiveMutex m_Mutex;
     std::list<ContextEntry> m_ContextEntries;
     SimpleMutex m_DataMutex;
-    std::shared_ptr<v8::TaskRunner> m_spForegroundTaskRunner;
     std::vector<std::shared_ptr<v8::Task>> m_AsyncTasks;
     std::queue<std::function<void(V8IsolateImpl*)>> m_CallWithLockQueue;
     std::condition_variable m_CallWithLockQueueChanged;

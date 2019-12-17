@@ -5,7 +5,7 @@ namespace Microsoft.ClearScript.JavaScript
 {
     /// <summary>
     /// Defines properties and methods common to all JavaScript
-    /// <see href="https://msdn.microsoft.com/en-us/library/br212485(v=vs.94).aspx">typed arrays</see>.
+    /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays">typed arrays</see>.
     /// </summary>
     public interface ITypedArray : IArrayBufferView
     {
@@ -16,7 +16,7 @@ namespace Microsoft.ClearScript.JavaScript
     }
 
     /// <summary>
-    /// Represents a JavaScript <see href="https://msdn.microsoft.com/en-us/library/br212485(v=vs.94).aspx">typed array</see>.
+    /// Represents a JavaScript <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays">typed array</see>.
     /// </summary>
     /// <typeparam name="T">The typed array's element type.</typeparam>
     /// <remarks>
@@ -30,39 +30,39 @@ namespace Microsoft.ClearScript.JavaScript
     ///         <term>Interface(s)&#xA0;(C#)</term>
     ///     </listheader>
     ///     <item>
-    ///         <term><see href="https://msdn.microsoft.com/en-us/library/br212477(v=vs.94).aspx">Uint8Array</see></term>
+    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</see></term>
     ///         <term><c>ITypedArray&#x3C;byte&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://msdn.microsoft.com/en-us/library/dn641188(v=vs.94).aspx">Uint8ClampedArray</see></term>
+    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray">Uint8ClampedArray</see></term>
     ///         <term><c>ITypedArray&#x3C;byte&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://msdn.microsoft.com/en-us/library/br212462(v=vs.94).aspx">Int8Array</see></term>
+    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array">Int8Array</see></term>
     ///         <term><c>ITypedArray&#x3C;sbyte&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://msdn.microsoft.com/en-us/library/br212484(v=vs.94).aspx">Uint16Array</see></term>
+    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array">Uint16Array</see></term>
     ///         <term><c>ITypedArray&#x3C;ushort&#x3E;</c> and <c>ITypedArray&#x3C;char&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://msdn.microsoft.com/en-us/library/br212480(v=vs.94).aspx">Int16Array</see></term>
+    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array">Int16Array</see></term>
     ///         <term><c>ITypedArray&#x3C;short&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://msdn.microsoft.com/en-us/library/br230737(v=vs.94).aspx">Uint32Array</see></term>
+    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array">Uint32Array</see></term>
     ///         <term><c>ITypedArray&#x3C;uint&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://msdn.microsoft.com/en-us/library/br212468(v=vs.94).aspx">Int32Array</see></term>
+    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array">Int32Array</see></term>
     ///         <term><c>ITypedArray&#x3C;int&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://msdn.microsoft.com/en-us/library/br212916(v=vs.94).aspx">Float32Array</see></term>
+    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array">Float32Array</see></term>
     ///         <term><c>ITypedArray&#x3C;float&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://msdn.microsoft.com/en-us/library/br212931(v=vs.94).aspx">Float64Array</see></term>
+    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array">Float64Array</see></term>
     ///         <term><c>ITypedArray&#x3C;double&#x3E;</c></term>
     ///     </item>
     /// </list>

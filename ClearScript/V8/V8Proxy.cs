@@ -13,7 +13,7 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8
 {
-    internal abstract class V8Proxy : IDisposable
+    internal abstract partial class V8Proxy : IDisposable
     {
         private static readonly object mapLock = new object();
         private static readonly Dictionary<Type, Type> map = new Dictionary<Type, Type>();
@@ -46,16 +46,6 @@ namespace Microsoft.ClearScript.V8
             }
 
             return implType;
-        }
-
-        private static Assembly GetAssembly()
-        {
-            if (assembly == null)
-            {
-                assembly = LoadAssembly();
-            }
-
-            return assembly;
         }
 
         private static Assembly LoadAssembly()

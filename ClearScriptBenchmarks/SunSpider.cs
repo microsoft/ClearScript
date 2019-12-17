@@ -88,7 +88,7 @@ namespace Microsoft.ClearScript.Test
             });
             resultString.Length -= 1;
             resultString.Append("}");
-            Process.Start((new Uri(baseUrl + "results.html?" + resultString)).AbsoluteUri);
+            Process.Start(new ProcessStartInfo((new Uri(baseUrl + "results.html?" + resultString)).AbsoluteUri) { UseShellExecute = true });
         }
 
         private static int RunTest(ScriptEngine engine, MockDOM mockDOM, int index)

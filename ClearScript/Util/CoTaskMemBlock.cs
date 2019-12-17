@@ -3,6 +3,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Util
 {
@@ -72,13 +73,13 @@ namespace Microsoft.ClearScript.Util
     internal sealed class CoTaskMemVariantBlock : CoTaskMemBlock
     {
         public CoTaskMemVariantBlock()
-            : base(RawCOMHelpers.VariantSize)
+            : base(DispatchHelpers.VariantSize)
         {
             NativeMethods.VariantInit(Addr);
         }
 
         public CoTaskMemVariantBlock(object obj)
-            : base(RawCOMHelpers.VariantSize)
+            : base(DispatchHelpers.VariantSize)
         {
             Marshal.GetNativeVariantForObject(obj, Addr);
         }
@@ -103,7 +104,7 @@ namespace Microsoft.ClearScript.Util
         private readonly int length;
 
         public CoTaskMemVariantArgsBlock(object[] args)
-            : base(args.Length * RawCOMHelpers.VariantSize)
+            : base(args.Length * DispatchHelpers.VariantSize)
         {
             length = args.Length;
             for (var index = 0; index < length; index++)
@@ -129,7 +130,7 @@ namespace Microsoft.ClearScript.Util
 
         private IntPtr GetAddrInternal(int index)
         {
-            return Addr + (index * RawCOMHelpers.VariantSize);
+            return Addr + (index * DispatchHelpers.VariantSize);
         }
 
         #region CoTaskMemBlock overrides
@@ -155,7 +156,7 @@ namespace Microsoft.ClearScript.Util
         private readonly object[] args;
 
         public CoTaskMemVariantArgsByRefBlock(object[] args)
-            : base(args.Length * 2 * RawCOMHelpers.VariantSize)
+            : base(args.Length * 2 * DispatchHelpers.VariantSize)
         {
             this.args = args;
             for (var index = 0; index < args.Length; index++)
@@ -186,7 +187,7 @@ namespace Microsoft.ClearScript.Util
 
         private IntPtr GetAddrInternal(int index)
         {
-            return Addr + (index * RawCOMHelpers.VariantSize);
+            return Addr + (index * DispatchHelpers.VariantSize);
         }
 
         #region CoTaskMemBlock overrides
