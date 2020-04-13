@@ -13,11 +13,11 @@ class V8ScriptHolderImpl final: public V8ScriptHolder
 
 public:
 
-    V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest);
-    V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest, StdString&& code);
+    V8ScriptHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest);
+    V8ScriptHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest, StdString&& code);
 
     virtual V8ScriptHolderImpl* Clone() const override;
-    virtual bool IsSameIsolate(void* pvIsolate) const override;
+    virtual bool IsSameIsolate(const SharedPtr<V8IsolateImpl>& spThat) const override;
     virtual void* GetScript() const override;
     virtual const V8DocumentInfo& GetDocumentInfo() const override;
     virtual size_t GetCodeDigest() const override;
@@ -30,7 +30,7 @@ public:
 
 private:
 
-    V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest, const StdString& code, const std::vector<uint8_t>& cacheBytes);
+    V8ScriptHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest, const StdString& code, const std::vector<uint8_t>& cacheBytes);
 
     SharedPtr<V8WeakContextBinding> m_spBinding;
     void* m_pvScript;

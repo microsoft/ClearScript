@@ -7,8 +7,8 @@
 // V8ScriptHolderImpl implementation
 //-----------------------------------------------------------------------------
 
-V8ScriptHolderImpl::V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest):
-    m_spBinding(pBinding),
+V8ScriptHolderImpl::V8ScriptHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest):
+    m_spBinding(spBinding),
     m_pvScript(pvScript),
     m_DocumentInfo(documentInfo),
     m_CodeDigest(codeDigest)
@@ -17,8 +17,8 @@ V8ScriptHolderImpl::V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvS
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolderImpl::V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest, StdString&& code):
-    m_spBinding(pBinding),
+V8ScriptHolderImpl::V8ScriptHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest, StdString&& code):
+    m_spBinding(spBinding),
     m_pvScript(pvScript),
     m_DocumentInfo(documentInfo),
     m_Code(std::move(code)),
@@ -28,8 +28,8 @@ V8ScriptHolderImpl::V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvS
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolderImpl::V8ScriptHolderImpl(V8WeakContextBinding* pBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest, const StdString& code, const std::vector<uint8_t>& cacheBytes):
-    m_spBinding(pBinding),
+V8ScriptHolderImpl::V8ScriptHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvScript, const V8DocumentInfo& documentInfo, size_t codeDigest, const StdString& code, const std::vector<uint8_t>& cacheBytes):
+    m_spBinding(spBinding),
     m_pvScript(pvScript),
     m_DocumentInfo(documentInfo),
     m_CodeDigest(codeDigest),
@@ -47,12 +47,12 @@ V8ScriptHolderImpl* V8ScriptHolderImpl::Clone() const
 
 //-----------------------------------------------------------------------------
 
-bool V8ScriptHolderImpl::IsSameIsolate(void* pvIsolate) const
+bool V8ScriptHolderImpl::IsSameIsolate(const SharedPtr<V8IsolateImpl>& spThat) const
 {
     SharedPtr<V8IsolateImpl> spIsolateImpl;
     if (m_spBinding->TryGetIsolateImpl(spIsolateImpl))
     {
-        return spIsolateImpl.GetRawPtr() == pvIsolate;
+        return spIsolateImpl == spThat;
     }
 
     return false;

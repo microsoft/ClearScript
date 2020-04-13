@@ -9,8 +9,13 @@
 
 #pragma warning(push, 3)
 
-//#define V8_DEPRECATION_WARNINGS
+#define V8_DEPRECATION_WARNINGS
 //#define V8_IMMINENT_DEPRECATION_WARNINGS
+
+#ifdef _M_X64
+    //#define V8_COMPRESS_POINTERS
+    //#define V8_31BIT_SMIS_ON_64BIT_ARCH
+#endif //_M_X64
 
 #include "v8.h"
 #include "v8-platform.h"

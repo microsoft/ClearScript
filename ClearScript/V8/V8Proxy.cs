@@ -58,7 +58,7 @@ namespace Microsoft.ClearScript.V8
             {
             }
 
-            var hCppLibrary = LoadNativeLibrary("v8-libcpp");
+            var hZlibLibrary = LoadNativeLibrary("v8-zlib");
             try
             {
                 var hBaseLibrary = LoadNativeLibrary("v8-base");
@@ -117,7 +117,7 @@ namespace Microsoft.ClearScript.V8
             }
             finally
             {
-                NativeMethods.FreeLibrary(hCppLibrary);
+                NativeMethods.FreeLibrary(hZlibLibrary);
             }
         }
 

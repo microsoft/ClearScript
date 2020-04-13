@@ -55,9 +55,9 @@ namespace Microsoft.ClearScript
             get { return null; }
         }
 
-        public override HostTargetFlags Flags
+        public override HostTargetFlags GetFlags(IHostInvokeContext context)
         {
-            get { return HostTargetFlags.None; }
+            return HostTargetFlags.None;
         }
 
         public override bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)

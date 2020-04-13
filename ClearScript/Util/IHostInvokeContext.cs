@@ -10,5 +10,6 @@ namespace Microsoft.ClearScript.Util
         ScriptEngine Engine { get; }
         Type AccessContext { get; }
         ScriptAccess DefaultAccess { get; }
+        HostTargetFlags TargetFlags { get; }
     }
 }

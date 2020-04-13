@@ -11,9 +11,9 @@ class V8WeakContextBinding final: public SharedPtrTarget
 {
 public:
 
-    V8WeakContextBinding(V8IsolateImpl* pIsolateImpl, V8ContextImpl* pContextImpl):
-        m_wrIsolate(pIsolateImpl->CreateWeakRef()),
-        m_IsolateName(pIsolateImpl->GetName()),
+    V8WeakContextBinding(const SharedPtr<V8IsolateImpl>& spIsolateImpl, V8ContextImpl* pContextImpl):
+        m_wrIsolate(spIsolateImpl->CreateWeakRef()),
+        m_IsolateName(spIsolateImpl->GetName()),
         m_wrContext(pContextImpl->CreateWeakRef()),
         m_ContextName(pContextImpl->GetName())
     {
@@ -35,7 +35,7 @@ public:
         auto spIsolate = m_wrIsolate.GetTarget();
         if (!spIsolate.IsEmpty())
         {
-            spIsolateImpl = static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr());
+            spIsolateImpl = spIsolate.CastTo<V8IsolateImpl>();
             return true;
         }
 
@@ -58,7 +58,7 @@ public:
         auto spContext = m_wrContext.GetTarget();
         if (!spContext.IsEmpty())
         {
-            spContextImpl = static_cast<V8ContextImpl*>(spContext.GetRawPtr());
+            spContextImpl = spContext.CastTo<V8ContextImpl>();
             return true;
         }
 

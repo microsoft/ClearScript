@@ -136,7 +136,7 @@ namespace Microsoft.ClearScript
             }
 
             var uniqueName = manager.GetUniqueName(Name, Category.DefaultName);
-            if (Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient))
+            if (info.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient))
             {
                 uniqueName += " [temp]";
             }

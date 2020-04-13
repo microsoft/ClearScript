@@ -1,0 +1,23 @@
+diff --git a/BUILD.gn b/BUILD.gn
+index 2414c88..0e0e2bf 100644
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -225,10 +225,18 @@ config("zlib_warnings") {
+   }
+ }
+ 
++if (current_cpu == "x86") {
++  clearscript_v8_platform = "ia32"
++} else {
++  clearscript_v8_platform = current_cpu
++}
++
+ component("zlib") {
+   if (!is_win) {
+     # Don't stomp on "libzlib" on other platforms.
+     output_name = "chrome_zlib"
++  } else {
++    output_name = "v8-zlib-${clearscript_v8_platform}"
+   }
+ 
+   sources = [

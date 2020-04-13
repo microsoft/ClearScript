@@ -203,8 +203,8 @@
   <ItemGroup>
     <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-base-x64.dll" />
     <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-base-x64.dll.pdb" />
-    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-libcpp-x64.dll" />
-    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-libcpp-x64.dll.pdb" />
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-zlib-x64.dll" />
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-zlib-x64.dll.pdb" />
     <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-x64.dll" />
     <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-x64.dll.pdb" />
   </ItemGroup>

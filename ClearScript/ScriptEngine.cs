@@ -22,6 +22,8 @@ namespace Microsoft.ClearScript
         private Type accessContext;
         private ScriptAccess defaultAccess;
         private bool enforceAnonymousTypeAccess;
+        private bool exposeHostObjectStaticMembers;
+        private object undefinedImportValue = Undefined.Value;
 
         private DocumentSettings documentSettings;
         private readonly DocumentSettings defaultDocumentSettings = new DocumentSettings();
@@ -149,6 +151,19 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
+        /// Controls whether host objects provide access to the static members of their exposed types to script code.
+        /// </summary>
+        public bool ExposeHostObjectStaticMembers
+        {
+            get { return exposeHostObjectStaticMembers; }
+            set
+            {
+                exposeHostObjectStaticMembers = value;
+                OnAccessSettingsChanged();
+            }
+        }
+
+        /// <summary>
         /// Enables or disables script code formatting.
         /// </summary>
         /// <remarks>
@@ -236,6 +251,21 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <seealso cref="HostFunctions.newVar{T}(T)"/>
         public bool EnableAutoHostVariables { get; set; }
+
+        /// <summary>
+        /// Gets or sets the engine's undefined import value.
+        /// </summary>
+        /// <remarks>
+        /// Some script languages support one or more special non-<c>null</c> values that represent
+        /// nonexistent, missing, unknown, or undefined data. When such a value is marshaled to the
+        /// host, the script engine maps it to the value of this property. The default value is
+        /// <see cref="Undefined.Value"/>.
+        /// </remarks>
+        public object UndefinedImportValue
+        {
+            get { return undefinedImportValue; }
+            set { undefinedImportValue = value; }
+        }
 
         /// <summary>
         /// Gets or sets a callback that can be used to halt script execution.
@@ -969,7 +999,8 @@ namespace Microsoft.ClearScript
         /// <para>
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with the specified name. Discarding this document removes it from view but
-        /// has no effect on the script engine.
+        /// has no effect on the script engine. Only Windows Script engines honor
+        /// <paramref name="discard"/>.
         /// </para>
         /// </remarks>
         public void Execute(string documentName, bool discard, string code)
@@ -1124,7 +1155,8 @@ namespace Microsoft.ClearScript
         /// <para>
         /// If a debugger is attached, it will present the specified script code to the user as a
         /// document with the specified name. Discarding this document removes it from view but
-        /// has no effect on the script engine.
+        /// has no effect on the script engine. Only Windows Script engines honor
+        /// <paramref name="discard"/>.
         /// </para>
         /// <para>
         /// The following table summarizes the types of result values that script code can return.
@@ -1786,7 +1818,7 @@ namespace Microsoft.ClearScript
 
         private readonly ConditionalWeakTable<Type, List<WeakReference>> sharedHostObjectMemberDataCache = new ConditionalWeakTable<Type, List<WeakReference>>();
 
-        internal HostTargetMemberData GetSharedHostObjectMemberData(HostObject target, Type targetAccessContext, ScriptAccess targetDefaultAccess)
+        internal HostTargetMemberData GetSharedHostObjectMemberData(HostObject target, Type targetAccessContext, ScriptAccess targetDefaultAccess, HostTargetFlags targetFlags)
         {
             var cacheEntry = sharedHostObjectMemberDataCache.GetOrCreateValue(target.Type);
 
@@ -1795,14 +1827,14 @@ namespace Microsoft.ClearScript
 
             foreach (var weakRef in cacheEntry)
             {
-                var memberData = weakRef.Target as SharedHostObjectMemberData;
+                var memberData = weakRef.Target as HostTargetMemberDataWithContext;
                 if (memberData == null)
                 {
                     staleWeakRefCount++;
                 }
                 else
                 {
-                    if ((memberData.AccessContext == targetAccessContext) && (memberData.DefaultAccess == targetDefaultAccess))
+                    if ((memberData.AccessContext == targetAccessContext) && (memberData.DefaultAccess == targetDefaultAccess) && (memberData.TargetFlags == targetFlags))
                     {
                         return memberData;
                     }
@@ -1826,7 +1858,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            var newMemberData = new SharedHostObjectMemberData(targetAccessContext, targetDefaultAccess);
+            var newMemberData = new HostTargetMemberDataWithContext(targetAccessContext, targetDefaultAccess, targetFlags);
             cacheEntry.Add(new WeakReference(newMemberData));
             return newMemberData;
         }

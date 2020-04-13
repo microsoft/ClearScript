@@ -324,6 +324,23 @@ namespace Microsoft.ClearScript.Util
             return type.Assembly.IsFriendOf(thatType.Assembly);
         }
 
+        public static bool IsCOMVisible(this Type type)
+        {
+            var attribute = type.GetAttribute<ComVisibleAttribute>(false);
+            if (attribute != null)
+            {
+                return attribute.Value;
+            }
+
+            attribute = type.Assembly.GetAttribute<ComVisibleAttribute>(false);
+            if (attribute != null)
+            {
+                return attribute.Value;
+            }
+
+            return false;
+        }
+
         public static string GetRootName(this Type type)
         {
             return StripGenericSuffix(type.Name);

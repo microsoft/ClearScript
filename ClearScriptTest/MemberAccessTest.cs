@@ -18,8 +18,8 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("v8-ia32.dll")]
     [DeploymentItem("v8-base-x64.dll")]
     [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-libcpp-x64.dll")]
-    [DeploymentItem("v8-libcpp-ia32.dll")]
+    [DeploymentItem("v8-zlib-x64.dll")]
+    [DeploymentItem("v8-zlib-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class MemberAccessTest : ClearScriptTest
     {

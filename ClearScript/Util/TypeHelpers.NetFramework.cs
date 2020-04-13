@@ -25,7 +25,7 @@ namespace Microsoft.ClearScript.Util
             return fullTypeName;
         }
 
-        public static IntPtr GetITypeInfo(this Type type)
+        public static IntPtr GetTypeInfo(this Type type)
         {
             return Marshal.GetITypeInfoForType(type);
         }

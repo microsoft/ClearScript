@@ -36,66 +36,49 @@ namespace Microsoft.ClearScript.Util
             public static string GetFullAssemblyNameImpl(string name)
             {
                 string fullName;
-                return ((table != null) && table.TryGetValue(name, out fullName)) ? fullName : name;
+                return ((table != null) && table.TryGetValue(name, out fullName)) ? fullName : AssemblyHelpers.GetFullAssemblyName(name);
             }
 
             private static void LoadAssemblyTable()
             {
-                // ReSharper disable EmptyGeneralCatchClause
-
-                string filePath = null;
-                try
+                if (!ReadAssemblyTable() && BuildAssemblyTable())
                 {
-                    var dirPath = Path.Combine(MiscHelpers.GetLocalDataRootPath(), GetRuntimeVersionDirectoryName());
-                    Directory.CreateDirectory(dirPath);
-
-                    filePath = Path.Combine(dirPath, "AssemblyTable.bin");
-                    if (File.Exists(filePath))
-                    {
-                        try
-                        {
-                            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                            {
-                                var formatter = new BinaryFormatter();
-                                table = (ConcurrentDictionary<string, string>)formatter.Deserialize(stream);
-                            }
-                        }
-                        catch (Exception)
-                        {
-                        }
-                    }
+                    WriteAssemblyTable();
                 }
-                catch (Exception)
-                {
-                }
-
-                if (table == null)
-                {
-                    BuildAssemblyTable();
-                    if ((table != null) && (filePath != null))
-                    {
-                        try
-                        {
-                            using (var stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
-                            {
-                                var formatter = new BinaryFormatter();
-                                formatter.Serialize(stream, table);
-                            }
-                        }
-                        catch (Exception)
-                        {
-                        }
-                    }
-                }
-
-                // ReSharper restore EmptyGeneralCatchClause
             }
 
-            private static void BuildAssemblyTable()
+            private static bool ReadAssemblyTable()
             {
-                // ReSharper disable EmptyGeneralCatchClause
+                bool usingAppPath;
+                if (ReadAssemblyTable(MiscHelpers.GetLocalDataRootPath(out usingAppPath)))
+                {
+                    return true;
+                }
 
-                try
+                return !usingAppPath && ReadAssemblyTable(MiscHelpers.GetLocalDataRootPath(AppDomain.CurrentDomain.BaseDirectory));
+            }
+
+            private static bool ReadAssemblyTable(string rootPath)
+            {
+                var succeeded = MiscHelpers.Try(() =>
+                {
+                    var filePath = GetFilePath(rootPath);
+                    if (File.Exists(filePath))
+                    {
+                        using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        {
+                            var formatter = new BinaryFormatter();
+                            table = (ConcurrentDictionary<string, string>)formatter.Deserialize(stream);
+                        }
+                    }
+                });
+
+                return succeeded && (table != null);
+            }
+
+            private static bool BuildAssemblyTable()
+            {
+                var succeeded = MiscHelpers.Try(() =>
                 {
                     var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\.NETFramework");
                     if (key != null)
@@ -105,22 +88,47 @@ namespace Microsoft.ClearScript.Util
                         table = new ConcurrentDictionary<string, string>();
                         foreach (var filePath in Directory.EnumerateFiles(dirPath, "*.dll", SearchOption.AllDirectories))
                         {
-                            try
+                            var path = filePath;
+                            MiscHelpers.Try(() =>
                             {
-                                var assemblyName = Assembly.ReflectionOnlyLoadFrom(filePath).GetName();
+                                var assemblyName = Assembly.ReflectionOnlyLoadFrom(path).GetName();
                                 table.TryAdd(assemblyName.Name, assemblyName.FullName);
-                            }
-                            catch (Exception)
-                            {
-                            }
+                            });
                         }
                     }
-                }
-                catch (Exception)
-                {
-                }
+                });
 
-                // ReSharper restore EmptyGeneralCatchClause
+                return succeeded && (table != null);
+            }
+
+            private static void WriteAssemblyTable()
+            {
+                bool usingAppPath;
+                if (!WriteAssemblyTable(MiscHelpers.GetLocalDataRootPath(out usingAppPath)) && !usingAppPath)
+                {
+                    WriteAssemblyTable(MiscHelpers.GetLocalDataRootPath(AppDomain.CurrentDomain.BaseDirectory));
+                }
+            }
+
+            private static bool WriteAssemblyTable(string rootPath)
+            {
+                return MiscHelpers.Try(() =>
+                {
+                    var filePath = GetFilePath(rootPath);
+                    using (var stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+                    {
+                        var formatter = new BinaryFormatter();
+                        formatter.Serialize(stream, table);
+                    }
+                });
+            }
+
+            private static string GetFilePath(string rootPath)
+            {
+                var dirPath = Path.Combine(rootPath, GetRuntimeVersionDirectoryName());
+                Directory.CreateDirectory(dirPath);
+
+                return Path.Combine(dirPath, "AssemblyTable.bin");
             }
 
             private static string GetRuntimeVersionDirectoryName()

@@ -7,13 +7,16 @@ namespace Microsoft.ClearScript
     /// Represents an undefined value.
     /// </summary>
     /// <remarks>
-    /// Most script languages support one or more special values that represent nonexistent,
-    /// missing, unknown, or undefined data. The ClearScript library maps some such values to
-    /// <c>null</c>, and others to instances of this class.
+    /// Some script languages support one or more special non-<c>null</c> values that represent
+    /// nonexistent, missing, unknown, or undefined data. The ClearScript library maps such values
+    /// to instances of this class.
     /// </remarks>
     public class Undefined
     {
-        internal static readonly Undefined Value = new Undefined();
+        /// <summary>
+        /// The sole instance of the <see cref="Undefined"/> class.
+        /// </summary>
+        public static readonly Undefined Value = new Undefined();
 
         private Undefined()
         {

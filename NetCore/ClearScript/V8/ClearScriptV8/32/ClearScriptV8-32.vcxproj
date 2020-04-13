@@ -125,10 +125,10 @@
     <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-ia32.dll.pdb">
       <FileType>Document</FileType>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-libcpp-ia32.dll">
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-zlib-ia32.dll">
       <FileType>Document</FileType>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-libcpp-ia32.dll.pdb">
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-zlib-ia32.dll.pdb">
       <FileType>Document</FileType>
     </CopyFileToFolders>
   </ItemGroup>

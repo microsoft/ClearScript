@@ -325,16 +325,16 @@ ClearScript root directory does not contain spaces or non-ASCII characters.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
-style='color:red'>Important:</span></b> The V8 build now requires a 64-bit
-operating system. Your Visual Studio installation must include the <b>.NET
-desktop development</b> and <b>Desktop development with C++</b> workloads. Once
-built, ClearScript can still be deployed in a 32-bit environment.</p>
+style='color:red'>Important:</span></b> The V8 build now requires a 64-bit operating
+system. Your Visual Studio installation must include the <b>.NET desktop
+development</b> and <b>Desktop development with C++</b> workloads. Once built,
+ClearScript can still be deployed in a 32-bit environment.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
-style='color:red'>Important:</span></b> Your Windows SDK installation must
-include the <b>Debugging Tools for Windows</b> feature. Here’s how to add it to
-your installation:</p>
+style='color:red'>Important:</span></b> Your Windows SDK installation must include
+the <b>Debugging Tools for Windows</b> feature. Here’s how to add it to your
+installation:</p>
 
 <p class=MsoListParagraph style='margin-left:1.25in;text-indent:-.25in'>a.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Launch
@@ -396,10 +396,10 @@ solution using Visual Studio 2017 or 2019.</p>
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Note:</span></b>
 The first time you open the solution, Visual Studio may prompt you to upgrade
 one or more projects to the latest platform toolset or .NET Framework. We
-recommend that you select <b>Cancel</b> or <b>Don't Upgrade</b>. If you encounter
-issues building ClearScript’s unmanaged projects (<b><span style='font-size:
-10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-32</span></b> and <b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-64</span></b>),
+recommend that you select <b>Cancel</b> or <b>Don't Upgrade</b>. If you
+encounter issues building ClearScript’s unmanaged projects (<b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-32</span></b>
+and <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-64</span></b>),
 ensure that their <b>Windows SDK Version</b> properties are set to an installed
 version of the Windows SDK.</p>
 
@@ -416,9 +416,9 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScript\doc\[
 name="_Building_strong-named_ClearScript"></a>IV. Building strong-named
 ClearScript assemblies (optional)</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>ClearScript now includes optional
-support for building strong-named assemblies. Use the following one-time
-procedure to enable this feature:</p>
+<p class=MsoNormal style='margin-left:.25in'>ClearScript now includes optional support
+for building strong-named assemblies. Use the following one-time procedure to
+enable this feature:</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>If
@@ -497,11 +497,11 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>v8-ba
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>v8-libcpp-ia32.dll</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>v8-zlib-ia32.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><b><span style='font-size:10.0pt;
-line-height:115%;font-family:Consolas;color:black'>v8-libcpp-x64.dll</span></b></p>
+line-height:115%;font-family:Consolas;color:black'>v8-zlib-x64.dll</span></b></p>
 
 <p class=MsoNormal style='margin-left:.75in'><a name="_Hlk14465584">For ASP.NET
 projects, we recommend that you add these assemblies as content files at the
@@ -729,6 +729,15 @@ and a TCP port number that matches one of your debug configurations. The
 default port number is 9222.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>You
+can add the flag <a
+href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart</span></b></a>
+to have the script engine stop and wait for a debugger connection before
+executing script code. Once attached, the debugger will be in a breakpoint
+state.</p>
+
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>If
 you’d like to debug your application remotely, you must also do the following:</p>
 
@@ -743,7 +752,7 @@ style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span
 style='color:red'>Important:</span></b> If necessary, configure your firewall
 to allow incoming connections to your TCP port.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>6.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Attach
 the Visual Studio Code debugger to your application:</p>
 

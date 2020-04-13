@@ -877,6 +877,21 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region Nested type: TaskKind
+
+        internal enum TaskKind : ushort
+        {
+            Worker,
+            DelayedWorker,
+            Foreground,
+            DelayedForeground,
+            NonNestableForeground,
+            NonNestableDelayedForeground,
+            Count
+        }
+
+        #endregion
+
         #region Nested type: Statistics
 
         internal sealed class Statistics
@@ -884,6 +899,8 @@ namespace Microsoft.ClearScript.V8
             public ulong ScriptCount;
             public ulong ScriptCacheSize;
             public ulong ModuleCount;
+            public ulong[] PostedTaskCounts;
+            public ulong[] InvokedTaskCounts;
         }
 
         #endregion

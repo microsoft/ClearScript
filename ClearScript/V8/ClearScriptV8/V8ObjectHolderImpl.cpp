@@ -7,7 +7,7 @@
 // V8ObjectHolderImpl implementation
 //-----------------------------------------------------------------------------
 
-V8ObjectHolderImpl::V8ObjectHolderImpl(V8WeakContextBinding* pBinding, void* pvObject):
+V8ObjectHolderImpl::V8ObjectHolderImpl(const SharedPtr<V8WeakContextBinding>& pBinding, void* pvObject):
     m_spBinding(pBinding),
     m_pvObject(pvObject)
 {

@@ -53,8 +53,8 @@ public:
 
 private:
 
-    explicit WeakRef(WeakRefImpl<T>* pImpl):
-        m_spImpl(pImpl)
+    explicit WeakRef(const SharedPtr<WeakRefImpl<T>>& spImpl):
+        m_spImpl(spImpl)
     {
     }
 
@@ -75,7 +75,7 @@ public:
     {
     }
 
-    WeakRef<T> CreateWeakRef()
+    WeakRef<T> CreateWeakRef() const
     {
         return WeakRef<T>(m_spWeakRefImpl);
     }

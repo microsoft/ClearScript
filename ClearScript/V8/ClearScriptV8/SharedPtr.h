@@ -95,6 +95,9 @@ public:
 template <typename T>
 class SharedPtr final
 {
+    template <typename TOther>
+    friend class SharedPtr;
+
 public:
 
     SharedPtr<T>()
@@ -179,14 +182,56 @@ public:
         return m_pTarget;
     }
 
-    operator T*() const
+    T& operator*() const
     {
-        return m_pTarget;
+        _ASSERTE(m_pTarget != nullptr);
+        return *m_pTarget;
     }
 
-    T* GetRawPtr() const
+    template <typename TOther>
+    TOther& DerefAs() const
     {
-        return m_pTarget;
+        _ASSERTE(m_pTarget != nullptr);
+        return *static_cast<TOther*>(m_pTarget);
+    }
+
+    bool operator==(nullptr_t) const
+    {
+        return IsEmpty();
+    }
+
+    bool operator==(T* pThat) const
+    {
+        return m_pTarget == pThat;
+    }
+
+    template <typename TOther>
+    bool operator==(const SharedPtr<TOther>& that) const
+    {
+        return m_pTarget == that.m_pTarget;
+    }
+
+    bool operator!=(nullptr_t) const
+    {
+        return !operator==(nullptr);
+    }
+
+    bool operator!=(T* pThat) const
+    {
+        return !operator==(pThat);
+    }
+
+    template <typename TOther>
+    bool operator!=(const SharedPtr<TOther>& that) const
+    {
+        return !operator==(that);
+    }
+
+    template <typename TOther>
+    SharedPtr<TOther> CastTo() const
+    {
+        AddRef();
+        return SharedPtr<TOther>(static_cast<TOther*>(m_pTarget), m_pRefCount);
     }
 
     bool IsEmpty() const
@@ -257,7 +302,7 @@ private:
         MoveInitialize(that);
     }
 
-    void AddRef()
+    void AddRef() const
     {
         if (m_pTarget != nullptr)
         {

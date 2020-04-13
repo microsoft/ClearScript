@@ -514,9 +514,33 @@ namespace Microsoft.ClearScript.Util
             Debug.Assert(false, "Entered code block presumed unreachable.");
         }
 
-        public static string GetLocalDataRootPath()
+        public static string GetLocalDataRootPath(out bool usingAppPath)
         {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "ClearScript", ClearScriptVersion.Triad, Environment.Is64BitProcess ? "x64" : "x86");
+            var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            if (string.IsNullOrWhiteSpace(basePath))
+            {
+                basePath = AppDomain.CurrentDomain.BaseDirectory;
+                usingAppPath = true;
+            }
+            else
+            {
+                usingAppPath = false;
+            }
+
+            return GetLocalDataRootPath(basePath);
+        }
+
+        public static string GetLocalDataRootPath(string basePath)
+        {
+            var path = Path.Combine(basePath, "Microsoft", "ClearScript", ClearScriptVersion.Triad, Environment.Is64BitProcess ? "x64" : "x86");
+
+            string fullPath;
+            if (Try(out fullPath, () => Path.GetFullPath(path)))
+            {
+                return fullPath;
+            }
+
+            return path;
         }
 
         #endregion

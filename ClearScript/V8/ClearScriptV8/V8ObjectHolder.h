@@ -7,7 +7,7 @@
 // V8ObjectHolder
 //-----------------------------------------------------------------------------
 
-class V8ObjectHolder
+class V8ObjectHolder: public SharedPtrTarget
 {
 public:
 

@@ -156,13 +156,10 @@ namespace Microsoft.ClearScript
             get { return GetSpecificType(); }
         }
 
-        public override HostTargetFlags Flags
+        public override HostTargetFlags GetFlags(IHostInvokeContext context)
         {
-            get
-            {
-                var type = GetSpecificTypeNoThrow();
-                return (type != null) ? HostTargetFlags.AllowStaticMembers : HostTargetFlags.None;
-            }
+            var type = GetSpecificTypeNoThrow();
+            return (type != null) ? HostTargetFlags.AllowStaticMembers : HostTargetFlags.None;
         }
 
         public override string[] GetAuxPropertyNames(IHostInvokeContext context, BindingFlags bindFlags)

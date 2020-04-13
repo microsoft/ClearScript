@@ -10,7 +10,20 @@ namespace Microsoft.ClearScript.Util.IJW
     {
         public static IntPtr Load()
         {
-            var dirPath = Path.Combine(MiscHelpers.GetLocalDataRootPath(), "IJW");
+            IntPtr hLibrary;
+
+            var usingAppPath = false;
+            if (!MiscHelpers.Try(out hLibrary, () => Load(MiscHelpers.GetLocalDataRootPath(out usingAppPath))) && !usingAppPath)
+            {
+                hLibrary = Load(MiscHelpers.GetLocalDataRootPath(AppDomain.CurrentDomain.BaseDirectory));
+            }
+
+            return hLibrary;
+        }
+
+        private static IntPtr Load(string rootPath)
+        {
+            var dirPath = Path.Combine(rootPath, "IJW");
             var filePath = Path.Combine(dirPath, "ijwhost.dll");
 
             if (!File.Exists(filePath))

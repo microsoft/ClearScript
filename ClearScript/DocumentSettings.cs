@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
@@ -190,14 +189,13 @@ namespace Microsoft.ClearScript
 
         private Document FindSystemDocument(string identifier, DocumentCategory category)
         {
-            try
+            Document document;
+            if (systemDocumentMap.TryGetValue(Tuple.Create(identifier, category ?? DocumentCategory.Script), out document))
             {
-                return systemDocumentMap[Tuple.Create(identifier, category ?? DocumentCategory.Script)];
+                return document;
             }
-            catch (KeyNotFoundException)
-            {
-                return null;
-            }
+
+            return null;
         }
     }
 }

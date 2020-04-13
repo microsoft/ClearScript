@@ -140,7 +140,7 @@ namespace Microsoft.ClearScript.Windows
 
                 if (mask.HasFlag(ScriptInfoFlags.ITypeInfo))
                 {
-                    pTypeInfo = item.GetType().GetITypeInfo();
+                    pTypeInfo = item.GetType().GetTypeInfo();
                 }
             }
 

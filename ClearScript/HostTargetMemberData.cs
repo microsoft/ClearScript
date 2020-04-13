@@ -28,15 +28,17 @@ namespace Microsoft.ClearScript
         public Invocability? TargetInvocability;
     }
 
-    internal sealed class SharedHostObjectMemberData : HostTargetMemberData
+    internal class HostTargetMemberDataWithContext : HostTargetMemberData
     {
         public readonly Type AccessContext;
         public readonly ScriptAccess DefaultAccess;
+        public readonly HostTargetFlags TargetFlags;
 
-        public SharedHostObjectMemberData(Type accessContext, ScriptAccess defaultAccess)
+        public HostTargetMemberDataWithContext(Type accessContext, ScriptAccess defaultAccess, HostTargetFlags targetFlags)
         {
             AccessContext = accessContext;
             DefaultAccess = defaultAccess;
+            TargetFlags = targetFlags;
         }
     }
 }

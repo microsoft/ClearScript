@@ -340,9 +340,25 @@ namespace V8 {
         auto statistics = GetIsolate()->GetStatistics();
 
         auto gcStatistics = gcnew V8Runtime::Statistics;
+
         gcStatistics->ScriptCount = statistics.ScriptCount;
         gcStatistics->ScriptCacheSize = statistics.ScriptCacheSize;
         gcStatistics->ModuleCount = statistics.ModuleCount;
+
+        auto size = static_cast<int>(statistics.PostedTaskCounts.size());
+        gcStatistics->PostedTaskCounts = gcnew array<uint64_t>(size);
+        for (auto index = 0; index < size; index++)
+        {
+            gcStatistics->PostedTaskCounts[index] = statistics.PostedTaskCounts[index];
+        }
+
+        size = static_cast<int>(statistics.InvokedTaskCounts.size());
+        gcStatistics->InvokedTaskCounts = gcnew array<uint64_t>(size);
+        for (auto index = 0; index < size; index++)
+        {
+            gcStatistics->InvokedTaskCounts[index] = statistics.InvokedTaskCounts[index];
+        }
+
         return gcStatistics;
     }
 

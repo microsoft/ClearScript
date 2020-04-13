@@ -293,7 +293,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-ia32.dll">
+    <CopyFileToFolders Include="..\..\V8\lib\v8-zlib-ia32.dll">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -302,7 +302,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)%(Filename)%(Extension)</Outputs>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-ia32.dll.pdb">
+    <CopyFileToFolders Include="..\..\V8\lib\v8-zlib-ia32.dll.pdb">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" "$(OutDir)"</Command>

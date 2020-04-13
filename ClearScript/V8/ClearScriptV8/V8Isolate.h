@@ -11,6 +11,17 @@ class V8Isolate: public WeakRefTarget<V8Isolate>, public IV8Entity
 {
 public:
 
+    enum class TaskKind: uint16_t
+    {
+        Worker,
+        DelayedWorker,
+        Foreground,
+        DelayedForeground,
+        NonNestableForeground,
+        NonNestableDelayedForeground,
+        Count
+    };
+
     struct Options final
     {
         bool EnableDebugging = false;
@@ -21,9 +32,23 @@ public:
 
     struct Statistics final
     {
+        using TaskCounts = std::array<size_t, static_cast<size_t>(TaskKind::Count)>;
+
+        void BumpPostedTaskCount(TaskKind kind)
+        {
+            ++PostedTaskCounts[static_cast<size_t>(kind)];
+        }
+
+        void BumpInvokedTaskCount(TaskKind kind)
+        {
+            ++InvokedTaskCounts[static_cast<size_t>(kind)];
+        }
+
         size_t ScriptCount = 0;
         size_t ScriptCacheSize = 0;
         size_t ModuleCount = 0;
+        TaskCounts PostedTaskCounts = {};
+        TaskCounts InvokedTaskCounts = {};
     };
 
     static V8Isolate* Create(const StdString& name, const v8::ResourceConstraints* pConstraints, const Options& options);

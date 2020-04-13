@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Windows.Threading;
 using Microsoft.ClearScript.JavaScript;
@@ -31,8 +32,8 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("v8-ia32.dll")]
     [DeploymentItem("v8-base-x64.dll")]
     [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-libcpp-x64.dll")]
-    [DeploymentItem("v8-libcpp-ia32.dll")]
+    [DeploymentItem("v8-zlib-x64.dll")]
+    [DeploymentItem("v8-zlib-ia32.dll")]
     [DeploymentItem("JavaScript", "JavaScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
@@ -2592,6 +2593,72 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<FileNotFoundException>(() => engine.EvaluateDocument("JavaScript/LegacyCommonJS/Module", ModuleCategory.CommonJS));
         }
 
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_UndefinedImportValue()
+        {
+            Assert.IsNull(engine.Evaluate("null"));
+            Assert.IsInstanceOfType(engine.Evaluate("undefined"), typeof(Undefined));
+
+            engine.UndefinedImportValue = null;
+            Assert.IsNull(engine.Evaluate("null"));
+            Assert.IsNull(engine.Evaluate("undefined"));
+
+            engine.UndefinedImportValue = 123;
+            Assert.IsNull(engine.Evaluate("null"));
+            Assert.AreEqual(123, engine.Evaluate("undefined"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ExposeStaticMembersOnHostObjects()
+        {
+            engine.Script.utf8 = Encoding.UTF8;
+            Assert.AreEqual("utf-8", engine.Evaluate("utf8.WebName"));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ASCII"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ReferenceEquals"), typeof(Undefined));
+
+            engine.ExposeHostObjectStaticMembers = true;
+            Assert.AreEqual("utf-8", engine.Evaluate("utf8.WebName"));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ASCII"), typeof(Encoding));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("utf8.ReferenceEquals(null, null)")));
+
+            engine.ExposeHostObjectStaticMembers = false;
+            Assert.AreEqual("utf-8", engine.Evaluate("utf8.WebName"));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ASCII"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ReferenceEquals"), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DirectAccess_Normal()
+        {
+            engine.Script.test = new DirectAccessTestObject();
+            engine.AddHostObject("daTest", HostItemFlags.DirectAccess, engine.Script.test);
+
+            Assert.AreEqual("[HostObject:JScriptEngineTest.DirectAccessTestObject]", engine.ExecuteCommand("test"));
+            Assert.AreEqual("[HostObject:JScriptEngineTest.DirectAccessTestObject]", engine.ExecuteCommand("daTest"));
+
+            Assert.AreEqual("123 456.789 qux", engine.Evaluate("test.Format('{0} {1} {2}', 123, 456.789, 'qux')"));
+            Assert.AreEqual("123 456.789 qux", engine.Evaluate("daTest.Format('{0} {1} {2}', 123, 456.789, 'qux')"));
+
+            Assert.AreEqual(0, engine.Evaluate("test.Bogus(123.456)"));
+            Assert.AreEqual(0, engine.Evaluate("daTest.Bogus(123.456)"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_DirectAccess_ComVisible()
+        {
+            engine.Script.test = new ComVisibleTestObject();
+            engine.AddHostObject("daTest", HostItemFlags.DirectAccess, engine.Script.test);
+
+            Assert.AreEqual("[HostObject:JScriptEngineTest.ComVisibleTestObject]", engine.ExecuteCommand("test"));
+            Assert.AreNotEqual("[HostObject:JScriptEngineTest.ComVisibleTestObject]", engine.ExecuteCommand("daTest"));
+
+            Assert.AreEqual("123 456.789 qux", engine.Evaluate("test.Format('{0} {1} {2}', 123, 456.789, 'qux')"));
+            Assert.AreEqual("123 456.789 qux", engine.Evaluate("daTest.Format('{0} {1} {2}', 123, 456.789, 'qux')"));
+
+            Assert.AreEqual(0, engine.Evaluate("test.Bogus(123.456)"));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("daTest.Bogus(123.456)"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2675,6 +2742,33 @@ namespace Microsoft.ClearScript.Test
         }
 
         private delegate string TestDelegate(string pre, ref string value, int post);
+
+        public sealed class DirectAccessTestObject
+        {
+            public string Format(string format, object arg0 = null, object arg1 = null, object arg2 = null, object arg3 = null)
+            {
+                return MiscHelpers.FormatInvariant(format, arg0, arg1, arg2, arg3);
+            }
+
+            public T Bogus<T>(T arg)
+            {
+                return default(T);
+            }
+        }
+
+        [ComVisible(true)]
+        public sealed class ComVisibleTestObject
+        {
+            public string Format(string format, object arg0 = null, object arg1 = null, object arg2 = null, object arg3 = null)
+            {
+                return MiscHelpers.FormatInvariant(format, arg0, arg1, arg2, arg3);
+            }
+
+            public T Bogus<T>(T arg)
+            {
+                return default(T);
+            }
+        }
 
         // ReSharper restore UnusedMember.Local
 

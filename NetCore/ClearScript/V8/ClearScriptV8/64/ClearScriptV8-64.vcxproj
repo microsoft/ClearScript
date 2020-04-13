@@ -76,9 +76,11 @@
       <PrecompiledHeaderOutputFile />
       <DisableSpecificWarnings>4564</DisableSpecificWarnings>
       <OmitFramePointers>false</OmitFramePointers>
+      <AdditionalOptions>-d2FH4- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(SolutionDir)ClearScript\V8\V8\lib\v8-x64.dll.lib</AdditionalDependencies>
+      <AdditionalOptions>-d2:-FH4- %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
@@ -102,12 +104,14 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalOptions>-d2FH4- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>$(SolutionDir)ClearScript\V8\V8\lib\v8-x64.dll.lib</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalOptions>-d2:-FH4- %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
@@ -120,10 +124,10 @@
     <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-base-x64.dll.pdb">
       <FileType>Document</FileType>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-libcpp-x64.dll">
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-zlib-x64.dll">
       <FileType>Document</FileType>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-libcpp-x64.dll.pdb">
+    <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-zlib-x64.dll.pdb">
       <FileType>Document</FileType>
     </CopyFileToFolders>
     <CopyFileToFolders Include="..\..\..\..\..\ClearScript\V8\V8\lib\v8-x64.dll">

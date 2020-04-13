@@ -9,7 +9,7 @@
 
 V8Context* V8Context::Create(const SharedPtr<V8Isolate>& spIsolate, const StdString& name, const Options& options)
 {
-    return new V8ContextImpl(static_cast<V8IsolateImpl*>(spIsolate.GetRawPtr()), name, options);
+    return new V8ContextImpl(spIsolate.CastTo<V8IsolateImpl>(), name, options);
 }
 
 //-----------------------------------------------------------------------------

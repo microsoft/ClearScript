@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 
 #include <algorithm>
+#include <array>
 #include <codecvt>
 #include <cstdint>
 #include <functional>

@@ -139,9 +139,15 @@ namespace Microsoft.ClearScript
             get { return target; }
         }
 
-        public override HostTargetFlags Flags
+        public override HostTargetFlags GetFlags(IHostInvokeContext context)
         {
-            get { return HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods; }
+            var flags = HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods;
+            if (context.Engine.ExposeHostObjectStaticMembers)
+            {
+                flags |= HostTargetFlags.AllowStaticMembers;
+            }
+
+            return flags;
         }
 
         public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)

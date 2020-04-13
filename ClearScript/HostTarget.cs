@@ -17,7 +17,7 @@ namespace Microsoft.ClearScript
 
         public abstract object DynamicInvokeTarget { get; }
 
-        public abstract HostTargetFlags Flags { get; }
+        public abstract HostTargetFlags GetFlags(IHostInvokeContext context);
 
         public virtual string[] GetAuxMethodNames(IHostInvokeContext context, BindingFlags bindFlags)
         {

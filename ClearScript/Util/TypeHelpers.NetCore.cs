@@ -3,7 +3,6 @@
 
 using System;
 using System.Reflection;
-using System.Runtime.InteropServices.ComTypes;
 
 namespace Microsoft.ClearScript.Util
 {
@@ -40,14 +39,9 @@ namespace Microsoft.ClearScript.Util
             return fullTypeName;
         }
 
-        public static IntPtr GetITypeInfo(this Type type)
+        public static IntPtr GetTypeInfo(this Type type)
         {
             return IntPtr.Zero;
-        }
-
-        public static Type GetManagedType(this ITypeInfo typeInfo)
-        {
-            return null;
         }
     }
 }

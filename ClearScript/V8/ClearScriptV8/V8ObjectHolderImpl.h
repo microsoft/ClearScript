@@ -13,7 +13,7 @@ class V8ObjectHolderImpl final: public V8ObjectHolder
 
 public:
 
-    V8ObjectHolderImpl(V8WeakContextBinding* pBinding, void* pvObject);
+    V8ObjectHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvObject);
 
     virtual V8ObjectHolderImpl* Clone() const override;
     virtual void* GetObject() const override;

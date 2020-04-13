@@ -53,7 +53,7 @@ namespace Microsoft.ClearScript
         private object InvokeMethod(string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
             var bindResult = BindMethod(name, typeArgs, args, bindArgs);
-            if ((bindResult is MethodBindFailure) && target.Flags.HasFlag(HostTargetFlags.AllowExtensionMethods))
+            if ((bindResult is MethodBindFailure) && target.GetFlags(this).HasFlag(HostTargetFlags.AllowExtensionMethods))
             {
                 var targetArg = target.Target.ToEnumerable();
                 var extensionArgs = targetArg.Concat(args).ToArray();
@@ -108,17 +108,17 @@ namespace Microsoft.ClearScript
             // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
             // will result in bugs that are difficult to diagnose. Create a copy if necessary.
 
-            var signature = new BindSignature(accessContext, bindFlags, target, name, typeArgs, bindArgs);
+            var signature = new BindSignature(AccessContext, bindFlags, target, name, typeArgs, bindArgs);
             MethodBindResult result;
 
             object rawResult;
             if (engine.TryGetCachedBindResult(signature, out rawResult))
             {
-                result = MethodBindResult.Create(name, rawResult, target, args);
+                result = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
             }
             else
             {
-                result = BindMethodInternal(accessContext, bindFlags, target, name, typeArgs, args, bindArgs);
+                result = BindMethodInternal(AccessContext, bindFlags, target, name, typeArgs, args, bindArgs);
                 if (!result.IsPreferredMethod(this, name))
                 {
                     if (result is MethodBindSuccess)
@@ -128,7 +128,7 @@ namespace Microsoft.ClearScript
 
                     foreach (var altName in GetAltMethodNames(name, bindFlags))
                     {
-                        var altResult = BindMethodInternal(accessContext, bindFlags, target, altName, typeArgs, args, bindArgs);
+                        var altResult = BindMethodInternal(AccessContext, bindFlags, target, altName, typeArgs, args, bindArgs);
                         if (altResult.IsUnblockedMethod(this))
                         {
                             result = altResult;
@@ -163,7 +163,7 @@ namespace Microsoft.ClearScript
             object rawResult;
             if (coreBindCache.TryGetValue(signature, out rawResult))
             {
-                result = MethodBindResult.Create(name, rawResult, target, args);
+                result = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
             }
             else
             {
@@ -185,7 +185,7 @@ namespace Microsoft.ClearScript
             // perform default binding
             var rawResult = BindMethodRaw(bindFlags, binder, target, bindArgs);
 
-            var result = MethodBindResult.Create(name, rawResult, target, args);
+            var result = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
             if ((result is MethodBindFailure) && !(target is HostType) && target.Type.IsInterface)
             {
                 // binding through interface failed; try base interfaces
@@ -194,7 +194,7 @@ namespace Microsoft.ClearScript
                     var baseInterfaceTarget = HostObject.Wrap(target.InvokeTarget, interfaceType);
                     rawResult = BindMethodRaw(bindFlags, binder, baseInterfaceTarget, bindArgs);
 
-                    var baseInterfaceResult = MethodBindResult.Create(name, rawResult, target, args);
+                    var baseInterfaceResult = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
                     if (baseInterfaceResult is MethodBindSuccess)
                     {
                         return baseInterfaceResult;
@@ -205,7 +205,7 @@ namespace Microsoft.ClearScript
                 var objectTarget = HostObject.Wrap(target.InvokeTarget, typeof(object));
                 rawResult = BindMethodRaw(bindFlags, binder, objectTarget, bindArgs);
 
-                var objectResult = MethodBindResult.Create(name, rawResult, target, args);
+                var objectResult = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
                 if (objectResult is MethodBindSuccess)
                 {
                     return objectResult;
@@ -259,7 +259,7 @@ namespace Microsoft.ClearScript
 
         private IEnumerable<string> GetAltMethodNamesInternal(string name, BindingFlags bindFlags)
         {
-            foreach (var method in target.Type.GetScriptableMethods(name, bindFlags, accessContext, defaultAccess))
+            foreach (var method in target.Type.GetScriptableMethods(name, bindFlags, AccessContext, DefaultAccess))
             {
                 var methodName = method.GetShortName();
                 if (methodName != name)
@@ -326,7 +326,7 @@ namespace Microsoft.ClearScript
                 {
                     object state;
                     var rawResult = Type.DefaultBinder.BindToMethod(bindFlags, candidates, ref args, null, null, null, out state);
-                    return MethodBindResult.Create(name, rawResult, hostTarget, args);
+                    return MethodBindResult.Create(name, bindFlags, rawResult, hostTarget, args);
                 }
                 catch (MissingMethodException)
                 {
@@ -368,7 +368,7 @@ namespace Microsoft.ClearScript
 
         private IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, Type type, string name, Type[] typeArgs)
         {
-            foreach (var method in type.GetScriptableMethods(name, bindFlags, accessContext, defaultAccess))
+            foreach (var method in type.GetScriptableMethods(name, bindFlags, AccessContext, DefaultAccess))
             {
                 MethodInfo tempMethod = null;
 
@@ -420,12 +420,12 @@ namespace Microsoft.ClearScript
 
         private abstract class MethodBindResult
         {
-            public static MethodBindResult Create(string name, object rawResult, HostTarget hostTarget, object[] args)
+            public static MethodBindResult Create(string name, BindingFlags bindFlags, object rawResult, HostTarget hostTarget, object[] args)
             {
                 var method = rawResult as MethodInfo;
                 if (method != null)
                 {
-                    if ((method.IsStatic) && !hostTarget.Flags.HasFlag(HostTargetFlags.AllowStaticMembers))
+                    if (method.IsStatic && !bindFlags.HasFlag(BindingFlags.Static))
                     {
                         return new MethodBindFailure(() => new InvalidOperationException(MiscHelpers.FormatInvariant("Cannot access static method '{0}' in non-static context", method.Name)));
                     }

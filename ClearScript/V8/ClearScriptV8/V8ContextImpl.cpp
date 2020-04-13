@@ -120,7 +120,7 @@ static V8ContextImpl* GetContextImplFromData(const TInfo& info)
 #define BEGIN_ISOLATE_SCOPE \
     { \
     __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
-        V8IsolateImpl::Scope t_IsolateScope(m_spIsolateImpl); \
+        V8IsolateImpl::Scope t_IsolateScope(*m_spIsolateImpl); \
     __pragma(warning(default:4456))
 
 #define END_ISOLATE_SCOPE \
@@ -169,8 +169,8 @@ static V8ContextImpl* GetContextImplFromData(const TInfo& info)
 #define BEGIN_EXECUTION_SCOPE \
     { \
     __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
-        V8IsolateImpl::ExecutionScope t_ExecutionScope(m_spIsolateImpl); \
-        V8IsolateImpl::TryCatch t_TryCatch(m_spIsolateImpl); \
+        V8IsolateImpl::ExecutionScope t_ExecutionScope(*m_spIsolateImpl); \
+        V8IsolateImpl::TryCatch t_TryCatch(*m_spIsolateImpl); \
     __pragma(warning(default:4456))
 
 #define END_EXECUTION_SCOPE \
@@ -184,7 +184,7 @@ static V8ContextImpl* GetContextImplFromData(const TInfo& info)
 #define BEGIN_DOCUMENT_SCOPE(DOCUMENT_INFO) \
     { \
     __pragma(warning(disable:4456)) /* declaration hides previous local declaration */ \
-        V8IsolateImpl::DocumentScope t_DocumentScope(m_spIsolateImpl, DOCUMENT_INFO); \
+        V8IsolateImpl::DocumentScope t_DocumentScope(*m_spIsolateImpl, DOCUMENT_INFO); \
     __pragma(warning(default:4456))
 
 #define END_DOCUMENT_SCOPE \
@@ -214,15 +214,15 @@ static const size_t s_MaxModuleCacheSize = 1024;
 //-----------------------------------------------------------------------------
 
 V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name):
-    V8ContextImpl(pIsolateImpl, name, Options())
+    V8ContextImpl(SharedPtr<V8IsolateImpl>(pIsolateImpl), name, Options())
 {
 }
 
 //-----------------------------------------------------------------------------
 
-V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, const Options& options):
+V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const StdString& name, const Options& options):
     m_Name(name),
-    m_spIsolateImpl(pIsolateImpl),
+    m_spIsolateImpl(std::move(spIsolateImpl)),
     m_DateTimeConversionEnabled(options.EnableDateTimeConversion),
     m_pvV8ObjectCache(nullptr),
     m_AllowHostObjectConstructorCall(false)
@@ -539,7 +539,7 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
 
         auto codeDigest = code.GetDigest();
         v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo));
-        std::unique_ptr<V8ScriptHolder> spScriptHolder;
+        std::unique_ptr<V8ScriptHolder> upScriptHolder;
 
         if (documentInfo.IsModule())
         {
@@ -555,7 +555,7 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                 CacheModule(documentInfo, codeDigest, hModule);
             }
 
-            spScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hModule)), documentInfo, codeDigest, std::move(code)));
+            upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hModule)), documentInfo, codeDigest, std::move(code)));
         }
         else
         {
@@ -571,10 +571,10 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                 CacheScript(documentInfo, codeDigest, hScript);
             }
 
-            spScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
+            upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
         }
 
-        return spScriptHolder.release();
+        return upScriptHolder.release();
 
     FROM_MAYBE_CATCH
 
@@ -603,8 +603,8 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
 
         auto codeDigest = code.GetDigest();
         v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo));
-        std::unique_ptr<V8ScriptHolder> spScriptHolder;
-        UniqueDeletePtr<v8::ScriptCompiler::CachedData> spCachedData;
+        std::unique_ptr<V8ScriptHolder> upScriptHolder;
+        UniqueDeletePtr<v8::ScriptCompiler::CachedData> upCachedData;
 
         if (documentInfo.IsModule())
         {
@@ -620,8 +620,8 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                 CacheModule(documentInfo, codeDigest, hModule);
             }
 
-            spScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hModule)), documentInfo, codeDigest, std::move(code)));
-            spCachedData.reset(v8::ScriptCompiler::CreateCodeCache(hModule->GetUnboundModuleScript()));
+            upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hModule)), documentInfo, codeDigest, std::move(code)));
+            upCachedData.reset(v8::ScriptCompiler::CreateCodeCache(hModule->GetUnboundModuleScript()));
         }
         else
         {
@@ -637,23 +637,23 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                 CacheScript(documentInfo, codeDigest, hScript);
             }
 
-            spScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
-            spCachedData.reset(v8::ScriptCompiler::CreateCodeCache(hScript));
+            upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
+            upCachedData.reset(v8::ScriptCompiler::CreateCodeCache(hScript));
         }
 
         cacheBytes.clear();
-        if (spCachedData && (spCachedData->length > 0) && (spCachedData->data != nullptr))
+        if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
         {
-            cacheBytes.resize(spCachedData->length);
-            memcpy_s(&cacheBytes[0], cacheBytes.size(), spCachedData->data, spCachedData->length);
+            cacheBytes.resize(upCachedData->length);
+            memcpy_s(&cacheBytes[0], cacheBytes.size(), upCachedData->data, upCachedData->length);
 
             if (documentInfo.IsModule())
             {
-                spScriptHolder->SetCacheBytes(cacheBytes);
+                upScriptHolder->SetCacheBytes(cacheBytes);
             }
         }
 
-        return spScriptHolder.release();
+        return upScriptHolder.release();
 
     FROM_MAYBE_CATCH
 
@@ -683,7 +683,7 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
         auto codeDigest = code.GetDigest();
         auto pCachedData = new v8::ScriptCompiler::CachedData(&cacheBytes[0], static_cast<int>(cacheBytes.size()), v8::ScriptCompiler::CachedData::BufferNotOwned);
         v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo), pCachedData);
-        std::unique_ptr<V8ScriptHolder> spScriptHolder;
+        std::unique_ptr<V8ScriptHolder> upScriptHolder;
 
         if (documentInfo.IsModule())
         {
@@ -699,7 +699,7 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                 CacheModule(documentInfo, codeDigest, hModule);
             }
 
-            spScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hModule)), documentInfo, codeDigest, std::move(code)));
+            upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hModule)), documentInfo, codeDigest, std::move(code)));
         }
         else
         {
@@ -715,16 +715,16 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                 CacheScript(documentInfo, codeDigest, hScript);
             }
 
-            spScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
+            upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
         }
 
         cacheAccepted = !pCachedData->rejected;
         if (cacheAccepted && documentInfo.IsModule())
         {
-            spScriptHolder->SetCacheBytes(cacheBytes);
+            upScriptHolder->SetCacheBytes(cacheBytes);
         }
 
-        return spScriptHolder.release();
+        return upScriptHolder.release();
 
     FROM_MAYBE_CATCH
 
@@ -738,38 +738,38 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
 
 //-----------------------------------------------------------------------------
 
-bool V8ContextImpl::CanExecute(V8ScriptHolder* pHolder)
+bool V8ContextImpl::CanExecute(const SharedPtr<V8ScriptHolder>& spHolder)
 {
-    return pHolder->IsSameIsolate(m_spIsolateImpl.GetRawPtr());
+    return spHolder->IsSameIsolate(m_spIsolateImpl);
 }
 
 //-----------------------------------------------------------------------------
 
-V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder, bool evaluate)
+V8Value V8ContextImpl::Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool evaluate)
 {
     BEGIN_CONTEXT_SCOPE
-    BEGIN_DOCUMENT_SCOPE(pHolder->GetDocumentInfo())
+    BEGIN_DOCUMENT_SCOPE(spHolder->GetDocumentInfo())
     BEGIN_EXECUTION_SCOPE
     FROM_MAYBE_TRY
 
         v8::Local<v8::Value> hResult;
 
-        if (pHolder->GetDocumentInfo().IsModule())
+        if (spHolder->GetDocumentInfo().IsModule())
         {
-            auto codeDigest = pHolder->GetCode().GetDigest();
-            auto hModule = GetCachedModule(pHolder->GetDocumentInfo(), codeDigest);
+            auto codeDigest = spHolder->GetCode().GetDigest();
+            auto hModule = GetCachedModule(spHolder->GetDocumentInfo(), codeDigest);
             if (hModule.IsEmpty())
             {
-                if (pHolder->GetCacheBytes().size() > 0)
+                if (spHolder->GetCacheBytes().size() > 0)
                 {
-                    auto pCachedData = new v8::ScriptCompiler::CachedData(&pHolder->GetCacheBytes()[0], static_cast<int>(pHolder->GetCacheBytes().size()), v8::ScriptCompiler::CachedData::BufferNotOwned);
-                    v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(pHolder->GetCode())), CreateScriptOrigin(pHolder->GetDocumentInfo()), pCachedData);
+                    auto pCachedData = new v8::ScriptCompiler::CachedData(&spHolder->GetCacheBytes()[0], static_cast<int>(spHolder->GetCacheBytes().size()), v8::ScriptCompiler::CachedData::BufferNotOwned);
+                    v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(spHolder->GetCode())), CreateScriptOrigin(spHolder->GetDocumentInfo()), pCachedData);
                     hModule = VERIFY_MAYBE(CompileModule(&source));
                     _ASSERTE(!pCachedData->rejected);
                 }
                 else
                 {
-                    v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(pHolder->GetCode())), CreateScriptOrigin(pHolder->GetDocumentInfo()));
+                    v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(spHolder->GetCode())), CreateScriptOrigin(spHolder->GetDocumentInfo()));
                     hModule = VERIFY_MAYBE(CompileModule(&source));
                 }
 
@@ -778,7 +778,7 @@ V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder, bool evaluate)
                     throw V8Exception(V8Exception::Type::General, m_Name, StdString(L"Module compilation failed; no additional information was provided by the V8 runtime"), false /*executionStarted*/);
                 }
 
-                CacheModule(pHolder->GetDocumentInfo(), codeDigest, hModule);
+                CacheModule(spHolder->GetDocumentInfo(), codeDigest, hModule);
             }
 
             if (hModule->GetStatus() < v8::Module::kInstantiated)
@@ -797,7 +797,7 @@ V8Value V8ContextImpl::Execute(V8ScriptHolder* pHolder, bool evaluate)
         }
         else
         {
-            auto hScript = ::HandleFromPtr<v8::UnboundScript>(pHolder->GetScript());
+            auto hScript = ::HandleFromPtr<v8::UnboundScript>(spHolder->GetScript());
             hResult = VERIFY_MAYBE(hScript->BindToCurrentContext()->Run(m_hContext));
         }
 
@@ -922,7 +922,7 @@ void V8ContextImpl::Flush()
 
 void V8ContextImpl::Destroy()
 {
-    m_spIsolateImpl->CallWithLockNoWait([this] (V8IsolateImpl* /*pIsolateImpl*/)
+    m_spIsolateImpl->CallWithLockNoWait(true /*allowNesting*/, [this] (V8IsolateImpl* /*pIsolateImpl*/)
     {
         delete this;
     });
@@ -1259,13 +1259,13 @@ void V8ContextImpl::InitializeImportMeta(v8::Local<v8::Context> /*hContext*/, v8
 
 v8::MaybeLocal<v8::Promise> V8ContextImpl::ImportModule(v8::Local<v8::ScriptOrModule> /*hReferrer*/, v8::Local<v8::String> hSpecifier)
 {
-    V8IsolateImpl::TryCatch outerTryCatch(m_spIsolateImpl);
+    V8IsolateImpl::TryCatch outerTryCatch(*m_spIsolateImpl);
 
     FROM_MAYBE_TRY
 
         auto hResolver = FROM_MAYBE(v8::Promise::Resolver::New(m_hContext));
 
-        V8IsolateImpl::TryCatch innerTryCatch(m_spIsolateImpl);
+        V8IsolateImpl::TryCatch innerTryCatch(*m_spIsolateImpl);
 
         FROM_MAYBE_TRY
 
@@ -1302,7 +1302,7 @@ v8::MaybeLocal<v8::Promise> V8ContextImpl::ImportModule(v8::Local<v8::ScriptOrMo
 
 v8::MaybeLocal<v8::Module> V8ContextImpl::ResolveModule(v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> /*hReferrer*/)
 {
-    V8IsolateImpl::TryCatch tryCatch(m_spIsolateImpl);
+    V8IsolateImpl::TryCatch tryCatch(*m_spIsolateImpl);
 
     FROM_MAYBE_TRY
 

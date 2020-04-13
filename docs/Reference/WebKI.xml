@@ -251,6 +251,7 @@
     <HelpKINode Title="ScriptEngineException.ExecutionStarted Property " Url="html/P_Microsoft_ClearScript_ScriptEngineException_ExecutionStarted.htm" />
     <HelpKINode Title="ScriptInterruptedException.ExecutionStarted Property " Url="html/P_Microsoft_ClearScript_ScriptInterruptedException_ExecutionStarted.htm" />
   </HelpKINode>
+  <HelpKINode Title="ExposeHostObjectStaticMembers property" Url="html/P_Microsoft_ClearScript_ScriptEngine_ExposeHostObjectStaticMembers.htm" />
   <HelpKINode Title="ExposeRuntimeType enumeration member" Url="html/T_Microsoft_ClearScript_ScriptMemberFlags.htm" />
   <HelpKINode Title="ExtendedHostFunctions class">
     <HelpKINode Title="ExtendedHostFunctions Class" Url="html/T_Microsoft_ClearScript_ExtendedHostFunctions.htm" />
@@ -304,8 +305,8 @@
     <HelpKINode Title="ScriptEngineException.GetObjectData Method " Url="html/M_Microsoft_ClearScript_ScriptEngineException_GetObjectData.htm" />
     <HelpKINode Title="ScriptInterruptedException.GetObjectData Method " Url="html/M_Microsoft_ClearScript_ScriptInterruptedException_GetObjectData.htm" />
   </HelpKINode>
-  <HelpKINode Title="GetProperty method" Url="html/Overload_Microsoft_ClearScript_ScriptObject_GetProperty.htm" />
   <HelpKINode Title="getProperty method" Url="html/Overload_Microsoft_ClearScript_HostFunctions_getProperty.htm" />
+  <HelpKINode Title="GetProperty method" Url="html/Overload_Microsoft_ClearScript_ScriptObject_GetProperty.htm" />
   <HelpKINode Title="GetRuntimeHeapInfo method" Url="html/M_Microsoft_ClearScript_V8_V8ScriptEngine_GetRuntimeHeapInfo.htm" />
   <HelpKINode Title="GetStackTrace method">
     <HelpKINode Title="ScriptEngine.GetStackTrace Method " Url="html/M_Microsoft_ClearScript_ScriptEngine_GetStackTrace.htm" />
@@ -751,6 +752,7 @@
   <HelpKINode Title="ScriptEngine.Execute method" Url="html/Overload_Microsoft_ClearScript_ScriptEngine_Execute.htm" />
   <HelpKINode Title="ScriptEngine.ExecuteCommand method" Url="html/M_Microsoft_ClearScript_ScriptEngine_ExecuteCommand.htm" />
   <HelpKINode Title="ScriptEngine.ExecuteDocument method" Url="html/Overload_Microsoft_ClearScript_ScriptEngine_ExecuteDocument.htm" />
+  <HelpKINode Title="ScriptEngine.ExposeHostObjectStaticMembers property" Url="html/P_Microsoft_ClearScript_ScriptEngine_ExposeHostObjectStaticMembers.htm" />
   <HelpKINode Title="ScriptEngine.FileNameExtension property" Url="html/P_Microsoft_ClearScript_ScriptEngine_FileNameExtension.htm" />
   <HelpKINode Title="ScriptEngine.Finalize method" Url="html/M_Microsoft_ClearScript_ScriptEngine_Finalize.htm" />
   <HelpKINode Title="ScriptEngine.FormatCode property" Url="html/P_Microsoft_ClearScript_ScriptEngine_FormatCode.htm" />
@@ -760,6 +762,7 @@
   <HelpKINode Title="ScriptEngine.Name property" Url="html/P_Microsoft_ClearScript_ScriptEngine_Name.htm" />
   <HelpKINode Title="ScriptEngine.Script property" Url="html/P_Microsoft_ClearScript_ScriptEngine_Script.htm" />
   <HelpKINode Title="ScriptEngine.ScriptEngine constructor" Url="html/Overload_Microsoft_ClearScript_ScriptEngine__ctor.htm" />
+  <HelpKINode Title="ScriptEngine.UndefinedImportValue property" Url="html/P_Microsoft_ClearScript_ScriptEngine_UndefinedImportValue.htm" />
   <HelpKINode Title="ScriptEngine.UseReflectionBindFallback property" Url="html/P_Microsoft_ClearScript_ScriptEngine_UseReflectionBindFallback.htm" />
   <HelpKINode Title="ScriptEngineException class">
     <HelpKINode Title="ScriptEngineException Class" Url="html/T_Microsoft_ClearScript_ScriptEngineException.htm" />
@@ -890,9 +893,12 @@
   <HelpKINode Title="typeOf method" Url="html/Overload_Microsoft_ClearScript_HostFunctions_typeOf.htm" />
   <HelpKINode Title="Undefined class">
     <HelpKINode Title="Undefined Class" Url="html/T_Microsoft_ClearScript_Undefined.htm" />
+    <HelpKINode Title="fields" Url="html/Fields_T_Microsoft_ClearScript_Undefined.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_Undefined.htm" />
   </HelpKINode>
   <HelpKINode Title="Undefined.ToString method" Url="html/M_Microsoft_ClearScript_Undefined_ToString.htm" />
+  <HelpKINode Title="Undefined.Value field" Url="html/F_Microsoft_ClearScript_Undefined_Value.htm" />
+  <HelpKINode Title="UndefinedImportValue property" Url="html/P_Microsoft_ClearScript_ScriptEngine_UndefinedImportValue.htm" />
   <HelpKINode Title="Uri property" Url="html/P_Microsoft_ClearScript_DocumentInfo_Uri.htm" />
   <HelpKINode Title="UseAssemblyTable property" Url="html/P_Microsoft_ClearScript_HostSettings_UseAssemblyTable.htm" />
   <HelpKINode Title="UsedHeapSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_UsedHeapSize.htm" />
@@ -1010,7 +1016,10 @@
   <HelpKINode Title="V8ScriptEngine.SuppressInstanceMethodEnumeration property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_SuppressInstanceMethodEnumeration.htm" />
   <HelpKINode Title="V8ScriptEngine.V8ScriptEngine constructor" Url="html/Overload_Microsoft_ClearScript_V8_V8ScriptEngine__ctor.htm" />
   <HelpKINode Title="V8ScriptEngineFlags enumeration" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
-  <HelpKINode Title="Value field" Url="html/F_Microsoft_ClearScript_Windows_Nothing_Value.htm" />
+  <HelpKINode Title="Value field">
+    <HelpKINode Title="Nothing.Value Field" Url="html/F_Microsoft_ClearScript_Windows_Nothing_Value.htm" />
+    <HelpKINode Title="Undefined.Value Field" Url="html/F_Microsoft_ClearScript_Undefined_Value.htm" />
+  </HelpKINode>
   <HelpKINode Title="Values property" Url="html/P_Microsoft_ClearScript_PropertyBag_Values.htm" />
   <HelpKINode Title="VBScriptEngine class">
     <HelpKINode Title="VBScriptEngine Class" Url="html/T_Microsoft_ClearScript_Windows_VBScriptEngine.htm" />

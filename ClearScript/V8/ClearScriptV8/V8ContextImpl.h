@@ -20,7 +20,7 @@ class V8ContextImpl final: public V8Context
 public:
 
     V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name);
-    V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name, const Options& options);
+    V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const StdString& name, const Options& options);
     static size_t GetInstanceCount();
 
     const StdString& GetName() const { return m_Name; }
@@ -45,8 +45,8 @@ public:
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
-    virtual bool CanExecute(V8ScriptHolder* pHolder) override;
-    virtual V8Value Execute(V8ScriptHolder* pHolder, bool evaluate) override;
+    virtual bool CanExecute(const SharedPtr<V8ScriptHolder>& spHolder) override;
+    virtual V8Value Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool evaluate) override;
 
     virtual void Interrupt() override;
     virtual void GetIsolateHeapStatistics(v8::HeapStatistics& heapStatistics) override;

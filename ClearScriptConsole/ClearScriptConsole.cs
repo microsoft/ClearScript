@@ -14,6 +14,8 @@ namespace Microsoft.ClearScript.Test
     {
         public static void Main(string[] args)
         {
+            HostSettings.UseAssemblyTable = true;
+
             if ((args.Length == 2) && (args[0] == "-t"))
             {
                 RunTest(args[1]);

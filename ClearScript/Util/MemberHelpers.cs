@@ -305,12 +305,7 @@ namespace Microsoft.ClearScript.Util
             return (index >= 0) ? name.Substring(index + 1) : name;
         }
 
-        private static bool IsExplicitImplementation(this MemberInfo member)
-        {
-            return member.Name.IndexOf('.') >= 0;
-        }
-
-        private static T GetAttribute<T>(this MemberInfo member, bool inherit) where T : Attribute
+        public static T GetAttribute<T>(this MemberInfo member, bool inherit) where T : Attribute
         {
             try
             {
@@ -328,6 +323,11 @@ namespace Microsoft.ClearScript.Util
 
                 throw;
             }
+        }
+
+        private static bool IsExplicitImplementation(this MemberInfo member)
+        {
+            return member.Name.IndexOf('.') >= 0;
         }
     }
 }

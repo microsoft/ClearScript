@@ -210,7 +210,7 @@
     <CopyFileToFolders Include="..\..\V8\lib\v8-ia32.dll.pdb" />
     <CopyFileToFolders Include="..\..\V8\lib\v8-base-ia32.dll" />
     <CopyFileToFolders Include="..\..\V8\lib\v8-base-ia32.dll.pdb" />
-    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-ia32.dll" />
-    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-ia32.dll.pdb" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-zlib-ia32.dll" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-zlib-ia32.dll.pdb" />
   </ItemGroup>
 </Project>

@@ -34,8 +34,8 @@ namespace Microsoft.ClearScript.Test
     [DeploymentItem("v8-ia32.dll")]
     [DeploymentItem("v8-base-x64.dll")]
     [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-libcpp-x64.dll")]
-    [DeploymentItem("v8-libcpp-ia32.dll")]
+    [DeploymentItem("v8-zlib-x64.dll")]
+    [DeploymentItem("v8-zlib-ia32.dll")]
     [DeploymentItem("JavaScript", "JavaScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
@@ -1560,14 +1560,14 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize_Dual()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"x = []; for (i = 0; i < 16 * 1024 * 1024; i++) { x.push(x); }";
+            const string code = @"x = []; for (i = 0; i < 64 * 1024 * 1024; i++) { x.push(x); }";
 
             engine.Execute(code);
             engine.CollectGarbage(true);
             var usedHeapSize = engine.GetRuntimeHeapInfo().UsedHeapSize;
 
             engine.Dispose();
-            engine = new V8ScriptEngine { MaxRuntimeHeapSize = (UIntPtr)limit };
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging) { MaxRuntimeHeapSize = (UIntPtr)limit };
 
             TestUtil.AssertException<ScriptEngineException>(() =>
             {
@@ -3477,6 +3477,40 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(0, array.Count);
             Assert.AreEqual(0, engine.Evaluate("array.length"));
             Assert.AreEqual("[]", JsonConvert.SerializeObject(engine.Evaluate("array")));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_UndefinedImportValue()
+        {
+            Assert.IsNull(engine.Evaluate("null"));
+            Assert.IsInstanceOfType(engine.Evaluate("undefined"), typeof(Undefined));
+
+            engine.UndefinedImportValue = null;
+            Assert.IsNull(engine.Evaluate("null"));
+            Assert.IsNull(engine.Evaluate("undefined"));
+
+            engine.UndefinedImportValue = 123;
+            Assert.IsNull(engine.Evaluate("null"));
+            Assert.AreEqual(123, engine.Evaluate("undefined"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ExposeStaticMembersOnHostObjects()
+        {
+            engine.Script.utf8 = Encoding.UTF8;
+            Assert.AreEqual("utf-8", engine.Evaluate("utf8.WebName"));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ASCII"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ReferenceEquals"), typeof(Undefined));
+
+            engine.ExposeHostObjectStaticMembers = true;
+            Assert.AreEqual("utf-8", engine.Evaluate("utf8.WebName"));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ASCII"), typeof(Encoding));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("utf8.ReferenceEquals(null, null)")));
+
+            engine.ExposeHostObjectStaticMembers = false;
+            Assert.AreEqual("utf-8", engine.Evaluate("utf8.WebName"));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ASCII"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("utf8.ReferenceEquals"), typeof(Undefined));
         }
 
         // ReSharper restore InconsistentNaming

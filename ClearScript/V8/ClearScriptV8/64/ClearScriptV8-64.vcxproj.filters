@@ -210,7 +210,7 @@
     <CopyFileToFolders Include="..\..\V8\lib\v8-x64.dll.pdb" />
     <CopyFileToFolders Include="..\..\V8\lib\v8-base-x64.dll" />
     <CopyFileToFolders Include="..\..\V8\lib\v8-base-x64.dll.pdb" />
-    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-x64.dll" />
-    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-x64.dll.pdb" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-zlib-x64.dll" />
+    <CopyFileToFolders Include="..\..\V8\lib\v8-zlib-x64.dll.pdb" />
   </ItemGroup>
 </Project>

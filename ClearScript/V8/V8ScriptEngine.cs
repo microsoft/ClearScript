@@ -1271,7 +1271,7 @@ namespace Microsoft.ClearScript.V8
         {
             if (obj == null)
             {
-                return Undefined.Value;
+                return UndefinedImportValue;
             }
 
             if (obj is DBNull)

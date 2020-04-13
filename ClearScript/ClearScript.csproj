@@ -126,6 +126,7 @@
     <Compile Include="Util\COM\DispatchMember.cs" />
     <Compile Include="Util\COM\DispatchWrappers.cs" />
     <Compile Include="Util\COM\HResult.cs" />
+    <Compile Include="Util\COM\StructHelpers.cs" />
     <Compile Include="Util\COM\TypeInfoHelpers.cs" />
     <Compile Include="Util\COM\TypeInfoHelpers.NetFramework.cs" />
     <Compile Include="Util\COM\TypeLibHelpers.cs" />

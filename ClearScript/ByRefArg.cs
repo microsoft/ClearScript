@@ -58,9 +58,9 @@ namespace Microsoft.ClearScript
             get { return target.DynamicInvokeTarget; }
         }
 
-        public override HostTargetFlags Flags
+        public override HostTargetFlags GetFlags(IHostInvokeContext context)
         {
-            get { return target.Flags; }
+            return target.GetFlags(context);
         }
 
         public override string[] GetAuxMethodNames(IHostInvokeContext context, BindingFlags bindFlags)

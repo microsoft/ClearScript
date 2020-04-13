@@ -121,6 +121,7 @@
     <Compile Include="..\..\ClearScript\Util\COM\DispatchMember.cs" Link="Util\COM\DispatchMember.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\DispatchWrappers.cs" Link="Util\COM\DispatchWrappers.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\HResult.cs" Link="Util\COM\HResult.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\StructHelpers.cs" Link="Util\COM\StructHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\TypeInfoHelpers.cs" Link="Util\COM\TypeInfoHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\TypeInfoHelpers.NetCore.cs" Link="Util\COM\TypeInfoHelpers.NetCore.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\TypeLibHelpers.cs" Link="Util\COM\TypeLibHelpers.cs" />
@@ -133,6 +134,7 @@
     <Compile Include="..\..\ClearScript\Util\IDynamic.cs" Link="Util\IDynamic.cs" />
     <Compile Include="..\..\ClearScript\Util\IExpando.cs" Link="Util\IExpando.cs" />
     <Compile Include="..\..\ClearScript\Util\IHostInvokeContext.cs" Link="Util\IHostInvokeContext.cs" />
+    <Compile Include="..\..\ClearScript\Util\IJW\IJWHostLibrary.cs" Link="Util\IJW\IJWHostLibrary.cs" />
     <Compile Include="..\..\ClearScript\Util\INativeCallback.cs" Link="Util\INativeCallback.cs" />
     <Compile Include="..\..\ClearScript\Util\InvokeHelpers.cs" Link="Util\InvokeHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\IScriptMarshalWrapper.cs" Link="Util\IScriptMarshalWrapper.cs" />

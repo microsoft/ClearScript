@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Globalization;
@@ -1647,13 +1646,20 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Imports enumerations from a type library.
+        /// Imports enumerations defined within or referenced from a COM/ActiveX type library.
         /// </summary>
-        /// <typeparam name="T">The imported type whose parent library is to be searched for enumerations.</typeparam>
+        /// <typeparam name="T">The imported type whose parent library is to be searched for relevant enumerations.</typeparam>
         /// <param name="obj">An instance of the representative type.</param>
-        /// <returns>A collection of imported enumerations.</returns>
-        public IPropertyBag typeLibEnums<T>(T obj) where T : class
+        /// <param name="collection">An optional host type collection with which to merge the imported enumerations.</param>
+        /// <returns>A host type collection: <paramref name="collection"/> if it is not <c>null</c>, a new host type collection otherwise.</returns>
+        public HostTypeCollection typeLibEnums<T>(T obj, HostTypeCollection collection = null) where T : class
         {
+            MiscHelpers.VerifyNonNullArgument(obj, "obj");
+            if (collection == null)
+            {
+                collection = new HostTypeCollection();
+            }
+
             var type = typeof(T);
             if (type.IsUnknownCOMObject())
             {
@@ -1663,31 +1669,18 @@ namespace Microsoft.ClearScript
                     var typeInfo = dispatch.GetTypeInfo();
                     if (typeInfo != null)
                     {
-                        return typeInfo.GetTypeLibEnums();
+                        typeInfo.GetContainingTypeLib().GetReferencedEnums().ForEach(collection.AddEnumTypeInfo);
+                        return collection;
                     }
                 }
-
-                throw new ArgumentException("Object type is not imported", "obj");
             }
-
-            if (!type.IsImport)
+            else if (type.IsImport && (type.Assembly.GetCustomAttribute(typeof(ImportedFromTypeLibAttribute)) != null))
             {
-                throw new ArgumentException("Object type is not imported", "obj");
+                type.Assembly.GetReferencedEnums().ForEach(collection.AddType);
+                return collection;
             }
 
-            var typeCollection = new HostTypeCollection();
-
-            var assembly = type.Assembly;
-            Debug.Assert(assembly.GetCustomAttribute(typeof(ImportedFromTypeLibAttribute)) != null);
-            foreach (var assemblyType in assembly.GetTypes())
-            {
-                if (assemblyType.IsPublic && assemblyType.IsEnum)
-                {
-                    typeCollection.AddType(assemblyType);
-                }
-            }
-
-            return typeCollection;
+            throw new ArgumentException("Object type is not imported", "obj");
         }
 
         // ReSharper restore InconsistentNaming

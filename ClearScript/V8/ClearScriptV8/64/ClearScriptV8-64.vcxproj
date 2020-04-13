@@ -88,11 +88,13 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <SDLCheck>true</SDLCheck>
       <OmitFramePointers>false</OmitFramePointers>
+      <AdditionalOptions>-d2FH4- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='14.0'">true</GenerateDebugInformation>
       <AdditionalDependencies>$(SolutionDir)ClearScript\V8\V8\lib\v8-x64.dll.lib</AdditionalDependencies>
+      <AdditionalOptions>-d2:-FH4- %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
@@ -119,6 +121,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalOptions>-d2FH4- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
@@ -127,6 +130,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalOptions>-d2:-FH4- %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
@@ -294,7 +298,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-x64.dll">
+    <CopyFileToFolders Include="..\..\V8\lib\v8-zlib-x64.dll">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy "%(FullPath)" "$(OutDir)"</Command>
@@ -303,7 +307,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(Filename)%(Extension)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(Filename)%(Extension)</Outputs>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="..\..\V8\lib\v8-libcpp-x64.dll.pdb">
+    <CopyFileToFolders Include="..\..\V8\lib\v8-zlib-x64.dll.pdb">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy "%(FullPath)" "$(OutDir)"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy "%(FullPath)" "$(OutDir)"</Command>

@@ -314,7 +314,7 @@ namespace Microsoft.ClearScript.Windows
                     continue;
                 }
 
-                if ((item != null) && item.GetType().IsCOMObject)
+                if ((item != null) && (item.GetType().IsCOMObject || item.GetType().IsCOMVisible()))
                 {
                     directAccessItem = item;
                     return true;
@@ -427,7 +427,7 @@ namespace Microsoft.ClearScript.Windows
         {
             if (obj == null)
             {
-                return Undefined.Value;
+                return UndefinedImportValue;
             }
 
             if (obj is DBNull)
@@ -802,6 +802,7 @@ namespace Microsoft.ClearScript.Windows
         /// </remarks>
         protected override void Dispose(bool disposing)
         {
+            VerifyAccess();
             if (disposedFlag.Set())
             {
                 if (disposing)
