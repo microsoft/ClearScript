@@ -45,7 +45,7 @@ namespace Microsoft.ClearScript.JavaScript
             {
                 task.ContinueWith(thisTask =>
                 {
-                    if (thisTask.IsCompleted)
+                    if (thisTask.IsCompleted && !thisTask.IsCanceled && !thisTask.IsFaulted)
                     {
                         resolve(thisTask.Result);
                     }
@@ -87,7 +87,7 @@ namespace Microsoft.ClearScript.JavaScript
             {
                 task.ContinueWith(thisTask =>
                 {
-                    if (thisTask.IsCompleted)
+                    if (thisTask.IsCompleted && !thisTask.IsCanceled && !thisTask.IsFaulted)
                     {
                         resolve();
                     }
