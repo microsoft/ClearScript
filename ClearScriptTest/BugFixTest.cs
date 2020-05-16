@@ -20,6 +20,7 @@ using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using UIAutomationClient;
+using System.Globalization;
 
 // ReSharper disable HeuristicUnreachableCode
 
@@ -1236,6 +1237,8 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_DynamicMethodArgs()
         {
             engine.Script.foo = new DynamicMethodArgTest();
+            //Handle decimal points invariantly
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Assert.AreEqual("123 456.789 hello", engine.Evaluate("foo.RunTest(123, 456.789, 'hello')"));
         }
 
