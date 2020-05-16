@@ -210,6 +210,7 @@ cd ..
 :CreatePatchesDone
 
 :Build32Bit
+setlocal
 echo Building 32-bit V8 ...
 cd v8
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x86 >nul
@@ -219,9 +220,11 @@ if errorlevel 1 goto Error
 ninja -C out\ia32\%mode% v8-ia32.dll >build-ia32.log
 if errorlevel 1 goto Error
 cd ..
+endlocal
 :Build32BitDone
 
 :Build64Bit
+setlocal
 echo Building 64-bit V8 ...
 cd v8
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64 >nul
@@ -231,6 +234,7 @@ if errorlevel 1 goto Error
 ninja -C out\x64\%mode% v8-x64.dll >build-x64.log
 if errorlevel 1 goto Error
 cd ..
+endlocal
 :Build64BitDone
 
 :BuildDone
@@ -302,6 +306,7 @@ echo Succeeded!
 goto Exit
 
 :Error
+endlocal
 echo *** THE PREVIOUS STEP FAILED ***
 
 :Exit
