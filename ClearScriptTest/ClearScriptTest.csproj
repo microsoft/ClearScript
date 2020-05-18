@@ -110,6 +110,7 @@
     </Compile>
     <Compile Include="PropertyBagTest.cs" />
     <Compile Include="MemberAccessTest.cs" />
+    <Compile Include="ToTaskExtensionTest.cs" />
     <Compile Include="V8ModuleTest.cs" />
     <Compile Include="StaticMemberAccessTest.cs" />
     <Compile Include="StaticTestClass.cs" />

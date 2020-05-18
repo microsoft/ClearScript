@@ -70,6 +70,7 @@
     <Compile Include="..\..\ClearScriptTest\StaticMemberAccessTest.cs" Link="StaticMemberAccessTest.cs" />
     <Compile Include="..\..\ClearScriptTest\StaticTestClass.cs" Link="StaticTestClass.cs" />
     <Compile Include="..\..\ClearScriptTest\TestObject.cs" Link="TestObject.cs" />
+    <Compile Include="..\..\ClearScriptTest\ToTaskExtensionTest.cs" Link="ToTaskExtensionTest.cs" />
     <Compile Include="..\..\ClearScriptTest\TypeRestrictionTest.cs" Link="TypeRestrictionTest.cs" />
     <Compile Include="..\..\ClearScriptTest\V8ArrayBufferOrViewTest.cs" Link="V8ArrayBufferOrViewTest.cs" />
     <Compile Include="..\..\ClearScriptTest\V8ModuleTest.cs" Link="V8ModuleTest.cs" />
