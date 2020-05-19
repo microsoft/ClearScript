@@ -31,6 +31,7 @@ namespace Microsoft.ClearScript.Test
             _engine.AddHostType(typeof(Extensions));
             _engine.AddHostType(typeof(JavaScriptExtensions));
             _engine.AddHostObject("Tracer", new Tracer());
+            _engine.AddHostObject("GetInnerMostMessage", new Func<Exception, string>(GetInnerMostMessage));
             _testTasks = new TestTasks(_engine.Script.Tracer);
         }
 
@@ -46,7 +47,7 @@ namespace Microsoft.ClearScript.Test
         #region test methods
 
         [TestMethod, TestCategory("ToTask")]
-        public async Task ToTask_HandlesException_ThrowBeforeReturningPromise__WithJavaScriptExceptionHandler()
+        public async Task ToTask_HandlesException_ThrowBeforeReturningPromise_WithJavaScriptExceptionHandler()
         {
             var setupScript = @"
 				var Test = {
@@ -133,16 +134,16 @@ namespace Microsoft.ClearScript.Test
         {
             await RunTestScriptWithTryCatch(_engine,
                 _testTasks.GetIntTask(PointOfFailure.Canceled),
-                new[] { "A", "JS Exception: [object HostObject]", "CLR Exception: A task was canceled." });
+                new[] { "A", "JS Exception: A task was canceled.", "CLR Exception: A task was canceled." });
             await RunTestScriptWithTryCatch(_engine,
                 _testTasks.GetIntTask(PointOfFailure.A),
-                new[] { "A", "JS Exception: [object HostObject]", "CLR Exception: GetInt Fail A" });
+                new[] { "A", "JS Exception: GetInt Fail A", "CLR Exception: GetInt Fail A" });
             await RunTestScriptWithTryCatch(_engine,
                 _testTasks.GetIntTask(PointOfFailure.B),
-                new[] { "A", "B", "JS Exception: [object HostObject]", "CLR Exception: GetInt Fail B" });
+                new[] { "A", "B", "JS Exception: GetInt Fail B", "CLR Exception: GetInt Fail B" });
             await RunTestScriptWithTryCatch(_engine,
                 _testTasks.GetIntTask(PointOfFailure.C),
-                new[] { "A", "B", "C", "JS Exception: [object HostObject]", "CLR Exception: GetInt Fail C" });
+                new[] { "A", "B", "C", "JS Exception: GetInt Fail C", "CLR Exception: GetInt Fail C" });
         }
 
         [TestMethod, TestCategory("ToTask")]
@@ -167,16 +168,16 @@ namespace Microsoft.ClearScript.Test
         {
             await RunTestScriptWithTryCatch(_engine,
                 _testTasks.GetVoidTask(PointOfFailure.Canceled),
-                new[] { "A", "JS Exception: [object HostObject]", "CLR Exception: A task was canceled." });
+                new[] { "A", "JS Exception: A task was canceled.", "CLR Exception: A task was canceled." });
             await RunTestScriptWithTryCatch(_engine,
                 _testTasks.GetVoidTask(PointOfFailure.A),
-                new[] { "A", "JS Exception: [object HostObject]", "CLR Exception: GetVoid Fail A" });
+                new[] { "A", "JS Exception: GetVoid Fail A", "CLR Exception: GetVoid Fail A" });
             await RunTestScriptWithTryCatch(_engine,
                 _testTasks.GetVoidTask(PointOfFailure.B),
-                new[] { "A", "B", "JS Exception: [object HostObject]", "CLR Exception: GetVoid Fail B" });
+                new[] { "A", "B", "JS Exception: GetVoid Fail B", "CLR Exception: GetVoid Fail B" });
             await RunTestScriptWithTryCatch(_engine,
                 _testTasks.GetVoidTask(PointOfFailure.C),
-                new[] { "A", "B", "C", "JS Exception: [object HostObject]", "CLR Exception: GetVoid Fail C" });
+                new[] { "A", "B", "C", "JS Exception: GetVoid Fail C", "CLR Exception: GetVoid Fail C" });
         }
 
         [TestMethod, TestCategory("ToTask")]
@@ -282,7 +283,7 @@ namespace Microsoft.ClearScript.Test
 						try {
 							return await testDelegate().ToPromise();
 						} catch (error) {
-							Tracer.Log('JS Exception: ' + error);
+							Tracer.Log('JS Exception: ' + GetInnerMostMessage(error));
 							throw error;
 						}
 					},
