@@ -45,8 +45,9 @@ namespace Microsoft.ClearScript.Test
 			{
 				task.ContinueWith(thisTask =>
 				{
-					if (thisTask.IsCanceled) reject(thisTask);
-					else if (thisTask.IsFaulted) reject(thisTask);
+					// Order is important
+					if (thisTask.IsCanceled) reject(new TaskCanceledException());
+					else if (thisTask.IsFaulted) reject(thisTask.Exception);
 					else if (thisTask.IsCompleted) resolve(thisTask.Result);
 					else reject(thisTask);
 				}, TaskContinuationOptions.ExecuteSynchronously);
@@ -83,8 +84,9 @@ namespace Microsoft.ClearScript.Test
 			{
 				task.ContinueWith(thisTask =>
 				{
-					if (thisTask.IsCanceled) reject(thisTask);
-					else if (thisTask.IsFaulted) reject(thisTask);
+					// Order is important
+					if (thisTask.IsCanceled) reject(new TaskCanceledException());
+					else if (thisTask.IsFaulted) reject(thisTask.Exception);
 					else if (thisTask.IsCompleted) resolve();
 					else reject(thisTask);
 				}, TaskContinuationOptions.ExecuteSynchronously);
@@ -105,16 +107,10 @@ namespace Microsoft.ClearScript.Test
 				new Action<object>(result => source.SetResult(result)),
 				new Action<dynamic>(rejected =>
 				{
-					var t = rejected as Task;
-					if (t != null)
-					{
-						if (t.IsCanceled) source.SetCanceled();
-						else if (t.Exception != null) source.SetException(t.Exception);
-					}
-					else
-					{
-						source.SetException(new Exception(rejected.ToString()));
-					}
+					var ex = rejected as Exception;
+					if (ex is TaskCanceledException) source.SetCanceled();
+					else if (ex != null) source.SetException(ex);
+					else source.SetException(new Exception(rejected.ToString()));
 				})
 			);
 			return source.Task;

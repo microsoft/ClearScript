@@ -1,12 +1,11 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using Microsoft.ClearScript.V8;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Microsoft.ClearScript.JavaScript;
-using Microsoft.ClearScript.V8;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -41,7 +40,7 @@ namespace Microsoft.ClearScript.Test
             BaseTestCleanup();
         }
 
-        #endregion
+        #endregion setup / teardown
 
         #region test methods
 
@@ -72,7 +71,7 @@ namespace Microsoft.ClearScript.Test
         public void Extensions_JavaScript_ToPromise()
         {
             engine.Script.promise = Task.FromResult(Math.PI).ToPromise(engine);
-            engine.Execute("(async function () { result = await promise; })()"); 
+            engine.Execute("(async function () { result = await promise; })()");
             Assert.AreEqual(Math.PI, engine.Script.result);
 
             engine.Script.task = Task.FromResult(Math.E);
@@ -92,9 +91,37 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(Math.E, engine.Script.result);
         }
 
+        [TestMethod, TestCategory("Extensions")]
+        public void Extensions_JavaScript_ToPromise_ErrorHandling()
+        {
+            engine.Script.errorResult = null;
+            engine.Script.promise = Task_FromException(new Exception("MyException")).ToPromise(engine);
+            engine.Execute(@"
+                    (async function () {
+                        try {
+                            result = await promise;
+                        } catch (error) {
+                            errorResult = error.InnerException.Message;
+                        }
+                    })()");
+            Assert.AreEqual("MyException", engine.Script.errorResult);
+
+            engine.Script.errorResult = null;
+            engine.Script.task = Task_FromException(new Exception("MyException"));
+            engine.Execute(@"
+                    (async function () {
+                        try {
+                            result = await task.ToPromise();
+                        } catch (error) {
+                            errorResult = error.InnerException.Message;
+                        }
+                    })()");
+            Assert.AreEqual("MyException", engine.Script.errorResult);
+        }
+
         // ReSharper restore InconsistentNaming
 
-        #endregion
+        #endregion test methods
 
         #region miscellaneous
 
@@ -105,6 +132,19 @@ namespace Microsoft.ClearScript.Test
             return task;
         }
 
-        #endregion
+        public Task Task_FromException(Exception ex)
+        {
+            Task task = null;
+            try
+            {
+                task = Task.Run(() => { throw ex; });
+            }
+            catch (Exception)
+            {
+            }
+            return task;
+        }
+
+        #endregion miscellaneous
     }
 }
