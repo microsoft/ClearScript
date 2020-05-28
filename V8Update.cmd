@@ -5,7 +5,7 @@ setlocal
 :: process arguments
 ::-----------------------------------------------------------------------------
 
-set v8testedrev=8.1.307.28
+set v8testedrev=8.3.110.9
 
 :ProcessArgs
 
@@ -212,25 +212,37 @@ cd ..
 :Build32Bit
 echo Building 32-bit V8 ...
 cd v8
+setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x86 >nul
-if errorlevel 1 goto Error
+if errorlevel 1 goto Build32BitError
 call gn gen out\ia32\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_i18n_support=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_target_cpu=\"x86\" v8_use_external_startup_data=false" >gn-ia32.log
-if errorlevel 1 goto Error
+if errorlevel 1 goto Build32BitError
 ninja -C out\ia32\%mode% v8-ia32.dll >build-ia32.log
-if errorlevel 1 goto Error
+if errorlevel 1 goto Build32BitError
+endlocal
 cd ..
+goto Build32BitDone
+:Build32BitError
+endlocal
+goto Error
 :Build32BitDone
 
 :Build64Bit
 echo Building 64-bit V8 ...
 cd v8
+setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64 >nul
-if errorlevel 1 goto Error
+if errorlevel 1 goto Build64BitError
 call gn gen out\x64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_i18n_support=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_target_cpu=\"x64\" v8_use_external_startup_data=false" >gn-x64.log
-if errorlevel 1 goto Error
+if errorlevel 1 goto Build64BitError
 ninja -C out\x64\%mode% v8-x64.dll >build-x64.log
-if errorlevel 1 goto Error
+if errorlevel 1 goto Build64BitError
+endlocal
 cd ..
+goto Build64BitDone
+:Build64BitError
+endlocal
+goto Error
 :Build64BitDone
 
 :BuildDone

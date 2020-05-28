@@ -1680,7 +1680,7 @@ namespace Microsoft.ClearScript
                 return collection;
             }
 
-            throw new ArgumentException("Object type is not imported", "obj");
+            throw new ArgumentException("The object type is not of an imported (COM/ActiveX) type", "obj");
         }
 
         // ReSharper restore InconsistentNaming

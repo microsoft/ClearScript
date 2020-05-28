@@ -282,7 +282,7 @@ namespace Microsoft.ClearScript
                 {
                     if (dispid >= int.MaxValue)
                     {
-                        throw new NotSupportedException("Object cannot support additional dynamic members");
+                        throw new NotSupportedException("The object cannot support additional dynamic members");
                     }
                 }
 

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
@@ -220,25 +221,30 @@ namespace Microsoft.ClearScript.V8
 
                 Execute(initScriptInfo,
                     @"
-                        EngineInternal = (function () {
+                        Object.defineProperty(this, 'EngineInternal', { value: (function () {
 
                             function convertArgs(args) {
-                                var result = [];
-                                var count = args.Length;
-                                for (var i = 0; i < count; i++) {
+                                let result = [];
+                                let count = args.Length;
+                                for (let i = 0; i < count; i++) {
                                     result.push(args[i]);
                                 }
                                 return result;
                             }
 
-                            function construct(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15) {
-                                return new this(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+                            function construct() {
+                                return new this(...arguments);
                             }
 
-                            var isHostObjectKey = this.isHostObjectKey;
+                            const isHostObjectKey = this.isHostObjectKey;
                             delete this.isHostObjectKey;
 
-                            return {
+                            const savedPromise = Promise;
+
+                            return Object.freeze({
+
+                                commandHolder: {
+                                },
 
                                 getCommandResult: function (value) {
                                     if (value == null) {
@@ -273,6 +279,37 @@ namespace Microsoft.ClearScript.V8
                                     return method.apply(target, convertArgs(args));
                                 },
 
+                                createPromise: function () {
+                                    return new savedPromise(...arguments);
+                                },
+
+                                isPromise: function (value) {
+                                    return value instanceof savedPromise;
+                                },
+
+                                onTaskWithResultCompleted: function (task, resolve, reject) {
+                                    try {
+                                        resolve(task.Result);
+                                    }
+                                    catch (exception) {
+                                        reject(exception);
+                                    }
+                                },
+
+                                onTaskCompleted: function (task, resolve, reject) {
+                                    try {
+                                        task.Wait();
+                                        resolve();
+                                    }
+                                    catch (exception) {
+                                        reject(exception);
+                                    }
+                                },
+
+                                throwValue: function (value) {
+                                    throw value;
+                                },
+
                                 getStackTrace: function () {
                                     try {
                                         throw new Error('[stack trace]');
@@ -282,8 +319,8 @@ namespace Microsoft.ClearScript.V8
                                     }
                                     return '';
                                 }
-                            };
-                        })();
+                            });
+                        })() });
                     "
                 );
 
@@ -1125,8 +1162,8 @@ namespace Microsoft.ClearScript.V8
         {
             return ScriptInvoke(() =>
             {
-                Script.EngineInternal.command = command;
-                return base.ExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.command))");
+                Script.EngineInternal.commandHolder.command = command;
+                return base.ExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.commandHolder.command))");
             });
         }
 
@@ -1213,6 +1250,8 @@ namespace Microsoft.ClearScript.V8
 
         internal override object MarshalToScript(object obj, HostItemFlags flags)
         {
+            const long maxIntInDouble = (1L << 53) - 1;
+
             if (obj == null)
             {
                 return DBNull.Value;
@@ -1231,6 +1270,41 @@ namespace Microsoft.ClearScript.V8
             if (obj is Nothing)
             {
                 return null;
+            }
+
+            if (obj is BigInteger)
+            {
+                return obj;
+            }
+
+            if (obj is long)
+            {
+                var value = (long)obj;
+
+                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalAllLongAsBigInt))
+                {
+                    return new BigInteger(value);
+                }
+
+                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt) && (Math.Abs(value) > maxIntInDouble))
+                {
+                    return new BigInteger(value);
+                }
+            }
+
+            if (obj is ulong)
+            {
+                var value = (ulong)obj;
+
+                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalAllLongAsBigInt))
+                {
+                    return new BigInteger(value);
+                }
+
+                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt) && (value > maxIntInDouble))
+                {
+                    return new BigInteger(value);
+                }
             }
 
             if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableDateTimeConversion) && (obj is DateTime))
@@ -1409,6 +1483,7 @@ namespace Microsoft.ClearScript.V8
         {
             if (disposedFlag.Set())
             {
+                base.Dispose(disposing);
                 if (disposing)
                 {
                     ((IDisposable)script).Dispose();

@@ -12,7 +12,6 @@ namespace Microsoft.ClearScript.Util
     [SuppressMessage("ReSharper", "CommentTypo")]
     internal abstract class VTablePatcher
     {
-        private static readonly object patchLock = new object();
         private static readonly HashSet<IntPtr> patchedVTables = new HashSet<IntPtr>();
         private static IntPtr hHeap;
 
@@ -23,14 +22,14 @@ namespace Microsoft.ClearScript.Util
 
         public static object PatchLock
         {
-            get { return patchLock; }
+            get { return patchedVTables; }
         }
 
         public abstract void PatchDispatchEx(IntPtr pDispatchEx);
 
         private static void ApplyVTablePatches(IntPtr pInterface, params VTablePatch[] patches)
         {
-            lock (patchLock)
+            lock (PatchLock)
             {
                 var pVTable = Marshal.ReadIntPtr(pInterface);
                 if (!patchedVTables.Contains(pVTable))

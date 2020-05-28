@@ -117,6 +117,7 @@
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_DocumentCategory.htm" />
     <HelpKINode Title="properties" Url="html/Properties_T_Microsoft_ClearScript_DocumentCategory.htm" />
   </HelpKINode>
+  <HelpKINode Title="DocumentCategory.MaxCacheSize property" Url="html/P_Microsoft_ClearScript_DocumentCategory_MaxCacheSize.htm" />
   <HelpKINode Title="DocumentCategory.Script property" Url="html/P_Microsoft_ClearScript_DocumentCategory_Script.htm" />
   <HelpKINode Title="DocumentContextCallback delegate" Url="html/T_Microsoft_ClearScript_DocumentContextCallback.htm" />
   <HelpKINode Title="DocumentFlags enumeration" Url="html/T_Microsoft_ClearScript_DocumentFlags.htm" />
@@ -146,6 +147,7 @@
   <HelpKINode Title="DocumentLoader.DocumentLoader constructor" Url="html/M_Microsoft_ClearScript_DocumentLoader__ctor.htm" />
   <HelpKINode Title="DocumentLoader.LoadDocument method" Url="html/M_Microsoft_ClearScript_DocumentLoader_LoadDocument.htm" />
   <HelpKINode Title="DocumentLoader.LoadDocumentAsync method" Url="html/M_Microsoft_ClearScript_DocumentLoader_LoadDocumentAsync.htm" />
+  <HelpKINode Title="DocumentLoader.MaxCacheSize property" Url="html/P_Microsoft_ClearScript_DocumentLoader_MaxCacheSize.htm" />
   <HelpKINode Title="DocumentSettings class">
     <HelpKINode Title="DocumentSettings Class" Url="html/T_Microsoft_ClearScript_DocumentSettings.htm" />
     <HelpKINode Title="constructor" Url="html/M_Microsoft_ClearScript_DocumentSettings__ctor.htm" />
@@ -165,6 +167,13 @@
   <HelpKINode Title="DocumentSettings.Loader property" Url="html/P_Microsoft_ClearScript_DocumentSettings_Loader.htm" />
   <HelpKINode Title="DocumentSettings.SearchPath property" Url="html/P_Microsoft_ClearScript_DocumentSettings_SearchPath.htm" />
   <HelpKINode Title="DoNotEnableVTablePatching enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
+  <HelpKINode Title="DynamicHostObject class">
+    <HelpKINode Title="DynamicHostObject Class" Url="html/T_Microsoft_ClearScript_DynamicHostObject.htm" />
+    <HelpKINode Title="constructor" Url="html/M_Microsoft_ClearScript_DynamicHostObject__ctor.htm" />
+    <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_DynamicHostObject.htm" />
+  </HelpKINode>
+  <HelpKINode Title="DynamicHostObject.DynamicHostObject constructor" Url="html/M_Microsoft_ClearScript_DynamicHostObject__ctor.htm" />
+  <HelpKINode Title="DynamicHostObject.HasMember method" Url="html/M_Microsoft_ClearScript_DynamicHostObject_HasMember.htm" />
   <HelpKINode Title="EnableAllLoading enumeration member" Url="html/T_Microsoft_ClearScript_DocumentAccessFlags.htm" />
   <HelpKINode Title="EnableAutoHostVariables property" Url="html/P_Microsoft_ClearScript_ScriptEngine_EnableAutoHostVariables.htm" />
   <HelpKINode Title="EnableDateTimeConversion enumeration member" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
@@ -305,8 +314,8 @@
     <HelpKINode Title="ScriptEngineException.GetObjectData Method " Url="html/M_Microsoft_ClearScript_ScriptEngineException_GetObjectData.htm" />
     <HelpKINode Title="ScriptInterruptedException.GetObjectData Method " Url="html/M_Microsoft_ClearScript_ScriptInterruptedException_GetObjectData.htm" />
   </HelpKINode>
-  <HelpKINode Title="getProperty method" Url="html/Overload_Microsoft_ClearScript_HostFunctions_getProperty.htm" />
   <HelpKINode Title="GetProperty method" Url="html/Overload_Microsoft_ClearScript_ScriptObject_GetProperty.htm" />
+  <HelpKINode Title="getProperty method" Url="html/Overload_Microsoft_ClearScript_HostFunctions_getProperty.htm" />
   <HelpKINode Title="GetRuntimeHeapInfo method" Url="html/M_Microsoft_ClearScript_V8_V8ScriptEngine_GetRuntimeHeapInfo.htm" />
   <HelpKINode Title="GetStackTrace method">
     <HelpKINode Title="ScriptEngine.GetStackTrace Method " Url="html/M_Microsoft_ClearScript_ScriptEngine_GetStackTrace.htm" />
@@ -315,6 +324,7 @@
   </HelpKINode>
   <HelpKINode Title="GetUnderlyingObject method" Url="html/M_Microsoft_ClearScript_Windows_IWindowsScriptObject_GetUnderlyingObject.htm" />
   <HelpKINode Title="GlobalMembers enumeration member" Url="html/T_Microsoft_ClearScript_HostItemFlags.htm" />
+  <HelpKINode Title="HasMember method" Url="html/M_Microsoft_ClearScript_DynamicHostObject_HasMember.htm" />
   <HelpKINode Title="HeapSizeLimit property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_HeapSizeLimit.htm" />
   <HelpKINode Title="HeapSizeSampleInterval property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_HeapSizeSampleInterval.htm" />
   <HelpKINode Title="HideDynamicMembers enumeration member" Url="html/T_Microsoft_ClearScript_HostItemFlags.htm" />
@@ -511,6 +521,7 @@
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_JavaScript_JavaScriptExtensions.htm" />
   </HelpKINode>
   <HelpKINode Title="JavaScriptExtensions.ToPromise method" Url="html/Overload_Microsoft_ClearScript_JavaScript_JavaScriptExtensions_ToPromise.htm" />
+  <HelpKINode Title="JavaScriptExtensions.ToTask method" Url="html/M_Microsoft_ClearScript_JavaScript_JavaScriptExtensions_ToTask.htm" />
   <HelpKINode Title="JScriptEngine class">
     <HelpKINode Title="JScriptEngine Class" Url="html/T_Microsoft_ClearScript_Windows_JScriptEngine.htm" />
     <HelpKINode Title="constructor" Url="html/Overload_Microsoft_ClearScript_Windows_JScriptEngine__ctor.htm" />
@@ -529,10 +540,16 @@
   <HelpKINode Title="LoadDocument method" Url="html/M_Microsoft_ClearScript_DocumentLoader_LoadDocument.htm" />
   <HelpKINode Title="LoadDocumentAsync method" Url="html/M_Microsoft_ClearScript_DocumentLoader_LoadDocumentAsync.htm" />
   <HelpKINode Title="Loader property" Url="html/P_Microsoft_ClearScript_DocumentSettings_Loader.htm" />
+  <HelpKINode Title="MarshalAllLongAsBigInt enumeration member" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
   <HelpKINode Title="MarshalArraysByValue enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
   <HelpKINode Title="MarshalDateTimeAsDate enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
   <HelpKINode Title="MarshalDecimalAsCurrency enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
   <HelpKINode Title="MarshalNullAsDispatch enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
+  <HelpKINode Title="MarshalUnsafeLongAsBigInt enumeration member" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
+  <HelpKINode Title="MaxCacheSize property">
+    <HelpKINode Title="DocumentCategory.MaxCacheSize Property " Url="html/P_Microsoft_ClearScript_DocumentCategory_MaxCacheSize.htm" />
+    <HelpKINode Title="DocumentLoader.MaxCacheSize Property " Url="html/P_Microsoft_ClearScript_DocumentLoader_MaxCacheSize.htm" />
+  </HelpKINode>
   <HelpKINode Title="MaxExecutableSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeConstraints_MaxExecutableSize.htm" />
   <HelpKINode Title="MaxHeapSize property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_MaxHeapSize.htm" />
   <HelpKINode Title="MaxNewSpaceSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeConstraints_MaxNewSpaceSize.htm" />
@@ -554,6 +571,7 @@
   <HelpKINode Title="Microsoft.ClearScript.DocumentLoadCallback delegate" Url="html/T_Microsoft_ClearScript_DocumentLoadCallback.htm" />
   <HelpKINode Title="Microsoft.ClearScript.DocumentLoader class" Url="html/T_Microsoft_ClearScript_DocumentLoader.htm" />
   <HelpKINode Title="Microsoft.ClearScript.DocumentSettings class" Url="html/T_Microsoft_ClearScript_DocumentSettings.htm" />
+  <HelpKINode Title="Microsoft.ClearScript.DynamicHostObject class" Url="html/T_Microsoft_ClearScript_DynamicHostObject.htm" />
   <HelpKINode Title="Microsoft.ClearScript.EventConnection(Of T) class" Url="html/T_Microsoft_ClearScript_EventConnection_1.htm" />
   <HelpKINode Title="Microsoft.ClearScript.EventConnection&lt;T&gt; class" Url="html/T_Microsoft_ClearScript_EventConnection_1.htm" />
   <HelpKINode Title="Microsoft.ClearScript.EventSource(Of T) class" Url="html/T_Microsoft_ClearScript_EventSource_1.htm" />
@@ -882,6 +900,7 @@
   <HelpKINode Title="TotalHeapSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalHeapSize.htm" />
   <HelpKINode Title="TotalHeapSizeExecutable property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalHeapSizeExecutable.htm" />
   <HelpKINode Title="TotalPhysicalSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalPhysicalSize.htm" />
+  <HelpKINode Title="ToTask method" Url="html/M_Microsoft_ClearScript_JavaScript_JavaScriptExtensions_ToTask.htm" />
   <HelpKINode Title="toUInt16 method" Url="html/M_Microsoft_ClearScript_HostFunctions_toUInt16.htm" />
   <HelpKINode Title="toUInt32 method" Url="html/M_Microsoft_ClearScript_HostFunctions_toUInt32.htm" />
   <HelpKINode Title="toUInt64 method" Url="html/M_Microsoft_ClearScript_HostFunctions_toUInt64.htm" />

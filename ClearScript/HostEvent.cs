@@ -21,6 +21,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(engine, "engine");
             MiscHelpers.VerifyNonNullArgument(eventInfo, "eventInfo");
+
             if (eventInfo.EventHandlerType != typeof(T))
             {
                 throw new ArgumentException("Invalid event type", "eventInfo");
@@ -53,9 +54,7 @@ namespace Microsoft.ClearScript
         public EventConnection<T> connect(object scriptFunc)
         {
             MiscHelpers.VerifyNonNullArgument(scriptFunc, "scriptFunc");
-            var handler = DelegateFactory.CreateDelegate(engine, scriptFunc, eventInfo.EventHandlerType);
-            eventInfo.AddEventHandler(source, handler);
-            return new EventConnection<T>(source, eventInfo, handler);
+            return engine.CreateEventConnection<T>(source, eventInfo, DelegateFactory.CreateDelegate(engine, scriptFunc, typeof(T)));
         }
 
         // ReSharper restore InconsistentNaming
@@ -63,28 +62,40 @@ namespace Microsoft.ClearScript
         #endregion
     }
 
+    internal interface IEventConnection
+    {
+        void Break();
+    }
+
     /// <summary>
     /// Represents a connection between a host event source and a script handler function.
     /// </summary>
     /// <typeparam name="T">The event handler delegate type.</typeparam>
-    public class EventConnection<T>
+    public class EventConnection<T> : IEventConnection
     {
-        private object source;
-        private EventInfo eventInfo;
-        private Delegate handler;
+        private readonly ScriptEngine engine;
+        private readonly object source;
+        private readonly EventInfo eventInfo;
+        private readonly Delegate handler;
+        private readonly InterlockedOneWayFlag brokenFlag = new InterlockedOneWayFlag();
 
-        internal EventConnection(object source, EventInfo eventInfo, Delegate handler)
+        internal EventConnection(ScriptEngine engine, object source, EventInfo eventInfo, Delegate handler)
         {
+            MiscHelpers.VerifyNonNullArgument(engine, "engine");
             MiscHelpers.VerifyNonNullArgument(handler, "handler");
             MiscHelpers.VerifyNonNullArgument(eventInfo, "eventInfo");
+
             if (eventInfo.EventHandlerType != typeof(T))
             {
                 throw new ArgumentException("Invalid event type", "eventInfo");
             }
 
+            this.engine = engine;
             this.source = source;
             this.eventInfo = eventInfo;
             this.handler = handler;
+
+            eventInfo.AddEventHandler(source, handler);
         }
 
         #region script-callable interface
@@ -96,17 +107,23 @@ namespace Microsoft.ClearScript
         /// </summary>
         public void disconnect()
         {
-            if (handler != null)
-            {
-                eventInfo.RemoveEventHandler(source, handler);
-                source = null;
-                eventInfo = null;
-                handler = null;
-            }
+            engine.BreakEventConnection(this);
         }
 
         // ReSharper restore InconsistentNaming
 
         #endregion
+
+        #region IEventConnection implementation
+
+        void IEventConnection.Break()
+        {
+            if (brokenFlag.Set())
+            {
+                eventInfo.RemoveEventHandler(source, handler);
+            }
+        }
+
+        #endregion 
     }
 }

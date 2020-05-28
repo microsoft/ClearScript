@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 
@@ -342,6 +343,15 @@ namespace Microsoft.ClearScript.V8
             }
 
             return null;
+        }
+
+        #endregion
+
+        #region miscellaneous
+
+        public static byte[] BigIntegerToByteArray(BigInteger value)
+        {
+            return value.ToByteArray();
         }
 
         #endregion

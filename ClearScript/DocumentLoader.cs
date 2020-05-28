@@ -39,6 +39,20 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
+        /// Gets or sets the maximum size of the document loader's cache.
+        /// </summary>
+        /// <remarks>
+        /// This property specifies the maximum number of documents to be cached by the document
+        /// loader. For the default document loader, its initial value is 1024.
+        /// </remarks>
+        /// <seealso cref="Default"/>
+        public virtual uint MaxCacheSize
+        {
+            get { return 0; }
+            set { throw new NotSupportedException("Loader does not support caching"); }
+        }
+
+        /// <summary>
         /// Loads a document.
         /// </summary>
         /// <param name="settings">Document access settings for the operation.</param>
@@ -99,7 +113,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: DefaultImpl
 
-        private class DefaultImpl : DocumentLoader
+        private sealed class DefaultImpl : DocumentLoader
         {
             public static readonly DefaultImpl Instance = new DefaultImpl();
 
@@ -111,12 +125,11 @@ namespace Microsoft.ClearScript
                 ".." + Path.AltDirectorySeparatorChar,
             };
 
-            private readonly object cacheLock = new object();
             private readonly List<Document> cache = new List<Document>();
-            private const int maxCacheSize = 1024;
 
             private DefaultImpl()
             {
+                MaxCacheSize = 1024;
             }
 
             private static async Task<List<Uri>> GetCandidateUrisAsync(DocumentSettings settings, DocumentInfo? sourceInfo, Uri uri)
@@ -310,7 +323,7 @@ namespace Microsoft.ClearScript
                 {
                     if (!flags.HasFlag(DocumentAccessFlags.EnableFileLoading))
                     {
-                        throw new UnauthorizedAccessException("This script engine is not configured for loading documents from the file system");
+                        throw new UnauthorizedAccessException("The script engine is not configured for loading documents from the file system");
                     }
 
                     using (var reader = new StreamReader(uri.LocalPath))
@@ -322,7 +335,7 @@ namespace Microsoft.ClearScript
                 {
                     if (!flags.HasFlag(DocumentAccessFlags.EnableWebLoading))
                     {
-                        throw new UnauthorizedAccessException("This script engine is not configured for downloading documents from the Web");
+                        throw new UnauthorizedAccessException("The script engine is not configured for downloading documents from the Web");
                     }
 
                     using (var client = new WebClient())
@@ -344,7 +357,7 @@ namespace Microsoft.ClearScript
 
             private Document GetCachedDocument(Uri uri)
             {
-                lock (cacheLock)
+                lock (cache)
                 {
                     for (var index = 0; index < cache.Count; index++)
                     {
@@ -363,7 +376,7 @@ namespace Microsoft.ClearScript
 
             private Document CacheDocument(Document document)
             {
-                lock (cacheLock)
+                lock (cache)
                 {
                     var cachedDocument = cache.FirstOrDefault(testDocument => testDocument.Info.Uri == document.Info.Uri);
                     if (cachedDocument != null)
@@ -372,6 +385,7 @@ namespace Microsoft.ClearScript
                         return cachedDocument;
                     }
 
+                    var maxCacheSize = Math.Max(16, Convert.ToInt32(Math.Min(MaxCacheSize, int.MaxValue)));
                     while (cache.Count >= maxCacheSize)
                     {
                         cache.RemoveAt(cache.Count - 1);
@@ -384,6 +398,8 @@ namespace Microsoft.ClearScript
 
             #region DocumentLoader overrides
 
+            public override uint MaxCacheSize { get; set; }
+
             public override async Task<Document> LoadDocumentAsync(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
             {
                 MiscHelpers.VerifyNonNullArgument(settings, "settings");
@@ -391,7 +407,7 @@ namespace Microsoft.ClearScript
 
                 if ((settings.AccessFlags & DocumentAccessFlags.EnableAllLoading) == DocumentAccessFlags.None)
                 {
-                    throw new UnauthorizedAccessException("This script engine is not configured for loading documents");
+                    throw new UnauthorizedAccessException("The script engine is not configured for loading documents");
                 }
 
                 if (category == null)
@@ -461,7 +477,7 @@ namespace Microsoft.ClearScript
 
             public override void DiscardCachedDocuments()
             {
-                lock (cacheLock)
+                lock (cache)
                 {
                     cache.Clear();
                 }

@@ -165,6 +165,16 @@ private:
         return m_spIsolateImpl->CreateInteger(value);
     }
 
+    v8::Local<v8::BigInt> CreateBigInt(int64_t value)
+    {
+        return m_spIsolateImpl->CreateBigInt(value);
+    }
+
+    v8::Local<v8::BigInt> CreateBigInt(uint64_t value)
+    {
+        return m_spIsolateImpl->CreateBigInt(value);
+    }
+
     v8::MaybeLocal<v8::String> CreateString(const StdString& value, v8::NewStringType type = v8::NewStringType::kNormal)
     {
         return m_spIsolateImpl->CreateString(value, type);
@@ -188,6 +198,21 @@ private:
     v8::Local<v8::Array> CreateArray(int length = 0)
     {
         return m_spIsolateImpl->CreateArray(length);
+    }
+
+    v8::Local<v8::PrimitiveArray> CreatePrimitiveArray(int length)
+    {
+        return m_spIsolateImpl->CreatePrimitiveArray(length);
+    }
+
+    void SetPrimitiveArrayItem(v8::Local<v8::PrimitiveArray> hArray, int index, v8::Local<v8::Primitive> hItem)
+    {
+        m_spIsolateImpl->SetPrimitiveArrayItem(hArray, index, hItem);
+    }
+
+    v8::Local<v8::Primitive> GetPrimitiveArrayItem(v8::Local<v8::PrimitiveArray> hArray, int index)
+    {
+        return m_spIsolateImpl->GetPrimitiveArrayItem(hArray, index);
     }
 
     v8::Local<v8::External> CreateExternal(void* pvValue)
@@ -371,13 +396,19 @@ private:
     static void InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void FlushCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
 
+    v8::MaybeLocal<v8::Promise> ImportModule(const V8DocumentInfo* pSourceDocumentInfo, v8::Local<v8::String> hSpecifier);
+    v8::MaybeLocal<v8::Module> ResolveModule(v8::Local<v8::String> hSpecifier, const V8DocumentInfo* pSourceDocumentInfo);
+
     static void DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, HostObjectHolder* pHolder, void* pvV8ObjectCache);
 
-    v8::Local<v8::Module> GetCachedModule(const V8DocumentInfo& documentInfo, size_t codeDigest);
+    bool TryGetCachedModuleInfo(uint64_t uniqueId, V8DocumentInfo& documentInfo);
+    bool TryGetCachedModuleInfo(v8::Local<v8::Module> hModule, V8DocumentInfo& documentInfo);
+    v8::Local<v8::Module> GetCachedModule(uint64_t uniqueId, size_t codeDigest);
     void CacheModule(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::Module> hModule);
     void ClearModuleCache();
 
-    v8::Local<v8::UnboundScript> GetCachedScript(const V8DocumentInfo& documentInfo, size_t codeDigest);
+    bool TryGetCachedScriptInfo(uint64_t uniqueId, V8DocumentInfo& documentInfo);
+    v8::Local<v8::UnboundScript> GetCachedScript(uint64_t uniqueId, size_t codeDigest);
     void CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript);
 
     v8::Local<v8::Value> ImportValue(const V8Value& value);

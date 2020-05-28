@@ -36,6 +36,7 @@ using namespace System;
 using namespace System::Collections::Generic;
 using namespace System::Collections::ObjectModel;
 using namespace System::Globalization;
+using namespace System::Numerics;
 using namespace System::Runtime::InteropServices;
 using namespace System::Text;
 using namespace System::Threading;

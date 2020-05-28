@@ -256,7 +256,7 @@ namespace Microsoft.ClearScript
             set { Collateral.TargetList.Set(this, value); }
         }
 
-        private DynamicMetaObject TargetDynamicMetaObject
+        private DynamicHostMetaObject TargetDynamicMetaObject
         {
             get { return Collateral.TargetDynamicMetaObject.Get(this); }
             set { Collateral.TargetDynamicMetaObject.Set(this, value); }
@@ -477,7 +477,8 @@ namespace Microsoft.ClearScript
                     IDynamicMetaObjectProvider dynamicMetaObjectProvider;
                     if (!flags.HasFlag(HostItemFlags.HideDynamicMembers) && BindSpecialTarget(out dynamicMetaObjectProvider))
                     {
-                        TargetDynamicMetaObject = dynamicMetaObjectProvider.GetMetaObject(Expression.Constant(target.InvokeTarget));
+                        var dynamicMetaObject = dynamicMetaObjectProvider.GetMetaObject(Expression.Constant(target.InvokeTarget));
+                        TargetDynamicMetaObject = new DynamicHostMetaObject(dynamicMetaObjectProvider, dynamicMetaObject);
                         TargetList = null;
                     }
                     else
@@ -912,7 +913,6 @@ namespace Microsoft.ClearScript
 
             const BindingFlags offFlags =
                 BindingFlags.DeclaredOnly |
-                BindingFlags.IgnoreCase |
                 BindingFlags.ExactBinding;
 
             const BindingFlags setPropertyFlags =
@@ -1089,7 +1089,7 @@ namespace Microsoft.ClearScript
                         }
                     }
 
-                    throw new NotSupportedException("Object does not support the requested invocation operation");
+                    throw new NotSupportedException("The object does not support the requested invocation operation");
                 }
 
                 if (name == SpecialMemberNames.NewEnum)
@@ -1099,7 +1099,7 @@ namespace Microsoft.ClearScript
 
                 if (!TargetPropertyBag.TryGetValue(name, out value))
                 {
-                    throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no property named '{0}'", name));
+                    throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no property named '{0}'", name));
                 }
 
                 object result;
@@ -1117,16 +1117,22 @@ namespace Microsoft.ClearScript
 
                     if (args.Length == 1)
                     {
+                        // ReSharper disable ConditionIsAlwaysTrueOrFalse
+                        // ReSharper disable HeuristicUnreachableCode
+
                         if (value == null)
                         {
                             throw new InvalidOperationException("Cannot invoke a null property value");
                         }
 
                         return ((HostItem)Wrap(engine, value)).InvokeMember(SpecialMemberNames.Default, invokeFlags, args, bindArgs, null, true);
+
+                        // ReSharper restore HeuristicUnreachableCode
+                        // ReSharper restore ConditionIsAlwaysTrueOrFalse
                     }
                 }
 
-                throw new NotSupportedException("Object does not support the requested invocation operation");
+                throw new NotSupportedException("The object does not support the requested invocation operation");
             }
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
@@ -1177,15 +1183,21 @@ namespace Microsoft.ClearScript
                     object value;
                     if (TargetPropertyBag.TryGetValue(name, out value))
                     {
+                        // ReSharper disable ConditionIsAlwaysTrueOrFalse
+                        // ReSharper disable HeuristicUnreachableCode
+
                         if (value == null)
                         {
                             throw new InvalidOperationException("Cannot invoke a null property value");
                         }
 
                         return ((HostItem)Wrap(engine, value)).InvokeMember(SpecialMemberNames.Default, invokeFlags, args, bindArgs, null, true);
+
+                        // ReSharper restore HeuristicUnreachableCode
+                        // ReSharper restore ConditionIsAlwaysTrueOrFalse
                     }
 
-                    throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no property named '{0}'", name));
+                    throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no property named '{0}'", name));
                 }
 
                 throw new InvalidOperationException("Invalid argument count");
@@ -1209,7 +1221,7 @@ namespace Microsoft.ClearScript
                     return TargetList[index];
                 }
 
-                throw new NotSupportedException("Object does not support the requested invocation operation");
+                throw new NotSupportedException("The object does not support the requested invocation operation");
             }
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
@@ -1335,7 +1347,7 @@ namespace Microsoft.ClearScript
                         }
                     }
 
-                    throw new NotSupportedException("Object does not support the requested invocation operation");
+                    throw new NotSupportedException("The object does not support the requested invocation operation");
                 }
 
                 if (name == SpecialMemberNames.NewEnum)
@@ -1354,10 +1366,10 @@ namespace Microsoft.ClearScript
                         }
                     }
 
-                    throw new NotSupportedException("Object is not enumerable");
+                    throw new NotSupportedException("The object is not enumerable");
                 }
 
-                if ((TargetDynamicMetaObject != null) && (TargetDynamicMetaObject.GetDynamicMemberNames().Contains(name)))
+                if ((TargetDynamicMetaObject != null) && TargetDynamicMetaObject.HasMember(name, invokeFlags.HasFlag(BindingFlags.IgnoreCase)))
                 {
                     if (TargetDynamicMetaObject.TryInvokeMember(this, name, invokeFlags, args, out result))
                     {
@@ -1410,7 +1422,7 @@ namespace Microsoft.ClearScript
                     return GetHostProperty(name, invokeFlags, args, bindArgs, culture, true, out isCacheable);
                 }
 
-                throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no suitable method named '{0}'", name));
+                throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no suitable method named '{0}'", name));
             }
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
@@ -1466,7 +1478,7 @@ namespace Microsoft.ClearScript
                     }
                 }
 
-                throw new NotSupportedException("Object is not enumerable");
+                throw new NotSupportedException("The object is not enumerable");
             }
 
             if ((TargetDynamicMetaObject != null) && (args.Length < 1))
@@ -1474,7 +1486,7 @@ namespace Microsoft.ClearScript
                 int index;
                 object result;
 
-                if (TargetDynamicMetaObject.GetDynamicMemberNames().Contains(name))
+                if (TargetDynamicMetaObject.HasMember(name, invokeFlags.HasFlag(BindingFlags.IgnoreCase)))
                 {
                     if (TargetDynamicMetaObject.TryGetMember(name, out result))
                     {
@@ -1536,7 +1548,7 @@ namespace Microsoft.ClearScript
 
             if (args.Length > 0)
             {
-                throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no suitable property named '{0}'", name));
+                throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no suitable property named '{0}'", name));
             }
 
             var eventInfo = target.Type.GetScriptableEvent(name, invokeFlags, AccessContext, DefaultAccess);
@@ -1707,7 +1719,7 @@ namespace Microsoft.ClearScript
                 throw new InvalidOperationException("Invalid argument count");
             }
 
-            throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no suitable property or field named '{0}'", name));
+            throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no suitable property or field named '{0}'", name));
         }
 
         private object SetHostProperty(PropertyInfo property, BindingFlags invokeFlags, object[] args, CultureInfo culture)
@@ -1864,7 +1876,7 @@ namespace Microsoft.ClearScript
 
             if (fields.Length > 1)
             {
-                throw new AmbiguousMatchException(MiscHelpers.FormatInvariant("Object has multiple fields named '{0}'", name));
+                throw new AmbiguousMatchException(MiscHelpers.FormatInvariant("The object has multiple fields named '{0}'", name));
             }
 
             return fields[0];
@@ -1909,7 +1921,7 @@ namespace Microsoft.ClearScript
 
             if (methods.Length > 1)
             {
-                throw new AmbiguousMatchException(MiscHelpers.FormatInvariant("Object has multiple methods named '{0}'", name));
+                throw new AmbiguousMatchException(MiscHelpers.FormatInvariant("The object has multiple methods named '{0}'", name));
             }
 
             return methods[0];
@@ -1973,7 +1985,7 @@ namespace Microsoft.ClearScript
 
             if (properties.Length > 1)
             {
-                throw new AmbiguousMatchException(MiscHelpers.FormatInvariant("Object has multiple properties named '{0}'", name));
+                throw new AmbiguousMatchException(MiscHelpers.FormatInvariant("The object has multiple properties named '{0}'", name));
             }
 
             return properties[0];
@@ -2038,7 +2050,7 @@ namespace Microsoft.ClearScript
                     throw new InvalidOperationException("Invalid dynamic member deletion");
                 }
 
-                throw new NotSupportedException("Object does not support dynamic members");
+                throw new NotSupportedException("The object does not support dynamic members");
             });
         }
 
@@ -2294,7 +2306,7 @@ namespace Microsoft.ClearScript
                         return MemberMap.GetField(name);
                     }
 
-                    throw new NotSupportedException("Object does not support dynamic fields");
+                    throw new NotSupportedException("The object does not support dynamic fields");
                 });
             }
 
@@ -2308,7 +2320,7 @@ namespace Microsoft.ClearScript
                         return MemberMap.GetProperty(name);
                     }
 
-                    throw new NotSupportedException("Object does not support dynamic properties");
+                    throw new NotSupportedException("The object does not support dynamic properties");
                 });
             }
 
@@ -2375,7 +2387,7 @@ namespace Microsoft.ClearScript
                     }
                     else
                     {
-                        throw new NotSupportedException("Object does not support dynamic members");
+                        throw new NotSupportedException("The object does not support dynamic members");
                     }
 
                     return false;

@@ -12,10 +12,7 @@ namespace Microsoft.ClearScript.JavaScript
     {
         private readonly ScriptEngine engine;
         private readonly ScriptObject createModule;
-
         private readonly List<Module> moduleCache = new List<Module>();
-        private const int maxModuleCacheSize = 1024;
-
         private static readonly DocumentInfo createModuleInfo = new DocumentInfo("CommonJS-createModule [internal]");
 
         public CommonJSManager(ScriptEngine engine)
@@ -111,6 +108,7 @@ namespace Microsoft.ClearScript.JavaScript
                 return cachedModule;
             }
 
+            var maxModuleCacheSize = Math.Max(16, Convert.ToInt32(Math.Min(ModuleCategory.CommonJS.MaxCacheSize, int.MaxValue)));
             while (moduleCache.Count >= maxModuleCacheSize)
             {
                 moduleCache.RemoveAt(moduleCache.Count - 1);

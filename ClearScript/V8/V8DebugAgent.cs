@@ -270,6 +270,9 @@ namespace Microsoft.ClearScript.V8
 
         private bool ConnectClient(WebSocket webSocket)
         {
+            // ReSharper disable ConditionIsAlwaysTrueOrFalse
+            // ReSharper disable HeuristicUnreachableCode
+
             var client = new V8DebugClient(this, webSocket);
             if (Interlocked.CompareExchange(ref activeClient, client, null) == null)
             {
@@ -279,16 +282,23 @@ namespace Microsoft.ClearScript.V8
             }
 
             return false;
+
+            // ReSharper restore HeuristicUnreachableCode
+            // ReSharper restore ConditionIsAlwaysTrueOrFalse
         }
 
         private void DisconnectClient(WebSocket.ErrorCode errorCode, string message)
         {
+            // ReSharper disable ConditionIsAlwaysTrueOrFalse
+
             var client = Interlocked.Exchange(ref activeClient, null);
             if (client != null)
             {
                 client.Dispose(errorCode, message);
                 listener.DisconnectClient();
             }
+
+            // ReSharper restore ConditionIsAlwaysTrueOrFalse
         }
 
         #endregion

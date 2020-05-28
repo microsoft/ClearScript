@@ -2461,6 +2461,19 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("recordSet.Fields.Item(\"baz\")"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_EventAfterEngineDispose()
+        {
+            var testObject = new TestObject();
+            engine.Script.testObject = testObject;
+            engine.Execute("testObject.Event.connect((sender, args) => eventArg = args.Arg)");
+            testObject.FireEvent(123);
+            Assert.AreEqual(123, Convert.ToInt32(engine.Script.eventArg));
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
+            testObject.FireEvent(456);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2539,7 +2552,11 @@ namespace Microsoft.ClearScript.Test
 
         public interface IAmbiguousIndexer : IAmbiguousIndexerBase1, IAmbiguousIndexerBase2
         {
+            #pragma warning disable 109 // The keyword 'new' is redundant because indexer 'this' hides nothing
+
             new object this[int i] { get; set; }
+
+            #pragma warning restore 109 // The keyword 'new' is redundant because indexer 'this' hides nothing
         }
 
         // ReSharper restore PossibleInterfaceMemberAmbiguity

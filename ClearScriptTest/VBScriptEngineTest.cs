@@ -2830,6 +2830,17 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("daTest.Bogus(123.456)"));
         }
 
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_isPromise()
+        {
+            engine.Execute(@"
+                class Promise : end class
+                set value = new Promise
+            ");
+
+            Assert.IsFalse(engine.Script.EngineInternal.isPromise(engine.Script.value));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

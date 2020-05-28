@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.Util;
 
@@ -11,7 +12,7 @@ namespace Microsoft.ClearScript.JavaScript
     /// </summary>
     public static class JavaScriptExtensions
     {
-        private delegate void Executor(dynamic resolve, dynamic reject);
+        private delegate void Executor(object resolve, object reject);
 
         /// <summary>
         /// Converts a <see cref="Task{TResult}"/> instance to a
@@ -40,20 +41,16 @@ namespace Microsoft.ClearScript.JavaScript
             MiscHelpers.VerifyNonNullArgument(task, "task");
             MiscHelpers.VerifyNonNullArgument(engine, "engine");
 
-            var ctor = (ScriptObject)engine.Script.Promise;
-            return ctor.Invoke(true, new Executor((resolve, reject) =>
+            var javaScriptEngine = engine as IJavaScriptEngine;
+            if ((javaScriptEngine == null) || (javaScriptEngine.BaseLanguageVersion < 6))
             {
-                task.ContinueWith(thisTask =>
-                {
-                    if (thisTask.IsCompleted && !thisTask.IsCanceled && !thisTask.IsFaulted)
-                    {
-                        resolve(thisTask.Result);
-                    }
-                    else
-                    {
-                        reject(thisTask.Exception);
-                    }
-                }, TaskContinuationOptions.ExecuteSynchronously);
+                throw new NotSupportedException("The script engine does not support promises");
+            }
+
+            return engine.Script.EngineInternal.createPromise(new Executor((resolve, reject) =>
+            {
+                Action<Task> continuation = thisTask => engine.Script.EngineInternal.onTaskWithResultCompleted(thisTask, resolve, reject);
+                task.ContinueWith(continuation, TaskContinuationOptions.ExecuteSynchronously);
             }));
         }
 
@@ -82,21 +79,58 @@ namespace Microsoft.ClearScript.JavaScript
             MiscHelpers.VerifyNonNullArgument(task, "task");
             MiscHelpers.VerifyNonNullArgument(engine, "engine");
 
-            var ctor = (ScriptObject)engine.Script.Promise;
-            return ctor.Invoke(true, new Executor((resolve, reject) =>
+            var javaScriptEngine = engine as IJavaScriptEngine;
+            if ((javaScriptEngine == null) || (javaScriptEngine.BaseLanguageVersion < 6))
             {
-                task.ContinueWith(thisTask =>
-                {
-                    if (thisTask.IsCompleted && !thisTask.IsCanceled && !thisTask.IsFaulted)
-                    {
-                        resolve();
-                    }
-                    else
-                    {
-                        reject(thisTask.Exception);
-                    }
-                }, TaskContinuationOptions.ExecuteSynchronously);
+                throw new NotSupportedException("The script engine does not support promises");
+            }
+
+            return engine.Script.EngineInternal.createPromise(new Executor((resolve, reject) =>
+            {
+                Action<Task> continuation = thisTask => engine.Script.EngineInternal.onTaskCompleted(thisTask, resolve, reject);
+                task.ContinueWith(continuation, TaskContinuationOptions.ExecuteSynchronously);
             }));
+        }
+
+        /// <summary>
+        /// Converts a
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
+        /// to a <see cref="Task{Object}"/> instance.
+        /// </summary>
+        /// <param name="promise">The promise to convert to a task.</param>
+        /// <returns>A task that represents the promise's asynchronous operation.</returns>
+        public static Task<object> ToTask(this object promise)
+        {
+            MiscHelpers.VerifyNonNullArgument(promise, "promise");
+
+            var scriptObject = promise as ScriptObject;
+            if ((scriptObject == null) || !scriptObject.Engine.Script.EngineInternal.isPromise(promise))
+            {
+                throw new ArgumentException("The object is not a promise", "promise");
+            }
+
+            var source = new TaskCompletionSource<object>();
+
+            Action<object> onResolved = result =>
+            {
+                source.SetResult(result);
+            };
+
+            Action<object> onRejected = error =>
+            {
+                try
+                {
+                    scriptObject.Engine.Script.EngineInternal.throwValue(error);
+                }
+                catch (Exception exception)
+                {
+                    source.SetException(exception);
+                }
+            };
+
+            ((dynamic)promise).then(onResolved, onRejected);
+
+            return source.Task;
         }
     }
 }

@@ -56,6 +56,15 @@
     <HelpFileVersion>1.0.0.0</HelpFileVersion>
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
+    <PlugInConfigurations>
+      <PlugInConfig id="XPath Reflection File Filter" enabled="True" xmlns="">
+        <configuration>
+          <expressions>
+            <expression>/reflection/apis/api/elements/element[@source='extension' and @api=/reflection/apis/api/@id[../parameters/parameter[1]/type[@api='T:System.Object']]]</expression>
+          </expressions>
+        </configuration>
+      </PlugInConfig>
+    </PlugInConfigurations>
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in
        order for Visual Studio to perform the build.  The others are optional

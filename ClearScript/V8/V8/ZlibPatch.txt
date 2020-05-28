@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 2414c88..0e0e2bf 100644
+index 1f57237..f7dc868 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -225,10 +225,18 @@ config("zlib_warnings") {
+@@ -228,10 +228,18 @@ config("zlib_warnings") {
    }
  }
  

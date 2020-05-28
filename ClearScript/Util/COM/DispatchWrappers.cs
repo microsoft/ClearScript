@@ -85,7 +85,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public bool DeleteProperty(string name)
         {
-            throw new NotSupportedException("Object does not support dynamic properties");
+            throw new NotSupportedException("The object does not support dynamic properties");
         }
 
         public string[] GetPropertyNames()
@@ -105,7 +105,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public bool DeleteProperty(int index)
         {
-            throw new NotSupportedException("Object does not support dynamic properties");
+            throw new NotSupportedException("The object does not support dynamic properties");
         }
 
         public int[] GetPropertyIndices()
@@ -117,7 +117,7 @@ namespace Microsoft.ClearScript.Util.COM
         {
             if (asConstructor)
             {
-                throw new NotSupportedException("Object does not support constructor invocation");
+                throw new NotSupportedException("The object does not support constructor invocation");
             }
 
             return dispatch.Invoke(args);

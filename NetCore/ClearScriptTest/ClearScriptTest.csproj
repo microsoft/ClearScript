@@ -135,6 +135,21 @@
     <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\ModuleWithSideEffects.js" Link="JavaScript\CommonJS\ModuleWithSideEffects.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJSWithCycles\Arithmetic\Arithmetic.js" Link="JavaScript\CommonJSWithCycles\Arithmetic\Arithmetic.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJSWithCycles\Geometry\Geometry.js" Link="JavaScript\CommonJSWithCycles\Geometry\Geometry.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJSWithCycles\Geometry\GeometryWithPathlessImport.js" Link="JavaScript\CommonJSWithCycles\Geometry\GeometryWithPathlessImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJSWithCycles\Module.js" Link="JavaScript\CommonJSWithCycles\Module.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\CommonJSWithCycles\ModuleWithSideEffects.js" Link="JavaScript\CommonJSWithCycles\ModuleWithSideEffects.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\NewMath.js" Link="JavaScript\CommonJS\NewMath.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -156,6 +171,21 @@
     <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\ModuleWithSideEffects.js" Link="JavaScript\LegacyCommonJS\ModuleWithSideEffects.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJSWithCycles\Arithmetic\Arithmetic.js" Link="JavaScript\LegacyCommonJSWithCycles\Arithmetic\Arithmetic.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJSWithCycles\Geometry\Geometry.js" Link="JavaScript\LegacyCommonJSWithCycles\Geometry\Geometry.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJSWithCycles\Geometry\GeometryWithPathlessImport.js" Link="JavaScript\LegacyCommonJSWithCycles\Geometry\GeometryWithPathlessImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJSWithCycles\Module.js" Link="JavaScript\LegacyCommonJSWithCycles\Module.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJSWithCycles\ModuleWithSideEffects.js" Link="JavaScript\LegacyCommonJSWithCycles\ModuleWithSideEffects.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\Arithmetic\Arithmetic.js" Link="JavaScript\StandardModule\Arithmetic\Arithmetic.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -172,6 +202,27 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\ModuleWithSideEffects.js" Link="JavaScript\StandardModule\ModuleWithSideEffects.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\Arithmetic\Arithmetic.js" Link="JavaScript\StandardModuleWithCycles\Arithmetic\Arithmetic.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\Arithmetic\ArithmeticWithDynamicImport.js" Link="JavaScript\StandardModuleWithCycles\Arithmetic\ArithmeticWithDynamicImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\Geometry\Geometry.js" Link="JavaScript\StandardModuleWithCycles\Geometry\Geometry.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\Geometry\GeometryWithDynamicImport.js" Link="JavaScript\StandardModuleWithCycles\Geometry\GeometryWithDynamicImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\Geometry\GeometryWithPathlessImport.js" Link="JavaScript\StandardModuleWithCycles\Geometry\GeometryWithPathlessImport.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\Module.js" Link="JavaScript\StandardModuleWithCycles\Module.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\ModuleWithSideEffects.js" Link="JavaScript\StandardModuleWithCycles\ModuleWithSideEffects.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\..\ClearScriptTest\VBScript\Expression.vbs" Link="VBScript\Expression.vbs">

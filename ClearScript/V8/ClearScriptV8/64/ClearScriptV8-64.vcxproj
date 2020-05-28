@@ -296,6 +296,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\..\V8\lib\v8-zlib-x64.dll">

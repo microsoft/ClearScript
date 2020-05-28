@@ -308,6 +308,12 @@ namespace Microsoft.ClearScript.Windows
                                 end if
                             end if
                         end function
+                        public function isPromise(value)
+                            isPromise = false
+                        end function
+                        public function throwValue(value)
+                            Err.Raise 445
+                        end function
                     end class
                     set EngineInternal = new EngineInternalImpl
                 "
@@ -383,7 +389,7 @@ namespace Microsoft.ClearScript.Windows
 
             if (documentInfo.Category != DocumentCategory.Script)
             {
-                throw new NotSupportedException("Engine cannot execute documents of type '" + documentInfo.Category + "'");
+                throw new NotSupportedException("The script engine cannot execute documents of type '" + documentInfo.Category + "'");
             }
 
             return base.Execute(documentInfo, code, evaluate);

@@ -15,14 +15,13 @@ namespace Microsoft.ClearScript.V8
 {
     internal abstract partial class V8Proxy : IDisposable
     {
-        private static readonly object mapLock = new object();
         private static readonly Dictionary<Type, Type> map = new Dictionary<Type, Type>();
         private static Assembly assembly;
 
         protected static T CreateImpl<T>(params object[] args) where T : V8Proxy
         {
             Type implType;
-            lock (mapLock)
+            lock (map)
             {
                 var type = typeof(T);
                 if (!map.TryGetValue(type, out implType))
@@ -50,12 +49,10 @@ namespace Microsoft.ClearScript.V8
 
         private static Assembly LoadAssembly()
         {
-            try
+            Assembly tempAssembly;
+            if (MiscHelpers.Try(out tempAssembly, () => Assembly.Load("ClearScriptV8")))
             {
-                return Assembly.Load("ClearScriptV8");
-            }
-            catch (FileNotFoundException)
-            {
+                return tempAssembly;
             }
 
             var hZlibLibrary = LoadNativeLibrary("v8-zlib");
@@ -196,7 +193,7 @@ namespace Microsoft.ClearScript.V8
 
         internal static void RunWithDeploymentDir(string name, Action action)
         {
-            lock (mapLock)
+            lock (map)
             {
                 map.Clear();
                 assembly = null;

@@ -82,7 +82,8 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                var typeArgs = paramTypes.Concat(new[] { method.ReturnType, delegateType }).ToArray();
+                // ReSharper disable once RedundantExplicitArrayCreation
+                var typeArgs = paramTypes.Concat(new Type[] { method.ReturnType, delegateType }).ToArray();
                 shimType = funcShimTemplates[paramTypes.Length].MakeSpecificType(typeArgs);
             }
 

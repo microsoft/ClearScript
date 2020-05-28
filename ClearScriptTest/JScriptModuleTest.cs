@@ -303,6 +303,16 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(579, add(123, 456));
         }
 
+        [TestMethod, TestCategory("JScriptModule")]
+        public void JScriptModule_CommonJS_CircularReference()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"
+                var Geometry = require('JavaScript/LegacyCommonJSWithCycles/Geometry/Geometry');
+                return new Geometry.Square(25).getArea();
+            "));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

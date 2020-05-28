@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.ClearScript.Util;
 
@@ -1865,6 +1866,27 @@ namespace Microsoft.ClearScript
 
         #endregion
 
+        #region event connections
+
+        private readonly EventConnectionMap eventConnectionMap = new EventConnectionMap();
+
+        internal EventConnection<T> CreateEventConnection<T>(object source, EventInfo eventInfo, Delegate handler)
+        {
+            return eventConnectionMap.Create<T>(this, source, eventInfo, handler);
+        }
+
+        internal void BreakEventConnection(IEventConnection connection)
+        {
+            eventConnectionMap.Break(connection);
+        }
+
+        private void BreakAllEventConnections()
+        {
+            eventConnectionMap.Dispose();
+        }
+
+        #endregion
+
         #region disposal / finalization
 
         /// <summary>
@@ -1893,7 +1915,13 @@ namespace Microsoft.ClearScript
         /// parameter set to <c>true</c>. <see cref="Finalize">Finalize</see> invokes
         /// <c>Dispose(Boolean)</c> with <paramref name="disposing"/> set to <c>false</c>.
         /// </remarks>
-        protected abstract void Dispose(bool disposing);
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                BreakAllEventConnections();
+            }
+        }
 
         /// <summary>
         /// Releases unmanaged resources and performs other cleanup operations before the script engine is reclaimed by garbage collection.
@@ -1922,6 +1950,64 @@ namespace Microsoft.ClearScript
             public IScriptEngineException PendingScriptError { get; set; }
 
             public bool InterruptRequested { get; set; }
+        }
+
+        #endregion
+
+        #region Nested type: EventConnectionMap
+
+        private sealed class EventConnectionMap : IDisposable
+        {
+            private readonly HashSet<IEventConnection> map = new HashSet<IEventConnection>();
+            private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+
+            internal EventConnection<T> Create<T>(ScriptEngine engine, object source, EventInfo eventInfo, Delegate handler)
+            {
+                var connection = new EventConnection<T>(engine, source, eventInfo, handler);
+
+                if (!disposedFlag.IsSet)
+                {
+                    lock (map)
+                    {
+                        map.Add(connection);
+                    }
+                }
+
+                return connection;
+            }
+
+            internal void Break(IEventConnection connection)
+            {
+                var mustBreak = true;
+
+                if (!disposedFlag.IsSet)
+                {
+                    lock (map)
+                    {
+                        mustBreak = map.Remove(connection);
+                    }
+                }
+
+                if (mustBreak)
+                {
+                    connection.Break();
+                }
+            }
+
+            public void Dispose()
+            {
+                if (disposedFlag.Set())
+                {
+                    var connections = new List<IEventConnection>();
+
+                    lock (map)
+                    {
+                        connections.AddRange(map);
+                    }
+
+                    connections.ForEach(connection => connection.Break());
+                }
+            }
         }
 
         #endregion

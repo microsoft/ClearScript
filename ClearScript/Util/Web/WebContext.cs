@@ -65,7 +65,7 @@ namespace Microsoft.ClearScript.Util.Web
                 }
 
                 var headers = new NameValueCollection(StringComparer.OrdinalIgnoreCase);
-                for (var index = 1; index < lines.Count; ++index)
+                for (var index = 1; index < lines.Count; index++)
                 {
                     var line = lines[index];
 

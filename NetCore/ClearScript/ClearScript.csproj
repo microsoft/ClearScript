@@ -59,6 +59,8 @@
     <Compile Include="..\..\ClearScript\DocumentLoadCallback.cs" Link="DocumentLoadCallback.cs" />
     <Compile Include="..\..\ClearScript\DocumentLoader.cs" Link="DocumentLoader.cs" />
     <Compile Include="..\..\ClearScript\DocumentSettings.cs" Link="DocumentSettings.cs" />
+    <Compile Include="..\..\ClearScript\DynamicHostMetaObject.cs" Link="DynamicHostMetaObject.cs" />
+    <Compile Include="..\..\ClearScript\DynamicHostObject.cs" Link="DynamicHostObject.cs" />
     <Compile Include="..\..\ClearScript\ExtensionMethods.cs" Link="ExtensionMethods.cs" />
     <Compile Include="..\..\ClearScript\Extensions.cs" Link="Extensions.cs" />
     <Compile Include="..\..\ClearScript\HostEvent.cs" Link="HostEvent.cs" />

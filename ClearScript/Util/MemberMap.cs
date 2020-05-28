@@ -373,13 +373,12 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class MemberMapImpl<T> : MemberMapBase where T : MemberInfo
         {
-            private readonly object dataLock = new object();
             private readonly Dictionary<string, WeakReference> map = new Dictionary<string, WeakReference>();
             private DateTime lastCompactionTime = DateTime.MinValue;
 
             public T GetMember(string name)
             {
-                lock (dataLock)
+                lock (map)
                 {
                     var result = GetMemberInternal(name);
                     CompactIfNecessary();
@@ -389,7 +388,7 @@ namespace Microsoft.ClearScript.Util
 
             public T[] GetMembers(string[] names)
             {
-                lock (dataLock)
+                lock (map)
                 {
                     var result = names.Select(GetMemberInternal).ToArray();
                     CompactIfNecessary();

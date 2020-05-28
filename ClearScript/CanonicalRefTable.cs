@@ -10,7 +10,6 @@ namespace Microsoft.ClearScript
 {
     internal static class CanonicalRefTable
     {
-        private static readonly object tableLock = new object();
         private static readonly Dictionary<Type, ICanonicalRefMap> table = new Dictionary<Type, ICanonicalRefMap>();
 
         public static object GetCanonicalRef(object obj)
@@ -30,7 +29,7 @@ namespace Microsoft.ClearScript
         private static ICanonicalRefMap GetMap(object obj)
         {
             var type = obj.GetType();
-            lock (tableLock)
+            lock (table)
             {
                 ICanonicalRefMap map;
                 if (!table.TryGetValue(type, out map))
@@ -81,7 +80,6 @@ namespace Microsoft.ClearScript
 
         private sealed class CanonicalRefMap<T> : CanonicalRefMapBase
         {
-            private readonly object mapLock = new object();
             private readonly Dictionary<T, WeakReference> map = new Dictionary<T, WeakReference>();
             private DateTime lastCompactionTime = DateTime.MinValue;
 
@@ -126,7 +124,7 @@ namespace Microsoft.ClearScript
 
             public override object GetRef(object obj)
             {
-                lock (mapLock)
+                lock (map)
                 {
                     var result = GetRefInternal(obj);
                     CompactIfNecessary();

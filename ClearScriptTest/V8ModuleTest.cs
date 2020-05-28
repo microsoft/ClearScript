@@ -696,6 +696,26 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8Module")]
+        public void V8Module_Standard_CircularReference()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                import * as Geometry from 'JavaScript/StandardModuleWithCycles/Geometry/Geometry.js';
+                new Geometry.Square(25).Area;
+            "));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_Standard_CircularReference_MixedImport()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                import * as Geometry from 'JavaScript/StandardModuleWithCycles/Geometry/GeometryWithDynamicImport.js';
+                new Geometry.Square(25).Area;
+            "));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
         public void V8Module_CommonJS_File()
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
@@ -1122,6 +1142,16 @@ namespace Microsoft.ClearScript.Test
             ");
 
             Assert.AreEqual(579, add(123, 456));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_CommonJS_CircularReference()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"
+                let Geometry = require('JavaScript/CommonJSWithCycles/Geometry/Geometry');
+                return new Geometry.Square(25).Area;
+            "));
         }
 
         #endregion

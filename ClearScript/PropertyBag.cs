@@ -130,7 +130,7 @@ namespace Microsoft.ClearScript
         {
             if (isReadOnly)
             {
-                throw new UnauthorizedAccessException("Object is read-only");
+                throw new UnauthorizedAccessException("The object is read-only");
             }
         }
 

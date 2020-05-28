@@ -210,6 +210,14 @@ namespace Microsoft.ClearScript.Windows
                                     throw new Error('Function expected');
                                 }
                                 return method.apply(target, convertArgs(args));
+                            },
+
+                            isPromise: function (value) {
+                                return false;
+                            },
+
+                            throwValue: function (value) {
+                                throw value;
                             }
                         };
                     })();
@@ -298,7 +306,7 @@ namespace Microsoft.ClearScript.Windows
 
             if (documentInfo.Category != DocumentCategory.Script)
             {
-                throw new NotSupportedException("Engine cannot execute documents of type '" + documentInfo.Category + "'");
+                throw new NotSupportedException("The script engine cannot execute documents of type '" + documentInfo.Category + "'");
             }
 
             return base.Execute(documentInfo, code, evaluate);

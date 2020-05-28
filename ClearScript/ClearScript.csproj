@@ -32,7 +32,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -47,7 +46,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>5</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
     <SignAssembly>true</SignAssembly>
@@ -64,10 +62,12 @@
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Numerics" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CanonicalRefTable.cs" />
+    <Compile Include="DynamicHostMetaObject.cs" />
     <Compile Include="HostItem.NetFramework.cs" />
     <Compile Include="HostSettings.cs" />
     <Compile Include="Document.cs" />
@@ -107,6 +107,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>AssemblyInfo.tt</DependentUpon>
     </Compile>
+    <Compile Include="DynamicHostObject.cs" />
     <Compile Include="ScriptAccess.cs" />
     <Compile Include="ScriptEngineException.cs" />
     <Compile Include="ScriptInterruptedException.cs" />

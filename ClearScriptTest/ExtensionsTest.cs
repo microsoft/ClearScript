@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -81,6 +82,36 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("Extensions")]
+        public void Extensions_JavaScript_ToPromise_Faulted()
+        {
+            const string message = "No task for you!";
+            var task = Task.FromException<double>(new UnauthorizedAccessException(message));
+
+            engine.Script.promise = task.ToPromise(engine);
+            engine.Execute("(async function () { try { result = await promise; } catch (exception) { result = exception.hostException.InnerException.InnerException.Message; } })()");
+            Assert.AreEqual(message, engine.Script.result);
+
+            engine.Script.task = task;
+            engine.Execute("(async function () { try { result = await task.ToPromise(); } catch (exception) { result = exception.hostException.InnerException.InnerException.Message; } })()");
+            Assert.AreEqual(message, engine.Script.result);
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extensions_JavaScript_ToPromise_Canceled()
+        {
+            var message = new TaskCanceledException().Message;
+            var task = Task.FromCanceled<double>(new CancellationToken(true));
+
+            engine.Script.promise = task.ToPromise(engine);
+            engine.Execute("(async function () { try { result = await promise; } catch (exception) { result = exception.hostException.InnerException.InnerException.Message; } })()");
+            Assert.AreEqual(message, engine.Script.result);
+
+            engine.Script.task = task;
+            engine.Execute("(async function () { try { result = await task.ToPromise(); } catch (exception) { result = exception.hostException.InnerException.InnerException.Message; } })()");
+            Assert.AreEqual(message, engine.Script.result);
+        }
+
+        [TestMethod, TestCategory("Extensions")]
         public void Extensions_JavaScript_ToPromise_NoResult()
         {
             engine.Script.promise = RunAsTask(() => engine.Script.result = Math.PI).ToPromise(engine);
@@ -90,6 +121,50 @@ namespace Microsoft.ClearScript.Test
             engine.Script.task = RunAsTask(() => engine.Script.result = Math.E);
             engine.Execute("(async function () { await task.ToPromise(); })()");
             Assert.AreEqual(Math.E, engine.Script.result);
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extensions_JavaScript_ToPromise_NoResult_Faulted()
+        {
+            const string message = "No task for you!";
+            var task = Task.FromException(new UnauthorizedAccessException(message));
+
+            engine.Script.promise = task.ToPromise(engine);
+            engine.Execute("(async function () { try { result = await promise; } catch (exception) { result = exception.hostException.InnerException.InnerException.Message; } })()");
+            Assert.AreEqual(message, engine.Script.result);
+
+            engine.Script.task = task;
+            engine.Execute("(async function () { try { result = await task.ToPromise(); } catch (exception) { result = exception.hostException.InnerException.InnerException.Message; } })()");
+            Assert.AreEqual(message, engine.Script.result);
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extensions_JavaScript_ToPromise_NoResult_Canceled()
+        {
+            var message = new TaskCanceledException().Message;
+            var task = Task.FromCanceled(new CancellationToken(true));
+
+            engine.Script.promise = task.ToPromise(engine);
+            engine.Execute("(async function () { try { result = await promise; } catch (exception) { result = exception.hostException.InnerException.InnerException.Message; } })()");
+            Assert.AreEqual(message, engine.Script.result);
+
+            engine.Script.task = task;
+            engine.Execute("(async function () { try { result = await task.ToPromise(); } catch (exception) { result = exception.hostException.InnerException.InnerException.Message; } })()");
+            Assert.AreEqual(message, engine.Script.result);
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extensions_JavaScript_ToTask()
+        {
+            engine.AddHostType(typeof(Task));
+            Assert.AreEqual(Math.PI, EvaluateAsync(@"(async function () { await Task.Delay(100).ToPromise(); return Math.PI; })()").Result);
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extensions_JavaScript_ToTask_Fail()
+        {
+            engine.AddHostType(typeof(Task));
+            TestUtil.AssertException<ScriptEngineException>(() => EvaluateAsync(@"(async function () { await Task.Delay(100).ToPromise(); throw new Error('Unauthorized'); })()").Wait());
         }
 
         // ReSharper restore InconsistentNaming
@@ -103,6 +178,11 @@ namespace Microsoft.ClearScript.Test
             var task = Task.Run(action);
             task.Wait();
             return task;
+        }
+
+        private async Task<object> EvaluateAsync(string code)
+        {
+            return await engine.Evaluate(code).ToTask();
         }
 
         #endregion

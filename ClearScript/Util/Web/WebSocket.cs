@@ -231,7 +231,7 @@ namespace Microsoft.ClearScript.Util.Web
 
             if (masked)
             {
-                for (var index = 0L; index < payload.LongLength; ++index)
+                for (var index = 0L; index < payload.LongLength; index++)
                 {
                     payload[index] ^= key[index % 4];
                 }
@@ -301,10 +301,10 @@ namespace Microsoft.ClearScript.Util.Web
 
                     if (masked)
                     {
-                        for (var i = 0; i < segmentLength; ++i)
+                        for (var segmentIndex = 0; segmentIndex < segmentLength; segmentIndex++)
                         {
                             // ReSharper disable once PossibleNullReferenceException
-                            segment[i] ^= key[i % 4];
+                            segment[segmentIndex] ^= key[segmentIndex % 4];
                         }
                     }
 
@@ -321,10 +321,10 @@ namespace Microsoft.ClearScript.Util.Web
 
                     if (masked)
                     {
-                        for (var i = 0; i < remainingLength; ++i)
+                        for (var segmentIndex = 0; segmentIndex < remainingLength; segmentIndex++)
                         {
                             // ReSharper disable once PossibleNullReferenceException
-                            segment[i] ^= key[i % 4];
+                            segment[segmentIndex] ^= key[segmentIndex % 4];
                         }
                     }
 

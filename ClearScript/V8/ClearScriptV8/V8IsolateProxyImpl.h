@@ -63,7 +63,7 @@ namespace V8 {
     private:
 
         SharedPtr<V8Isolate> GetIsolate();
-        static int AdjustConstraint(int value);
+        static size_t AdjustConstraint(int value);
 
         Object^ m_gcLock;
         SharedPtr<V8Isolate>* m_pspIsolate;

@@ -55,6 +55,23 @@ namespace Microsoft.ClearScript.V8
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#Dynamic_Imports">dynamic module imports</see>
         /// are to be enabled. This is an experimental feature and may be removed in a future release.
         /// </summary>
-        EnableDynamicModuleImports = 0x00000020
+        EnableDynamicModuleImports = 0x00000020,
+
+        /// <summary>
+        /// Specifies that long integers with values greater than
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER">Number.MAX_SAFE_INTEGER</see>
+        /// or less than
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_SAFE_INTEGER">Number.MIN_SAFE_INTEGER</see>
+        /// are to be marshaled as
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt">BigInt</see>.
+        /// This option is ignored if <see cref="MarshalAllLongAsBigInt"/> is specified.
+        /// </summary>
+        MarshalUnsafeLongAsBigInt = 0x00000040,
+
+        /// <summary>
+        /// Specifies that all long integers are to be marshaled as
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt">BigInt</see>.
+        /// </summary>
+        MarshalAllLongAsBigInt = 0x00000080,
     }
 }

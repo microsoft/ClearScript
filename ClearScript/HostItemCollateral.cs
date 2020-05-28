@@ -3,7 +3,6 @@
 
 using System.Collections;
 using System.Collections.Generic;
-using System.Dynamic;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
@@ -15,7 +14,7 @@ namespace Microsoft.ClearScript
         public readonly CollateralObject<IDynamic> TargetDynamic = new CollateralObject<IDynamic>();
         public readonly CollateralObject<IPropertyBag> TargetPropertyBag = new CollateralObject<IPropertyBag>();
         public readonly CollateralObject<IHostList> TargetList = new CollateralObject<IHostList>();
-        public readonly CollateralObject<DynamicMetaObject> TargetDynamicMetaObject = new CollateralObject<DynamicMetaObject>();
+        public readonly CollateralObject<DynamicHostMetaObject> TargetDynamicMetaObject = new CollateralObject<DynamicHostMetaObject>();
         public readonly CollateralObject<IEnumerator> TargetEnumerator = new CollateralObject<IEnumerator>();
 
         #endregion

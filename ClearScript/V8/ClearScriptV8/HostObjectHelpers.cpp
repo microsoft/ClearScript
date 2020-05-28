@@ -20,6 +20,13 @@ static void DECLSPEC_NORETURN ThrowHostException(void* pvSource, Exception^ gcEx
 }
 
 //-----------------------------------------------------------------------------
+
+static size_t GetMaxCacheSizeForCategory(DocumentCategory^ gcCategory)
+{
+    return std::max(16U, gcCategory->MaxCacheSize);
+}
+
+//-----------------------------------------------------------------------------
 // HostObjectHelpers implementation
 //-----------------------------------------------------------------------------
 
@@ -412,6 +419,20 @@ std::vector<std::pair<StdString, V8Value>> HostObjectHelpers::CreateModuleContex
     {
         ThrowHostException(ScriptEngine::Current, gcException);
     }
+}
+
+//-----------------------------------------------------------------------------
+
+size_t HostObjectHelpers::GetMaxScriptCacheSize()
+{
+    return GetMaxCacheSizeForCategory(DocumentCategory::Script);
+}
+
+//-----------------------------------------------------------------------------
+
+size_t HostObjectHelpers::GetMaxModuleCacheSize()
+{
+    return GetMaxCacheSizeForCategory(ModuleCategory::Standard);
 }
 
 //-----------------------------------------------------------------------------

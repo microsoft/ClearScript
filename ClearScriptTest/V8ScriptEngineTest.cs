@@ -22,6 +22,7 @@ using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Numerics;
 
 // ReSharper disable HeuristicUnreachableCode
 
@@ -760,7 +761,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_CollectGarbage()
         {
-            engine.Execute(@"x = []; for (i = 0; i < 1024 * 1024; i++) { x.push(x); }");
+            engine.Execute(@"x = {}; for (i = 0; i < 1024 * 1024; i++) { x = { next: x }; }");
             var usedHeapSize = engine.GetRuntimeHeapInfo().UsedHeapSize;
             engine.CollectGarbage(true);
             Assert.IsTrue(usedHeapSize > engine.GetRuntimeHeapInfo().UsedHeapSize);
@@ -1496,7 +1497,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"x = []; while (true) { x.push(x); }";
+            const string code = @"x = {}; while (true) { x = { next: x }; }";
 
             engine.MaxRuntimeHeapSize = (UIntPtr)limit;
 
@@ -1534,7 +1535,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize_Recovery()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"x = []; while (true) { x.push(x); }";
+            const string code = @"x = {}; while (true) { x = { next: x }; }";
 
             engine.MaxRuntimeHeapSize = (UIntPtr)limit;
 
@@ -1560,7 +1561,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize_Dual()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"x = []; for (i = 0; i < 64 * 1024 * 1024; i++) { x.push(x); }";
+            const string code = @"x = {}; for (i = 0; i < 16 * 1024 * 1024; i++) { x = { next: x }; }";
 
             engine.Execute(code);
             engine.CollectGarbage(true);
@@ -1591,7 +1592,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize_ShortBursts()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"for (i = 0; i < 1024 * 1024; i++) { x.push(x); }";
+            const string code = @"for (i = 0; i < 1024 * 1024; i++) { x = { next: x }; }";
 
             engine.MaxRuntimeHeapSize = (UIntPtr)limit;
             engine.RuntimeHeapSizeSampleInterval = TimeSpan.FromMilliseconds(30000);
@@ -1600,7 +1601,7 @@ namespace Microsoft.ClearScript.Test
             {
                 try
                 {
-                    engine.Execute("x = []");
+                    engine.Execute("x = {}");
                     using (var script = engine.Compile(code))
                     {
                         while (true)
@@ -3414,7 +3415,7 @@ namespace Microsoft.ClearScript.Test
 
             using (var runtime = new V8Runtime())
             {
-                for (var i = 0; i < 300; i++)
+                for (var i = 0; i < 1100; i++)
                 {
                     using (var testEngine = runtime.CreateScriptEngine())
                     {
@@ -3422,8 +3423,8 @@ namespace Microsoft.ClearScript.Test
                     }
                 }
 
-                Assert.AreEqual(301UL, runtime.GetStatistics().ScriptCount);
-                Assert.AreEqual(256UL, runtime.GetStatistics().ScriptCacheSize);
+                Assert.AreEqual(1101UL, runtime.GetStatistics().ScriptCount);
+                Assert.AreEqual(1024UL, runtime.GetStatistics().ScriptCacheSize);
             }
         }
 
@@ -3511,6 +3512,140 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("utf-8", engine.Evaluate("utf8.WebName"));
             Assert.IsInstanceOfType(engine.Evaluate("utf8.ASCII"), typeof(Undefined));
             Assert.IsInstanceOfType(engine.Evaluate("utf8.ReferenceEquals"), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_BigInt()
+        {
+            TestBigInt(0);
+            TestBigInt(int.MinValue);
+            TestBigInt(int.MaxValue);
+            TestBigInt(uint.MinValue);
+            TestBigInt(uint.MaxValue);
+            TestBigInt(long.MinValue);
+            TestBigInt(long.MaxValue);
+            TestBigInt(ulong.MinValue);
+            TestBigInt(ulong.MaxValue);
+            TestBigInt(new BigInteger(float.MinValue));
+            TestBigInt(new BigInteger(float.MaxValue));
+            TestBigInt(new BigInteger(decimal.MinValue));
+            TestBigInt(new BigInteger(decimal.MaxValue));
+
+            var random = new Random();
+            var length = random.Next(32, 65);
+            var bytes = new byte[length];
+            random.NextBytes(bytes);
+
+            bytes[length - 1] &= 0x7F;
+            var value = new BigInteger(bytes);
+            Assert.IsTrue(value >= 0);
+            TestBigInt(value);
+
+            bytes[length - 1] |= 0x80;
+            value = new BigInteger(bytes);
+            Assert.IsTrue(value < 0);
+            TestBigInt(value);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_BigInt_NoLongConversion()
+        {
+            const long maxIntInDouble = (1L << 53) - 1;
+
+            engine.Script.value = maxIntInDouble;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+            engine.Script.value = maxIntInDouble + 1;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+
+            engine.Script.value = -maxIntInDouble;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+            engine.Script.value = -maxIntInDouble - 1;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+
+            engine.Script.value = (ulong)maxIntInDouble;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+            engine.Script.value = (ulong)maxIntInDouble + 1;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+
+            engine.Script.value = int.MinValue;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+            engine.Script.value = uint.MaxValue;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_BigInt_UnsafeLongConversion()
+        {
+            const long maxIntInDouble = (1L << 53) - 1;
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt);
+
+            engine.Script.value = maxIntInDouble;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+            engine.Script.value = maxIntInDouble + 1;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+
+            engine.Script.value = -maxIntInDouble;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+            engine.Script.value = -maxIntInDouble - 1;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+
+            engine.Script.value = (ulong)maxIntInDouble;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+            engine.Script.value = (ulong)maxIntInDouble + 1;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+
+            engine.Script.value = int.MinValue;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+            engine.Script.value = uint.MaxValue;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_BigInt_AllLongConversion()
+        {
+            const long maxIntInDouble = (1L << 53) - 1;
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.MarshalAllLongAsBigInt);
+
+            engine.Script.value = maxIntInDouble;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+            engine.Script.value = maxIntInDouble + 1;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+
+            engine.Script.value = -maxIntInDouble;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+            engine.Script.value = -maxIntInDouble - 1;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+
+            engine.Script.value = (ulong)maxIntInDouble;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+            engine.Script.value = (ulong)maxIntInDouble + 1;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+
+            engine.Script.value = int.MinValue;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+            engine.Script.value = uint.MaxValue;
+            Assert.AreEqual("number", engine.Evaluate("typeof value"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_isPromise()
+        {
+            engine.Execute("value = new Promise(() => {})");
+            Assert.IsTrue(engine.Script.EngineInternal.isPromise(engine.Script.value));
+
+            engine.Execute("delete Promise");
+            Assert.IsInstanceOfType(engine.Script.Promise, typeof(Undefined));
+
+            engine.Execute("function Promise() { this.foo = 123; } value2 = new Promise();");
+            Assert.AreEqual(123, engine.Script.value2.foo);
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("value2 instanceof Promise")));
+
+            Assert.IsFalse(engine.Script.EngineInternal.isPromise(engine.Script.value2));
+            Assert.IsTrue(engine.Script.EngineInternal.isPromise(engine.Script.value));
         }
 
         // ReSharper restore InconsistentNaming
@@ -3631,6 +3766,17 @@ namespace Microsoft.ClearScript.Test
         public object TestProperty { get; set; }
 
         public static object StaticTestProperty { get; set; }
+
+        private void TestBigInt(BigInteger value)
+        {
+            engine.Script.value = value;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+            Assert.IsInstanceOfType(engine.Script.value, typeof(BigInteger));
+            Assert.AreEqual(value, engine.Script.value);
+            Assert.IsInstanceOfType(engine.Evaluate("value"), typeof(BigInteger));
+            Assert.AreEqual(value, engine.Evaluate("value"));
+            Assert.AreEqual(value.ToString(), engine.Evaluate("value.toString()"));
+        }
 
         // ReSharper disable UnusedMember.Local
 

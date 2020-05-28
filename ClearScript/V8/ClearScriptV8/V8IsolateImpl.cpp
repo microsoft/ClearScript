@@ -322,7 +322,6 @@ static std::atomic<size_t> s_InstanceCount(0);
 static const int s_ContextGroupId = 1;
 static const size_t s_StackBreathingRoom = static_cast<size_t>(16 * 1024);
 static size_t* const s_pMinStackLimit = reinterpret_cast<size_t*>(sizeof(size_t));
-static const size_t s_MaxScriptCacheSize = 256;
 
 //-----------------------------------------------------------------------------
 
@@ -352,8 +351,8 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     params.array_buffer_allocator = &V8ArrayBufferAllocator::GetInstance();
     if (pConstraints != nullptr)
     {
-        params.constraints.set_max_semi_space_size_in_kb(pConstraints->max_semi_space_size_in_kb());
-        params.constraints.set_max_old_space_size(pConstraints->max_old_space_size());
+        params.constraints.set_max_young_generation_size_in_bytes(pConstraints->max_young_generation_size_in_bytes());
+        params.constraints.set_max_old_generation_size_in_bytes(pConstraints->max_old_generation_size_in_bytes());
     }
 
     m_upIsolate.reset(v8::Isolate::Allocate());
@@ -1192,13 +1191,32 @@ v8::MaybeLocal<v8::Module> V8IsolateImpl::ResolveModule(v8::Local<v8::Context> h
 
 //-----------------------------------------------------------------------------
 
-v8::Local<v8::UnboundScript> V8IsolateImpl::GetCachedScript(const V8DocumentInfo& documentInfo, size_t codeDigest)
+bool V8IsolateImpl::TryGetCachedScriptInfo(uint64_t uniqueId, V8DocumentInfo& documentInfo)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    for (auto it = m_ScriptCache.begin(); it != m_ScriptCache.end(); ++it)
+    for (auto it = m_ScriptCache.begin(); it != m_ScriptCache.end(); it++)
     {
-        if ((it->DocumentInfo.GetUniqueId() == documentInfo.GetUniqueId()) && (it->CodeDigest == codeDigest))
+        if (it->DocumentInfo.GetUniqueId() == uniqueId)
+        {
+            m_ScriptCache.splice(m_ScriptCache.begin(), m_ScriptCache, it);
+            documentInfo = it->DocumentInfo;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+v8::Local<v8::UnboundScript> V8IsolateImpl::GetCachedScript(uint64_t uniqueId, size_t codeDigest)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    for (auto it = m_ScriptCache.begin(); it != m_ScriptCache.end(); it++)
+    {
+        if ((it->DocumentInfo.GetUniqueId() == uniqueId) && (it->CodeDigest == codeDigest))
         {
             m_ScriptCache.splice(m_ScriptCache.begin(), m_ScriptCache, it);
             return it->hScript;
@@ -1214,7 +1232,8 @@ void V8IsolateImpl::CacheScript(const V8DocumentInfo& documentInfo, size_t codeD
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    while (m_ScriptCache.size() >= s_MaxScriptCacheSize)
+    auto maxScriptCacheSize = HostObjectHelpers::GetMaxScriptCacheSize();
+    while (m_ScriptCache.size() >= maxScriptCacheSize)
     {
         Dispose(m_ScriptCache.back().hScript);
         m_ScriptCache.pop_back();

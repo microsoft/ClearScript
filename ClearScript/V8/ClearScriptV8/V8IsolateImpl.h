@@ -207,6 +207,16 @@ public:
         return v8::Uint32::NewFromUnsigned(m_upIsolate.get(), value);
     }
 
+    v8::Local<v8::BigInt> CreateBigInt(int64_t value)
+    {
+        return v8::BigInt::New(m_upIsolate.get(), value);
+    }
+
+    v8::Local<v8::BigInt> CreateBigInt(uint64_t value)
+    {
+        return v8::BigInt::NewFromUnsigned(m_upIsolate.get(), value);
+    }
+
     v8::MaybeLocal<v8::String> CreateString(const StdString& value, v8::NewStringType type = v8::NewStringType::kNormal)
     {
         return value.ToV8String(m_upIsolate.get(), type);
@@ -230,6 +240,21 @@ public:
     v8::Local<v8::Array> CreateArray(int length = 0)
     {
         return v8::Array::New(m_upIsolate.get(), length);
+    }
+
+    v8::Local<v8::PrimitiveArray> CreatePrimitiveArray(int length)
+    {
+        return v8::PrimitiveArray::New(m_upIsolate.get(), length);
+    }
+
+    void SetPrimitiveArrayItem(v8::Local<v8::PrimitiveArray> hArray, int index, v8::Local<v8::Primitive> hItem)
+    {
+        hArray->Set(m_upIsolate.get(), index, hItem);
+    }
+
+    v8::Local<v8::Primitive> GetPrimitiveArrayItem(v8::Local<v8::PrimitiveArray> hArray, int index)
+    {
+        return hArray->Get(m_upIsolate.get(), index);
     }
 
     v8::Local<v8::External> CreateExternal(void* pvValue)
@@ -458,7 +483,8 @@ public:
     v8::MaybeLocal<v8::Promise> ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier);
     v8::MaybeLocal<v8::Module> ResolveModule(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer);
 
-    v8::Local<v8::UnboundScript> GetCachedScript(const V8DocumentInfo& documentInfo, size_t codeDigest);
+    bool TryGetCachedScriptInfo(uint64_t uniqueId, V8DocumentInfo& documentInfo);
+    v8::Local<v8::UnboundScript> GetCachedScript(uint64_t uniqueId, size_t codeDigest);
     void CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript);
     void ClearScriptCache();
 

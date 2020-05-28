@@ -4,6 +4,70 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
+// V8BigInt
+//-----------------------------------------------------------------------------
+
+class V8BigInt final
+{
+public:
+
+    V8BigInt(int signBit, std::vector<uint64_t>&& words):
+        m_SignBit(signBit),
+        m_Words(std::move(words))
+    {
+    }
+
+    V8BigInt(const V8BigInt& that):
+        m_SignBit(that.m_SignBit),
+        m_Words(that.m_Words)
+    {
+    }
+
+    V8BigInt(V8BigInt&& that) :
+        m_SignBit(that.m_SignBit),
+        m_Words(std::move(that.m_Words))
+    {
+    }
+
+    const V8BigInt& operator=(const V8BigInt& that)
+    {
+        if (&that != this)
+        {
+            m_SignBit = that.m_SignBit;
+            m_Words = that.m_Words;
+        }
+
+        return *this;
+    }
+
+    const V8BigInt& operator=(V8BigInt&& that)
+    {
+        if (&that != this)
+        {
+            m_SignBit = that.m_SignBit;
+            m_Words = std::move(that.m_Words);
+        }
+
+        return *this;
+    }
+
+    int GetSignBit() const
+    {
+        return m_SignBit;
+    }
+
+    const std::vector<uint64_t>& GetWords() const
+    {
+        return m_Words;
+    }
+
+private:
+
+    int m_SignBit;
+    std::vector<uint64_t> m_Words;
+};
+
+//-----------------------------------------------------------------------------
 // V8Value
 //-----------------------------------------------------------------------------
 
@@ -120,6 +184,13 @@ public:
         m_Subtype(Subtype::None)
     {
         m_Data.DoubleValue = value;
+    }
+
+    V8Value(const V8BigInt* pBigInt):
+        m_Type(Type::BigInt),
+        m_Subtype(Subtype::None)
+    {
+        m_Data.pBigInt = pBigInt;
     }
 
     V8Value(const V8Value& that)
@@ -250,6 +321,17 @@ public:
         return false;
     }
 
+    bool AsBigInt(const V8BigInt*& pBigInt) const
+    {
+        if (m_Type == Type::BigInt)
+        {
+            pBigInt = m_Data.pBigInt;
+            return true;
+        }
+
+        return false;
+    }
+
     ~V8Value()
     {
         Dispose();
@@ -269,7 +351,8 @@ private:
         String,
         V8Object,
         HostObject,
-        DateTime
+        DateTime,
+        BigInt
     };
 
     union Data
@@ -281,6 +364,7 @@ private:
         const StdString* pString;
         V8ObjectHolder* pV8ObjectHolder;
         HostObjectHolder* pHostObjectHolder;
+        const V8BigInt* pBigInt;
     };
 
     void Copy(const V8Value& that)
@@ -316,6 +400,10 @@ private:
         {
             m_Data.pHostObjectHolder = that.m_Data.pHostObjectHolder->Clone();
         }
+        else if (m_Type == Type::BigInt)
+        {
+            m_Data.pBigInt = new V8BigInt(*that.m_Data.pBigInt);
+        }
     }
 
     void Move(V8Value& that)
@@ -339,6 +427,10 @@ private:
         else if (m_Type == Type::HostObject)
         {
             delete m_Data.pHostObjectHolder;
+        }
+        else if (m_Type == Type::BigInt)
+        {
+            delete m_Data.pBigInt;
         }
     }
 

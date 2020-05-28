@@ -805,6 +805,7 @@ namespace Microsoft.ClearScript.Windows
             VerifyAccess();
             if (disposedFlag.Set())
             {
+                base.Dispose(disposing);
                 if (disposing)
                 {
                     if (sourceManagement)

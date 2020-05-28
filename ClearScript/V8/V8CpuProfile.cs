@@ -137,7 +137,7 @@ namespace Microsoft.ClearScript.V8
                 writer.Write(",\"timeDeltas\":[");
                 {
                     writer.Write(Samples[0].Timestamp - StartTimestamp);
-                    for (var index = 1; index < Samples.Count; ++index)
+                    for (var index = 1; index < Samples.Count; index++)
                     {
                         writer.Write(',');
                         writer.Write(Samples[index].Timestamp - Samples[index - 1].Timestamp);
@@ -309,7 +309,7 @@ namespace Microsoft.ClearScript.V8
                     writer.Write(",\"positionTicks\":[");
                     {
                         HitLines[0].WriteJson(writer);
-                        for (var index = 1; index < HitLines.Count; ++index)
+                        for (var index = 1; index < HitLines.Count; index++)
                         {
                             writer.Write(',');
                             HitLines[index].WriteJson(writer);

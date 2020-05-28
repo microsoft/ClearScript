@@ -50,7 +50,7 @@ namespace V8 {
             {
                 auto gcHitLines = gcnew array<V8CpuProfile::Node::HitLine>(hitLineCount);
 
-                for (auto index = 0U; index < hitLineCount; ++index)
+                for (auto index = 0U; index < hitLineCount; index++)
                 {
                     gcHitLines[index].LineNumber = hitLines[index].line;
                     gcHitLines[index].HitCount = hitLines[index].hit_count;
@@ -65,7 +65,7 @@ namespace V8 {
         {
             auto gcChildNodes = gcnew List<V8CpuProfile::Node^>(childCount);
 
-            for (auto index = 0; index < childCount; ++index)
+            for (auto index = 0; index < childCount; index++)
             {
                 auto pChildNode = node.GetChild(index);
                 if (pChildNode != nullptr)
@@ -118,7 +118,7 @@ namespace V8 {
         {
             auto gcSamples = gcnew List<V8CpuProfile::Sample^>(sampleCount);
             
-            for (auto index = 0; index < sampleCount; ++index)
+            for (auto index = 0; index < sampleCount; index++)
             {
                 pNode = profile.GetSample(index);
                 if (pNode != nullptr)
@@ -152,8 +152,8 @@ namespace V8 {
         v8::ResourceConstraints constraints;
         if (gcConstraints != nullptr)
         {
-            constraints.set_max_semi_space_size_in_kb(AdjustConstraint(gcConstraints->MaxNewSpaceSize) * 1024);
-            constraints.set_max_old_space_size(AdjustConstraint(gcConstraints->MaxOldSpaceSize));
+            constraints.set_max_young_generation_size_in_bytes(AdjustConstraint(gcConstraints->MaxNewSpaceSize));
+            constraints.set_max_old_generation_size_in_bytes(AdjustConstraint(gcConstraints->MaxOldSpaceSize));
             pConstraints = &constraints;
         }
 
@@ -479,16 +479,19 @@ namespace V8 {
 
     //-------------------------------------------------------------------------
 
-    int V8IsolateProxyImpl::AdjustConstraint(int value)
+    size_t V8IsolateProxyImpl::AdjustConstraint(int value)
     {
+        value = Math::Max(value, 0);
+        size_t result = value;
+
         const int maxValueInMiB = 1024 * 1024;
-        if (value > maxValueInMiB)
+        if (value <= maxValueInMiB)
         {
-            const double bytesPerMiB = 1024 * 1024;
-            return Convert::ToInt32(Math::Ceiling(Convert::ToDouble(value) / bytesPerMiB));
+            const size_t bytesPerMiB = 1024 * 1024;
+            result *= bytesPerMiB;
         }
 
-        return value;
+        return result;
     }
 
     //-------------------------------------------------------------------------

@@ -63,5 +63,8 @@ public:
     static StdString LoadModule(const V8DocumentInfo& sourceDocumentInfo, const StdString& specifier, V8DocumentInfo& documentInfo);
     static std::vector<std::pair<StdString, V8Value>> CreateModuleContext(const V8DocumentInfo& documentInfo);
 
+    static size_t GetMaxScriptCacheSize();
+    static size_t GetMaxModuleCacheSize();
+
     static bool TryParseInt32(const StdString& text, int& result);
 };

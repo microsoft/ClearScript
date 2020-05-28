@@ -123,7 +123,7 @@ namespace Microsoft.ClearScript
                 {
                     if (result is MethodBindSuccess)
                     {
-                        result = new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}' that matches the specified arguments", name)));
+                        result = new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
                     }
 
                     foreach (var altName in GetAltMethodNames(name, bindFlags))
@@ -224,7 +224,7 @@ namespace Microsoft.ClearScript
 
             if (expr == null)
             {
-                return new Func<Exception>(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}'", binder.Name)));
+                return new Func<Exception>(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}'", binder.Name)));
             }
 
             // ReSharper restore HeuristicUnreachableCode
@@ -241,7 +241,7 @@ namespace Microsoft.ClearScript
                 try
                 {
                     var method = target.Type.GetMethod(binder.Name, bindFlags);
-                    return (object)method ?? new Func<Exception>(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}'", binder.Name)));
+                    return (object)method ?? new Func<Exception>(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}'", binder.Name)));
                 }
                 catch (AmbiguousMatchException exception)
                 {
@@ -336,7 +336,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            return new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("Object has no method named '{0}' that matches the specified arguments", name)));
+            return new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
 
             // ReSharper restore PossibleNullReferenceException
             // ReSharper restore CoVariantArrayConversion

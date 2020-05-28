@@ -566,6 +566,31 @@ namespace V8 {
         }
 
         {
+            auto gcValue = dynamic_cast<BigInteger^>(gcObject);
+            if (gcValue != nullptr)
+            {
+                auto signBit = 0;
+                std::vector<uint64_t> words;
+
+                if (gcValue->Sign < 0)
+                {
+                    signBit = 1;
+                    gcValue = BigInteger::Negate(*gcValue);
+                }
+
+                auto gcBytes = V8ProxyHelpers::BigIntegerToByteArray(*gcValue);
+                if (gcBytes->Length > 0)
+                {
+                    pin_ptr<Byte> pBytes = &gcBytes[0];
+                    words.resize((gcBytes->Length + sizeof(uint64_t) - 1) / sizeof(uint64_t), 0);
+                    memcpy_s(words.data(), words.size() * sizeof(uint64_t), pBytes, gcBytes->Length);
+                }
+
+                return V8Value(new V8BigInt(signBit, std::move(words)));
+            }
+        }
+
+        {
             auto gcValue = dynamic_cast<V8ObjectImpl^>(gcObject);
             if (gcValue != nullptr)
             {
@@ -657,6 +682,40 @@ namespace V8 {
             if (value.AsDateTime(result))
             {
                 return DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind::Utc) + TimeSpan::FromMilliseconds(result);
+            }
+        }
+
+        {
+            const V8BigInt* pBigInt;
+            if (value.AsBigInt(pBigInt))
+            {
+                const auto& words = pBigInt->GetWords();
+
+                const auto wordCount = words.size();
+                if (wordCount < 1)
+                {
+                    return BigInteger::Zero;
+                }
+
+                const auto byteCount = wordCount * sizeof(uint64_t);
+                if (byteCount < INT_MAX)
+                {
+                    // use extra zero byte to force unsigned interpretation
+                    auto gcBytes = gcnew array<Byte>(static_cast<int>(byteCount + 1));
+                    pin_ptr<Byte> pBytes = &gcBytes[0];
+                    memcpy_s(pBytes, gcBytes->Length, words.data(), byteCount);
+
+                    // construct result and negate if necessary
+                    BigInteger result(gcBytes);
+                    if (pBigInt->GetSignBit())
+                    {
+                        result = BigInteger::Negate(result);
+                    }
+
+                    return result;
+                }
+
+                return nullptr;
             }
         }
 

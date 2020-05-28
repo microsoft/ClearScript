@@ -2659,6 +2659,18 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("daTest.Bogus(123.456)"));
         }
 
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_isPromise()
+        {
+            Assert.IsInstanceOfType(engine.Script.Promise, typeof(Undefined));
+
+            engine.Execute("function Promise() { this.foo = 123; } value = new Promise();");
+            Assert.AreEqual(123, engine.Script.value.foo);
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("value instanceof Promise")));
+
+            Assert.IsFalse(engine.Script.EngineInternal.isPromise(engine.Script.value));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

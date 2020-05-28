@@ -13,14 +13,13 @@ namespace Microsoft.ClearScript.Util
 
     internal sealed class UniqueNameManager : IUniqueNameManager
     {
-        private readonly object mapLock = new object();
         private readonly Dictionary<string, uint> map = new Dictionary<string, uint>();
 
         #region IUniqueNameManager implementation
 
         public string GetUniqueName(string inputName, string alternate)
         {
-            lock (mapLock)
+            lock (map)
             {
                 var nonBlankName = MiscHelpers.EnsureNonBlank(inputName, alternate);
 
@@ -37,14 +36,13 @@ namespace Microsoft.ClearScript.Util
 
     internal sealed class UniqueFileNameManager : IUniqueNameManager
     {
-        private readonly object mapLock = new object();
         private readonly Dictionary<string, uint> map = new Dictionary<string, uint>();
 
         #region IUniqueNameManager implementation
 
         public string GetUniqueName(string inputName, string alternate)
         {
-            lock (mapLock)
+            lock (map)
             {
                 var nonBlankName = MiscHelpers.EnsureNonBlank(Path.GetFileNameWithoutExtension(inputName), alternate);
                 var extension = Path.GetExtension(inputName);

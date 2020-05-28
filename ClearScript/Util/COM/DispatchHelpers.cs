@@ -151,7 +151,7 @@ namespace Microsoft.ClearScript.Util.COM
             var member = dispatch.GetMembers().FirstOrDefault(testMember => testMember.Name == name);
             if (member == null)
             {
-                throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no property named '{0}'", name));
+                throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no property named '{0}'", name));
             }
 
             return member.DispID;
@@ -162,7 +162,7 @@ namespace Microsoft.ClearScript.Util.COM
             var typeInfo = dispatch.GetTypeInfo();
             if (typeInfo == null)
             {
-                throw new NotSupportedException("Object does not support late binding");
+                throw new NotSupportedException("The object does not support late binding");
             }
 
             return typeInfo.GetDispatchMembers();
@@ -301,7 +301,7 @@ namespace Microsoft.ClearScript.Util.COM
             var result = dispatchEx.GetDispID(name, flags, out dispid);
             if (ensure && (result == HResult.DISP_E_UNKNOWNNAME))
             {
-                throw new NotSupportedException("Object does not support dynamic properties");
+                throw new NotSupportedException("The object does not support dynamic properties");
             }
 
             if (HResult.Succeeded(result))
@@ -320,7 +320,7 @@ namespace Microsoft.ClearScript.Util.COM
                 return member.DispID;
             }
 
-            throw new MissingMemberException(MiscHelpers.FormatInvariant("Object has no property named '{0}'", name));
+            throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no property named '{0}'", name));
         }
 
         private static IEnumerable<DispatchMember> GetMembersRaw(this IDispatchEx dispatchEx)

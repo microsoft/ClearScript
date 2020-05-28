@@ -170,6 +170,7 @@ namespace Microsoft.ClearScript.Util
                 Marshal.WriteIntPtr(pArgRef, sizeof(ushort) * 4, pArg);
             }
         }
+        
         public IntPtr GetAddr(int index)
         {
             if ((index < 0) || (index >= args.Length))
