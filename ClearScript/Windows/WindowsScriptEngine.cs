@@ -505,7 +505,7 @@ namespace Microsoft.ClearScript.Windows
             var comException = exception as COMException;
             if (comException != null)
             {
-                if (comException.ErrorCode == HResult.SCRIPT_E_REPORTED)
+                if (CurrentScriptFrame.ScriptError != null || CurrentScriptFrame.PendingScriptError != null)
                 {
                     // a script error was reported; the corresponding exception should be in the script frame
                     ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
