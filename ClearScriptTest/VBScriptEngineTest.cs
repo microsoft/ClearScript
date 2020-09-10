@@ -490,6 +490,57 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        public void ThrowException()
+        {
+            throw new Exception("check for this message");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExceptionUnwrapsTargetInvocationException()
+        {
+            engine.AddHostObject("test", this);
+            engine.Execute("Sub Run\ntest.ThrowException\nEnd Sub");
+            try
+            {
+                engine.Invoke("Run");
+                Assert.Fail("Expected failure");
+            }
+            catch (ScriptEngineException see)
+            {
+                Assert.AreEqual(
+                   "check for this message\n    at Run (Script [3]:1:0) -> test.ThrowException",
+                   see.ErrorDetails, "Details message was wrong");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Wrong exception thrown: " + ex);
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExceptionUnwrapsTargetInvocationException_NoDebugger()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.None);
+            engine.AddHostObject("test", this);
+            engine.Execute("Sub Run\ntest.ThrowException\nEnd Sub");
+            try
+            {
+                engine.Invoke("Run");
+                Assert.Fail("Expected failure");
+            }
+            catch (ScriptEngineException see)
+            {
+                Assert.AreEqual(
+                   "check for this message\n    at (Unknown:1:0)",
+                   see.ErrorDetails, "Details message was wrong");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Wrong exception thrown: " + ex);
+            }
+        }
+
         [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_ExceptionDetails_NoDebugger()
         {
@@ -849,7 +900,7 @@ namespace Microsoft.ClearScript.Test
                         // ReSharper disable once PossibleNullReferenceException
                         Assert.IsNull(nestedException.InnerException);
 
-                        Assert.AreEqual(hostException.Message, exception.Message);
+                        Assert.AreEqual(hostException.InnerException.Message, exception.Message);
                         throw;
                     }
                 });
@@ -893,7 +944,14 @@ namespace Microsoft.ClearScript.Test
                         Assert.IsNull(nestedHostException.InnerException);
 
                         Assert.AreEqual(nestedHostException.Message, nestedException.Message);
-                        Assert.AreEqual(hostException.Message, exception.Message);
+                        if (hostException is TargetInvocationException)
+                        {
+                            Assert.AreEqual(hostException.InnerException.Message, exception.Message);
+                        }
+                        else
+                        {
+                            Assert.AreEqual(hostException.Message, exception.Message);
+                        }
                         throw;
                     }
                 });

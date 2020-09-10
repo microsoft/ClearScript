@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using Reflection = System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
@@ -197,7 +198,15 @@ namespace Microsoft.ClearScript.Windows
                             innerException = engine.CurrentScriptFrame.HostException;
                             if ((innerException != null) && string.IsNullOrWhiteSpace(description))
                             {
-                                description = innerException.Message;
+                                if (innerException is Reflection.TargetInvocationException &&
+                                    innerException.InnerException != null)
+                                {
+                                    description = innerException.InnerException.Message;
+                                }
+                                else
+                                {
+                                    description = innerException.Message;
+                                }
                             }
                         }
 
@@ -297,7 +306,15 @@ namespace Microsoft.ClearScript.Windows
                             innerException = engine.CurrentScriptFrame.HostException;
                             if ((innerException != null) && string.IsNullOrWhiteSpace(description))
                             {
-                                description = innerException.Message;
+                                if (innerException is Reflection.TargetInvocationException &&
+                                    innerException.InnerException != null)
+                                {
+                                    description = innerException.InnerException.Message;
+                                }
+                                else
+                                {
+                                    description = innerException.Message;
+                                }
                             }
                         }
 
