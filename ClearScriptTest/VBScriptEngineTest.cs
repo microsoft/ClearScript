@@ -491,6 +491,30 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExceptionDetails_NoDebugger()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.None);
+            engine.AddHostObject("test", this);
+            engine.Execute("Sub Run\ntest.NonExistent = 3\nEnd Sub");
+            try
+            {
+                engine.Invoke("Run");
+                Assert.Fail("Expected failure");
+            }
+            catch (ScriptEngineException see)
+            {
+                Assert.AreEqual(
+                   "Object doesn't support this property or method: 'test.NonExistent'\n    at (Unknown:1:0)",
+                   see.ErrorDetails, "Details message was wrong");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Wrong exception thrown: " + ex);
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_ExceptionDetails2()
         {
             engine.AddHostObject("test", HostItemFlags.DirectAccess, new ComVisibleTestObject());
