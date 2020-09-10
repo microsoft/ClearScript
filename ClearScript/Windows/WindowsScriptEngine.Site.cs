@@ -82,7 +82,12 @@ namespace Microsoft.ClearScript.Windows
                         Debug.Assert(false, "Exception caught during error processing", exception.ToString());
                     }
                 }
-
+                //If we don't have a debugger, at least try to report the location
+                var errorLocation2 = GetErrorLocation(error);
+                if (!string.IsNullOrWhiteSpace(errorLocation2))
+                {
+                    return message + "\n" + errorLocation2;
+                }
                 return message;
             }
 
@@ -116,6 +121,10 @@ namespace Microsoft.ClearScript.Windows
 
                         var text = new string(document.Code.Skip(position).TakeWhile(ch => ch != '\n').ToArray());
                         return MiscHelpers.FormatInvariant("    at ({0}:{1}:{2}) -> {3}", documentName, lineNumber, offsetInLine, text);
+                    }
+                    else
+                    {
+                        return MiscHelpers.FormatInvariant("    at (Unknown:{0}:{1})", lineNumber, offsetInLine);
                     }
                 }
 
