@@ -491,6 +491,28 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExceptionDetails2()
+        {
+            engine.AddHostObject("test", HostItemFlags.DirectAccess, new ComVisibleTestObject());
+            engine.Execute("Sub Run\ntest = \"invalid type\"\nEnd Sub");
+            try
+            {
+                engine.Invoke("Run");
+                Assert.Fail("Expected failure");
+            }
+            catch (ScriptEngineException see)
+            {
+                Assert.AreEqual(
+                    "Class doesn't support Automation: 'test'\n    at Run (Script [3]:1:0) -> test = \"invalid type\"",
+                    see.ErrorDetails, "Details message was wrong");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Wrong exception thrown: " + ex);
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_AccessContext_Private()
         {
             engine.AddHostObject("test", this);
@@ -3025,6 +3047,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [ComVisible(true)]
+        [ClassInterface(ClassInterfaceType.AutoDual)]
         public sealed class ComVisibleTestObject
         {
             public string Format(string format, object arg0 = null, object arg1 = null, object arg2 = null, object arg3 = null)
@@ -3036,6 +3059,8 @@ namespace Microsoft.ClearScript.Test
             {
                 return default(T);
             }
+         
+            public double Value { get; set; }
         }
 
         #endregion
