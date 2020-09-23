@@ -502,15 +502,15 @@ namespace Microsoft.ClearScript.Windows
 
         private void ThrowScriptError(Exception exception)
         {
+            if (CurrentScriptFrame.ScriptError != null || CurrentScriptFrame.PendingScriptError != null)
+            {
+                // a script error was reported; the corresponding exception should be in the script frame
+                ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
+            }
             var comException = exception as COMException;
             if (comException != null)
             {
-                if (comException.ErrorCode == HResult.SCRIPT_E_REPORTED)
-                {
-                    // a script error was reported; the corresponding exception should be in the script frame
-                    ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
-                }
-                else if (comException.ErrorCode == HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
+                if (comException.ErrorCode == HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
                 {
                     // A host exception surrogate passed through the COM boundary; this happens
                     // when some script engines are invoked via script item access rather than

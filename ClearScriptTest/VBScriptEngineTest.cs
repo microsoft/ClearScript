@@ -469,6 +469,125 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExceptionDetails()
+        {
+            engine.AddHostObject("test", this);
+            engine.Execute("Sub Run\ntest.NonExistent = 3\nEnd Sub");
+            try
+            {
+                engine.Invoke("Run");
+                Assert.Fail("Expected failure");
+            }
+            catch ( ScriptEngineException see )
+            {
+                Assert.AreEqual(
+                   "Object doesn't support this property or method: 'test.NonExistent'\n    at Run (Script [3]:1:0) -> test.NonExistent = 3",
+                   see.ErrorDetails, "Details message was wrong");
+            }
+            catch ( Exception ex )
+            {
+                Assert.Fail("Wrong exception thrown: " + ex);
+            }
+        }
+
+        public void ThrowException()
+        {
+            throw new Exception("check for this message");
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExceptionUnwrapsTargetInvocationException()
+        {
+            engine.AddHostObject("test", this);
+            engine.Execute("Sub Run\ntest.ThrowException\nEnd Sub");
+            try
+            {
+                engine.Invoke("Run");
+                Assert.Fail("Expected failure");
+            }
+            catch (ScriptEngineException see)
+            {
+                Assert.AreEqual(
+                   "check for this message\n    at Run (Script [3]:1:0) -> test.ThrowException",
+                   see.ErrorDetails, "Details message was wrong");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Wrong exception thrown: " + ex);
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExceptionUnwrapsTargetInvocationException_NoDebugger()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.None);
+            engine.AddHostObject("test", this);
+            engine.Execute("Sub Run\ntest.ThrowException\nEnd Sub");
+            try
+            {
+                engine.Invoke("Run");
+                Assert.Fail("Expected failure");
+            }
+            catch (ScriptEngineException see)
+            {
+                Assert.AreEqual(
+                   "check for this message\n    at (Unknown:1:0)",
+                   see.ErrorDetails, "Details message was wrong");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Wrong exception thrown: " + ex);
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExceptionDetails_NoDebugger()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.None);
+            engine.AddHostObject("test", this);
+            engine.Execute("Sub Run\ntest.NonExistent = 3\nEnd Sub");
+            try
+            {
+                engine.Invoke("Run");
+                Assert.Fail("Expected failure");
+            }
+            catch (ScriptEngineException see)
+            {
+                Assert.AreEqual(
+                   "Object doesn't support this property or method: 'test.NonExistent'\n    at (Unknown:1:0)",
+                   see.ErrorDetails, "Details message was wrong");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Wrong exception thrown: " + ex);
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_ExceptionDetails2()
+        {
+            engine.AddHostObject("test", HostItemFlags.DirectAccess, new ComVisibleTestObject());
+            engine.Execute("Sub Run\ntest = \"invalid type\"\nEnd Sub");
+            try
+            {
+                engine.Invoke("Run");
+                Assert.Fail("Expected failure");
+            }
+            catch (ScriptEngineException see)
+            {
+                Assert.AreEqual(
+                    "Class doesn't support Automation: 'test'\n    at Run (Script [3]:1:0) -> test = \"invalid type\"",
+                    see.ErrorDetails, "Details message was wrong");
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail("Wrong exception thrown: " + ex);
+            }
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_AccessContext_Private()
         {
             engine.AddHostObject("test", this);
@@ -781,7 +900,7 @@ namespace Microsoft.ClearScript.Test
                         // ReSharper disable once PossibleNullReferenceException
                         Assert.IsNull(nestedException.InnerException);
 
-                        Assert.AreEqual(hostException.Message, exception.Message);
+                        Assert.AreEqual(hostException.InnerException.Message, exception.Message);
                         throw;
                     }
                 });
@@ -825,7 +944,14 @@ namespace Microsoft.ClearScript.Test
                         Assert.IsNull(nestedHostException.InnerException);
 
                         Assert.AreEqual(nestedHostException.Message, nestedException.Message);
-                        Assert.AreEqual(hostException.Message, exception.Message);
+                        if (hostException is TargetInvocationException)
+                        {
+                            Assert.AreEqual(hostException.InnerException.Message, exception.Message);
+                        }
+                        else
+                        {
+                            Assert.AreEqual(hostException.Message, exception.Message);
+                        }
                         throw;
                     }
                 });
@@ -3003,6 +3129,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [ComVisible(true)]
+        [ClassInterface(ClassInterfaceType.AutoDual)]
         public sealed class ComVisibleTestObject
         {
             public string Format(string format, object arg0 = null, object arg1 = null, object arg2 = null, object arg3 = null)
@@ -3014,6 +3141,8 @@ namespace Microsoft.ClearScript.Test
             {
                 return default(T);
             }
+         
+            public double Value { get; set; }
         }
 
         #endregion
