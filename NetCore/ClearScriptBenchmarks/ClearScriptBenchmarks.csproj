@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\ClearScriptBenchmarks\ClearScriptBenchmarks.cs" Link="ClearScriptBenchmarks.cs" />
+    <Compile Include="..\..\ClearScriptBenchmarks\ClearScriptBenchmarks.Windows.cs" Link="ClearScriptBenchmarks.Windows.cs" />
     <Compile Include="..\..\ClearScriptBenchmarks\Properties\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs" />
     <Compile Include="..\..\ClearScriptBenchmarks\SunSpider.cs" Link="SunSpider.cs" />
   </ItemGroup>

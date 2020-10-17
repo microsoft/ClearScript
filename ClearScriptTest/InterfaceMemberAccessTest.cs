@@ -4,13 +4,15 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Microsoft.ClearScript.V8;
 using Microsoft.CSharp.RuntimeBinder;
-using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
+    [DeploymentItem("ClearScriptV8-64.dll")]
+    [DeploymentItem("ClearScriptV8-32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class InterfaceMemberAccessTest : ClearScriptTest
     {
@@ -22,7 +24,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
-            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging);
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
             engine.AddHostObject("host", new ExtendedHostFunctions());
             engine.AddHostObject("mscorlib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));
             engine.AddHostObject("ClearScriptTest", HostItemFlags.GlobalMembers, new HostTypeCollection("ClearScriptTest").GetNamespaceNode("Microsoft.ClearScript.Test"));

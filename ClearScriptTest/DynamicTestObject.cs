@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Microsoft.ClearScript.Test
 {
-    [SuppressMessage("ReSharper", "StringLiteralTypo")]
+    [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "Typos in test code are acceptable.")]
     public sealed class DynamicTestObject : DynamicObject
     {
         private readonly Dictionary<string, object> memberMap = new Dictionary<string, object>();
@@ -17,10 +17,7 @@ namespace Microsoft.ClearScript.Test
 
         public int SomeField = 12345;
 
-        public string SomeProperty
-        {
-            get { return "Bogus"; }
-        }
+        public string SomeProperty => "Bogus";
 
         public double SomeMethod()
         {
@@ -120,7 +117,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
         {
-            if (indexes.All(index => (index is int) || ((index is string) && !((string)index).StartsWith("Z", StringComparison.Ordinal))))
+            if (indexes.All(index => (index is int) || ((index is string stringIndex) && !stringIndex.StartsWith("Z", StringComparison.Ordinal))))
             {
                 return indexMap.TryGetValue(string.Join(":", indexes), out result);
             }
@@ -130,7 +127,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
         {
-            if (indexes.All(index => (index is int) || ((index is string) && !((string)index).StartsWith("Z", StringComparison.Ordinal))))
+            if (indexes.All(index => (index is int) || ((index is string stringIndex) && !stringIndex.StartsWith("Z", StringComparison.Ordinal))))
             {
                 indexMap[string.Join(":", indexes)] = value;
                 return true;
@@ -141,7 +138,7 @@ namespace Microsoft.ClearScript.Test
 
         public override bool TryDeleteIndex(DeleteIndexBinder binder, object[] indexes)
         {
-            if (indexes.All(index => (index is int) || ((index is string) && !((string)index).StartsWith("Z", StringComparison.Ordinal))))
+            if (indexes.All(index => (index is int) || ((index is string stringIndex) && !stringIndex.StartsWith("Z", StringComparison.Ordinal))))
             {
                 return indexMap.Remove(string.Join(":", indexes));
             }

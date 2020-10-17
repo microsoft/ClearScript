@@ -22,14 +22,12 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static ITypeLib GetContainingTypeLib(this ITypeInfo typeInfo)
         {
-            int index;
-            return typeInfo.GetContainingTypeLib(out index);
+            return typeInfo.GetContainingTypeLib(out _);
         }
 
         public static ITypeLib GetContainingTypeLib(this ITypeInfo typeInfo, out int index)
         {
-            ITypeLib typeLib;
-            typeInfo.GetContainingTypeLib(out typeLib, out index);
+            typeInfo.GetContainingTypeLib(out var typeLib, out index);
             return typeLib;
         }
 
@@ -40,19 +38,16 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static string GetManagedName(this ITypeInfo typeInfo)
         {
-            var typeInfo2 = typeInfo as ITypeInfo2;
-            if (typeInfo2 != null)
+            if (typeInfo is ITypeInfo2 typeInfo2)
             {
                 // ReSharper disable EmptyGeneralCatchClause
 
                 try
                 {
                     var guid = managedNameGuid;
-                    object data;
-                    typeInfo2.GetCustData(ref guid, out data);
+                    typeInfo2.GetCustData(ref guid, out var data);
 
-                    var name = data as string;
-                    if (name != null)
+                    if (data is string name)
                     {
                         return name.Trim();
                     }
@@ -69,11 +64,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static string GetMemberName(this ITypeInfo typeInfo, int memid)
         {
-            string name;
-            string docString;
-            int helpContext;
-            string helpFile;
-            typeInfo.GetDocumentation(memid, out name, out docString, out helpContext, out helpFile);
+            typeInfo.GetDocumentation(memid, out var name, out _, out _, out _);
             return name;
         }
 
@@ -142,8 +133,7 @@ namespace Microsoft.ClearScript.Util.COM
                             continue;
                         }
 
-                        int nameCount;
-                        typeInfo.GetNames(funcDescScope.Value.memid, names, 1, out nameCount);
+                        typeInfo.GetNames(funcDescScope.Value.memid, names, 1, out var nameCount);
                         if (nameCount > 0)
                         {
                             yield return new DispatchMember(names[0], funcDescScope.Value.memid, funcDescScope.Value.invkind);
@@ -169,8 +159,7 @@ namespace Microsoft.ClearScript.Util.COM
 
                 if (attrScope.Value.typekind == TYPEKIND.TKIND_ALIAS)
                 {
-                    ITypeInfo refTypeInfo;
-                    typeInfo.GetRefTypeInfo(unchecked((int)attrScope.Value.tdescAlias.lpValue.ToInt64()), out refTypeInfo);
+                    typeInfo.GetRefTypeInfo(unchecked((int)attrScope.Value.tdescAlias.lpValue.ToInt64()), out var refTypeInfo);
                     return refTypeInfo.IsEnum();
                 }
 

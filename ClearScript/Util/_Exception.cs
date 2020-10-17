@@ -4,7 +4,6 @@
 using System.Reflection;
 using System.Runtime.Serialization;
 
-// ReSharper disable CheckNamespace
 // ReSharper disable InconsistentNaming
 
 namespace System.Runtime.InteropServices
@@ -27,4 +26,3 @@ namespace System.Runtime.InteropServices
 }
 
 // ReSharper restore InconsistentNaming
-// ReSharper restore CheckNamespace

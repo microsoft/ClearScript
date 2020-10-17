@@ -13,8 +13,7 @@ namespace Microsoft.ClearScript.Util
 
         public TValue Get(THolder holder)
         {
-            TValue value;
-            return table.TryGetValue(holder, out value) ? value : null;
+            return table.TryGetValue(holder, out var value) ? value : null;
         }
 
         public TValue GetOrCreate(THolder holder)

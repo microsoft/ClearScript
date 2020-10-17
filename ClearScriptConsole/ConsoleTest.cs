@@ -26,8 +26,8 @@ namespace Microsoft.ClearScript.Test
                 {
                     var thread = new Thread(() =>
                     {
-                        var pointer = stackalloc byte[192 * 1024];
-                        if ((ulong)pointer < (984 * 1024UL))
+                        var ptr = stackalloc byte[192 * 1024];
+                        if ((ulong)ptr < (984 * 1024UL))
                         {
                             try
                             {

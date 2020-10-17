@@ -15,7 +15,7 @@ namespace Microsoft.ClearScript
         {
             if ((argCount < 0) || (argCount > maxArgCount))
             {
-                throw new ArgumentException("Invalid argument count", "argCount");
+                throw new ArgumentException("Invalid argument count", nameof(argCount));
             }
 
             var typeArgs = Enumerable.Repeat(typeof(object), argCount).ToArray();
@@ -26,7 +26,7 @@ namespace Microsoft.ClearScript
         {
             if ((argCount < 0) || (argCount > maxArgCount))
             {
-                throw new ArgumentException("Invalid argument count", "argCount");
+                throw new ArgumentException("Invalid argument count", nameof(argCount));
             }
 
             var typeArgs = Enumerable.Repeat(typeof(object), argCount).Concat(typeof(TResult).ToEnumerable()).ToArray();
@@ -69,8 +69,6 @@ namespace Microsoft.ClearScript
 
         private static Delegate CreateSimpleDelegate(ScriptEngine engine, object target, Type delegateType)
         {
-            // ReSharper disable PossibleNullReferenceException
-
             var method = delegateType.GetMethod("Invoke");
             var paramTypes = method.GetParameters().Select(param => param.ParameterType).ToArray();
 
@@ -82,22 +80,16 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                // ReSharper disable once RedundantExplicitArrayCreation
-                var typeArgs = paramTypes.Concat(new Type[] { method.ReturnType, delegateType }).ToArray();
+                var typeArgs = paramTypes.Concat(new[] { method.ReturnType, delegateType }).ToArray();
                 shimType = funcShimTemplates[paramTypes.Length].MakeSpecificType(typeArgs);
             }
 
             var shim = (DelegateShim)shimType.CreateInstance(engine, target);
             return shim.Delegate;
-
-            // ReSharper restore PossibleNullReferenceException
         }
 
         private static Delegate CreateComplexDelegate(ScriptEngine engine, object target, Type delegateType)
         {
-            // ReSharper disable CoVariantArrayConversion
-            // ReSharper disable PossibleNullReferenceException
-
             var method = delegateType.GetMethod("Invoke");
 
             var parameters = method.GetParameters();
@@ -140,12 +132,8 @@ namespace Microsoft.ClearScript
             {
                 if (paramTypes[index].IsByRef)
                 {
-                    // ReSharper disable AssignNullToNotNullAttribute
-
                     var constructor = innerParamTypes[index].GetConstructor(new[] { paramTypes[index].GetElementType() });
                     topExprs.Add(Expression.Assign(varExprs[index], Expression.New(constructor, paramExprs[index])));
-
-                    // ReSharper restore AssignNullToNotNullAttribute
                 }
                 else
                 {
@@ -154,6 +142,8 @@ namespace Microsoft.ClearScript
             }
 
             var innerDelegate = CreateSimpleDelegate(engine, target, innerDelegateType);
+
+            // ReSharper disable once CoVariantArrayConversion
             var invokeExpr = Expression.Invoke(Expression.Constant(innerDelegate), varExprs);
 
             var finallyExprs = new List<Expression>();
@@ -161,13 +151,9 @@ namespace Microsoft.ClearScript
             {
                 if (paramTypes[index].IsByRef)
                 {
-                    // ReSharper disable AssignNullToNotNullAttribute
-
                     var member = innerParamTypes[index].GetProperty("Value");
                     var resultExpr = Expression.MakeMemberAccess(varExprs[index], member);
                     finallyExprs.Add(Expression.Assign(paramExprs[index], resultExpr));
-
-                    // ReSharper restore AssignNullToNotNullAttribute
                 }
             }
 
@@ -176,16 +162,13 @@ namespace Microsoft.ClearScript
 
             var topBlockExpr = Expression.Block(method.ReturnType, varExprs, topExprs);
             return Expression.Lambda(delegateType, topBlockExpr, paramExprs).Compile();
-
-            // ReSharper restore PossibleNullReferenceException
-            // ReSharper restore CoVariantArrayConversion
         }
 
         private abstract class DelegateShim
         {
             public abstract Delegate Delegate { get; }
 
-            protected ScriptEngine Engine { get; private set; }
+            protected ScriptEngine Engine { get; }
 
             protected DelegateShim(ScriptEngine engine)
             {
@@ -199,14 +182,12 @@ namespace Microsoft.ClearScript
 
             protected static object GetArgValue(object arg)
             {
-                var byRefArg = arg as IByRefArg;
-                return (byRefArg != null) ? byRefArg.Value : arg;
+                return (arg is IByRefArg byRefArg) ? byRefArg.Value : arg;
             }
 
             protected static void SetArgValue(object arg, object value)
             {
-                var byRefArg = arg as IByRefArg;
-                if (byRefArg != null)
+                if (arg is IByRefArg byRefArg)
                 {
                     byRefArg.Value = value;
                 }
@@ -214,8 +195,7 @@ namespace Microsoft.ClearScript
 
             protected static object GetCompatibleTarget(Type delegateType, object target)
             {
-                var del = target as Delegate;
-                if ((del != null) && (del.GetType() != delegateType))
+                if ((target is Delegate del) && (del.GetType() != delegateType))
                 {
                     // The target is a delegate of a different type from the one we are creating.
                     // Normally we expect the target to be a script function (COM object), but

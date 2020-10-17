@@ -222,7 +222,7 @@ namespace Microsoft.ClearScript.Util
         public static string GetScriptName(this MemberInfo member)
         {
             var attribute = member.GetAttribute<ScriptMemberAttribute>(true);
-            return ((attribute != null) && (attribute.Name != null)) ? attribute.Name : member.GetShortName();
+            return attribute?.Name ?? member.GetShortName();
         }
 
         public static bool IsBlockedFromScript(this MemberInfo member, ScriptAccess defaultAccess, bool chain = true)
@@ -295,7 +295,7 @@ namespace Microsoft.ClearScript.Util
         public static ScriptMemberFlags GetScriptMemberFlags(this MemberInfo member)
         {
             var attribute = member.GetAttribute<ScriptMemberAttribute>(true);
-            return (attribute != null) ? attribute.Flags : ScriptMemberFlags.None;
+            return attribute?.Flags ?? ScriptMemberFlags.None;
         }
 
         public static string GetShortName(this MemberInfo member)

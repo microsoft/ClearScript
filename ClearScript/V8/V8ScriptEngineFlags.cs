@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -44,9 +45,10 @@ namespace Microsoft.ClearScript.V8
         /// Specifies that the script engine is to perform automatic conversion between
         /// .NET <see cref="DateTime"/> objects and JavaScript
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</see>
-        /// objects. This conversion is bidirectional. A <c>DateTime</c> object constructed from
-        /// a JavaScript <c>Date</c> object always represents a Coordinated Universal Timestamp (UTC)
-        /// and has its <see cref="DateTime.Kind"/> property set to <see cref="DateTimeKind.Utc"/>.
+        /// objects. This conversion is bidirectional and lossy. A <c>DateTime</c> object
+        /// constructed from a JavaScript <c>Date</c> object always represents a Coordinated
+        /// Universal Timestamp (UTC) and has its <see cref="DateTime.Kind"/> property set to
+        /// <see cref="DateTimeKind.Utc"/>.
         /// </summary>
         EnableDateTimeConversion = 0x00000010,
 
@@ -73,5 +75,14 @@ namespace Microsoft.ClearScript.V8
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt">BigInt</see>.
         /// </summary>
         MarshalAllLongAsBigInt = 0x00000080,
+
+        /// <summary>
+        /// Specifies that the script engine is to perform automatic conversion between
+        /// .NET <see cref="Task"/> objects and JavaScript
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promises</see>.
+        /// This conversion is bidirectional and lossy. A <c>Task</c> object constructed from a
+        /// JavaScript promise always has a result type of <see cref="object"/>.
+        /// </summary>
+        EnableTaskPromiseConversion = 0x00000100
     }
 }

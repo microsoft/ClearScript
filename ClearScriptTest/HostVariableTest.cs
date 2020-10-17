@@ -7,19 +7,11 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable HeuristicUnreachableCode
-
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
     [DeploymentItem("ClearScriptV8-64.dll")]
     [DeploymentItem("ClearScriptV8-32.dll")]
-    [DeploymentItem("v8-x64.dll")]
-    [DeploymentItem("v8-ia32.dll")]
-    [DeploymentItem("v8-base-x64.dll")]
-    [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-zlib-x64.dll")]
-    [DeploymentItem("v8-zlib-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class HostVariableTest : ClearScriptTest
     {
@@ -144,7 +136,7 @@ namespace Microsoft.ClearScript.Test
 
         // ReSharper disable UnusedMember.Local
 
-        public T TestMethod<T>(ref T value, T outValue = default(T))
+        public T TestMethod<T>(ref T value, T outValue = default)
         {
             var inValue = value;
             value = outValue;

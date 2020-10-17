@@ -22,7 +22,7 @@ namespace Microsoft.ClearScript.Test
                 return;
             }
 
-            using (var engine = new V8ScriptEngine(typeof(ClearScriptConsole).Name, V8ScriptEngineFlags.EnableDebugging))
+            using (var engine = new V8ScriptEngine(nameof(ClearScriptConsole), V8ScriptEngineFlags.EnableDebugging))
             {
                 engine.AddHostObject("host", new ExtendedHostFunctions());
                 engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System", "System.Core", "System.Numerics", "ClearScript"));
@@ -38,18 +38,12 @@ namespace Microsoft.ClearScript.Test
         {
             try
             {
-                // ReSharper disable AssignNullToNotNullAttribute
-                // ReSharper disable PossibleNullReferenceException
-
                 var fileName = Path.ChangeExtension("Startup", engine.FileNameExtension);
                 var filePath = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), fileName);
                 if (File.Exists(filePath))
                 {
                     engine.Execute(new DocumentInfo(new Uri(filePath)), File.ReadAllText(filePath));
                 }
-
-                // ReSharper restore PossibleNullReferenceException
-                // ReSharper restore AssignNullToNotNullAttribute
             }
             catch (Exception exception)
             {

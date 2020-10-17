@@ -31,8 +31,7 @@ namespace Microsoft.ClearScript
             var type = obj.GetType();
             lock (table)
             {
-                ICanonicalRefMap map;
-                if (!table.TryGetValue(type, out map))
+                if (!table.TryGetValue(type, out var map))
                 {
                     if (type.IsEnum ||
                         type.IsNumeric() ||
@@ -88,8 +87,7 @@ namespace Microsoft.ClearScript
                 var value = (T)obj;
                 object result;
 
-                WeakReference weakRef;
-                if (map.TryGetValue(value, out weakRef))
+                if (map.TryGetValue(value, out var weakRef))
                 {
                     result = weakRef.Target;
                     if (result == null)

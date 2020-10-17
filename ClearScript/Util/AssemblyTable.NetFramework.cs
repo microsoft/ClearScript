@@ -35,8 +35,7 @@ namespace Microsoft.ClearScript.Util
 
             public static string GetFullAssemblyNameImpl(string name)
             {
-                string fullName;
-                return ((table != null) && table.TryGetValue(name, out fullName)) ? fullName : AssemblyHelpers.GetFullAssemblyName(name);
+                return ((table != null) && table.TryGetValue(name, out var fullName)) ? fullName : AssemblyHelpers.GetFullAssemblyName(name);
             }
 
             private static void LoadAssemblyTable()
@@ -49,8 +48,7 @@ namespace Microsoft.ClearScript.Util
 
             private static bool ReadAssemblyTable()
             {
-                bool usingAppPath;
-                if (ReadAssemblyTable(MiscHelpers.GetLocalDataRootPath(out usingAppPath)))
+                if (ReadAssemblyTable(MiscHelpers.GetLocalDataRootPath(out var usingAppPath)))
                 {
                     return true;
                 }
@@ -103,8 +101,7 @@ namespace Microsoft.ClearScript.Util
 
             private static void WriteAssemblyTable()
             {
-                bool usingAppPath;
-                if (!WriteAssemblyTable(MiscHelpers.GetLocalDataRootPath(out usingAppPath)) && !usingAppPath)
+                if (!WriteAssemblyTable(MiscHelpers.GetLocalDataRootPath(out var usingAppPath)) && !usingAppPath)
                 {
                     WriteAssemblyTable(MiscHelpers.GetLocalDataRootPath(AppDomain.CurrentDomain.BaseDirectory));
                 }

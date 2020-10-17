@@ -18,13 +18,10 @@ namespace Microsoft.ClearScript
     {
         #region data
 
-        private readonly string name;
-
         private Type accessContext;
         private ScriptAccess defaultAccess;
         private bool enforceAnonymousTypeAccess;
         private bool exposeHostObjectStaticMembers;
-        private object undefinedImportValue = Undefined.Value;
 
         private DocumentSettings documentSettings;
         private readonly DocumentSettings defaultDocumentSettings = new DocumentSettings();
@@ -54,7 +51,7 @@ namespace Microsoft.ClearScript
         /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
         protected ScriptEngine(string name, string fileNameExtensions)
         {
-            this.name = nameManager.GetUniqueName(name, GetType().GetRootName());
+            Name = nameManager.GetUniqueName(name, GetType().GetRootName());
             defaultDocumentSettings.FileNameExtensions = fileNameExtensions;
         }
 
@@ -65,10 +62,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Gets the name associated with the script engine instance.
         /// </summary>
-        public string Name
-        {
-            get { return name; }
-        }
+        public string Name { get; }
 
         /// <summary>
         /// Gets the script engine that is invoking a host member on the current thread.
@@ -79,10 +73,7 @@ namespace Microsoft.ClearScript
         /// engines are invoking host members on the current thread, this property returns
         /// <c>null</c>.
         /// </remarks>
-        public static ScriptEngine Current
-        {
-            get { return currentEngine; }
-        }
+        public static ScriptEngine Current => currentEngine;
 
         /// <summary>
         /// Gets the script engine's recommended file name extension for script files.
@@ -100,7 +91,8 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public Type AccessContext
         {
-            get { return accessContext; }
+            get => accessContext;
+
             set
             {
                 accessContext = value;
@@ -120,7 +112,8 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public ScriptAccess DefaultAccess
         {
-            get { return defaultAccess; }
+            get => defaultAccess;
+
             set
             {
                 defaultAccess = value;
@@ -143,7 +136,8 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public bool EnforceAnonymousTypeAccess
         {
-            get { return enforceAnonymousTypeAccess; }
+            get => enforceAnonymousTypeAccess;
+
             set
             {
                 enforceAnonymousTypeAccess = value;
@@ -156,7 +150,8 @@ namespace Microsoft.ClearScript
         /// </summary>
         public bool ExposeHostObjectStaticMembers
         {
-            get { return exposeHostObjectStaticMembers; }
+            get => exposeHostObjectStaticMembers;
+
             set
             {
                 exposeHostObjectStaticMembers = value;
@@ -262,11 +257,7 @@ namespace Microsoft.ClearScript
         /// host, the script engine maps it to the value of this property. The default value is
         /// <see cref="Undefined.Value"/>.
         /// </remarks>
-        public object UndefinedImportValue
-        {
-            get { return undefinedImportValue; }
-            set { undefinedImportValue = value; }
-        }
+        public object UndefinedImportValue { get; set; } = Undefined.Value;
 
         /// <summary>
         /// Gets or sets a callback that can be used to halt script execution.
@@ -293,8 +284,8 @@ namespace Microsoft.ClearScript
         /// </summary>
         public DocumentSettings DocumentSettings
         {
-            get { return documentSettings ?? defaultDocumentSettings; }
-            set { documentSettings = value; }
+            get => documentSettings ?? defaultDocumentSettings;
+            set => documentSettings = value;
         }
 
         /// <summary>
@@ -1376,15 +1367,9 @@ namespace Microsoft.ClearScript
 
         internal abstract IUniqueNameManager DocumentNameManager { get; }
 
-        internal virtual bool EnumerateInstanceMethods
-        {
-            get { return true; }
-        }
+        internal virtual bool EnumerateInstanceMethods => true;
 
-        internal virtual bool EnumerateExtensionMethods
-        {
-            get { return EnumerateInstanceMethods; }
-        }
+        internal virtual bool EnumerateExtensionMethods => EnumerateInstanceMethods;
 
         internal abstract void AddHostItem(string itemName, HostItemFlags flags, object item);
 
@@ -1414,7 +1399,7 @@ namespace Microsoft.ClearScript
         internal object MarshalToScript(object obj)
         {
             var hostItem = obj as HostItem;
-            return MarshalToScript(obj, (hostItem != null) ? hostItem.Flags : HostItemFlags.None);
+            return MarshalToScript(obj, hostItem?.Flags ?? HostItemFlags.None);
         }
 
         internal object[] MarshalToScript(object[] args)
@@ -1446,8 +1431,7 @@ namespace Microsoft.ClearScript
 
         internal string GetCommandResultString(object result)
         {
-            var hostItem = result as HostItem;
-            if (hostItem != null)
+            if (result is HostItem hostItem)
             {
                 if (hostItem.Target is IHostVariable)
                 {
@@ -1614,16 +1598,11 @@ namespace Microsoft.ClearScript
 
         #region enumeration settings
 
-        private object enumerationSettingsToken = new object();
-
-        internal object EnumerationSettingsToken
-        {
-            get { return enumerationSettingsToken; }
-        }
+        internal object EnumerationSettingsToken { get; private set; } = new object();
 
         internal void OnEnumerationSettingsChanged()
         {
-            enumerationSettingsToken = new object();
+            EnumerationSettingsToken = new object();
         }
 
         #endregion
@@ -1640,10 +1619,7 @@ namespace Microsoft.ClearScript
             }
         }
 
-        internal ExtensionMethodSummary ExtensionMethodSummary
-        {
-            get { return extensionMethodTable.Summary; }
-        }
+        internal ExtensionMethodSummary ExtensionMethodSummary => extensionMethodTable.Summary;
 
         internal void RebuildExtensionMethodSummary()
         {
@@ -1675,32 +1651,27 @@ namespace Microsoft.ClearScript
 
         internal HostItem GetOrCreateHostItem(HostTarget target, HostItemFlags flags, HostItem.CreateFunc createHostItem)
         {
-            var hostObject = target as HostObject;
-            if (hostObject != null)
+            if (target is HostObject hostObject)
             {
                 return GetOrCreateHostItemForHostObject(hostObject, hostObject.Target, flags, createHostItem);
             }
 
-            var hostType = target as HostType;
-            if (hostType != null)
+            if (target is HostType hostType)
             {
                 return GetOrCreateHostItemForHostType(hostType, flags, createHostItem);
             }
 
-            var hostMethod = target as HostMethod;
-            if (hostMethod != null)
+            if (target is HostMethod hostMethod)
             {
                 return GetOrCreateHostItemForHostObject(hostMethod, hostMethod, flags, createHostItem);
             }
 
-            var hostVariable = target as HostVariableBase;
-            if (hostVariable != null)
+            if (target is HostVariableBase hostVariable)
             {
                 return GetOrCreateHostItemForHostObject(hostVariable, hostVariable, flags, createHostItem);
             }
 
-            var hostIndexedProperty = target as HostIndexedProperty;
-            if (hostIndexedProperty != null)
+            if (target is HostIndexedProperty hostIndexedProperty)
             {
                 return GetOrCreateHostItemForHostObject(hostIndexedProperty, hostIndexedProperty, flags, createHostItem);
             }

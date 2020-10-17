@@ -18,18 +18,12 @@ namespace Microsoft.ClearScript.Test
         public TestEnum BaseEnumProperty { get; set; }
         public TimeSpan BaseStructProperty { get; set; }
 
-        public byte BaseReadOnlyProperty
-        {
-            get { return 117; }
-        }
+        public byte BaseReadOnlyProperty => 117;
 
         public event EventHandler<TestEventArgs<short>> BaseEvent;
         public void BaseFireEvent(short arg)
         {
-            if (BaseEvent != null)
-            {
-                BaseEvent(this, new TestEventArgs<short> { Arg = arg });
-            }
+            BaseEvent?.Invoke(this, new TestEventArgs<short> { Arg = arg });
         }
 
         public double BaseMethod(string arg1, int arg2)
@@ -59,18 +53,12 @@ namespace Microsoft.ClearScript.Test
         public TestEnum BaseInterfaceEnumProperty { get; set; }
         public TimeSpan BaseInterfaceStructProperty { get; set; }
 
-        public byte BaseInterfaceReadOnlyProperty
-        {
-            get { return 73; }
-        }
+        public byte BaseInterfaceReadOnlyProperty => 73;
 
         public event EventHandler<TestEventArgs<short>> BaseInterfaceEvent;
         public void BaseInterfaceFireEvent(short arg)
         {
-            if (BaseInterfaceEvent != null)
-            {
-                BaseInterfaceEvent(this, new TestEventArgs<short> { Arg = arg });
-            }
+            BaseInterfaceEvent?.Invoke(this, new TestEventArgs<short> { Arg = arg });
         }
 
         public double BaseInterfaceMethod(string arg1, int arg2)
@@ -110,26 +98,20 @@ namespace Microsoft.ClearScript.Test
         TimeSpan IExplicitBaseTestInterface.ExplicitBaseInterfaceStructProperty { get; set; }
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation for testing purposes.")]
-        byte IExplicitBaseTestInterface.ExplicitBaseInterfaceReadOnlyProperty
-        {
-            get { return 17; }
-        }
+        byte IExplicitBaseTestInterface.ExplicitBaseInterfaceReadOnlyProperty => 17;
 
         private event EventHandler<TestEventArgs<short>> ExplicitBaseInterfaceEventImpl;
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation for testing purposes.")]
         event EventHandler<TestEventArgs<short>> IExplicitBaseTestInterface.ExplicitBaseInterfaceEvent
         {
-            add { ExplicitBaseInterfaceEventImpl += value; }
-            remove { ExplicitBaseInterfaceEventImpl -= value; }
+            add => ExplicitBaseInterfaceEventImpl += value;
+            remove => ExplicitBaseInterfaceEventImpl -= value;
         }
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation for testing purposes.")]
         void IExplicitBaseTestInterface.ExplicitBaseInterfaceFireEvent(short arg)
         {
-            if (ExplicitBaseInterfaceEventImpl != null)
-            {
-                ExplicitBaseInterfaceEventImpl(this, new TestEventArgs<short> { Arg = arg });
-            }
+            ExplicitBaseInterfaceEventImpl?.Invoke(this, new TestEventArgs<short> { Arg = arg });
         }
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation for testing purposes.")]

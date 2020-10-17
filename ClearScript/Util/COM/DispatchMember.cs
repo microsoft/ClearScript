@@ -10,9 +10,9 @@ namespace Microsoft.ClearScript.Util.COM
 {
     internal sealed class DispatchMember
     {
-        public string Name { get; private set; }
+        public string Name { get; }
 
-        public int DispID { get; private set; }
+        public int DispID { get; }
 
         public DispatchFlags DispatchFlags { get; private set; }
 

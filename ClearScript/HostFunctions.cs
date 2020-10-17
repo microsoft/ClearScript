@@ -145,8 +145,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
-            object result;
-            if (target.GetMetaObject(Expression.Constant(target)).TryCreateInstance(args, out result))
+            if (target.GetMetaObject(Expression.Constant(target)).TryCreateInstance(args, out var result))
             {
                 return result;
             }
@@ -256,7 +255,7 @@ namespace Microsoft.ClearScript
         /// </code>
         /// </example>
         /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
-        public object newVar<T>(T initValue = default(T))
+        public object newVar<T>(T initValue = default)
         {
             return new HostVariable<T>(initValue);
         }
@@ -1071,8 +1070,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
-            object result;
-            if (target.TryGetValue(name, out result))
+            if (target.TryGetValue(name, out var result))
             {
                 return result;
             }
@@ -1124,8 +1122,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
-            object result;
-            if (target.GetMetaObject(Expression.Constant(target)).TryGetMember(name, out result))
+            if (target.GetMetaObject(Expression.Constant(target)).TryGetMember(name, out var result))
             {
                 return result;
             }
@@ -1147,8 +1144,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
-            object result;
-            if (target.GetMetaObject(Expression.Constant(target)).TrySetMember(name, value, out result))
+            if (target.GetMetaObject(Expression.Constant(target)).TrySetMember(name, value, out var result))
             {
                 return result;
             }
@@ -1169,8 +1165,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
-            bool result;
-            if (target.GetMetaObject(Expression.Constant(target)).TryDeleteMember(name, out result))
+            if (target.GetMetaObject(Expression.Constant(target)).TryDeleteMember(name, out var result))
             {
                 return result;
             }
@@ -1191,8 +1186,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
-            object result;
-            if (target.GetMetaObject(Expression.Constant(target)).TryGetIndex(indices, out result))
+            if (target.GetMetaObject(Expression.Constant(target)).TryGetIndex(indices, out var result))
             {
                 return result;
             }
@@ -1215,8 +1209,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
-            object result;
-            if (target.GetMetaObject(Expression.Constant(target)).TrySetIndex(indices, value, out result))
+            if (target.GetMetaObject(Expression.Constant(target)).TrySetIndex(indices, value, out var result))
             {
                 return result;
             }
@@ -1237,8 +1230,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(target, "target");
 
-            bool result;
-            if (target.GetMetaObject(Expression.Constant(target)).TryDeleteIndex(indices, out result))
+            if (target.GetMetaObject(Expression.Constant(target)).TryDeleteIndex(indices, out var result))
             {
                 return result;
             }
@@ -1663,8 +1655,7 @@ namespace Microsoft.ClearScript
             var type = typeof(T);
             if (type.IsUnknownCOMObject())
             {
-                var dispatch = obj as IDispatch;
-                if (dispatch != null)
+                if (obj is IDispatch dispatch)
                 {
                     var typeInfo = dispatch.GetTypeInfo();
                     if (typeInfo != null)
@@ -1680,7 +1671,7 @@ namespace Microsoft.ClearScript
                 return collection;
             }
 
-            throw new ArgumentException("The object type is not of an imported (COM/ActiveX) type", "obj");
+            throw new ArgumentException("The object type is not of an imported (COM/ActiveX) type", nameof(obj));
         }
 
         // ReSharper restore InconsistentNaming

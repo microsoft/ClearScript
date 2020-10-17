@@ -32,31 +32,19 @@ namespace Microsoft.ClearScript
 
         public T Value
         {
-            get { return target.Value; }
-            set { target.Value = value; }
+            get => target.Value;
+            set => target.Value = value;
         }
 
         #region HostTarget overrides
 
-        public override Type Type
-        {
-            get { return target.Type; }
-        }
+        public override Type Type => target.Type;
 
-        public override object Target
-        {
-            get { return this; }
-        }
+        public override object Target => this;
 
-        public override object InvokeTarget
-        {
-            get { return target.InvokeTarget; }
-        }
+        public override object InvokeTarget => target.InvokeTarget;
 
-        public override object DynamicInvokeTarget
-        {
-            get { return target.DynamicInvokeTarget; }
-        }
+        public override object DynamicInvokeTarget => target.DynamicInvokeTarget;
 
         public override HostTargetFlags GetFlags(IHostInvokeContext context)
         {
@@ -94,8 +82,8 @@ namespace Microsoft.ClearScript
 
         object IByRefArg.Value
         {
-            get { return target.Value; }
-            set { ((IHostVariable)target).Value = value; }
+            get => target.Value;
+            set => ((IHostVariable)target).Value = value;
         }
 
         #endregion

@@ -26,7 +26,7 @@
     <OutputPath>..\bin\Debug\</OutputPath>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <DefineConstants>TRACE;DEBUG;NETFRAMEWORK</DefineConstants>
-    <DocumentationFile>bin\Debug\ClearScript.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\ClearScript.xml</DocumentationFile>
     <ErrorReport>prompt</ErrorReport>
     <DebugType>full</DebugType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -37,7 +37,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputPath>..\bin\Release\</OutputPath>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DocumentationFile>bin\Release\ClearScript.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\ClearScript.xml</DocumentationFile>
     <DefineConstants>TRACE;NETFRAMEWORK</DefineConstants>
     <Optimize>true</Optimize>
     <ErrorReport>prompt</ErrorReport>
@@ -68,7 +68,8 @@
   <ItemGroup>
     <Compile Include="CanonicalRefTable.cs" />
     <Compile Include="DynamicHostMetaObject.cs" />
-    <Compile Include="HostItem.NetFramework.cs" />
+    <Compile Include="HostItem.Windows.NetFramework.cs" />
+    <Compile Include="HostItem.Windows.cs" />
     <Compile Include="HostSettings.cs" />
     <Compile Include="Document.cs" />
     <Compile Include="DocumentCategory.cs" />
@@ -131,6 +132,7 @@
     <Compile Include="Util\COM\TypeInfoHelpers.cs" />
     <Compile Include="Util\COM\TypeInfoHelpers.NetFramework.cs" />
     <Compile Include="Util\COM\TypeLibHelpers.cs" />
+    <Compile Include="Util\MiscHelpers.Windows.cs" />
     <Compile Include="Util\VTableHelpers.cs" />
     <Compile Include="Util\CoTaskMemBlock.cs" />
     <Compile Include="Util\Holder.cs" />
@@ -140,7 +142,7 @@
     <Compile Include="Util\IHostInvokeContext.cs" />
     <Compile Include="Util\MemberComparer.cs" />
     <Compile Include="Util\NativeCallbackTimer.cs" />
-    <Compile Include="Util\NativeMethods.cs" />
+    <Compile Include="Util\NativeMethods.Windows.cs" />
     <Compile Include="Util\COM\Dispatch.cs" />
     <Compile Include="Util\IScriptMarshalWrapper.cs" />
     <Compile Include="Util\MemberHelpers.cs" />
@@ -157,6 +159,21 @@
     <Compile Include="Util\VTablePatcher.cs" />
     <Compile Include="Util\Web\WebSocket.cs" />
     <Compile Include="V8\IV8DebugListener.cs" />
+    <Compile Include="V8\SplitProxy\IV8SplitProxyNative.cs" />
+    <Compile Include="V8\SplitProxy\NativeCallbackImpl.cs" />
+    <Compile Include="V8\SplitProxy\V8DebugListenerImpl.cs" />
+    <Compile Include="V8\SplitProxy\V8EntityHolder.cs" />
+    <Compile Include="V8\SplitProxy\V8ScriptImpl.cs" />
+    <Compile Include="V8\SplitProxy\V8SplitProxyHelpers.cs" />
+    <Compile Include="V8\SplitProxy\V8SplitProxyManaged.cs" />
+    <Compile Include="V8\SplitProxy\V8SplitProxyNative.cs" />
+    <Compile Include="V8\SplitProxy\V8ContextProxyImpl.cs" />
+    <Compile Include="V8\SplitProxy\V8IsolateProxyImpl.cs" />
+    <Compile Include="V8\SplitProxy\V8SplitProxyNative.Windows.32.cs" />
+    <Compile Include="V8\SplitProxy\V8SplitProxyNative.Windows.64.cs" />
+    <Compile Include="V8\SplitProxy\V8SplitProxyNative.Windows.cs" />
+    <Compile Include="V8\SplitProxy\V8ObjectImpl.cs" />
+    <Compile Include="V8\SplitProxy\V8TestProxyImpl.cs" />
     <Compile Include="V8\V8ArrayBufferOrViewInfo.cs" />
     <Compile Include="V8\V8ArrayBufferOrViewKind.cs" />
     <Compile Include="V8\V8CacheKind.cs" />
@@ -164,7 +181,7 @@
     <Compile Include="V8\V8CpuProfileFlags.cs" />
     <Compile Include="V8\V8DebugAgent.cs" />
     <Compile Include="V8\V8DebugClient.cs" />
-    <Compile Include="V8\V8Proxy.NetFramework.cs" />
+    <Compile Include="V8\V8Proxy.Windows.cs" />
     <Compile Include="V8\V8RuntimeHeapInfo.cs" />
     <Compile Include="V8\V8Script.cs" />
     <Compile Include="V8\V8IsolateProxy.cs" />
@@ -210,10 +227,6 @@
     <Compile Include="HostItem.cs" />
     <Compile Include="HostVariable.cs" />
     <Compile Include="Windows\JScriptEngine.cs" />
-    <None Include="Exports\CallbackManager.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>CallbackManager.h</LastGenOutput>
-    </None>
     <None Include="Properties\AssemblyInfo.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>AssemblyInfo.cs</LastGenOutput>
@@ -227,6 +240,7 @@
     <Compile Include="Util\MiscHelpers.cs" />
     <Compile Include="Util\Nonexistent.cs" />
     <Compile Include="Util\ObjectHelpers.cs" />
+    <Compile Include="Util\ObjectHelpers.Windows.cs" />
     <Compile Include="Util\COM\UnknownHelpers.cs" />
     <Compile Include="Util\TypeHelpers.cs" />
     <Compile Include="Undefined.cs" />
@@ -254,11 +268,6 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Exports\CallbackManager.h">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>CallbackManager.tt</DependentUpon>
-    </None>
     <None Include="Exports\VersionSymbols.h">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

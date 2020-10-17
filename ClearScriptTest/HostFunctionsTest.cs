@@ -6,18 +6,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Windows;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
-using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-// ReSharper disable HeuristicUnreachableCode
 
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
+    [DeploymentItem("ClearScriptV8-64.dll")]
+    [DeploymentItem("ClearScriptV8-32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class HostFunctionsTest : ClearScriptTest
     {
@@ -29,7 +27,7 @@ namespace Microsoft.ClearScript.Test
         [TestInitialize]
         public void TestInitialize()
         {
-            engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging);
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
             engine.AddHostObject("host", host = new HostFunctions());
         }
 
@@ -280,12 +278,10 @@ namespace Microsoft.ClearScript.Test
                 return retArg;
             };
 
-            int[] foo;
             var bar = 0d;
-            DayOfWeek baz;
             var qux = DateTime.UtcNow;
 
-            Assert.AreEqual(retVal, host.del<CustomDelegate>(method)(out foo, fooVal, ref bar, barVal, out baz, bazVal, ref qux, quxVal, retVal));
+            Assert.AreEqual(retVal, host.del<CustomDelegate>(method)(out var foo, fooVal, ref bar, barVal, out var baz, bazVal, ref qux, quxVal, retVal));
             Assert.AreEqual(fooVal, foo);
             Assert.AreEqual(barVal, bar);
             Assert.AreEqual(bazVal, baz);
@@ -469,8 +465,8 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("HostFunctions")]
         public void HostFunctions_newObj_Struct()
         {
-            Assert.AreEqual(new Point(), host.newObj<Point>());
-            Assert.AreEqual(new Point(100, 200), host.newObj<Point>(100, 200));
+            Assert.AreEqual(new DateTime(), host.newObj<DateTime>());
+            Assert.AreEqual(new DateTime(2007, 5, 22), host.newObj<DateTime>(2007, 5, 22));
         }
 
         [TestMethod, TestCategory("HostFunctions")]
@@ -795,7 +791,6 @@ namespace Microsoft.ClearScript.Test
         {
             var hostItem = host.asType<T>(value) as HostItem;
             Assert.IsNotNull(hostItem);
-            // ReSharper disable once PossibleNullReferenceException
             Assert.AreEqual(typeof(T), hostItem.Target.Type);
             Assert.AreEqual(value, hostItem.Unwrap());
         }
@@ -818,7 +813,7 @@ namespace Microsoft.ClearScript.Test
             Assert.IsInstanceOfType(variable, typeof(HostVariable<T>));
             if (typeof(T).IsValueType)
             {
-                Assert.AreEqual(default(T), ((HostVariable<T>)variable).Value);
+                Assert.AreEqual(default, ((HostVariable<T>)variable).Value);
             }
             else
             {
@@ -873,8 +868,7 @@ namespace Microsoft.ClearScript.Test
                 var expectedResult = value.DynamicCast<T>();
 
                 var result = host.cast<T>(value);
-                var hostItem = result as HostItem;
-                if (hostItem != null)
+                if (result is HostItem hostItem)
                 {
                     Assert.AreEqual(typeof(T), hostItem.Target.Type);
                     result = hostItem.Unwrap();

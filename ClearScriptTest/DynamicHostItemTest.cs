@@ -3,7 +3,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.ClearScript.V8;
-using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -11,15 +10,9 @@ namespace Microsoft.ClearScript.Test
     [TestClass]
     [DeploymentItem("ClearScriptV8-64.dll")]
     [DeploymentItem("ClearScriptV8-32.dll")]
-    [DeploymentItem("v8-x64.dll")]
-    [DeploymentItem("v8-ia32.dll")]
-    [DeploymentItem("v8-base-x64.dll")]
-    [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-zlib-x64.dll")]
-    [DeploymentItem("v8-zlib-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
-    [SuppressMessage("ReSharper", "StringLiteralTypo")]
-    public class DynamicHostItemTest : ClearScriptTest
+    [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "Typos in test code are acceptable.")]
+    public partial class DynamicHostItemTest : ClearScriptTest
     {
         #region setup / teardown
 
@@ -69,23 +62,6 @@ namespace Microsoft.ClearScript.Test
             engine.Script.mscorlib = new HostTypeCollection("mscorlib");
             Assert.IsInstanceOfType(engine.Script.mscorlib.BogusNonexistentProperty, typeof(Undefined));
             Assert.IsInstanceOfType(engine.Script["mscorlib"]["BogusNonexistentProperty"], typeof(Undefined));
-        }
-
-        [TestMethod, TestCategory("DynamicHostItem")]
-        public void DynamicHostItem_CrossEngine()
-        {
-            const string format = "{0} foo {1} bar {2} baz {3} qux {4} quux {5}";
-            var args = new object[] { 1, 2, 3, 4, 5, 6 };
-            engine.Script.mscorlib = new HostTypeCollection("mscorlib");
-
-            using (var outerEngine = new JScriptEngine())
-            {
-                outerEngine.Script.inner = engine;
-                outerEngine.Script.format = format;
-                outerEngine.Script.args = args;
-                Assert.AreEqual(string.Format(format, args), outerEngine.Evaluate("inner.Script.mscorlib.System.String.Format(format, args)"));
-                Assert.AreEqual(string.Format(format, args), outerEngine.Evaluate("inner.Script.mscorlib['System'].String['Format'](format, args)"));
-            }
         }
 
         // ReSharper restore InconsistentNaming

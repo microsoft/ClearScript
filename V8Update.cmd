@@ -1,11 +1,11 @@
 @echo off
 setlocal
 
+set v8testedrev=8.6.395.17
+
 ::-----------------------------------------------------------------------------
 :: process arguments
 ::-----------------------------------------------------------------------------
-
-set v8testedrev=8.3.110.9
 
 :ProcessArgs
 
@@ -88,7 +88,7 @@ goto Exit
 :Main
 
 echo Build mode: %mode%
-cd ClearScript\v8\v8
+cd V8
 if errorlevel 1 goto Exit
 
 set DEPOT_TOOLS_WIN_TOOLCHAIN=0
@@ -168,7 +168,6 @@ call gclient sync -r %v8rev% >sync.log
 if errorlevel 1 goto Error
 :SyncClientDone
 
-
 :ApplyPatches
 echo Applying patches ...
 cd v8
@@ -178,14 +177,6 @@ call git config user.email "ClearScript@microsoft.com"
 if errorlevel 1 goto Error
 call git apply --reject --ignore-whitespace ..\..\V8Patch.txt 2>applyV8Patch.log
 if errorlevel 1 goto Error
-cd third_party\zlib
-call git config user.name ClearScript
-if errorlevel 1 goto Error
-call git config user.email "ClearScript@microsoft.com"
-if errorlevel 1 goto Error
-call git apply --reject --ignore-whitespace ..\..\..\..\ZlibPatch.txt 2>..\..\applyZlibPatch.log
-if errorlevel 1 goto Error
-cd ..\..
 cd ..
 :ApplyPatchesDone
 
@@ -202,22 +193,18 @@ echo Creating/updating patches ...
 cd v8
 call git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createV8Patch.log
 if errorlevel 1 goto Error
-cd third_party\zlib
-call git diff --ignore-space-change --ignore-space-at-eol >..\..\ZlibPatch.txt 2>..\..\createZlibPatch.log
-if errorlevel 1 goto Error
-cd ..\..
 cd ..
 :CreatePatchesDone
 
 :Build32Bit
-echo Building 32-bit V8 ...
 cd v8
 setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x86 >nul
 if errorlevel 1 goto Build32BitError
-call gn gen out\ia32\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_i18n_support=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_target_cpu=\"x86\" v8_use_external_startup_data=false" >gn-ia32.log
+echo Building 32-bit V8 ...
+call gn gen out\Win32\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_i18n_support=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-Win32-%mode%.log
 if errorlevel 1 goto Build32BitError
-ninja -C out\ia32\%mode% v8-ia32.dll >build-ia32.log
+ninja -C out\Win32\%mode% obj\v8_monolith.lib >build-Win32-%mode%.log
 if errorlevel 1 goto Build32BitError
 endlocal
 cd ..
@@ -228,14 +215,14 @@ goto Error
 :Build32BitDone
 
 :Build64Bit
-echo Building 64-bit V8 ...
 cd v8
 setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64 >nul
 if errorlevel 1 goto Build64BitError
-call gn gen out\x64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=true is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_i18n_support=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_target_cpu=\"x64\" v8_use_external_startup_data=false" >gn-x64.log
+echo Building 64-bit V8 ...
+call gn gen out\x64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_i18n_support=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x64\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-x64-%mode%.log
 if errorlevel 1 goto Build64BitError
-ninja -C out\x64\%mode% v8-x64.dll >build-x64.log
+ninja -C out\x64\%mode% obj\v8_monolith.lib >build-x64-%mode%.log
 if errorlevel 1 goto Build64BitError
 endlocal
 cd ..
@@ -255,52 +242,9 @@ goto Error
 
 cd ..
 
-:EnsureLibDir
-if not exist lib\ goto CreateLibDir
-echo Removing old lib directory ...
-rd /s /q lib
-:CreateLibDir
-echo Creating lib directory ...
-md lib
-if errorlevel 1 goto Error
-:EnsureLibDirDone
-
-:ImportLibs
-echo Importing V8 libraries ...
-copy build\v8\out\ia32\%mode%\v8-zlib-ia32.dll lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\ia32\%mode%\v8-zlib-ia32.dll.pdb lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\ia32\%mode%\v8-base-ia32.dll lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\ia32\%mode%\v8-base-ia32.dll.pdb lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\ia32\%mode%\v8-ia32.dll lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\ia32\%mode%\v8-ia32.dll.pdb lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\ia32\%mode%\v8-ia32.dll.lib lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\x64\%mode%\v8-zlib-x64.dll lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\x64\%mode%\v8-zlib-x64.dll.pdb lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\x64\%mode%\v8-base-x64.dll lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\x64\%mode%\v8-base-x64.dll.pdb lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\x64\%mode%\v8-x64.dll lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\x64\%mode%\v8-x64.dll.pdb lib\ >nul
-if errorlevel 1 goto Error
-copy build\v8\out\x64\%mode%\v8-x64.dll.lib lib\ >nul
-if errorlevel 1 goto Error
-:ImportLibsDone
-
 :ImportPatches
 echo Importing patches ...
 copy build\v8\V8Patch.txt .\ >nul
-copy build\v8\ZlibPatch.txt .\ >nul
 if errorlevel 1 goto Error
 :ImportPatchesDone
 

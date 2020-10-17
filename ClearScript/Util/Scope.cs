@@ -32,19 +32,16 @@ namespace Microsoft.ClearScript.Util
             public ScopeImpl(Action enterAction, Action exitAction)
             {
                 this.exitAction = exitAction;
-                if (enterAction != null)
-                {
-                    enterAction();
-                }
+                enterAction?.Invoke();
             }
 
             #region IDisposable implementation
 
             public void Dispose()
             {
-                if (disposedFlag.Set() && (exitAction != null))
+                if (disposedFlag.Set())
                 {
-                    exitAction();
+                    exitAction?.Invoke();
                 }
             }
 
@@ -57,7 +54,6 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class ScopeImpl<T> : IScope<T>
         {
-            private readonly T value;
             private readonly Action<T> exitAction;
             private readonly OneWayFlag disposedFlag = new OneWayFlag();
 
@@ -66,22 +62,19 @@ namespace Microsoft.ClearScript.Util
                 this.exitAction = exitAction;
                 if (enterFunc != null)
                 {
-                    value = enterFunc();
+                    Value = enterFunc();
                 }
             }
 
             #region IScope<T> implementation
 
-            public T Value
-            {
-                get { return value; }
-            }
+            public T Value { get; }
 
             public void Dispose()
             {
-                if (disposedFlag.Set() && (exitAction != null))
+                if (disposedFlag.Set())
                 {
-                    exitAction(value);
+                    exitAction?.Invoke(Value);
                 }
             }
 

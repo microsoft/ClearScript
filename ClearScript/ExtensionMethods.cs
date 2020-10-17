@@ -14,12 +14,8 @@ namespace Microsoft.ClearScript
     internal sealed class ExtensionMethodTable
     {
         private readonly Dictionary<Type, MethodInfo[]> table = new Dictionary<Type, MethodInfo[]>();
-        private ExtensionMethodSummary summary = new ExtensionMethodSummary();
 
-        public ExtensionMethodSummary Summary
-        {
-            get { return summary; }
-        }
+        public ExtensionMethodSummary Summary { get; private set; } = new ExtensionMethodSummary();
 
         public bool ProcessType(Type type, Type accessContext, ScriptAccess defaultAccess)
         {
@@ -37,7 +33,7 @@ namespace Microsoft.ClearScript
 
         public void RebuildSummary()
         {
-            summary = new ExtensionMethodSummary(table);
+            Summary = new ExtensionMethodSummary(table);
         }
 
         private static bool IsScriptableExtensionMethod(MethodInfo method, Type accessContext, ScriptAccess defaultAccess)
@@ -62,10 +58,10 @@ namespace Microsoft.ClearScript
             MethodNames = Methods.Select(method => method.GetScriptName()).ToArray();
         }
 
-        public Type[] Types { get; private set; }
+        public Type[] Types { get; }
 
-        public MethodInfo[] Methods { get; private set; }
+        public MethodInfo[] Methods { get; }
 
-        public string[] MethodNames { get; private set; }
+        public string[] MethodNames { get; }
     }
 }

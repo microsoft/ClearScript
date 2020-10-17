@@ -14,11 +14,7 @@ namespace Microsoft.ClearScript.V8
     {
         #region data
 
-        private readonly string name;
         private static readonly IUniqueNameManager nameManager = new UniqueNameManager();
-
-        private readonly IUniqueNameManager documentNameManager = new UniqueFileNameManager();
-        private readonly HostItemCollateral hostItemCollateral = new HostItemCollateral();
 
         private DocumentSettings documentSettings;
         private readonly DocumentSettings defaultDocumentSettings = new DocumentSettings();
@@ -147,8 +143,8 @@ namespace Microsoft.ClearScript.V8
         /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         public V8Runtime(string name, V8RuntimeConstraints constraints, V8RuntimeFlags flags, int debugPort)
         {
-            this.name = nameManager.GetUniqueName(name, GetType().GetRootName());
-            proxy = V8IsolateProxy.Create(this.name, constraints, flags, debugPort);
+            Name = nameManager.GetUniqueName(name, GetType().GetRootName());
+            proxy = V8IsolateProxy.Create(Name, constraints, flags, debugPort);
         }
 
         #endregion
@@ -158,10 +154,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Gets the name associated with the V8 runtime instance.
         /// </summary>
-        public string Name
-        {
-            get { return name; }
-        }
+        public string Name { get; }
 
         /// <summary>
         /// Enables or disables script code formatting.
@@ -267,8 +260,8 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         public DocumentSettings DocumentSettings
         {
-            get { return documentSettings ?? defaultDocumentSettings; }
-            set { documentSettings = value; }
+            get => documentSettings ?? defaultDocumentSettings;
+            set => documentSettings = value;
         }
 
         /// <summary>
@@ -417,7 +410,7 @@ namespace Microsoft.ClearScript.V8
         public V8Script Compile(DocumentInfo documentInfo, string code)
         {
             VerifyNotDisposed();
-            return CompileInternal(documentInfo.MakeUnique(documentNameManager), code);
+            return CompileInternal(documentInfo.MakeUnique(DocumentNameManager), code);
         }
 
         /// <summary>
@@ -471,7 +464,7 @@ namespace Microsoft.ClearScript.V8
         public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
             VerifyNotDisposed();
-            return CompileInternal(documentInfo.MakeUnique(documentNameManager), code, cacheKind, out cacheBytes);
+            return CompileInternal(documentInfo.MakeUnique(DocumentNameManager), code, cacheKind, out cacheBytes);
         }
 
         /// <summary>
@@ -528,7 +521,7 @@ namespace Microsoft.ClearScript.V8
         public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             VerifyNotDisposed();
-            return CompileInternal(documentInfo.MakeUnique(documentNameManager), code, cacheKind, cacheBytes, out cacheAccepted);
+            return CompileInternal(documentInfo.MakeUnique(DocumentNameManager), code, cacheKind, cacheBytes, out cacheAccepted);
         }
 
         /// <summary>
@@ -695,8 +688,6 @@ namespace Microsoft.ClearScript.V8
             proxy.CollectGarbage(exhaustive);
         }
 
-        // ReSharper disable ParameterHidesMember
-
         /// <summary>
         /// Begins collecting a new CPU profile.
         /// </summary>
@@ -770,21 +761,13 @@ namespace Microsoft.ClearScript.V8
             }
         }
 
-        // ReSharper restore ParameterHidesMember
-
         #endregion
 
         #region internal members
 
-        internal IUniqueNameManager DocumentNameManager
-        {
-            get { return documentNameManager; }
-        }
+        internal IUniqueNameManager DocumentNameManager { get; } = new UniqueFileNameManager();
 
-        internal HostItemCollateral HostItemCollateral
-        {
-            get { return hostItemCollateral; }
-        }
+        internal HostItemCollateral HostItemCollateral { get; } = new HostItemCollateral();
 
         internal V8IsolateProxy IsolateProxy
         {

@@ -330,10 +330,7 @@ namespace Microsoft.ClearScript.Windows
         /// <remarks>
         /// <see cref="VBScriptEngine"/> instances return "vbs" for this property.
         /// </remarks>
-        public override string FileNameExtension
-        {
-            get { return "vbs"; }
-        }
+        public override string FileNameExtension => "vbs";
 
         /// <summary>
         /// Executes script code as a command.
@@ -370,15 +367,9 @@ namespace Microsoft.ClearScript.Windows
             return null;
         }
 
-        internal override IDictionary<int, string> RuntimeErrorMap
-        {
-            get { return runtimeErrorMap; }
-        }
+        internal override IDictionary<int, string> RuntimeErrorMap => runtimeErrorMap;
 
-        internal override IDictionary<int, string> SyntaxErrorMap
-        {
-            get { return syntaxErrorMap; }
-        }
+        internal override IDictionary<int, string> SyntaxErrorMap => syntaxErrorMap;
 
         internal override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
         {

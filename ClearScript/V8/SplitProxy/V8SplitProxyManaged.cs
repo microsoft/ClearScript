@@ -1,0 +1,773 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
+using Microsoft.ClearScript.JavaScript;
+using Microsoft.ClearScript.Util;
+
+namespace Microsoft.ClearScript.V8.SplitProxy
+{
+    internal static class V8SplitProxyManaged
+    {
+        public static IntPtr MethodTable { get; } = CreateMethodTable();
+
+        [ThreadStatic] public static Exception ScheduledException;
+
+        private static void ScheduleHostException(IntPtr pObject, Exception exception)
+        {
+            V8SplitProxyNative.InvokeNoThrow(instance => instance.HostException_Schedule(exception.GetBaseException().Message, V8ProxyHelpers.MarshalExceptionToScript(pObject, exception)));
+        }
+
+        private static void ScheduleHostException(Exception exception)
+        {
+            V8SplitProxyNative.InvokeNoThrow(instance => instance.HostException_Schedule(exception.GetBaseException().Message, ScriptEngine.Current?.MarshalToScript(exception)));
+        }
+
+        private static uint GetMaxCacheSizeForCategory(DocumentCategory category)
+        {
+            return Math.Max(16U, category.MaxCacheSize);
+        }
+
+        #region method delegates
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawScheduleForwardingException(
+            [In] V8Value.Ptr pException
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawScheduleInvalidOperationException(
+            [In] StdString.Ptr pMessage
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawScheduleScriptEngineException(
+            [In] StdString.Ptr pEngineName,
+            [In] StdString.Ptr pMessage,
+            [In] StdString.Ptr pStackTrace,
+            [In] [MarshalAs(UnmanagedType.I1)] bool isFatal,
+            [In] [MarshalAs(UnmanagedType.I1)] bool executionStarted,
+            [In] V8Value.Ptr pScriptException,
+            [In] V8Value.Ptr pInnerException
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawScheduleScriptInterruptedException(
+            [In] StdString.Ptr pEngineName,
+            [In] StdString.Ptr pMessage,
+            [In] StdString.Ptr pStackTrace,
+            [In] [MarshalAs(UnmanagedType.I1)] bool isFatal,
+            [In] [MarshalAs(UnmanagedType.I1)] bool executionStarted,
+            [In] V8Value.Ptr pScriptException,
+            [In] V8Value.Ptr pInnerException
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawInvokeAction(
+            [In] IntPtr pAction
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawProcessArrayBufferOrViewData(
+            [In] IntPtr pData,
+            [In] IntPtr pAction
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawProcessCpuProfile(
+            [In] V8CpuProfile.Ptr pProfile,
+            [In] IntPtr pAction
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate IntPtr RawCreateV8ObjectCache();
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawCacheV8Object(
+            [In] IntPtr pCache,
+            [In] IntPtr pObject,
+            [In] IntPtr pV8Object
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate IntPtr RawGetCachedV8Object(
+            [In] IntPtr pCache,
+            [In] IntPtr pObject
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawGetAllCachedV8Objects(
+            [In] IntPtr pCache,
+            [In] StdPtrArray.Ptr pV8ObjectPtrs
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool RawRemoveV8ObjectCacheEntry(
+            [In] IntPtr pCache,
+            [In] IntPtr pObject
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate IntPtr RawCreateDebugAgent(
+            [In] StdString.Ptr pName,
+            [In] StdString.Ptr pVersion,
+            [In] int port,
+            [In] [MarshalAs(UnmanagedType.I1)] bool remote,
+            [In] V8DebugCallback.Handle hCallback
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawSendDebugMessage(
+            [In] IntPtr pAgent,
+            [In] StdString.Ptr pContent
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawDestroyDebugAgent(
+            [In] IntPtr pAgent
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate uint RawGetMaxScriptCacheSize();
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate uint RawGetMaxModuleCacheSize();
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate IntPtr RawAddRefHostObject(
+            [In] IntPtr pObject
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawReleaseHostObject(
+            [In] IntPtr pObject
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate Invocability RawGetHostObjectInvocability(
+            [In] IntPtr pObject
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawGetHostObjectNamedProperty(
+            [In] IntPtr pObject,
+            [In] StdString.Ptr pName,
+            [In] V8Value.Ptr pValue
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawGetHostObjectNamedPropertyWithCacheability(
+            [In] IntPtr pObject,
+            [In] StdString.Ptr pName,
+            [In] V8Value.Ptr pValue,
+            [Out] [MarshalAs(UnmanagedType.I1)] out bool isCacheable
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawSetHostObjectNamedProperty(
+            [In] IntPtr pObject,
+            [In] StdString.Ptr pName,
+            [In] V8Value.Ptr pValue
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool RawDeleteHostObjectNamedProperty(
+            [In] IntPtr pObject,
+            [In] StdString.Ptr pName
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawGetHostObjectPropertyNames(
+            [In] IntPtr pObject,
+            [In] StdStringArray.Ptr pNames
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawGetHostObjectIndexedProperty(
+            [In] IntPtr pObject,
+            [In] int index,
+            [In] V8Value.Ptr pValue
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawSetHostObjectIndexedProperty(
+            [In] IntPtr pObject,
+            [In] int index,
+            [In] V8Value.Ptr pValue
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool RawDeleteHostObjectIndexedProperty(
+            [In] IntPtr pObject,
+            [In] int index
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawGetHostObjectPropertyIndices(
+            [In] IntPtr pObject,
+            [In] StdInt32Array.Ptr pIndices
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawInvokeHostObject(
+            [In] IntPtr pObject,
+            [In] [MarshalAs(UnmanagedType.I1)] bool asConstructor,
+            [In] StdV8ValueArray.Ptr pArgs,
+            [In] V8Value.Ptr pResult
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawInvokeHostObjectMethod(
+            [In] IntPtr pObject,
+            [In] StdString.Ptr pName,
+            [In] StdV8ValueArray.Ptr pArgs,
+            [In] V8Value.Ptr pResult
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawGetEnumeratorForHostObject(
+            [In] IntPtr pObject,
+            [In] V8Value.Ptr pResult
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool RawAdvanceEnumerator(
+            [In] IntPtr pEnumerator,
+            [In] V8Value.Ptr pValue
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawQueueNativeCallback(
+            [In] NativeCallback.Handle hCallback
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate IntPtr RawCreateNativeCallbackTimer(
+            [In] int dueTime,
+            [In] int period,
+            [In] NativeCallback.Handle hCallback
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool RawChangeNativeCallbackTimer(
+            [In] IntPtr pTimer,
+            [In] int dueTime,
+            [In] int period
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawDestroyNativeCallbackTimer(
+            [In] IntPtr pTimer
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawLoadModule(
+            [In] IntPtr pSourceDocumentInfo,
+            [In] StdString.Ptr pSpecifier,
+            [In] StdString.Ptr pResourceName,
+            [In] StdString.Ptr pSourceMapUrl,
+            [Out] out ulong uniqueId,
+            [Out] [MarshalAs(UnmanagedType.I1)] out bool isModule,
+            [In] StdString.Ptr pCode,
+            [Out] out IntPtr pDocumentInfo
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawCreateModuleContext(
+            [In] IntPtr pDocumentInfo,
+            [In] StdStringArray.Ptr pNames,
+            [In] StdV8ValueArray.Ptr pValues
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool RawTryParseInt32(
+            [In] StdString.Ptr pText,
+            [Out] out int result
+        );
+
+        #endregion
+
+        #region method table construction
+
+        private static IntPtr CreateMethodTable()
+        {
+            IntPtr[] methodPtrs =
+            {
+                //----------------------------------------------------------------------------
+                // IMPORTANT: maintain synchronization with V8_SPLIT_PROXY_MANAGED_METHOD_LIST
+                //----------------------------------------------------------------------------
+
+                GetMethodPtr<RawScheduleForwardingException>(ScheduleForwardingException),
+                GetMethodPtr<RawScheduleInvalidOperationException>(ScheduleInvalidOperationException),
+                GetMethodPtr<RawScheduleScriptEngineException>(ScheduleScriptEngineException),
+                GetMethodPtr<RawScheduleScriptInterruptedException>(ScheduleScriptInterruptedException),
+                GetMethodPtr<RawInvokeAction>(InvokeHostAction),
+                GetMethodPtr<RawProcessArrayBufferOrViewData>(ProcessArrayBufferOrViewData),
+                GetMethodPtr<RawProcessCpuProfile>(ProcessCpuProfile),
+                GetMethodPtr<RawCreateV8ObjectCache>(CreateV8ObjectCache),
+                GetMethodPtr<RawCacheV8Object>(CacheV8Object),
+                GetMethodPtr<RawGetCachedV8Object>(GetCachedV8Object),
+                GetMethodPtr<RawGetAllCachedV8Objects>(GetAllCachedV8Objects),
+                GetMethodPtr<RawRemoveV8ObjectCacheEntry>(RemoveV8ObjectCacheEntry),
+                GetMethodPtr<RawCreateDebugAgent>(CreateDebugAgent),
+                GetMethodPtr<RawSendDebugMessage>(SendDebugMessage),
+                GetMethodPtr<RawDestroyDebugAgent>(DestroyDebugAgent),
+                GetMethodPtr<RawGetMaxScriptCacheSize>(GetMaxScriptCacheSize),
+                GetMethodPtr<RawGetMaxModuleCacheSize>(GetMaxModuleCacheSize),
+                GetMethodPtr<RawAddRefHostObject>(AddRefHostObject),
+                GetMethodPtr<RawReleaseHostObject>(ReleaseHostObject),
+                GetMethodPtr<RawGetHostObjectInvocability>(GetHostObjectInvocability),
+                GetMethodPtr<RawGetHostObjectNamedProperty>(GetHostObjectNamedProperty),
+                GetMethodPtr<RawGetHostObjectNamedPropertyWithCacheability>(GetHostObjectNamedPropertyWithCacheability),
+                GetMethodPtr<RawSetHostObjectNamedProperty>(SetHostObjectNamedProperty),
+                GetMethodPtr<RawDeleteHostObjectNamedProperty>(DeleteHostObjectNamedProperty),
+                GetMethodPtr<RawGetHostObjectPropertyNames>(GetHostObjectPropertyNames),
+                GetMethodPtr<RawGetHostObjectIndexedProperty>(GetHostObjectIndexedProperty),
+                GetMethodPtr<RawSetHostObjectIndexedProperty>(SetHostObjectIndexedProperty),
+                GetMethodPtr<RawDeleteHostObjectIndexedProperty>(DeleteHostObjectIndexedProperty),
+                GetMethodPtr<RawGetHostObjectPropertyIndices>(GetHostObjectPropertyIndices),
+                GetMethodPtr<RawInvokeHostObject>(InvokeHostObject),
+                GetMethodPtr<RawInvokeHostObjectMethod>(InvokeHostObjectMethod),
+                GetMethodPtr<RawGetEnumeratorForHostObject>(GetEnumeratorForHostObject),
+                GetMethodPtr<RawAdvanceEnumerator>(AdvanceEnumerator),
+                GetMethodPtr<RawQueueNativeCallback>(QueueNativeCallback),
+                GetMethodPtr<RawCreateNativeCallbackTimer>(CreateNativeCallbackTimer),
+                GetMethodPtr<RawChangeNativeCallbackTimer>(ChangeNativeCallbackTimer),
+                GetMethodPtr<RawDestroyNativeCallbackTimer>(DestroyNativeCallbackTimer),
+                GetMethodPtr<RawLoadModule>(LoadModule),
+                GetMethodPtr<RawCreateModuleContext>(CreateModuleContext),
+                GetMethodPtr<RawTryParseInt32>(TryParseInt32)
+            };
+
+            var pMethodTable = Marshal.AllocCoTaskMem(IntPtr.Size * methodPtrs.Length);
+            Marshal.Copy(methodPtrs, 0, pMethodTable, methodPtrs.Length);
+            return pMethodTable;
+        }
+
+        private static IntPtr GetMethodPtr<T>(T del)
+        {
+            GCHandle.Alloc(del);
+            return Marshal.GetFunctionPointerForDelegate((Delegate)(object)del);
+        }
+
+        #endregion
+
+        #region method table implementation
+
+        private static void ScheduleForwardingException(V8Value.Ptr pException)
+        {
+            Debug.Assert(ScheduledException == null);
+
+            var exception = V8ProxyHelpers.MarshalExceptionToHost(V8Value.Get(pException));
+            if (exception is ScriptEngineException scriptEngineException)
+            {
+                ScheduledException = new ScriptEngineException(scriptEngineException.EngineName, scriptEngineException.Message, scriptEngineException.ErrorDetails, scriptEngineException.HResult, scriptEngineException.IsFatal, scriptEngineException.ExecutionStarted, scriptEngineException.ScriptException, scriptEngineException);
+            }
+            else if (exception is ScriptInterruptedException scriptInterruptedException)
+            {
+                ScheduledException = new ScriptInterruptedException(scriptInterruptedException.EngineName, scriptInterruptedException.Message, scriptInterruptedException.ErrorDetails, scriptInterruptedException.HResult, scriptInterruptedException.IsFatal, scriptInterruptedException.ExecutionStarted, scriptInterruptedException.ScriptException, scriptInterruptedException);
+            }
+            else
+            {
+                ScheduledException = exception;
+            }
+        }
+
+        private static void ScheduleInvalidOperationException(StdString.Ptr pMessage)
+        {
+            Debug.Assert(ScheduledException == null);
+            ScheduledException = new InvalidOperationException(StdString.GetValue(pMessage));
+        }
+
+        private static void ScheduleScriptEngineException(StdString.Ptr pEngineName, StdString.Ptr pMessage, StdString.Ptr pStackTrace, bool isFatal, bool executionStarted, V8Value.Ptr pScriptException, V8Value.Ptr pInnerException)
+        {
+            Debug.Assert(ScheduledException == null);
+            var scriptException = ScriptEngine.Current?.MarshalToHost(V8Value.Get(pScriptException), false);
+            var innerException = V8ProxyHelpers.MarshalExceptionToHost(V8Value.Get(pInnerException));
+            ScheduledException = new ScriptEngineException(StdString.GetValue(pEngineName), StdString.GetValue(pMessage), StdString.GetValue(pStackTrace), 0, isFatal, executionStarted, scriptException, innerException);
+        }
+
+        private static void ScheduleScriptInterruptedException(StdString.Ptr pEngineName, StdString.Ptr pMessage, StdString.Ptr pStackTrace, bool isFatal, bool executionStarted, V8Value.Ptr pScriptException, V8Value.Ptr pInnerException)
+        {
+            Debug.Assert(ScheduledException == null);
+            var scriptException = ScriptEngine.Current?.MarshalToHost(V8Value.Get(pScriptException), false);
+            var innerException = V8ProxyHelpers.MarshalExceptionToHost(V8Value.Get(pInnerException));
+            ScheduledException = new ScriptInterruptedException(StdString.GetValue(pEngineName), StdString.GetValue(pMessage), StdString.GetValue(pStackTrace), 0, isFatal, executionStarted, scriptException, innerException);
+        }
+
+        private static void InvokeHostAction(IntPtr pAction)
+        {
+            try
+            {
+                V8ProxyHelpers.GetHostObject<Action>(pAction)();
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(exception);
+            }
+        }
+
+        private static void ProcessArrayBufferOrViewData(IntPtr pData, IntPtr pAction)
+        {
+            try
+            {
+                V8ProxyHelpers.GetHostObject<Action<IntPtr>>(pAction)(pData);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(exception);
+            }
+        }
+
+        private static void ProcessCpuProfile(V8CpuProfile.Ptr pProfile, IntPtr pAction)
+        {
+            try
+            {
+                V8ProxyHelpers.GetHostObject<Action<V8CpuProfile.Ptr>>(pAction)(pProfile);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(exception);
+            }
+        }
+
+        private static IntPtr CreateV8ObjectCache()
+        {
+            return V8ProxyHelpers.AddRefHostObject(new Dictionary<object, IntPtr>());
+        }
+
+        private static void CacheV8Object(IntPtr pCache, IntPtr pObject, IntPtr pV8Object)
+        {
+            V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache).Add(V8ProxyHelpers.GetHostObject(pObject), pV8Object);
+        }
+
+        private static IntPtr GetCachedV8Object(IntPtr pCache, IntPtr pObject)
+        {
+            return V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache).TryGetValue(V8ProxyHelpers.GetHostObject(pObject), out IntPtr pV8Object) ? pV8Object : IntPtr.Zero;
+        }
+
+        private static void GetAllCachedV8Objects(IntPtr pCache, StdPtrArray.Ptr pV8ObjectPtrs)
+        {
+            var cache = V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache);
+            StdPtrArray.CopyFromArray(pV8ObjectPtrs, cache.Values.ToArray());
+        }
+
+        private static bool RemoveV8ObjectCacheEntry(IntPtr pCache, IntPtr pObject)
+        {
+            return V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache).Remove(V8ProxyHelpers.GetHostObject(pObject));
+        }
+
+        private static IntPtr CreateDebugAgent(StdString.Ptr pName, StdString.Ptr pVersion, int port, bool remote, V8DebugCallback.Handle hCallback)
+        {
+            return V8ProxyHelpers.AddRefHostObject(new V8DebugAgent(StdString.GetValue(pName), StdString.GetValue(pVersion), port, remote, new V8DebugListenerImpl(hCallback)));
+        }
+
+        private static void SendDebugMessage(IntPtr pAgent, StdString.Ptr pContent)
+        {
+            V8ProxyHelpers.GetHostObject<V8DebugAgent>(pAgent).SendMessage(StdString.GetValue(pContent));
+        }
+
+        private static void DestroyDebugAgent(IntPtr pAgent)
+        {
+            V8ProxyHelpers.GetHostObject<V8DebugAgent>(pAgent).Dispose();
+            V8ProxyHelpers.ReleaseHostObject(pAgent);
+        }
+
+        private static uint GetMaxScriptCacheSize()
+        {
+            return GetMaxCacheSizeForCategory(DocumentCategory.Script);
+        }
+
+        private static uint GetMaxModuleCacheSize()
+        {
+            return GetMaxCacheSizeForCategory(ModuleCategory.Standard);
+        }
+
+        private static IntPtr AddRefHostObject(IntPtr pObject)
+        {
+            return V8ProxyHelpers.AddRefHostObject(pObject);
+        }
+
+        private static void ReleaseHostObject(IntPtr pObject)
+        {
+            V8ProxyHelpers.ReleaseHostObject(pObject);
+        }
+
+        private static Invocability GetHostObjectInvocability(IntPtr pObject)
+        {
+            try
+            {
+                return V8ProxyHelpers.GetHostObjectInvocability(pObject);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return default;
+            }
+        }
+
+        private static void GetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue)
+        {
+            try
+            {
+                V8Value.Set(pValue, V8ProxyHelpers.GetHostObjectProperty(pObject, StdString.GetValue(pName)));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void GetHostObjectNamedPropertyWithCacheability(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue, out bool isCacheable)
+        {
+            try
+            {
+                V8Value.Set(pValue, V8ProxyHelpers.GetHostObjectProperty(pObject, StdString.GetValue(pName), out isCacheable));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                isCacheable = false;
+            }
+        }
+
+        private static void SetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue)
+        {
+            try
+            {
+                V8ProxyHelpers.SetHostObjectProperty(pObject, StdString.GetValue(pName), V8Value.Get(pValue));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static bool DeleteHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName)
+        {
+            try
+            {
+                return V8ProxyHelpers.DeleteHostObjectProperty(pObject, StdString.GetValue(pName));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return default;
+            }
+        }
+
+        private static void GetHostObjectPropertyNames(IntPtr pObject, StdStringArray.Ptr pNames)
+        {
+            string[] names;
+            try
+            {
+                names = V8ProxyHelpers.GetHostObjectPropertyNames(pObject);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return;
+            }
+
+            StdStringArray.CopyFromArray(pNames, names);
+        }
+
+        private static void GetHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.Ptr pValue)
+        {
+            try
+            {
+                V8Value.Set(pValue, V8ProxyHelpers.GetHostObjectProperty(pObject, index));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void SetHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.Ptr pValue)
+        {
+            try
+            {
+                V8ProxyHelpers.SetHostObjectProperty(pObject, index, V8Value.Get(pValue));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static bool DeleteHostObjectIndexedProperty(IntPtr pObject, int index)
+        {
+            try
+            {
+                return V8ProxyHelpers.DeleteHostObjectProperty(pObject, index);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return default;
+            }
+        }
+
+        private static void GetHostObjectPropertyIndices(IntPtr pObject, StdInt32Array.Ptr pIndices)
+        {
+            int[] indices;
+            try
+            {
+                indices = V8ProxyHelpers.GetHostObjectPropertyIndices(pObject);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return;
+            }
+
+            StdInt32Array.CopyFromArray(pIndices, indices);
+        }
+
+        private static void InvokeHostObject(IntPtr pObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+        {
+            try
+            {
+                V8Value.Set(pResult, V8ProxyHelpers.InvokeHostObject(pObject, asConstructor, StdV8ValueArray.ToArray(pArgs)));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void InvokeHostObjectMethod(IntPtr pObject, StdString.Ptr pName, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+        {
+            try
+            {
+                V8Value.Set(pResult, V8ProxyHelpers.InvokeHostObjectMethod(pObject, StdString.GetValue(pName), StdV8ValueArray.ToArray(pArgs)));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void GetEnumeratorForHostObject(IntPtr pObject, V8Value.Ptr pResult)
+        {
+            try
+            {
+                V8Value.Set(pResult, V8ProxyHelpers.GetEnumeratorForHostObject(pObject));
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static bool AdvanceEnumerator(IntPtr pEnumerator, V8Value.Ptr pValue)
+        {
+            try
+            {
+                var result = V8ProxyHelpers.AdvanceEnumerator(pEnumerator, out object value);
+                if (result)
+                {
+                    V8Value.Set(pValue, value);
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pEnumerator, exception);
+                return default;
+            }
+        }
+
+        private static void QueueNativeCallback(NativeCallback.Handle hCallback)
+        {
+            MiscHelpers.QueueNativeCallback(new NativeCallbackImpl(hCallback));
+        }
+
+        private static IntPtr CreateNativeCallbackTimer(int dueTime, int period, NativeCallback.Handle hCallback)
+        {
+            return V8ProxyHelpers.AddRefHostObject(new NativeCallbackTimer(dueTime, period, new NativeCallbackImpl(hCallback)));
+        }
+
+        private static bool ChangeNativeCallbackTimer(IntPtr pTimer, int dueTime, int period)
+        {
+            return V8ProxyHelpers.GetHostObject<NativeCallbackTimer>(pTimer).Change(dueTime, period);
+        }
+
+        private static void DestroyNativeCallbackTimer(IntPtr pTimer)
+        {
+            V8ProxyHelpers.GetHostObject<NativeCallbackTimer>(pTimer).Dispose();
+            V8ProxyHelpers.ReleaseHostObject(pTimer);
+        }
+
+        private static void LoadModule(IntPtr pSourceDocumentInfo, StdString.Ptr pSpecifier, StdString.Ptr pResourceName, StdString.Ptr pSourceMapUrl, out ulong uniqueId, out bool isModule, StdString.Ptr pCode, out IntPtr pDocumentInfo)
+        {
+            string code;
+            UniqueDocumentInfo documentInfo;
+
+            try
+            {
+                code = V8ProxyHelpers.LoadModule(pSourceDocumentInfo, StdString.GetValue(pSpecifier), ModuleCategory.Standard, out documentInfo);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(exception);
+                uniqueId = default;
+                isModule = default;
+                pDocumentInfo = default;
+                return;
+            }
+
+            StdString.SetValue(pResourceName, MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName));
+            StdString.SetValue(pSourceMapUrl, MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty));
+            uniqueId = documentInfo.UniqueId;
+            isModule = documentInfo.Category == ModuleCategory.Standard;
+            StdString.SetValue(pCode, code);
+            pDocumentInfo = V8ProxyHelpers.AddRefHostObject(documentInfo);
+        }
+
+        private static void CreateModuleContext(IntPtr pDocumentInfo, StdStringArray.Ptr pNames, StdV8ValueArray.Ptr pValues)
+        {
+            IDictionary<string, object> context;
+            try
+            {
+                context = V8ProxyHelpers.CreateModuleContext(pDocumentInfo);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(exception);
+                return;
+            }
+
+            if (context == null)
+            {
+                StdStringArray.SetElementCount(pNames, 0);
+                StdV8ValueArray.SetElementCount(pValues, 0);
+            }
+            else
+            {
+                StdStringArray.CopyFromArray(pNames, context.Keys.ToArray());
+                StdV8ValueArray.CopyFromArray(pValues, context.Values.ToArray());
+            }
+        }
+
+        private static bool TryParseInt32(StdString.Ptr pText, out int result)
+        {
+            return int.TryParse(StdString.GetValue(pText), out result);
+        }
+
+        #endregion
+    }
+}

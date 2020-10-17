@@ -37,19 +37,18 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("ClearScript Library")]
 [assembly: AssemblyProduct("ClearScript")]
 [assembly: AssemblyCopyright("(c) Microsoft Corporation")]
-[assembly: InternalsVisibleTo("<#= "ClearScriptV8-32" + publicKeySpec #>")]
-[assembly: InternalsVisibleTo("<#= "ClearScriptV8-64" + publicKeySpec #>")]
 [assembly: InternalsVisibleTo("<#= "ClearScriptTest" + publicKeySpec #>")]
 
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("<#= version #>")]
-[assembly: AssemblyFileVersion("<#= version #>")]
+[assembly: AssemblyVersion("<#= version.ToString(3) #>")]
+[assembly: AssemblyFileVersion("<#= version.ToString(3) #>")]
+[assembly: AssemblyInformationalVersion("<#= version.ToString(3) + versionSuffix #>")]
 
 namespace Microsoft.ClearScript.Properties
 {
     internal static class ClearScriptVersion
     {
-        public const string Value = "<#= version #>";
         public const string Triad = "<#= version.ToString(3) #>";
+        public const string Informational = "<#= version.ToString(3) + versionSuffix #>";
     }
 }

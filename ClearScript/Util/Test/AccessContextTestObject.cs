@@ -51,7 +51,7 @@ namespace Microsoft.ClearScript.Util.Test
         // ReSharper restore EventNeverSubscribedTo.Local
         // ReSharper restore UnusedParameter.Local
         // ReSharper restore UnusedMember.Local
-        #pragma warning restore 67
+        #pragma warning restore 67 // Event 'abc' is never invoked
         #pragma warning restore 169 // The field 'abc' is never used
     }
 

@@ -3,157 +3,81 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using Microsoft.ClearScript.Properties;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace Microsoft.ClearScript.V8
 {
     internal abstract partial class V8Proxy : IDisposable
     {
-        private static readonly Dictionary<Type, Type> map = new Dictionary<Type, Type>();
-        private static Assembly assembly;
+        private static readonly object dataLock = new object();
 
-        protected static T CreateImpl<T>(params object[] args) where T : V8Proxy
+        private static IntPtr hNativeAssembly;
+        private static ulong splitImplCount;
+
+        internal static bool OnEntityHolderCreated()
         {
-            Type implType;
-            lock (map)
+            lock (dataLock)
             {
-                var type = typeof(T);
-                if (!map.TryGetValue(type, out implType))
+                if (hNativeAssembly == IntPtr.Zero)
                 {
-                    implType = GetImplType(type);
-                    map.Add(type, implType);
+                    hNativeAssembly = LoadNativeAssembly();
+                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8SplitProxyManaged_SetMethodTable(V8SplitProxyManaged.MethodTable));
                 }
-            }
 
-            return (T)Activator.CreateInstance(implType, args);
-        }
-
-        private static Type GetImplType(Type type)
-        {
-            var name = type.GetFullRootName();
-
-            var implType = GetAssembly().GetType(name + "Impl");
-            if (implType == null)
-            {
-                throw new TypeLoadException("Cannot find " + name + " implementation type in V8 interface assembly");
-            }
-
-            return implType;
-        }
-
-        private static Assembly LoadAssembly()
-        {
-            Assembly tempAssembly;
-            if (MiscHelpers.Try(out tempAssembly, () => Assembly.Load("ClearScriptV8")))
-            {
-                return tempAssembly;
-            }
-
-            var hZlibLibrary = LoadNativeLibrary("v8-zlib");
-            try
-            {
-                var hBaseLibrary = LoadNativeLibrary("v8-base");
-                try
-                {
-                    var hLibrary = LoadNativeLibrary("v8");
-                    try
-                    {
-                        var suffix = Environment.Is64BitProcess ? "64" : "32";
-                        var assemblyName = "ClearScriptV8-" + suffix;
-                        var fileName = assemblyName + ".dll";
-                        var messageBuilder = new StringBuilder();
-
-                        var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
-                        foreach (var path in paths)
-                        {
-                            try
-                            {
-                                return Assembly.LoadFrom(path);
-                            }
-                            catch (Exception exception)
-                            {
-                                messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
-                            }
-                        }
-
-                        if (string.IsNullOrEmpty(deploymentDirName))
-                        {
-                            var publicKeyToken = typeof(V8Proxy).Assembly.GetName().GetPublicKeyToken();
-                            if ((publicKeyToken != null) && (publicKeyToken.Length > 0))
-                            {
-                                var assemblyFullName = MiscHelpers.FormatInvariant("{0}, Version={1}, Culture=neutral, PublicKeyToken={2}", assemblyName, ClearScriptVersion.Value, BitConverter.ToString(publicKeyToken).Replace("-", string.Empty));
-                                try
-                                {
-                                    return Assembly.Load(assemblyFullName);
-                                }
-                                catch (Exception exception)
-                                {
-                                    messageBuilder.AppendInvariant("\n{0}: {1}", assemblyFullName, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
-                                }
-                            }
-                        }
-
-                        var message = MiscHelpers.FormatInvariant("Cannot load V8 interface assembly. Load failure information for {0}:{1}", fileName, messageBuilder);
-                        throw new TypeLoadException(message);
-                    }
-                    finally
-                    {
-                        NativeMethods.FreeLibrary(hLibrary);
-                    }
-                }
-                finally
-                {
-                    NativeMethods.FreeLibrary(hBaseLibrary);
-                }
-            }
-            finally
-            {
-                NativeMethods.FreeLibrary(hZlibLibrary);
+                ++splitImplCount;
+                return true;
             }
         }
 
-        private static IntPtr LoadNativeLibrary(string baseFileName)
+        internal static void OnEntityHolderDestroyed()
         {
-            var suffix = Environment.Is64BitProcess ? "-x64" : "-ia32";
-            var fileName = baseFileName + suffix + ".dll";
+            lock (dataLock)
+            {
+                if (--splitImplCount < 1)
+                {
+                    FreeLibrary(hNativeAssembly);
+                    hNativeAssembly = IntPtr.Zero;
+                }
+            }
+        }
+
+        private static IntPtr LoadNativeLibrary(string baseFileName, string prefix, string suffix32, string suffix64, string extension)
+        {
+            var suffix = Environment.Is64BitProcess ? suffix64 : suffix32;
+            var fileName = prefix + baseFileName + suffix + extension;
             var messageBuilder = new StringBuilder();
 
             IntPtr hLibrary;
-            Win32Exception exception;
 
             var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
             foreach (var path in paths)
             {
-                hLibrary = NativeMethods.LoadLibraryW(path);
+                hLibrary = LoadLibrary(path);
                 if (hLibrary != IntPtr.Zero)
                 {
                     return hLibrary;
                 }
 
-                exception = new Win32Exception();
-                messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
+                messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(GetLoadLibraryErrorMessage(), "Unknown error"));
             }
 
             if (string.IsNullOrEmpty(deploymentDirName))
             {
                 var systemPath = Path.Combine(Environment.SystemDirectory, fileName);
-                hLibrary = NativeMethods.LoadLibraryW(systemPath);
+                hLibrary = LoadLibrary(systemPath);
                 if (hLibrary != IntPtr.Zero)
                 {
                     return hLibrary;
                 }
 
-                exception = new Win32Exception();
-                messageBuilder.AppendInvariant("\n{0}: {1}", systemPath, MiscHelpers.EnsureNonBlank(exception.Message, "Unknown error"));
+                messageBuilder.AppendInvariant("\n{0}: {1}", systemPath, MiscHelpers.EnsureNonBlank(GetLoadLibraryErrorMessage(), "Unknown error"));
             }
 
-            var message = MiscHelpers.FormatInvariant("Cannot load V8 interface assembly. Load failure information for {0}:{1}", fileName, messageBuilder);
+            var message = MiscHelpers.FormatInvariant("Cannot load ClearScript V8 library. Load failure information for {0}:{1}", fileName, messageBuilder);
             throw new TypeLoadException(message);
         }
 
@@ -193,12 +117,6 @@ namespace Microsoft.ClearScript.V8
 
         internal static void RunWithDeploymentDir(string name, Action action)
         {
-            lock (map)
-            {
-                map.Clear();
-                assembly = null;
-            }
-
             deploymentDirName = name;
             try
             {

@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// ReSharper disable once UnusedLocals
 import * as Geometry from '../Geometry/Geometry.js';
 
 export const Meta = import.meta;

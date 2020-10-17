@@ -13,12 +13,6 @@ namespace Microsoft.ClearScript.Test
     [TestClass]
     [DeploymentItem("ClearScriptV8-64.dll")]
     [DeploymentItem("ClearScriptV8-32.dll")]
-    [DeploymentItem("v8-x64.dll")]
-    [DeploymentItem("v8-ia32.dll")]
-    [DeploymentItem("v8-base-x64.dll")]
-    [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-zlib-x64.dll")]
-    [DeploymentItem("v8-zlib-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class HostListTest : ClearScriptTest
     {
@@ -152,20 +146,11 @@ namespace Microsoft.ClearScript.Test
                 list.CopyTo(array, index);
             }
 
-            public int Count
-            {
-                get { return list.Count; }
-            }
+            public int Count => list.Count;
 
-            public object SyncRoot
-            {
-                get { return list.SyncRoot; }
-            }
+            public object SyncRoot => list.SyncRoot;
 
-            public bool IsSynchronized
-            {
-                get { return list.IsSynchronized; }
-            }
+            public bool IsSynchronized => list.IsSynchronized;
 
             public int Add(object value)
             {
@@ -204,19 +189,13 @@ namespace Microsoft.ClearScript.Test
 
             public object this[int index]
             {
-                get { return list[index]; }
-                set { list[index] = value; }
+                get => list[index];
+                set => list[index] = value;
             }
 
-            public bool IsReadOnly
-            {
-                get { return list.IsReadOnly; }
-            }
+            public bool IsReadOnly => list.IsReadOnly;
 
-            public bool IsFixedSize
-            {
-                get { return list.IsFixedSize; }
-            }
+            public bool IsFixedSize => list.IsFixedSize;
         }
 
         public class BogusCustomListBase<T> : IBogusCustomList<T>
@@ -258,15 +237,9 @@ namespace Microsoft.ClearScript.Test
                 return list.Remove(item);
             }
 
-            public int Count
-            {
-                get { return list.Count; }
-            }
+            public int Count => list.Count;
 
-            public bool IsReadOnly
-            {
-                get { return list.IsReadOnly; }
-            }
+            public bool IsReadOnly => list.IsReadOnly;
 
             public int IndexOf(T item)
             {
@@ -285,8 +258,8 @@ namespace Microsoft.ClearScript.Test
 
             public T this[int index]
             {
-                get { return list[index]; }
-                set { list[index] = value; }
+                get => list[index];
+                set => list[index] = value;
             }
         }
 

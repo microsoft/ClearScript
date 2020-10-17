@@ -26,30 +26,22 @@ namespace Microsoft.ClearScript.JavaScript
         // ReSharper disable InconsistentNaming
 
         /// <exclude/>
-        public string id { get; private set; }
+        public string id { get; }
 
         /// <exclude/>
-        public string uri { get; private set; }
+        public string uri { get; }
 
         /// <exclude/>
         public object exports { get; set; }
 
         /// <exclude/>
-        public object meta
-        {
-            get { return GetInitializedContext(); }
-        }
+        public object meta => GetInitializedContext();
 
         // ReSharper restore InconsistentNaming
 
         private ScriptObject GetInitializedContext()
         {
-            if (initializedContext == null)
-            {
-                initializedContext = initializeContext(context);
-            }
-
-            return initializedContext;
+            return initializedContext ?? (initializedContext = initializeContext(context));
         }
     }
 }

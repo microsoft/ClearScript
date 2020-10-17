@@ -23,8 +23,7 @@ namespace Microsoft.ClearScript.Util
             {
                 var nonBlankName = MiscHelpers.EnsureNonBlank(inputName, alternate);
 
-                uint count;
-                map.TryGetValue(nonBlankName, out count);
+                map.TryGetValue(nonBlankName, out var count);
 
                 map[nonBlankName] = ++count;
                 return (count < 2) ? nonBlankName : string.Concat(nonBlankName, " [", count, "]");
@@ -47,8 +46,7 @@ namespace Microsoft.ClearScript.Util
                 var nonBlankName = MiscHelpers.EnsureNonBlank(Path.GetFileNameWithoutExtension(inputName), alternate);
                 var extension = Path.GetExtension(inputName);
 
-                uint count;
-                map.TryGetValue(nonBlankName, out count);
+                map.TryGetValue(nonBlankName, out var count);
 
                 map[nonBlankName] = ++count;
                 return (count < 2) ? string.Concat(nonBlankName, extension) : string.Concat(nonBlankName, " [", count, "]", extension);

@@ -10,13 +10,13 @@ namespace Microsoft.ClearScript.Util.Web
     {
         internal static readonly string[] Methods = { "GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH" };
 
-        public bool IsWebSocketRequest { get; private set; }
+        public bool IsWebSocketRequest { get; }
 
-        public Uri Uri { get; private set; }
+        public Uri Uri { get; }
 
-        public string RawUrl { get; private set; }
+        public string RawUrl { get; }
 
-        public NameValueCollection Headers { get; private set; }
+        public NameValueCollection Headers { get; }
 
         internal WebRequest(Uri uri, NameValueCollection headers)
         {

@@ -196,6 +196,7 @@
   </HelpKINode>
   <HelpKINode Title="EnableSampleCollection enumeration member" Url="html/T_Microsoft_ClearScript_V8_V8CpuProfileFlags.htm" />
   <HelpKINode Title="EnableStandardsMode enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
+  <HelpKINode Title="EnableTaskPromiseConversion enumeration member" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
   <HelpKINode Title="EnableWebLoading enumeration member" Url="html/T_Microsoft_ClearScript_DocumentAccessFlags.htm" />
   <HelpKINode Title="Encoding property">
     <HelpKINode Title="Document.Encoding Property " Url="html/P_Microsoft_ClearScript_Document_Encoding.htm" />
@@ -314,8 +315,8 @@
     <HelpKINode Title="ScriptEngineException.GetObjectData Method " Url="html/M_Microsoft_ClearScript_ScriptEngineException_GetObjectData.htm" />
     <HelpKINode Title="ScriptInterruptedException.GetObjectData Method " Url="html/M_Microsoft_ClearScript_ScriptInterruptedException_GetObjectData.htm" />
   </HelpKINode>
-  <HelpKINode Title="GetProperty method" Url="html/Overload_Microsoft_ClearScript_ScriptObject_GetProperty.htm" />
   <HelpKINode Title="getProperty method" Url="html/Overload_Microsoft_ClearScript_HostFunctions_getProperty.htm" />
+  <HelpKINode Title="GetProperty method" Url="html/Overload_Microsoft_ClearScript_ScriptObject_GetProperty.htm" />
   <HelpKINode Title="GetRuntimeHeapInfo method" Url="html/M_Microsoft_ClearScript_V8_V8ScriptEngine_GetRuntimeHeapInfo.htm" />
   <HelpKINode Title="GetStackTrace method">
     <HelpKINode Title="ScriptEngine.GetStackTrace Method " Url="html/M_Microsoft_ClearScript_ScriptEngine_GetStackTrace.htm" />
@@ -853,8 +854,8 @@
   <HelpKINode Title="ScriptUsageAttribute.ScriptUsageAttribute constructor" Url="html/Overload_Microsoft_ClearScript_ScriptUsageAttribute__ctor.htm" />
   <HelpKINode Title="SearchPath property" Url="html/P_Microsoft_ClearScript_DocumentSettings_SearchPath.htm" />
   <HelpKINode Title="setElement method" Url="html/M_Microsoft_ClearScript_HostFunctions_setElement.htm" />
-  <HelpKINode Title="SetProperty method" Url="html/Overload_Microsoft_ClearScript_ScriptObject_SetProperty.htm" />
   <HelpKINode Title="setProperty method" Url="html/Overload_Microsoft_ClearScript_HostFunctions_setProperty.htm" />
+  <HelpKINode Title="SetProperty method" Url="html/Overload_Microsoft_ClearScript_ScriptObject_SetProperty.htm" />
   <HelpKINode Title="SetPropertyNoCheck method" Url="html/M_Microsoft_ClearScript_PropertyBag_SetPropertyNoCheck.htm" />
   <HelpKINode Title="Size property">
     <HelpKINode Title="IArrayBuffer.Size Property " Url="html/P_Microsoft_ClearScript_JavaScript_IArrayBuffer_Size.htm" />

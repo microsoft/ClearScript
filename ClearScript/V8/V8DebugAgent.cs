@@ -84,10 +84,7 @@ namespace Microsoft.ClearScript.V8
             if (!disposedFlag.IsSet)
             {
                 var client = activeClient;
-                if (client != null)
-                {
-                    client.SendMessage(message);
-                }
+                client?.SendMessage(message);
             }
         }
 
@@ -110,8 +107,7 @@ namespace Microsoft.ClearScript.V8
 
         private void OnWebClientAccepted(Task<Socket> task)
         {
-            Socket socket;
-            var succeeded = MiscHelpers.Try(out socket, () => task.Result);
+            var succeeded = MiscHelpers.Try(out var socket, () => task.Result);
 
             if (!disposedFlag.IsSet)
             {
@@ -126,8 +122,7 @@ namespace Microsoft.ClearScript.V8
 
         private void OnWebContextCreated(Task<WebContext> task)
         {
-            WebContext webContext;
-            if (MiscHelpers.Try(out webContext, () => task.Result) && !disposedFlag.IsSet)
+            if (MiscHelpers.Try(out var webContext, () => task.Result) && !disposedFlag.IsSet)
             {
                 if (!webContext.Request.IsWebSocketRequest)
                 {
@@ -152,8 +147,6 @@ namespace Microsoft.ClearScript.V8
             if (webContext.Request.RawUrl.Equals("/json", StringComparison.OrdinalIgnoreCase) ||
                 webContext.Request.RawUrl.Equals("/json/list", StringComparison.OrdinalIgnoreCase))
             {
-                // ReSharper disable PossibleNullReferenceException
-
                 if (activeClient != null)
                 {
                     SendWebResponse(webContext, MiscHelpers.FormatInvariant(
@@ -194,8 +187,6 @@ namespace Microsoft.ClearScript.V8
                         faviconUrl
                     ));
                 }
-
-                // ReSharper restore PossibleNullReferenceException
             }
             else if (webContext.Request.RawUrl.Equals("/json/version", StringComparison.OrdinalIgnoreCase))
             {
@@ -204,7 +195,7 @@ namespace Microsoft.ClearScript.V8
                         "  \"Browser\": \"ClearScript {0} [V8 {1}]\",\r\n" +
                         "  \"Protocol-Version\": \"1.1\"\r\n" +
                     "}}\r\n",
-                    ClearScriptVersion.Value,
+                    ClearScriptVersion.Informational,
                     version
                 ));
             }
@@ -254,8 +245,7 @@ namespace Microsoft.ClearScript.V8
 
         private void OnWebSocketAccepted(WebContext webContext, Task<WebSocket> task)
         {
-            WebSocket webSocket;
-            if (MiscHelpers.Try(out webSocket, () => task.Result))
+            if (MiscHelpers.Try(out var webSocket, () => task.Result))
             {
                 if (!ConnectClient(webSocket))
                 {
@@ -270,9 +260,6 @@ namespace Microsoft.ClearScript.V8
 
         private bool ConnectClient(WebSocket webSocket)
         {
-            // ReSharper disable ConditionIsAlwaysTrueOrFalse
-            // ReSharper disable HeuristicUnreachableCode
-
             var client = new V8DebugClient(this, webSocket);
             if (Interlocked.CompareExchange(ref activeClient, client, null) == null)
             {
@@ -282,23 +269,16 @@ namespace Microsoft.ClearScript.V8
             }
 
             return false;
-
-            // ReSharper restore HeuristicUnreachableCode
-            // ReSharper restore ConditionIsAlwaysTrueOrFalse
         }
 
         private void DisconnectClient(WebSocket.ErrorCode errorCode, string message)
         {
-            // ReSharper disable ConditionIsAlwaysTrueOrFalse
-
             var client = Interlocked.Exchange(ref activeClient, null);
             if (client != null)
             {
                 client.Dispose(errorCode, message);
                 listener.DisconnectClient();
             }
-
-            // ReSharper restore ConditionIsAlwaysTrueOrFalse
         }
 
         #endregion

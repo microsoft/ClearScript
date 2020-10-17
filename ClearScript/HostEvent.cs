@@ -14,8 +14,6 @@ namespace Microsoft.ClearScript
     public class EventSource<T>
     {
         private readonly ScriptEngine engine;
-        private readonly object source;
-        private readonly EventInfo eventInfo;
 
         internal EventSource(ScriptEngine engine, object source, EventInfo eventInfo)
         {
@@ -24,23 +22,17 @@ namespace Microsoft.ClearScript
 
             if (eventInfo.EventHandlerType != typeof(T))
             {
-                throw new ArgumentException("Invalid event type", "eventInfo");
+                throw new ArgumentException("Invalid event type", nameof(eventInfo));
             }
 
             this.engine = engine;
-            this.source = source;
-            this.eventInfo = eventInfo;
+            Source = source;
+            EventInfo = eventInfo;
         }
 
-        internal object Source
-        {
-            get { return source; }
-        }
+        internal object Source { get; }
 
-        internal EventInfo EventInfo
-        {
-            get { return eventInfo; }
-        }
+        internal EventInfo EventInfo { get; }
 
         #region script-callable interface
 
@@ -54,7 +46,7 @@ namespace Microsoft.ClearScript
         public EventConnection<T> connect(object scriptFunc)
         {
             MiscHelpers.VerifyNonNullArgument(scriptFunc, "scriptFunc");
-            return engine.CreateEventConnection<T>(source, eventInfo, DelegateFactory.CreateDelegate(engine, scriptFunc, typeof(T)));
+            return engine.CreateEventConnection<T>(Source, EventInfo, DelegateFactory.CreateDelegate(engine, scriptFunc, typeof(T)));
         }
 
         // ReSharper restore InconsistentNaming
@@ -87,7 +79,7 @@ namespace Microsoft.ClearScript
 
             if (eventInfo.EventHandlerType != typeof(T))
             {
-                throw new ArgumentException("Invalid event type", "eventInfo");
+                throw new ArgumentException("Invalid event type", nameof(eventInfo));
             }
 
             this.engine = engine;

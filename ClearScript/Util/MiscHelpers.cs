@@ -15,7 +15,7 @@ using Microsoft.ClearScript.Properties;
 
 namespace Microsoft.ClearScript.Util
 {
-    internal static class MiscHelpers
+    internal static partial class MiscHelpers
     {
         #region COM helpers
 
@@ -33,8 +33,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool TryCreateCOMObject<T>(string progID, string serverName, out T obj) where T : class
         {
-            Type type;
-            if (!TryGetCOMType(progID, serverName, out type))
+            if (!TryGetCOMType(progID, serverName, out var type))
             {
                 obj = null;
                 return false;
@@ -46,8 +45,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool TryCreateCOMObject<T>(Guid clsid, string serverName, out T obj) where T : class
         {
-            Type type;
-            if (!TryGetCOMType(clsid, serverName, out type))
+            if (!TryGetCOMType(clsid, serverName, out var type))
             {
                 obj = null;
                 return false;
@@ -61,8 +59,7 @@ namespace Microsoft.ClearScript.Util
         {
             VerifyNonBlankArgument(progID, "progID", "Invalid programmatic identifier (ProgID)");
 
-            Type type;
-            if (!TryGetCOMType(progID, serverName, out type))
+            if (!TryGetCOMType(progID, serverName, out var type))
             {
                 throw new TypeLoadException(FormatInvariant("Could not find a registered class for '{0}'", progID));
             }
@@ -72,8 +69,7 @@ namespace Microsoft.ClearScript.Util
 
         public static Type GetCOMType(Guid clsid, string serverName)
         {
-            Type type;
-            if (!TryGetCOMType(clsid, serverName, out type))
+            if (!TryGetCOMType(clsid, serverName, out var type))
             {
                 throw new TypeLoadException(FormatInvariant("Could not find a registered class for '{0}'", clsid.ToString("B")));
             }
@@ -83,8 +79,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool TryGetCOMType(string progID, string serverName, out Type type)
         {
-            Guid clsid;
-            type = Guid.TryParseExact(progID, "B", out clsid) ? Type.GetTypeFromCLSID(clsid, serverName) : Type.GetTypeFromProgID(progID, serverName);
+            type = Guid.TryParseExact(progID, "B", out var clsid) ? Type.GetTypeFromCLSID(clsid, serverName) : Type.GetTypeFromProgID(progID, serverName);
             return type != null;
         }
 
@@ -339,7 +334,7 @@ namespace Microsoft.ClearScript.Util
             }
             catch (Exception)
             {
-                result = default(T);
+                result = default;
                 return false;
             }
         }
@@ -376,8 +371,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool TryMarshalPrimitiveToHost(object obj, out object result)
         {
-            var convertible = obj as IConvertible;
-            if (convertible != null)
+            if (obj is IConvertible convertible)
             {
                 switch (convertible.GetTypeCode())
                 {
@@ -453,23 +447,6 @@ namespace Microsoft.ClearScript.Util
             return oldValue;
         }
 
-        public static bool IsX86InstructionSet()
-        {
-            SystemInfo info;
-            try
-            {
-                NativeMethods.GetNativeSystemInfo(out info);
-            }
-            catch (EntryPointNotFoundException)
-            {
-                NativeMethods.GetSystemInfo(out info);
-            }
-
-            return
-                ((info.ProcessorArchitecture == 0 /*PROCESSOR_ARCHITECTURE_INTEL*/) ||
-                 (info.ProcessorArchitecture == 9 /*PROCESSOR_ARCHITECTURE_AMD64*/));
-        }
-
         public static void QueueNativeCallback(INativeCallback callback)
         {
             ThreadPool.QueueUserWorkItem(state =>
@@ -534,8 +511,7 @@ namespace Microsoft.ClearScript.Util
         {
             var path = Path.Combine(basePath, "Microsoft", "ClearScript", ClearScriptVersion.Triad, Environment.Is64BitProcess ? "x64" : "x86");
 
-            string fullPath;
-            if (Try(out fullPath, () => Path.GetFullPath(path)))
+            if (Try(out var fullPath, () => Path.GetFullPath(path)))
             {
                 return fullPath;
             }

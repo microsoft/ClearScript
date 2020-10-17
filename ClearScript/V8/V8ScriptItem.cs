@@ -33,8 +33,7 @@ namespace Microsoft.ClearScript.V8
                 return null;
             }
 
-            var target = obj as IV8Object;
-            if (target != null)
+            if (obj is IV8Object target)
             {
                 if (target.IsArray())
                 {
@@ -93,49 +92,35 @@ namespace Microsoft.ClearScript.V8
 
             try
             {
-                var getMemberBinder = binder as GetMemberBinder;
-                if (getMemberBinder != null)
+                if (binder is GetMemberBinder getMemberBinder)
                 {
                     result = target.GetProperty(getMemberBinder.Name);
                     return true;
                 }
 
-                var setMemberBinder = binder as SetMemberBinder;
-                if ((setMemberBinder != null) && (args != null) && (args.Length > 0))
+                if ((binder is SetMemberBinder setMemberBinder) && (args != null) && (args.Length > 0))
                 {
                     target.SetProperty(setMemberBinder.Name, args[0]);
                     result = args[0];
                     return true;
                 }
 
-                var getIndexBinder = binder as GetIndexBinder;
-                if (getIndexBinder != null)
+                if (binder is GetIndexBinder)
                 {
                     if ((args != null) && (args.Length == 1))
                     {
-                        int index;
-                        if (MiscHelpers.TryGetNumericIndex(args[0], out index))
-                        {
-                            result = target.GetProperty(index);
-                        }
-                        else
-                        {
-                            result = target.GetProperty(args[0].ToString());
-                        }
-
+                        result = MiscHelpers.TryGetNumericIndex(args[0], out int index) ? target.GetProperty(index) : target.GetProperty(args[0].ToString());
                         return true;
                     }
 
                     throw new InvalidOperationException("Invalid argument or index count");
                 }
 
-                var setIndexBinder = binder as SetIndexBinder;
-                if (setIndexBinder != null)
+                if (binder is SetIndexBinder)
                 {
                     if ((args != null) && (args.Length == 2))
                     {
-                        int index;
-                        if (MiscHelpers.TryGetNumericIndex(args[0], out index))
+                        if (MiscHelpers.TryGetNumericIndex(args[0], out int index))
                         {
                             target.SetProperty(index, args[1]);
                         }
@@ -151,15 +136,13 @@ namespace Microsoft.ClearScript.V8
                     throw new InvalidOperationException("Invalid argument or index count");
                 }
 
-                var invokeBinder = binder as InvokeBinder;
-                if (invokeBinder != null)
+                if (binder is InvokeBinder)
                 {
                     result = target.Invoke(false, args);
                     return true;
                 }
 
-                var invokeMemberBinder = binder as InvokeMemberBinder;
-                if (invokeMemberBinder != null)
+                if (binder is InvokeMemberBinder invokeMemberBinder)
                 {
                     result = target.InvokeMethod(invokeMemberBinder.Name, args);
                     return true;
@@ -169,8 +152,7 @@ namespace Microsoft.ClearScript.V8
             {
                 if (engine.CurrentScriptFrame != null)
                 {
-                    var scriptError = exception as IScriptEngineException;
-                    if (scriptError != null)
+                    if (exception is IScriptEngineException scriptError)
                     {
                         if (scriptError.ExecutionStarted)
                         {
@@ -216,8 +198,7 @@ namespace Microsoft.ClearScript.V8
 
             var result = engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(name)), false);
 
-            var resultScriptItem = result as V8ScriptItem;
-            if ((resultScriptItem != null) && (resultScriptItem.engine == engine))
+            if ((result is V8ScriptItem resultScriptItem) && (resultScriptItem.engine == engine))
             {
                 resultScriptItem.holder = this;
             }
@@ -282,10 +263,7 @@ namespace Microsoft.ClearScript.V8
 
         #region IScriptMarshalWrapper implementation
 
-        public override ScriptEngine Engine
-        {
-            get { return engine; }
-        }
+        public override ScriptEngine Engine => engine;
 
         public override object Unwrap()
         {
@@ -328,18 +306,18 @@ namespace Microsoft.ClearScript.V8
 
                 if (array.Rank > 1)
                 {
-                    throw new ArgumentException("Invalid target array", "array");
+                    throw new ArgumentException("Invalid target array", nameof(array));
                 }
 
                 if (index < 0)
                 {
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
                 var length = Count;
                 if ((index + length) > array.Length)
                 {
-                    throw new ArgumentException("Insufficient space in target array", "array");
+                    throw new ArgumentException("Insufficient space in target array", nameof(array));
                 }
 
                 for (var sourceIndex = 0; sourceIndex < length; sourceIndex++)
@@ -348,14 +326,11 @@ namespace Microsoft.ClearScript.V8
                 }
             }
 
-            public int Count
-            {
-                get { return Convert.ToInt32(GetProperty("length")); }
-            }
+            public int Count => Convert.ToInt32(GetProperty("length"));
 
-            public object SyncRoot { get { return this; } }
+            public object SyncRoot => this;
 
-            public bool IsSynchronized { get { return false; } }
+            public bool IsSynchronized => false;
 
             public int Add(object value)
             {
@@ -396,15 +371,9 @@ namespace Microsoft.ClearScript.V8
                 InvokeMethod("splice", index, 1);
             }
 
-            public bool IsReadOnly
-            {
-                get { return false; }
-            }
+            public bool IsReadOnly => false;
 
-            public bool IsFixedSize
-            {
-                get { return false; }
-            }
+            public bool IsFixedSize => false;
 
             #region Nested type: Enumerator
 
@@ -436,10 +405,7 @@ namespace Microsoft.ClearScript.V8
                     index = -1;
                 }
 
-                public object Current
-                {
-                    get { return array[index]; }
-                }
+                public object Current => array[index];
             }
 
             #endregion
@@ -461,25 +427,13 @@ namespace Microsoft.ClearScript.V8
             {
             }
 
-            protected IArrayBuffer ArrayBuffer
-            {
-                get { return GetArrayBuffer(); }
-            }
+            protected IArrayBuffer ArrayBuffer => GetArrayBuffer();
 
-            protected ulong Offset
-            {
-                get { return GetInfo().Offset; }
-            }
+            protected ulong Offset => GetInfo().Offset;
 
-            protected ulong Size
-            {
-                get { return GetInfo().Size; }
-            }
+            protected ulong Size => GetInfo().Size;
 
-            protected ulong Length
-            {
-                get { return GetInfo().Length; }
-            }
+            protected ulong Length => GetInfo().Length;
 
             protected byte[] GetBytes()
             {
@@ -500,7 +454,7 @@ namespace Microsoft.ClearScript.V8
                 var size = Size;
                 if (offset >= size)
                 {
-                    throw new ArgumentOutOfRangeException("offset");
+                    throw new ArgumentOutOfRangeException(nameof(offset));
                 }
 
                 count = Math.Min(count, size - offset);
@@ -520,7 +474,7 @@ namespace Microsoft.ClearScript.V8
                 var size = Size;
                 if (offset >= size)
                 {
-                    throw new ArgumentOutOfRangeException("offset");
+                    throw new ArgumentOutOfRangeException(nameof(offset));
                 }
 
                 count = Math.Min(count, size - offset);
@@ -555,12 +509,7 @@ namespace Microsoft.ClearScript.V8
 
             private IArrayBuffer GetArrayBuffer()
             {
-                if (arrayBuffer == null)
-                {
-                    arrayBuffer = (IArrayBuffer)engine.MarshalToHost(GetInfo().ArrayBuffer, false);
-                }
-
-                return arrayBuffer;
+                return arrayBuffer ?? (arrayBuffer = (IArrayBuffer)engine.MarshalToHost(GetInfo().ArrayBuffer, false));
             }
 
             private static IntPtr GetPtrWithOffset(IntPtr pData, ulong offset)
@@ -583,10 +532,7 @@ namespace Microsoft.ClearScript.V8
 
             #region IArrayBuffer implementation
 
-            ulong IArrayBuffer.Size
-            {
-                get { return Size; }
-            }
+            ulong IArrayBuffer.Size => Size;
 
             byte[] IArrayBuffer.GetBytes()
             {
@@ -619,20 +565,11 @@ namespace Microsoft.ClearScript.V8
 
             #region IArrayBufferView implementation
 
-            IArrayBuffer IArrayBufferView.ArrayBuffer
-            {
-                get { return ArrayBuffer; }
-            }
+            IArrayBuffer IArrayBufferView.ArrayBuffer => ArrayBuffer;
 
-            ulong IArrayBufferView.Offset
-            {
-                get { return Offset; }
-            }
+            ulong IArrayBufferView.Offset => Offset;
 
-            ulong IArrayBufferView.Size
-            {
-                get { return Size; }
-            }
+            ulong IArrayBufferView.Size => Size;
 
             byte[] IArrayBufferView.GetBytes()
             {
@@ -683,10 +620,7 @@ namespace Microsoft.ClearScript.V8
 
             #region ITypedArray implementation
 
-            ulong ITypedArray.Length
-            {
-                get { return Length; }
-            }
+            ulong ITypedArray.Length => Length;
 
             #endregion
         }
@@ -723,7 +657,7 @@ namespace Microsoft.ClearScript.V8
                 var totalLength = Length;
                 if (index >= totalLength)
                 {
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
                 length = Math.Min(length, totalLength - index);
@@ -743,7 +677,7 @@ namespace Microsoft.ClearScript.V8
                 var totalLength = Length;
                 if (index >= totalLength)
                 {
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
                 length = Math.Min(length, totalLength - index);
@@ -795,7 +729,7 @@ namespace Microsoft.ClearScript.V8
                 var totalLength = Length;
                 if (index >= totalLength)
                 {
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
                 length = Math.Min(length, totalLength - index);
@@ -815,7 +749,7 @@ namespace Microsoft.ClearScript.V8
                 var totalLength = Length;
                 if (index >= totalLength)
                 {
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
                 length = Math.Min(length, totalLength - index);

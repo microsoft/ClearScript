@@ -15,8 +15,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static IScope<T> CreateScope<T>(GetStruct get, ReleaseStruct release)
         {
-            IntPtr pStruct;
-            get(out pStruct);
+            get(out var pStruct);
             return Scope.Create(() => (T)Marshal.PtrToStructure(pStruct, typeof(T)), value => release(pStruct));
         }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -9,7 +10,7 @@ namespace Microsoft.ClearScript.V8
     {
         public static V8IsolateProxy Create(string name, V8RuntimeConstraints constraints, V8RuntimeFlags flags, int debugPort)
         {
-            return CreateImpl<V8IsolateProxy>(name, constraints, flags, debugPort);
+            return new V8IsolateProxyImpl(name, constraints, flags, debugPort);
         }
 
         public abstract UIntPtr MaxHeapSize { get; set; }

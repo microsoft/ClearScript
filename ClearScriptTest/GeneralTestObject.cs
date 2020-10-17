@@ -11,7 +11,7 @@ namespace Microsoft.ClearScript.Test
         private string name;
         public string Name
         {
-            get { return name; }
+            get => name;
 
             set
             {
@@ -23,7 +23,7 @@ namespace Microsoft.ClearScript.Test
         private int age;
         public int Age
         {
-            get { return age; }
+            get => age;
 
             set
             {
@@ -44,22 +44,15 @@ namespace Microsoft.ClearScript.Test
 
         private void InvokeChange(string propertyName, object propertyValue)
         {
-            if (Change != null)
-            {
-                Change(this, new PropertyChangedEventArgs(propertyName));
-            }
-
-            if (StaticChange != null)
-            {
-                StaticChange(null, new StaticEventArgs(propertyName, propertyValue));
-            }
+            Change?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            StaticChange?.Invoke(null, new StaticEventArgs(propertyName, propertyValue));
         }
 
         #region Nested type: StaticEventArgs
 
         public class StaticEventArgs : PropertyChangedEventArgs
         {
-            public object PropertyValue { get; private set; }
+            public object PropertyValue { get; }
 
             public StaticEventArgs(string name, object value)
                 : base(name)

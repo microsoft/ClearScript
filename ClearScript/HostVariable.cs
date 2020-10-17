@@ -26,8 +26,6 @@ namespace Microsoft.ClearScript
 
     internal sealed class HostVariable<T> : HostVariableBase, IHostVariable
     {
-        private T value;
-
         public HostVariable(T initValue)
         {
             if ((typeof(T) == typeof(Undefined)) || (typeof(T) == typeof(VoidResult)))
@@ -45,23 +43,18 @@ namespace Microsoft.ClearScript
                 throw new NotSupportedException("Unsupported value type");
             }
 
-            value = initValue;
+            Value = initValue;
         }
 
-        public T Value
-        {
+        public T Value { get; set; }
             // Be careful when renaming or deleting this property; it is accessed by name in the
             // expression tree construction code in DelegateFactory.CreateComplexDelegate().
-
-            get { return value; }
-            set { this.value = value; }
-        }
 
         #region Object overrides
 
         public override string ToString()
         {
-            var objectName = value.GetFriendlyName(typeof(T));
+            var objectName = Value.GetFriendlyName(typeof(T));
             return MiscHelpers.FormatInvariant("HostVariable:{0}", objectName);
         }
 
@@ -69,25 +62,13 @@ namespace Microsoft.ClearScript
 
         #region HostTarget overrides
 
-        public override Type Type
-        {
-            get { return typeof(T); }
-        }
+        public override Type Type => typeof(T);
 
-        public override object Target
-        {
-            get { return value; }
-        }
+        public override object Target => Value;
 
-        public override object InvokeTarget
-        {
-            get { return value; }
-        }
+        public override object InvokeTarget => Value;
 
-        public override object DynamicInvokeTarget
-        {
-            get { return value; }
-        }
+        public override object DynamicInvokeTarget => Value;
 
         public override HostTargetFlags GetFlags(IHostInvokeContext context)
         {
@@ -131,14 +112,14 @@ namespace Microsoft.ClearScript
             {
                 if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
                 {
-                    if (InvokeHelpers.TryInvokeObject(context, value, invokeFlags, args, bindArgs, typeof(IDynamicMetaObjectProvider).IsAssignableFrom(typeof(T)), out result))
+                    if (InvokeHelpers.TryInvokeObject(context, Value, invokeFlags, args, bindArgs, typeof(IDynamicMetaObjectProvider).IsAssignableFrom(typeof(T)), out result))
                     {
                         return true;
                     }
 
                     if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                     {
-                        result = context.Engine.PrepareResult(value, ScriptMemberFlags.None, false);
+                        result = context.Engine.PrepareResult(Value, ScriptMemberFlags.None, false);
                         return true;
                     }
 
@@ -148,7 +129,7 @@ namespace Microsoft.ClearScript
 
                 if ((invokeFlags & getPropertyFlags) != 0)
                 {
-                    result = context.Engine.PrepareResult(value, ScriptMemberFlags.None, false);
+                    result = context.Engine.PrepareResult(Value, ScriptMemberFlags.None, false);
                     return true;
                 }
 
@@ -177,7 +158,7 @@ namespace Microsoft.ClearScript
 
         object IHostVariable.Value
         {
-            get { return value; }
+            get => Value;
 
             set
             {
@@ -191,7 +172,7 @@ namespace Microsoft.ClearScript
                     throw new NotSupportedException("Unsupported value type");
                 }
 
-                this.value = (T)value;
+                Value = (T)value;
             }
         }
 

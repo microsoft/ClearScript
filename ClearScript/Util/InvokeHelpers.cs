@@ -25,8 +25,6 @@ namespace Microsoft.ClearScript.Util
                 {
                     if ((index != (args.Length - 1)) || !param.ParameterType.IsInstanceOfType(args[index]))
                     {
-                        // ReSharper disable AssignNullToNotNullAttribute
-
                         var tailArgType = param.ParameterType.GetElementType();
                         var tailArgs = Array.CreateInstance(tailArgType, args.Length - index);
                         for (var innerIndex = index; innerIndex < args.Length; innerIndex++)
@@ -46,8 +44,6 @@ namespace Microsoft.ClearScript.Util
                         argList.Add(tailArgs);
                         tailArgsArg = tailArgs;
                         break;
-
-                        // ReSharper restore AssignNullToNotNullAttribute
                     }
                 }
 
@@ -130,8 +126,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool TryInvokeObject(IHostInvokeContext context, object target, BindingFlags invokeFlags, object[] args, object[] bindArgs, bool tryDynamic, out object result)
         {
-            var hostTarget = target as HostTarget;
-            if (hostTarget != null)
+            if (target is HostTarget hostTarget)
             {
                 if (hostTarget.TryInvoke(context, invokeFlags, args, bindArgs, out result))
                 {
@@ -149,14 +144,12 @@ namespace Microsoft.ClearScript.Util
 
             if ((target != null) && invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
-                var scriptItem = target as ScriptItem;
-                if (scriptItem != null)
+                if (target is ScriptItem scriptItem)
                 {
                     target = DelegateFactory.CreateFunc<object>(scriptItem.Engine, target, args.Length);
                 }
 
-                var del = target as Delegate;
-                if (del != null)
+                if (target is Delegate del)
                 {
                     result = InvokeDelegate(context, del, args);
                     return true;
@@ -164,8 +157,7 @@ namespace Microsoft.ClearScript.Util
 
                 if (tryDynamic)
                 {
-                    var dynamicMetaObjectProvider = target as IDynamicMetaObjectProvider;
-                    if (dynamicMetaObjectProvider != null)
+                    if (target is IDynamicMetaObjectProvider dynamicMetaObjectProvider)
                     {
                         if (dynamicMetaObjectProvider.GetMetaObject(Expression.Constant(target)).TryInvoke(context, args, out result))
                         {
@@ -198,11 +190,11 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class ByRefArgItem
         {
-            public IByRefArg ByRefArg { get; private set; }
+            public IByRefArg ByRefArg { get; }
 
-            public Array Array { get; private set; }
+            public Array Array { get; }
 
-            public int Index { get; private set; }
+            public int Index { get; }
 
             public ByRefArgItem(IByRefArg arg, Array array, int index)
             {

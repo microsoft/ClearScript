@@ -73,8 +73,7 @@ namespace Microsoft.ClearScript.V8
                 {
                     if (!disposedFlag.IsSet)
                     {
-                        var webSocketException = exception as WebSocket.Exception;
-                        if (webSocketException != null)
+                        if (exception is WebSocket.Exception webSocketException)
                         {
                             OnFailed(webSocketException.ErrorCode, webSocketException.Message);
                         }
@@ -106,8 +105,7 @@ namespace Microsoft.ClearScript.V8
         {
             using (await sendSemaphore.CreateLockScopeAsync().ConfigureAwait(false))
             {
-                string message;
-                while (queue.TryDequeue(out message))
+                while (queue.TryDequeue(out var message))
                 {
                     await webSocket.SendMessageAsync(Encoding.UTF8.GetBytes(message)).ConfigureAwait(false);
                 }
@@ -126,8 +124,7 @@ namespace Microsoft.ClearScript.V8
                 {
                     if (!disposedFlag.IsSet)
                     {
-                        var webSocketException = exception as WebSocket.Exception;
-                        if (webSocketException != null)
+                        if (exception is WebSocket.Exception webSocketException)
                         {
                             OnFailed(webSocketException.ErrorCode, webSocketException.Message);
                         }

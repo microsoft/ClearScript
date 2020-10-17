@@ -21,22 +21,14 @@ using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable HeuristicUnreachableCode
-
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
     [DeploymentItem("ClearScriptV8-64.dll")]
     [DeploymentItem("ClearScriptV8-32.dll")]
-    [DeploymentItem("v8-x64.dll")]
-    [DeploymentItem("v8-ia32.dll")]
-    [DeploymentItem("v8-base-x64.dll")]
-    [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-zlib-x64.dll")]
-    [DeploymentItem("v8-zlib-ia32.dll")]
     [DeploymentItem("JavaScript", "JavaScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
-    [SuppressMessage("ReSharper", "StringLiteralTypo")]
+    [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "Typos in test code are acceptable.")]
     public class JScriptEngineTest : ClearScriptTest
     {
         #region setup / teardown
@@ -865,12 +857,13 @@ namespace Microsoft.ClearScript.Test
 
                         var nestedException = hostException.InnerException as ScriptEngineException;
                         Assert.IsNotNull(nestedException);
+
                         // ReSharper disable once AccessToDisposedClosure
                         TestUtil.AssertValidException(innerEngine, nestedException);
-                        // ReSharper disable once PossibleNullReferenceException
+
                         Assert.IsNull(nestedException.InnerException);
 
-                        Assert.AreEqual(hostException.Message, exception.Message);
+                        Assert.AreEqual(hostException.GetBaseException().Message, exception.Message);
                         throw;
                     }
                 });
@@ -903,9 +896,10 @@ namespace Microsoft.ClearScript.Test
 
                         var nestedException = hostException.InnerException as ScriptEngineException;
                         Assert.IsNotNull(nestedException);
+
                         // ReSharper disable once AccessToDisposedClosure
                         TestUtil.AssertValidException(innerEngine, nestedException);
-                        // ReSharper disable once PossibleNullReferenceException
+
                         Assert.IsNotNull(nestedException.InnerException);
 
                         var nestedHostException = nestedException.InnerException;
@@ -913,8 +907,8 @@ namespace Microsoft.ClearScript.Test
                         TestUtil.AssertValidException(nestedHostException);
                         Assert.IsNull(nestedHostException.InnerException);
 
-                        Assert.AreEqual(nestedHostException.Message, nestedException.Message);
-                        Assert.AreEqual(hostException.Message, exception.Message);
+                        Assert.AreEqual(nestedHostException.GetBaseException().Message, nestedException.Message);
+                        Assert.AreEqual(hostException.GetBaseException().Message, exception.Message);
                         throw;
                     }
                 });
@@ -1218,16 +1212,13 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_StandardsMode()
         {
-            // ReSharper disable AccessToDisposedClosure
-
+            // ReSharper disable once AccessToDisposedClosure
             TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("JSON"));
 
             engine.Dispose();
             engine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.EnableStandardsMode);
 
             Assert.AreEqual("{\"foo\":123,\"bar\":456.789}", engine.Evaluate("JSON.stringify({ foo: 123, bar: 456.789 })"));
-
-            // ReSharper restore AccessToDisposedClosure
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -2045,17 +2036,19 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_Current()
         {
-            // ReSharper disable AccessToDisposedClosure
-
             using (var innerEngine = new JScriptEngine())
             {
                 engine.Script.test = new Action(() =>
                 {
+                    // ReSharper disable AccessToDisposedClosure
+
                     innerEngine.Script.test = new Action(() => Assert.AreSame(innerEngine, ScriptEngine.Current));
                     Assert.AreSame(engine, ScriptEngine.Current);
                     innerEngine.Execute("test()");
                     innerEngine.Script.test();
                     Assert.AreSame(engine, ScriptEngine.Current);
+
+                    // ReSharper restore AccessToDisposedClosure
                 });
 
                 Assert.IsNull(ScriptEngine.Current);
@@ -2063,8 +2056,6 @@ namespace Microsoft.ClearScript.Test
                 engine.Script.test();
                 Assert.IsNull(ScriptEngine.Current);
             }
-
-            // ReSharper restore AccessToDisposedClosure
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -2764,7 +2755,7 @@ namespace Microsoft.ClearScript.Test
 
             public T Bogus<T>(T arg)
             {
-                return default(T);
+                return default;
             }
         }
 
@@ -2778,7 +2769,7 @@ namespace Microsoft.ClearScript.Test
 
             public T Bogus<T>(T arg)
             {
-                return default(T);
+                return default;
             }
         }
 

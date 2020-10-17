@@ -145,8 +145,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsNumeric(this Type type)
         {
-            bool isIntegral;
-            return type.IsNumeric(out isIntegral);
+            return type.IsNumeric(out _);
         }
 
         public static bool IsNullable(this Type type)
@@ -175,13 +174,11 @@ namespace Microsoft.ClearScript.Util
 
             if (type.IsNullable())
             {
-                // ReSharper disable once AssignNullToNotNullAttribute
                 return (value == null) || (Nullable.GetUnderlyingType(type).IsAssignableFrom(ref value));
             }
 
             if (value == null)
             {
-                // ReSharper disable once PossibleNullReferenceException
                 return !type.IsValueType;
             }
 
@@ -196,7 +193,6 @@ namespace Microsoft.ClearScript.Util
                 return true;
             }
 
-            // ReSharper disable once PossibleNullReferenceException
             if (!type.IsValueType)
             {
                 if (type.IsAssignableFrom(valueType))
@@ -212,8 +208,7 @@ namespace Microsoft.ClearScript.Util
                     var iid = type.GUID;
                     if (iid != Guid.Empty)
                     {
-                        IntPtr pInterface;
-                        if (HResult.Succeeded(Marshal.QueryInterface(pUnknown, ref iid, out pInterface)))
+                        if (HResult.Succeeded(Marshal.QueryInterface(pUnknown, ref iid, out var pInterface)))
                         {
                             Marshal.Release(pInterface);
                             result = true;
@@ -242,8 +237,7 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
 
-            bool typeIsIntegral;
-            if (type.IsNumeric(out typeIsIntegral))
+            if (type.IsNumeric(out var typeIsIntegral))
             {
                 if (typeIsIntegral)
                 {
@@ -355,9 +349,8 @@ namespace Microsoft.ClearScript.Util
         {
             if (type.IsUnknownCOMObject())
             {
-                string progID;
                 var clsid = type.GUID;
-                if (HResult.Succeeded(NativeMethods.ProgIDFromCLSID(ref clsid, out progID)))
+                if (HResult.Succeeded(NativeMethods.ProgIDFromCLSID(ref clsid, out var progID)))
                 {
                     return progID;
                 }
@@ -370,9 +363,8 @@ namespace Microsoft.ClearScript.Util
         {
             if (type.IsUnknownCOMObject())
             {
-                string progID;
                 var clsid = type.GUID;
-                if (HResult.Succeeded(NativeMethods.ProgIDFromCLSID(ref clsid, out progID)))
+                if (HResult.Succeeded(NativeMethods.ProgIDFromCLSID(ref clsid, out var progID)))
                 {
                     return progID;
                 }
@@ -503,9 +495,6 @@ namespace Microsoft.ClearScript.Util
 
         public static object CreateInstance(this Type type, Type accessContext, ScriptAccess defaultAccess, params object[] args)
         {
-            // ReSharper disable CoVariantArrayConversion
-            // ReSharper disable PossibleNullReferenceException
-
             if (type.IsCOMObject || (type.IsValueType && (args.Length < 1)))
             {
                 return type.CreateInstance(args);
@@ -522,8 +511,8 @@ namespace Microsoft.ClearScript.Util
 
             try
             {
-                object state;
-                constructor = Type.DefaultBinder.BindToMethod(flags, candidates, ref args, null, null, null, out state) as ConstructorInfo;
+                // ReSharper disable once CoVariantArrayConversion
+                constructor = Type.DefaultBinder.BindToMethod(flags, candidates, ref args, null, null, null, out _) as ConstructorInfo;
             }
             catch (MissingMethodException)
             {
@@ -535,9 +524,6 @@ namespace Microsoft.ClearScript.Util
             }
 
             return constructor.Invoke(args);
-
-            // ReSharper restore PossibleNullReferenceException
-            // ReSharper restore CoVariantArrayConversion
         }
 
         public static Type MakeSpecificType(this Type template, params Type[] typeArgs)
@@ -580,12 +566,12 @@ namespace Microsoft.ClearScript.Util
         {
             if (!IsValidLocator(typeName))
             {
-                throw new ArgumentException("Invalid type name", "typeName");
+                throw new ArgumentException("Invalid type name", nameof(typeName));
             }
 
             if (useAssemblyName && string.IsNullOrWhiteSpace(assemblyName))
             {
-                throw new ArgumentException("Invalid assembly name", "assemblyName");
+                throw new ArgumentException("Invalid assembly name", nameof(assemblyName));
             }
 
             if (!hostTypeArgs.All(arg => arg is HostType))
@@ -725,8 +711,7 @@ namespace Microsoft.ClearScript.Util
 
         private static Type GetPropertyIndexType(object bindArg)
         {
-            var hostTarget = bindArg as HostTarget;
-            if (hostTarget != null)
+            if (bindArg is HostTarget hostTarget)
             {
                 return hostTarget.Type;
             }
@@ -746,7 +731,6 @@ namespace Microsoft.ClearScript.Util
                 return null;
             }
 
-            // ReSharper disable once PossibleNullReferenceException
             var result = Type.DefaultBinder.SelectProperty(bindFlags, candidates, null, bindArgs.Select(GetPropertyIndexType).ToArray(), null);
             if (result != null)
             {
@@ -778,17 +762,12 @@ namespace Microsoft.ClearScript.Util
                 var parameters = converter.GetParameters();
                 if ((parameters.Length == 1) && parameters[0].ParameterType.IsAssignableFrom(sourceType) && targetType.IsAssignableFrom(converter.ReturnType))
                 {
-                    // ReSharper disable AccessToForEachVariableInClosure
-
                     var args = new[] { value };
-                    object result;
-                    if (MiscHelpers.Try(out result, () => converter.Invoke(null, args)))
+                    if (MiscHelpers.Try(out var result, () => converter.Invoke(null, args)))
                     {
                         value = result;
                         return true;
                     }
-
-                    // ReSharper restore AccessToForEachVariableInClosure
                 }
             }
 
@@ -799,21 +778,15 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class PropertySignatureComparer : IEqualityComparer<PropertyInfo>
         {
-            private static readonly PropertySignatureComparer instance = new PropertySignatureComparer();
-
-            public static PropertySignatureComparer Instance { get { return instance; } }
+            public static PropertySignatureComparer Instance { get; } = new PropertySignatureComparer();
 
             #region IEqualityComparer<PropertyInfo> implementation
 
             public bool Equals(PropertyInfo first, PropertyInfo second)
             {
-                // ReSharper disable PossibleNullReferenceException
-
                 var firstParamTypes = first.GetIndexParameters().Select(param => param.ParameterType);
                 var secondParamTypes = second.GetIndexParameters().Select(param => param.ParameterType);
                 return firstParamTypes.SequenceEqual(secondParamTypes);
-
-                // ReSharper restore PossibleNullReferenceException
             }
 
             public int GetHashCode(PropertyInfo property)

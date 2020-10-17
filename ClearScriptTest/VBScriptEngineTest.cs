@@ -20,22 +20,14 @@ using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable HeuristicUnreachableCode
-
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
     [DeploymentItem("ClearScriptV8-64.dll")]
     [DeploymentItem("ClearScriptV8-32.dll")]
-    [DeploymentItem("v8-x64.dll")]
-    [DeploymentItem("v8-ia32.dll")]
-    [DeploymentItem("v8-base-x64.dll")]
-    [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-zlib-x64.dll")]
-    [DeploymentItem("v8-zlib-ia32.dll")]
     [DeploymentItem("VBScript", "VBScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
-    [SuppressMessage("ReSharper", "StringLiteralTypo")]
+    [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "Typos in test code are acceptable.")]
     public class VBScriptEngineTest : ClearScriptTest
     {
         #region setup / teardown
@@ -469,125 +461,6 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
-        public void VBScriptEngine_ExceptionDetails()
-        {
-            engine.AddHostObject("test", this);
-            engine.Execute("Sub Run\ntest.NonExistent = 3\nEnd Sub");
-            try
-            {
-                engine.Invoke("Run");
-                Assert.Fail("Expected failure");
-            }
-            catch ( ScriptEngineException see )
-            {
-                Assert.AreEqual(
-                   "Object doesn't support this property or method: 'test.NonExistent'\n    at Run (Script [3]:1:0) -> test.NonExistent = 3",
-                   see.ErrorDetails, "Details message was wrong");
-            }
-            catch ( Exception ex )
-            {
-                Assert.Fail("Wrong exception thrown: " + ex);
-            }
-        }
-
-        public void ThrowException()
-        {
-            throw new Exception("check for this message");
-        }
-
-        [TestMethod, TestCategory("VBScriptEngine")]
-        public void VBScriptEngine_ExceptionUnwrapsTargetInvocationException()
-        {
-            engine.AddHostObject("test", this);
-            engine.Execute("Sub Run\ntest.ThrowException\nEnd Sub");
-            try
-            {
-                engine.Invoke("Run");
-                Assert.Fail("Expected failure");
-            }
-            catch (ScriptEngineException see)
-            {
-                Assert.AreEqual(
-                   "check for this message\n    at Run (Script [3]:1:0) -> test.ThrowException",
-                   see.ErrorDetails, "Details message was wrong");
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail("Wrong exception thrown: " + ex);
-            }
-        }
-
-        [TestMethod, TestCategory("VBScriptEngine")]
-        public void VBScriptEngine_ExceptionUnwrapsTargetInvocationException_NoDebugger()
-        {
-            engine.Dispose();
-            engine = new VBScriptEngine(WindowsScriptEngineFlags.None);
-            engine.AddHostObject("test", this);
-            engine.Execute("Sub Run\ntest.ThrowException\nEnd Sub");
-            try
-            {
-                engine.Invoke("Run");
-                Assert.Fail("Expected failure");
-            }
-            catch (ScriptEngineException see)
-            {
-                Assert.AreEqual(
-                   "check for this message\n    at (Unknown:1:0)",
-                   see.ErrorDetails, "Details message was wrong");
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail("Wrong exception thrown: " + ex);
-            }
-        }
-
-        [TestMethod, TestCategory("VBScriptEngine")]
-        public void VBScriptEngine_ExceptionDetails_NoDebugger()
-        {
-            engine.Dispose();
-            engine = new VBScriptEngine(WindowsScriptEngineFlags.None);
-            engine.AddHostObject("test", this);
-            engine.Execute("Sub Run\ntest.NonExistent = 3\nEnd Sub");
-            try
-            {
-                engine.Invoke("Run");
-                Assert.Fail("Expected failure");
-            }
-            catch (ScriptEngineException see)
-            {
-                Assert.AreEqual(
-                   "Object doesn't support this property or method: 'test.NonExistent'\n    at (Unknown:1:0)",
-                   see.ErrorDetails, "Details message was wrong");
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail("Wrong exception thrown: " + ex);
-            }
-        }
-
-        [TestMethod, TestCategory("VBScriptEngine")]
-        public void VBScriptEngine_ExceptionDetails2()
-        {
-            engine.AddHostObject("test", HostItemFlags.DirectAccess, new ComVisibleTestObject());
-            engine.Execute("Sub Run\ntest = \"invalid type\"\nEnd Sub");
-            try
-            {
-                engine.Invoke("Run");
-                Assert.Fail("Expected failure");
-            }
-            catch (ScriptEngineException see)
-            {
-                Assert.AreEqual(
-                    "Class doesn't support Automation: 'test'\n    at Run (Script [3]:1:0) -> test = \"invalid type\"",
-                    see.ErrorDetails, "Details message was wrong");
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail("Wrong exception thrown: " + ex);
-            }
-        }
-
-        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_AccessContext_Private()
         {
             engine.AddHostObject("test", this);
@@ -895,12 +768,13 @@ namespace Microsoft.ClearScript.Test
 
                         var nestedException = hostException.InnerException as ScriptEngineException;
                         Assert.IsNotNull(nestedException);
+
                         // ReSharper disable once AccessToDisposedClosure
                         TestUtil.AssertValidException(innerEngine, nestedException);
-                        // ReSharper disable once PossibleNullReferenceException
+
                         Assert.IsNull(nestedException.InnerException);
 
-                        Assert.AreEqual(hostException.InnerException.Message, exception.Message);
+                        Assert.AreEqual(hostException.GetBaseException().Message, exception.Message);
                         throw;
                     }
                 });
@@ -933,9 +807,10 @@ namespace Microsoft.ClearScript.Test
 
                         var nestedException = hostException.InnerException as ScriptEngineException;
                         Assert.IsNotNull(nestedException);
+
                         // ReSharper disable once AccessToDisposedClosure
                         TestUtil.AssertValidException(innerEngine, nestedException);
-                        // ReSharper disable once PossibleNullReferenceException
+
                         Assert.IsNotNull(nestedException.InnerException);
 
                         var nestedHostException = nestedException.InnerException;
@@ -943,15 +818,8 @@ namespace Microsoft.ClearScript.Test
                         TestUtil.AssertValidException(nestedHostException);
                         Assert.IsNull(nestedHostException.InnerException);
 
-                        Assert.AreEqual(nestedHostException.Message, nestedException.Message);
-                        if (hostException is TargetInvocationException)
-                        {
-                            Assert.AreEqual(hostException.InnerException.Message, exception.Message);
-                        }
-                        else
-                        {
-                            Assert.AreEqual(hostException.Message, exception.Message);
-                        }
+                        Assert.AreEqual(nestedHostException.GetBaseException().Message, nestedException.Message);
+                        Assert.AreEqual(hostException.GetBaseException().Message, exception.Message);
                         throw;
                     }
                 });
@@ -1486,9 +1354,8 @@ namespace Microsoft.ClearScript.Test
             ");
 
             engine.Dispose();
-            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalArraysByValue);
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.MarshalArraysByValue) { UseReflectionBindFallback = true };
 
-            engine.UseReflectionBindFallback = true;
             engine.Script.test = new ReflectionBindFallbackTest();
             engine.AddHostType("Assert", typeof(Assert));
             engine.Execute(@"
@@ -2313,17 +2180,19 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_Current()
         {
-            // ReSharper disable AccessToDisposedClosure
-
             using (var innerEngine = new VBScriptEngine())
             {
                 engine.Script.test = new Action(() =>
                 {
+                    // ReSharper disable AccessToDisposedClosure
+
                     innerEngine.Script.test = new Action(() => Assert.AreSame(innerEngine, ScriptEngine.Current));
                     Assert.AreSame(engine, ScriptEngine.Current);
                     innerEngine.Execute("test()");
                     innerEngine.Script.test();
                     Assert.AreSame(engine, ScriptEngine.Current);
+
+                    // ReSharper restore AccessToDisposedClosure
                 });
 
                 Assert.IsNull(ScriptEngine.Current);
@@ -2331,8 +2200,6 @@ namespace Microsoft.ClearScript.Test
                 engine.Script.test();
                 Assert.IsNull(ScriptEngine.Current);
             }
-
-            // ReSharper restore AccessToDisposedClosure
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
@@ -2975,7 +2842,7 @@ namespace Microsoft.ClearScript.Test
 
         public class ReflectionBindFallbackTest
         {
-            public string Property { get { return "qux"; } }
+            public string Property => "qux";
 
             public void Method(ref string a, ref double b)
             {
@@ -3124,12 +2991,11 @@ namespace Microsoft.ClearScript.Test
 
             public T Bogus<T>(T arg)
             {
-                return default(T);
+                return default;
             }
         }
 
         [ComVisible(true)]
-        [ClassInterface(ClassInterfaceType.AutoDual)]
         public sealed class ComVisibleTestObject
         {
             public string Format(string format, object arg0 = null, object arg1 = null, object arg2 = null, object arg3 = null)
@@ -3139,10 +3005,8 @@ namespace Microsoft.ClearScript.Test
 
             public T Bogus<T>(T arg)
             {
-                return default(T);
+                return default;
             }
-         
-            public double Value { get; set; }
         }
 
         #endregion

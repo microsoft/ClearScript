@@ -7,5 +7,7 @@
 
 #pragma once
 
-#define CLEARSCRIPT_VERSION_STRING "<#= version #>"
-#define CLEARSCRIPT_VERSION_COMMA_SEPARATED <#= version.Major #>,<#= version.Minor #>,<#= version.Build #>,<#= version.Revision #>
+#define CLEARSCRIPT_VERSION_STRING "<#= version.ToString(3) #>"
+#define CLEARSCRIPT_VERSION_COMMA_SEPARATED <#= version.Major #>,<#= version.Minor #>,<#= version.Build #>
+#define CLEARSCRIPT_VERSION_STRING_INFORMATIONAL "<#= version.ToString(3) + versionSuffix #>"
+#define CLEARSCRIPT_FILE_FLAGS <#= string.IsNullOrEmpty(versionSuffix) ? "0L" : "VS_FF_PRERELEASE" #>

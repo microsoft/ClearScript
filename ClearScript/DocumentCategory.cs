@@ -32,10 +32,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Gets the document category for normal scripts.
         /// </summary>
-        public static DocumentCategory Script
-        {
-            get { return ScriptDocument.Instance; }
-        }
+        public static DocumentCategory Script => ScriptDocument.Instance;
 
         internal abstract string DefaultName { get; }
 
@@ -51,10 +48,7 @@ namespace Microsoft.ClearScript
 
             #region DocumentCategory overrides
 
-            internal override string DefaultName
-            {
-                get { return "Script"; }
-            }
+            internal override string DefaultName => "Script";
 
             #endregion
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -9,7 +10,7 @@ namespace Microsoft.ClearScript.V8
     {
         public static V8TestProxy Create()
         {
-            return CreateImpl<V8TestProxy>();
+            return new V8TestProxyImpl();
         }
 
         public abstract UIntPtr GetNativeDigest(string value);

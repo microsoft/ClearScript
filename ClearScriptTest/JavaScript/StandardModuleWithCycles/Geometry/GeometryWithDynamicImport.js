@@ -3,7 +3,6 @@
 
 let Arithmetic;
 (async function() {
-    // ReSharper disable once UseOfImplicitGlobalInFunctionScope
     Arithmetic = await import('../Arithmetic/ArithmeticWithDynamicImport.js');
 })();
 

@@ -20,7 +20,6 @@ namespace Microsoft.ClearScript.Windows
             private readonly WindowsScriptEngine engine;
             private readonly UIntPtr sourceContext;
             private readonly UniqueDocumentInfo documentInfo;
-            private readonly string code;
 
             private string[] codeLines;
             private IDebugApplicationNode node;
@@ -30,26 +29,22 @@ namespace Microsoft.ClearScript.Windows
                 this.engine = engine;
                 this.sourceContext = sourceContext;
                 this.documentInfo = documentInfo;
-                this.code = code;
+                Code = code;
                 Initialize();
             }
 
             private void Initialize()
             {
-                codeLines = code.Split('\n').Select(line => line + '\n').ToArray();
+                codeLines = Code.Split('\n').Select(line => line + '\n').ToArray();
 
                 engine.debugApplication.CreateApplicationNode(out node);
                 node.SetDocumentProvider(this);
 
-                IDebugApplicationNode rootNode;
-                engine.debugApplication.GetRootNode(out rootNode);
+                engine.debugApplication.GetRootNode(out var rootNode);
                 node.Attach(rootNode);
             }
 
-            public string Code
-            {
-                get { return code; }
-            }
+            public string Code { get; }
 
             public void Close()
             {
@@ -146,14 +141,14 @@ namespace Microsoft.ClearScript.Windows
             public void GetSize(out uint numLines, out uint length)
             {
                 numLines = (uint)codeLines.Length;
-                length = (uint)code.Length;
+                length = (uint)Code.Length;
             }
 
             public void GetPositionOfLine(uint lineNumber, out uint position)
             {
                 if (lineNumber >= codeLines.Length)
                 {
-                    throw new ArgumentOutOfRangeException("lineNumber");
+                    throw new ArgumentOutOfRangeException(nameof(lineNumber));
                 }
 
                 position = 0;
@@ -165,9 +160,9 @@ namespace Microsoft.ClearScript.Windows
 
             public void GetLineOfPosition(uint position, out uint lineNumber, out uint offsetInLine)
             {
-                if (position >= code.Length)
+                if (position >= Code.Length)
                 {
-                    throw new ArgumentOutOfRangeException("position");
+                    throw new ArgumentOutOfRangeException(nameof(position));
                 }
 
                 offsetInLine = position;
@@ -185,14 +180,14 @@ namespace Microsoft.ClearScript.Windows
 
             public void GetText(uint position, IntPtr pChars, IntPtr pAttrs, ref uint length, uint maxChars)
             {
-                var codeLength = (uint)code.Length;
+                var codeLength = (uint)Code.Length;
                 if (position < codeLength)
                 {
                     length = Math.Min(codeLength - position, maxChars);
 
                     if (pChars != IntPtr.Zero)
                     {
-                        Marshal.Copy(code.ToCharArray(), (int)position, pChars, (int)length);
+                        Marshal.Copy(Code.ToCharArray(), (int)position, pChars, (int)length);
                     }
 
                     if (pAttrs != IntPtr.Zero)
@@ -212,8 +207,7 @@ namespace Microsoft.ClearScript.Windows
 
             public void GetContextOfPosition(uint position, uint length, out IDebugDocumentContext context)
             {
-                IEnumDebugCodeContexts enumCodeContexts;
-                engine.activeScript.EnumCodeContextsOfPosition(sourceContext, position, length, out enumCodeContexts);
+                engine.activeScript.EnumCodeContextsOfPosition(sourceContext, position, length, out var enumCodeContexts);
                 context = new DebugDocumentContext(this, position, length, enumCodeContexts);
             }
 
@@ -235,27 +229,19 @@ namespace Microsoft.ClearScript.Windows
         private sealed class DebugDocumentContext : IDebugDocumentContext
         {
             private readonly DebugDocument document;
-            private readonly uint position;
-            private readonly uint length;
             private readonly IEnumDebugCodeContexts enumCodeContexts;
 
             public DebugDocumentContext(DebugDocument document, uint position, uint length, IEnumDebugCodeContexts enumCodeContexts)
             {
                 this.document = document;
-                this.position = position;
-                this.length = length;
+                Position = position;
+                Length = length;
                 this.enumCodeContexts = enumCodeContexts;
             }
 
-            public uint Position
-            {
-                get { return position; }
-            }
+            public uint Position { get; }
 
-            public uint Length
-            {
-                get { return length; }
-            }
+            public uint Length { get; }
 
             #region IDebugDocumentContext implementation
 

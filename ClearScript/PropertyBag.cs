@@ -121,10 +121,7 @@ namespace Microsoft.ClearScript
 
         #region internal members
 
-        internal int EngineCount
-        {
-            get { return engineSet.Count; }
-        }
+        internal int EngineCount => engineSet.Count;
 
         private void CheckReadOnly()
         {
@@ -144,16 +141,12 @@ namespace Microsoft.ClearScript
         private void NotifyPropertyChanged(string name)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(name));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
         private void NotifyExposedToScriptCode(object value)
         {
-            var scriptableObject = value as IScriptableObject;
-            if (scriptableObject != null)
+            if (value is IScriptableObject scriptableObject)
             {
                 engineSet.ForEach(scriptableObject.OnExposedToScriptCode);
             }
@@ -223,16 +216,10 @@ namespace Microsoft.ClearScript
         }
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
-        int ICollection<KeyValuePair<string, object>>.Count
-        {
-            get { return collection.Count; }
-        }
+        int ICollection<KeyValuePair<string, object>>.Count => collection.Count;
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
-        bool ICollection<KeyValuePair<string, object>>.IsReadOnly
-        {
-            get { return isReadOnly; }
-        }
+        bool ICollection<KeyValuePair<string, object>>.IsReadOnly => isReadOnly;
 
         #endregion
 
@@ -288,7 +275,7 @@ namespace Microsoft.ClearScript
         /// <returns>The property value.</returns>
         public object this[string key]
         {
-            get { return dictionary[key]; }
+            get => dictionary[key];
 
             set
             {
@@ -300,18 +287,12 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Gets a collection of property names from the <see cref="PropertyBag"/>.
         /// </summary>
-        public ICollection<string> Keys
-        {
-            get { return dictionary.Keys; }
-        }
+        public ICollection<string> Keys => dictionary.Keys;
 
         /// <summary>
         /// Gets a collection of property values from the <see cref="PropertyBag"/>.
         /// </summary>
-        public ICollection<object> Values
-        {
-            get { return dictionary.Values; }
-        }
+        public ICollection<object> Values => dictionary.Values;
 
         #endregion
 

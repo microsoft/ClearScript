@@ -1,0 +1,99 @@
+diff --git a/BUILD.gn b/BUILD.gn
+index bda33c185f..56a342e06c 100644
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -639,7 +639,7 @@ config("toolchain") {
+   visibility = [ "./*" ]
+ 
+   defines = []
+-  cflags = []
++  cflags = [ "-Wno-invalid-offsetof" ]
+   ldflags = []
+ 
+   if (v8_current_cpu == "arm") {
+diff --git a/include/v8.h b/include/v8.h
+index a839165324..26f3e153c1 100644
+--- a/include/v8.h
++++ b/include/v8.h
+@@ -19,6 +19,7 @@
+ #include <stdint.h>
+ #include <stdio.h>
+ 
++#include <atomic>
+ #include <memory>
+ #include <string>
+ #include <type_traits>
+diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
+index 5a8d0bad03..cf975c5372 100644
+--- a/src/codegen/code-stub-assembler.cc
++++ b/src/codegen/code-stub-assembler.cc
+@@ -12076,6 +12076,11 @@ TNode<String> CodeStubAssembler::Typeof(SloppyTNode<Object> value) {
+ 
+   GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
+ 
++  Label resume_default(this);
++  GotoIfNot(Word32And(LoadMapBitField(map), Int32Constant(Map::Bits1::HasNamedInterceptorBit::kMask)), &resume_default);
++  Branch(Word32And(LoadMapBitField2(map), Int32Constant(Map::Bits2::IsImmutablePrototypeBit::kMask)), &return_function, &return_object);
++  BIND(&resume_default);
++
+   TNode<Int32T> callable_or_undetectable_mask =
+       Word32And(LoadMapBitField(map),
+                 Int32Constant(Map::Bits1::IsCallableBit::kMask |
+diff --git a/src/compiler/backend/register-allocator-verifier.cc b/src/compiler/backend/register-allocator-verifier.cc
+index 50e57bc5ad..fa687a760a 100644
+--- a/src/compiler/backend/register-allocator-verifier.cc
++++ b/src/compiler/backend/register-allocator-verifier.cc
+@@ -352,7 +352,7 @@ bool BlockAssessments::IsStaleReferenceStackSlot(InstructionOperand op) {
+ 
+ void BlockAssessments::Print() const {
+   StdoutStream os;
+-  for (const auto pair : map()) {
++  for (const auto& pair : map()) {
+     const InstructionOperand op = pair.first;
+     const Assessment* assessment = pair.second;
+     // Use operator<< so we can write the assessment on the same
+diff --git a/src/execution/stack-guard.cc b/src/execution/stack-guard.cc
+index a98fb07c93..6774605093 100644
+--- a/src/execution/stack-guard.cc
++++ b/src/execution/stack-guard.cc
+@@ -200,8 +200,10 @@ void StackGuard::FreeThreadResources() {
+ void StackGuard::ThreadLocal::Initialize(Isolate* isolate,
+                                          const ExecutionAccess& lock) {
+   const uintptr_t kLimitSize = FLAG_stack_size * KB;
+-  DCHECK_GT(GetCurrentStackPosition(), kLimitSize);
+   uintptr_t limit = GetCurrentStackPosition() - kLimitSize;
++  if (GetCurrentStackPosition() < kLimitSize) {
++    limit = 0;
++  }
+   real_jslimit_ = SimulatorStack::JsLimitFromCLimit(isolate, limit);
+   set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
+   real_climit_ = limit;
+diff --git a/src/init/v8.cc b/src/init/v8.cc
+index 2b2194ca73..6f272842a7 100644
+--- a/src/init/v8.cc
++++ b/src/init/v8.cc
+@@ -124,7 +124,6 @@ void V8::InitializeOncePerProcess() {
+ }
+ 
+ void V8::InitializePlatform(v8::Platform* platform) {
+-  CHECK(!platform_);
+   CHECK(platform);
+   platform_ = platform;
+   v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
+diff --git a/src/objects/objects.cc b/src/objects/objects.cc
+index a8dfa6adf5..7025dc386b 100644
+--- a/src/objects/objects.cc
++++ b/src/objects/objects.cc
+@@ -825,6 +825,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+   if (object->IsString()) return isolate->factory()->string_string();
+   if (object->IsSymbol()) return isolate->factory()->symbol_string();
+   if (object->IsBigInt()) return isolate->factory()->bigint_string();
++  if (object->IsJSObject()) {
++    Handle<JSObject> obj = Handle<JSObject>::cast(object);
++    if (obj->HasNamedInterceptor()) {
++      return obj->map().is_immutable_proto() ? isolate->factory()->function_string() : isolate->factory()->object_string();
++    }
++  }
+   if (object->IsCallable()) return isolate->factory()->function_string();
+   return isolate->factory()->object_string();
+ }

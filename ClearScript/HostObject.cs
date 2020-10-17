@@ -31,8 +31,7 @@ namespace Microsoft.ClearScript
 
             if (type.IsUnknownCOMObject())
             {
-                var enumVariant = target as IEnumVARIANT;
-                if (enumVariant != null)
+                if (target is IEnumVARIANT enumVariant)
                 {
                     target = new EnumeratorWrapper(enumVariant);
                     type = typeof(IEnumerator);
@@ -119,25 +118,13 @@ namespace Microsoft.ClearScript
 
         #region HostTarget overrides
 
-        public override Type Type
-        {
-            get { return type; }
-        }
+        public override Type Type => type;
 
-        public override object Target
-        {
-            get { return target; }
-        }
+        public override object Target => target;
 
-        public override object InvokeTarget
-        {
-            get { return target; }
-        }
+        public override object InvokeTarget => target;
 
-        public override object DynamicInvokeTarget
-        {
-            get { return target; }
-        }
+        public override object DynamicInvokeTarget => target;
 
         public override HostTargetFlags GetFlags(IHostInvokeContext context)
         {
@@ -163,12 +150,7 @@ namespace Microsoft.ClearScript
 
         private static class NullWrapper<T>
         {
-            private static readonly HostObject value = new HostObject(null, typeof(T));
-
-            public static HostObject Value
-            {
-                get { return value; }
-            }
+            public static HostObject Value { get; } = new HostObject(null, typeof(T));
         }
 
         // ReSharper restore UnusedMember.Local

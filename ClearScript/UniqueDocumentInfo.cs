@@ -14,40 +14,22 @@ namespace Microsoft.ClearScript
             UniqueName = uniqueName;
         }
 
-        public DocumentInfo Info { get; private set; }
+        public DocumentInfo Info { get; }
 
-        public string Name
-        {
-            get { return Info.Name; }
-        }
+        public string Name => Info.Name;
 
-        public Uri Uri
-        {
-            get { return Info.Uri; }
-        }
+        public Uri Uri => Info.Uri;
 
-        public Uri SourceMapUri
-        {
-            get { return Info.SourceMapUri; }
-        }
+        public Uri SourceMapUri => Info.SourceMapUri;
 
-        public DocumentCategory Category
-        {
-            get { return Info.Category; }
-        }
+        public DocumentCategory Category => Info.Category;
 
-        public DocumentFlags? Flags
-        {
-            get { return Info.Flags; }
-        }
+        public DocumentFlags? Flags => Info.Flags;
 
-        public DocumentContextCallback ContextCallback
-        {
-            get { return Info.ContextCallback; }
-        }
+        public DocumentContextCallback ContextCallback => Info.ContextCallback;
 
-        public ulong UniqueId { get; private set; }
+        public ulong UniqueId { get; }
 
-        public string UniqueName { get; private set; }
+        public string UniqueName { get; }
     }
 }

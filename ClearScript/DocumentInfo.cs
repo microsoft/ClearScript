@@ -17,7 +17,6 @@ namespace Microsoft.ClearScript
         private static long lastUniqueId;
 
         private readonly string name;
-        private readonly Uri uri;
         private DocumentCategory category;
         private ulong uniqueId;
 
@@ -40,8 +39,8 @@ namespace Microsoft.ClearScript
             : this()
         {
             MiscHelpers.VerifyNonNullArgument(uri, "uri");
-            this.uri = uri.IsAbsoluteUri ? uri : new Uri(Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + uri);
-            name = Path.GetFileName(this.uri.AbsolutePath);
+            Uri = uri.IsAbsoluteUri ? uri : new Uri(Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + uri);
+            name = Path.GetFileName(Uri.AbsolutePath);
             uniqueId = Interlocked.Increment(ref lastUniqueId).ToUnsigned();
         }
 
@@ -52,10 +51,7 @@ namespace Microsoft.ClearScript
         /// This property always returns a non-blank string. If a null or blank document name was
         /// specified at instantiation time, this property returns a default document name.
         /// </remarks>
-        public string Name
-        {
-            get { return MiscHelpers.EnsureNonBlank(name, Category.DefaultName); }
-        }
+        public string Name => MiscHelpers.EnsureNonBlank(name, Category.DefaultName);
 
         /// <summary>
         /// Gets the document's URI.
@@ -63,10 +59,7 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// This property returns <c>null</c> if a URI was not specified at instantiation time.
         /// </remarks>
-        public Uri Uri
-        {
-            get { return uri; }
-        }
+        public Uri Uri { get; }
 
         /// <summary>
         /// Gets or sets an optional source map URI for the document.
@@ -78,8 +71,8 @@ namespace Microsoft.ClearScript
         /// </summary>
         public DocumentCategory Category
         {
-            get { return category ?? DocumentCategory.Script; }
-            set { category = value; }
+            get => category ?? DocumentCategory.Script;
+            set => category = value;
         }
 
         /// <summary>

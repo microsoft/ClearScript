@@ -117,8 +117,7 @@ namespace Microsoft.ClearScript
                     {
                         if (paramTypes[index].IsByRef)
                         {
-                            var hostVariable = args[index] as IHostVariable;
-                            if (hostVariable != null)
+                            if (args[index] is IHostVariable hostVariable)
                             {
                                 args[index] = hostVariable.Value;
                             }
@@ -145,26 +144,20 @@ namespace Microsoft.ClearScript
 
         #region ScriptObject overrides
 
-        public override IEnumerable<string> PropertyNames
-        {
-            get { return GetPropertyNames(); }
-        }
+        public override IEnumerable<string> PropertyNames => GetPropertyNames();
 
-        public override IEnumerable<int> PropertyIndices
-        {
-            get { return GetPropertyIndices(); }
-        }
+        public override IEnumerable<int> PropertyIndices => GetPropertyIndices();
 
         public new object this[string name, params object[] args]
         {
-            get { return GetProperty(name, args).ToDynamicResult(Engine); }
-            set { SetProperty(name, args.Concat(value.ToEnumerable()).ToArray()); }
+            get => GetProperty(name, args).ToDynamicResult(Engine);
+            set => SetProperty(name, args.Concat(value.ToEnumerable()).ToArray());
         }
 
         public new object this[int index]
         {
-            get { return GetProperty(index).ToDynamicResult(Engine); }
-            set { SetProperty(index, value); }
+            get => GetProperty(index).ToDynamicResult(Engine);
+            set => SetProperty(index, value);
         }
 
         #endregion
@@ -188,8 +181,7 @@ namespace Microsoft.ClearScript
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            object ignoredResult;
-            return TryWrappedBindAndInvoke(binder, new[] { value }, out ignoredResult);
+            return TryWrappedBindAndInvoke(binder, new[] { value }, out _);
         }
 
         public override bool TryGetIndex(GetIndexBinder binder, object[] indices, out object result)
@@ -199,8 +191,7 @@ namespace Microsoft.ClearScript
 
         public override bool TrySetIndex(SetIndexBinder binder, object[] indices, object value)
         {
-            object ignoredResult;
-            return TryWrappedBindAndInvoke(binder, indices.Concat(value.ToEnumerable()).ToArray(), out ignoredResult);
+            return TryWrappedBindAndInvoke(binder, indices.Concat(value.ToEnumerable()).ToArray(), out _);
         }
 
         public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
@@ -271,16 +262,14 @@ namespace Microsoft.ClearScript
 
         public MemberInfo[] GetMember(string name, BindingFlags bindFlags)
         {
-            // ReSharper disable CoVariantArrayConversion
+            // ReSharper disable once CoVariantArrayConversion
             return new [] { MemberMap.GetField(name) };
-            // ReSharper restore CoVariantArrayConversion
         }
 
         public MemberInfo[] GetMembers(BindingFlags bindFlags)
         {
-            // ReSharper disable CoVariantArrayConversion
+            // ReSharper disable once CoVariantArrayConversion
             return GetFields(bindFlags);
-            // ReSharper restore CoVariantArrayConversion
         }
 
         public object InvokeMember(string name, BindingFlags invokeFlags, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
@@ -297,8 +286,7 @@ namespace Microsoft.ClearScript
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
             {
-                int index;
-                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out var index))
                 {
                     return GetProperty(index);
                 }
@@ -315,8 +303,7 @@ namespace Microsoft.ClearScript
 
                 var value = args[0];
 
-                int index;
-                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out var index))
                 {
                     SetProperty(index, value);
                     return value;
@@ -329,10 +316,7 @@ namespace Microsoft.ClearScript
             throw new InvalidOperationException("Invalid member access mode");
         }
 
-        public Type UnderlyingSystemType
-        {
-            get { throw new NotImplementedException(); }
-        }
+        public Type UnderlyingSystemType => throw new NotImplementedException();
 
         #endregion
 

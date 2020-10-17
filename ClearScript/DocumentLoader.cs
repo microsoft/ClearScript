@@ -33,10 +33,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Gets the default document loader.
         /// </summary>
-        public static DocumentLoader Default
-        {
-            get { return DefaultImpl.Instance; }
-        }
+        public static DocumentLoader Default => DefaultImpl.Instance;
 
         /// <summary>
         /// Gets or sets the maximum size of the document loader's cache.
@@ -48,8 +45,8 @@ namespace Microsoft.ClearScript
         /// <seealso cref="Default"/>
         public virtual uint MaxCacheSize
         {
-            get { return 0; }
-            set { throw new NotSupportedException("Loader does not support caching"); }
+            get => 0;
+            set => throw new NotSupportedException("Loader does not support caching");
         }
 
         /// <summary>
@@ -179,7 +176,6 @@ namespace Microsoft.ClearScript
             {
                 Uri baseUri;
                 Uri uri;
-                string path;
 
                 if (sourceInfo.HasValue && SpecifierMayBeRelative(settings, specifier))
                 {
@@ -202,7 +198,7 @@ namespace Microsoft.ClearScript
                     }
                 }
 
-                if (MiscHelpers.Try(out path, () => Path.Combine(Directory.GetCurrentDirectory(), specifier)) && Uri.TryCreate(path, UriKind.Absolute, out uri))
+                if (MiscHelpers.Try(out var path, () => Path.Combine(Directory.GetCurrentDirectory(), specifier)) && Uri.TryCreate(path, UriKind.Absolute, out uri))
                 {
                     yield return uri;
                 }
@@ -347,10 +343,7 @@ namespace Microsoft.ClearScript
                 var documentInfo = new DocumentInfo(uri) { Category = category, ContextCallback = contextCallback };
 
                 var callback = settings.LoadCallback;
-                if (callback != null)
-                {
-                    callback(ref documentInfo);
-                }
+                callback?.Invoke(ref documentInfo);
 
                 return CacheDocument(new StringDocument(documentInfo, contents));
             }
@@ -417,8 +410,7 @@ namespace Microsoft.ClearScript
 
                 List<Uri> candidateUris;
 
-                Uri uri;
-                if (Uri.TryCreate(specifier, UriKind.RelativeOrAbsolute, out uri) && uri.IsAbsoluteUri)
+                if (Uri.TryCreate(specifier, UriKind.RelativeOrAbsolute, out var uri) && uri.IsAbsoluteUri)
                 {
                     candidateUris = await GetCandidateUrisAsync(settings, sourceInfo, uri).ConfigureAwait(false);
                 }

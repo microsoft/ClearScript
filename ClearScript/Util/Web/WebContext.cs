@@ -14,9 +14,9 @@ namespace Microsoft.ClearScript.Util.Web
 {
     internal sealed class WebContext
     {
-        public WebRequest Request { get; private set; }
+        public WebRequest Request { get; }
 
-        public WebResponse Response { get; private set; }
+        public WebResponse Response { get; }
 
         private WebContext(Socket socket, Uri uri, NameValueCollection headers)
         {
@@ -104,9 +104,7 @@ namespace Microsoft.ClearScript.Util.Web
                     else
                     {
                         hostName = hostHeader.Substring(0, pos).Trim();
-
-                        int tempPort;
-                        if (int.TryParse(hostHeader.Substring(pos + 1), out tempPort))
+                        if (int.TryParse(hostHeader.Substring(pos + 1), out var tempPort))
                         {
                             port = tempPort;
                         }

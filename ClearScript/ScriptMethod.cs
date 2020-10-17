@@ -35,25 +35,13 @@ namespace Microsoft.ClearScript
 
         #region HostTarget overrides
 
-        public override Type Type
-        {
-            get { return typeof(void); }
-        }
+        public override Type Type => typeof(void);
 
-        public override object Target
-        {
-            get { return this; }
-        }
+        public override object Target => this;
 
-        public override object InvokeTarget
-        {
-            get { return null; }
-        }
+        public override object InvokeTarget => null;
 
-        public override object DynamicInvokeTarget
-        {
-            get { return null; }
-        }
+        public override object DynamicInvokeTarget => null;
 
         public override HostTargetFlags GetFlags(IHostInvokeContext context)
         {
@@ -135,10 +123,7 @@ namespace Microsoft.ClearScript
             throw new NotImplementedException();
         }
 
-        Type IReflect.UnderlyingSystemType
-        {
-            get { throw new NotImplementedException(); }
-        }
+        Type IReflect.UnderlyingSystemType => throw new NotImplementedException();
 
         #endregion
     }

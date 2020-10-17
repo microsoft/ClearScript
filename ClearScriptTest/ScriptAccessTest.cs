@@ -14,12 +14,6 @@ namespace Microsoft.ClearScript.Test
     [TestClass]
     [DeploymentItem("ClearScriptV8-64.dll")]
     [DeploymentItem("ClearScriptV8-32.dll")]
-    [DeploymentItem("v8-x64.dll")]
-    [DeploymentItem("v8-ia32.dll")]
-    [DeploymentItem("v8-base-x64.dll")]
-    [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-zlib-x64.dll")]
-    [DeploymentItem("v8-zlib-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class ScriptAccessTest : ClearScriptTest
     {
@@ -406,8 +400,8 @@ namespace Microsoft.ClearScript.Test
 
             [NoScriptAccess] public int BlockedBaseField = 1;
 
-            [NoScriptAccess] public Guid BlockedBaseProperty { get { return guids[0]; } set {} }
-            [NoScriptAccess] public virtual Guid BlockedOverriddenProperty { get { return guids[1]; } set {} }
+            [NoScriptAccess] public Guid BlockedBaseProperty { get => guids[0]; set {} }
+            [NoScriptAccess] public virtual Guid BlockedOverriddenProperty { get => guids[1]; set {} }
 
             [NoScriptAccess] public double BlockedBaseMethod(object arg) { return TestUtil.CalcTestValue(new Guid("9bf4c32d-1394-4546-a150-eb162b3bbb5f"), "BlockedBaseMethod", arg); }
             [NoScriptAccess] public virtual double BlockedOverriddenMethod(object arg) { return TestUtil.CalcTestValue(new Guid("83aa905a-e17d-47fe-bd0f-d2350cfb92d6"), "BlockedOverriddenMethod", arg); }
@@ -417,8 +411,8 @@ namespace Microsoft.ClearScript.Test
 
             [ScriptMember("renamedBaseField")] public int RenamedBaseField = 2;
 
-            [ScriptMember("renamedBaseProperty")] public Guid RenamedBaseProperty { get { return guids[2]; } set {} }
-            [ScriptMember("renamedOverriddenProperty")] public virtual Guid RenamedOverriddenProperty { get { return guids[3]; } set {} }
+            [ScriptMember("renamedBaseProperty")] public Guid RenamedBaseProperty { get => guids[2]; set {} }
+            [ScriptMember("renamedOverriddenProperty")] public virtual Guid RenamedOverriddenProperty { get => guids[3]; set {} }
 
             [ScriptMember("renamedBaseMethod")] public double RenamedBaseMethod(object arg) { return TestUtil.CalcTestValue(new Guid("460c0b65-56e6-4174-9331-905d417df885"), "RenamedBaseMethod", arg); }
             [ScriptMember("renamedOverriddenMethod")] public virtual double RenamedOverriddenMethod(object arg) { return TestUtil.CalcTestValue(new Guid("051b3239-df62-4a14-967c-0291e02ad48f"), "RenamedOverriddenMethod", arg); }
@@ -455,11 +449,11 @@ namespace Microsoft.ClearScript.Test
             [NoScriptAccess] public int BlockedField = 3;
             [ScriptMember(ScriptAccess.ReadOnly)] public int ReadOnlyField = 4;
 
-            [NoScriptAccess] public Guid BlockedProperty { get { return guids[4]; } set {} }
-            public override Guid BlockedOverriddenProperty { get { return guids[5]; } set {} }
-            public Guid BlockedInterfaceProperty { get { return guids[6]; } set {} }
-            Guid ITestInterface.BlockedExplicitInterfaceProperty { get { return guids[7]; } set {} }
-            [ScriptMember(ScriptAccess.ReadOnly)] public Guid ReadOnlyProperty { get { return guids[8]; } set {} }
+            [NoScriptAccess] public Guid BlockedProperty { get => guids[4]; set {} }
+            public override Guid BlockedOverriddenProperty { get => guids[5]; set {} }
+            public Guid BlockedInterfaceProperty { get => guids[6]; set {} }
+            Guid ITestInterface.BlockedExplicitInterfaceProperty { get => guids[7]; set {} }
+            [ScriptMember(ScriptAccess.ReadOnly)] public Guid ReadOnlyProperty { get => guids[8]; set {} }
 
             [NoScriptAccess] public double BlockedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("9e890478-709c-4e42-be5f-c4e291572a17"), "BlockedMethod", arg); }
             public override double BlockedOverriddenMethod(object arg) { return TestUtil.CalcTestValue(new Guid("7ff033f5-f6f2-46cf-aba5-5adec6e210fd"), "BlockedOverriddenMethod", arg); }
@@ -476,11 +470,11 @@ namespace Microsoft.ClearScript.Test
             [ScriptMember("renamedField")] public int RenamedField = 5;
             [ScriptMember("renamedReadOnlyField", ScriptAccess.ReadOnly)] public int RenamedReadOnlyField = 6;
 
-            [ScriptMember("renamedProperty")] public Guid RenamedProperty { get { return guids[9]; } set {} }
-            public override Guid RenamedOverriddenProperty { get { return guids[10]; } set {} }
-            public Guid RenamedInterfaceProperty { get { return guids[11]; } set {} }
-            Guid ITestInterface.RenamedExplicitInterfaceProperty { get { return guids[12]; } set {} }
-            [ScriptMember("renamedReadOnlyProperty", ScriptAccess.ReadOnly)] public Guid RenamedReadOnlyProperty { get { return guids[13]; } set {} }
+            [ScriptMember("renamedProperty")] public Guid RenamedProperty { get => guids[9]; set {} }
+            public override Guid RenamedOverriddenProperty { get => guids[10]; set {} }
+            public Guid RenamedInterfaceProperty { get => guids[11]; set {} }
+            Guid ITestInterface.RenamedExplicitInterfaceProperty { get => guids[12]; set {} }
+            [ScriptMember("renamedReadOnlyProperty", ScriptAccess.ReadOnly)] public Guid RenamedReadOnlyProperty { get => guids[13]; set {} }
 
             [ScriptMember("renamedMethod")] public double RenamedMethod(object arg) { return TestUtil.CalcTestValue(new Guid("d6c05624-6357-4ef1-b54a-d7a03864a034"), "RenamedMethod", arg); }
             public override double RenamedOverriddenMethod(object arg) { return TestUtil.CalcTestValue(new Guid("77382ed3-feec-4d49-bd6e-d1d590827c35"), "RenamedOverriddenMethod", arg); }
@@ -547,7 +541,6 @@ namespace Microsoft.ClearScript.Test
             {
                 var eventSource = engine.Evaluate(objectName + "." + scriptMemberName) as EventSource<EventHandler>;
                 Assert.IsNotNull(eventSource);
-                // ReSharper disable once PossibleNullReferenceException
                 Assert.AreSame(target, eventSource.Source);
                 Assert.AreSame(eventInfo, eventSource.EventInfo);
                 return;

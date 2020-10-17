@@ -1,10 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// ReSharper disable once UnusedLocals
 let Geometry;
 (async function() {
-    // ReSharper disable once UseOfImplicitGlobalInFunctionScope
     Geometry = await import('../Geometry/GeometryWithDynamicImport.js');
 })();
 

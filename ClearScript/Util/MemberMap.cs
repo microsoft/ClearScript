@@ -22,9 +22,8 @@ namespace Microsoft.ClearScript.Util
 
         public static FieldInfo[] GetFields(string[] names)
         {
-            // ReSharper disable CoVariantArrayConversion
+            // ReSharper disable once CoVariantArrayConversion
             return fieldMap.GetMembers(names);
-            // ReSharper restore CoVariantArrayConversion
         }
 
         public static MethodInfo GetMethod(string name)
@@ -34,9 +33,8 @@ namespace Microsoft.ClearScript.Util
 
         public static MethodInfo[] GetMethods(string[] names)
         {
-            // ReSharper disable CoVariantArrayConversion
+            // ReSharper disable once CoVariantArrayConversion
             return methodMap.GetMembers(names);
-            // ReSharper restore CoVariantArrayConversion
         }
 
         public static PropertyInfo GetProperty(string name)
@@ -46,9 +44,8 @@ namespace Microsoft.ClearScript.Util
 
         public static PropertyInfo[] GetProperties(string[] names)
         {
-            // ReSharper disable CoVariantArrayConversion
+            // ReSharper disable once CoVariantArrayConversion
             return propertyMap.GetMembers(names);
-            // ReSharper restore CoVariantArrayConversion
         }
 
         // ReSharper disable ClassNeverInstantiated.Local
@@ -57,71 +54,39 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class Field : FieldInfo
         {
-            private readonly string name;
-
             public Field(string name)
             {
-                this.name = name;
+                Name = name;
             }
 
             #region FieldInfo overrides
 
-            public override FieldAttributes Attributes
-            {
-                get
-                {
-                    // This occurs during VB-based dynamic script item invocation. It was not
-                    // observed before script items gained an IReflect/IExpando implementation that
-                    // exposes script item properties as fields. Apparently VB's dynamic invocation
-                    // support not only recognizes IReflect/IExpando but actually favors it over
-                    // DynamicObject.
+            public override FieldAttributes Attributes => FieldAttributes.Public;
+                // This occurs during VB-based dynamic script item invocation. It was not
+                // observed before script items gained an IReflect/IExpando implementation that
+                // exposes script item properties as fields. Apparently VB's dynamic invocation
+                // support not only recognizes IReflect/IExpando but actually favors it over
+                // DynamicObject.
 
-                    return FieldAttributes.Public;
-                }
-            }
+            public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
 
-            public override RuntimeFieldHandle FieldHandle
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override Type FieldType => typeof(object);
+                // This occurs during VB-based dynamic script item invocation. It was not
+                // observed before script items gained an IReflect/IExpando implementation that
+                // exposes script item properties as fields. Apparently VB's dynamic invocation
+                // support not only recognizes IReflect/IExpando but actually favors it over
+                // DynamicObject.
 
-            public override Type FieldType
-            {
-                get
-                {
-                    // This occurs during VB-based dynamic script item invocation. It was not
-                    // observed before script items gained an IReflect/IExpando implementation that
-                    // exposes script item properties as fields. Apparently VB's dynamic invocation
-                    // support not only recognizes IReflect/IExpando but actually favors it over
-                    // DynamicObject.
+            public override Type DeclaringType => typeof(object);
+                // This occurs during VB-based dynamic script item invocation. It was not
+                // observed before script items gained an IReflect/IExpando implementation that
+                // exposes script item properties as fields. Apparently VB's dynamic invocation
+                // support not only recognizes IReflect/IExpando but actually favors it over
+                // DynamicObject.
 
-                    return typeof(object);
-                }
-            }
+            public override string Name { get; }
 
-            public override Type DeclaringType
-            {
-                get
-                {
-                    // This occurs during VB-based dynamic script item invocation. It was not
-                    // observed before script items gained an IReflect/IExpando implementation that
-                    // exposes script item properties as fields. Apparently VB's dynamic invocation
-                    // support not only recognizes IReflect/IExpando but actually favors it over
-                    // DynamicObject.
-
-                    return typeof(object);
-                }
-            }
-
-            public override string Name
-            {
-                get { return name; }
-            }
-
-            public override Type ReflectedType
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override Type ReflectedType => throw new NotImplementedException();
 
             public override object GetValue(object obj)
             {
@@ -130,10 +95,9 @@ namespace Microsoft.ClearScript.Util
                 // script item properties as fields. Apparently VB's dynamic invocation support not
                 // only recognizes IReflect/IExpando but actually favors it over DynamicObject.
 
-                var reflect = obj as IReflect;
-                if (reflect != null)
+                if (obj is IReflect reflect)
                 {
-                    return reflect.InvokeMember(name, BindingFlags.GetField, null, obj, ArrayHelpers.GetEmptyArray<object>(), null, CultureInfo.InvariantCulture, null);
+                    return reflect.InvokeMember(Name, BindingFlags.GetField, null, obj, ArrayHelpers.GetEmptyArray<object>(), null, CultureInfo.InvariantCulture, null);
                 }
 
                 throw new InvalidOperationException("Invalid field retrieval");
@@ -146,10 +110,9 @@ namespace Microsoft.ClearScript.Util
                 // script item properties as fields. Apparently VB's dynamic invocation support not
                 // only recognizes IReflect/IExpando but actually favors it over DynamicObject.
 
-                var reflect = obj as IReflect;
-                if (reflect != null)
+                if (obj is IReflect reflect)
                 {
-                    reflect.InvokeMember(name, BindingFlags.SetField, null, obj, new[] { value }, null, culture, null);
+                    reflect.InvokeMember(Name, BindingFlags.SetField, null, obj, new[] { value }, null, culture, null);
                     return;
                 }
 
@@ -180,44 +143,24 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class Method : MethodInfo
         {
-            private readonly string name;
-
             public Method(string name)
             {
-                this.name = name;
+                Name = name;
             }
 
             #region MethodInfo overrides
 
-            public override ICustomAttributeProvider ReturnTypeCustomAttributes
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override ICustomAttributeProvider ReturnTypeCustomAttributes => throw new NotImplementedException();
 
-            public override MethodAttributes Attributes
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override MethodAttributes Attributes => throw new NotImplementedException();
 
-            public override RuntimeMethodHandle MethodHandle
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
 
-            public override Type DeclaringType
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override Type DeclaringType => throw new NotImplementedException();
 
-            public override string Name
-            {
-                get { return name; }
-            }
+            public override string Name { get; }
 
-            public override Type ReflectedType
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override Type ReflectedType => throw new NotImplementedException();
 
             public override MethodInfo GetBaseDefinition()
             {
@@ -263,49 +206,26 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class Property : PropertyInfo
         {
-            private readonly string name;
-
             public Property(string name)
             {
-                this.name = name;
+                Name = name;
             }
 
             #region PropertyInfo overrides
 
-            public override PropertyAttributes Attributes
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override PropertyAttributes Attributes => throw new NotImplementedException();
 
-            public override bool CanRead
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override bool CanRead => throw new NotImplementedException();
 
-            public override bool CanWrite
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override bool CanWrite => throw new NotImplementedException();
 
-            public override Type PropertyType
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override Type PropertyType => throw new NotImplementedException();
 
-            public override Type DeclaringType
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override Type DeclaringType => throw new NotImplementedException();
 
-            public override string Name
-            {
-                get { return name; }
-            }
+            public override string Name { get; }
 
-            public override Type ReflectedType
-            {
-                get { throw new NotImplementedException(); }
-            }
+            public override Type ReflectedType => throw new NotImplementedException();
 
             public override MethodInfo[] GetAccessors(bool nonPublic)
             {
@@ -400,8 +320,7 @@ namespace Microsoft.ClearScript.Util
             {
                 T member;
 
-                WeakReference weakRef;
-                if (map.TryGetValue(name, out weakRef))
+                if (map.TryGetValue(name, out var weakRef))
                 {
                     member = weakRef.Target as T;
                     if (member == null)

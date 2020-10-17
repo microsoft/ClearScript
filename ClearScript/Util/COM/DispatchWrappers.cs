@@ -22,18 +22,12 @@ namespace Microsoft.ClearScript.Util.COM
 
         private IReadOnlyList<DispatchMember> GetMembers()
         {
-            if (members == null)
-            {
-                members = dispatch.GetMembers().ToArray();
-            }
-
-            return members;
+            return members ?? (members = dispatch.GetMembers().ToArray());
         }
 
         public object GetProperty(string name, params object[] args)
         {
-            bool isCacheable;
-            return GetProperty(name, out isCacheable, args);
+            return GetProperty(name, out _, args);
         }
 
         public object GetProperty(string name, out bool isCacheable, params object[] args)
@@ -142,8 +136,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public object GetProperty(string name, params object[] args)
         {
-            bool isCacheable;
-            return GetProperty(name, out isCacheable, args);
+            return GetProperty(name, out _, args);
         }
 
         public object GetProperty(string name, out bool isCacheable, params object[] args)

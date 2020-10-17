@@ -35,8 +35,7 @@ namespace Microsoft.ClearScript.Windows
                 return null;
             }
 
-            var target = obj as IDispatchEx;
-            if ((target != null) && (obj.GetType().IsCOMObject))
+            if ((obj is IDispatchEx target) && (obj.GetType().IsCOMObject))
             {
                 return new WindowsScriptItem(engine, target);
             }
@@ -46,8 +45,7 @@ namespace Microsoft.ClearScript.Windows
 
         private IScriptEngineException GetScriptError(Exception exception)
         {
-            IScriptEngineException scriptError;
-            if (TryGetScriptError(exception, out scriptError))
+            if (TryGetScriptError(exception, out var scriptError))
             {
                 return scriptError;
             }
@@ -71,8 +69,7 @@ namespace Microsoft.ClearScript.Windows
                 return true;
             }
 
-            var comException = exception as COMException;
-            if (comException != null)
+            if (exception is COMException comException)
             {
                 var result = comException.ErrorCode;
                 if (((result == HResult.SCRIPT_E_REPORTED) || (result == HResult.CLEARSCRIPT_E_HOSTEXCEPTION)) && (engine.CurrentScriptFrame != null))
@@ -95,15 +92,13 @@ namespace Microsoft.ClearScript.Windows
                     // These exceptions often have awful messages that include COM error codes.
                     // The engine itself may be able to provide a better message.
 
-                    string runtimeErrorMessage;
-                    if (engine.RuntimeErrorMap.TryGetValue(HResult.GetCode(result), out runtimeErrorMessage) && (runtimeErrorMessage != exception.Message))
+                    if (engine.RuntimeErrorMap.TryGetValue(HResult.GetCode(result), out var runtimeErrorMessage) && (runtimeErrorMessage != exception.Message))
                     {
                         scriptError = new ScriptEngineException(engine.Name, runtimeErrorMessage, null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                         return true;
                     }
 
-                    string syntaxErrorMessage;
-                    if (engine.SyntaxErrorMap.TryGetValue(HResult.GetCode(result), out syntaxErrorMessage) && (syntaxErrorMessage != exception.Message))
+                    if (engine.SyntaxErrorMap.TryGetValue(HResult.GetCode(result), out var syntaxErrorMessage) && (syntaxErrorMessage != exception.Message))
                     {
                         scriptError = new ScriptEngineException(engine.Name, syntaxErrorMessage, null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
                         return true;
@@ -118,8 +113,7 @@ namespace Microsoft.ClearScript.Windows
             }
             else
             {
-                var argumentException = exception as ArgumentException;
-                if ((argumentException != null) && (argumentException.ParamName == null))
+                if ((exception is ArgumentException argumentException) && (argumentException.ParamName == null))
                 {
                     // this usually indicates invalid object or property access in VBScript
                     scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
@@ -147,15 +141,9 @@ namespace Microsoft.ClearScript.Windows
             var succeeded = DynamicHelpers.TryBindAndInvoke(binder, target, args, out result);
             if (!succeeded)
             {
-                var exception = result as Exception;
-                if ((exception != null) && (engine.CurrentScriptFrame != null))
+                if ((result is Exception exception) && (engine.CurrentScriptFrame != null))
                 {
-                    var scriptError = exception as IScriptEngineException;
-
-                    if (scriptError == null)
-                    {
-                        scriptError = GetScriptError(exception);
-                    }
+                    var scriptError = exception as IScriptEngineException ?? GetScriptError(exception);
 
                     if (scriptError.ExecutionStarted && (binder.GetType().FullName != "Microsoft.VisualBasic.CompilerServices.VBGetBinder"))
                     {
@@ -207,7 +195,7 @@ namespace Microsoft.ClearScript.Windows
                 }
                 catch (Exception exception)
                 {
-                    if (exception.HResult != HResult.DISP_E_UNKNOWNNAME)
+                    if (!name.IsDispIDName(out _) && (exception.HResult != HResult.DISP_E_UNKNOWNNAME))
                     {
                         // Property retrieval failed, but a method with the given name exists;
                         // create a tear-off method. This currently applies only to VBScript.
@@ -219,8 +207,7 @@ namespace Microsoft.ClearScript.Windows
                 }
             }), false);
 
-            var resultScriptItem = result as WindowsScriptItem;
-            if ((resultScriptItem != null) && (resultScriptItem.engine == engine))
+            if ((result is WindowsScriptItem resultScriptItem) && (resultScriptItem.engine == engine))
             {
                 resultScriptItem.holder = this;
             }
@@ -280,8 +267,7 @@ namespace Microsoft.ClearScript.Windows
             }
             catch (Exception exception)
             {
-                IScriptEngineException scriptError;
-                if (TryGetScriptError(exception, out scriptError))
+                if (TryGetScriptError(exception, out var scriptError))
                 {
                     throw (Exception)scriptError;
                 }
@@ -294,10 +280,7 @@ namespace Microsoft.ClearScript.Windows
 
         #region IScriptMarshalWrapper implementation
 
-        public override ScriptEngine Engine
-        {
-            get { return engine; }
-        }
+        public override ScriptEngine Engine => engine;
 
         public override object Unwrap()
         {

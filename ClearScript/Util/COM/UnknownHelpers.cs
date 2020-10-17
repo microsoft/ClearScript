@@ -10,17 +10,15 @@ namespace Microsoft.ClearScript.Util.COM
     {
         public static IntPtr QueryInterface<T>(IntPtr pUnknown)
         {
-            IntPtr pInterface;
             var iid = typeof(T).GUID;
-            HResult.Check(Marshal.QueryInterface(pUnknown, ref iid, out pInterface));
+            HResult.Check(Marshal.QueryInterface(pUnknown, ref iid, out var pInterface));
             return pInterface;
         }
 
         public static IntPtr QueryInterfaceNoThrow<T>(IntPtr pUnknown)
         {
-            IntPtr pInterface;
             var iid = typeof(T).GUID;
-            var result = Marshal.QueryInterface(pUnknown, ref iid, out pInterface);
+            var result = Marshal.QueryInterface(pUnknown, ref iid, out var pInterface);
             return (result == HResult.S_OK) ? pInterface : IntPtr.Zero;
         }
 

@@ -227,56 +227,49 @@ namespace Microsoft.ClearScript
                     return;
                 }
 
-                var outArg = arg as IOutArg;
-                if (outArg != null)
+                if (arg is IOutArg outArg)
                 {
                     kind = ArgKind.Out;
                     type = outArg.Type;
                     return;
                 }
 
-                var refArg = arg as IRefArg;
-                if (refArg != null)
+                if (arg is IRefArg refArg)
                 {
                     kind = ArgKind.Ref;
                     type = refArg.Type;
                     return;
                 }
 
-                var hostType = arg as HostType;
-                if (hostType != null)
+                if (arg is HostType)
                 {
                     kind = ArgKind.ByValue;
                     type = typeof(HostType);
                     return;
                 }
 
-                var hostMethod = arg as HostMethod;
-                if (hostMethod != null)
+                if (arg is HostMethod)
                 {
                     kind = ArgKind.ByValue;
                     type = typeof(HostMethod);
                     return;
                 }
 
-                var hostIndexedProperty = arg as HostIndexedProperty;
-                if (hostIndexedProperty != null)
+                if (arg is HostIndexedProperty)
                 {
                     kind = ArgKind.ByValue;
                     type = typeof(HostIndexedProperty);
                     return;
                 }
 
-                var scriptMethod = arg as ScriptMethod;
-                if (scriptMethod != null)
+                if (arg is ScriptMethod)
                 {
                     kind = ArgKind.ByValue;
                     type = typeof(ScriptMethod);
                     return;
                 }
 
-                var hostTarget = arg as HostTarget;
-                if (hostTarget != null)
+                if (arg is HostTarget hostTarget)
                 {
                     kind = ArgKind.ByValue;
                     type = hostTarget.Type;
@@ -334,7 +327,7 @@ namespace Microsoft.ClearScript
 
             public void Update(object obj)
             {
-                HashCode = unchecked((HashCode * 31) + ((obj != null) ? obj.GetHashCode() : 0));
+                HashCode = unchecked((HashCode * 31) + (obj?.GetHashCode() ?? 0));
             }
         }
 

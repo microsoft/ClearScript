@@ -10,12 +10,6 @@ namespace Microsoft.ClearScript.Test
     [TestClass]
     [DeploymentItem("ClearScriptV8-64.dll")]
     [DeploymentItem("ClearScriptV8-32.dll")]
-    [DeploymentItem("v8-x64.dll")]
-    [DeploymentItem("v8-ia32.dll")]
-    [DeploymentItem("v8-base-x64.dll")]
-    [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-zlib-x64.dll")]
-    [DeploymentItem("v8-zlib-ia32.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class TypeRestrictionTest : ClearScriptTest
     {
@@ -103,10 +97,10 @@ namespace Microsoft.ClearScript.Test
             public object ObjectField = new TestObject();
             [ScriptMember(ScriptMemberFlags.ExposeRuntimeType)] public ITestInterface UnrestrictedField = new TestObject();
 
-            public TestObject Property { get { return Field; } }
-            public ITestInterface InterfaceProperty { get { return InterfaceField; } }
-            public object ObjectProperty { get { return ObjectField; } }
-            [ScriptMember(ScriptMemberFlags.ExposeRuntimeType)] public ITestInterface UnrestrictedProperty { get { return UnrestrictedField; } }
+            public TestObject Property => Field;
+            public ITestInterface InterfaceProperty => InterfaceField;
+            public object ObjectProperty => ObjectField;
+            [ScriptMember(ScriptMemberFlags.ExposeRuntimeType)] public ITestInterface UnrestrictedProperty => UnrestrictedField;
 
             public TestObject Method() { return Property; }
             public ITestInterface InterfaceMethod() { return InterfaceProperty; }

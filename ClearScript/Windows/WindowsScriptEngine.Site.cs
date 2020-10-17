@@ -5,7 +5,6 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using Reflection = System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
@@ -34,11 +33,9 @@ namespace Microsoft.ClearScript.Windows
                     {
                         var syntaxError = false;
 
-                        var scriptError = error as IActiveScriptError;
-                        if (scriptError != null)
+                        if (error is IActiveScriptError scriptError)
                         {
-                            EXCEPINFO excepInfo;
-                            scriptError.GetExceptionInfo(out excepInfo);
+                            scriptError.GetExceptionInfo(out var excepInfo);
                             if (HResult.GetFacility(excepInfo.scode) == HResult.FACILITY_CONTROL)
                             {
                                 syntaxError = engine.SyntaxErrorMap.ContainsKey(HResult.GetCode(excepInfo.scode));
@@ -83,36 +80,32 @@ namespace Microsoft.ClearScript.Windows
                         Debug.Assert(false, "Exception caught during error processing", exception.ToString());
                     }
                 }
-                //If we don't have a debugger, at least try to report the location
-                var errorLocation2 = GetErrorLocation(error);
-                if (!string.IsNullOrWhiteSpace(errorLocation2))
+                else
                 {
-                    return message + "\n" + errorLocation2;
+                    var errorLocation = GetErrorLocation(error);
+                    if (!string.IsNullOrWhiteSpace(errorLocation))
+                    {
+                        return message + "\n" + errorLocation;
+                    }
                 }
+
                 return message;
             }
 
             private string GetErrorLocation(object error)
             {
-                var scriptError = error as IActiveScriptError;
-                if (scriptError != null)
+                if (error is IActiveScriptError scriptError)
                 {
-                    uint sourceContext;
-                    uint lineNumber;
-                    int offsetInLine;
-                    scriptError.GetSourcePosition(out sourceContext, out lineNumber, out offsetInLine);
+                    scriptError.GetSourcePosition(out var sourceContext, out var lineNumber, out var offsetInLine);
 
-                    DebugDocument document;
-                    if (engine.debugDocumentMap.TryGetValue(new UIntPtr(sourceContext), out document))
+                    if (engine.debugDocumentMap.TryGetValue(new UIntPtr(sourceContext), out var document))
                     {
-                        string documentName;
-                        document.GetName(DocumentNameType.UniqueTitle, out documentName);
+                        document.GetName(DocumentNameType.UniqueTitle, out var documentName);
 
                         int position;
                         if (lineNumber > 0)
                         {
-                            uint linePosition;
-                            document.GetPositionOfLine(lineNumber, out linePosition);
+                            document.GetPositionOfLine(lineNumber, out var linePosition);
                             position = (int)linePosition + offsetInLine;
                         }
                         else
@@ -123,10 +116,8 @@ namespace Microsoft.ClearScript.Windows
                         var text = new string(document.Code.Skip(position).TakeWhile(ch => ch != '\n').ToArray());
                         return MiscHelpers.FormatInvariant("    at ({0}:{1}:{2}) -> {3}", documentName, lineNumber, offsetInLine, text);
                     }
-                    else
-                    {
-                        return MiscHelpers.FormatInvariant("    at (Unknown:{0}:{1})", lineNumber, offsetInLine);
-                    }
+
+                    return MiscHelpers.FormatInvariant("    at ([unknown]:{0}:{1})", lineNumber, offsetInLine);
                 }
 
                 return null;
@@ -171,8 +162,7 @@ namespace Microsoft.ClearScript.Windows
             {
                 if ((engine.CurrentScriptFrame != null) && (error != null))
                 {
-                    EXCEPINFO excepInfo;
-                    error.GetExceptionInfo(out excepInfo);
+                    error.GetExceptionInfo(out var excepInfo);
                     if (excepInfo.scode == HResult.E_ABORT)
                     {
                         // Script execution was interrupted explicitly. At this point the script
@@ -198,15 +188,7 @@ namespace Microsoft.ClearScript.Windows
                             innerException = engine.CurrentScriptFrame.HostException;
                             if ((innerException != null) && string.IsNullOrWhiteSpace(description))
                             {
-                                if (innerException is Reflection.TargetInvocationException &&
-                                    innerException.InnerException != null)
-                                {
-                                    description = innerException.InnerException.Message;
-                                }
-                                else
-                                {
-                                    description = innerException.Message;
-                                }
+                                description = innerException.GetBaseException().Message;
                             }
                         }
 
@@ -247,14 +229,13 @@ namespace Microsoft.ClearScript.Windows
             public void GetWindow(out IntPtr hwnd)
             {
                 var hostWindow = engine.HostWindow;
-                hwnd = (hostWindow != null) ? hostWindow.OwnerHandle : IntPtr.Zero;
+                hwnd = hostWindow?.OwnerHandle ?? IntPtr.Zero;
             }
 
             public void EnableModeless(bool enable)
             {
                 var hostWindow = engine.HostWindow;
-                if (hostWindow != null)
-                    hostWindow.EnableModeless(enable);
+                hostWindow?.EnableModeless(enable);
             }
 
             #endregion
@@ -264,8 +245,7 @@ namespace Microsoft.ClearScript.Windows
             public void GetDocumentContextFromPosition(uint sourceContext, uint offset, uint length, out IDebugDocumentContext context)
             {
                 context = null;
-                DebugDocument document;
-                if (engine.debugDocumentMap.TryGetValue(new UIntPtr(sourceContext), out document))
+                if (engine.debugDocumentMap.TryGetValue(new UIntPtr(sourceContext), out var document))
                 {
                     document.GetContextOfPosition(offset, length, out context);
                 }
@@ -285,8 +265,7 @@ namespace Microsoft.ClearScript.Windows
             {
                 if ((engine.CurrentScriptFrame != null) && (errorDebug != null))
                 {
-                    EXCEPINFO excepInfo;
-                    errorDebug.GetExceptionInfo(out excepInfo);
+                    errorDebug.GetExceptionInfo(out var excepInfo);
                     if (excepInfo.scode == HResult.E_ABORT)
                     {
                         var description = excepInfo.bstrDescription ?? "Script execution interrupted by host";
@@ -306,15 +285,7 @@ namespace Microsoft.ClearScript.Windows
                             innerException = engine.CurrentScriptFrame.HostException;
                             if ((innerException != null) && string.IsNullOrWhiteSpace(description))
                             {
-                                if (innerException is Reflection.TargetInvocationException &&
-                                    innerException.InnerException != null)
-                                {
-                                    description = innerException.InnerException.Message;
-                                }
-                                else
-                                {
-                                    description = innerException.Message;
-                                }
+                                description = innerException.GetBaseException().Message;
                             }
                         }
 
@@ -333,8 +304,7 @@ namespace Microsoft.ClearScript.Windows
             public void GetDocumentContextFromPosition(ulong sourceContext, uint offset, uint length, out IDebugDocumentContext context)
             {
                 context = null;
-                DebugDocument document;
-                if (engine.debugDocumentMap.TryGetValue(new UIntPtr(sourceContext), out document))
+                if (engine.debugDocumentMap.TryGetValue(new UIntPtr(sourceContext), out var document))
                 {
                     document.GetContextOfPosition(offset, length, out context);
                 }
@@ -351,8 +321,7 @@ namespace Microsoft.ClearScript.Windows
 
             public void OnCanNotJITScriptErrorDebug(IActiveScriptErrorDebug errorDebug, out bool callOnScriptErrorWhenContinuing)
             {
-                bool enterDebugger;
-                OnScriptErrorDebug(errorDebug, out enterDebugger, out callOnScriptErrorWhenContinuing);
+                OnScriptErrorDebug(errorDebug, out _, out callOnScriptErrorWhenContinuing);
             }
 
             #endregion

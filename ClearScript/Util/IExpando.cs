@@ -3,8 +3,6 @@
 
 using System.Reflection;
 
-// ReSharper disable CheckNamespace
-
 namespace System.Runtime.InteropServices.Expando
 {
     internal interface IExpando : IReflect
@@ -15,5 +13,3 @@ namespace System.Runtime.InteropServices.Expando
         void RemoveMember(MemberInfo member);
     }
 }
-
-// ReSharper restore CheckNamespace

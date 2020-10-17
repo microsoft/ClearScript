@@ -3,5 +3,4 @@
 
 import * as Geometry from 'Geometry/Geometry.js';
 
-// ReSharper disable once WrongExpressionStatement
 new Geometry.Square(25).Area;

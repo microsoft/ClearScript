@@ -70,8 +70,7 @@ namespace Microsoft.ClearScript.Util
         {
             foreach (var name in names)
             {
-                int index;
-                if (!int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                if (!int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
                 {
                     yield return name;
                 }
@@ -82,8 +81,7 @@ namespace Microsoft.ClearScript.Util
         {
             foreach (var name in names)
             {
-                int index;
-                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out index))
+                if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out var index))
                 {
                     yield return index;
                 }

@@ -15,12 +15,6 @@ namespace Microsoft.ClearScript.Test
     [TestClass]
     [DeploymentItem("ClearScriptV8-64.dll")]
     [DeploymentItem("ClearScriptV8-32.dll")]
-    [DeploymentItem("v8-x64.dll")]
-    [DeploymentItem("v8-ia32.dll")]
-    [DeploymentItem("v8-base-x64.dll")]
-    [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-zlib-x64.dll")]
-    [DeploymentItem("v8-zlib-ia32.dll")]
     [DeploymentItem("JavaScript", "JavaScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class V8ModuleTest : ClearScriptTest
@@ -457,8 +451,7 @@ namespace Microsoft.ClearScript.Test
             engine.Dispose();
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDynamicModuleImports | V8ScriptEngineFlags.EnableDebugging);
 
-            bool cacheAccepted;
-            var module = engine.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, cacheBytes, out cacheAccepted);
+            var module = engine.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, cacheBytes, out var cacheAccepted);
             Assert.IsTrue(cacheAccepted);
 
             using (module)
@@ -518,8 +511,7 @@ namespace Microsoft.ClearScript.Test
             {
                 engine = runtime.CreateScriptEngine();
 
-                bool cacheAccepted;
-                var module = runtime.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, cacheBytes, out cacheAccepted);
+                var module = runtime.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, cacheBytes, out var cacheAccepted);
                 Assert.IsTrue(cacheAccepted);
 
                 using (module)
@@ -673,8 +665,9 @@ namespace Microsoft.ClearScript.Test
                 Arithmetic.Meta.bar
             "), typeof(Undefined));
 
-            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+            Assert.AreEqual(0, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js';
+                Object.keys(Geometry.Meta).length;
             "));
         }
 
@@ -898,8 +891,7 @@ namespace Microsoft.ClearScript.Test
             engine.Dispose();
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDynamicModuleImports | V8ScriptEngineFlags.EnableDebugging);
 
-            bool cacheAccepted;
-            var module = engine.Compile(new DocumentInfo { Category = ModuleCategory.CommonJS }, code, V8CacheKind.Code, cacheBytes, out cacheAccepted);
+            var module = engine.Compile(new DocumentInfo { Category = ModuleCategory.CommonJS }, code, V8CacheKind.Code, cacheBytes, out var cacheAccepted);
             Assert.IsTrue(cacheAccepted);
 
             using (module)
@@ -934,8 +926,7 @@ namespace Microsoft.ClearScript.Test
             {
                 engine = runtime.CreateScriptEngine();
 
-                bool cacheAccepted;
-                var module = runtime.Compile(new DocumentInfo { Category = ModuleCategory.CommonJS }, code, V8CacheKind.Code, cacheBytes, out cacheAccepted);
+                var module = runtime.Compile(new DocumentInfo { Category = ModuleCategory.CommonJS }, code, V8CacheKind.Code, cacheBytes, out var cacheAccepted);
                 Assert.IsTrue(cacheAccepted);
 
                 using (module)

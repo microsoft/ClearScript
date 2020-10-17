@@ -14,8 +14,6 @@ namespace Microsoft.ClearScript
     [AttributeUsage(AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Interface | AttributeTargets.Struct)]
     public class ScriptUsageAttribute : Attribute
     {
-        private readonly ScriptAccess access;
-
         /// <summary>
         /// Initializes a new <see cref="ScriptUsageAttribute"/> instance.
         /// </summary>
@@ -29,12 +27,12 @@ namespace Microsoft.ClearScript
         /// <param name="access">The script access setting for the target type member.</param>
         public ScriptUsageAttribute(ScriptAccess access)
         {
-            this.access = access;
+            Access = access;
         }
 
         /// <summary>
         /// Gets the script access setting for the target type member.
         /// </summary>
-        public ScriptAccess Access { get { return access; } }
+        public ScriptAccess Access { get; }
     }
 }

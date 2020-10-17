@@ -13,7 +13,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Windows.Threading;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
@@ -23,24 +22,17 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Numerics;
-
-// ReSharper disable HeuristicUnreachableCode
+using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
     [DeploymentItem("ClearScriptV8-64.dll")]
     [DeploymentItem("ClearScriptV8-32.dll")]
-    [DeploymentItem("v8-x64.dll")]
-    [DeploymentItem("v8-ia32.dll")]
-    [DeploymentItem("v8-base-x64.dll")]
-    [DeploymentItem("v8-base-ia32.dll")]
-    [DeploymentItem("v8-zlib-x64.dll")]
-    [DeploymentItem("v8-zlib-ia32.dll")]
     [DeploymentItem("JavaScript", "JavaScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
-    [SuppressMessage("ReSharper", "StringLiteralTypo")]
-    public class V8ScriptEngineTest : ClearScriptTest
+    [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "Typos in test code are acceptable.")]
+    public partial class V8ScriptEngineTest : ClearScriptTest
     {
         #region setup / teardown
 
@@ -558,9 +550,8 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_ContinuationCallback_AwaitDebuggerAndPauseOnStart()
         {
             engine.Dispose();
-            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart);
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart) { ContinuationCallback = () => false };
 
-            engine.ContinuationCallback = () => false;
             TestUtil.AssertException<OperationCanceledException>(() => engine.Evaluate("Math.E * Math.PI"));
             engine.ContinuationCallback = null;
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
@@ -813,12 +804,10 @@ namespace Microsoft.ClearScript.Test
 
             ThreadStart body = () =>
             {
-                // ReSharper disable AccessToDisposedClosure
-
+                // ReSharper disable once AccessToDisposedClosure
                 startEvent.Wait();
-                engine.Execute("list.RemoveAt(0); if (list.Count == 0) { stopEvent.Set(); }");
 
-                // ReSharper restore AccessToDisposedClosure
+                engine.Execute("list.RemoveAt(0); if (list.Count == 0) { stopEvent.Set(); }");
             };
 
             var threads = Enumerable.Range(0, threadCount).Select(index => new Thread(body)).ToArray();
@@ -1024,8 +1013,7 @@ namespace Microsoft.ClearScript.Test
             Assert.IsNotNull(cacheBytes);
             Assert.IsTrue(cacheBytes.Length > 2000); // typical size is ~4K
 
-            bool cacheAccepted;
-            using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out cacheAccepted))
+            using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out var cacheAccepted))
             {
                 Assert.IsTrue(cacheAccepted);
                 using (var console = new StringWriter())
@@ -1071,8 +1059,7 @@ namespace Microsoft.ClearScript.Test
 
             cacheBytes = cacheBytes.Take(cacheBytes.Length - 1).ToArray();
 
-            bool cacheAccepted;
-            using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out cacheAccepted))
+            using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out var cacheAccepted))
             {
                 Assert.IsFalse(cacheAccepted);
                 using (var console = new StringWriter())
@@ -1113,8 +1100,7 @@ namespace Microsoft.ClearScript.Test
             Assert.IsNotNull(cacheBytes);
             Assert.IsTrue(cacheBytes.Length > 2000); // typical size is ~4K
 
-            bool cacheAccepted;
-            using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out cacheAccepted))
+            using (var script = engine.Compile(generalScript, V8CacheKind.Parser, cacheBytes, out var cacheAccepted))
             {
                 Assert.IsTrue(cacheAccepted);
                 using (var console = new StringWriter())
@@ -1156,8 +1142,7 @@ namespace Microsoft.ClearScript.Test
             Assert.IsNotNull(cacheBytes);
             Assert.IsTrue(cacheBytes.Length > 2000); // typical size is ~4K
 
-            bool cacheAccepted;
-            using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out cacheAccepted))
+            using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out var cacheAccepted))
             {
                 Assert.IsTrue(cacheAccepted);
                 using (var console = new StringWriter())
@@ -1199,8 +1184,7 @@ namespace Microsoft.ClearScript.Test
 
             cacheBytes = cacheBytes.Take(cacheBytes.Length - 1).ToArray();
 
-            bool cacheAccepted;
-            using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out cacheAccepted))
+            using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out var cacheAccepted))
             {
                 Assert.IsFalse(cacheAccepted);
                 using (var console = new StringWriter())
@@ -1237,8 +1221,7 @@ namespace Microsoft.ClearScript.Test
             Assert.IsNotNull(cacheBytes);
             Assert.IsTrue(cacheBytes.Length > 2000); // typical size is ~4K
 
-            bool cacheAccepted;
-            using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out cacheAccepted))
+            using (var script = engine.Compile(generalScript, V8CacheKind.Code, cacheBytes, out var cacheAccepted))
             {
                 Assert.IsTrue(cacheAccepted);
                 using (var console = new StringWriter())
@@ -1272,6 +1255,11 @@ namespace Microsoft.ClearScript.Test
                 }
                 catch (ScriptEngineException exception)
                 {
+                    if (exception.InnerException is ScriptEngineException innerScriptEngineException)
+                    {
+                        exception = innerScriptEngineException;
+                    }
+
                     TestUtil.AssertValidException(engine, exception);
                     Assert.IsNotNull(exception.ScriptException);
                     Assert.AreEqual("SyntaxError", exception.ScriptException.constructor.name);
@@ -1294,6 +1282,11 @@ namespace Microsoft.ClearScript.Test
                 }
                 catch (ScriptEngineException exception)
                 {
+                    if (exception.InnerException is ScriptEngineException innerScriptEngineException)
+                    {
+                        exception = innerScriptEngineException;
+                    }
+
                     TestUtil.AssertValidException(engine, exception);
                     Assert.AreEqual(123, exception.ScriptException);
                     Assert.IsNull(exception.InnerException);
@@ -1315,6 +1308,11 @@ namespace Microsoft.ClearScript.Test
                 }
                 catch (ScriptEngineException exception)
                 {
+                    if (exception.InnerException is ScriptEngineException innerScriptEngineException)
+                    {
+                        exception = innerScriptEngineException;
+                    }
+
                     TestUtil.AssertValidException(engine, exception);
                     Assert.AreEqual("TypeError", exception.ScriptException.constructor.name);
                     Assert.IsNull(exception.InnerException);
@@ -1336,6 +1334,11 @@ namespace Microsoft.ClearScript.Test
                 }
                 catch (ScriptEngineException exception)
                 {
+                    if (exception.InnerException is ScriptEngineException innerScriptEngineException)
+                    {
+                        exception = innerScriptEngineException;
+                    }
+
                     TestUtil.AssertValidException(engine, exception);
                     Assert.AreEqual("Error", exception.ScriptException.constructor.name);
                     Assert.IsNotNull(exception.InnerException);
@@ -1364,6 +1367,11 @@ namespace Microsoft.ClearScript.Test
                 }
                 catch (ScriptEngineException exception)
                 {
+                    if (exception.InnerException is ScriptEngineException innerScriptEngineException)
+                    {
+                        exception = innerScriptEngineException;
+                    }
+
                     TestUtil.AssertValidException(engine, exception);
                     Assert.AreEqual("TypeError", exception.ScriptException.constructor.name);
                     Assert.IsNull(exception.InnerException);
@@ -1386,6 +1394,11 @@ namespace Microsoft.ClearScript.Test
                 }
                 catch (ScriptEngineException exception)
                 {
+                    if (exception.InnerException is ScriptEngineException innerScriptEngineException)
+                    {
+                        exception = innerScriptEngineException;
+                    }
+
                     TestUtil.AssertValidException(engine, exception);
                     Assert.AreEqual("Error", exception.ScriptException.constructor.name);
                     Assert.IsNotNull(exception.InnerException);
@@ -1396,10 +1409,13 @@ namespace Microsoft.ClearScript.Test
                     Assert.IsNotNull(hostException.InnerException);
 
                     var nestedException = hostException.InnerException as ScriptEngineException;
+                    if (nestedException?.InnerException is ScriptEngineException nestedInnerScriptEngineException)
+                    {
+                        nestedException = nestedInnerScriptEngineException;
+                    }
+
                     Assert.IsNotNull(nestedException);
-                    // ReSharper disable once AccessToDisposedClosure
                     TestUtil.AssertValidException(engine, nestedException);
-                    // ReSharper disable once PossibleNullReferenceException
                     Assert.IsNull(nestedException.InnerException);
                     Assert.IsTrue(nestedException.ErrorDetails.Contains("at bad.js:1:22 -> "));
                     Assert.IsTrue(nestedException.ErrorDetails.Contains("at bar (good.js:1:25)"));
@@ -1425,6 +1441,11 @@ namespace Microsoft.ClearScript.Test
                     }
                     catch (ScriptEngineException exception)
                     {
+                        if (exception.InnerException is ScriptEngineException innerScriptEngineException)
+                        {
+                            exception = innerScriptEngineException;
+                        }
+
                         TestUtil.AssertValidException(engine, exception);
                         Assert.AreEqual("Error", exception.ScriptException.constructor.name);
                         Assert.IsNotNull(exception.InnerException);
@@ -1435,10 +1456,16 @@ namespace Microsoft.ClearScript.Test
                         Assert.IsNotNull(hostException.InnerException);
 
                         var nestedException = hostException.InnerException as ScriptEngineException;
+                        if (nestedException?.InnerException is ScriptEngineException nestedInnerScriptEngineException)
+                        {
+                            nestedException = nestedInnerScriptEngineException;
+                        }
+
                         Assert.IsNotNull(nestedException);
+
                         // ReSharper disable once AccessToDisposedClosure
                         TestUtil.AssertValidException(innerEngine, nestedException);
-                        // ReSharper disable once PossibleNullReferenceException
+
                         Assert.IsNull(nestedException.InnerException);
 
                         Assert.AreEqual("Error: " + hostException.GetBaseException().Message, exception.Message);
@@ -1464,6 +1491,11 @@ namespace Microsoft.ClearScript.Test
                     }
                     catch (ScriptEngineException exception)
                     {
+                        if (exception.InnerException is ScriptEngineException innerScriptEngineException)
+                        {
+                            exception = innerScriptEngineException;
+                        }
+
                         TestUtil.AssertValidException(engine, exception);
                         Assert.AreEqual("Error", exception.ScriptException.constructor.name);
                         Assert.IsNotNull(exception.InnerException);
@@ -1474,10 +1506,16 @@ namespace Microsoft.ClearScript.Test
                         Assert.IsNotNull(hostException.InnerException);
 
                         var nestedException = hostException.InnerException as ScriptEngineException;
+                        if (nestedException?.InnerException is ScriptEngineException nestedInnerScriptEngineException)
+                        {
+                            nestedException = nestedInnerScriptEngineException;
+                        }
+
                         Assert.IsNotNull(nestedException);
+
                         // ReSharper disable once AccessToDisposedClosure
                         TestUtil.AssertValidException(innerEngine, nestedException);
-                        // ReSharper disable once PossibleNullReferenceException
+
                         Assert.IsNotNull(nestedException.InnerException);
 
                         var nestedHostException = nestedException.InnerException;
@@ -2035,556 +2073,6 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMObject_FileSystemObject()
-        {
-            var list = new ArrayList();
-
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.Script.list = list;
-            engine.Execute(@"
-                fso = host.newComObj('Scripting.FileSystemObject');
-                drives = fso.Drives;
-                e = drives.GetEnumerator();
-                while (e.MoveNext()) {
-                    list.Add(e.Current.Path);
-                }
-            ");
-
-            var drives = DriveInfo.GetDrives();
-            Assert.AreEqual(drives.Length, list.Count);
-            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMObject_FileSystemObject_ForOf()
-        {
-            var list = new ArrayList();
-
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.Script.list = list;
-            engine.Execute(@"
-                fso = host.newComObj('Scripting.FileSystemObject');
-                drives = fso.Drives;
-                for (drive of drives) {
-                    list.Add(drive.Path);
-                }
-            ");
-
-            var drives = DriveInfo.GetDrives();
-            Assert.AreEqual(drives.Length, list.Count);
-            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMObject_FileSystemObject_TypeLibEnums()
-        {
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.Execute(@"
-                fso = host.newComObj('Scripting.FileSystemObject');
-                enums = host.typeLibEnums(fso);
-            ");
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.BinaryCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.BinaryCompare)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.DatabaseCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.DatabaseCompare)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.TextCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.TextCompare)"));
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForAppending), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForAppending)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForReading), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForReading)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForWriting), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForWriting)"));
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateFalse), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateFalse)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateMixed), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateMixed)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateTrue), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateTrue)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateUseDefault), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateUseDefault)"));
-
-            engine.Execute(@"
-                function writeFile(contents) {
-                    var name = fso.GetTempName();
-                    var path = fso.GetSpecialFolder(enums.Scripting.SpecialFolderConst.TemporaryFolder).Path + '\\' + name;
-                    var stream = fso.OpenTextFile(path, enums.Scripting.IOMode.ForWriting, true, enums.Scripting.Tristate.TristateTrue);
-                    stream.Write(contents);
-                    stream.Close();
-                    return path;
-                }
-            ");
-
-            var contents = Guid.NewGuid().ToString();
-            var path = engine.Script.writeFile(contents);
-            Assert.IsTrue(new FileInfo(path).Length >= (contents.Length * 2));
-            Assert.AreEqual(contents, File.ReadAllText(path));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMObject_Dictionary()
-        {
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.Execute(@"
-                dict = host.newComObj('Scripting.Dictionary');
-                dict.Add('foo', Math.PI);
-                dict.Add('bar', Math.E);
-                dict.Add('baz', 'abc');
-            ");
-
-            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item('foo')"));
-            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get('foo')"));
-            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item('bar')"));
-            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get('bar')"));
-            Assert.AreEqual("abc", engine.Evaluate("dict.Item('baz')"));
-            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get('baz')"));
-
-            engine.Execute(@"
-                dict.Item.set('foo', 'pushkin');
-                dict.Item.set('bar', 'gogol');
-                dict.Item.set('baz', Math.PI * Math.E);
-            ");
-
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('foo')"));
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('foo')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item('bar')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get('bar')"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item('baz')"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get('baz')"));
-
-            engine.Execute(@"
-                dict.Key.set('foo', 'qux');
-                dict.Key.set('bar', Math.PI);
-                dict.Key.set('baz', Math.E);
-            ");
-
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('qux')"));
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('qux')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item(Math.PI)"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get(Math.PI)"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item(Math.E)"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get(Math.E)"));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMType_FileSystemObject()
-        {
-            var list = new ArrayList();
-
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.Script.list = list;
-            engine.Execute(@"
-                FSO = host.comType('Scripting.FileSystemObject');
-                fso = host.newObj(FSO);
-                drives = fso.Drives;
-                e = drives.GetEnumerator();
-                while (e.MoveNext()) {
-                    list.Add(e.Current.Path);
-                }
-            ");
-
-            var drives = DriveInfo.GetDrives();
-            Assert.AreEqual(drives.Length, list.Count);
-            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMType_FileSystemObject_ForOf()
-        {
-            var list = new ArrayList();
-
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.Script.list = list;
-            engine.Execute(@"
-                FSO = host.comType('Scripting.FileSystemObject');
-                fso = host.newObj(FSO);
-                drives = fso.Drives;
-                for (drive of drives) {
-                    list.Add(drive.Path);
-                }
-            ");
-
-            var drives = DriveInfo.GetDrives();
-            Assert.AreEqual(drives.Length, list.Count);
-            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMType_FileSystemObject_TypeLibEnums()
-        {
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.Execute(@"
-                FSO = host.comType('Scripting.FileSystemObject');
-                fso = host.newObj(FSO);
-                enums = host.typeLibEnums(fso);
-            ");
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.BinaryCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.BinaryCompare)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.DatabaseCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.DatabaseCompare)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.TextCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.TextCompare)"));
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForAppending), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForAppending)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForReading), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForReading)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForWriting), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForWriting)"));
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateFalse), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateFalse)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateMixed), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateMixed)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateTrue), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateTrue)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateUseDefault), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateUseDefault)"));
-
-            engine.Execute(@"
-                function writeFile(contents) {
-                    var name = fso.GetTempName();
-                    var path = fso.GetSpecialFolder(enums.Scripting.SpecialFolderConst.TemporaryFolder).Path + '\\' + name;
-                    var stream = fso.OpenTextFile(path, enums.Scripting.IOMode.ForWriting, true, enums.Scripting.Tristate.TristateTrue);
-                    stream.Write(contents);
-                    stream.Close();
-                    return path;
-                }
-            ");
-
-            var contents = Guid.NewGuid().ToString();
-            var path = engine.Script.writeFile(contents);
-            Assert.IsTrue(new FileInfo(path).Length >= (contents.Length * 2));
-            Assert.AreEqual(contents, File.ReadAllText(path));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMType_Dictionary()
-        {
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.Execute(@"
-                Dict = host.comType('Scripting.Dictionary');
-                dict = host.newObj(Dict);
-                dict.Add('foo', Math.PI);
-                dict.Add('bar', Math.E);
-                dict.Add('baz', 'abc');
-            ");
-
-            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item('foo')"));
-            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get('foo')"));
-            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item('bar')"));
-            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get('bar')"));
-            Assert.AreEqual("abc", engine.Evaluate("dict.Item('baz')"));
-            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get('baz')"));
-
-            engine.Execute(@"
-                dict.Item.set('foo', 'pushkin');
-                dict.Item.set('bar', 'gogol');
-                dict.Item.set('baz', Math.PI * Math.E);
-            ");
-
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('foo')"));
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('foo')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item('bar')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get('bar')"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item('baz')"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get('baz')"));
-
-            engine.Execute(@"
-                dict.Key.set('foo', 'qux');
-                dict.Key.set('bar', Math.PI);
-                dict.Key.set('baz', Math.E);
-            ");
-
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('qux')"));
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('qux')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item(Math.PI)"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get(Math.PI)"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item(Math.E)"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get(Math.E)"));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMObject_FileSystemObject()
-        {
-            var list = new ArrayList();
-
-            engine.Script.list = list;
-            engine.AddCOMObject("fso", "Scripting.FileSystemObject");
-            engine.Execute(@"
-                drives = fso.Drives;
-                e = drives.GetEnumerator();
-                while (e.MoveNext()) {
-                    list.Add(e.Current.Path);
-                }
-            ");
-
-            var drives = DriveInfo.GetDrives();
-            Assert.AreEqual(drives.Length, list.Count);
-            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMObject_FileSystemObject_ForOf()
-        {
-            var list = new ArrayList();
-
-            engine.Script.list = list;
-            engine.AddCOMObject("fso", "Scripting.FileSystemObject");
-            engine.Execute(@"
-                drives = fso.Drives;
-                for (drive of drives) {
-                    list.Add(drive.Path);
-                }
-            ");
-
-            var drives = DriveInfo.GetDrives();
-            Assert.AreEqual(drives.Length, list.Count);
-            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMObject_FileSystemObject_TypeLibEnums()
-        {
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.AddCOMObject("fso", "Scripting.FileSystemObject");
-            engine.Execute(@"
-                enums = host.typeLibEnums(fso);
-            ");
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.BinaryCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.BinaryCompare)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.DatabaseCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.DatabaseCompare)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.TextCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.TextCompare)"));
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForAppending), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForAppending)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForReading), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForReading)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForWriting), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForWriting)"));
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateFalse), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateFalse)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateMixed), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateMixed)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateTrue), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateTrue)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateUseDefault), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateUseDefault)"));
-
-            engine.Execute(@"
-                function writeFile(contents) {
-                    var name = fso.GetTempName();
-                    var path = fso.GetSpecialFolder(enums.Scripting.SpecialFolderConst.TemporaryFolder).Path + '\\' + name;
-                    var stream = fso.OpenTextFile(path, enums.Scripting.IOMode.ForWriting, true, enums.Scripting.Tristate.TristateTrue);
-                    stream.Write(contents);
-                    stream.Close();
-                    return path;
-                }
-            ");
-
-            var contents = Guid.NewGuid().ToString();
-            var path = engine.Script.writeFile(contents);
-            Assert.IsTrue(new FileInfo(path).Length >= (contents.Length * 2));
-            Assert.AreEqual(contents, File.ReadAllText(path));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMObject_Dictionary()
-        {
-            engine.AddCOMObject("dict", new Guid("{ee09b103-97e0-11cf-978f-00a02463e06f}"));
-            engine.Execute(@"
-                dict.Add('foo', Math.PI);
-                dict.Add('bar', Math.E);
-                dict.Add('baz', 'abc');
-            ");
-
-            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item('foo')"));
-            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get('foo')"));
-            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item('bar')"));
-            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get('bar')"));
-            Assert.AreEqual("abc", engine.Evaluate("dict.Item('baz')"));
-            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get('baz')"));
-
-            engine.Execute(@"
-                dict.Item.set('foo', 'pushkin');
-                dict.Item.set('bar', 'gogol');
-                dict.Item.set('baz', Math.PI * Math.E);
-            ");
-
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('foo')"));
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('foo')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item('bar')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get('bar')"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item('baz')"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get('baz')"));
-
-            engine.Execute(@"
-                dict.Key.set('foo', 'qux');
-                dict.Key.set('bar', Math.PI);
-                dict.Key.set('baz', Math.E);
-            ");
-
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('qux')"));
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('qux')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item(Math.PI)"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get(Math.PI)"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item(Math.E)"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get(Math.E)"));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMType_FileSystemObject()
-        {
-            var list = new ArrayList();
-
-            engine.Script.list = list;
-            engine.AddCOMType("FSO", "Scripting.FileSystemObject");
-            engine.Execute(@"
-                fso = new FSO();
-                drives = fso.Drives;
-                e = drives.GetEnumerator();
-                while (e.MoveNext()) {
-                    list.Add(e.Current.Path);
-                }
-            ");
-
-            var drives = DriveInfo.GetDrives();
-            Assert.AreEqual(drives.Length, list.Count);
-            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMType_FileSystemObject_ForOf()
-        {
-            var list = new ArrayList();
-
-            engine.Script.list = list;
-            engine.AddCOMType("FSO", "Scripting.FileSystemObject");
-            engine.Execute(@"
-                fso = new FSO();
-                drives = fso.Drives;
-                for (drive of drives) {
-                    list.Add(drive.Path);
-                }
-            ");
-
-            var drives = DriveInfo.GetDrives();
-            Assert.AreEqual(drives.Length, list.Count);
-            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMType_FileSystemObject_TypeLibEnums()
-        {
-            engine.Script.host = new ExtendedHostFunctions();
-            engine.AddCOMType("FSO", "Scripting.FileSystemObject");
-            engine.Execute(@"
-                fso = new FSO();
-                enums = host.typeLibEnums(fso);
-            ");
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.BinaryCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.BinaryCompare)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.DatabaseCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.DatabaseCompare)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.CompareMethod.TextCompare), engine.Evaluate("host.toInt32(enums.Scripting.CompareMethod.TextCompare)"));
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForAppending), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForAppending)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForReading), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForReading)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.IOMode.ForWriting), engine.Evaluate("host.toInt32(enums.Scripting.IOMode.ForWriting)"));
-
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateFalse), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateFalse)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateMixed), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateMixed)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateTrue), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateTrue)"));
-            Assert.AreEqual(Convert.ToInt32(Scripting.Tristate.TristateUseDefault), engine.Evaluate("host.toInt32(enums.Scripting.Tristate.TristateUseDefault)"));
-
-            engine.Execute(@"
-                function writeFile(contents) {
-                    var name = fso.GetTempName();
-                    var path = fso.GetSpecialFolder(enums.Scripting.SpecialFolderConst.TemporaryFolder).Path + '\\' + name;
-                    var stream = fso.OpenTextFile(path, enums.Scripting.IOMode.ForWriting, true, enums.Scripting.Tristate.TristateTrue);
-                    stream.Write(contents);
-                    stream.Close();
-                    return path;
-                }
-            ");
-
-            var contents = Guid.NewGuid().ToString();
-            var path = engine.Script.writeFile(contents);
-            Assert.IsTrue(new FileInfo(path).Length >= (contents.Length * 2));
-            Assert.AreEqual(contents, File.ReadAllText(path));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMType_Dictionary()
-        {
-            engine.AddCOMType("Dict", new Guid("{ee09b103-97e0-11cf-978f-00a02463e06f}"));
-            engine.Execute(@"
-                dict = new Dict();
-                dict.Add('foo', Math.PI);
-                dict.Add('bar', Math.E);
-                dict.Add('baz', 'abc');
-            ");
-
-            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item('foo')"));
-            Assert.AreEqual(Math.PI, engine.Evaluate("dict.Item.get('foo')"));
-            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item('bar')"));
-            Assert.AreEqual(Math.E, engine.Evaluate("dict.Item.get('bar')"));
-            Assert.AreEqual("abc", engine.Evaluate("dict.Item('baz')"));
-            Assert.AreEqual("abc", engine.Evaluate("dict.Item.get('baz')"));
-
-            engine.Execute(@"
-                dict.Item.set('foo', 'pushkin');
-                dict.Item.set('bar', 'gogol');
-                dict.Item.set('baz', Math.PI * Math.E);
-            ");
-
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('foo')"));
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('foo')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item('bar')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get('bar')"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item('baz')"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get('baz')"));
-
-            engine.Execute(@"
-                dict.Key.set('foo', 'qux');
-                dict.Key.set('bar', Math.PI);
-                dict.Key.set('baz', Math.E);
-            ");
-
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item('qux')"));
-            Assert.AreEqual("pushkin", engine.Evaluate("dict.Item.get('qux')"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item(Math.PI)"));
-            Assert.AreEqual("gogol", engine.Evaluate("dict.Item.get(Math.PI)"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item(Math.E)"));
-            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get(Math.E)"));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMType_XMLHTTP()
-        {
-            var status = 0;
-            string data = null;
-
-            var thread = new Thread(() =>
-            {
-                using (var testEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
-                {
-                    testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
-                    {
-                        status = xhrStatus;
-                        data = xhrData;
-                        Dispatcher.ExitAllFrames();
-                    });
-
-                    Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
-                    {
-                        // ReSharper disable AccessToDisposedClosure
-
-                        testEngine.AddCOMType("XMLHttpRequest", "MSXML2.XMLHTTP");
-                        testEngine.Execute(@"
-                            xhr = new XMLHttpRequest();
-                            xhr.open('POST', 'http://httpbin.org/post', true);
-                            xhr.onreadystatechange = function () {
-                                if (xhr.readyState == 4) {
-                                    onComplete(xhr.status, JSON.parse(xhr.responseText).data);
-                                }
-                            };
-                            xhr.send('Hello, world!');
-                        ");
-
-                        // ReSharper restore AccessToDisposedClosure
-                    }));
-
-                    Dispatcher.Run();
-                }
-            });
-
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-            thread.Join();
-
-            Assert.AreEqual(200, status);
-            Assert.AreEqual("Hello, world!", data);
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_EnableAutoHostVariables()
         {
             const string pre = "123";
@@ -2626,7 +2114,7 @@ namespace Microsoft.ClearScript.Test
             Exception exception = new IOException("something awful happened");
             engine.AddRestrictedHostObject("exception", exception);
 
-            engine.Script.foo = new Action(() => { throw exception; });
+            engine.Script.foo = new Action(() => throw exception);
 
             engine.Execute(@"
                 function bar() {
@@ -2646,17 +2134,19 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_Current()
         {
-            // ReSharper disable AccessToDisposedClosure
-
             using (var innerEngine = new V8ScriptEngine())
             {
                 engine.Script.test = new Action(() =>
                 {
+                    // ReSharper disable AccessToDisposedClosure
+
                     innerEngine.Script.test = new Action(() => Assert.AreSame(innerEngine, ScriptEngine.Current));
                     Assert.AreSame(engine, ScriptEngine.Current);
                     innerEngine.Execute("test()");
                     innerEngine.Script.test();
                     Assert.AreSame(engine, ScriptEngine.Current);
+
+                    // ReSharper restore AccessToDisposedClosure
                 });
 
                 Assert.IsNull(ScriptEngine.Current);
@@ -2664,8 +2154,6 @@ namespace Microsoft.ClearScript.Test
                 engine.Script.test();
                 Assert.IsNull(ScriptEngine.Current);
             }
-
-            // ReSharper restore AccessToDisposedClosure
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -3074,6 +2562,28 @@ namespace Microsoft.ClearScript.Test
             engine.Script.now = utcNow;
             Assert.AreEqual("Date", engine.Evaluate("now.constructor.name"));
             Assert.IsTrue(Math.Abs((utcNow - utcEpoch).TotalMilliseconds - Convert.ToDouble(engine.Evaluate("now.valueOf()"))) <= 1.0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_TaskPromiseConversion()
+        {
+            engine.Script.value = Task.FromResult("foo");
+            Assert.AreEqual("HostObject", engine.Evaluate("value.constructor.name"));
+            Assert.IsInstanceOfType(engine.Evaluate("Promise.resolve(123)"), typeof(ScriptObject));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion);
+
+            engine.Script.value = Task.FromResult("bar");
+            Assert.AreEqual("Promise", engine.Evaluate("value.constructor.name"));
+            Assert.IsInstanceOfType(engine.Evaluate("Promise.resolve(123)"), typeof(Task));
+
+            var task = new Func<Task<object>>(async () => await (Task<object>)engine.Evaluate("Promise.resolve(123)"))();
+            Assert.AreEqual(123, task.Result);
+
+            engine.Script.promise = Task.FromResult(456);
+            engine.Execute("promise.then(value => result = value);");
+            Assert.AreEqual(456, engine.Script.result);
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]

@@ -7,7 +7,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using DISPPARAMS = System.Runtime.InteropServices.ComTypes.DISPPARAMS;
-using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
 
 namespace Microsoft.ClearScript.Util.COM
 {
@@ -19,11 +18,9 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static ITypeInfo GetTypeInfo(this IDispatch dispatch)
         {
-            uint count;
-            if (HResult.Succeeded(dispatch.GetTypeInfoCount(out count)) && (count > 0))
+            if (HResult.Succeeded(dispatch.GetTypeInfoCount(out var count)) && (count > 0))
             {
-                ITypeInfo typeInfo;
-                if (HResult.Succeeded(dispatch.GetTypeInfo(0, 0, out typeInfo)))
+                if (HResult.Succeeded(dispatch.GetTypeInfo(0, 0, out var typeInfo)))
                 {
                     return typeInfo;
                 }
@@ -34,8 +31,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static object GetProperty(this IDispatch dispatch, string name, params object[] args)
         {
-            int dispid;
-            if (!MiscHelpers.Try(out dispid, () => dispatch.GetDispIDForName(name)))
+            if (!MiscHelpers.Try(out int dispid, () => dispatch.GetDispIDForName(name)))
             {
                 return Nonexistent.Value;
             }
@@ -44,10 +40,8 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
-                    EXCEPINFO excepInfo;
-                    uint argErr;
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
-                    HResult.Check(dispatch.Invoke(dispid, ref iid, 0, DispatchFlags.PropertyGet, ref dispArgs, resultVariantBlock.Addr, out excepInfo, out argErr));
+                    HResult.Check(dispatch.Invoke(dispid, ref iid, 0, DispatchFlags.PropertyGet, ref dispArgs, resultVariantBlock.Addr, out _, out _));
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             }
@@ -57,7 +51,7 @@ namespace Microsoft.ClearScript.Util.COM
         {
             if (args.Length < 1)
             {
-                throw new ArgumentException("Invalid argument count", "args");
+                throw new ArgumentException("Invalid argument count", nameof(args));
             }
 
             var dispid = dispatch.GetDispIDForName(name);
@@ -65,20 +59,18 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 using (var namedArgDispidBlock = new CoTaskMemBlock(sizeof(int)))
                 {
-                    EXCEPINFO excepInfo;
                     Marshal.WriteInt32(namedArgDispidBlock.Addr, SpecialDispIDs.PropertyPut);
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 1, rgdispidNamedArgs = namedArgDispidBlock.Addr };
 
-                    uint argErr;
-                    var result = dispatch.Invoke(dispid, ref iid, 0, DispatchFlags.PropertyPut | DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out excepInfo, out argErr);
+                    var result = dispatch.Invoke(dispid, ref iid, 0, DispatchFlags.PropertyPut | DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out _, out _);
                     if (result == HResult.DISP_E_MEMBERNOTFOUND)
                     {
                         // VBScript objects can be finicky about property-put dispatch flags
 
-                        result = dispatch.Invoke(dispid, iid, 0, DispatchFlags.PropertyPut, ref dispArgs, IntPtr.Zero, out excepInfo, out argErr);
+                        result = dispatch.Invoke(dispid, iid, 0, DispatchFlags.PropertyPut, ref dispArgs, IntPtr.Zero, out _, out _);
                         if (result == HResult.DISP_E_MEMBERNOTFOUND)
                         {
-                            result = dispatch.Invoke(dispid, iid, 0, DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out excepInfo, out argErr);
+                            result = dispatch.Invoke(dispid, iid, 0, DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out _, out _);
                         }
                     }
 
@@ -98,10 +90,8 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
-                    EXCEPINFO excepInfo;
-                    uint argErr;
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
-                    HResult.Check(dispatch.Invoke(SpecialDispIDs.Default, ref iid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out excepInfo, out argErr));
+                    HResult.Check(dispatch.Invoke(SpecialDispIDs.Default, ref iid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out _, out _));
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             }
@@ -119,10 +109,8 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
-                    EXCEPINFO excepInfo;
-                    uint argErr;
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
-                    HResult.Check(dispatch.Invoke(dispid, iid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out excepInfo, out argErr));
+                    HResult.Check(dispatch.Invoke(dispid, iid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out _, out _));
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             }
@@ -173,11 +161,9 @@ namespace Microsoft.ClearScript.Util.COM
     {
         public static ITypeInfo GetTypeInfo(this IDispatchEx dispatchEx)
         {
-            uint count;
-            if (HResult.Succeeded(dispatchEx.GetTypeInfoCount(out count)) && (count > 0))
+            if (HResult.Succeeded(dispatchEx.GetTypeInfoCount(out var count)) && (count > 0))
             {
-                ITypeInfo typeInfo;
-                if (HResult.Succeeded(dispatchEx.GetTypeInfo(0, 0, out typeInfo)))
+                if (HResult.Succeeded(dispatchEx.GetTypeInfo(0, 0, out var typeInfo)))
                 {
                     return typeInfo;
                 }
@@ -188,8 +174,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static object GetProperty(this IDispatchEx dispatchEx, string name, bool ignoreCase, params object[] args)
         {
-            int dispid;
-            if (!MiscHelpers.Try(out dispid, () => dispatchEx.GetDispIDForName(name, false, ignoreCase)))
+            if (!MiscHelpers.Try(out int dispid, () => dispatchEx.GetDispIDForName(name, false, ignoreCase)))
             {
                 return Nonexistent.Value;
             }
@@ -198,9 +183,8 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
-                    EXCEPINFO excepInfo;
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
-                    HResult.Check(dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyGet, ref dispArgs, resultVariantBlock.Addr, out excepInfo));
+                    HResult.Check(dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyGet, ref dispArgs, resultVariantBlock.Addr, out _));
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             }
@@ -210,7 +194,7 @@ namespace Microsoft.ClearScript.Util.COM
         {
             if (args.Length < 1)
             {
-                throw new ArgumentException("Invalid argument count", "args");
+                throw new ArgumentException("Invalid argument count", nameof(args));
             }
 
             var dispid = dispatchEx.GetDispIDForName(name, true, ignoreCase);
@@ -218,19 +202,18 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 using (var namedArgDispidBlock = new CoTaskMemBlock(sizeof(int)))
                 {
-                    EXCEPINFO excepInfo;
                     Marshal.WriteInt32(namedArgDispidBlock.Addr, SpecialDispIDs.PropertyPut);
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 1, rgdispidNamedArgs = namedArgDispidBlock.Addr };
 
-                    var result = dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPut | DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out excepInfo);
+                    var result = dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPut | DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out _);
                     if (result == HResult.DISP_E_MEMBERNOTFOUND)
                     {
                         // VBScript objects can be finicky about property-put dispatch flags
 
-                        result = dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPut, ref dispArgs, IntPtr.Zero, out excepInfo);
+                        result = dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPut, ref dispArgs, IntPtr.Zero, out _);
                         if (result == HResult.DISP_E_MEMBERNOTFOUND)
                         {
-                            result = dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out excepInfo);
+                            result = dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyPutRef, ref dispArgs, IntPtr.Zero, out _);
                         }
                     }
 
@@ -255,9 +238,8 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
-                    EXCEPINFO excepInfo;
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
-                    HResult.Check(dispatchEx.InvokeEx(SpecialDispIDs.Default, 0, asConstructor ? DispatchFlags.Construct : DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out excepInfo));
+                    HResult.Check(dispatchEx.InvokeEx(SpecialDispIDs.Default, 0, asConstructor ? DispatchFlags.Construct : DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out _));
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             }
@@ -275,9 +257,8 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 using (var resultVariantBlock = new CoTaskMemVariantBlock())
                 {
-                    EXCEPINFO excepInfo;
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
-                    HResult.Check(dispatchEx.InvokeEx(dispid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out excepInfo));
+                    HResult.Check(dispatchEx.InvokeEx(dispid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out _));
                     return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
                 }
             }
@@ -297,8 +278,7 @@ namespace Microsoft.ClearScript.Util.COM
                 flags |= DispatchNameFlags.Ensure;
             }
 
-            int dispid;
-            var result = dispatchEx.GetDispID(name, flags, out dispid);
+            var result = dispatchEx.GetDispID(name, flags, out var dispid);
             if (ensure && (result == HResult.DISP_E_UNKNOWNNAME))
             {
                 throw new NotSupportedException("The object does not support dynamic properties");
@@ -327,15 +307,12 @@ namespace Microsoft.ClearScript.Util.COM
         {
             var isEnumerable = false;
 
-            int dispid;
-            var result = dispatchEx.GetNextDispID(DispatchEnumFlags.All, SpecialDispIDs.StartEnum, out dispid);
+            var result = dispatchEx.GetNextDispID(DispatchEnumFlags.All, SpecialDispIDs.StartEnum, out var dispid);
             while (result == HResult.S_OK)
             {
-                string name;
-                if (HResult.Succeeded(dispatchEx.GetMemberName(dispid, out name)))
+                if (HResult.Succeeded(dispatchEx.GetMemberName(dispid, out var name)))
                 {
-                    DispatchPropFlags flags;
-                    if (HResult.Succeeded(dispatchEx.GetMemberProperties(dispid, DispatchPropFlags.CanAll, out flags)))
+                    if (HResult.Succeeded(dispatchEx.GetMemberProperties(dispid, DispatchPropFlags.CanAll, out var flags)))
                     {
                         if (dispid == SpecialDispIDs.NewEnum)
                         {

@@ -9,9 +9,7 @@ namespace Microsoft.ClearScript.Util
 {
     internal sealed class MemberComparer<T> : EqualityComparer<T> where T : MemberInfo
     {
-        private static readonly MemberComparer<T> instance = new MemberComparer<T>();
-
-        public static MemberComparer<T> Instance { get { return instance; } }
+        public static MemberComparer<T> Instance { get; } = new MemberComparer<T>();
 
         private MemberComparer()
         {
@@ -19,8 +17,6 @@ namespace Microsoft.ClearScript.Util
 
         public override bool Equals(T x, T y)
         {
-            // ReSharper disable PossibleNullReferenceException
-
             try
             {
                 return (x.Module == y.Module) && (x.MetadataToken == y.MetadataToken);
@@ -29,8 +25,6 @@ namespace Microsoft.ClearScript.Util
             {
                 return x == y;
             }
-
-            // ReSharper restore PossibleNullReferenceException
         }
 
         public override int GetHashCode(T obj)

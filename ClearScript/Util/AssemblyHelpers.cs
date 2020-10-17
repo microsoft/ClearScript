@@ -14,15 +14,12 @@ namespace Microsoft.ClearScript.Util
     {
         public static string GetFullAssemblyName(string name)
         {
-            // ReSharper disable AccessToModifiedClosure
-
             if (string.IsNullOrWhiteSpace(name))
             {
                 return name;
             }
 
-            Assembly assembly;
-            if (MiscHelpers.Try(out assembly, () => Assembly.Load(name)))
+            if (MiscHelpers.Try(out var assembly, () => Assembly.Load(name)))
             {
                 return assembly.FullName;
             }
@@ -33,8 +30,7 @@ namespace Microsoft.ClearScript.Util
                 fileName = Path.ChangeExtension(fileName + '.', "dll");
             }
 
-            AssemblyName assemblyName;
-            if (MiscHelpers.Try(out assemblyName, () => AssemblyName.GetAssemblyName(fileName)))
+            if (MiscHelpers.Try(out var assemblyName, () => AssemblyName.GetAssemblyName(fileName)))
             {
                 return assemblyName.FullName;
             }
@@ -42,14 +38,15 @@ namespace Microsoft.ClearScript.Util
             var dirPath = Path.GetDirectoryName(typeof(string).Assembly.Location);
             if (!string.IsNullOrWhiteSpace(dirPath))
             {
+                // ReSharper disable AccessToModifiedClosure
+
                 var path = Path.Combine(dirPath, fileName);
                 if (File.Exists(path) && MiscHelpers.Try(out assemblyName, () => AssemblyName.GetAssemblyName(path)))
                 {
                     return assemblyName.FullName;
                 }
 
-                IEnumerable<string> subDirPaths;
-                if (MiscHelpers.Try(out subDirPaths, () => Directory.EnumerateDirectories(dirPath, "*", SearchOption.AllDirectories)))
+                if (MiscHelpers.Try(out var subDirPaths, () => Directory.EnumerateDirectories(dirPath, "*", SearchOption.AllDirectories)))
                 {
                     foreach (var subDirPath in subDirPaths)
                     {
@@ -60,17 +57,16 @@ namespace Microsoft.ClearScript.Util
                         }
                     }
                 }
+
+                // ReSharper restore AccessToModifiedClosure
             }
 
             return name;
-
-            // ReSharper restore AccessToModifiedClosure
         }
 
         public static Assembly TryLoad(AssemblyName name)
         {
-            Assembly assembly;
-            if (MiscHelpers.Try(out assembly, () => Assembly.Load(name)))
+            if (MiscHelpers.Try(out var assembly, () => Assembly.Load(name)))
             {
                 return assembly;
             }

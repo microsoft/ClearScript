@@ -55,10 +55,7 @@ namespace Microsoft.ClearScript.JavaScript
 
         }
 
-        public int ModuleCacheSize
-        {
-            get { return moduleCache.Count; }
-        }
+        public int ModuleCacheSize => moduleCache.Count;
 
         public Module GetOrCreateModule(UniqueDocumentInfo documentInfo, string code)
         {
@@ -150,9 +147,9 @@ namespace Microsoft.ClearScript.JavaScript
                 Evaluator = evaluator;
             }
 
-            public UniqueDocumentInfo DocumentInfo { get; private set; }
+            public UniqueDocumentInfo DocumentInfo { get; }
 
-            public UIntPtr CodeDigest { get; private set; }
+            public UIntPtr CodeDigest { get; }
 
             public Func<object> Evaluator { get; set; }
 
@@ -215,15 +212,12 @@ namespace Microsoft.ClearScript.JavaScript
             private ScriptObject InitializeContext(ScriptObject context)
             {
                 var callback = DocumentInfo.ContextCallback ?? engine.DocumentSettings.ContextCallback;
-                if (callback != null)
+                var properties = callback?.Invoke(DocumentInfo.Info);
+                if (properties != null)
                 {
-                    var properties = callback(DocumentInfo.Info);
-                    if (properties != null)
+                    foreach (var pair in properties)
                     {
-                        foreach (var pair in properties)
-                        {
-                            context.SetProperty(pair.Key, pair.Value);
-                        }
+                        context.SetProperty(pair.Key, pair.Value);
                     }
                 }
 

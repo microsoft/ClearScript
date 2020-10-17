@@ -11,8 +11,6 @@ namespace Microsoft.ClearScript
 {
     internal sealed class HostType : HostTarget, IScriptableObject
     {
-        private readonly Type[] types;
-
         private HostType(Type type)
             : this(new[] { type })
         {
@@ -50,7 +48,7 @@ namespace Microsoft.ClearScript
                 throw new NotSupportedException("Cannot create type wrapper for multiple specific types");
             }
 
-            this.types = types;
+            Types = types;
         }
 
         public static HostType Wrap(Type type)
@@ -63,17 +61,14 @@ namespace Microsoft.ClearScript
             return ((types != null) && (types.Length > 0)) ? new HostType(types) : null;
         }
 
-        public Type[] Types
-        {
-            get { return types; }
-        }
+        public Type[] Types { get; }
 
         public Type GetSpecificType()
         {
             var type = GetSpecificTypeNoThrow();
             if (type == null)
             {
-                throw new InvalidOperationException(MiscHelpers.FormatInvariant("'{0}' requires type arguments", types[0].GetRootName()));
+                throw new InvalidOperationException(MiscHelpers.FormatInvariant("'{0}' requires type arguments", Types[0].GetRootName()));
             }
 
             return type;
@@ -104,7 +99,7 @@ namespace Microsoft.ClearScript
 
         private Type GetSpecificTypeNoThrow()
         {
-            return types.FirstOrDefault(testType => testType.IsSpecific());
+            return Types.FirstOrDefault(testType => testType.IsSpecific());
         }
 
         #region Object overrides
@@ -117,30 +112,24 @@ namespace Microsoft.ClearScript
                 return MiscHelpers.FormatInvariant("HostType:{0}", type.GetFriendlyName());
             }
 
-            var typeArgs = types[0].GetGenericArguments();
+            var typeArgs = Types[0].GetGenericArguments();
             var parentPrefix = string.Empty;
-            if (types[0].IsNested)
+            if (Types[0].IsNested)
             {
-                var parentType = types[0].DeclaringType.MakeSpecificType(typeArgs);
+                var parentType = Types[0].DeclaringType.MakeSpecificType(typeArgs);
                 parentPrefix = parentType.GetFriendlyName() + ".";
             }
 
-            return MiscHelpers.FormatInvariant((types.Length > 1) ? "HostTypeGroup:{0}{1}" : "GenericHostType:{0}{1}", parentPrefix, types[0].GetRootName());
+            return MiscHelpers.FormatInvariant((Types.Length > 1) ? "HostTypeGroup:{0}{1}" : "GenericHostType:{0}{1}", parentPrefix, Types[0].GetRootName());
         }
 
         #endregion
 
         #region HostTarget overrides
 
-        public override Type Type
-        {
-            get { return GetSpecificTypeNoThrow() ?? types[0]; }
-        }
+        public override Type Type => GetSpecificTypeNoThrow() ?? Types[0];
 
-        public override object Target
-        {
-            get { return this; }
-        }
+        public override object Target => this;
 
         public override object InvokeTarget
         {
@@ -151,10 +140,7 @@ namespace Microsoft.ClearScript
             }
         }
 
-        public override object DynamicInvokeTarget
-        {
-            get { return GetSpecificType(); }
-        }
+        public override object DynamicInvokeTarget => GetSpecificType();
 
         public override HostTargetFlags GetFlags(IHostInvokeContext context)
         {
@@ -217,7 +203,7 @@ namespace Microsoft.ClearScript
                 throw new ArgumentException("Invalid generic type argument");
             }
 
-            var templates = types.Where(type => !type.IsSpecific()).ToArray();
+            var templates = Types.Where(type => !type.IsSpecific()).ToArray();
             var typeArgs = args.Cast<HostType>().Select(hostType => hostType.GetTypeArg()).ToArray();
 
             var template = templates.FirstOrDefault(testTemplate => testTemplate.GetGenericParamCount() == typeArgs.Length);

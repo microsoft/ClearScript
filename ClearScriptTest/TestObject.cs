@@ -19,18 +19,12 @@ namespace Microsoft.ClearScript.Test
         public TestEnum EnumProperty { get; set; }
         public TimeSpan StructProperty { get; set; }
 
-        public byte ReadOnlyProperty
-        {
-            get { return 123; }
-        }
+        public byte ReadOnlyProperty => 123;
 
         public event EventHandler<TestEventArgs<short>> Event;
         public void FireEvent(short arg)
         {
-            if (Event != null)
-            {
-                Event(this, new TestEventArgs<short> { Arg = arg });
-            }
+            Event?.Invoke(this, new TestEventArgs<short> { Arg = arg });
         }
 
         public double Method(string arg1, int arg2)
@@ -57,20 +51,20 @@ namespace Microsoft.ClearScript.Test
 
         public object this[string key]
         {
-            get { return dict[key]; }
-            set { dict[key] = value; }
+            get => dict[key];
+            set => dict[key] = value;
         }
 
         public object this[int index]
         {
-            get { return dict[index.ToString(CultureInfo.InvariantCulture)]; }
-            set { dict[index.ToString(CultureInfo.InvariantCulture)] = value; }
+            get => dict[index.ToString(CultureInfo.InvariantCulture)];
+            set => dict[index.ToString(CultureInfo.InvariantCulture)] = value;
         }
 
         public object this[object i1, object i2, object i3, object i4]
         {
-            get { return dict[string.Join(":", i1, i2, i3, i4)]; }
-            set { dict[string.Join(":", i1, i2, i3, i4)] = value; }
+            get => dict[string.Join(":", i1, i2, i3, i4)];
+            set => dict[string.Join(":", i1, i2, i3, i4)] = value;
         }
 
         #region Implementation of ITestInterface
@@ -80,18 +74,12 @@ namespace Microsoft.ClearScript.Test
         public TestEnum InterfaceEnumProperty { get; set; }
         public TimeSpan InterfaceStructProperty { get; set; }
 
-        public byte InterfaceReadOnlyProperty
-        {
-            get { return 17; }
-        }
+        public byte InterfaceReadOnlyProperty => 17;
 
         public event EventHandler<TestEventArgs<short>> InterfaceEvent;
         public void InterfaceFireEvent(short arg)
         {
-            if (InterfaceEvent != null)
-            {
-                InterfaceEvent(this, new TestEventArgs<short> { Arg = arg });
-            }
+            InterfaceEvent?.Invoke(this, new TestEventArgs<short> { Arg = arg });
         }
 
         public double InterfaceMethod(string arg1, int arg2)
@@ -123,24 +111,18 @@ namespace Microsoft.ClearScript.Test
         TestEnum IExplicitTestInterface.ExplicitInterfaceEnumProperty { get; set; }
         TimeSpan IExplicitTestInterface.ExplicitInterfaceStructProperty { get; set; }
 
-        byte IExplicitTestInterface.ExplicitInterfaceReadOnlyProperty
-        {
-            get { return 17; }
-        }
+        byte IExplicitTestInterface.ExplicitInterfaceReadOnlyProperty => 17;
 
         private event EventHandler<TestEventArgs<short>> ExplicitInterfaceEventImpl;
         event EventHandler<TestEventArgs<short>> IExplicitTestInterface.ExplicitInterfaceEvent
         {
-            add { ExplicitInterfaceEventImpl += value; }
-            remove { ExplicitInterfaceEventImpl -= value; }
+            add => ExplicitInterfaceEventImpl += value;
+            remove => ExplicitInterfaceEventImpl -= value;
         }
 
         void IExplicitTestInterface.ExplicitInterfaceFireEvent(short arg)
         {
-            if (ExplicitInterfaceEventImpl != null)
-            {
-                ExplicitInterfaceEventImpl(this, new TestEventArgs<short> { Arg = arg });
-            }
+            ExplicitInterfaceEventImpl?.Invoke(this, new TestEventArgs<short> { Arg = arg });
         }
 
         double IExplicitTestInterface.ExplicitInterfaceMethod(string arg1, int arg2)

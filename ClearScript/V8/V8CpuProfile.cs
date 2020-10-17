@@ -56,7 +56,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <remarks>
         /// See the
-        /// <see href="https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json">V8 Inspector JSON Protocol</see>
+        /// <see href="https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json">V8 Inspector JSON Protocol</see>
         /// for schema details.
         /// </remarks>
         /// <returns>A JSON representation of the profile in V8 Inspector format.</returns>
@@ -75,12 +75,12 @@ namespace Microsoft.ClearScript.V8
         /// <param name="writer">The text writer to which to write the profile.</param>
         /// <remarks>
         /// See the
-        /// <see href="https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json">V8 Inspector JSON Protocol</see>
+        /// <see href="https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json">V8 Inspector JSON Protocol</see>
         /// for schema details.
         /// </remarks>
         public void WriteJson(TextWriter writer)
         {
-            // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json
+            // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
             writer.Write('{');
             {
@@ -95,12 +95,12 @@ namespace Microsoft.ClearScript.V8
 
         internal Node FindNode(ulong nodeId)
         {
-            return (RootNode != null) ? RootNode.FindNode(nodeId) : null;
+            return RootNode?.FindNode(nodeId);
         }
 
         private void WriteNodesJson(TextWriter writer)
         {
-            // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json
+            // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
             writer.Write("\"nodes\":[");
             {
@@ -120,7 +120,7 @@ namespace Microsoft.ClearScript.V8
 
         private void WriteSamplesJson(TextWriter writer)
         {
-            // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json
+            // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
             if ((Samples != null) && (Samples.Count > 0))
             {
@@ -130,7 +130,7 @@ namespace Microsoft.ClearScript.V8
 
         private void WriteTimeDeltasJson(TextWriter writer)
         {
-            // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json
+            // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
             if ((Samples != null) && (Samples.Count > 0))
             {
@@ -254,7 +254,7 @@ namespace Microsoft.ClearScript.V8
 
             internal void WriteJson(TextWriter writer, Queue<Node> queue)
             {
-                // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json
+                // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
                 writer.Write('{');
                 {
@@ -276,7 +276,7 @@ namespace Microsoft.ClearScript.V8
 
             private void WriteCallFrameJson(TextWriter writer)
             {
-                // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json
+                // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
                 writer.Write(",\"callFrame\":{");
                 {
@@ -291,7 +291,7 @@ namespace Microsoft.ClearScript.V8
 
             private void WriteChildrenJson(TextWriter writer, Queue<Node> queue)
             {
-                // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json
+                // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
                 if ((ChildNodes != null) && (ChildNodes.Count > 0))
                 {
@@ -302,7 +302,7 @@ namespace Microsoft.ClearScript.V8
 
             private void WritePositionTicksJson(TextWriter writer)
             {
-                // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json
+                // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
                 if ((HitLines != null) && (HitLines.Count > 0))
                 {
@@ -342,7 +342,7 @@ namespace Microsoft.ClearScript.V8
 
                 internal void WriteJson(TextWriter writer)
                 {
-                    // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/master/src/inspector/js_protocol-1.3.json
+                    // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
                     writer.Write("{{\"line\":{0},\"ticks\":{1}}}", LineNumber, HitCount);
                 }

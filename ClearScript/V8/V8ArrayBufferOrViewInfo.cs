@@ -14,14 +14,14 @@ namespace Microsoft.ClearScript.V8
             Length = length;
         }
 
-        public V8ArrayBufferOrViewKind Kind { get; private set; }
+        public V8ArrayBufferOrViewKind Kind { get; }
 
-        public IV8Object ArrayBuffer { get; private set; }
+        public IV8Object ArrayBuffer { get; }
 
-        public ulong Offset { get; private set; }
+        public ulong Offset { get; }
 
-        public ulong Size { get; private set; }
+        public ulong Size { get; }
 
-        public ulong Length { get; private set; }
+        public ulong Length { get; }
     }
 }

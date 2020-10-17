@@ -33,13 +33,11 @@ namespace Microsoft.ClearScript.Windows
         private WindowsScriptEngineFlags engineFlags;
 
         private readonly HostItemMap hostItemMap = new HostItemMap();
-        private readonly HostItemCollateral hostItemCollateral = new HostItemCollateral();
         private readonly object script;
 
         private ProcessDebugManagerWrapper processDebugManager;
         private DebugApplicationWrapper debugApplication;
         private uint debugApplicationCookie;
-        private readonly IUniqueNameManager debugDocumentNameManager = new UniqueFileNameManager();
 
         private bool sourceManagement;
         private readonly DebugDocumentMap debugDocumentMap = new DebugDocumentMap();
@@ -161,15 +159,13 @@ namespace Microsoft.ClearScript.Windows
 
         private object GetScriptDispatch()
         {
-            object scriptDispatch;
-            activeScript.GetScriptDispatch(null, out scriptDispatch);
+            activeScript.GetScriptDispatch(null, out var scriptDispatch);
             return scriptDispatch;
         }
 
         private void Parse(UniqueDocumentInfo documentInfo, string code, ScriptTextFlags flags, IntPtr pVarResult, out EXCEPINFO excepInfo)
         {
-            DebugDocument debugDocument;
-            var sourceContext = CreateDebugDocument(documentInfo, code, out debugDocument);
+            var sourceContext = CreateDebugDocument(documentInfo, code, out var debugDocument);
             if (sourceContext != UIntPtr.Zero)
             {
                 flags |= ScriptTextFlags.HostManagesSource;
@@ -212,14 +208,11 @@ namespace Microsoft.ClearScript.Windows
             Debug.Assert(processDebugManager != null);
             var stackTrace = string.Empty;
 
-            IEnumDebugStackFrames enumFrames;
-            activeScript.EnumStackFrames(out enumFrames);
+            activeScript.EnumStackFrames(out var enumFrames);
 
             while (true)
             {
-                DebugStackFrameDescriptor descriptor;
-                uint countFetched;
-                enumFrames.Next(1, out descriptor, out countFetched);
+                enumFrames.Next(1, out var descriptor, out var countFetched);
                 if (countFetched < 1)
                 {
                     break;
@@ -227,30 +220,21 @@ namespace Microsoft.ClearScript.Windows
 
                 try
                 {
-                    string description;
-                    descriptor.Frame.GetDescriptionString(true, out description);
+                    descriptor.Frame.GetDescriptionString(true, out var description);
+                    descriptor.Frame.GetCodeContext(out var codeContext);
 
-                    IDebugCodeContext codeContext;
-                    descriptor.Frame.GetCodeContext(out codeContext);
-
-                    IDebugDocumentContext documentContext;
-                    codeContext.GetDocumentContext(out documentContext);
+                    codeContext.GetDocumentContext(out var documentContext);
                     if (documentContext == null)
                     {
                         stackTrace += MiscHelpers.FormatInvariant("    at {0}\n", description);
                     }
                     else
                     {
-                        IDebugDocument document;
-                        documentContext.GetDocument(out document);
+                        documentContext.GetDocument(out var document);
                         var documentText = (IDebugDocumentText)document;
 
-                        string documentName;
-                        document.GetName(DocumentNameType.UniqueTitle, out documentName);
-
-                        uint position;
-                        uint length;
-                        documentText.GetPositionOfContext(documentContext, out position, out length);
+                        document.GetName(DocumentNameType.UniqueTitle, out var documentName);
+                        documentText.GetPositionOfContext(documentContext, out var position, out var length);
 
                         using (var bufferBlock = new CoTaskMemArrayBlock(sizeof(char), (int)length))
                         {
@@ -258,10 +242,7 @@ namespace Microsoft.ClearScript.Windows
                             documentText.GetText(position, bufferBlock.Addr, IntPtr.Zero, ref lengthReturned, length);
                             var codeLine = Marshal.PtrToStringUni(bufferBlock.Addr, (int)lengthReturned);
 
-                            uint lineNumber;
-                            uint offsetInLine;
-                            documentText.GetLineOfPosition(position, out lineNumber, out offsetInLine);
-
+                            documentText.GetLineOfPosition(position, out var lineNumber, out var offsetInLine);
                             stackTrace += MiscHelpers.FormatInvariant("    at {0} ({1}:{2}:{3}) -> {4}\n", description, documentName, lineNumber, offsetInLine, codeLine);
                         }
                     }
@@ -290,8 +271,7 @@ namespace Microsoft.ClearScript.Windows
         {
             while (true)
             {
-                var scriptMarshalWrapper = item as IScriptMarshalWrapper;
-                if (scriptMarshalWrapper != null)
+                if (item is IScriptMarshalWrapper scriptMarshalWrapper)
                 {
                     item = scriptMarshalWrapper.Unwrap();
                     if (ReferenceEquals(item, scriptMarshalWrapper))
@@ -302,8 +282,7 @@ namespace Microsoft.ClearScript.Windows
                     continue;
                 }
 
-                var hostTarget = item as HostTarget;
-                if (hostTarget != null)
+                if (item is HostTarget hostTarget)
                 {
                     item = hostTarget.Target;
                     if (ReferenceEquals(item, hostTarget))
@@ -364,8 +343,7 @@ namespace Microsoft.ClearScript.Windows
                 return new CurrencyWrapper(obj);
             }
 
-            var hostItem = obj as HostItem;
-            if (hostItem != null)
+            if (obj is HostItem hostItem)
             {
                 if ((hostItem.Engine == this) && (hostItem.Flags == flags))
                 {
@@ -381,8 +359,7 @@ namespace Microsoft.ClearScript.Windows
                 obj = hostTarget.Target;
             }
 
-            var scriptItem = obj as ScriptItem;
-            if (scriptItem != null)
+            if (obj is ScriptItem scriptItem)
             {
                 if (scriptItem.Engine == this)
                 {
@@ -392,8 +369,7 @@ namespace Microsoft.ClearScript.Windows
 
             if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalArraysByValue))
             {
-                var array = obj as Array;
-                if ((array != null) && ((hostTarget == null) || (typeof(Array).IsAssignableFrom(hostTarget.Type))))
+                if ((obj is Array array) && ((hostTarget == null) || (typeof(Array).IsAssignableFrom(hostTarget.Type))))
                 {
                     bool alreadyMarshaled;
                     if (marshaledArraySet != null)
@@ -435,14 +411,12 @@ namespace Microsoft.ClearScript.Windows
                 return null;
             }
 
-            object result;
-            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, out result))
+            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, out var result))
             {
                 return result;
             }
 
-            var array = obj as Array;
-            if (array != null)
+            if (obj is Array array)
             {
                 // COM interop converts VBScript arrays to managed arrays
 
@@ -466,14 +440,12 @@ namespace Microsoft.ClearScript.Windows
                 return array;
             }
 
-            var hostTarget = obj as HostTarget;
-            if (hostTarget != null)
+            if (obj is HostTarget hostTarget)
             {
                 return preserveHostTarget ? hostTarget : hostTarget.Target;
             }
 
-            var hostItem = obj as HostItem;
-            if (hostItem != null)
+            if (obj is HostItem hostItem)
             {
                 return preserveHostTarget ? hostItem.Target : hostItem.Unwrap();
             }
@@ -502,19 +474,21 @@ namespace Microsoft.ClearScript.Windows
 
         private void ThrowScriptError(Exception exception)
         {
-            if (CurrentScriptFrame.ScriptError != null || CurrentScriptFrame.PendingScriptError != null)
+            if (exception is COMException comException)
             {
-                // a script error was reported; the corresponding exception should be in the script frame
-                ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
-            }
-            var comException = exception as COMException;
-            if (comException != null)
-            {
-                if (comException.ErrorCode == HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
+                if (comException.ErrorCode == HResult.SCRIPT_E_REPORTED)
+                {
+                    // a script error was reported; the corresponding exception should be in the script frame
+                    ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
+                }
+                else if (comException.ErrorCode == HResult.CLEARSCRIPT_E_HOSTEXCEPTION)
                 {
                     // A host exception surrogate passed through the COM boundary; this happens
                     // when some script engines are invoked via script item access rather than
-                    // script execution. Chain the host exception to a new script exception.
+                    // script execution. Use the exception in the script frame if one is available.
+                    // Otherwise chain the host exception to a new script exception.
+
+                    ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
 
                     var hostException = CurrentScriptFrame.HostException;
                     if (hostException != null)
@@ -522,6 +496,13 @@ namespace Microsoft.ClearScript.Windows
                         throw new ScriptEngineException(Name, hostException.Message, null, HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
                     }
                 }
+            }
+            else
+            {
+                // It's likely that an error occurred in a DirectAccess object. Throw the exception
+                // in the script frame if one is available; otherwise do nothing.
+
+                ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
             }
         }
 
@@ -563,7 +544,7 @@ namespace Microsoft.ClearScript.Windows
         public override string GetStackTrace()
         {
             VerifyNotDisposed();
-            return (processDebugManager != null) ? ScriptInvoke(() => GetStackTraceInternal()) : string.Empty;
+            return (processDebugManager != null) ? ScriptInvoke(GetStackTraceInternal) : string.Empty;
         }
 
         /// <summary>
@@ -594,10 +575,7 @@ namespace Microsoft.ClearScript.Windows
 
         #region ScriptEngine overrides (internal members)
 
-        internal override IUniqueNameManager DocumentNameManager
-        {
-            get { return debugDocumentNameManager; }
-        }
+        internal override IUniqueNameManager DocumentNameManager { get; } = new UniqueFileNameManager();
 
         internal override void AddHostItem(string itemName, HostItemFlags flags, object item)
         {
@@ -608,8 +586,7 @@ namespace Microsoft.ClearScript.Windows
 
             ScriptInvoke(() =>
             {
-                object marshaledItem;
-                if (!flags.HasFlag(HostItemFlags.DirectAccess) || !GetDirectAccessItem(item, out marshaledItem))
+                if (!flags.HasFlag(HostItemFlags.DirectAccess) || !GetDirectAccessItem(item, out var marshaledItem))
                 {
                     marshaledItem = MarshalToScript(item, flags);
                     if (!(marshaledItem is HostItem))
@@ -681,26 +658,22 @@ namespace Microsoft.ClearScript.Windows
 
         internal sealed override object ExecuteRaw(UniqueDocumentInfo documentInfo, string code, bool evaluate)
         {
-            EXCEPINFO excepInfo;
             if (!evaluate)
             {
                 const ScriptTextFlags flags = ScriptTextFlags.IsVisible;
-                Parse(documentInfo, code, flags, IntPtr.Zero, out excepInfo);
+                Parse(documentInfo, code, flags, IntPtr.Zero, out _);
                 return null;
             }
 
             using (var resultVariantBlock = new CoTaskMemVariantBlock())
             {
                 const ScriptTextFlags flags = ScriptTextFlags.IsExpression;
-                Parse(documentInfo, code, flags, resultVariantBlock.Addr, out excepInfo);
+                Parse(documentInfo, code, flags, resultVariantBlock.Addr, out _);
                 return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
             }
         }
 
-        internal override HostItemCollateral HostItemCollateral
-        {
-            get { return hostItemCollateral; }
-        }
+        internal override HostItemCollateral HostItemCollateral { get; } = new HostItemCollateral();
 
         #endregion
 
@@ -802,12 +775,13 @@ namespace Microsoft.ClearScript.Windows
         /// </remarks>
         protected override void Dispose(bool disposing)
         {
-            VerifyAccess();
             if (disposedFlag.Set())
             {
                 base.Dispose(disposing);
                 if (disposing)
                 {
+                    dispatcher.VerifyAccess();
+
                     if (sourceManagement)
                     {
                         debugDocumentMap.Values.ForEach(debugDocument => debugDocument.Close());
@@ -833,8 +807,7 @@ namespace Microsoft.ClearScript.Windows
         {
             return debugDocumentMap.Values.Select(debugDocument =>
             {
-                string name;
-                debugDocument.GetName(DocumentNameType.UniqueTitle, out name);
+                debugDocument.GetName(DocumentNameType.UniqueTitle, out var name);
                 return name;
             });
         }

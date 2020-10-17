@@ -9,17 +9,15 @@ namespace Microsoft.ClearScript.Util.COM
     {
         public static IntPtr CreateInstance<T>(string progID)
         {
-            IntPtr pInterface;
             var clsid = CLSIDFromProgID(progID);
             var iid = typeof(T).GUID;
-            HResult.Check(NativeMethods.CoCreateInstance(ref clsid, IntPtr.Zero, 1, ref iid, out pInterface));
+            HResult.Check(NativeMethods.CoCreateInstance(ref clsid, IntPtr.Zero, 1, ref iid, out var pInterface));
             return pInterface;
         }
 
         private static Guid CLSIDFromProgID(string progID)
         {
-            Guid clsid;
-            if (!Guid.TryParseExact(progID, "B", out clsid))
+            if (!Guid.TryParseExact(progID, "B", out var clsid))
             {
                 HResult.Check(NativeMethods.CLSIDFromProgID(progID, out clsid));
             }

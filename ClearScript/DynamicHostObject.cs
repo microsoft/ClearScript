@@ -38,8 +38,7 @@ namespace Microsoft.ClearScript
 
         internal static bool HasMember(IDynamicMetaObjectProvider metaObjectProvider, DynamicMetaObject metaObject, string name, bool ignoreCase)
         {
-            var hostObject = metaObjectProvider as DynamicHostObject;
-            if (hostObject != null)
+            if (metaObjectProvider is DynamicHostObject hostObject)
             {
                 return hostObject.HasMember(name, ignoreCase);
             }

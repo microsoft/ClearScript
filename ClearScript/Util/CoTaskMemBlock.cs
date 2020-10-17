@@ -53,7 +53,7 @@ namespace Microsoft.ClearScript.Util
         {
             if ((index < 0) || (index >= length))
             {
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
             }
 
             if (Addr == IntPtr.Zero)
@@ -117,7 +117,7 @@ namespace Microsoft.ClearScript.Util
         {
             if ((index < 0) || (index >= length))
             {
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
             }
 
             if (Addr == IntPtr.Zero)
@@ -175,7 +175,7 @@ namespace Microsoft.ClearScript.Util
         {
             if ((index < 0) || (index >= args.Length))
             {
-                throw new ArgumentOutOfRangeException("index");
+                throw new ArgumentOutOfRangeException(nameof(index));
             }
 
             if (Addr == IntPtr.Zero)

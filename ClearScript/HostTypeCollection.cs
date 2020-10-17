@@ -173,8 +173,7 @@ namespace Microsoft.ClearScript
             var segments = name.Split('.');
             foreach (var segment in segments)
             {
-                object node;
-                if (!namespaceNode.TryGetValue(segment, out node))
+                if (!namespaceNode.TryGetValue(segment, out var node))
                 {
                     return null;
                 }
@@ -200,8 +199,7 @@ namespace Microsoft.ClearScript
             {
                 if (attrScope.Value.typekind == TYPEKIND.TKIND_ALIAS)
                 {
-                    ITypeInfo refTypeInfo;
-                    typeInfo.GetRefTypeInfo(unchecked((int)attrScope.Value.tdescAlias.lpValue.ToInt64()), out refTypeInfo);
+                    typeInfo.GetRefTypeInfo(unchecked((int)attrScope.Value.tdescAlias.lpValue.ToInt64()), out var refTypeInfo);
 
                     var node = AddEnumTypeInfoInternal(refTypeInfo);
                     if (node != null)
@@ -261,8 +259,7 @@ namespace Microsoft.ClearScript
             {
                 PropertyBag innerNode;
 
-                object node;
-                if (!enumTypeInfoNode.TryGetValue(segment, out node))
+                if (!enumTypeInfoNode.TryGetValue(segment, out var node))
                 {
                     innerNode = new PropertyBag(true);
                     enumTypeInfoNode.SetPropertyNoCheck(segment, innerNode);
@@ -313,8 +310,7 @@ namespace Microsoft.ClearScript
             {
                 PropertyBag innerNode;
 
-                object node;
-                if (!namespaceNode.TryGetValue(segment, out node))
+                if (!namespaceNode.TryGetValue(segment, out var node))
                 {
                     innerNode = new PropertyBag(true);
                     namespaceNode.SetPropertyNoCheck(segment, innerNode);
@@ -336,16 +332,14 @@ namespace Microsoft.ClearScript
 
         private static void AddTypeToNamespaceNode(PropertyBag node, Type type)
         {
-            object value;
             var name = type.GetRootName();
-            if (!node.TryGetValue(name, out value))
+            if (!node.TryGetValue(name, out var value))
             {
                 node.SetPropertyNoCheck(name, HostType.Wrap(type));
                 return;
             }
 
-            var hostType = value as HostType;
-            if (hostType != null)
+            if (value is HostType hostType)
             {
                 var types = type.ToEnumerable().Concat(hostType.Types).ToArray();
 

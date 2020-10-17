@@ -11,10 +11,7 @@ namespace Microsoft.ClearScript.Util
         private readonly object dataLock = new object();
         private List<WeakReference> weakRefs = new List<WeakReference>();
 
-        public int Count
-        {
-            get { return GetItems().Count; }
-        }
+        public int Count => GetItems().Count;
 
         public bool Contains(T item)
         {
@@ -57,8 +54,7 @@ namespace Microsoft.ClearScript.Util
             var tempWeakRefs = new List<WeakReference>();
             foreach (var weakRef in weakRefs)
             {
-                var item = weakRef.Target as T;
-                if (item != null)
+                if (weakRef.Target is T item)
                 {
                     items.Add(item);
                     tempWeakRefs.Add(weakRef);

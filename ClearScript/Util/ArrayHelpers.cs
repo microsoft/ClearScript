@@ -47,12 +47,7 @@ namespace Microsoft.ClearScript.Util
 
         private static class EmptyArray<T>
         {
-            private static readonly T[] value = new T[0];
-
-            public static T[] Value
-            {
-                get { return value; }
-            }
+            public static T[] Value { get; } = new T[0];
         }
 
         #endregion

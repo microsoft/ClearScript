@@ -76,8 +76,8 @@ namespace Microsoft.ClearScript.V8
         [Obsolete("Use MaxNewSpaceSize instead.")]
         public int MaxYoungSpaceSize
         {
-            get { return MaxNewSpaceSize; }
-            set { MaxNewSpaceSize = value; }
+            get => MaxNewSpaceSize;
+            set => MaxNewSpaceSize = value;
         }
     }
 }

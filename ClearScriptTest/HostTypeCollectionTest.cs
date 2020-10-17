@@ -53,14 +53,11 @@ namespace Microsoft.ClearScript.Test
 
         private static bool ReflectionFilter(Type type)
         {
-            // ReSharper disable once PossibleNullReferenceException
             return (type != typeof(Type)) && !type.FullName.StartsWith("System.Reflection.", StringComparison.Ordinal);
         }
 
         internal static void Test(HostTypeCollection typeCollection, string[] assemblyNames, Predicate<Type> filter, Func<Type, Type, bool> comparer)
         {
-            // ReSharper disable CollectionNeverQueried.Local
-
             typeCollection = typeCollection ?? new HostTypeCollection(filter, assemblyNames);
             var allNodes = GetLeafNodes(typeCollection).OrderBy(hostType => hostType.Type.GetLocator()).ToArray();
 
@@ -83,8 +80,6 @@ namespace Microsoft.ClearScript.Test
             {
                 Assert.IsTrue(allNodes.All(hostType => hostType.Types.All(type => filter(type))));
             }
-
-            // ReSharper restore CollectionNeverQueried.Local
         }
 
         private static IEnumerable<Type> GetImportableTypes(string[] assemblyNames, Predicate<Type> filter)

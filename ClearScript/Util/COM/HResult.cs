@@ -31,6 +31,9 @@ namespace Microsoft.ClearScript.Util.COM
         public static readonly int E_FAIL = 0x80004005U.ToSigned();
         public static readonly int E_INVALIDARG = 0x80070057U.ToSigned();
 
+        public static readonly int CO_E_CLASSSTRING = 0x800401F3U.ToSigned();
+        public static readonly int REGDB_E_CLASSNOTREG = 0x80040154U.ToSigned();
+
         public static readonly int DISP_E_MEMBERNOTFOUND = 0x80020003U.ToSigned();
         public static readonly int DISP_E_UNKNOWNNAME = 0x80020006U.ToSigned();
         public static readonly int DISP_E_EXCEPTION = 0x80020009U.ToSigned();

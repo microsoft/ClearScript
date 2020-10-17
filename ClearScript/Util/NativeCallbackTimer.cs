@@ -27,8 +27,7 @@ namespace Microsoft.ClearScript.Util
         {
             if (!disposedFlag.IsSet)
             {
-                bool result;
-                if (MiscHelpers.Try(out result, () => timer.Change(dueTime, period)))
+                if (MiscHelpers.Try(out var result, () => timer.Change(dueTime, period)))
                 {
                     return result;
                 }

@@ -10,11 +10,11 @@ namespace Microsoft.ClearScript.Util
     {
         public static T GetMethodDelegate<T>(IntPtr pInterface, int methodIndex) where T : class
         {
-            var pMethod = GetMethodPointer(pInterface, methodIndex);
+            var pMethod = GetMethodPtr(pInterface, methodIndex);
             return Marshal.GetDelegateForFunctionPointer(pMethod, typeof(T)) as T;
         }
 
-        public static IntPtr GetMethodPointer(IntPtr pInterface, int methodIndex)
+        public static IntPtr GetMethodPtr(IntPtr pInterface, int methodIndex)
         {
             var pVTable = Marshal.ReadIntPtr(pInterface);
             return Marshal.ReadIntPtr(pVTable + methodIndex * IntPtr.Size);
@@ -28,11 +28,11 @@ namespace Microsoft.ClearScript.Util
         public static T SetMethodDelegate<T>(IntPtr pInterface, int methodIndex, T del) where T : class
         {
             var pMethod = Marshal.GetFunctionPointerForDelegate((Delegate)(object)del);
-            SetMethodPointer(pInterface, methodIndex, pMethod);
+            SetMethodPtr(pInterface, methodIndex, pMethod);
             return del;
         }
 
-        public static IntPtr SetMethodPointer(IntPtr pInterface, int methodIndex, IntPtr pMethod)
+        public static IntPtr SetMethodPtr(IntPtr pInterface, int methodIndex, IntPtr pMethod)
         {
             var pVTable = Marshal.ReadIntPtr(pInterface);
             WriteMethodPtr(pVTable + methodIndex * IntPtr.Size, pMethod);
@@ -41,8 +41,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool WriteMethodPtr(IntPtr pSlot, IntPtr pMethod)
         {
-            uint oldProtect;
-            if (NativeMethods.VirtualProtect(pSlot, (UIntPtr)IntPtr.Size, 0x04 /*PAGE_READWRITE*/, out oldProtect))
+            if (NativeMethods.VirtualProtect(pSlot, (UIntPtr)IntPtr.Size, 0x04 /*PAGE_READWRITE*/, out var oldProtect))
             {
                 Marshal.WriteIntPtr(pSlot, pMethod);
                 NativeMethods.VirtualProtect(pSlot, (UIntPtr)IntPtr.Size, oldProtect, out oldProtect);

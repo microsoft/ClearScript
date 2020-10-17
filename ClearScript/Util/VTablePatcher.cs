@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace Microsoft.ClearScript.Util
 {
-    [SuppressMessage("ReSharper", "CommentTypo")]
+    [SuppressMessage("ReSharper", "CommentTypo", Justification = "This class uses comments to show machine code disassembly.")]
     internal abstract class VTablePatcher
     {
         private static readonly HashSet<IntPtr> patchedVTables = new HashSet<IntPtr>();
@@ -20,10 +20,7 @@ namespace Microsoft.ClearScript.Util
             return Environment.Is64BitProcess ? VTablePatcher64.Instance : VTablePatcher32.Instance;
         }
 
-        public static object PatchLock
-        {
-            get { return patchedVTables; }
-        }
+        public static object PatchLock => patchedVTables;
 
         public abstract void PatchDispatchEx(IntPtr pDispatchEx);
 

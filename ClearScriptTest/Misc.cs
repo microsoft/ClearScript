@@ -42,11 +42,9 @@ namespace Microsoft.ClearScript.Test
 
     public class NullResultWrappingTestObject<T>
     {
-        private readonly T value;
-
         public NullResultWrappingTestObject(T value)
         {
-            this.value = value;
+            Value = value;
         }
 
         public T Method(T arg)
@@ -59,12 +57,12 @@ namespace Microsoft.ClearScript.Test
             return arg;
         }
 
-        public T Value { get { return value; } }
+        public T Value { get; }
 
-        public T NullValue { get { return default(T); } }
+        public T NullValue => default;
 
         [ScriptMember(ScriptMemberFlags.WrapNullResult)]
-        public T WrappedNullValue { get { return NullValue; } }
+        public T WrappedNullValue => NullValue;
     }
 
     public class DefaultPropertyTestObject
@@ -74,14 +72,14 @@ namespace Microsoft.ClearScript.Test
 
         public object this[string name]
         {
-            get { return ((IDictionary)byName)[name]; }
-            set { byName[name] = value; }
+            get => ((IDictionary)byName)[name];
+            set => byName[name] = value;
         }
 
         public object this[DayOfWeek day]
         {
-            get { return ((IDictionary)byDay)[day]; }
-            set { byDay[day] = value; }
+            get => ((IDictionary)byDay)[day];
+            set => byDay[day] = value;
         }
 
         [DispId(0)]
@@ -92,7 +90,7 @@ namespace Microsoft.ClearScript.Test
     {
         public readonly DefaultPropertyTestObject Field = new DefaultPropertyTestObject();
 
-        public DefaultPropertyTestObject Property { get { return Field; } }
+        public DefaultPropertyTestObject Property => Field;
 
         public DefaultPropertyTestObject Method()
         {
@@ -131,7 +129,7 @@ namespace Microsoft.ClearScript.Test
 
         public static double CalcTestValue(Guid callerGuid, params object[] args)
         {
-            var hashCode = args.Aggregate(callerGuid.GetHashCode(), (currentHashCode, value) => unchecked((currentHashCode * 31) + ((value != null) ? value.GetHashCode() : 0)));
+            var hashCode = args.Aggregate(callerGuid.GetHashCode(), (currentHashCode, value) => unchecked((currentHashCode * 31) + (value?.GetHashCode() ?? 0)));
             return hashCode * Math.E / Math.PI;
         }
 
@@ -202,8 +200,7 @@ namespace Microsoft.ClearScript.Test
         {
             while (exception != null)
             {
-                var scriptError = exception as IScriptEngineException;
-                if (scriptError != null)
+                if (exception is IScriptEngineException scriptError)
                 {
                     AssertValidException(scriptError, checkScriptStackTrace);
                 }
@@ -218,8 +215,7 @@ namespace Microsoft.ClearScript.Test
 
         public static string GetCOMObjectTypeName(object obj)
         {
-            var dispatch = obj as IDispatch;
-            if (dispatch != null)
+            if (obj is IDispatch dispatch)
             {
                 var typeInfo = dispatch.GetTypeInfo();
                 if (typeInfo != null)

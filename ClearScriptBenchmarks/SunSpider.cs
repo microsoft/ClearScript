@@ -131,10 +131,7 @@ namespace Microsoft.ClearScript.Test
 
             public string innerHTML { get; set; }
 
-            public object parent
-            {
-                get { return this; }
-            }
+            public object parent => this;
 
             public void recordResult(int time)
             {

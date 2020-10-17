@@ -11,18 +11,12 @@ namespace Microsoft.ClearScript.JavaScript
         /// <summary>
         /// Gets the document category for standard <see href="https://www.ecma-international.org/ecma-262/6.0/#sec-modules">ECMAScript 6</see> modules.
         /// </summary>
-        public static DocumentCategory Standard
-        {
-            get { return StandardModule.Instance; }
-        }
+        public static DocumentCategory Standard => StandardModule.Instance;
 
         /// <summary>
         /// Gets the document category for <see href="http://wiki.commonjs.org/wiki/Modules">CommonJS</see> modules.
         /// </summary>
-        public static DocumentCategory CommonJS
-        {
-            get { return CommonJSModule.Instance; }
-        }
+        public static DocumentCategory CommonJS => CommonJSModule.Instance;
 
         #region Nested type: StandardModule
 
@@ -36,10 +30,7 @@ namespace Microsoft.ClearScript.JavaScript
 
             #region DocumentCategory overrides
 
-            internal override string DefaultName
-            {
-                get { return "Module"; }
-            }
+            internal override string DefaultName => "Module";
 
             #endregion
 
@@ -67,10 +58,7 @@ namespace Microsoft.ClearScript.JavaScript
 
             #region DocumentCategory overrides
 
-            internal override string DefaultName
-            {
-                get { return "Module"; }
-            }
+            internal override string DefaultName => "Module";
 
             #endregion
 

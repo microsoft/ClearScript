@@ -50,5 +50,4 @@ tlist.Item(1).Name = 'Ellis';
 tlist.Item(0).Name = 'Eóin';
 tlist.Item(1).Name = 'Shane';
 
-// ReSharper disable once WrongExpressionStatement
 Math.round(Math.sin(Math.PI) * 1000e16);

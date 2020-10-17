@@ -72,8 +72,10 @@
     <Compile Include="BindSignatureTest.cs" />
     <Compile Include="BugFixTest.cs" />
     <Compile Include="BugFixTest.NetFramework.cs" />
+    <Compile Include="BugFixTest.Windows.cs" />
     <Compile Include="CrossEngineTest.cs" />
     <Compile Include="DynamicHostItemTest.cs" />
+    <Compile Include="DynamicHostItemTest.Windows.cs" />
     <Compile Include="DynamicTestObject.cs" />
     <Compile Include="ExplicitBaseInterfaceMemberAccessTest.cs" />
     <Compile Include="BaseInterfaceMemberAccessTest.cs" />
@@ -95,6 +97,7 @@
     <Compile Include="JScriptEngineTest.cs" />
     <Compile Include="JScriptModuleTest.cs" />
     <Compile Include="Misc.NetFramework.cs" />
+    <Compile Include="PropertyBagTest.Windows.cs" />
     <Compile Include="ScriptAccessTest.cs" />
     <Compile Include="Misc.cs" />
     <None Include="packages.config" />
@@ -117,6 +120,7 @@
     <Compile Include="TypeRestrictionTest.cs" />
     <Compile Include="V8ArrayBufferOrViewTest.cs" />
     <Compile Include="V8ScriptEngineTest.cs" />
+    <Compile Include="V8ScriptEngineTest.Windows.cs" />
     <Compile Include="VBScriptEngineTest.cs" />
   </ItemGroup>
   <ItemGroup>

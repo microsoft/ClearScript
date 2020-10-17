@@ -38,8 +38,8 @@ namespace Microsoft.ClearScript
         /// </summary>
         public DocumentLoader Loader
         {
-            get { return loader ?? DocumentLoader.Default; }
-            set { loader = value; }
+            get => loader ?? DocumentLoader.Default;
+            set => loader = value;
         }
 
         /// <summary>
@@ -189,8 +189,7 @@ namespace Microsoft.ClearScript
 
         private Document FindSystemDocument(string identifier, DocumentCategory category)
         {
-            Document document;
-            if (systemDocumentMap.TryGetValue(Tuple.Create(identifier, category ?? DocumentCategory.Script), out document))
+            if (systemDocumentMap.TryGetValue(Tuple.Create(identifier, category ?? DocumentCategory.Script), out var document))
             {
                 return document;
             }

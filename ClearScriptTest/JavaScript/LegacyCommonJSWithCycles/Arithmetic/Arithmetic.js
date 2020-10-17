@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// ReSharper disable once UnusedLocals
 var Geometry = require("../Geometry/Geometry");
 
 exports.Module = module;

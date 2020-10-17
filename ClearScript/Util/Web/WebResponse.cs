@@ -21,7 +21,7 @@ namespace Microsoft.ClearScript.Util.Web
 
         public string ContentType { get; set; }
 
-        public Stream OutputStream { get; private set; }
+        public Stream OutputStream { get; }
 
         internal WebResponse(Socket socket, int statusCode)
         {

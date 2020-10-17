@@ -36,7 +36,6 @@ namespace Microsoft.ClearScript
         public ScriptEngineException()
             : base(defaultMessage)
         {
-            // ReSharper disable once RedundantBaseQualifier
             errorDetails = base.Message;
         }
 
@@ -47,7 +46,6 @@ namespace Microsoft.ClearScript
         public ScriptEngineException(string message)
             : base(MiscHelpers.EnsureNonBlank(message, defaultMessage))
         {
-            // ReSharper disable once RedundantBaseQualifier
             errorDetails = base.Message;
         }
 
@@ -59,7 +57,6 @@ namespace Microsoft.ClearScript
         public ScriptEngineException(string message, Exception innerException)
             : base(MiscHelpers.EnsureNonBlank(message, defaultMessage), innerException)
         {
-            // ReSharper disable once RedundantBaseQualifier
             errorDetails = base.Message;
         }
 
@@ -81,7 +78,6 @@ namespace Microsoft.ClearScript
             : base(MiscHelpers.EnsureNonBlank(message, defaultMessage), innerException)
         {
             this.engineName = engineName;
-            // ReSharper disable once RedundantBaseQualifier
             this.errorDetails = MiscHelpers.EnsureNonBlank(errorDetails, base.Message);
             this.isFatal = isFatal;
             this.executionStarted = executionStarted;
@@ -100,50 +96,32 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Gets an <see href="http://en.wikipedia.org/wiki/HRESULT">HRESULT</see> error code if one is available, zero otherwise.
         /// </summary>
-        int IScriptEngineException.HResult
-        {
-            get { return HResult; }
-        }
+        int IScriptEngineException.HResult => HResult;
 
         /// <summary>
         /// Gets the name associated with the script engine instance.
         /// </summary>
-        public string EngineName
-        {
-            get { return engineName; }
-        }
+        public string EngineName => engineName;
 
         /// <summary>
         /// Gets a detailed error message if one is available, <c>null</c> otherwise.
         /// </summary>
-        public string ErrorDetails
-        {
-            get { return errorDetails; }
-        }
+        public string ErrorDetails => errorDetails;
 
         /// <summary>
         /// Gets a value that indicates whether the exception represents a fatal error.
         /// </summary>
-        public bool IsFatal
-        {
-            get { return isFatal; }
-        }
+        public bool IsFatal => isFatal;
 
         /// <summary>
         /// Gets a value that indicates whether script code execution had started before the current exception was thrown.
         /// </summary>
-        public bool ExecutionStarted
-        {
-            get { return executionStarted; }
-        }
+        public bool ExecutionStarted => executionStarted;
 
         /// <summary>
         /// Gets the script exception that caused the current exception to be thrown, or <c>null</c> if one was not specified.
         /// </summary>
-        public dynamic ScriptException
-        {
-            get { return scriptException; }
-        }
+        public dynamic ScriptException => scriptException;
 
         #endregion
 

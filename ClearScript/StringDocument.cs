@@ -11,7 +11,6 @@ namespace Microsoft.ClearScript
     /// </summary>
     public class StringDocument : Document
     {
-        private readonly DocumentInfo info;
         private readonly byte[] contents;
 
         /// <summary>
@@ -21,7 +20,7 @@ namespace Microsoft.ClearScript
         /// <param name="contents">A string containing the document's contents.</param>
         public StringDocument(DocumentInfo info, string contents)
         {
-            this.info = info;
+            Info = info;
             this.contents = Encoding.UTF8.GetBytes(contents);
         }
 
@@ -30,10 +29,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Gets a structure containing meta-information for the document.
         /// </summary>
-        public override DocumentInfo Info
-        {
-            get { return info; }
-        }
+        public override DocumentInfo Info { get; }
 
         /// <summary>
         /// Gets a stream that provides read access to the document.
@@ -42,10 +38,7 @@ namespace Microsoft.ClearScript
         /// The <see cref="StringDocument"/> implementation of this property returns a
         /// <see cref="MemoryStream"/> instance.
         /// </remarks>
-        public override Stream Contents
-        {
-            get { return new MemoryStream(contents, false); }
-        }
+        public override Stream Contents => new MemoryStream(contents, false);
 
         /// <summary>
         /// Gets the document's character encoding.
@@ -53,10 +46,7 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// <see cref="StringDocument"/> instances return <see cref="System.Text.Encoding.UTF8"/> for this property.
         /// </remarks>
-        public override Encoding Encoding
-        {
-            get { return Encoding.UTF8; }
-        }
+        public override Encoding Encoding => Encoding.UTF8;
 
         #endregion
     }

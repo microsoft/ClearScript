@@ -303,7 +303,6 @@ namespace Microsoft.ClearScript.Util.Web
                     {
                         for (var segmentIndex = 0; segmentIndex < segmentLength; segmentIndex++)
                         {
-                            // ReSharper disable once PossibleNullReferenceException
                             segment[segmentIndex] ^= key[segmentIndex % 4];
                         }
                     }
@@ -323,7 +322,6 @@ namespace Microsoft.ClearScript.Util.Web
                     {
                         for (var segmentIndex = 0; segmentIndex < remainingLength; segmentIndex++)
                         {
-                            // ReSharper disable once PossibleNullReferenceException
                             segment[segmentIndex] ^= key[segmentIndex % 4];
                         }
                     }

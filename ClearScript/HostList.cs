@@ -29,15 +29,12 @@ namespace Microsoft.ClearScript
 
         #region IHostList implementation
 
-        public int Count
-        {
-            get { return list.Count; }
-        }
+        public int Count => list.Count;
 
         public object this[int index]
         {
-            get { return engine.PrepareResult(list[index], elementType, ScriptMemberFlags.None, true); }
-            set { list[index] = value; }
+            get => engine.PrepareResult(list[index], elementType, ScriptMemberFlags.None, true);
+            set => list[index] = value;
         }
 
         #endregion
@@ -56,14 +53,11 @@ namespace Microsoft.ClearScript
 
         #region IHostList implementation
 
-        public int Count
-        {
-            get { return list.Count; }
-        }
+        public int Count => list.Count;
 
         public object this[int index]
         {
-            get { return engine.PrepareResult(list[index], ScriptMemberFlags.None, true); }
+            get => engine.PrepareResult(list[index], ScriptMemberFlags.None, true);
 
             set
             {

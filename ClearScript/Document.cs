@@ -40,9 +40,6 @@ namespace Microsoft.ClearScript
         /// This property returns <c>null</c> if the document contains binary data or if its
         /// character encoding is unknown.
         /// </remarks>
-        public virtual Encoding Encoding
-        {
-            get { return null; }
-        }
+        public virtual Encoding Encoding => null;
     }
 }

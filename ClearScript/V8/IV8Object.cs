@@ -20,6 +20,7 @@ namespace Microsoft.ClearScript.V8
         object Invoke(bool asConstructor, object[] args);
         object InvokeMethod(string name, object[] args);
 
+        bool IsPromise();
         bool IsArray();
 
         bool IsArrayBufferOrView();

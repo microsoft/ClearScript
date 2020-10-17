@@ -55,7 +55,7 @@ namespace Microsoft.ClearScript.Windows
 
             public void Next(uint count, out DebugStackFrameDescriptor descriptor, out uint countFetched)
             {
-                descriptor = default(DebugStackFrameDescriptor);
+                descriptor = default;
                 countFetched = 0;
             }
 
@@ -129,11 +129,9 @@ namespace Microsoft.ClearScript.Windows
 
             if (flags.HasFlag(WindowsScriptEngineFlags.EnableStandardsMode))
             {
-                var activeScriptProperty = activeScript as IActiveScriptProperty;
-                if (activeScriptProperty != null)
+                if (activeScript is IActiveScriptProperty activeScriptProperty)
                 {
-                    object name;
-                    activeScriptProperty.GetProperty(ScriptProp.Name, IntPtr.Zero, out name);
+                    activeScriptProperty.GetProperty(ScriptProp.Name, IntPtr.Zero, out var name);
                     if (Equals(name, "JScript"))
                     {
                         object value = ScriptLanguageVersion.Standards;
@@ -211,10 +209,7 @@ namespace Microsoft.ClearScript.Windows
 
         public override void CollectGarbage(ScriptGCType type)
         {
-            if (activeScriptGarbageCollector != null)
-            {
-                activeScriptGarbageCollector.CollectGarbage(type);
-            }
+            activeScriptGarbageCollector?.CollectGarbage(type);
         }
 
         public override void Close()
@@ -287,11 +282,9 @@ namespace Microsoft.ClearScript.Windows
 
             if (flags.HasFlag(WindowsScriptEngineFlags.EnableStandardsMode))
             {
-                var activeScriptProperty = activeScript as IActiveScriptProperty;
-                if (activeScriptProperty != null)
+                if (activeScript is IActiveScriptProperty activeScriptProperty)
                 {
-                    object name;
-                    activeScriptProperty.GetProperty(ScriptProp.Name, IntPtr.Zero, out name);
+                    activeScriptProperty.GetProperty(ScriptProp.Name, IntPtr.Zero, out var name);
                     if (Equals(name, "JScript"))
                     {
                         object value = ScriptLanguageVersion.Standards;
@@ -369,10 +362,7 @@ namespace Microsoft.ClearScript.Windows
 
         public override void CollectGarbage(ScriptGCType type)
         {
-            if (activeScriptGarbageCollector != null)
-            {
-                activeScriptGarbageCollector.CollectGarbage(type);
-            }
+            activeScriptGarbageCollector?.CollectGarbage(type);
         }
 
         public override void Close()
@@ -423,8 +413,7 @@ namespace Microsoft.ClearScript.Windows
 
         public new static bool TryCreate(out ProcessDebugManagerWrapper wrapper)
         {
-            IProcessDebugManager32 processDebugManager;
-            if (MiscHelpers.TryCreateCOMObject("ProcessDebugManager", null, out processDebugManager))
+            if (MiscHelpers.TryCreateCOMObject("ProcessDebugManager", null, out IProcessDebugManager32 processDebugManager))
             {
                 wrapper = new ProcessDebugManagerWrapper32(processDebugManager);
                 return true;
@@ -441,8 +430,7 @@ namespace Microsoft.ClearScript.Windows
 
         public override void CreateApplication(out DebugApplicationWrapper applicationWrapper)
         {
-            IDebugApplication32 debugApplication;
-            processDebugManager.CreateApplication(out debugApplication);
+            processDebugManager.CreateApplication(out var debugApplication);
             applicationWrapper = DebugApplicationWrapper.Create(debugApplication);
         }
 
@@ -463,8 +451,7 @@ namespace Microsoft.ClearScript.Windows
 
         public new static bool TryCreate(out ProcessDebugManagerWrapper wrapper)
         {
-            IProcessDebugManager64 processDebugManager;
-            if (MiscHelpers.TryCreateCOMObject("ProcessDebugManager", null, out processDebugManager))
+            if (MiscHelpers.TryCreateCOMObject("ProcessDebugManager", null, out IProcessDebugManager64 processDebugManager))
             {
                 wrapper = new ProcessDebugManagerWrapper64(processDebugManager);
                 return true;
@@ -481,8 +468,7 @@ namespace Microsoft.ClearScript.Windows
 
         public override void CreateApplication(out DebugApplicationWrapper applicationWrapper)
         {
-            IDebugApplication64 debugApplication;
-            processDebugManager.CreateApplication(out debugApplication);
+            processDebugManager.CreateApplication(out var debugApplication);
             applicationWrapper = DebugApplicationWrapper.Create(debugApplication);
         }
 
@@ -535,8 +521,7 @@ namespace Microsoft.ClearScript.Windows
 
         public static IDebugApplication32 Unwrap(DebugApplicationWrapper wrapper)
         {
-            var wrapper32 = wrapper as DebugApplicationWrapper32;
-            return (wrapper32 != null) ? wrapper32.debugApplication : null;
+            return (wrapper is DebugApplicationWrapper32 wrapper32) ? wrapper32.debugApplication : null;
         }
 
         public override void SetName(string name)
@@ -576,8 +561,7 @@ namespace Microsoft.ClearScript.Windows
 
         public static IDebugApplication64 Unwrap(DebugApplicationWrapper wrapper)
         {
-            var wrapper64 = wrapper as DebugApplicationWrapper64;
-            return (wrapper64 != null) ? wrapper64.debugApplication : null;
+            return (wrapper is DebugApplicationWrapper64 wrapper64) ? wrapper64.debugApplication : null;
         }
 
         public override void SetName(string name)

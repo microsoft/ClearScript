@@ -17,18 +17,12 @@ namespace Microsoft.ClearScript.Test
         public static TestEnum StaticEnumProperty { get; set; }
         public static TimeSpan StaticStructProperty { get; set; }
 
-        public static byte StaticReadOnlyProperty
-        {
-            get { return 93; }
-        }
+        public static byte StaticReadOnlyProperty => 93;
 
         public static event EventHandler<TestEventArgs<short>> StaticEvent;
         public static void StaticFireEvent(short arg)
         {
-            if (StaticEvent != null)
-            {
-                StaticEvent(typeof(StaticTestClass), new TestEventArgs<short> { Arg = arg });
-            }
+            StaticEvent?.Invoke(typeof(StaticTestClass), new TestEventArgs<short> { Arg = arg });
         }
 
         public static double StaticMethod(string arg1, int arg2)

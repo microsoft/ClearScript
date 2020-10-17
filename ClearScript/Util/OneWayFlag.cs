@@ -9,10 +9,7 @@ namespace Microsoft.ClearScript.Util
     {
         private bool isSet;
 
-        public bool IsSet
-        {
-            get { return isSet; }
-        }
+        public bool IsSet => isSet;
 
         public bool Set()
         {
@@ -24,10 +21,7 @@ namespace Microsoft.ClearScript.Util
     {
         private int isSet;
 
-        public bool IsSet
-        {
-            get { return isSet != 0; }
-        }
+        public bool IsSet => isSet != 0;
 
         public bool Set()
         {

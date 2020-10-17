@@ -53,17 +53,17 @@ namespace Microsoft.ClearScript
         private object InvokeMethod(string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
             var bindResult = BindMethod(name, typeArgs, args, bindArgs);
-            if ((bindResult is MethodBindFailure) && target.GetFlags(this).HasFlag(HostTargetFlags.AllowExtensionMethods))
+            if ((bindResult is MethodBindFailure) && Target.GetFlags(this).HasFlag(HostTargetFlags.AllowExtensionMethods))
             {
-                var targetArg = target.Target.ToEnumerable();
+                var targetArg = Target.Target.ToEnumerable();
                 var extensionArgs = targetArg.Concat(args).ToArray();
 
-                var targetBindArg = new object[] { target };
+                var targetBindArg = new object[] { Target };
                 var extensionBindArgs = targetBindArg.Concat(bindArgs).ToArray();
 
                 foreach (var type in ExtensionMethodSummary.Types)
                 {
-                    var extensionHostItem = (HostItem)Wrap(engine, HostType.Wrap(type));
+                    var extensionHostItem = (HostItem)Wrap(Engine, HostType.Wrap(type));
                     var extensionBindResult = extensionHostItem.BindMethod(name, typeArgs, extensionArgs, extensionBindArgs);
                     if (extensionBindResult is MethodBindSuccess)
                     {
@@ -108,17 +108,16 @@ namespace Microsoft.ClearScript
             // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
             // will result in bugs that are difficult to diagnose. Create a copy if necessary.
 
-            var signature = new BindSignature(AccessContext, bindFlags, target, name, typeArgs, bindArgs);
+            var signature = new BindSignature(AccessContext, bindFlags, Target, name, typeArgs, bindArgs);
             MethodBindResult result;
 
-            object rawResult;
-            if (engine.TryGetCachedBindResult(signature, out rawResult))
+            if (Engine.TryGetCachedBindResult(signature, out var rawResult))
             {
-                result = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
+                result = MethodBindResult.Create(name, bindFlags, rawResult, Target, args);
             }
             else
             {
-                result = BindMethodInternal(AccessContext, bindFlags, target, name, typeArgs, args, bindArgs);
+                result = BindMethodInternal(AccessContext, bindFlags, Target, name, typeArgs, args, bindArgs);
                 if (!result.IsPreferredMethod(this, name))
                 {
                     if (result is MethodBindSuccess)
@@ -128,7 +127,7 @@ namespace Microsoft.ClearScript
 
                     foreach (var altName in GetAltMethodNames(name, bindFlags))
                     {
-                        var altResult = BindMethodInternal(AccessContext, bindFlags, target, altName, typeArgs, args, bindArgs);
+                        var altResult = BindMethodInternal(AccessContext, bindFlags, Target, altName, typeArgs, args, bindArgs);
                         if (altResult.IsUnblockedMethod(this))
                         {
                             result = altResult;
@@ -137,16 +136,16 @@ namespace Microsoft.ClearScript
                     }
                 }
 
-                if ((result is MethodBindFailure) && engine.UseReflectionBindFallback)
+                if ((result is MethodBindFailure) && Engine.UseReflectionBindFallback)
                 {
-                    var reflectionResult = BindMethodUsingReflection(bindFlags, target, name, typeArgs, args);
+                    var reflectionResult = BindMethodUsingReflection(bindFlags, Target, name, typeArgs, args);
                     if (reflectionResult is MethodBindSuccess)
                     {
                         result = reflectionResult;
                     }
                 }
 
-                engine.CacheBindResult(signature, result.RawResult);
+                Engine.CacheBindResult(signature, result.RawResult);
             }
 
             return result;
@@ -160,8 +159,7 @@ namespace Microsoft.ClearScript
             var signature = new BindSignature(bindContext, bindFlags, target, name, typeArgs, bindArgs);
             MethodBindResult result;
 
-            object rawResult;
-            if (coreBindCache.TryGetValue(signature, out rawResult))
+            if (coreBindCache.TryGetValue(signature, out var rawResult))
             {
                 result = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
             }
@@ -259,7 +257,7 @@ namespace Microsoft.ClearScript
 
         private IEnumerable<string> GetAltMethodNamesInternal(string name, BindingFlags bindFlags)
         {
-            foreach (var method in target.Type.GetScriptableMethods(name, bindFlags, AccessContext, DefaultAccess))
+            foreach (var method in Target.Type.GetScriptableMethods(name, bindFlags, AccessContext, DefaultAccess))
             {
                 var methodName = method.GetShortName();
                 if (methodName != name)
@@ -316,16 +314,14 @@ namespace Microsoft.ClearScript
 
         private MethodBindResult BindMethodUsingReflection(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs, object[] args)
         {
-            // ReSharper disable CoVariantArrayConversion
-            // ReSharper disable PossibleNullReferenceException
-
             var candidates = GetReflectionCandidates(bindFlags, hostTarget, name, typeArgs).Distinct().ToArray();
             if (candidates.Length > 0)
             {
                 try
                 {
-                    object state;
-                    var rawResult = Type.DefaultBinder.BindToMethod(bindFlags, candidates, ref args, null, null, null, out state);
+                    // ReSharper disable once CoVariantArrayConversion
+                    var rawResult = Type.DefaultBinder.BindToMethod(bindFlags, candidates, ref args, null, null, null, out _);
+
                     return MethodBindResult.Create(name, bindFlags, rawResult, hostTarget, args);
                 }
                 catch (MissingMethodException)
@@ -337,9 +333,6 @@ namespace Microsoft.ClearScript
             }
 
             return new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
-
-            // ReSharper restore PossibleNullReferenceException
-            // ReSharper restore CoVariantArrayConversion
         }
 
         private IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs)
@@ -471,10 +464,7 @@ namespace Microsoft.ClearScript
 
             #region MethodBindResult overrides
 
-            public override object RawResult
-            {
-                get { return method; }
-            }
+            public override object RawResult => method;
 
             public override bool IsPreferredMethod(HostItem hostItem, string name)
             {
@@ -514,10 +504,7 @@ namespace Microsoft.ClearScript
 
             #region MethodBindResult overrides
 
-            public override object RawResult
-            {
-                get { return exceptionFactory; }
-            }
+            public override object RawResult => exceptionFactory;
 
             public override bool IsPreferredMethod(HostItem hostItem, string name)
             {
@@ -568,10 +555,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            public object Result
-            {
-                get { return results[0]; }
-            }
+            public object Result => results[0];
 
             protected override Expression VisitMethodCall(MethodCallExpression node)
             {
@@ -585,8 +569,7 @@ namespace Microsoft.ClearScript
 
             protected override Expression VisitInvocation(InvocationExpression node)
             {
-                var targetDelegate = target as Delegate;
-                if (targetDelegate != null)
+                if (target is Delegate targetDelegate)
                 {
                     var del = DynamicHelpers.Invoke(node.Expression) as Delegate;
                     if (del == targetDelegate)
@@ -602,8 +585,7 @@ namespace Microsoft.ClearScript
             {
                 if (node.NodeType == ExpressionType.Throw)
                 {
-                    var exception = DynamicHelpers.Invoke(node.Operand) as Exception;
-                    if (exception != null)
+                    if (DynamicHelpers.Invoke(node.Operand) is Exception)
                     {
                         AddResult(() => (Exception)DynamicHelpers.Invoke(node.Operand));
                     }

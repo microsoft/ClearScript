@@ -21,22 +21,16 @@ namespace Microsoft.ClearScript.V8
         /// Gets the document name associated with the compiled script.
         /// </summary>
         [Obsolete("Use DocumentInfo instead.")]
-        public string Name
-        {
-            get { return UniqueDocumentInfo.UniqueName; }
-        }
+        public string Name => UniqueDocumentInfo.UniqueName;
 
         /// <summary>
         /// Gets the document meta-information for the compiled script.
         /// </summary>
-        public DocumentInfo DocumentInfo
-        {
-            get { return UniqueDocumentInfo.Info; }
-        }
+        public DocumentInfo DocumentInfo => UniqueDocumentInfo.Info;
 
-        internal UniqueDocumentInfo UniqueDocumentInfo { get; private set; }
+        internal UniqueDocumentInfo UniqueDocumentInfo { get; }
 
-        internal UIntPtr CodeDigest { get; private set; }
+        internal UIntPtr CodeDigest { get; }
 
         #region IDisposable implementation (abstract)
 
@@ -49,7 +43,7 @@ namespace Microsoft.ClearScript.V8
         /// must release all references to the compiled script so the garbage collector can reclaim
         /// the memory that the compiled script was occupying.
         /// </remarks>
-        [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "This class is almost purely abstract; the implementation class uses the C++/CLI disposal pattern.")]
+        [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "This class is almost purely abstract; the implementation class implements disposal.")]
         public abstract void Dispose();
 
         #endregion

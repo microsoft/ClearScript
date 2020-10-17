@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Windows;
@@ -27,7 +29,8 @@ namespace Microsoft.ClearScript.V8
     {
         #region data
 
-        private static readonly DocumentInfo initScriptInfo = new DocumentInfo(MiscHelpers.FormatInvariant("{0} [internal]", typeof(V8ScriptEngine).Name));
+        private static readonly DocumentInfo initScriptInfo = new DocumentInfo(MiscHelpers.FormatInvariant("{0} [internal]", nameof(V8ScriptEngine)));
+        [ThreadStatic] private static bool bypassTaskPromiseConversion;
 
         private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
@@ -38,8 +41,6 @@ namespace Microsoft.ClearScript.V8
         private bool inContinuationTimerScope;
         private bool awaitDebuggerAndPause;
 
-        private readonly HostItemCollateral hostItemCollateral;
-        private readonly IUniqueNameManager documentNameManager;
         private List<string> documentNames;
         private bool suppressInstanceMethodEnumeration;
         private bool suppressExtensionMethodEnumeration;
@@ -212,8 +213,8 @@ namespace Microsoft.ClearScript.V8
             using (var localRuntime = (runtime != null) ? null : new V8Runtime(name, constraints))
             {
                 var activeRuntime = runtime ?? localRuntime;
-                documentNameManager = activeRuntime.DocumentNameManager;
-                hostItemCollateral = activeRuntime.HostItemCollateral;
+                DocumentNameManager = activeRuntime.DocumentNameManager;
+                HostItemCollateral = activeRuntime.HostItemCollateral;
 
                 engineFlags = flags;
                 proxy = V8ContextProxy.Create(activeRuntime.IsolateProxy, Name, flags, debugPort);
@@ -435,7 +436,8 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public bool SuppressInstanceMethodEnumeration
         {
-            get { return suppressInstanceMethodEnumeration; }
+            get => suppressInstanceMethodEnumeration;
+
             set
             {
                 suppressInstanceMethodEnumeration = value;
@@ -461,7 +463,8 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public bool SuppressExtensionMethodEnumeration
         {
-            get { return suppressExtensionMethodEnumeration; }
+            get => suppressExtensionMethodEnumeration;
+
             set
             {
                 suppressExtensionMethodEnumeration = value;
@@ -557,8 +560,7 @@ namespace Microsoft.ClearScript.V8
             V8Script tempScript = null;
             cacheBytes = ScriptInvoke(() =>
             {
-                byte[] tempCacheBytes;
-                tempScript = CompileInternal(documentInfo.MakeUnique(this), code, cacheKind, out tempCacheBytes);
+                tempScript = CompileInternal(documentInfo.MakeUnique(this), code, cacheKind, out var tempCacheBytes);
                 return tempCacheBytes;
             });
 
@@ -623,8 +625,7 @@ namespace Microsoft.ClearScript.V8
             V8Script tempScript = null;
             cacheAccepted = ScriptInvoke(() =>
             {
-                bool tempCacheAccepted;
-                tempScript = CompileInternal(documentInfo.MakeUnique(this), code, cacheKind, cacheBytes, out tempCacheAccepted);
+                tempScript = CompileInternal(documentInfo.MakeUnique(this), code, cacheKind, cacheBytes, out var tempCacheAccepted);
                 return tempCacheAccepted;
             });
 
@@ -916,18 +917,7 @@ namespace Microsoft.ClearScript.V8
             });
         }
 
-        private CommonJSManager CommonJSManager
-        {
-            get
-            {
-                if (commonJSManager == null)
-                {
-                    commonJSManager = new CommonJSManager(this);
-                }
-
-                return commonJSManager;
-            }
-        }
+        private CommonJSManager CommonJSManager => commonJSManager ?? (commonJSManager = new CommonJSManager(this));
 
         private object GetRootItem()
         {
@@ -1002,6 +992,7 @@ namespace Microsoft.ClearScript.V8
 
             // ReSharper disable once LocalVariableHidesMember
             var script = proxy.Compile(documentInfo, code);
+
             if (module != null)
             {
                 module.Evaluator = () => proxy.Execute(script, true);
@@ -1026,6 +1017,7 @@ namespace Microsoft.ClearScript.V8
 
             // ReSharper disable once LocalVariableHidesMember
             var script = proxy.Compile(documentInfo, code, cacheKind, out cacheBytes);
+
             if (module != null)
             {
                 module.Evaluator = () => proxy.Execute(script, true);
@@ -1050,6 +1042,7 @@ namespace Microsoft.ClearScript.V8
 
             // ReSharper disable once LocalVariableHidesMember
             var script = proxy.Compile(documentInfo, code, cacheKind, cacheBytes, out cacheAccepted);
+
             if (module != null)
             {
                 module.Evaluator = () => proxy.Execute(script, true);
@@ -1118,10 +1111,7 @@ namespace Microsoft.ClearScript.V8
         /// <remarks>
         /// <see cref="V8ScriptEngine"/> instances return "js" for this property.
         /// </remarks>
-        public override string FileNameExtension
-        {
-            get { return "js"; }
-        }
+        public override string FileNameExtension => "js";
 
         /// <summary>
         /// Allows the host to access script resources directly.
@@ -1208,20 +1198,11 @@ namespace Microsoft.ClearScript.V8
 
         #region ScriptEngine overrides (internal members)
 
-        internal override IUniqueNameManager DocumentNameManager
-        {
-            get { return documentNameManager; }
-        }
+        internal override IUniqueNameManager DocumentNameManager { get; }
 
-        internal override bool EnumerateInstanceMethods
-        {
-            get { return base.EnumerateInstanceMethods && !SuppressInstanceMethodEnumeration; }
-        }
+        internal override bool EnumerateInstanceMethods => base.EnumerateInstanceMethods && !SuppressInstanceMethodEnumeration;
 
-        internal override bool EnumerateExtensionMethods
-        {
-            get { return base.EnumerateExtensionMethods && !SuppressExtensionMethodEnumeration; }
-        }
+        internal override bool EnumerateExtensionMethods => base.EnumerateExtensionMethods && !SuppressExtensionMethodEnumeration;
 
         internal override void AddHostItem(string itemName, HostItemFlags flags, object item)
         {
@@ -1277,33 +1258,29 @@ namespace Microsoft.ClearScript.V8
                 return obj;
             }
 
-            if (obj is long)
+            if (obj is long longValue)
             {
-                var value = (long)obj;
-
                 if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalAllLongAsBigInt))
                 {
-                    return new BigInteger(value);
+                    return new BigInteger(longValue);
                 }
 
-                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt) && (Math.Abs(value) > maxIntInDouble))
+                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt) && (Math.Abs(longValue) > maxIntInDouble))
                 {
-                    return new BigInteger(value);
+                    return new BigInteger(longValue);
                 }
             }
 
-            if (obj is ulong)
+            if (obj is ulong ulongValue)
             {
-                var value = (ulong)obj;
-
                 if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalAllLongAsBigInt))
                 {
-                    return new BigInteger(value);
+                    return new BigInteger(ulongValue);
                 }
 
-                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt) && (value > maxIntInDouble))
+                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt) && (ulongValue > maxIntInDouble))
                 {
-                    return new BigInteger(value);
+                    return new BigInteger(ulongValue);
                 }
             }
 
@@ -1312,8 +1289,25 @@ namespace Microsoft.ClearScript.V8
                 return obj;
             }
 
-            var hostItem = obj as HostItem;
-            if (hostItem != null)
+            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && !bypassTaskPromiseConversion)
+            {
+                if (obj.GetType().IsAssignableToGenericType(typeof(Task<>), out var typeArgs))
+                {
+                    using (Scope.Create(() => bypassTaskPromiseConversion = true, () => bypassTaskPromiseConversion = false))
+                    {
+                        obj = typeof(TaskConverter<>).MakeSpecificType(typeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] { obj, this });
+                    }
+                }
+                else if (obj is Task task)
+                {
+                    using (Scope.Create(() => bypassTaskPromiseConversion = true, () => bypassTaskPromiseConversion = false))
+                    {
+                        obj = task.ToPromise(this);
+                    }
+                }
+            }
+
+            if (obj is HostItem hostItem)
             {
                 if ((hostItem.Engine == this) && (hostItem.Flags == flags))
                 {
@@ -1329,8 +1323,7 @@ namespace Microsoft.ClearScript.V8
                 obj = hostTarget.Target;
             }
 
-            var scriptItem = obj as ScriptItem;
-            if (scriptItem != null)
+            if (obj is ScriptItem scriptItem)
             {
                 if (scriptItem.Engine == this)
                 {
@@ -1353,20 +1346,17 @@ namespace Microsoft.ClearScript.V8
                 return null;
             }
 
-            object result;
-            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, out result))
+            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, out var result))
             {
                 return result;
             }
 
-            var hostTarget = obj as HostTarget;
-            if (hostTarget != null)
+            if (obj is HostTarget hostTarget)
             {
                 return preserveHostTarget ? hostTarget : hostTarget.Target;
             }
 
-            var hostItem = obj as HostItem;
-            if (hostItem != null)
+            if (obj is HostItem hostItem)
             {
                 return preserveHostTarget ? hostItem.Target : hostItem.Unwrap();
             }
@@ -1376,7 +1366,16 @@ namespace Microsoft.ClearScript.V8
                 return obj;
             }
 
-            return V8ScriptItem.Wrap(this, obj);
+            var scriptItem = V8ScriptItem.Wrap(this, obj);
+            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && !bypassTaskPromiseConversion && (obj is IV8Object v8Object) && v8Object.IsPromise())
+            {
+                using (Scope.Create(() => bypassTaskPromiseConversion = true, () => bypassTaskPromiseConversion = false))
+                {
+                    return scriptItem.ToTask();
+                }
+            }
+
+            return scriptItem;
         }
 
         internal override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
@@ -1428,10 +1427,7 @@ namespace Microsoft.ClearScript.V8
             return proxy.Execute(documentInfo, code, evaluate);
         }
 
-        internal override HostItemCollateral HostItemCollateral
-        {
-            get { return hostItemCollateral; }
-        }
+        internal override HostItemCollateral HostItemCollateral { get; }
 
         internal override void OnAccessSettingsChanged()
         {
@@ -1496,10 +1492,7 @@ namespace Microsoft.ClearScript.V8
 
         #region IJavaScriptEngine implementation
 
-        uint IJavaScriptEngine.BaseLanguageVersion
-        {
-            get { return 8; }
-        }
+        uint IJavaScriptEngine.BaseLanguageVersion => 8;
 
         #endregion
 
@@ -1525,6 +1518,22 @@ namespace Microsoft.ClearScript.V8
             public ulong ModuleCount;
             public ulong ModuleCacheSize;
             public int CommonJSModuleCacheSize;
+        }
+
+        #endregion
+
+        #region Nested type: TaskConverter
+
+        private static class TaskConverter<T>
+        {
+            // ReSharper disable UnusedMember.Local
+
+            public static object ToPromise(Task<T> task, V8ScriptEngine engine)
+            {
+                return task.ToPromise(engine);
+            }
+
+            // ReSharper restore UnusedMember.Local
         }
 
         #endregion

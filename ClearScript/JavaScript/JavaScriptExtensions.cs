@@ -106,7 +106,7 @@ namespace Microsoft.ClearScript.JavaScript
             var scriptObject = promise as ScriptObject;
             if ((scriptObject == null) || !scriptObject.Engine.Script.EngineInternal.isPromise(promise))
             {
-                throw new ArgumentException("The object is not a promise", "promise");
+                throw new ArgumentException("The object is not a promise", nameof(promise));
             }
 
             var source = new TaskCompletionSource<object>();
@@ -128,7 +128,7 @@ namespace Microsoft.ClearScript.JavaScript
                 }
             };
 
-            ((dynamic)promise).then(onResolved, onRejected);
+            scriptObject.InvokeMethod("then", onResolved, onRejected);
 
             return source.Task;
         }

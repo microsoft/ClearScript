@@ -229,18 +229,7 @@ namespace Microsoft.ClearScript.Windows
 
         #region internal members
 
-        private CommonJSManager CommonJSManager
-        {
-            get
-            {
-                if (commonJSManager == null)
-                {
-                    commonJSManager = new CommonJSManager(this);
-                }
-
-                return commonJSManager;
-            }
-        }
+        private CommonJSManager CommonJSManager => commonJSManager ?? (commonJSManager = new CommonJSManager(this));
 
         #endregion
 
@@ -252,10 +241,7 @@ namespace Microsoft.ClearScript.Windows
         /// <remarks>
         /// <see cref="JScriptEngine"/> instances return "js" for this property.
         /// </remarks>
-        public override string FileNameExtension
-        {
-            get { return "js"; }
-        }
+        public override string FileNameExtension => "js";
 
         /// <summary>
         /// Executes script code as a command.
@@ -281,15 +267,9 @@ namespace Microsoft.ClearScript.Windows
             return base.ExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.command))");
         }
 
-        internal override IDictionary<int, string> RuntimeErrorMap
-        {
-            get { return runtimeErrorMap; }
-        }
+        internal override IDictionary<int, string> RuntimeErrorMap => runtimeErrorMap;
 
-        internal override IDictionary<int, string> SyntaxErrorMap
-        {
-            get { return syntaxErrorMap; }
-        }
+        internal override IDictionary<int, string> SyntaxErrorMap => syntaxErrorMap;
 
         internal override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
         {
@@ -316,10 +296,7 @@ namespace Microsoft.ClearScript.Windows
 
         #region IJavaScriptEngine implementation
 
-        uint IJavaScriptEngine.BaseLanguageVersion
-        {
-            get { return 3; }
-        }
+        uint IJavaScriptEngine.BaseLanguageVersion => 3;
 
         #endregion
     }

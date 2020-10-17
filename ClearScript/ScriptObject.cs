@@ -59,8 +59,8 @@ namespace Microsoft.ClearScript
         /// <returns>The value of the specified property.</returns>
         public object this[string name, params object[] args]
         {
-            get { return GetProperty(name, args); }
-            set { SetProperty(name, args.Concat(value.ToEnumerable()).ToArray()); }
+            get => GetProperty(name, args);
+            set => SetProperty(name, args.Concat(value.ToEnumerable()).ToArray());
         }
 
         /// <summary>
@@ -96,8 +96,8 @@ namespace Microsoft.ClearScript
         /// <returns>The value of the specified property.</returns>
         public object this[int index]
         {
-            get { return GetProperty(index); }
-            set { SetProperty(index, value); }
+            get => GetProperty(index);
+            set => SetProperty(index, value);
         }
 
         /// <summary>

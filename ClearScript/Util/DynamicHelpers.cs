@@ -43,11 +43,9 @@ namespace Microsoft.ClearScript.Util
                 // For COM member access, use IReflect/IExpando if possible. This works around
                 // some dynamic binder bugs and limitations observed during batch test runs.
 
-                var reflect = target as IReflect;
-                if ((reflect != null) && reflect.GetType().IsCOMObject)
+                if ((target is IReflect reflect) && reflect.GetType().IsCOMObject)
                 {
-                    var getMemberBinder = binder as GetMemberBinder;
-                    if (getMemberBinder != null)
+                    if (binder is GetMemberBinder getMemberBinder)
                     {
                         if (TryGetProperty(reflect, getMemberBinder.Name, getMemberBinder.IgnoreCase, args, out result))
                         {
@@ -56,8 +54,7 @@ namespace Microsoft.ClearScript.Util
                     }
                     else
                     {
-                        var setMemberBinder = binder as SetMemberBinder;
-                        if (setMemberBinder != null)
+                        if (binder is SetMemberBinder setMemberBinder)
                         {
                             if (TrySetProperty(reflect, setMemberBinder.Name, setMemberBinder.IgnoreCase, args, out result))
                             {
@@ -66,8 +63,7 @@ namespace Microsoft.ClearScript.Util
                         }
                         else
                         {
-                            var createInstanceBinder = binder as CreateInstanceBinder;
-                            if (createInstanceBinder != null)
+                            if (binder is CreateInstanceBinder)
                             {
                                 if (TryCreateInstance(reflect, args, out result))
                                 {
@@ -76,8 +72,7 @@ namespace Microsoft.ClearScript.Util
                             }
                             else
                             {
-                                var invokeBinder = binder as InvokeBinder;
-                                if (invokeBinder != null)
+                                if (binder is InvokeBinder)
                                 {
                                     if (TryInvoke(reflect, args, out result))
                                     {
@@ -86,8 +81,7 @@ namespace Microsoft.ClearScript.Util
                                 }
                                 else
                                 {
-                                    var invokeMemberBinder = binder as InvokeMemberBinder;
-                                    if (invokeMemberBinder != null)
+                                    if (binder is InvokeMemberBinder invokeMemberBinder)
                                     {
                                         if (TryInvokeMethod(reflect, invokeMemberBinder.Name, invokeMemberBinder.IgnoreCase, args, out result))
                                         {
@@ -96,8 +90,7 @@ namespace Microsoft.ClearScript.Util
                                     }
                                     else if ((args != null) && (args.Length > 0))
                                     {
-                                        var getIndexBinder = binder as GetIndexBinder;
-                                        if (getIndexBinder != null)
+                                        if (binder is GetIndexBinder)
                                         {
                                             if (TryGetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
                                             {
@@ -106,8 +99,7 @@ namespace Microsoft.ClearScript.Util
                                         }
                                         else
                                         {
-                                            var setIndexBinder = binder as SetIndexBinder;
-                                            if (setIndexBinder != null)
+                                            if (binder is SetIndexBinder)
                                             {
                                                 if (TrySetProperty(reflect, args[0].ToString(), false, args.Skip(1).ToArray(), out result))
                                                 {
@@ -188,10 +180,8 @@ namespace Microsoft.ClearScript.Util
 
         private static bool TryGetProperty(IReflect target, string name, bool ignoreCase, object[] args, out object result)
         {
-            // ReSharper disable SuspiciousTypeConversion.Global
-
-            var dispatchEx = target as IDispatchEx;
-            if (dispatchEx != null)
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if (target is IDispatchEx dispatchEx)
             {
                 // Standard IExpando-over-IDispatchEx support appears to leak the variants it
                 // creates for the invocation arguments. This issue has been reported. In the
@@ -201,8 +191,6 @@ namespace Microsoft.ClearScript.Util
                 result = (value is Nonexistent) ? Undefined.Value : value;
                 return true;
             }
-
-            // ReSharper restore SuspiciousTypeConversion.Global
 
             var flags = BindingFlags.Public;
             if (ignoreCase)
@@ -225,10 +213,8 @@ namespace Microsoft.ClearScript.Util
         {
             if ((args != null) && (args.Length > 0))
             {
-                // ReSharper disable SuspiciousTypeConversion.Global
-
-                var dispatchEx = target as IDispatchEx;
-                if (dispatchEx != null)
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                if (target is IDispatchEx dispatchEx)
                 {
                     // Standard IExpando-over-IDispatchEx support appears to leak the variants it
                     // creates for the invocation arguments. This issue has been reported. In the
@@ -239,8 +225,6 @@ namespace Microsoft.ClearScript.Util
                     return true;
                 }
 
-                // ReSharper restore SuspiciousTypeConversion.Global
-
                 var flags = BindingFlags.Public;
                 if (ignoreCase)
                 {
@@ -250,8 +234,7 @@ namespace Microsoft.ClearScript.Util
                 var property = target.GetProperty(name, flags);
                 if (property == null)
                 {
-                    var expando = target as IExpando;
-                    if (expando != null)
+                    if (target is IExpando expando)
                     {
                         property = expando.AddProperty(name);
                     }
@@ -271,10 +254,8 @@ namespace Microsoft.ClearScript.Util
 
         private static bool TryCreateInstance(IReflect target, object[] args, out object result)
         {
-            // ReSharper disable SuspiciousTypeConversion.Global
-
-            var dispatchEx = target as IDispatchEx;
-            if (dispatchEx != null)
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if (target is IDispatchEx dispatchEx)
             {
                 // Standard IExpando-over-IDispatchEx support appears to leak the variants it
                 // creates for the invocation arguments. This issue has been reported. In the
@@ -283,8 +264,6 @@ namespace Microsoft.ClearScript.Util
                 result = dispatchEx.Invoke(true, args);
                 return true;
             }
-
-            // ReSharper restore SuspiciousTypeConversion.Global
 
             try
             {
@@ -304,10 +283,8 @@ namespace Microsoft.ClearScript.Util
 
         private static bool TryInvoke(IReflect target, object[] args, out object result)
         {
-            // ReSharper disable SuspiciousTypeConversion.Global
-
-            var dispatchEx = target as IDispatchEx;
-            if (dispatchEx != null)
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if (target is IDispatchEx dispatchEx)
             {
                 // Standard IExpando-over-IDispatchEx support appears to leak the variants it
                 // creates for the invocation arguments. This issue has been reported. In the
@@ -316,8 +293,6 @@ namespace Microsoft.ClearScript.Util
                 result = dispatchEx.Invoke(false, args);
                 return true;
             }
-
-            // ReSharper restore SuspiciousTypeConversion.Global
 
             try
             {
@@ -337,10 +312,8 @@ namespace Microsoft.ClearScript.Util
 
         private static bool TryInvokeMethod(IReflect target, string name, bool ignoreCase, object[] args, out object result)
         {
-            // ReSharper disable SuspiciousTypeConversion.Global
-
-            var dispatchEx = target as IDispatchEx;
-            if (dispatchEx != null)
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if (target is IDispatchEx dispatchEx)
             {
                 // Standard IExpando-over-IDispatchEx support appears to leak the variants it
                 // creates for the invocation arguments. This issue has been reported. In the
@@ -349,8 +322,6 @@ namespace Microsoft.ClearScript.Util
                 result = dispatchEx.InvokeMethod(name, ignoreCase, args);
                 return true;
             }
-
-            // ReSharper restore SuspiciousTypeConversion.Global
 
             var flags = BindingFlags.Public;
             if (ignoreCase)
@@ -380,7 +351,7 @@ namespace Microsoft.ClearScript.Util
             {
                 if (exception.InnerException is InvalidDynamicOperationException)
                 {
-                    result = default(T);
+                    result = default;
                     return false;
                 }
 
@@ -499,8 +470,7 @@ namespace Microsoft.ClearScript.Util
 
         private static DynamicMetaObject CreateDynamicTarget(object target)
         {
-            var byRefArg = target as IByRefArg;
-            if (byRefArg != null)
+            if (target is IByRefArg byRefArg)
             {
                 return CreateDynamicMetaObject(byRefArg.Value, Expression.Parameter(byRefArg.Type.MakeByRefType()));
             }
@@ -530,8 +500,7 @@ namespace Microsoft.ClearScript.Util
 
         private static DynamicMetaObject CreateDynamicArg(object arg)
         {
-            var byRefArg = arg as IByRefArg;
-            if (byRefArg != null)
+            if (arg is IByRefArg byRefArg)
             {
                 return CreateDynamicMetaObject(byRefArg.Value, Expression.Parameter(byRefArg.Type.MakeByRefType()));
             }
@@ -752,8 +721,7 @@ namespace Microsoft.ClearScript.Util
 
             private static object InvokeMemberValue(IHostInvokeContext context, object target, BindingFlags invokeFlags, object[] args)
             {
-                object result;
-                if (InvokeHelpers.TryInvokeObject(context, target, BindingFlags.InvokeMethod, args, args, true, out result))
+                if (InvokeHelpers.TryInvokeObject(context, target, BindingFlags.InvokeMethod, args, args, true, out var result))
                 {
                     return result;
                 }

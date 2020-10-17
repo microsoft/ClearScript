@@ -26,29 +26,22 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static string GetMemberName(this ITypeLib typeLib, int index)
         {
-            string name;
-            string docString;
-            int helpContext;
-            string helpFile;
-            typeLib.GetDocumentation(index, out name, out docString, out helpContext, out helpFile);
+            typeLib.GetDocumentation(index, out var name, out _, out _, out _);
             return name;
         }
 
         public static string GetManagedName(this ITypeLib typeLib)
         {
-            var typeLib2 = typeLib as ITypeLib2;
-            if (typeLib2 != null)
+            if (typeLib is ITypeLib2 typeLib2)
             {
                 // ReSharper disable EmptyGeneralCatchClause
 
                 try
                 {
                     var guid = managedNameGuid;
-                    object data;
-                    typeLib2.GetCustData(ref guid, out data);
+                    typeLib2.GetCustData(ref guid, out var data);
 
-                    var name = data as string;
-                    if (name != null)
+                    if (data is string name)
                     {
                         name = name.Trim();
                         if (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
@@ -89,9 +82,7 @@ namespace Microsoft.ClearScript.Util.COM
             var count = typeLib.GetTypeInfoCount();
             for (var index = 0; index < count; index++)
             {
-                ITypeInfo typeInfo;
-                typeLib.GetTypeInfo(index, out typeInfo);
-
+                typeLib.GetTypeInfo(index, out var typeInfo);
                 foreach (var enumTypeInfo in GetReferencedEnums(typeLib, typeInfo, processedTypeInfo))
                 {
                     yield return enumTypeInfo;
@@ -152,11 +143,8 @@ namespace Microsoft.ClearScript.Util.COM
 
                 for (var implTypeIndex = 0; implTypeIndex < typeAttrScope.Value.cImplTypes; implTypeIndex++)
                 {
-                    int href;
-                    typeInfo.GetRefTypeOfImplType(implTypeIndex, out href);
-
-                    ITypeInfo refTypeInfo;
-                    typeInfo.GetRefTypeInfo(href, out refTypeInfo);
+                    typeInfo.GetRefTypeOfImplType(implTypeIndex, out var href);
+                    typeInfo.GetRefTypeInfo(href, out var refTypeInfo);
 
                     var refGuid = refTypeInfo.GetGuid();
                     if ((refGuid == typeof(IDispatch).GUID) || (refGuid == typeof(IDispatchEx).GUID))
@@ -207,8 +195,7 @@ namespace Microsoft.ClearScript.Util.COM
 
             if (typeDesc.vt == (short)VarEnum.VT_USERDEFINED)
             {
-                ITypeInfo refTypeInfo;
-                typeInfo.GetRefTypeInfo(unchecked((int)typeDesc.lpValue.ToInt64()), out refTypeInfo);
+                typeInfo.GetRefTypeInfo(unchecked((int)typeDesc.lpValue.ToInt64()), out var refTypeInfo);
                 return GetReferencedEnums(typeLib, refTypeInfo, processedTypeInfo);
             }
 
