@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 
@@ -297,6 +298,16 @@ namespace Microsoft.ClearScript.Windows
         #region IJavaScriptEngine implementation
 
         uint IJavaScriptEngine.BaseLanguageVersion => 3;
+
+        void IJavaScriptEngine.CompletePromiseWithResult<T>(Task<T> task, object resolve, object reject)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IJavaScriptEngine.CompletePromise(Task task, object resolve, object reject)
+        {
+            throw new NotImplementedException();
+        }
 
         #endregion
     }

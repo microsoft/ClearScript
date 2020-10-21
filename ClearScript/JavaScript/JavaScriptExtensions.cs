@@ -49,7 +49,7 @@ namespace Microsoft.ClearScript.JavaScript
 
             return engine.Script.EngineInternal.createPromise(new Executor((resolve, reject) =>
             {
-                Action<Task> continuation = thisTask => engine.Script.EngineInternal.onTaskWithResultCompleted(thisTask, resolve, reject);
+                Action<Task<TResult>> continuation = thisTask => javaScriptEngine.CompletePromiseWithResult(thisTask, resolve, reject);
                 task.ContinueWith(continuation, TaskContinuationOptions.ExecuteSynchronously);
             }));
         }
@@ -87,7 +87,7 @@ namespace Microsoft.ClearScript.JavaScript
 
             return engine.Script.EngineInternal.createPromise(new Executor((resolve, reject) =>
             {
-                Action<Task> continuation = thisTask => engine.Script.EngineInternal.onTaskCompleted(thisTask, resolve, reject);
+                Action<Task> continuation = thisTask => javaScriptEngine.CompletePromise(thisTask, resolve, reject);
                 task.ContinueWith(continuation, TaskContinuationOptions.ExecuteSynchronously);
             }));
         }

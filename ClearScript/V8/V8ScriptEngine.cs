@@ -288,7 +288,7 @@ namespace Microsoft.ClearScript.V8
                                     return value instanceof savedPromise;
                                 },
 
-                                onTaskWithResultCompleted: function (task, resolve, reject) {
+                                completePromiseWithResult: function (task, resolve, reject) {
                                     try {
                                         resolve(task.Result);
                                     }
@@ -297,7 +297,7 @@ namespace Microsoft.ClearScript.V8
                                     }
                                 },
 
-                                onTaskCompleted: function (task, resolve, reject) {
+                                completePromise: function (task, resolve, reject) {
                                     try {
                                         task.Wait();
                                         resolve();
@@ -1291,18 +1291,29 @@ namespace Microsoft.ClearScript.V8
 
             if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && !bypassTaskPromiseConversion)
             {
-                if (obj.GetType().IsAssignableToGenericType(typeof(Task<>), out var typeArgs))
+                // .NET Core async functions return Task subclass instances that trigger result wrapping
+
+                var testObject = obj;
+                if (testObject is HostObject testHostObject)
                 {
-                    using (Scope.Create(() => bypassTaskPromiseConversion = true, () => bypassTaskPromiseConversion = false))
-                    {
-                        obj = typeof(TaskConverter<>).MakeSpecificType(typeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] { obj, this });
-                    }
+                    testObject = testHostObject.Target;
                 }
-                else if (obj is Task task)
+
+                if (testObject != null)
                 {
-                    using (Scope.Create(() => bypassTaskPromiseConversion = true, () => bypassTaskPromiseConversion = false))
+                    if (testObject.GetType().IsAssignableToGenericType(typeof(Task<>), out var typeArgs))
                     {
-                        obj = task.ToPromise(this);
+                        using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
+                        {
+                            obj = typeof(TaskConverter<>).MakeSpecificType(typeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] {testObject, this});
+                        }
+                    }
+                    else if (testObject is Task task)
+                    {
+                        using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
+                        {
+                            obj = task.ToPromise(this);
+                        }
                     }
                 }
             }
@@ -1369,7 +1380,7 @@ namespace Microsoft.ClearScript.V8
             var scriptItem = V8ScriptItem.Wrap(this, obj);
             if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && !bypassTaskPromiseConversion && (obj is IV8Object v8Object) && v8Object.IsPromise())
             {
-                using (Scope.Create(() => bypassTaskPromiseConversion = true, () => bypassTaskPromiseConversion = false))
+                using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
                 {
                     return scriptItem.ToTask();
                 }
@@ -1493,6 +1504,22 @@ namespace Microsoft.ClearScript.V8
         #region IJavaScriptEngine implementation
 
         uint IJavaScriptEngine.BaseLanguageVersion => 8;
+
+        void IJavaScriptEngine.CompletePromiseWithResult<T>(Task<T> task, object resolve, object reject)
+        {
+            using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
+            {
+                Script.EngineInternal.completePromiseWithResult(task, resolve, reject);
+            }
+        }
+
+        void IJavaScriptEngine.CompletePromise(Task task, object resolve, object reject)
+        {
+            using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
+            {
+                Script.EngineInternal.completePromise(task, resolve, reject);
+            }
+        }
 
         #endregion
 

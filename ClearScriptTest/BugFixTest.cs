@@ -13,6 +13,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.Util;
@@ -1383,6 +1384,21 @@ namespace Microsoft.ClearScript.Test
             testObject.FireEvent(456);
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8ScriptEngine_TaskPromiseConversion()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion);
+
+            engine.AddHostType(typeof(TaskPromiseConversionTest));
+            engine.Execute("value = TaskPromiseConversionTest.GetStringAsync();");
+            Assert.AreEqual("Promise", engine.Evaluate("value.constructor.name"));
+            Task.Delay(200).Wait();
+
+            engine.Execute("value.then(value => result = value);");
+            Assert.AreEqual("foo", engine.Script.result);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1686,6 +1702,15 @@ namespace Microsoft.ClearScript.Test
         {
             public int Value { get; set; }
             public bool IsValid { get; set; }
+        }
+
+        public class TaskPromiseConversionTest
+        {
+            public static async Task<string> GetStringAsync()
+            {
+                await Task.Delay(100);
+                return "foo";
+            }
         }
 
         #endregion

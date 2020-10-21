@@ -167,8 +167,8 @@
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ScriptImpl.cs" Link="V8\SplitProxy\V8ScriptImpl.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyHelpers.cs" Link="V8\SplitProxy\V8SplitProxyHelpers.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyManaged.cs" Link="V8\SplitProxy\V8SplitProxyManaged.cs" />
-    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.cs" Link="V8\SplitProxy\SplitProxyNative.cs" />
-    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Unix.cs" Link="V8\SplitProxy\SplitProxyNative.Unix.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.cs" Link="V8\SplitProxy\V8SplitProxyNative.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Unix.cs" Link="V8\SplitProxy\V8SplitProxyNative.Unix.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ContextProxyImpl.cs" Link="V8\SplitProxy\V8ContextProxyImpl.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8IsolateProxyImpl.cs" Link="V8\SplitProxy\V8IsolateProxyImpl.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ObjectImpl.cs" Link="V8\SplitProxy\V8ObjectImpl.cs" />
@@ -211,6 +211,7 @@
     <Folder Include="Util\COM\" />
     <Folder Include="Util\Test\" />
     <Folder Include="Util\Web\" />
+    <Folder Include="V8\SplitProxy\" />
     <Folder Include="Windows\" />
   </ItemGroup>
 
