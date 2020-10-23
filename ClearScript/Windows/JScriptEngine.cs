@@ -299,12 +299,17 @@ namespace Microsoft.ClearScript.Windows
 
         uint IJavaScriptEngine.BaseLanguageVersion => 3;
 
-        void IJavaScriptEngine.CompletePromiseWithResult<T>(Task<T> task, object resolve, object reject)
+        object IJavaScriptEngine.CreatePromiseForTask<T>(Task<T> task)
         {
             throw new NotImplementedException();
         }
 
-        void IJavaScriptEngine.CompletePromise(Task task, object resolve, object reject)
+        object IJavaScriptEngine.CreatePromiseForTask(Task task)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<object> IJavaScriptEngine.CreateTaskForPromise(ScriptObject promise)
         {
             throw new NotImplementedException();
         }

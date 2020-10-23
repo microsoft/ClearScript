@@ -30,7 +30,6 @@ namespace Microsoft.ClearScript.V8
         #region data
 
         private static readonly DocumentInfo initScriptInfo = new DocumentInfo(MiscHelpers.FormatInvariant("{0} [internal]", nameof(V8ScriptEngine)));
-        [ThreadStatic] private static bool bypassTaskPromiseConversion;
 
         private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
@@ -288,23 +287,25 @@ namespace Microsoft.ClearScript.V8
                                     return value instanceof savedPromise;
                                 },
 
-                                completePromiseWithResult: function (task, resolve, reject) {
+                                completePromiseWithResult: function (getResult, resolve, reject) {
                                     try {
-                                        resolve(task.Result);
+                                        resolve(getResult());
                                     }
                                     catch (exception) {
                                         reject(exception);
                                     }
+                                    return undefined;
                                 },
 
-                                completePromise: function (task, resolve, reject) {
+                                completePromise: function (wait, resolve, reject) {
                                     try {
-                                        task.Wait();
+                                        wait();
                                         resolve();
                                     }
                                     catch (exception) {
                                         reject(exception);
                                     }
+                                    return undefined;
                                 },
 
                                 throwValue: function (value) {
@@ -1101,6 +1102,26 @@ namespace Microsoft.ClearScript.V8
             }
         }
 
+        private object CreatePromise(Action<object, object> executor)
+        {
+            VerifyNotDisposed();
+            var v8Script = (V8ScriptItem)script;
+            var v8Internal = (V8ScriptItem)v8Script.GetProperty("EngineInternal");
+            return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createPromise", executor));
+        }
+
+        private void CompletePromise<T>(Task<T> task, object resolve, object reject)
+        {
+            Func<T> getResult = () => task.Result;
+            Script.EngineInternal.completePromiseWithResult(getResult, resolve, reject);
+        }
+
+        private void CompletePromise(Task task, object resolve, object reject)
+        {
+            Action wait = task.Wait;
+            Script.EngineInternal.completePromise(wait, resolve, reject);
+        }
+
         #endregion
 
         #region ScriptEngine overrides (public members)
@@ -1289,7 +1310,7 @@ namespace Microsoft.ClearScript.V8
                 return obj;
             }
 
-            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && !bypassTaskPromiseConversion)
+            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion))
             {
                 // .NET Core async functions return Task subclass instances that trigger result wrapping
 
@@ -1303,17 +1324,11 @@ namespace Microsoft.ClearScript.V8
                 {
                     if (testObject.GetType().IsAssignableToGenericType(typeof(Task<>), out var typeArgs))
                     {
-                        using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
-                        {
-                            obj = typeof(TaskConverter<>).MakeSpecificType(typeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] {testObject, this});
-                        }
+                        obj = typeof(TaskConverter<>).MakeSpecificType(typeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] {testObject, this});
                     }
                     else if (testObject is Task task)
                     {
-                        using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
-                        {
-                            obj = task.ToPromise(this);
-                        }
+                        obj = task.ToPromise(this);
                     }
                 }
             }
@@ -1378,12 +1393,9 @@ namespace Microsoft.ClearScript.V8
             }
 
             var scriptItem = V8ScriptItem.Wrap(this, obj);
-            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && !bypassTaskPromiseConversion && (obj is IV8Object v8Object) && v8Object.IsPromise())
+            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && (obj is IV8Object v8Object) && v8Object.IsPromise())
             {
-                using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
-                {
-                    return scriptItem.ToTask();
-                }
+                return scriptItem.ToTask();
             }
 
             return scriptItem;
@@ -1505,20 +1517,51 @@ namespace Microsoft.ClearScript.V8
 
         uint IJavaScriptEngine.BaseLanguageVersion => 8;
 
-        void IJavaScriptEngine.CompletePromiseWithResult<T>(Task<T> task, object resolve, object reject)
+        object IJavaScriptEngine.CreatePromiseForTask<T>(Task<T> task)
         {
-            using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
+            return CreatePromise((resolve, reject) =>
             {
-                Script.EngineInternal.completePromiseWithResult(task, resolve, reject);
-            }
+                task.ContinueWith(_ => CompletePromise(task, resolve, reject), TaskContinuationOptions.ExecuteSynchronously);
+            });
         }
 
-        void IJavaScriptEngine.CompletePromise(Task task, object resolve, object reject)
+        object IJavaScriptEngine.CreatePromiseForTask(Task task)
         {
-            using (Scope.Create(() => MiscHelpers.Exchange(ref bypassTaskPromiseConversion, true), oldValue => bypassTaskPromiseConversion = oldValue))
+            return CreatePromise((resolve, reject) =>
             {
-                Script.EngineInternal.completePromise(task, resolve, reject);
+                task.ContinueWith(_ => CompletePromise(task, resolve, reject), TaskContinuationOptions.ExecuteSynchronously);
+            });
+        }
+
+        Task<object> IJavaScriptEngine.CreateTaskForPromise(ScriptObject promise)
+        {
+            if (!(promise is V8ScriptItem v8Promise) || !v8Promise.IsPromise())
+            {
+                throw new ArgumentException("The object is not a V8 promise", nameof(promise));
             }
+
+            var source = new TaskCompletionSource<object>();
+
+            Action<object> onResolved = result =>
+            {
+                source.SetResult(result);
+            };
+
+            Action<object> onRejected = error =>
+            {
+                try
+                {
+                    Script.EngineInternal.throwValue(error);
+                }
+                catch (Exception exception)
+                {
+                    source.SetException(exception);
+                }
+            };
+
+            v8Promise.InvokeMethod(false, "then", onResolved, onRejected);
+
+            return source.Task;
         }
 
         #endregion

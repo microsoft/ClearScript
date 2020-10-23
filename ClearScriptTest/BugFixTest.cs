@@ -1397,6 +1397,10 @@ namespace Microsoft.ClearScript.Test
 
             engine.Execute("value.then(value => result = value);");
             Assert.AreEqual("foo", engine.Script.result);
+
+            engine.Execute("TaskPromiseConversionTest.GetStringAsync().then(async function () { result = TaskPromiseConversionTest.GetStringQuicklyAsync() instanceof Promise; });");
+            Task.Delay(200).Wait();
+            Assert.AreEqual(true, engine.Script.result);
         }
 
         // ReSharper restore InconsistentNaming
@@ -1708,9 +1712,19 @@ namespace Microsoft.ClearScript.Test
         {
             public static async Task<string> GetStringAsync()
             {
-                await Task.Delay(100);
+                await Task.Delay(10);
                 return "foo";
             }
+
+        #pragma warning disable 1998
+
+            public static async Task<string> GetStringQuicklyAsync()
+            {
+                return "foo";
+            }
+
+        #pragma warning restore 1998
+
         }
 
         #endregion

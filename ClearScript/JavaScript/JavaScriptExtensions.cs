@@ -12,8 +12,6 @@ namespace Microsoft.ClearScript.JavaScript
     /// </summary>
     public static class JavaScriptExtensions
     {
-        private delegate void Executor(object resolve, object reject);
-
         /// <summary>
         /// Converts a <see cref="Task{TResult}"/> instance to a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
@@ -47,11 +45,7 @@ namespace Microsoft.ClearScript.JavaScript
                 throw new NotSupportedException("The script engine does not support promises");
             }
 
-            return engine.Script.EngineInternal.createPromise(new Executor((resolve, reject) =>
-            {
-                Action<Task<TResult>> continuation = thisTask => javaScriptEngine.CompletePromiseWithResult(thisTask, resolve, reject);
-                task.ContinueWith(continuation, TaskContinuationOptions.ExecuteSynchronously);
-            }));
+            return javaScriptEngine.CreatePromiseForTask(task);
         }
 
         /// <summary>
@@ -85,11 +79,7 @@ namespace Microsoft.ClearScript.JavaScript
                 throw new NotSupportedException("The script engine does not support promises");
             }
 
-            return engine.Script.EngineInternal.createPromise(new Executor((resolve, reject) =>
-            {
-                Action<Task> continuation = thisTask => javaScriptEngine.CompletePromise(thisTask, resolve, reject);
-                task.ContinueWith(continuation, TaskContinuationOptions.ExecuteSynchronously);
-            }));
+            return javaScriptEngine.CreatePromiseForTask(task);
         }
 
         /// <summary>
@@ -104,33 +94,18 @@ namespace Microsoft.ClearScript.JavaScript
             MiscHelpers.VerifyNonNullArgument(promise, "promise");
 
             var scriptObject = promise as ScriptObject;
-            if ((scriptObject == null) || !scriptObject.Engine.Script.EngineInternal.isPromise(promise))
+            if (scriptObject == null)
             {
                 throw new ArgumentException("The object is not a promise", nameof(promise));
             }
 
-            var source = new TaskCompletionSource<object>();
-
-            Action<object> onResolved = result =>
+            var javaScriptEngine = scriptObject.Engine as IJavaScriptEngine;
+            if ((javaScriptEngine == null) || (javaScriptEngine.BaseLanguageVersion < 6))
             {
-                source.SetResult(result);
-            };
+                throw new NotSupportedException("The script engine does not support promises");
+            }
 
-            Action<object> onRejected = error =>
-            {
-                try
-                {
-                    scriptObject.Engine.Script.EngineInternal.throwValue(error);
-                }
-                catch (Exception exception)
-                {
-                    source.SetException(exception);
-                }
-            };
-
-            scriptObject.InvokeMethod("then", onResolved, onRejected);
-
-            return source.Task;
+            return javaScriptEngine.CreateTaskForPromise(scriptObject);
         }
     }
 }

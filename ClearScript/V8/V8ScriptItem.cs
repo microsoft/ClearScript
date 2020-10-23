@@ -76,6 +76,24 @@ namespace Microsoft.ClearScript.V8
             return obj;
         }
 
+        public bool IsPromise()
+        {
+            return target.IsPromise();
+        }
+
+        public object InvokeMethod(bool marshalResult, string name, params object[] args)
+        {
+            VerifyNotDisposed();
+
+            var result = engine.ScriptInvoke(() => target.InvokeMethod(name, engine.MarshalToScript(args)));
+            if (marshalResult)
+            {
+                return engine.MarshalToHost(result, false);
+            }
+
+            return result;
+        }
+
         private void VerifyNotDisposed()
         {
             if (disposedFlag.IsSet)
@@ -255,8 +273,7 @@ namespace Microsoft.ClearScript.V8
 
         public override object InvokeMethod(string name, params object[] args)
         {
-            VerifyNotDisposed();
-            return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMethod(name, engine.MarshalToScript(args))), false);
+            return InvokeMethod(true, name, args);
         }
 
         #endregion

@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript.JavaScript
 {
@@ -6,7 +9,9 @@ namespace Microsoft.ClearScript.JavaScript
     {
         uint BaseLanguageVersion { get; }
 
-        void CompletePromiseWithResult<T>(Task<T> task, object resolve, object reject);
-        void CompletePromise(Task task, object resolve, object reject);
+        object CreatePromiseForTask<T>(Task<T> task);
+        object CreatePromiseForTask(Task task);
+
+        Task<object> CreateTaskForPromise(ScriptObject promise);
     }
 }
