@@ -1,5 +1,5 @@
 <#
     var version = new Version(7, 0, 0);
-    var versionSuffix = "-rc3";
+    var versionSuffix = "-rc4";
     new Random(versionSuffix.Length); // suppress "versionSuffix not used" warning
 #>

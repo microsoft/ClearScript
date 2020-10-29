@@ -109,9 +109,9 @@ void V8EntityHandleBase::ScheduleInvalidOperationException(const StdString& mess
 // V8 split proxy native entry points (implementation)
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8SplitProxyManaged_SetMethodTable(void** pMethodTable) noexcept
+NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTable) noexcept
 {
-    V8SplitProxyManaged::SetMethodTable(pMethodTable);
+    return V8SplitProxyManaged::SetMethodTable(pMethodTable);
 }
 
 //-----------------------------------------------------------------------------

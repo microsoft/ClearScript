@@ -9,6 +9,7 @@
 
 #pragma warning(push, 3)
 
+#define V8_REVERSE_JSARGS
 #define V8_DEPRECATION_WARNINGS
 //#define V8_IMMINENT_DEPRECATION_WARNINGS
 

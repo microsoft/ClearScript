@@ -1,6 +1,6 @@
 #!/bin/bash
 
-v8testedrev=8.6.395.17
+v8testedrev=8.7.220.10
 
 function usage {
     echo

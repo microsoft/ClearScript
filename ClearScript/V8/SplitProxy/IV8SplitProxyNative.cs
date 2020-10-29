@@ -9,7 +9,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         #region initialization
 
-        void V8SplitProxyManaged_SetMethodTable(IntPtr pMethodTable);
+        IntPtr V8SplitProxyManaged_SetMethodTable(IntPtr pMethodTable);
 
         #endregion
 

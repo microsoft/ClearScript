@@ -9,6 +9,8 @@ namespace Microsoft.ClearScript.Test
 {
     public partial class BugFixTest
     {
+        #region test methods
+
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_AssemblyTableClass()
         {
@@ -26,5 +28,13 @@ namespace Microsoft.ClearScript.Test
         {
             TestUtil.InvokeConsoleTest("BugFix_V8StackLimitIntegerOverflow");
         }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_MultipleAppDomains()
+        {
+            TestUtil.InvokeConsoleTest("BugFix_MultipleAppDomains");
+        }
+
+        #endregion
     }
 }

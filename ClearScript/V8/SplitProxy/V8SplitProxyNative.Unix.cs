@@ -20,9 +20,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region initialization
 
-            void IV8SplitProxyNative.V8SplitProxyManaged_SetMethodTable(IntPtr pMethodTable)
+            IntPtr IV8SplitProxyNative.V8SplitProxyManaged_SetMethodTable(IntPtr pMethodTable)
             {
-                V8SplitProxyManaged_SetMethodTable(pMethodTable);
+                return V8SplitProxyManaged_SetMethodTable(pMethodTable);
             }
 
             #endregion
@@ -964,7 +964,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             #region initialization
 
             [DllImport("ClearScriptV8", CallingConvention = CallingConvention.Cdecl)]
-            private static extern void V8SplitProxyManaged_SetMethodTable(
+            private static extern IntPtr V8SplitProxyManaged_SetMethodTable(
                 [In] IntPtr pMethodTable
             );
 

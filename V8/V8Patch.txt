@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index bda33c185f..56a342e06c 100644
+index 704ed28caa..653da104f0 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -639,7 +639,7 @@ config("toolchain") {
+@@ -664,7 +664,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
@@ -11,23 +11,11 @@ index bda33c185f..56a342e06c 100644
    ldflags = []
  
    if (v8_current_cpu == "arm") {
-diff --git a/include/v8.h b/include/v8.h
-index a839165324..26f3e153c1 100644
---- a/include/v8.h
-+++ b/include/v8.h
-@@ -19,6 +19,7 @@
- #include <stdint.h>
- #include <stdio.h>
- 
-+#include <atomic>
- #include <memory>
- #include <string>
- #include <type_traits>
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index 5a8d0bad03..cf975c5372 100644
+index 184a31c8a3..b59f3ec349 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -12076,6 +12076,11 @@ TNode<String> CodeStubAssembler::Typeof(SloppyTNode<Object> value) {
+@@ -12124,6 +12124,11 @@ TNode<String> CodeStubAssembler::Typeof(SloppyTNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -81,10 +69,10 @@ index 2b2194ca73..6f272842a7 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index a8dfa6adf5..7025dc386b 100644
+index bb33b5d097..0b6935f9ef 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
-@@ -825,6 +825,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -831,6 +831,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();

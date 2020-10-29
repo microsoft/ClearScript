@@ -17,13 +17,13 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 [assembly: AssemblyVersion("7.0.0")]
 [assembly: AssemblyFileVersion("7.0.0")]
-[assembly: AssemblyInformationalVersion("7.0.0-rc3")]
+[assembly: AssemblyInformationalVersion("7.0.0-rc4")]
 
 namespace Microsoft.ClearScript.Properties
 {
     internal static class ClearScriptVersion
     {
         public const string Triad = "7.0.0";
-        public const string Informational = "7.0.0-rc3";
+        public const string Informational = "7.0.0-rc4";
     }
 }

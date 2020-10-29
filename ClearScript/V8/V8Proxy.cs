@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Microsoft.ClearScript.Util;
-using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -25,7 +24,6 @@ namespace Microsoft.ClearScript.V8
                 if (hNativeAssembly == IntPtr.Zero)
                 {
                     hNativeAssembly = LoadNativeAssembly();
-                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8SplitProxyManaged_SetMethodTable(V8SplitProxyManaged.MethodTable));
                 }
 
                 ++splitImplCount;

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -11,6 +12,8 @@ namespace Microsoft.ClearScript.Test
 {
     internal static class ConsoleTest
     {
+        #region test methods
+
         public static unsafe void BugFix_V8StackLimitIntegerOverflow()
         {
             var threads = new List<Thread>();
@@ -72,5 +75,41 @@ namespace Microsoft.ClearScript.Test
                 threads.ForEach(thread => thread.Join());
             }
         }
+
+        public static void BugFix_MultipleAppDomains()
+        {
+            var domain1 = AppDomain.CreateDomain("domain1");
+            var domain2 = AppDomain.CreateDomain("domain2");
+
+            var obj1 = (MultiAppDomainTest)domain1.CreateInstanceAndUnwrap(Assembly.GetEntryAssembly().FullName, typeof(MultiAppDomainTest).FullName);
+            var obj2 = (MultiAppDomainTest)domain2.CreateInstanceAndUnwrap(Assembly.GetEntryAssembly().FullName, typeof(MultiAppDomainTest).FullName);
+
+            obj1.CreateEngine();
+            obj2.CreateEngine();
+
+            obj1.DisposeEngine();
+            obj2.DisposeEngine();
+        }
+
+        #endregion
+
+        #region miscellaneous
+
+        public class MultiAppDomainTest : MarshalByRefObject
+        {
+            private ScriptEngine engine;
+
+            public void CreateEngine()
+            {
+                engine = new V8ScriptEngine();
+            }
+
+            public void DisposeEngine()
+            {
+                engine.Dispose();
+            }
+        }
+
+        #endregion
     }
 }

@@ -89,8 +89,7 @@ public:
         #undef V8_SPLIT_PROXY_MANAGED_METHOD
     };
 
-    static bool HasMethodTable() noexcept;
-    static void SetMethodTable(void** pMethodTable) noexcept;
+    static void** SetMethodTable(void** pMethodTable) noexcept;
     static void SetHostException(HostException&& exception) noexcept;
 
     template <typename T>
@@ -136,7 +135,7 @@ private:
 
     static void ThrowHostException();
 
-    static void** ms_pMethodTable;
+    static thread_local void** ms_pMethodTable;
     static thread_local HostException* ms_pHostException;
 };
 

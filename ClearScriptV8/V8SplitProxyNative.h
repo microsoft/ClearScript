@@ -156,7 +156,7 @@ DEFINE_V8_ENTITY_HANDLE(NativeCallbackHandle, IHostObjectUtil::NativeCallback, S
 // V8 split proxy native entry points
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8SplitProxyManaged_SetMethodTable(void** pMethodTable) noexcept;
+NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTable) noexcept;
 
 NATIVE_ENTRY_POINT(StdString*) StdString_New(const StdChar* pValue, int32_t length) noexcept;
 NATIVE_ENTRY_POINT(const StdChar*) StdString_GetValue(const StdString& string, int32_t& length) noexcept;

@@ -7,21 +7,14 @@
 // V8SplitProxyManaged implementation
 //-----------------------------------------------------------------------------
 
-void** V8SplitProxyManaged::ms_pMethodTable = nullptr;
+thread_local void** V8SplitProxyManaged::ms_pMethodTable = nullptr;
 thread_local HostException* V8SplitProxyManaged::ms_pHostException = nullptr;
 
 //-----------------------------------------------------------------------------
 
-bool V8SplitProxyManaged::HasMethodTable() noexcept
+void** V8SplitProxyManaged::SetMethodTable(void** pMethodTable) noexcept
 {
-    return ms_pMethodTable != nullptr;
-}
-
-//-----------------------------------------------------------------------------
-
-void V8SplitProxyManaged::SetMethodTable(void** pMethodTable) noexcept
-{
-    ms_pMethodTable = pMethodTable;
+    return std::exchange(ms_pMethodTable, pMethodTable);
 }
 
 //-----------------------------------------------------------------------------
