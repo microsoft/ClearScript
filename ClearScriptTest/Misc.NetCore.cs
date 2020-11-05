@@ -8,6 +8,8 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8;
+using Microsoft.ClearScript.Windows;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -24,8 +26,9 @@ namespace Microsoft.ClearScript.Test
                 MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Assert).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ScriptEngine).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(V8ScriptEngine).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(WindowsScriptEngine).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ClearScriptTest).Assembly.Location),
-
                 MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location),
                 MetadataReference.CreateFromFile(Assembly.Load("Microsoft.VisualBasic.Core").Location)
             };
@@ -82,8 +85,9 @@ namespace Microsoft.ClearScript.Test
                 MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Assert).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ScriptEngine).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(V8ScriptEngine).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(WindowsScriptEngine).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ClearScriptTest).Assembly.Location),
-
                 MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location),
                 MetadataReference.CreateFromFile(Assembly.Load("Microsoft.VisualBasic.Core").Location)
             };

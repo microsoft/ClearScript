@@ -120,10 +120,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClearScript\ClearScript.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\Arithmetic\Arithmetic.js" Link="JavaScript\CommonJS\Arithmetic\Arithmetic.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -239,6 +235,12 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ClearScript\ClearScript.Core.csproj" />
+    <ProjectReference Include="..\ClearScript\ClearScript.V8.csproj" />
+    <ProjectReference Include="..\ClearScript\ClearScript.Windows.csproj" />
   </ItemGroup>
 
 </Project>

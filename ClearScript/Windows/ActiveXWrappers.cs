@@ -139,7 +139,7 @@ namespace Microsoft.ClearScript.Windows
                     }
                 }
 
-                if (!flags.HasFlag(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.IsX86InstructionSet())
+                if (!flags.HasFlag(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.ProcessorArchitectureIsIntel())
                 {
                     HostItem.EnableVTablePatching = true;
                 }
@@ -292,7 +292,7 @@ namespace Microsoft.ClearScript.Windows
                     }
                 }
 
-                if (!flags.HasFlag(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.IsX86InstructionSet())
+                if (!flags.HasFlag(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.ProcessorArchitectureIsIntel())
                 {
                     HostItem.EnableVTablePatching = true;
                 }

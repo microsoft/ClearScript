@@ -13,6 +13,7 @@ using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Windows
 {
+    [Guid(TypeGuids.WindowsScriptItem)]
     internal sealed class WindowsScriptItem : ScriptItem, IWindowsScriptObject, IDisposable
     {
         private readonly WindowsScriptEngine engine;

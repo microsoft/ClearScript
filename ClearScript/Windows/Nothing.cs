@@ -1,6 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System.Runtime.InteropServices;
+using Microsoft.ClearScript.Util;
+
 namespace Microsoft.ClearScript.Windows
 {
     /// <summary>
@@ -14,6 +17,7 @@ namespace Microsoft.ClearScript.Windows
     /// In JScript it appears as a value that is equal to, but not strictly equal to,
     /// <c><see href="https://developer.mozilla.org/en-US/docs/Glossary/Undefined">undefined</see></c>.
     /// </remarks>
+    [Guid(TypeGuids.Nothing)]
     public class Nothing
     {
         /// <summary>

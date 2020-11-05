@@ -57,7 +57,7 @@
     <Compile Include="..\..\ClearScriptTest\ITestInterface.cs" Link="ITestInterface.cs" />
     <Compile Include="..\..\ClearScriptTest\MemberAccessTest.cs" Link="MemberAccessTest.cs" />
     <Compile Include="..\..\ClearScriptTest\Misc.cs" Link="Misc.cs" />
-    <Compile Include="..\..\ClearScriptTest\Misc.NetCore.cs" Link="Misc.NetCore.cs" />
+    <Compile Include="..\..\ClearScriptTest\Misc.Unix.cs" Link="Misc.Unix.cs" />
     <Compile Include="..\..\ClearScriptTest\Properties\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs" />
     <Compile Include="..\..\ClearScriptTest\PropertyBagTest.cs" Link="PropertyBagTest.cs" />
     <Compile Include="..\..\ClearScriptTest\PropertyBagTest.Unix.cs" Link="PropertyBagTest.Unix.cs" />
@@ -78,10 +78,6 @@
     <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
     <PackageReference Include="coverlet.collector" Version="1.0.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.4.0-beta2-final" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ClearScript\ClearScript.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -200,6 +196,11 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\NetCore\ClearScript\ClearScript.Core.csproj" />
+    <ProjectReference Include="..\..\NetCore\ClearScript\ClearScript.V8.csproj" />
   </ItemGroup>
 
 </Project>

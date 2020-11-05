@@ -43,15 +43,14 @@ namespace Microsoft.ClearScript.V8
             }
         }
 
-        private static IntPtr LoadNativeLibrary(string baseFileName, string prefix, string suffix32, string suffix64, string extension)
+        private static IntPtr LoadNativeLibrary(string baseName, string platform, string architecture, string extension)
         {
-            var suffix = Environment.Is64BitProcess ? suffix64 : suffix32;
-            var fileName = prefix + baseFileName + suffix + extension;
-            var messageBuilder = new StringBuilder();
+            var fileName = $"{baseName}.{platform}-{architecture}.{extension}";
 
             IntPtr hLibrary;
+            var messageBuilder = new StringBuilder();
 
-            var paths = GetDirPaths().Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
+            var paths = GetDirPaths(platform, architecture).Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
             foreach (var path in paths)
             {
                 hLibrary = LoadLibrary(path);
@@ -79,7 +78,7 @@ namespace Microsoft.ClearScript.V8
             throw new TypeLoadException(message);
         }
 
-        private static IEnumerable<string> GetDirPaths()
+        private static IEnumerable<string> GetDirPaths(string platform, string architecture)
         {
             // The assembly location may be empty if the host preloaded the assembly
             // from custom storage. Support for this scenario was requested on CodePlex.
@@ -87,6 +86,7 @@ namespace Microsoft.ClearScript.V8
             var location = typeof(V8Proxy).Assembly.Location;
             if (!string.IsNullOrWhiteSpace(location))
             {
+                yield return Path.Combine(Path.GetDirectoryName(location), "runtimes", $"{platform}-{architecture}", "native");
                 yield return Path.GetDirectoryName(location);
             }
 

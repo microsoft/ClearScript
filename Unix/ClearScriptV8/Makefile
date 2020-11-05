@@ -6,10 +6,24 @@ else
 	CXXCONFIGFLAGS = -O3
 endif
 
-ifeq ($(shell uname -s), Darwin)
-	EXTENSION=.dylib
+KERNEL = $(shell uname -s)
+ifeq ($(KERNEL), Darwin)
+	KERNELSUFFIX = osx
+	EXTENSION = .dylib
+else ifeq ($(KERNEL), Linux)
+	KERNELSUFFIX = linux
+	EXTENSION = .so
 else
-	EXTENSION=.so
+    $(error unsupported operating system '$(KERNEL)')
+endif
+
+ARCH = $(shell uname -m)
+ifeq ($(ARCH), x86_64)
+	ARCHSUFFIX = x64
+else ifeq ($(ARCH), i386)
+	ARCHSUFFIX = x86
+else
+    $(error unsupported machine architecture '$(ARCH)')
 endif
 
 MAKEFILE = $(word $(words $(MAKEFILE_LIST)), $(MAKEFILE_LIST))
@@ -27,7 +41,7 @@ V8LIBDIR = $(V8OUTDIR)/obj
 
 OUTDIR = $(ROOTDIR)/bin/$(CONFIG)/Unix
 OBJDIR = $(OUTDIR)/obj
-CLEARSCRIPTV8 = $(OUTDIR)/ClearScriptV8$(EXTENSION)
+CLEARSCRIPTV8 = $(OUTDIR)/ClearScriptV8.$(KERNELSUFFIX)-$(ARCHSUFFIX)$(EXTENSION)
 
 CXX = clang++
 CXXFLAGS = -std=c++17 -fvisibility=hidden -fPIC -fno-rtti $(CXXCONFIGFLAGS) -I$(V8INCDIR)

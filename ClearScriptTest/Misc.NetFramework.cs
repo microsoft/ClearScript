@@ -17,7 +17,9 @@ namespace Microsoft.ClearScript.Test
         public static void InvokeVBTestSub(string code, string extraDefinitions = null)
         {
             var options = new CompilerParameters { GenerateInMemory = true };
-            options.ReferencedAssemblies.Add("ClearScript.dll");
+            options.ReferencedAssemblies.Add("ClearScript.Core.dll");
+            options.ReferencedAssemblies.Add("ClearScript.V8.dll");
+            options.ReferencedAssemblies.Add("ClearScript.Windows.dll");
             options.ReferencedAssemblies.Add("ClearScriptTest.dll");
             options.ReferencedAssemblies.Add(typeof(Enumerable).Assembly.Location);
             options.ReferencedAssemblies.Add(typeof(Assert).Assembly.Location);
@@ -56,7 +58,9 @@ namespace Microsoft.ClearScript.Test
         public static object InvokeVBTestFunction(string code, string extraDefinitions = null)
         {
             var options = new CompilerParameters { GenerateInMemory = true };
-            options.ReferencedAssemblies.Add("ClearScript.dll");
+            options.ReferencedAssemblies.Add("ClearScript.Core.dll");
+            options.ReferencedAssemblies.Add("ClearScript.V8.dll");
+            options.ReferencedAssemblies.Add("ClearScript.Windows.dll");
             options.ReferencedAssemblies.Add("ClearScriptTest.dll");
             options.ReferencedAssemblies.Add(typeof(Enumerable).Assembly.Location);
             options.ReferencedAssemblies.Add(typeof(Assert).Assembly.Location);

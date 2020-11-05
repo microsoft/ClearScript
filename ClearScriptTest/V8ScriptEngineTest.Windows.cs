@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Threading;
 using Microsoft.ClearScript.V8;
+using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -566,6 +567,14 @@ namespace Microsoft.ClearScript.Test
 
             Assert.AreEqual(200, status);
             Assert.AreEqual("Hello, world!", data);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Nothing()
+        {
+            engine.Script.foo = new Func<object>(() => Nothing.Value);
+            Assert.IsTrue((bool)engine.Evaluate("foo() == undefined"));
+            Assert.IsTrue((bool)engine.Evaluate("foo() === undefined"));
         }
 
         // ReSharper restore InconsistentNaming

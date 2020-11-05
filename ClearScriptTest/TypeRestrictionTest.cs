@@ -8,8 +8,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
-    [DeploymentItem("ClearScriptV8-64.dll")]
-    [DeploymentItem("ClearScriptV8-32.dll")]
+    [DeploymentItem("ClearScriptV8.win-x64.dll")]
+    [DeploymentItem("ClearScriptV8.win-x86.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class TypeRestrictionTest : ClearScriptTest
     {

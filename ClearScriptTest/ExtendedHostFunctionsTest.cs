@@ -12,8 +12,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
-    [DeploymentItem("ClearScriptV8-64.dll")]
-    [DeploymentItem("ClearScriptV8-32.dll")]
+    [DeploymentItem("ClearScriptV8.win-x64.dll")]
+    [DeploymentItem("ClearScriptV8.win-x86.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     public class ExtendedHostFunctionsTest : ClearScriptTest
     {
@@ -260,7 +260,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("ExtendedHostFunctions")]
         public void ExtendedHostFunctions_type_NonSystem_PartialAssemblyName()
         {
-            var hostType = (HostType)host.type("Microsoft.ClearScript.ScriptEngine", "ClearScript");
+            var hostType = (HostType)host.type("Microsoft.ClearScript.ScriptEngine", "ClearScript.Core");
             Assert.AreEqual(1, hostType.Types.Length);
             Assert.AreEqual(typeof(ScriptEngine), hostType.Type);
         }
@@ -268,7 +268,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("ExtendedHostFunctions")]
         public void ExtendedHostFunctions_type_NonSystem_PartialAssemblyName_Generic()
         {
-            var hostType = (HostType)host.type("Microsoft.ClearScript.OutArg", "ClearScript");
+            var hostType = (HostType)host.type("Microsoft.ClearScript.OutArg", "ClearScript.Core");
             Assert.AreEqual(1, hostType.Types.Length);
             Assert.AreEqual(typeof(OutArg<>), hostType.Type);
         }
@@ -277,7 +277,7 @@ namespace Microsoft.ClearScript.Test
         public void ExtendedHostFunctions_type_NonSystem_PartialAssemblyName_GenericWithTypeArgs()
         {
             var stringHostType = host.type("System.String");
-            var hostType = (HostType)host.type("Microsoft.ClearScript.OutArg", "ClearScript", stringHostType);
+            var hostType = (HostType)host.type("Microsoft.ClearScript.OutArg", "ClearScript.Core", stringHostType);
             Assert.AreEqual(1, hostType.Types.Length);
             Assert.AreEqual(typeof(OutArg<string>), hostType.Type);
         }

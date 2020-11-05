@@ -25,7 +25,7 @@ namespace Microsoft.ClearScript.Test
             using (var engine = new V8ScriptEngine(nameof(ClearScriptConsole), V8ScriptEngineFlags.EnableDebugging))
             {
                 engine.AddHostObject("host", new ExtendedHostFunctions());
-                engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System", "System.Core", "System.Numerics", "ClearScript"));
+                engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System", "System.Core", "System.Numerics", "ClearScript.Core", "ClearScript.V8"));
                 engine.SuppressExtensionMethodEnumeration = true;
                 engine.AllowReflection = true;
 

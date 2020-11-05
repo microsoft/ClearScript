@@ -17,7 +17,6 @@ using Microsoft.ClearScript.JavaScript;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
-using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -27,8 +26,8 @@ using System.Threading.Tasks;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
-    [DeploymentItem("ClearScriptV8-64.dll")]
-    [DeploymentItem("ClearScriptV8-32.dll")]
+    [DeploymentItem("ClearScriptV8.win-x64.dll")]
+    [DeploymentItem("ClearScriptV8.win-x86.dll")]
     [DeploymentItem("JavaScript", "JavaScript")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "Typos in test code are acceptable.")]
@@ -2720,14 +2719,6 @@ namespace Microsoft.ClearScript.Test
             var indices = foo.PropertyIndices.ToArray();
             Assert.AreEqual(1, indices.Length);
             Assert.IsTrue(indices.Contains(1));
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_Nothing()
-        {
-            engine.Script.foo = new Func<object>(() => Nothing.Value);
-            Assert.IsTrue((bool)engine.Evaluate("foo() == undefined"));
-            Assert.IsTrue((bool)engine.Evaluate("foo() === undefined"));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]

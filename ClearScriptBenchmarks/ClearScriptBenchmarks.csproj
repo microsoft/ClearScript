@@ -62,14 +62,21 @@
     <Compile Include="SunSpider.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ClearScript\ClearScript.csproj">
-      <Project>{D2382D2C-6576-4D96-B6CD-057C4F6BED96}</Project>
-      <Name>ClearScript</Name>
-      <Private>False</Private>
-    </ProjectReference>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+    <ProjectReference Include="..\ClearScript\ClearScript.Core.csproj">
+      <Project>{f1022c3f-afbc-4f23-b4de-c6c0742aeff2}</Project>
+      <Name>ClearScript.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ClearScript\ClearScript.V8.csproj">
+      <Project>{59cc81a3-3d97-469a-9c8b-533f920085f1}</Project>
+      <Name>ClearScript.V8</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ClearScript\ClearScript.Windows.csproj">
+      <Project>{bc560ff8-ab7a-4da9-a1fd-99221447d370}</Project>
+      <Name>ClearScript.Windows</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

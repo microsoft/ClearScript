@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -33,7 +33,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClearScript\ClearScript.csproj" />
+    <ProjectReference Include="..\ClearScript\ClearScript.Core.csproj" />
+    <ProjectReference Include="..\ClearScript\ClearScript.V8.csproj" />
+    <ProjectReference Include="..\ClearScript\ClearScript.Windows.csproj" />
   </ItemGroup>
 
 </Project>

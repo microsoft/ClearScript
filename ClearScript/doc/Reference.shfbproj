@@ -20,7 +20,9 @@
     <Language>en-US</Language>
     <HelpTitle>ClearScript Library</HelpTitle>
     <DocumentationSources>
-      <DocumentationSource sourceFile="..\ClearScript.csproj" />
+      <DocumentationSource sourceFile="..\ClearScript.Core.csproj" />
+      <DocumentationSource sourceFile="..\ClearScript.V8.csproj" />
+      <DocumentationSource sourceFile="..\ClearScript.Windows.csproj" />
     </DocumentationSources>
     <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, SealedProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <MissingTags>Summary, Parameter, Returns, TypeParameter</MissingTags>

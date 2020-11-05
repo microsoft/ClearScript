@@ -37,7 +37,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClearScript\ClearScript.csproj" />
+    <ProjectReference Include="..\..\NetCore\ClearScript\ClearScript.Core.csproj" />
+    <ProjectReference Include="..\..\NetCore\ClearScript\ClearScript.V8.csproj" />
   </ItemGroup>
 
 </Project>

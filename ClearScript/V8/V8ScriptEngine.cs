@@ -11,7 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
-using Microsoft.ClearScript.Windows;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -19,7 +18,7 @@ namespace Microsoft.ClearScript.V8
     /// Represents an instance of the V8 JavaScript engine.
     /// </summary>
     /// <remarks>
-    /// Unlike <see cref="WindowsScriptEngine"/> instances, V8ScriptEngine instances do not have
+    /// Unlike <c>WindowsScriptEngine</c> instances, V8ScriptEngine instances do not have
     /// thread affinity. The underlying script engine is not thread-safe, however, so this class
     /// uses internal locks to automatically serialize all script code execution for a given
     /// instance. Script delegates and event handlers are invoked on the calling thread without
@@ -1269,7 +1268,7 @@ namespace Microsoft.ClearScript.V8
                 return obj;
             }
 
-            if (obj is Nothing)
+            if (obj.GetType().IsGuidType<TypeGuidMocks.Nothing>())
             {
                 return null;
             }

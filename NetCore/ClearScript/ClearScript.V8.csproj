@@ -1,0 +1,128 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>Microsoft.ClearScript</RootNamespace>
+    <AssemblyName>ClearScript.V8</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>CS0618</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <OutputPath>..\..\bin\Debug</OutputPath>
+    <WarningsAsErrors />
+    <DocumentationFile>..\..\bin\Debug\netcoreapp3.1\ClearScript.V8.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>CS0618</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DefineConstants>TRACE</DefineConstants>
+    <OutputPath>..\..\bin\Release</OutputPath>
+    <WarningsAsErrors />
+    <DocumentationFile>..\..\bin\Release\netcoreapp3.1\ClearScript.V8.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>true</DelaySign>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\ClearScript\Properties\AssemblyInfo.V8.cs" Link="Properties\AssemblyInfo.V8.cs" />
+    <Compile Include="..\..\ClearScript\V8\IV8DebugListener.cs" Link="V8\IV8DebugListener.cs" />
+    <Compile Include="..\..\ClearScript\V8\IV8Object.cs" Link="V8\IV8Object.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\IV8SplitProxyNative.cs" Link="V8\SplitProxy\IV8SplitProxyNative.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\NativeCallbackImpl.cs" Link="V8\SplitProxy\NativeCallbackImpl.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ContextProxyImpl.cs" Link="V8\SplitProxy\V8ContextProxyImpl.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8DebugListenerImpl.cs" Link="V8\SplitProxy\V8DebugListenerImpl.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8EntityHolder.cs" Link="V8\SplitProxy\V8EntityHolder.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8IsolateProxyImpl.cs" Link="V8\SplitProxy\V8IsolateProxyImpl.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ObjectImpl.cs" Link="V8\SplitProxy\V8ObjectImpl.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ScriptImpl.cs" Link="V8\SplitProxy\V8ScriptImpl.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyHelpers.cs" Link="V8\SplitProxy\V8SplitProxyHelpers.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyManaged.cs" Link="V8\SplitProxy\V8SplitProxyManaged.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.cs" Link="V8\SplitProxy\V8SplitProxyNative.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Generated.cs" Link="V8\SplitProxy\V8SplitProxyNative.Generated.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.NetCore.cs" Link="V8\SplitProxy\V8SplitProxyNative.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8TestProxyImpl.cs" Link="V8\SplitProxy\V8TestProxyImpl.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ArrayBufferOrViewInfo.cs" Link="V8\V8ArrayBufferOrViewInfo.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ArrayBufferOrViewKind.cs" Link="V8\V8ArrayBufferOrViewKind.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8CacheKind.cs" Link="V8\V8CacheKind.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ContextProxy.cs" Link="V8\V8ContextProxy.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8CpuProfile.cs" Link="V8\V8CpuProfile.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8CpuProfileFlags.cs" Link="V8\V8CpuProfileFlags.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8DebugAgent.cs" Link="V8\V8DebugAgent.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8DebugClient.cs" Link="V8\V8DebugClient.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8IsolateProxy.cs" Link="V8\V8IsolateProxy.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8Proxy.cs" Link="V8\V8Proxy.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8Proxy.NetCore.cs" Link="V8\V8Proxy.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ProxyHelpers.cs" Link="V8\V8ProxyHelpers.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8Runtime.cs" Link="V8\V8Runtime.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8RuntimeConstraints.cs" Link="V8\V8RuntimeConstraints.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8RuntimeFlags.cs" Link="V8\V8RuntimeFlags.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8RuntimeHeapInfo.cs" Link="V8\V8RuntimeHeapInfo.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8Script.cs" Link="V8\V8Script.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.cs" Link="V8\V8ScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ScriptEngineFlags.cs" Link="V8\V8ScriptEngineFlags.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ScriptItem.cs" Link="V8\V8ScriptItem.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8TestProxy.cs" Link="V8\V8TestProxy.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+    <Folder Include="V8\" />
+    <Folder Include="V8\SplitProxy\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.dll" Link="ClearScriptV8.win-x86.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.pdb" Link="ClearScriptV8.win-x86.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x64.dll" Link="ClearScriptV8.win-x64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+    <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x64.pdb" Link="ClearScriptV8.win-x64.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'" Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.linux-x64.so" Link="ClearScriptV8.linux-x64.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'" Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.osx-x64.dylib" Link="ClearScriptV8.osx-x64.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="ClearScript.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+</Project>

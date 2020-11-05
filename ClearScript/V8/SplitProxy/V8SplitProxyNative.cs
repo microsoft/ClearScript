@@ -8,6 +8,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 {
     internal static partial class V8SplitProxyNative
     {
+        private static readonly IV8SplitProxyNative instance = CreateInstance();
+
         public static void Invoke(Action<IV8SplitProxyNative> action)
         {
             var previousScheduledException = MiscHelpers.Exchange(ref V8SplitProxyManaged.ScheduledException, null);

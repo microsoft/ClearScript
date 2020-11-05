@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.Windows
@@ -10,6 +11,7 @@ namespace Microsoft.ClearScript.Windows
     /// <summary>
     /// Represents an instance of the VBScript engine.
     /// </summary>
+    [Guid(TypeGuids.VBScriptEngine)]
     public class VBScriptEngine : WindowsScriptEngine
     {
         #region data
