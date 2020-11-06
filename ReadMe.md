@@ -30,7 +30,7 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
 * [![ClearScript.Core](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.Core?label=ClearScript.Core&logo=NuGet&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.Core)
 * [![ClearScript.Windows](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.Windows?label=ClearScript.Windows&logo=Windows&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.Windows)
 * [![ClearScript.V8](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8?label=ClearScript.V8&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8)
-### V8 native component packages
+### V8 native assembly packages
 * [![ClearScript.V8.Native.win-x86](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.win-x86?label=Windows%20(x86)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.win-x86)
 * [![ClearScript.V8.Native.win-x64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.win-x64?label=Windows%20(x64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.win-x64)
 * [![ClearScript.V8.Native.linux-x64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.linux-x64?label=Linux%20(x64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.linux-x64)
