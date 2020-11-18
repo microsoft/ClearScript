@@ -19,7 +19,7 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
 * (V8) Support for fast data transfer to and from [JavaScript typed arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays)
 * (V8) Support for [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
 * (JavaScript) Support for [CommonJS modules](http://wiki.commonjs.org/wiki/Modules)
-* :new: Support for .NET Core 3.1 on Windows, Linux, and macOS.
+* :new: Support for .NET Core 3.1 and .NET 5.0 on Windows, Linux, and macOS.
 
 # Installation
 ### Composite packages
