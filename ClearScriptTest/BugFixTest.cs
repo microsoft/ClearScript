@@ -24,10 +24,6 @@ using Newtonsoft.Json;
 namespace Microsoft.ClearScript.Test
 {
     [TestClass]
-    [DeploymentItem("ClearScriptV8.win-x64.dll")]
-    [DeploymentItem("ClearScriptV8.win-x86.dll")]
-    [DeploymentItem("ClearScriptConsole.exe")]
-    [DeploymentItem("Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll")]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "Typos in test code are acceptable.")]
     [SuppressMessage("ReSharper", "IdentifierTypo", Justification = "Typos in test code are acceptable.")]

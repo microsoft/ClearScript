@@ -12,7 +12,10 @@
     ("WinArm", "win-arm.dll"),
     ("WinArm64", "win-arm64.dll"),
     ("LinuxX64", "linux-x64.so"),
-    ("MacX64", "osx-x64.dylib")
+    ("LinuxArm", "linux-arm.so"),
+    ("LinuxArm64", "linux-arm64.so"),
+    ("MacX64", "osx-x64.dylib"),
+    ("MacArm64", "osx-arm64.dylib")
 };
 #>
 

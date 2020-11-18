@@ -3,7 +3,6 @@
 <head>
 <meta http-equiv=Content-Type content="text/html; charset=utf-8">
 <meta name=Generator content="Microsoft Word 15 (filtered)">
-<title>Building, Integrating, and Deploying ClearScript</title>
 <style>
 <!--
  /* Font Definitions */
@@ -220,7 +219,7 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas'>dotnet</span></b>
 command line to add pre-release packages.</p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-9.35pt;margin-bottom:.0001pt'>Linux</h2>
+9.35pt;margin-bottom:.0001pt'>Linux (x64)</h2>
 
 <p class=MsoNormal style='margin-left:.25in'>Use <a
 href="https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-add-package"><b><span
@@ -233,7 +232,7 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas'>dotnet</span></b>
 command line to add pre-release packages.</p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-9.35pt;margin-bottom:.0001pt'>macOS</h2>
+9.35pt;margin-bottom:.0001pt'>macOS (x64)</h2>
 
 <p class=MsoNormal style='margin-left:.25in'>Use <a
 href="https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-add-package"><b><span
@@ -274,10 +273,14 @@ avoid path length issues.</p>
 <p class=MsoNormal style='margin-left:.25in'>The provided project and solution
 files support <a href="https://www.visualstudio.com/downloads/">Visual Studio 2019</a>
 Version 16.4 or later. They produce architecture-neutral managed libraries that
-target .NET Framework 4.5 and .NET Core 3.1. ClearScript does not support older
-environments. The output directories are <b><span style='font-size:10.0pt;
-line-height:115%;font-family:Consolas'>bin\[Debug|Release]</span></b> and <b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin\[Debug|Release]\netcoreapp3.1</span></b>.</p>
+target .NET Framework 4.5, .NET Framework 4.7.1, .NET Core 3.1, and .NET 5.0.
+ClearScript does not support older environments. The output directory is <b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin\[Debug|Release]</span></b>.</p>
+
+<p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:
+</span></b>Ensure that <a
+href="https://dotnet.microsoft.com/download/visual-studio-sdks">.NET 5.0 SDK</a>
+is installed before building ClearScript.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>There are two ways to build
 ClearScript – with and without V8 support. If you don't need V8 support, simply
@@ -389,8 +392,8 @@ and ClearScript on Linux:</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
 the following packages: <a href="https://www.git-scm.com/download/linux">Git</a>,
-<a href="https://docs.microsoft.com/en-us/dotnet/core/install/linux">.NET Core
-SDK</a>, <a href="https://clang.llvm.org/">Clang</a>, <a
+<a href="https://dotnet.microsoft.com/download/dotnet/5.0">.NET 5.0 SDK</a>, <a
+href="https://clang.llvm.org/">Clang</a>, <a
 href="https://www.gnu.org/software/make/">GNU Make</a>, <a
 href="https://www.python.org/downloads/release/python-2718/">Python 2</a>, and <a
 href="http://pkgconf.org/">pkgconf</a>. For each of these, check your package
@@ -428,7 +431,7 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>make
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>DEBUG=1</span></b>
 is optional; the default configuration is <b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas'>Release</span></b>. The output directory
-is <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin/[Debug|Release]/Unix/netcoreapp3.1</span></b>.</p>
+is <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin/[Debug|Release]</span></b>.</p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 9.35pt;margin-bottom:.0001pt'>macOS</h2>
@@ -439,7 +442,7 @@ and ClearScript on macOS:</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
 <a href="https://developer.apple.com/xcode/">Xcode</a> and <a
-href="https://docs.microsoft.com/en-us/dotnet/core/install/macos">.NET Core SDK</a>.</p>
+href="https://dotnet.microsoft.com/download/dotnet/5.0">.NET 5.0 SDK</a>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
@@ -473,7 +476,7 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>make
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>DEBUG=1</span></b>
 is optional; the default configuration is <b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas'>Release</span></b>. The output directory
-is <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin/[Debug|Release]/Unix/netcoreapp3.1</span></b>.</p>
+is <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin/[Debug|Release]</span></b>.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'>IV. Building strong-named
@@ -530,8 +533,9 @@ your project in Visual Studio and select <b>Add Reference</b>.</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>In
 the Reference Manager window, click <b>Browse</b> and locate your ClearScript
-output directory (see above). Select <b>ClearScript.dll</b>, click <b>Add</b>,
-and then click <b>OK</b> to exit Reference Manager.</p>
+output directory (see above). Select <b>ClearScript.Core.dll</b>, <b>ClearScript.Windows.dll</b>,
+and <b>ClearScript.V8.dll</b>, click <b>Add</b>, and then click <b>OK</b> to
+exit Reference Manager.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
@@ -541,14 +545,14 @@ application's directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScriptV8-32.dll</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.win-x86.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><b><span style='font-size:10.0pt;
-line-height:115%;font-family:Consolas;color:black'>ClearScriptV8-64.dll</span></b></p>
+line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.win-x64.dll</span></b></p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-9.0pt;margin-bottom:.0001pt'>Linux</h2>
+9.0pt;margin-bottom:.0001pt'>Linux (x64)</h2>
 
 <p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript,
 here's how to reference it in your application:</p>
@@ -558,7 +562,7 @@ here's how to reference it in your application:</p>
 line-height:115%;font-family:Consolas;color:gray'>user@host:/path/to/MyApp$</span><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>dotnet
-add reference /path/to/ClearScript/Unix/ClearScript</span></b></p>
+add reference /path/to/ClearScript/NetCore/ClearScript.V8</span></b></p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:</span></b>
 If your application fails to load ClearScript, ensure that the following ClearScript
@@ -566,14 +570,18 @@ output files are present in your application’s output directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.dll</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.Core.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.V8.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:.5in;background:#F2F2F2'><b><span style='font-size:10.0pt;
-line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.so</span></b></p>
+line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.linux-x64.so</span></b></p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-9.0pt;margin-bottom:.0001pt'>macOS</h2>
+9.0pt;margin-bottom:.0001pt'>macOS (x64)</h2>
 
 <p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript,
 here's how to reference it in your application:</p>
@@ -583,7 +591,7 @@ here's how to reference it in your application:</p>
 line-height:115%;font-family:Consolas;color:gray'>user@host:/path/to/MyApp$</span><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>dotnet
-add reference /path/to/ClearScript/Unix/ClearScript</span></b></p>
+add reference /path/to/ClearScript/NetCore/ClearScript.V8</span></b></p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:</span></b>
 If your application fails to load ClearScript, ensure that the following
@@ -591,11 +599,15 @@ ClearScript output files are present in your application’s output directory:</
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.dll</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.Core.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.dylib</span></b></p>
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.V8.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.osx-x64.dylib</span></b></p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'>VI. Machine-level (global) deployment
@@ -610,8 +622,8 @@ IV</a> for more information. The <a
 href="https://www.nuget.org/packages/Microsoft.ClearScript">official
 ClearScript NuGet package</a> contains strong-named assemblies.</p>
 
-<p class=MsoNormal style='margin-left:.25in'>To deploy ClearScript globally, install
-its managed assembly in the <a
+<p class=MsoNormal style='margin-left:.25in'>To deploy ClearScript globally,
+install its managed assembly in the <a
 href="https://docs.microsoft.com/en-us/dotnet/framework/app-domains/gac">Global
 Assembly Cache</a>:</p>
 
@@ -622,8 +634,8 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </spa
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>gacutil
 /i ClearScript.dll</span></b></p>
 
-<p class=MsoNormal style='margin-left:.25in'>Additionally, you must copy ClearScript’s
-V8 assemblies to the system folder:</p>
+<p class=MsoNormal style='margin-left:.25in'>Additionally, you must copy
+ClearScript’s V8 assemblies to the system folder:</p>
 
 <p class=MsoNormal style='margin-left:.5in'>On 32-bit Windows:</p>
 
@@ -632,7 +644,7 @@ V8 assemblies to the system folder:</p>
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'>C:\Path\To\ClearScript\bin\Release&gt;</span></a><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><a
 name="_Hlk14466717"><b><span style='font-size:10.0pt;line-height:115%;
-font-family:Consolas;color:black'>copy ClearScriptV8-32.dll %SystemRoot%\System32</span></b></a></p>
+font-family:Consolas;color:black'>copy ClearScriptV8.win-x86.dll %SystemRoot%\System32</span></b></a></p>
 
 <p class=MsoNormal style='margin-left:.5in'>On 64-bit Windows:</p>
 
@@ -641,14 +653,14 @@ font-family:Consolas;color:black'>copy ClearScriptV8-32.dll %SystemRoot%\System3
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'>C:\Path\To\ClearScript\bin\Release&gt;</span><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>copy
-ClearScriptV8-64.dll %SystemRoot%\System32</span></b></p>
+ClearScriptV8.win-x64.dll %SystemRoot%\System32</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas;color:gray'>C:\Path\To\ClearScript\bin\Release&gt;</span><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>copy
-ClearScriptV8-32.dll %SystemRoot%\SysWOW64</span></b></p>
+ClearScriptV8.win-x86.dll %SystemRoot%\SysWOW64</span></b></p>
 
 <p class=MsoNormal style='margin-left:.25in'><a
 name="_Debugging_with_ClearScript"></a><b><span style='color:red'>Important:</span></b>

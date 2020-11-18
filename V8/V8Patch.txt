@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 704ed28caa..653da104f0 100644
+index 94b598bc9a..3c00cacb98 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -664,7 +664,7 @@ config("toolchain") {
+@@ -663,7 +663,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []

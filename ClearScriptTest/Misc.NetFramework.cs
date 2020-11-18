@@ -21,6 +21,7 @@ namespace Microsoft.ClearScript.Test
             options.ReferencedAssemblies.Add("ClearScript.V8.dll");
             options.ReferencedAssemblies.Add("ClearScript.Windows.dll");
             options.ReferencedAssemblies.Add("ClearScriptTest.dll");
+            options.ReferencedAssemblies.Add("System.Runtime.dll");
             options.ReferencedAssemblies.Add(typeof(Enumerable).Assembly.Location);
             options.ReferencedAssemblies.Add(typeof(Assert).Assembly.Location);
             var results = new VBCodeProvider().CompileAssemblyFromSource(options, MiscHelpers.FormatInvariant(@"
@@ -62,6 +63,7 @@ namespace Microsoft.ClearScript.Test
             options.ReferencedAssemblies.Add("ClearScript.V8.dll");
             options.ReferencedAssemblies.Add("ClearScript.Windows.dll");
             options.ReferencedAssemblies.Add("ClearScriptTest.dll");
+            options.ReferencedAssemblies.Add("System.Runtime.dll");
             options.ReferencedAssemblies.Add(typeof(Enumerable).Assembly.Location);
             options.ReferencedAssemblies.Add(typeof(Assert).Assembly.Location);
             var results = new VBCodeProvider().CompileAssemblyFromSource(options, MiscHelpers.FormatInvariant(@"

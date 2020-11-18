@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -15,7 +16,7 @@ using Microsoft.ClearScript.Properties;
 
 namespace Microsoft.ClearScript.Util
 {
-    internal static partial class MiscHelpers
+    internal static class MiscHelpers
     {
         #region COM helpers
 
@@ -517,6 +518,37 @@ namespace Microsoft.ClearScript.Util
             }
 
             return path;
+        }
+
+        public static bool PlatformIsWindows()
+        {
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        }
+
+        public static bool ProcessorArchitectureIsIntel()
+        {
+            switch (RuntimeInformation.ProcessArchitecture)
+            {
+                case Architecture.X64:
+                case Architecture.X86:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        public static bool ProcessorArchitectureIsArm()
+        {
+            switch (RuntimeInformation.ProcessArchitecture)
+            {
+                case Architecture.Arm:
+                case Architecture.Arm64:
+                    return true;
+
+                default:
+                    return false;
+            }
         }
 
         #endregion

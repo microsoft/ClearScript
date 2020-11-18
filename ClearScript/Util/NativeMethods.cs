@@ -6,22 +6,6 @@ using System.Runtime.InteropServices;
 
 namespace Microsoft.ClearScript.Util
 {
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SystemInfo
-    {
-        public ushort ProcessorArchitecture;
-        public ushort Reserved;
-        public uint PageSize;
-        public IntPtr MinimumApplicationAddress;
-        public IntPtr MaximumApplicationAddress;
-        public IntPtr ActiveProcessorMask;
-        public uint NumberOfProcessors;
-        public uint ProcessorType;
-        public uint AllocationGranularity;
-        public ushort ProcessorLevel;
-        public ushort ProcessorRevision;
-    }
-
     internal static class NativeMethods
     {
         public static IntPtr LoadLibraryW(string path)
@@ -146,30 +130,6 @@ namespace Microsoft.ClearScript.Util
             throw new PlatformNotSupportedException();
         }
 
-        public static void GetSystemInfo(out SystemInfo info)
-        {
-            if (MiscHelpers.PlatformIsWindows())
-            {
-                NativeWindowsMethods.GetSystemInfo(out info);
-            }
-            else
-            {
-                throw new PlatformNotSupportedException();
-            }
-        }
-
-        public static void GetNativeSystemInfo(out SystemInfo info)
-        {
-            if (MiscHelpers.PlatformIsWindows())
-            {
-                NativeWindowsMethods.GetNativeSystemInfo(out info);
-            }
-            else
-            {
-                throw new PlatformNotSupportedException();
-            }
-        }
-
         #region Nested type: WindowsNativeMethods
 
         private static class NativeWindowsMethods
@@ -250,16 +210,6 @@ namespace Microsoft.ClearScript.Util
                 [In] UIntPtr size,
                 [In] uint newProtect,
                 [Out] out uint oldProtect
-            );
-
-            [DllImport("kernel32.dll", SetLastError = false)]
-            public static extern void GetSystemInfo(
-                [Out] out SystemInfo info
-            );
-
-            [DllImport("kernel32.dll")]
-            public static extern void GetNativeSystemInfo(
-                [Out] out SystemInfo info
             );
 
             // ReSharper restore MemberHidesStaticFromOuterClass

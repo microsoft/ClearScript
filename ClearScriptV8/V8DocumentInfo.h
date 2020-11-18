@@ -22,7 +22,7 @@ public:
     {
     }
 
-    V8DocumentInfo(StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, bool isModule, void* pvDocumentInfo) :
+    V8DocumentInfo(StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, bool isModule, void* pvDocumentInfo):
         m_ResourceName(std::move(resourceName)),
         m_SourceMapUrl(std::move(sourceMapUrl)),
         m_UniqueId(uniqueId),

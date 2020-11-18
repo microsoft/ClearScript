@@ -22,6 +22,16 @@ ifeq ($(ARCH), x86_64)
 	ARCHSUFFIX = x64
 else ifeq ($(ARCH), i386)
 	ARCHSUFFIX = x86
+else ifeq ($(ARCH), arm)
+	ARCHSUFFIX = arm
+else ifeq ($(ARCH), arm32)
+	ARCHSUFFIX = arm
+else ifeq ($(ARCH), aarch32)
+	ARCHSUFFIX = arm
+else ifeq ($(ARCH), arm64)
+	ARCHSUFFIX = arm64
+else ifeq ($(ARCH), aarch64)
+	ARCHSUFFIX = arm64
 else
     $(error unsupported machine architecture '$(ARCH)')
 endif

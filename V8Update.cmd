@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set v8testedrev=8.7.220.16
+set v8testedrev=8.7.220.25
 
 ::-----------------------------------------------------------------------------
 :: process arguments

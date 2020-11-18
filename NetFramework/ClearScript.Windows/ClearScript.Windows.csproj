@@ -1,0 +1,81 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+    <PropertyGroup>
+        <TargetFramework>net45</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <RootNamespace>Microsoft.ClearScript</RootNamespace>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DefineConstants>TRACE;DEBUG</DefineConstants>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <OutputPath>..\..\bin\Debug</OutputPath>
+        <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.Windows.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <DefineConstants>TRACE</DefineConstants>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <OutputPath>..\..\bin\Release</OutputPath>
+        <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.Windows.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+    <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</AssemblyOriginatorKeyFile>
+        <DelaySign>true</DelaySign>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\..\ClearScript\Properties\AssemblyInfo.Windows.cs" Link="Properties\AssemblyInfo.Windows.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>AssemblyInfo.Windows.tt</DependentUpon>
+        </Compile>
+        <Compile Include="..\..\ClearScript\Windows\ActiveXDebugging.cs" Link="Windows\ActiveXDebugging.cs" />
+        <Compile Include="..\..\ClearScript\Windows\ActiveXScripting.cs" Link="Windows\ActiveXScripting.cs" />
+        <Compile Include="..\..\ClearScript\Windows\ActiveXWrappers.cs" Link="Windows\ActiveXWrappers.cs" />
+        <Compile Include="..\..\ClearScript\Windows\IHostWindow.cs" Link="Windows\IHostWindow.cs" />
+        <Compile Include="..\..\ClearScript\Windows\IWindowsScriptObject.cs" Link="Windows\IWindowsScriptObject.cs" />
+        <Compile Include="..\..\ClearScript\Windows\JScriptEngine.cs" Link="Windows\JScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Nothing.cs" Link="Windows\Nothing.cs" />
+        <Compile Include="..\..\ClearScript\Windows\VBScriptEngine.cs" Link="Windows\VBScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.cs" Link="Windows\WindowsScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.Debug.cs" Link="Windows\WindowsScriptEngine.Debug.cs" />
+        <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.Site.cs" Link="Windows\WindowsScriptEngine.Site.cs" />
+        <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngineFlags.cs" Link="Windows\WindowsScriptEngineFlags.cs" />
+        <Compile Include="..\..\ClearScript\Windows\WindowsScriptItem.cs" Link="Windows\WindowsScriptItem.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Properties\" />
+        <Folder Include="Windows\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\ClearScript\Properties\AssemblyInfo.Windows.tt" Link="Properties\AssemblyInfo.Windows.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>AssemblyInfo.Windows.cs</LastGenOutput>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Microsoft.CSharp" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+    </ItemGroup>
+
+</Project>

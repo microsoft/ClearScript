@@ -9,26 +9,6 @@ namespace Microsoft.ClearScript.V8
 {
     internal abstract partial class V8Proxy
     {
-        private static IntPtr LoadNativeAssembly()
-        {
-            string architecture;
-
-            if (MiscHelpers.ProcessorArchitectureIsIntel())
-            {
-                architecture = Environment.Is64BitProcess ? "x64" : "x86";
-            }
-            else if (MiscHelpers.ProcessorArchitectureIsArm())
-            {
-                architecture = Environment.Is64BitProcess ? "arm64" : "arm";
-            }
-            else
-            {
-                throw new PlatformNotSupportedException("Unsupported processor architecture");
-            }
-
-            return LoadNativeLibrary("ClearScriptV8", "win", architecture, "dll");
-        }
-
         private static IntPtr LoadLibrary(string path)
         {
             return NativeMethods.LoadLibraryW(path);

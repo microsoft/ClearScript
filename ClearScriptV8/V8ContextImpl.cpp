@@ -2955,9 +2955,6 @@ v8::ScriptOrigin V8ContextImpl::CreateScriptOrigin(const V8DocumentInfo& documen
 {
     FROM_MAYBE_TRY
 
-        auto hOptions = CreatePrimitiveArray(1);
-        //SetPrimitiveArrayItem(hOptions, 0, CreateBigInt(documentInfo.GetUniqueId()));
-
         return v8::ScriptOrigin(
             FROM_MAYBE(CreateString(documentInfo.GetResourceName())),
             v8::Local<v8::Integer>(),
@@ -2967,8 +2964,7 @@ v8::ScriptOrigin V8ContextImpl::CreateScriptOrigin(const V8DocumentInfo& documen
             (documentInfo.GetSourceMapUrl().GetLength() > 0) ? FROM_MAYBE(CreateString(documentInfo.GetSourceMapUrl())) : v8::Local<v8::String>(),
             v8::Local<v8::Boolean>(),
             v8::Local<v8::Boolean>(),
-            documentInfo.IsModule() ? GetTrue() : GetFalse(),
-            hOptions
+            documentInfo.IsModule() ? GetTrue() : GetFalse()
         );
 
     FROM_MAYBE_CATCH

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.ClearScript.Util;
 
@@ -41,6 +42,56 @@ namespace Microsoft.ClearScript.V8
                     hNativeAssembly = IntPtr.Zero;
                 }
             }
+        }
+
+        private static IntPtr LoadNativeAssembly()
+        {
+            string platform;
+            string architecture;
+            string extension;
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                platform = "win";
+                extension = "dll";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                platform = "linux";
+                extension = "so";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                platform = "osx";
+                extension = "dylib";
+            }
+            else
+            {
+                throw new PlatformNotSupportedException("Unsupported OS platform");
+            }
+
+            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+            {
+                architecture = "x64";
+            }
+            else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
+            {
+                architecture = "x86";
+            }
+            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
+            {
+                architecture = "arm";
+            }
+            else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+            {
+                architecture = "arm64";
+            }
+            else
+            {
+                throw new PlatformNotSupportedException("Unsupported process architecture");
+            }
+
+            return LoadNativeLibrary("ClearScriptV8", platform, architecture, extension);
         }
 
         private static IntPtr LoadNativeLibrary(string baseName, string platform, string architecture, string extension)
