@@ -53,11 +53,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Properties\" />
-        <Folder Include="Windows\" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
     </ItemGroup>
 

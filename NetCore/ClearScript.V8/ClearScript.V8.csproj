@@ -73,12 +73,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Properties\" />
-        <Folder Include="V8\" />
-        <Folder Include="V8\SplitProxy\" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X86' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.dll" Link="ClearScriptV8.win-x86.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>

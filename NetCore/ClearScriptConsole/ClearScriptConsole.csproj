@@ -30,10 +30,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Properties\" />
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="MSTest.TestFramework" Version="2.1.2" />
     </ItemGroup>
 

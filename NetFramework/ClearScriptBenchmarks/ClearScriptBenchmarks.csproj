@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net471</TargetFramework>
+        <TargetFrameworks>net45;net471</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
@@ -29,10 +29,6 @@
             <DependentUpon>AssemblyInfo.tt</DependentUpon>
         </Compile>
         <Compile Include="..\..\ClearScriptBenchmarks\SunSpider.cs" Link="SunSpider.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Properties\" />
     </ItemGroup>
 
     <ItemGroup>

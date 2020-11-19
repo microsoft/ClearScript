@@ -81,12 +81,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Properties\" />
-        <Folder Include="V8\" />
-        <Folder Include="V8\SplitProxy\" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Include="..\..\ClearScript\Properties\AssemblyInfo.V8.tt" Link="Properties\AssemblyInfo.V8.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>AssemblyInfo.V8.cs</LastGenOutput>

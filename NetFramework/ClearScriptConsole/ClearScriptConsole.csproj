@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>net45;net46</TargetFrameworks>
+        <TargetFrameworks>net45;net471</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
@@ -33,10 +33,6 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>AssemblyInfo.tt</DependentUpon>
         </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Properties\" />
     </ItemGroup>
 
     <ItemGroup>
