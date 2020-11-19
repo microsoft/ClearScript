@@ -55,11 +55,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Properties\" />
-        <Folder Include="Windows\" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Include="..\..\ClearScript\Properties\AssemblyInfo.Windows.tt" Link="Properties\AssemblyInfo.Windows.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>AssemblyInfo.Windows.cs</LastGenOutput>

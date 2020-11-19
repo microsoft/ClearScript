@@ -36,10 +36,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Properties\" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Include="..\..\ClearScriptConsole\Properties\AssemblyInfo.tt" Link="Properties\AssemblyInfo.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>AssemblyInfo.cs</LastGenOutput>

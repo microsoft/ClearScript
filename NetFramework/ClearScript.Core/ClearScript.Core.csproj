@@ -167,15 +167,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Exports\" />
-        <Folder Include="JavaScript\" />
-        <Folder Include="Properties\" />
-        <Folder Include="Util\COM\" />
-        <Folder Include="Util\Test\" />
-        <Folder Include="Util\Web\" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Include="..\..\ClearScript\DelegateFactory.tt" Link="DelegateFactory.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>DelegateFactory.Generated.cs</LastGenOutput>

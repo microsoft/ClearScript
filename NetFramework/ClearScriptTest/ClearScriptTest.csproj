@@ -242,10 +242,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Properties\" />
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
         <ProjectReference Include="..\ClearScript.V8\ClearScript.V8.csproj" />
         <ProjectReference Include="..\ClearScript.Windows\ClearScript.Windows.csproj" />
