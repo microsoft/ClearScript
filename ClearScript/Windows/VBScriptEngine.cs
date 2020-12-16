@@ -74,6 +74,7 @@ namespace Microsoft.ClearScript.Windows
             { 1057, "'Default' specification must also specify 'Public'" },
             { 1005, "Expected '('" },
             { 1006, "Expected ')'" },
+            { 1007, "Expected ']'" },                   // missing in the online documentation
             { 1011, "Expected '='" },
             { 1021, "Expected 'Case'" },
             { 1047, "Expected 'Class'" },
