@@ -7,13 +7,30 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+#if USESYNCCONTEXT
+using System.Threading;
+#else
 using System.Windows.Threading;
+#endif
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
 using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
 
 namespace Microsoft.ClearScript.Windows
 {
+#if USESYNCCONTEXT
+    /// <summary>
+    /// Provides the base implementation for all Windows Script engines.
+    /// </summary>
+    /// <remarks>
+    /// Each Windows Script engine instance uses a <see cref="SynchronizationContext"/>.
+    /// Script delegates and event handlers are marshaled synchronously onto this context.
+    /// The synchronization context is responsible for ensuring thread affinity
+    /// and/or processing the Windows message queue, if needed.
+    /// The current context is used, and if there is none, a default threadpool-based context is created.
+    /// Attempting to execute script code on a different context will not result in an exception.
+    /// </remarks>
+#else
     /// <summary>
     /// Provides the base implementation for all Windows Script engines.
     /// </summary>
@@ -23,6 +40,7 @@ namespace Microsoft.ClearScript.Windows
     /// different thread results in an exception. Script delegates and event handlers are marshaled
     /// synchronously onto the correct thread.
     /// </remarks>
+#endif
     public abstract partial class WindowsScriptEngine : ScriptEngine
     {
         #region data
@@ -43,7 +61,13 @@ namespace Microsoft.ClearScript.Windows
         private readonly DebugDocumentMap debugDocumentMap = new DebugDocumentMap();
         private uint nextSourceContext = 1;
 
+#if USESYNCCONTEXT
+        private readonly SynchronizationContext synchronizationContext
+            = SynchronizationContext.Current ?? new SynchronizationContext();
+#else
         private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
+#endif
+
         private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
         #endregion
@@ -113,6 +137,42 @@ namespace Microsoft.ClearScript.Windows
 
         #region public members
 
+#if USESYNCCONTEXT
+        /// <summary>
+        /// Gets the <see cref="System.Threading.SynchronizationContext"/> associated with the current script engine.
+        /// </summary>
+        public SynchronizationContext SynchronizationContext
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return synchronizationContext;
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the calling thread has access to the current script engine.
+        /// </summary>
+        /// <returns><c>True</c> if the calling thread has access to the current script engine, <c>false</c> otherwise.</returns>
+        public bool CheckAccess()
+        {
+            VerifyNotDisposed();
+
+            // cannot implement CheckAccess with a SynchronizationContext,
+            // SynchronizationContext instances cannot be compared meaningfully
+            return true; 
+        }
+
+        /// <summary>
+        /// Enforces that the calling thread has access to the current script engine.
+        /// </summary>
+        public void VerifyAccess()
+        {
+            // cannot implement VerifyAccess with a SynchronizationContext.
+            // SynchronizationContext instances cannot be compared meaningfully
+            VerifyNotDisposed();
+        }
+#else
         /// <summary>
         /// Gets the <see cref="Dispatcher"/> associated with the current script engine.
         /// </summary>
@@ -143,6 +203,7 @@ namespace Microsoft.ClearScript.Windows
             VerifyNotDisposed();
             dispatcher.VerifyAccess();
         }
+#endif
 
         /// <summary>
         /// Gets or sets an interface that supports the display of dialogs on behalf of script code.
@@ -747,6 +808,21 @@ namespace Microsoft.ClearScript.Windows
 
         #region ScriptEngine overrides (synchronized invocation)
 
+#if USESYNCCONTEXT
+        internal override void SyncInvoke(Action action)
+        {
+            synchronizationContext.Send(x => action(), null);
+        }
+
+        internal override T SyncInvoke<T>(Func<T> func)
+        {
+            T retval = default;
+            void callback(object x) { retval = func(); }
+            synchronizationContext.Send(callback, null);
+
+            return retval;
+        }
+#else
         internal override void SyncInvoke(Action action)
         {
             dispatcher.Invoke(DispatcherPriority.Send, action);
@@ -756,6 +832,7 @@ namespace Microsoft.ClearScript.Windows
         {
             return (T)dispatcher.Invoke(DispatcherPriority.Send, func);
         }
+#endif
 
         #endregion
 
@@ -780,7 +857,9 @@ namespace Microsoft.ClearScript.Windows
                 base.Dispose(disposing);
                 if (disposing)
                 {
+#if !USESYNCCONTEXT // cannot implement VerifyAccess with a SynchronizationContext 
                     dispatcher.VerifyAccess();
+#endif
 
                     if (sourceManagement)
                     {

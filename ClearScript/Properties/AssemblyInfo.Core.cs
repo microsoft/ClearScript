@@ -14,7 +14,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("(c) Microsoft Corporation")]
 [assembly: InternalsVisibleTo("ClearScript.V8")]
 [assembly: InternalsVisibleTo("ClearScript.Windows")]
+[assembly: InternalsVisibleTo("ClearScript.WindowsSyncContext")]
 [assembly: InternalsVisibleTo("ClearScriptTest")]
+[assembly: InternalsVisibleTo("ClearScriptTest.SyncContext")]
 
 [assembly: ComVisible(false)]
 [assembly: AssemblyVersion("7.0.0")]

@@ -2079,6 +2079,12 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("halloween", engine.Evaluate("dict.Item.get(\"baz\")"));
         }
 
+#if !USESYNCCONTEXT
+        // MSXML2.XMLHTTP XMLHttpRequest uses the Windows message queue
+        // to notify the application when data becomes available.
+        // So, all variants of this test need to process the Windows message queue.
+        // This is done either using the WPF Dispatcher,
+        // or using the headless MessageQueueSynchronizationContext provided in this project.
         [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_AddCOMType_XMLHTTP()
         {
@@ -2128,6 +2134,7 @@ namespace Microsoft.ClearScript.Test
                 }
             });
 
+            thread.Name = "TestThread";
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
             thread.Join();
@@ -2135,6 +2142,140 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(200, status);
             Assert.AreEqual("Hello, world!", data);
         }
+#else
+        // MSXML2.XMLHTTP XMLHttpRequest uses the Windows message queue
+        // to notify the application when data becomes available.
+        // So, all variants of this test need to process the Windows message queue.
+        // This is done either using the WPF Dispatcher,
+        // or using the headless MessageQueueSynchronizationContext provided in this project.
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMType_XMLHTTP_DispatcherSyncContext()
+        {
+            var status = 0;
+            string data = null;
+
+            var thread = new Thread(() =>
+            {
+                var context = SetupDispatcherSynchronizationContext();
+
+                using (var testEngine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging))
+                {
+                    using (var helperEngine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode))
+                    {
+                        // ReSharper disable AccessToDisposedClosure
+
+                        testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
+                        {
+                            status = xhrStatus;
+                            data = xhrData;
+                            Dispatcher.ExitAllFrames();
+                        });
+
+                        testEngine.Script.getData = new Func<string, string>(responseText =>
+                            helperEngine.Script.JSON.parse(responseText).data
+                        );
+
+                        context.Post(
+                            state =>
+                            {
+                                testEngine.AddCOMType("XMLHttpRequest", "MSXML2.XMLHTTP");
+                                testEngine.Script.host = new HostFunctions();
+                                testEngine.Execute(@"
+                                    sub onreadystatechange
+                                        if xhr.readyState = 4 then
+                                            call onComplete(xhr.status, getData(xhr.responseText))
+                                        end if
+                                    end sub
+                                    xhr = host.newObj(XMLHttpRequest)
+                                    call xhr.open(""POST"", ""http://httpbin.org/post"", true)
+                                    xhr.onreadystatechange = GetRef(""onreadystatechange"")
+                                    call xhr.send(""Hello, world!"")
+                                ");
+                            },
+                            null);
+
+                        Dispatcher.Run();
+
+                        // ReSharper restore AccessToDisposedClosure
+                    }
+                }
+            });
+
+            thread.Name = "TestThread";
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            Assert.AreEqual(200, status);
+            Assert.AreEqual("Hello, world!", data);
+        }
+
+        // MSXML2.XMLHTTP XMLHttpRequest uses the Windows message queue
+        // to notify the application when data becomes available.
+        // So, all variants of this test need to process the Windows message queue.
+        // This is done either using the WPF Dispatcher,
+        // or using the headless MessageQueueSynchronizationContext provided in this project.
+        [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_AddCOMType_XMLHTTP_MessageQueueSyncContext()
+        {
+            var status = 0;
+            string data = null;
+
+            var thread = new Thread(() =>
+            {
+                using (var context = SetupMessageQueueSynchronizationContext())
+                using (var testEngine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging))
+                {
+                    using (var helperEngine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode))
+                    {
+                        // ReSharper disable AccessToDisposedClosure
+
+                        testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
+                        {
+                            status = xhrStatus;
+                            data = xhrData;
+                            context.Stop();
+                        });
+
+                        testEngine.Script.getData = new Func<string, string>(responseText =>
+                            helperEngine.Script.JSON.parse(responseText).data
+                        );
+
+                        context.Post(
+                            state =>
+                            {
+                                testEngine.AddCOMType("XMLHttpRequest", "MSXML2.XMLHTTP");
+                                testEngine.Script.host = new HostFunctions();
+                                testEngine.Execute(@"
+                                    sub onreadystatechange
+                                        if xhr.readyState = 4 then
+                                            call onComplete(xhr.status, getData(xhr.responseText))
+                                        end if
+                                    end sub
+                                    xhr = host.newObj(XMLHttpRequest)
+                                    call xhr.open(""POST"", ""http://httpbin.org/post"", true)
+                                    xhr.onreadystatechange = GetRef(""onreadystatechange"")
+                                    call xhr.send(""Hello, world!"")
+                                ");
+                            },
+                            null);
+
+                        context.Run();
+
+                        // ReSharper restore AccessToDisposedClosure
+                    }
+                }
+            });
+
+            thread.Name = "TestThread";
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            Assert.AreEqual(200, status);
+            Assert.AreEqual("Hello, world!", data);
+        }
+#endif
 
         [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_EnableAutoHostVariables()
@@ -2871,7 +3012,7 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
-        private const string generalScript =
+        private static readonly string generalScript =
         @"
             set System = clr.System
 
@@ -2935,7 +3076,7 @@ namespace Microsoft.ClearScript.Test
             tlist.Item(1).Name = ""Ellis""
             tlist.Item(0).Name = ""Eóin""
             tlist.Item(1).Name = ""Shane""
-        ";
+        ".Replace("\"ClearScriptTest\"", $"\"{TestAssemblyName()}\"");
 
         private const string generalScriptOutput =
         @"

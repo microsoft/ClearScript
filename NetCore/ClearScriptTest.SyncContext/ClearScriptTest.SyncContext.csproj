@@ -1,20 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
     <PropertyGroup>
-        <TargetFramework>net471</TargetFramework>
+        <TargetFrameworks>netcoreapp3.1;net5.0-windows</TargetFrameworks>
         <UseWPF>true</UseWPF>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <DefineConstants>USESYNCCONTEXT;DEBUG;TRACE</DefineConstants>
+        <NoWarn>CA1416</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <DefineConstants>TRACE</DefineConstants>
+        <DefineConstants>USESYNCCONTEXT;TRACE</DefineConstants>
+        <NoWarn>CA1416</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
     </PropertyGroup>
@@ -31,13 +33,12 @@
 
     <ItemGroup>
         <Compile Include="..\..\ClearScriptTest\AccessContextTest.cs" Link="AccessContextTest.cs" />
-        <Compile Include="..\..\ClearScriptTest\BadV8DeploymentTest.cs" Link="BadV8DeploymentTest.cs" />
         <Compile Include="..\..\ClearScriptTest\BaseInterfaceMemberAccessTest.cs" Link="BaseInterfaceMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\BaseMemberAccessTest.cs" Link="BaseMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\BaseTestObject.cs" Link="BaseTestObject.cs" />
         <Compile Include="..\..\ClearScriptTest\BindSignatureTest.cs" Link="BindSignatureTest.cs" />
         <Compile Include="..\..\ClearScriptTest\BugFixTest.cs" Link="BugFixTest.cs" />
-        <Compile Include="..\..\ClearScriptTest\BugFixTest.NetFramework.cs" Link="BugFixTest.NetFramework.cs" />
+        <Compile Include="..\..\ClearScriptTest\BugFixTest.NetCore.cs" Link="BugFixTest.NetCore.cs" />
         <Compile Include="..\..\ClearScriptTest\BugFixTest.Windows.cs" Link="BugFixTest.Windows.cs" />
         <Compile Include="..\..\ClearScriptTest\ClearScriptTest.cs" Link="ClearScriptTest.cs" />
         <Compile Include="..\..\ClearScriptTest\CrossEngineTest.cs" Link="CrossEngineTest.cs" />
@@ -61,13 +62,10 @@
         <Compile Include="..\..\ClearScriptTest\JScriptEngineTest.cs" Link="JScriptEngineTest.cs" />
         <Compile Include="..\..\ClearScriptTest\JScriptModuleTest.cs" Link="JScriptModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\MemberAccessTest.cs" Link="MemberAccessTest.cs" />
+        <Compile Include="..\..\ClearScriptTest\MessageQueueSynchronizationContext.Windows.cs" Link="MessageQueueSynchronizationContext.Windows.cs" />
         <Compile Include="..\..\ClearScriptTest\Misc.cs" Link="Misc.cs" />
-        <Compile Include="..\..\ClearScriptTest\Misc.NetFramework.cs" Link="Misc.NetFramework.cs" />
-        <Compile Include="..\..\ClearScriptTest\Properties\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>AssemblyInfo.tt</DependentUpon>
-        </Compile>
+        <Compile Include="..\..\ClearScriptTest\Misc.NetCore.cs" Link="Misc.NetCore.cs" />
+        <Compile Include="..\..\ClearScriptTest\Properties\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs" />
         <Compile Include="..\..\ClearScriptTest\PropertyBagTest.cs" Link="PropertyBagTest.cs" />
         <Compile Include="..\..\ClearScriptTest\PropertyBagTest.Windows.cs" Link="PropertyBagTest.Windows.cs" />
         <Compile Include="..\..\ClearScriptTest\ScriptAccessTest.cs" Link="ScriptAccessTest.cs" />
@@ -120,7 +118,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+        <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.7.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -157,7 +155,7 @@
         <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\NewMath.js" Link="JavaScript\CommonJS\NewMath.js">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Include="..\..\ClearScriptTest\JavaScript\General.js" Link="JavaScript\General.js">
+        <None Include="..\..\ClearScriptTest\JavaScript\GeneralSyncContext.js" Link="JavaScript\General.js">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js" Link="JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js">
@@ -229,14 +227,10 @@
         <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\ModuleWithSideEffects.js" Link="JavaScript\StandardModuleWithCycles\ModuleWithSideEffects.js">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Include="..\..\ClearScriptTest\Properties\AssemblyInfo.tt" Link="Properties\AssemblyInfo.tt">
-            <Generator>TextTemplatingFileGenerator</Generator>
-            <LastGenOutput>AssemblyInfo.cs</LastGenOutput>
-        </None>
         <None Include="..\..\ClearScriptTest\VBScript\Expression.vbs" Link="VBScript\Expression.vbs">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Include="..\..\ClearScriptTest\VBScript\General.vbs" Link="VBScript\General.vbs">
+        <None Include="..\..\ClearScriptTest\VBScript\GeneralSyncContext.vbs" Link="VBScript\General.vbs">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
@@ -244,15 +238,7 @@
     <ItemGroup>
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
         <ProjectReference Include="..\ClearScript.V8\ClearScript.V8.csproj" />
-        <ProjectReference Include="..\ClearScript.Windows\ClearScript.Windows.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Microsoft.CSharp" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+        <ProjectReference Include="..\ClearScript.WindowsSyncContext\ClearScript.WindowsSyncContext.csproj" />
     </ItemGroup>
 
 </Project>

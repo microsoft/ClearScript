@@ -521,8 +521,14 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("dict.Item.get(Math.E)"));
         }
 
+#if !USESYNCCONTEXT
+        // MSXML2.XMLHTTP XMLHttpRequest uses the Windows message queue
+        // to notify the application when data becomes available.
+        // So, all variants of this test need to process the Windows message queue.
+        // This is done either using the WPF Dispatcher,
+        // or using the headless MessageQueueSynchronizationContext provided in this project.
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMType_XMLHTTP()
+        public void V8ScriptEngine_AddCOMType_XMLHTTP_Dispatcher()
         {
             var status = 0;
             string data = null;
@@ -561,6 +567,7 @@ namespace Microsoft.ClearScript.Test
                 }
             });
 
+            thread.Name = "TestThread";
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
             thread.Join();
@@ -568,6 +575,122 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(200, status);
             Assert.AreEqual("Hello, world!", data);
         }
+#else
+        // MSXML2.XMLHTTP XMLHttpRequest uses the Windows message queue
+        // to notify the application when data becomes available.
+        // So, all variants of this test need to process the Windows message queue.
+        // This is done either using the WPF Dispatcher,
+        // or using the headless MessageQueueSynchronizationContext provided in this project.
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AddCOMType_XMLHTTP_DispatcherSyncContext()
+        {
+            var status = 0;
+            string data = null;
+
+            var thread = new Thread(() =>
+            {
+                var context = SetupDispatcherSynchronizationContext();
+
+                using (var testEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
+                {
+                    testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
+                    {
+                        status = xhrStatus;
+                        data = xhrData;
+                        Dispatcher.ExitAllFrames();
+                    });
+
+                    context.Post(
+                        state =>
+                        {
+                            // ReSharper disable AccessToDisposedClosure
+
+                            testEngine.AddCOMType("XMLHttpRequest", "MSXML2.XMLHTTP");
+                            testEngine.Execute(@"
+                                xhr = new XMLHttpRequest();
+                                xhr.open('POST', 'http://httpbin.org/post', true);
+                                xhr.onreadystatechange = function () {
+                                    if (xhr.readyState == 4) {
+                                        onComplete(xhr.status, JSON.parse(xhr.responseText).data);
+                                    }
+                                };
+                                xhr.send('Hello, world!');
+                            ");
+
+                            // ReSharper restore AccessToDisposedClosure
+                        },
+                        null);
+
+                    Dispatcher.Run();
+                }
+            });
+
+            thread.Name = "TestThread";
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            Assert.AreEqual(200, status);
+            Assert.AreEqual("Hello, world!", data);
+        }
+
+        // MSXML2.XMLHTTP XMLHttpRequest uses the Windows message queue
+        // to notify the application when data becomes available.
+        // So, all variants of this test need to process the Windows message queue.
+        // This is done either using the WPF Dispatcher,
+        // or using the headless MessageQueueSynchronizationContext provided in this project.
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AddCOMType_XMLHTTP_MessageQueueSyncContext()
+        {
+            var status = 0;
+            string data = null;
+
+            var thread = new Thread(() =>
+            {
+                using (var context = SetupMessageQueueSynchronizationContext())
+                using (var testEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
+                {
+                    testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
+                    {
+                        status = xhrStatus;
+                        data = xhrData;
+                        context.Stop();
+                    });
+
+                    context.Post(
+                        state =>
+                        {
+                            // ReSharper disable AccessToDisposedClosure
+
+                            testEngine.AddCOMType("XMLHttpRequest", "MSXML2.XMLHTTP");
+                            testEngine.Execute(@"
+                                xhr = new XMLHttpRequest();
+                                xhr.open('POST', 'http://httpbin.org/post', true);
+                                xhr.onreadystatechange = function () {
+                                    if (xhr.readyState == 4) {
+                                        onComplete(xhr.status, JSON.parse(xhr.responseText).data);
+                                    }
+                                };
+                                xhr.send('Hello, world!');
+                            ");
+
+                            // ReSharper restore AccessToDisposedClosure
+                        },
+                        null);
+
+                    context.Run();
+                }
+            });
+
+            thread.Name = "TestThread";
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+
+            Assert.AreEqual(200, status);
+            Assert.AreEqual("Hello, world!", data);
+        }
+#endif
 
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_Nothing()

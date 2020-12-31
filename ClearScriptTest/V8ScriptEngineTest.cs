@@ -3152,7 +3152,7 @@ namespace Microsoft.ClearScript.Test
 
         #region miscellaneous
 
-        private const string generalScript =
+        private static readonly string generalScript =
         @"
             System = clr.System;
 
@@ -3202,7 +3202,7 @@ namespace Microsoft.ClearScript.Test
             tlist.Item(1).Name = 'Ellis';
             tlist.Item(0).Name = 'Eóin';
             tlist.Item(1).Name = 'Shane';
-        ";
+        ".Replace("'ClearScriptTest'", $"'{TestAssemblyName()}'");
 
         private const string generalScriptOutput =
         @"
