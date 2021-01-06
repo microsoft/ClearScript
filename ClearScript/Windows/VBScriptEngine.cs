@@ -126,7 +126,16 @@ namespace Microsoft.ClearScript.Windows
         /// Initializes a new VBScript engine instance.
         /// </summary>
         public VBScriptEngine()
-            : this(null)
+            : this(new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new VBScript engine instance with the specified <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        public VBScriptEngine(ISyncInvoker syncInvoker)
+            : this(null, syncInvoker)
         {
         }
 
@@ -135,7 +144,17 @@ namespace Microsoft.ClearScript.Windows
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         public VBScriptEngine(string name)
-            : this(name, WindowsScriptEngineFlags.None)
+            : this(name, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new VBScript engine instance with the specified name and <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        public VBScriptEngine(string name, ISyncInvoker syncInvoker)
+            : this(name, WindowsScriptEngineFlags.None, syncInvoker)
         {
         }
 
@@ -144,7 +163,17 @@ namespace Microsoft.ClearScript.Windows
         /// </summary>
         /// <param name="flags">A value that selects options for the operation.</param>
         public VBScriptEngine(WindowsScriptEngineFlags flags)
-            : this(null, flags)
+            : this(flags, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new VBScript engine instance with the specified options and <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        public VBScriptEngine(WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
+            : this(null, flags, syncInvoker)
         {
         }
 
@@ -154,7 +183,18 @@ namespace Microsoft.ClearScript.Windows
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         public VBScriptEngine(string name, WindowsScriptEngineFlags flags)
-            : this("VBScript", name, flags)
+            : this(name, flags, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new VBScript engine instance with the specified name, options, and <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        public VBScriptEngine(string name, WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
+            : this("VBScript", name, flags, syncInvoker)
         {
         }
 
@@ -170,7 +210,24 @@ namespace Microsoft.ClearScript.Windows
         /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
         /// </remarks>
         protected VBScriptEngine(string progID, string name, WindowsScriptEngineFlags flags)
-            : this(progID, name, "vbs", flags)
+            : this(progID, name, flags, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new VBScript engine instance with the specified programmatic
+        /// identifier, name, options, and <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="progID">The programmatic identifier (ProgID) of the VBScript engine class.</param>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
+        /// </remarks>
+        protected VBScriptEngine(string progID, string name, WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
+            : this(progID, name, "vbs", flags, syncInvoker)
         {
         }
 
@@ -187,7 +244,25 @@ namespace Microsoft.ClearScript.Windows
         /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
         /// </remarks>
         protected VBScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags)
-            : base(progID, name, fileNameExtensions, flags)
+            : this(progID, name, fileNameExtensions, flags, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new VBScript engine instance with the specified programmatic
+        /// identifier, name, list of supported file name extensions, options, and <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="progID">The programmatic identifier (ProgID) of the VBScript engine class.</param>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
+        /// </remarks>
+        protected VBScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
+            : base(progID, name, fileNameExtensions, flags, syncInvoker)
         {
             Execute(
                 MiscHelpers.FormatInvariant("{0} [internal]", GetType().Name),

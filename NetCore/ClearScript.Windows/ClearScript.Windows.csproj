@@ -1,8 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFrameworks>netcoreapp3.1;net5.0-windows</TargetFrameworks>
-        <UseWPF>true</UseWPF>
         <RootNamespace>Microsoft.ClearScript</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
@@ -40,6 +39,8 @@
         <Compile Include="..\..\ClearScript\Windows\ActiveXDebugging.cs" Link="Windows\ActiveXDebugging.cs" />
         <Compile Include="..\..\ClearScript\Windows\ActiveXScripting.cs" Link="Windows\ActiveXScripting.cs" />
         <Compile Include="..\..\ClearScript\Windows\ActiveXWrappers.cs" Link="Windows\ActiveXWrappers.cs" />
+        <Compile Include="..\..\ClearScript\Windows\DefaultSyncInvoker.cs" Link="Windows\DefaultSyncInvoker.cs" />
+        <Compile Include="..\..\ClearScript\Windows\ISyncInvoker.cs" Link="Windows\ISyncInvoker.cs" />
         <Compile Include="..\..\ClearScript\Windows\IHostWindow.cs" Link="Windows\IHostWindow.cs" />
         <Compile Include="..\..\ClearScript\Windows\IWindowsScriptObject.cs" Link="Windows\IWindowsScriptObject.cs" />
         <Compile Include="..\..\ClearScript\Windows\JScriptEngine.cs" Link="Windows\JScriptEngine.cs" />

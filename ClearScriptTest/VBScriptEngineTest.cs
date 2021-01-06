@@ -2087,9 +2087,9 @@ namespace Microsoft.ClearScript.Test
 
             var thread = new Thread(() =>
             {
-                using (var testEngine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging))
+                using (var testEngine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging, DispatcherSyncInvoker.FromCurrent()))
                 {
-                    using (var helperEngine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode))
+                    using (var helperEngine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode, DispatcherSyncInvoker.FromCurrent()))
                     {
                         // ReSharper disable AccessToDisposedClosure
 

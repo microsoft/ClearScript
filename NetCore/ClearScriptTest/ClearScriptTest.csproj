@@ -237,6 +237,7 @@
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
         <ProjectReference Include="..\ClearScript.V8\ClearScript.V8.csproj" />
         <ProjectReference Include="..\ClearScript.Windows\ClearScript.Windows.csproj" />
+        <ProjectReference Include="..\ClearScript.WindowsDesktop\ClearScript.WindowsDesktop.csproj" />
     </ItemGroup>
 
 </Project>

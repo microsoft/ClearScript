@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Windows.Threading;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
 using EXCEPINFO = System.Runtime.InteropServices.ComTypes.EXCEPINFO;
@@ -19,7 +18,7 @@ namespace Microsoft.ClearScript.Windows
     /// </summary>
     /// <remarks>
     /// Each Windows Script engine instance has thread affinity and is bound to a
-    /// <see cref="Dispatcher"/> during instantiation. Attempting to execute script code on a
+    /// <see cref="ISyncInvoker"/> during instantiation. Attempting to execute script code on a
     /// different thread results in an exception. Script delegates and event handlers are marshaled
     /// synchronously onto the correct thread.
     /// </remarks>
@@ -43,7 +42,7 @@ namespace Microsoft.ClearScript.Windows
         private readonly DebugDocumentMap debugDocumentMap = new DebugDocumentMap();
         private uint nextSourceContext = 1;
 
-        private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
+        private readonly ISyncInvoker syncInvoker;
         private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
         #endregion
@@ -56,13 +55,14 @@ namespace Microsoft.ClearScript.Windows
         /// <param name="progID">The programmatic identifier (ProgID) of the Windows Script engine class.</param>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
         /// <remarks>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
         /// </remarks>
         [Obsolete("Use WindowsScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags) instead.")]
-        protected WindowsScriptEngine(string progID, string name, WindowsScriptEngineFlags flags)
-            : this(progID, name, null, flags)
+        protected WindowsScriptEngine(string progID, string name, WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
+            : this(progID, name, null, flags, syncInvoker)
         {
         }
 
@@ -73,13 +73,16 @@ namespace Microsoft.ClearScript.Windows
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
         /// <remarks>
         /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
         /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
         /// </remarks>
-        protected WindowsScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags)
+        protected WindowsScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
             : base(name, fileNameExtensions)
         {
+            this.syncInvoker = syncInvoker ?? throw new ArgumentNullException(nameof(syncInvoker));
+
             script = base.ScriptInvoke(() =>
             {
                 activeScript = ActiveScriptWrapper.Create(progID, flags);
@@ -114,14 +117,14 @@ namespace Microsoft.ClearScript.Windows
         #region public members
 
         /// <summary>
-        /// Gets the <see cref="Dispatcher"/> associated with the current script engine.
+        /// Gets the <see cref="ISyncInvoker"/> associated with the current script engine.
         /// </summary>
-        public Dispatcher Dispatcher
+        public ISyncInvoker SyncInvoker
         {
             get
             {
                 VerifyNotDisposed();
-                return dispatcher;
+                return syncInvoker;
             }
         }
 
@@ -132,7 +135,7 @@ namespace Microsoft.ClearScript.Windows
         public bool CheckAccess()
         {
             VerifyNotDisposed();
-            return dispatcher.CheckAccess();
+            return syncInvoker.CheckAccess();
         }
 
         /// <summary>
@@ -141,7 +144,7 @@ namespace Microsoft.ClearScript.Windows
         public void VerifyAccess()
         {
             VerifyNotDisposed();
-            dispatcher.VerifyAccess();
+            syncInvoker.VerifyAccess();
         }
 
         /// <summary>
@@ -749,12 +752,12 @@ namespace Microsoft.ClearScript.Windows
 
         internal override void SyncInvoke(Action action)
         {
-            dispatcher.Invoke(DispatcherPriority.Send, action);
+            syncInvoker.Invoke(action);
         }
 
         internal override T SyncInvoke<T>(Func<T> func)
         {
-            return (T)dispatcher.Invoke(DispatcherPriority.Send, func);
+            return syncInvoker.Invoke(func);
         }
 
         #endregion
@@ -780,7 +783,7 @@ namespace Microsoft.ClearScript.Windows
                 base.Dispose(disposing);
                 if (disposing)
                 {
-                    dispatcher.VerifyAccess();
+                    syncInvoker.VerifyAccess();
 
                     if (sourceManagement)
                     {

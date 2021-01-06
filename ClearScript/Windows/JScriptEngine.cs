@@ -96,7 +96,16 @@ namespace Microsoft.ClearScript.Windows
         /// Initializes a new JScript engine instance.
         /// </summary>
         public JScriptEngine()
-            : this(null)
+            : this(new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new JScript engine instance with the specified <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        public JScriptEngine(ISyncInvoker syncInvoker)
+            : this(null, syncInvoker)
         {
         }
 
@@ -105,7 +114,17 @@ namespace Microsoft.ClearScript.Windows
         /// </summary>
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         public JScriptEngine(string name)
-            : this(name, WindowsScriptEngineFlags.None)
+            : this(name, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new JScript engine instance with the specified name and <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        public JScriptEngine(string name, ISyncInvoker syncInvoker)
+            : this(name, WindowsScriptEngineFlags.None, syncInvoker)
         {
         }
 
@@ -114,7 +133,17 @@ namespace Microsoft.ClearScript.Windows
         /// </summary>
         /// <param name="flags">A value that selects options for the operation.</param>
         public JScriptEngine(WindowsScriptEngineFlags flags)
-            : this(null, flags)
+            : this(flags, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new JScript engine instance with the specified options and <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        public JScriptEngine(WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
+            : this(null, flags, syncInvoker)
         {
         }
 
@@ -124,7 +153,18 @@ namespace Microsoft.ClearScript.Windows
         /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         public JScriptEngine(string name, WindowsScriptEngineFlags flags)
-            : this("JScript", name, flags)
+            : this(name, flags, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new JScript engine instance with the specified name, options, and <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        public JScriptEngine(string name, WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
+            : this("JScript", name, flags, syncInvoker)
         {
         }
 
@@ -140,7 +180,24 @@ namespace Microsoft.ClearScript.Windows
         /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
         /// </remarks>
         protected JScriptEngine(string progID, string name, WindowsScriptEngineFlags flags)
-            : this(progID, name, "js", flags)
+            : this(progID, name, flags, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new JScript engine instance with the specified programmatic
+        /// identifier, name, options, and <see cref="ISyncInvoker"/>.
+        /// </summary>
+        /// <param name="progID">The programmatic identifier (ProgID) of the JScript engine class.</param>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
+        /// </remarks>
+        protected JScriptEngine(string progID, string name, WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
+            : this(progID, name, "js", flags, syncInvoker)
         {
         }
 
@@ -157,7 +214,25 @@ namespace Microsoft.ClearScript.Windows
         /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
         /// </remarks>
         protected JScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags)
-            : base(progID, name, fileNameExtensions, flags)
+            : this(progID, name, fileNameExtensions, flags, new DefaultSyncInvoker())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new JScript engine instance with the specified programmatic
+        /// identifier, name, list of supported file name extensions, and options.
+        /// </summary>
+        /// <param name="progID">The programmatic identifier (ProgID) of the JScript engine class.</param>
+        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
+        /// <param name="flags">A value that selects options for the operation.</param>
+        /// <param name="syncInvoker">A synchronous invoker.</param>
+        /// <remarks>
+        /// The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+        /// GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
+        /// </remarks>
+        protected JScriptEngine(string progID, string name, string fileNameExtensions, WindowsScriptEngineFlags flags, ISyncInvoker syncInvoker)
+            : base(progID, name, fileNameExtensions, flags, syncInvoker)
         {
             Execute(
                 MiscHelpers.FormatInvariant("{0} [internal]", GetType().Name),

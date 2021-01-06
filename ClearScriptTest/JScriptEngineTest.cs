@@ -1954,7 +1954,9 @@ namespace Microsoft.ClearScript.Test
 
             var thread = new Thread(() =>
             {
-                using (var testEngine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.EnableStandardsMode))
+                using (var testEngine = new JScriptEngine(
+                    WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.EnableStandardsMode,
+                    DispatcherSyncInvoker.FromCurrent()))
                 {
                     testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
                     {
