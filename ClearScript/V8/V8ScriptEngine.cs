@@ -870,6 +870,19 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
+        /// Specifies that the script engine is to wait for a debugger connection and schedule a
+        /// pause before executing the next application script. This method is
+        /// ignored if <see cref="V8ScriptEngineFlags.EnableDebugging"/> is not specified.
+        /// </summary>
+        public void AwaitDebuggerOnNextExecution()
+        {
+            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableDebugging))
+            {
+                awaitDebuggerAndPause = true;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the time interval between automatic CPU profile samples, in microseconds.
         /// </summary>
         /// <remarks>
@@ -890,7 +903,6 @@ namespace Microsoft.ClearScript.V8
                 proxy.CpuProfileSampleInterval = value;
             }
         }
-
         #endregion
 
         #region internal members
