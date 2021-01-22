@@ -19,6 +19,9 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
 * (V8) Support for fast data transfer to and from [JavaScript typed arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays)
 * (V8) Support for [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
 * (JavaScript) Support for [CommonJS modules](http://wiki.commonjs.org/wiki/Modules)
+* :new: (V8) Automatic conversion between .NET [`BigInteger`](https://docs.microsoft.com/en-us/dotnet/api/system.numerics.biginteger) and JavaScript [`BigInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt).
+* :new: (V8) Optional automatic conversion between .NET [`DateTime`](https://docs.microsoft.com/en-us/dotnet/api/system.datetime) and JavaScript [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date).
+* :new: (V8) Optional automatic conversion between .NET [tasks](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task) and JavaScript [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
 * :new: Support for .NET Core 3.1 and .NET 5.0 on Windows (x86/x64/arm64), Linux (x64/arm64), and macOS (x64).
 
 # Installation
