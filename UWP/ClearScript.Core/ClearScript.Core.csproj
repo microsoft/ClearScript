@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D3391831-65CE-4C1E-A21B-01A283F3E193}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Microsoft.ClearScript</RootNamespace>
+    <AssemblyName>ClearScript.Core</AssemblyName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.19041.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\bin\Debug\uap10.0\</OutputPath>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>CS0618</NoWarn>
+    <SuppressXamlWarnings>
+    </SuppressXamlWarnings>
+    <DocumentationFile>..\..\bin\Debug\uap10.0\ClearScript.Core.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\bin\Release\uap10.0\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>CS0618</NoWarn>
+    <SuppressXamlWarnings>
+    </SuppressXamlWarnings>
+    <DocumentationFile>..\..\bin\Release\uap10.0\ClearScript.Core.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>true</DelaySign>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\ClearScript\BindSignature.cs" Link="BindSignature.cs" />
+    <Compile Include="..\..\ClearScript\ByRefArg.cs" Link="ByRefArg.cs" />
+    <Compile Include="..\..\ClearScript\CanonicalRefTable.cs" Link="CanonicalRefTable.cs" />
+    <Compile Include="..\..\ClearScript\ContinuationCallback.cs" Link="ContinuationCallback.cs" />
+    <Compile Include="..\..\ClearScript\DefaultScriptUsageAttribute.cs" Link="DefaultScriptUsageAttribute.cs" />
+    <Compile Include="..\..\ClearScript\DelegateFactory.cs" Link="DelegateFactory.cs" />
+    <Compile Include="..\..\ClearScript\DelegateFactory.Generated.cs" Link="DelegateFactory.Generated.cs" />
+    <Compile Include="..\..\ClearScript\Document.cs" Link="Document.cs" />
+    <Compile Include="..\..\ClearScript\DocumentAccessFlags.cs" Link="DocumentAccessFlags.cs" />
+    <Compile Include="..\..\ClearScript\DocumentCategory.cs" Link="DocumentCategory.cs" />
+    <Compile Include="..\..\ClearScript\DocumentContextCallback.cs" Link="DocumentContextCallback.cs" />
+    <Compile Include="..\..\ClearScript\DocumentFlags.cs" Link="DocumentFlags.cs" />
+    <Compile Include="..\..\ClearScript\DocumentInfo.cs" Link="DocumentInfo.cs" />
+    <Compile Include="..\..\ClearScript\DocumentLoadCallback.cs" Link="DocumentLoadCallback.cs" />
+    <Compile Include="..\..\ClearScript\DocumentLoader.cs" Link="DocumentLoader.cs" />
+    <Compile Include="..\..\ClearScript\DocumentSettings.cs" Link="DocumentSettings.cs" />
+    <Compile Include="..\..\ClearScript\DynamicHostMetaObject.cs" Link="DynamicHostMetaObject.cs" />
+    <Compile Include="..\..\ClearScript\DynamicHostObject.cs" Link="DynamicHostObject.cs" />
+    <Compile Include="..\..\ClearScript\ExtensionMethods.cs" Link="ExtensionMethods.cs" />
+    <Compile Include="..\..\ClearScript\Extensions.cs" Link="Extensions.cs" />
+    <Compile Include="..\..\ClearScript\HostEvent.cs" Link="HostEvent.cs" />
+    <Compile Include="..\..\ClearScript\HostFunctions.cs" Link="HostFunctions.cs" />
+    <Compile Include="..\..\ClearScript\HostIndexedProperty.cs" Link="HostIndexedProperty.cs" />
+    <Compile Include="..\..\ClearScript\HostItem.cs" Link="HostItem.cs" />
+    <Compile Include="..\..\ClearScript\HostItem.InvokeMethod.cs" Link="HostItem.InvokeMethod.cs" />
+    <Compile Include="..\..\ClearScript\HostItem.NetFramework.cs" Link="HostItem.NetFramework.cs" />
+    <Compile Include="..\..\ClearScript\HostItemCollateral.cs" Link="HostItemCollateral.cs" />
+    <Compile Include="..\..\ClearScript\HostItemFlags.cs" Link="HostItemFlags.cs" />
+    <Compile Include="..\..\ClearScript\HostList.cs" Link="HostList.cs" />
+    <Compile Include="..\..\ClearScript\HostMethod.cs" Link="HostMethod.cs" />
+    <Compile Include="..\..\ClearScript\HostObject.cs" Link="HostObject.cs" />
+    <Compile Include="..\..\ClearScript\HostSettings.cs" Link="HostSettings.cs" />
+    <Compile Include="..\..\ClearScript\HostTarget.cs" Link="HostTarget.cs" />
+    <Compile Include="..\..\ClearScript\HostTargetFlags.cs" Link="HostTargetFlags.cs" />
+    <Compile Include="..\..\ClearScript\HostTargetMemberData.cs" Link="HostTargetMemberData.cs" />
+    <Compile Include="..\..\ClearScript\HostType.cs" Link="HostType.cs" />
+    <Compile Include="..\..\ClearScript\HostTypeCollection.cs" Link="HostTypeCollection.cs" />
+    <Compile Include="..\..\ClearScript\HostVariable.cs" Link="HostVariable.cs" />
+    <Compile Include="..\..\ClearScript\ImmutableValueAttribute.cs" Link="ImmutableValueAttribute.cs" />
+    <Compile Include="..\..\ClearScript\Invocability.cs" Link="Invocability.cs" />
+    <Compile Include="..\..\ClearScript\IScriptableObject.cs" Link="IScriptableObject.cs" />
+    <Compile Include="..\..\ClearScript\IScriptEngineException.cs" Link="IScriptEngineException.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\CommonJSLegacyModule.cs" Link="JavaScript\CommonJSLegacyModule.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\CommonJSManager.cs" Link="JavaScript\CommonJSManager.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\IArrayBuffer.cs" Link="JavaScript\IArrayBuffer.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\IArrayBufferView.cs" Link="JavaScript\IArrayBufferView.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\IDataView.cs" Link="JavaScript\IDataView.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\IJavaScriptEngine.cs" Link="JavaScript\IJavaScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\ITypedArray.cs" Link="JavaScript\ITypedArray.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\JavaScriptExtensions.cs" Link="JavaScript\JavaScriptExtensions.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\ModuleCategory.cs" Link="JavaScript\ModuleCategory.cs" />
+    <Compile Include="..\..\ClearScript\NoDefaultScriptAccessAttribute.cs" Link="NoDefaultScriptAccessAttribute.cs" />
+    <Compile Include="..\..\ClearScript\NoScriptAccessAttribute.cs" Link="NoScriptAccessAttribute.cs" />
+    <Compile Include="..\..\ClearScript\Properties\AssemblyInfo.Core.cs" Link="Properties\AssemblyInfo.Core.cs" />
+    <Compile Include="..\..\ClearScript\PropertyBag.cs" Link="PropertyBag.cs" />
+    <Compile Include="..\..\ClearScript\ScriptAccess.cs" Link="ScriptAccess.cs" />
+    <Compile Include="..\..\ClearScript\ScriptEngine.cs" Link="ScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\ScriptEngineException.cs" Link="ScriptEngineException.cs" />
+    <Compile Include="..\..\ClearScript\ScriptInterruptedException.cs" Link="ScriptInterruptedException.cs" />
+    <Compile Include="..\..\ClearScript\ScriptItem.cs" Link="ScriptItem.cs" />
+    <Compile Include="..\..\ClearScript\ScriptMemberAttribute.cs" Link="ScriptMemberAttribute.cs" />
+    <Compile Include="..\..\ClearScript\ScriptMemberFlags.cs" Link="ScriptMemberFlags.cs" />
+    <Compile Include="..\..\ClearScript\ScriptMethod.cs" Link="ScriptMethod.cs" />
+    <Compile Include="..\..\ClearScript\ScriptObject.cs" Link="ScriptObject.cs" />
+    <Compile Include="..\..\ClearScript\ScriptUsageAttribute.cs" Link="ScriptUsageAttribute.cs" />
+    <Compile Include="..\..\ClearScript\StringDocument.cs" Link="StringDocument.cs" />
+    <Compile Include="..\..\ClearScript\Undefined.cs" Link="Undefined.cs" />
+    <Compile Include="..\..\ClearScript\UniqueDocumentInfo.cs" Link="UniqueDocumentInfo.cs" />
+    <Compile Include="..\..\ClearScript\Util\ArrayHelpers.cs" Link="Util\ArrayHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.cs" Link="Util\AssemblyHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.NetFramework.cs" Link="Util\AssemblyHelpers.NetFramework.cs" />
+    <Compile Include="..\..\ClearScript\Util\AssemblyTable.NetCore.cs" Link="Util\AssemblyTable.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\BitwiseHelpers.cs" Link="Util\BitwiseHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\Collateral.cs" Link="Util\Collateral.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\ActivationHelpers.cs" Link="Util\COM\ActivationHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\Dispatch.cs" Link="Util\COM\Dispatch.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\DispatchHelpers.cs" Link="Util\COM\DispatchHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\DispatchMember.cs" Link="Util\COM\DispatchMember.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\DispatchWrappers.cs" Link="Util\COM\DispatchWrappers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\HResult.cs" Link="Util\COM\HResult.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\StructHelpers.cs" Link="Util\COM\StructHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\TypeInfoHelpers.cs" Link="Util\COM\TypeInfoHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\TypeInfoHelpers.NetCore.cs" Link="Util\COM\TypeInfoHelpers.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\TypeLibHelpers.cs" Link="Util\COM\TypeLibHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\UnknownHelpers.cs" Link="Util\COM\UnknownHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\ConcurrentWeakSet.cs" Link="Util\ConcurrentWeakSet.cs" />
+    <Compile Include="..\..\ClearScript\Util\CoTaskMemBlock.cs" Link="Util\CoTaskMemBlock.cs" />
+    <Compile Include="..\..\ClearScript\Util\DynamicHelpers.cs" Link="Util\DynamicHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.cs" Link="Util\EnumerableHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\Holder.cs" Link="Util\Holder.cs" />
+    <Compile Include="..\..\ClearScript\Util\IDynamic.cs" Link="Util\IDynamic.cs" />
+    <Compile Include="..\..\ClearScript\Util\IExpando.cs" Link="Util\IExpando.cs" />
+    <Compile Include="..\..\ClearScript\Util\IHostInvokeContext.cs" Link="Util\IHostInvokeContext.cs" />
+    <Compile Include="..\..\ClearScript\Util\INativeCallback.cs" Link="Util\INativeCallback.cs" />
+    <Compile Include="..\..\ClearScript\Util\InvokeHelpers.cs" Link="Util\InvokeHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\IScriptMarshalWrapper.cs" Link="Util\IScriptMarshalWrapper.cs" />
+    <Compile Include="..\..\ClearScript\Util\MemberComparer.cs" Link="Util\MemberComparer.cs" />
+    <Compile Include="..\..\ClearScript\Util\MemberHelpers.cs" Link="Util\MemberHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\MemberMap.cs" Link="Util\MemberMap.cs" />
+    <Compile Include="..\..\ClearScript\Util\MiscHelpers.cs" Link="Util\MiscHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\NativeCallbackTimer.cs" Link="Util\NativeCallbackTimer.cs" />
+    <Compile Include="..\..\ClearScript\Util\NativeMethods.cs" Link="Util\NativeMethods.cs" />
+    <Compile Include="..\..\ClearScript\Util\Nonexistent.cs" Link="Util\Nonexistent.cs" />
+    <Compile Include="..\..\ClearScript\Util\ObjectHelpers.cs" Link="Util\ObjectHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\ObjectHelpers.UWP.cs" Link="Util\ObjectHelpers.UWP.cs" />
+    <Compile Include="..\..\ClearScript\Util\OneWayFlag.cs" Link="Util\OneWayFlag.cs" />
+    <Compile Include="..\..\ClearScript\Util\Scope.cs" Link="Util\Scope.cs" />
+    <Compile Include="..\..\ClearScript\Util\SocketHelpers.cs" Link="Util\SocketHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\SpecialDispIDs.cs" Link="Util\SpecialDispIDs.cs" />
+    <Compile Include="..\..\ClearScript\Util\SpecialMemberNames.cs" Link="Util\SpecialMemberNames.cs" />
+    <Compile Include="..\..\ClearScript\Util\SpecialParamNames.cs" Link="Util\SpecialParamNames.cs" />
+    <Compile Include="..\..\ClearScript\Util\Test\AccessContextTestObject.cs" Link="Util\Test\AccessContextTestObject.cs" />
+    <Compile Include="..\..\ClearScript\Util\TypeGuidMocks.cs" Link="Util\TypeGuidMocks.cs" />
+    <Compile Include="..\..\ClearScript\Util\TypeGuids.cs" Link="Util\TypeGuids.cs" />
+    <Compile Include="..\..\ClearScript\Util\TypeHelpers.cs" Link="Util\TypeHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\TypeHelpers.NetCore.cs" Link="Util\TypeHelpers.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\UniqueNameManager.cs" Link="Util\UniqueNameManager.cs" />
+    <Compile Include="..\..\ClearScript\Util\UnmanagedMemoryHelpers.cs" Link="Util\UnmanagedMemoryHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\VTableHelpers.cs" Link="Util\VTableHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\VTablePatcher.cs" Link="Util\VTablePatcher.cs" />
+    <Compile Include="..\..\ClearScript\Util\Web\WebContext.cs" Link="Util\Web\WebContext.cs" />
+    <Compile Include="..\..\ClearScript\Util\Web\WebRequest.cs" Link="Util\Web\WebRequest.cs" />
+    <Compile Include="..\..\ClearScript\Util\Web\WebResponse.cs" Link="Util\Web\WebResponse.cs" />
+    <Compile Include="..\..\ClearScript\Util\Web\WebSocket.cs" Link="Util\Web\WebSocket.cs" />
+    <Compile Include="..\..\ClearScript\Util\_Exception.cs" Link="Util\_Exception.cs" />
+    <Compile Include="..\..\ClearScript\VoidResult.cs" Link="VoidResult.cs" />
+  </ItemGroup>
+  <PropertyGroup>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\ClearScript.Core.rd.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
+      <Version>6.2.11</Version>
+    </PackageReference>
+  </ItemGroup>
+  <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
+    <VisualStudioVersion>14.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

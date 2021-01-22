@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
+        <RootNamespace>Microsoft.ClearScript.Windows</RootNamespace>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DefineConstants>TRACE;DEBUG</DefineConstants>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <NoWarn>CS0618;CA1416</NoWarn>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <OutputPath>..\..\bin\Debug</OutputPath>
+        <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.Windows.Core.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <DefineConstants>TRACE</DefineConstants>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <NoWarn>CS0618;CA1416</NoWarn>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <OutputPath>..\..\bin\Release</OutputPath>
+        <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.Windows.Core.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+    <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</AssemblyOriginatorKeyFile>
+        <DelaySign>true</DelaySign>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\..\ClearScript\Properties\AssemblyInfo.Windows.Core.cs" Link="Properties\AssemblyInfo.Windows.Core.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\ActiveXDebugging.cs" Link="Windows\Core\ActiveXDebugging.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\ActiveXScripting.cs" Link="Windows\Core\ActiveXScripting.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\ActiveXWrappers.cs" Link="Windows\Core\ActiveXWrappers.cs" />
+        <Compile Include="..\..\ClearScript\Windows\IHostWindow.cs" Link="Windows\IHostWindow.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\ISyncInvoker.cs" Link="Windows\Core\ISyncInvoker.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\NullSyncInvoker.cs" Link="Windows\Core\NullSyncInvoker.cs" />
+        <Compile Include="..\..\ClearScript\Windows\IWindowsScriptObject.cs" Link="Windows\IWindowsScriptObject.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\JScriptEngine.cs" Link="Windows\Core\JScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Nothing.cs" Link="Windows\Nothing.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\VBScriptEngine.cs" Link="Windows\Core\VBScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\WindowsScriptEngine.cs" Link="Windows\Core\WindowsScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\WindowsScriptEngine.Debug.cs" Link="Windows\Core\WindowsScriptEngine.Debug.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\WindowsScriptEngine.Site.cs" Link="Windows\Core\WindowsScriptEngine.Site.cs" />
+        <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngineFlags.cs" Link="Windows\WindowsScriptEngineFlags.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\WindowsScriptItem.cs" Link="Windows\Core\WindowsScriptItem.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
+    </ItemGroup>
+
+</Project>

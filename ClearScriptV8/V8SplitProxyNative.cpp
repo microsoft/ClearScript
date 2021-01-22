@@ -116,6 +116,14 @@ NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTabl
 
 //-----------------------------------------------------------------------------
 
+NATIVE_ENTRY_POINT(void) V8Environment_InitializeICU(const StdChar* pDataPath) noexcept
+{
+    StdString dataPath(pDataPath);
+    ASSERT_EVAL(v8::V8::InitializeICU(dataPath.ToUTF8().c_str()));
+}
+
+//-----------------------------------------------------------------------------
+
 NATIVE_ENTRY_POINT(StdString*) StdString_New(const StdChar* pValue, int32_t length) noexcept
 {
     return new StdString(pValue, length);
@@ -999,6 +1007,17 @@ NATIVE_ENTRY_POINT(void) V8Isolate_SetCpuProfileSampleInterval(const V8IsolateHa
 
 //-----------------------------------------------------------------------------
 
+NATIVE_ENTRY_POINT(void) V8Isolate_WriteHeapSnapshot(const V8IsolateHandle& handle, void* pvStream) noexcept
+{
+    auto spIsolate = handle.GetEntity();
+    if (!spIsolate.IsEmpty())
+    {
+        spIsolate->WriteHeapSnapshot(pvStream);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 NATIVE_ENTRY_POINT(size_t) V8Context_GetMaxIsolateHeapSize(const V8ContextHandle& handle) noexcept
 {
     auto spContext = handle.GetEntity();
@@ -1402,6 +1421,17 @@ NATIVE_ENTRY_POINT(void) V8Context_SetCpuProfileSampleInterval(const V8ContextHa
     if (!spContext.IsEmpty())
     {
         spContext->SetCpuProfileSampleInterval(value);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) V8Context_WriteIsolateHeapSnapshot(const V8ContextHandle& handle, void* pvStream) noexcept
+{
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        spContext->WriteIsolateHeapSnapshot(pvStream);
     }
 }
 

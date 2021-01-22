@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+-->
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:iot2="http://schemas.microsoft.com/appx/manifest/iot/windows10/2"
+  IgnorableNamespaces="uap mp uap5 iot2 desktop4">
+
+    <Identity
+      Name="1d95a6b5-2a0a-46bf-9d2b-4bc4594a15e3"
+      Publisher="CN=Microsoft"
+      Version="1.0.0.0" />
+
+    <mp:PhoneIdentity PhoneProductId="1d95a6b5-2a0a-46bf-9d2b-4bc4594a15e3" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+
+    <Properties>
+        <DisplayName>ClearScriptConsole</DisplayName>
+        <PublisherDisplayName>Microsoft</PublisherDisplayName>
+        <Logo>Assets\ClearScript.png</Logo>
+    </Properties>
+
+    <Dependencies>
+        <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
+    </Dependencies>
+
+    <Resources>
+        <Resource Language="x-generate"/>
+    </Resources>
+
+    <Applications>
+        <Application
+          Id="App"
+          Executable="$targetnametoken$.exe"
+          EntryPoint="ClearScriptConsole.Program"
+          desktop4:SupportsMultipleInstances="true"
+          desktop4:Subsystem="console"
+          iot2:SupportsMultipleInstances="true"
+          iot2:Subsystem="console">
+
+            <uap:VisualElements
+              DisplayName="ClearScriptConsole"
+              Square150x150Logo="Assets\ClearScript150x150.png"
+              Square44x44Logo="Assets\ClearScript44x44.png"
+              Description="ClearScriptConsole"
+              BackgroundColor="transparent">
+            </uap:VisualElements>
+
+            <Extensions>
+                <uap5:Extension
+                  Category="windows.appExecutionAlias"
+                   Executable="ClearScriptConsole.exe"
+                  EntryPoint="ClearScriptConsole.Program">
+                    <uap5:AppExecutionAlias desktop4:Subsystem="console" iot2:Subsystem="console">
+                        <uap5:ExecutionAlias Alias="ClearScriptConsole.exe" />
+                    </uap5:AppExecutionAlias>
+                </uap5:Extension>
+            </Extensions>
+
+        </Application>
+    </Applications>
+
+    <Capabilities>
+        <Capability Name="internetClient" />
+    </Capabilities>
+
+</Package>

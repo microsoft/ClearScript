@@ -17,8 +17,8 @@ namespace Microsoft.ClearScript
 
         internal EventSource(ScriptEngine engine, object source, EventInfo eventInfo)
         {
-            MiscHelpers.VerifyNonNullArgument(engine, "engine");
-            MiscHelpers.VerifyNonNullArgument(eventInfo, "eventInfo");
+            MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
+            MiscHelpers.VerifyNonNullArgument(eventInfo, nameof(eventInfo));
 
             if (eventInfo.EventHandlerType != typeof(T))
             {
@@ -45,7 +45,7 @@ namespace Microsoft.ClearScript
         /// <returns>An <see cref="EventConnection{T}"/> that represents the connection.</returns>
         public EventConnection<T> connect(object scriptFunc)
         {
-            MiscHelpers.VerifyNonNullArgument(scriptFunc, "scriptFunc");
+            MiscHelpers.VerifyNonNullArgument(scriptFunc, nameof(scriptFunc));
             return engine.CreateEventConnection<T>(Source, EventInfo, DelegateFactory.CreateDelegate(engine, scriptFunc, typeof(T)));
         }
 
@@ -73,9 +73,9 @@ namespace Microsoft.ClearScript
 
         internal EventConnection(ScriptEngine engine, object source, EventInfo eventInfo, Delegate handler)
         {
-            MiscHelpers.VerifyNonNullArgument(engine, "engine");
-            MiscHelpers.VerifyNonNullArgument(handler, "handler");
-            MiscHelpers.VerifyNonNullArgument(eventInfo, "eventInfo");
+            MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
+            MiscHelpers.VerifyNonNullArgument(handler, nameof(handler));
+            MiscHelpers.VerifyNonNullArgument(eventInfo, nameof(eventInfo));
 
             if (eventInfo.EventHandlerType != typeof(T))
             {

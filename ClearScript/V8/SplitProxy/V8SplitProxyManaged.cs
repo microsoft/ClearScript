@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.JavaScript;
@@ -295,6 +296,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [Out] out int result
         );
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void RawWriteBytesToStream(
+            [In] IntPtr pStream,
+            [In] IntPtr pBytes,
+            [In] int count
+        );
+
         #endregion
 
         #region method table construction
@@ -346,7 +354,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 GetMethodPtr<RawDestroyNativeCallbackTimer>(DestroyNativeCallbackTimer),
                 GetMethodPtr<RawLoadModule>(LoadModule),
                 GetMethodPtr<RawCreateModuleContext>(CreateModuleContext),
-                GetMethodPtr<RawTryParseInt32>(TryParseInt32)
+                GetMethodPtr<RawTryParseInt32>(TryParseInt32),
+                GetMethodPtr<RawWriteBytesToStream>(WriteBytesToStream)
             };
 
             var pMethodTable = Marshal.AllocCoTaskMem(IntPtr.Size * methodPtrs.Length);
@@ -766,6 +775,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         private static bool TryParseInt32(StdString.Ptr pText, out int result)
         {
             return int.TryParse(StdString.GetValue(pText), out result);
+        }
+
+        private static void WriteBytesToStream(IntPtr pStream, IntPtr pBytes, int count)
+        {
+            try
+            {
+                var bytes = new byte[count];
+                Marshal.Copy(pBytes, bytes, 0, count);
+                V8ProxyHelpers.GetHostObject<Stream>(pStream).Write(bytes, 0, count);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(exception);
+            }
         }
 
         #endregion

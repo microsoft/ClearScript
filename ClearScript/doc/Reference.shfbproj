@@ -20,9 +20,14 @@
     <Language>en-US</Language>
     <HelpTitle>ClearScript Library</HelpTitle>
     <DocumentationSources>
-      <DocumentationSource sourceFile="..\ClearScript.Core.csproj" />
-      <DocumentationSource sourceFile="..\ClearScript.V8.csproj" />
-      <DocumentationSource sourceFile="..\ClearScript.Windows.csproj" />
+      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Core.dll" />
+      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Core.xml" />
+      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.V8.dll" />
+      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.V8.xml" />
+      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Windows.dll" />
+      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Windows.xml" />
+      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Windows.Core.dll" />
+      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Windows.Core.xml" />
     </DocumentationSources>
     <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, SealedProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <MissingTags>Summary, Parameter, Returns, TypeParameter</MissingTags>
@@ -47,7 +52,8 @@
     <NamespaceSummaries>
       <NamespaceSummaryItem name="Microsoft.ClearScript" isDocumented="True">The Microsoft.ClearScript namespace contains types that support all script engines.</NamespaceSummaryItem>
       <NamespaceSummaryItem name="Microsoft.ClearScript.V8" isDocumented="True">The Microsoft.ClearScript.V8 namespace contains types that provide access to the V8 high-performance open-source JavaScript engine.</NamespaceSummaryItem>
-      <NamespaceSummaryItem name="Microsoft.ClearScript.Windows" isDocumented="True">The Microsoft.ClearScript.Windows namespace contains types that provide access to Windows Script engines such as JScript and VBScript.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Microsoft.ClearScript.Windows" isDocumented="True">The Microsoft.ClearScript.Windows namespace contains types that provide access to Windows Script engines such as JScript and VBScript in a desktop environment.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Microsoft.ClearScript.Windows.Core" isDocumented="True">The Microsoft.ClearScript.Windows.Core namespace contains types that provide access to Windows Script engines such as JScript and VBScript.</NamespaceSummaryItem>
       <NamespaceSummaryItem name="(global)" isDocumented="False" />
       <NamespaceSummaryItem name="Microsoft.ClearScript.JavaScript" isDocumented="True">The Microsoft.ClearScript.JavaScript namespace contains types that provide access to JavaScript-specific features.</NamespaceSummaryItem>
     </NamespaceSummaries>

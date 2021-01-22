@@ -58,7 +58,7 @@ namespace Microsoft.ClearScript.Util
 
         public static Type GetCOMType(string progID, string serverName)
         {
-            VerifyNonBlankArgument(progID, "progID", "Invalid programmatic identifier (ProgID)");
+            VerifyNonBlankArgument(progID, nameof(progID), "Invalid programmatic identifier (ProgID)");
 
             if (!TryGetCOMType(progID, serverName, out var type))
             {

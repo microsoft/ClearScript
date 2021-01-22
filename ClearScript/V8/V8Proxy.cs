@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -25,6 +26,7 @@ namespace Microsoft.ClearScript.V8
                 if (hNativeAssembly == IntPtr.Zero)
                 {
                     hNativeAssembly = LoadNativeAssembly();
+                    InitializeICU();
                 }
 
                 ++splitImplCount;
@@ -129,6 +131,19 @@ namespace Microsoft.ClearScript.V8
             throw new TypeLoadException(message);
         }
 
+        private static void InitializeICU()
+        {
+            var paths = GetDirPaths(null, null).Select(dirPath => Path.Combine(dirPath, deploymentDirName, "ClearScriptV8.ICU.dat")).Distinct();
+            foreach (var path in paths)
+            {
+                if (File.Exists(path))
+                {
+                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Environment_InitializeICU(path));
+                    return;
+                }
+            }
+        }
+
         private static IEnumerable<string> GetDirPaths(string platform, string architecture)
         {
             // The assembly location may be empty if the host preloaded the assembly
@@ -137,7 +152,11 @@ namespace Microsoft.ClearScript.V8
             var location = typeof(V8Proxy).Assembly.Location;
             if (!string.IsNullOrWhiteSpace(location))
             {
-                yield return Path.Combine(Path.GetDirectoryName(location), "runtimes", $"{platform}-{architecture}", "native");
+                if ((platform != null) && (architecture != null))
+                {
+                    yield return Path.Combine(Path.GetDirectoryName(location), "runtimes", $"{platform}-{architecture}", "native");
+                }
+
                 yield return Path.GetDirectoryName(location);
             }
 

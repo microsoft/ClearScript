@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
@@ -662,7 +663,7 @@ namespace Microsoft.ClearScript.V8
         /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
-            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
             var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents());
         }
@@ -715,7 +716,7 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
-            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
             var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents(), cacheKind, out cacheBytes);
         }
@@ -771,7 +772,7 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
-            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
             var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents(), cacheKind, cacheBytes, out cacheAccepted);
         }
@@ -891,6 +892,21 @@ namespace Microsoft.ClearScript.V8
             }
         }
 
+        /// <summary>
+        /// Writes a snapshot of the V8 runtime's heap to the given stream.
+        /// </summary>
+        /// <param name="stream">The stream to which to write the heap snapshot.</param>
+        /// <remarks>
+        /// This method generates a heap snapshot in JSON format with ASCII encoding.
+        /// </remarks>
+        public void WriteRuntimeHeapSnapshot(Stream stream)
+        {
+            MiscHelpers.VerifyNonNullArgument(stream, nameof(stream));
+            VerifyNotDisposed();
+
+            ScriptInvoke(() => proxy.WriteRuntimeHeapSnapshot(stream));
+        }
+
         #endregion
 
         #region internal members
@@ -936,7 +952,7 @@ namespace Microsoft.ClearScript.V8
 
         private object Execute(V8Script script, bool evaluate)
         {
-            MiscHelpers.VerifyNonNullArgument(script, "script");
+            MiscHelpers.VerifyNonNullArgument(script, nameof(script));
             VerifyNotDisposed();
 
             return MarshalToHost(ScriptInvoke(() =>
@@ -1234,7 +1250,7 @@ namespace Microsoft.ClearScript.V8
                 throw new InvalidOperationException("GlobalMembers support is disabled in this script engine");
             }
 
-            MiscHelpers.VerifyNonNullArgument(itemName, "itemName");
+            MiscHelpers.VerifyNonNullArgument(itemName, nameof(itemName));
             Debug.Assert(item != null);
 
             ScriptInvoke(() =>

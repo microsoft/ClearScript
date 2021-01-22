@@ -23,15 +23,15 @@ namespace Microsoft.ClearScript.Test
         private static string testPrefix;
         private static string testContents;
 
-        public static void RunSuite(ScriptEngine engine)
+        public static void RunSuite(ScriptEngine engine, bool quiet)
         {
             // download raw test code if necessary
             if (!gotCode)
             {
-                Console.Write("Downloading code... ");
+                if (!quiet) Console.Write("Downloading code... ");
                 testPrefix = DownloadFileAsString("sunspider-test-prefix.js");
                 testContents = DownloadFileAsString("sunspider-test-contents.js");
-                Console.WriteLine("Done");
+                if (!quiet) Console.WriteLine("Done");
                 gotCode = true;
             }
 
@@ -61,34 +61,37 @@ namespace Microsoft.ClearScript.Test
             var repeatIndices = Enumerable.Range(0, repeatCount).ToList();
 
             // run warmup cycle
-            Console.Write("Warming up... ");
+            if (!quiet) Console.Write("Warming up... ");
             testIndices.ForEach(testIndex => RunTest(engine, mockDOM, testIndex));
-            Console.WriteLine("Done");
+            if (!quiet) Console.WriteLine("Done");
 
             // run main test
             var results = repeatIndices.Select(index => new Dictionary<string, int>()).ToArray();
             repeatIndices.ForEach(repeatIndex =>
             {
-                Console.Write("Running iteration {0}... ", repeatIndex + 1);
+                if (!quiet) Console.Write("Running iteration {0}... ", repeatIndex + 1);
                 testIndices.ForEach(testIndex =>
                 {
                     var name = (string)engine.Script.tests[testIndex];
                     results[repeatIndex][name] = RunTest(engine, mockDOM, testIndex);
                 });
-                Console.WriteLine("Done");
+                if (!quiet) Console.WriteLine("Done");
             });
 
             // show results
-            var resultString = new StringBuilder("{\"v\":\"" + version + "\",");
-            results[0].Keys.ToList().ForEach(name =>
+            if (!quiet)
             {
-                resultString.Append("\"" + name + "\":[");
-                resultString.Append(string.Join(",", repeatIndices.Select(repeatIndex => results[repeatIndex][name])));
-                resultString.Append("],");
-            });
-            resultString.Length -= 1;
-            resultString.Append("}");
-            Process.Start(new ProcessStartInfo((new Uri(baseUrl + "results.html?" + resultString)).AbsoluteUri) { UseShellExecute = true });
+                var resultString = new StringBuilder("{\"v\":\"" + version + "\",");
+                results[0].Keys.ToList().ForEach(name =>
+                {
+                    resultString.Append("\"" + name + "\":[");
+                    resultString.Append(string.Join(",", repeatIndices.Select(repeatIndex => results[repeatIndex][name])));
+                    resultString.Append("],");
+                });
+                resultString.Length -= 1;
+                resultString.Append("}");
+                Process.Start(new ProcessStartInfo((new Uri(baseUrl + "results.html?" + resultString)).AbsoluteUri) {UseShellExecute = true});
+            }
         }
 
         private static int RunTest(ScriptEngine engine, MockDOM mockDOM, int index)

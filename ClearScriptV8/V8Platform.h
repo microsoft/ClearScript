@@ -8,10 +8,10 @@
 //-----------------------------------------------------------------------------
 
 #pragma warning(push, 3)
+#pragma warning(disable: 4996) // deprecated item usage
 
-#define V8_REVERSE_JSARGS
 #define V8_DEPRECATION_WARNINGS
-//#define V8_IMMINENT_DEPRECATION_WARNINGS
+#define V8_IMMINENT_DEPRECATION_WARNINGS
 
 #ifdef _M_X64
     //#define V8_COMPRESS_POINTERS

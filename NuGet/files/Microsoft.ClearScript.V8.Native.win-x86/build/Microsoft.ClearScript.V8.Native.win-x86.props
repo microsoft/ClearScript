@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup Condition="'$(TargetFramework)' == '' Or '$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+  <ItemGroup Condition="('$(TargetFramework)' == '' Or '$(TargetFramework.TrimEnd(`0123456789`))' == 'net') and ('$(PlatformTarget)' == '' Or '$(PlatformTarget)' == 'AnyCPU' Or '$(PlatformTarget)' == 'x86')">
     <None Include="$(MSBuildThisFileDirectory)..\runtimes\win-x86\native\ClearScriptV8.win-x86.dll">
       <Link>ClearScriptV8.win-x86.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

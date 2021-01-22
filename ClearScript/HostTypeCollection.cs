@@ -28,7 +28,8 @@ namespace Microsoft.ClearScript
     /// </remarks>
     public class HostTypeCollection : PropertyBag
     {
-        private static readonly Predicate<Type> defaultFilter = type => true; 
+        private static readonly Predicate<Type> defaultFilter = type => true;
+        private static readonly TypeComparer typeComparer = new TypeComparer();
 
         /// <summary>
         /// Initializes a new host type collection.
@@ -45,7 +46,7 @@ namespace Microsoft.ClearScript
         public HostTypeCollection(params Assembly[] assemblies)
             : base(true)
         {
-            MiscHelpers.VerifyNonNullArgument(assemblies, "assemblies");
+            MiscHelpers.VerifyNonNullArgument(assemblies, nameof(assemblies));
             Array.ForEach(assemblies, AddAssembly);
         }
 
@@ -57,7 +58,7 @@ namespace Microsoft.ClearScript
         public HostTypeCollection(params string[] assemblyNames)
             : base(true)
         {
-            MiscHelpers.VerifyNonNullArgument(assemblyNames, "assemblyNames");
+            MiscHelpers.VerifyNonNullArgument(assemblyNames, nameof(assemblyNames));
             Array.ForEach(assemblyNames, AddAssembly);
         }
 
@@ -68,7 +69,7 @@ namespace Microsoft.ClearScript
         /// <param name="assemblies">The assemblies that contain the types with which to initialize the collection.</param>
         public HostTypeCollection(Predicate<Type> filter, params Assembly[] assemblies)
         {
-            MiscHelpers.VerifyNonNullArgument(assemblies, "assemblies");
+            MiscHelpers.VerifyNonNullArgument(assemblies, nameof(assemblies));
             Array.ForEach(assemblies, assembly => AddAssembly(assembly, filter));
         }
 
@@ -80,7 +81,7 @@ namespace Microsoft.ClearScript
         /// <param name="assemblyNames">The names of the assemblies that contain the types with which to initialize the collection.</param>
         public HostTypeCollection(Predicate<Type> filter, params string[] assemblyNames)
         {
-            MiscHelpers.VerifyNonNullArgument(assemblyNames, "assemblyNames");
+            MiscHelpers.VerifyNonNullArgument(assemblyNames, nameof(assemblyNames));
             Array.ForEach(assemblyNames, assemblyName => AddAssembly(assemblyName, filter));
         }
 
@@ -90,7 +91,7 @@ namespace Microsoft.ClearScript
         /// <param name="assembly">The assembly that contains the types to add.</param>
         public void AddAssembly(Assembly assembly)
         {
-            MiscHelpers.VerifyNonNullArgument(assembly, "assembly");
+            MiscHelpers.VerifyNonNullArgument(assembly, nameof(assembly));
             assembly.GetAllTypes().Where(type => type.IsImportable()).ForEach(AddType);
         }
 
@@ -100,7 +101,7 @@ namespace Microsoft.ClearScript
         /// <param name="assemblyName">The name of the assembly that contains the types to add.</param>
         public void AddAssembly(string assemblyName)
         {
-            MiscHelpers.VerifyNonBlankArgument(assemblyName, "assemblyName", "Invalid assembly name");
+            MiscHelpers.VerifyNonBlankArgument(assemblyName, nameof(assemblyName), "Invalid assembly name");
             AddAssembly(Assembly.Load(AssemblyTable.GetFullAssemblyName(assemblyName)));
         }
 
@@ -111,7 +112,7 @@ namespace Microsoft.ClearScript
         /// <param name="filter">A filter for selecting the types to add.</param>
         public void AddAssembly(Assembly assembly, Predicate<Type> filter)
         {
-            MiscHelpers.VerifyNonNullArgument(assembly, "assembly");
+            MiscHelpers.VerifyNonNullArgument(assembly, nameof(assembly));
             var activeFilter = filter ?? defaultFilter;
             assembly.GetAllTypes().Where(type => type.IsImportable() && activeFilter(type)).ForEach(AddType);
         }
@@ -124,7 +125,7 @@ namespace Microsoft.ClearScript
         /// <param name="filter">A filter for selecting the types to add.</param>
         public void AddAssembly(string assemblyName, Predicate<Type> filter)
         {
-            MiscHelpers.VerifyNonBlankArgument(assemblyName, "assemblyName", "Invalid assembly name");
+            MiscHelpers.VerifyNonBlankArgument(assemblyName, nameof(assemblyName), "Invalid assembly name");
             AddAssembly(Assembly.Load(AssemblyTable.GetFullAssemblyName(assemblyName)), filter);
         }
 
@@ -134,7 +135,7 @@ namespace Microsoft.ClearScript
         /// <param name="type">The type to add.</param>
         public void AddType(Type type)
         {
-            MiscHelpers.VerifyNonNullArgument(type, "type");
+            MiscHelpers.VerifyNonNullArgument(type, nameof(type));
             AddType(HostType.Wrap(type));
         }
 
@@ -166,7 +167,7 @@ namespace Microsoft.ClearScript
         /// <returns>The node that represents the namespace if it was found, <c>null</c> otherwise.</returns>
         public PropertyBag GetNamespaceNode(string name)
         {
-            MiscHelpers.VerifyNonNullArgument(name, "name");
+            MiscHelpers.VerifyNonNullArgument(name, nameof(name));
 
             PropertyBag namespaceNode = this;
 
@@ -281,7 +282,7 @@ namespace Microsoft.ClearScript
 
         private void AddType(HostType hostType)
         {
-            MiscHelpers.VerifyNonNullArgument(hostType, "hostType");
+            MiscHelpers.VerifyNonNullArgument(hostType, nameof(hostType));
             foreach (var type in hostType.Types)
             {
                 var namespaceNode = GetOrCreateNamespaceNode(type);
@@ -363,8 +364,19 @@ namespace Microsoft.ClearScript
 
         private static Type ResolveTypeConflict(IEnumerable<Type> types)
         {
-            var typeList = types.Distinct().ToIList();
+            var typeList = types.Distinct(typeComparer).ToIList();
             return typeList.SingleOrDefault(type => type.IsPublic) ?? typeList[0];
         }
+
+        #region Nested type : TypeComparer
+
+        private sealed class TypeComparer : EqualityComparer<Type>
+        {
+            public override bool Equals(Type x, Type y) => (x == y) || (x.AssemblyQualifiedName == y.AssemblyQualifiedName);
+
+            public override int GetHashCode(Type type) => type.AssemblyQualifiedName.GetHashCode();
+        }
+
+        #endregion
     }
 }

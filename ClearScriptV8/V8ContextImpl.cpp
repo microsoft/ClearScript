@@ -913,6 +913,13 @@ void V8ContextImpl::SetCpuProfileSampleInterval(uint32_t value)
 
 //-----------------------------------------------------------------------------
 
+void V8ContextImpl::WriteIsolateHeapSnapshot(void* pvStream)
+{
+    m_spIsolateImpl->WriteHeapSnapshot(pvStream);
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ContextImpl::Flush()
 {
     BEGIN_CONTEXT_SCOPE

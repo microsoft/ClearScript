@@ -21,11 +21,11 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
-            VALUE "FileDescription", "ClearScript V8 Native Library (64-bit)"
+            VALUE "FileDescription", "ClearScript V8 Native Library (x64)"
             VALUE "FileVersion", CLEARSCRIPT_VERSION_STRING
-            VALUE "InternalName", "ClearScriptV8-64.dll"
+            VALUE "InternalName", "ClearScriptV8.win-x64.dll"
             VALUE "LegalCopyright", "(c) Microsoft Corporation"
-            VALUE "OriginalFilename", "ClearScriptV8-64.dll"
+            VALUE "OriginalFilename", "ClearScriptV8.win-x64.dll"
             VALUE "ProductName", "ClearScript"
             VALUE "ProductVersion", CLEARSCRIPT_VERSION_STRING_INFORMATIONAL
         END

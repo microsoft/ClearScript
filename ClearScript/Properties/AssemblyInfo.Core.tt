@@ -39,6 +39,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("(c) Microsoft Corporation")]
 [assembly: InternalsVisibleTo("<#= "ClearScript.V8" + publicKeySpec #>")]
 [assembly: InternalsVisibleTo("<#= "ClearScript.Windows" + publicKeySpec #>")]
+[assembly: InternalsVisibleTo("<#= "ClearScript.Windows.Core" + publicKeySpec #>")]
 [assembly: InternalsVisibleTo("<#= "ClearScriptTest" + publicKeySpec #>")]
 
 [assembly: ComVisible(false)]

@@ -2,19 +2,17 @@
 // Licensed under the MIT license.
 
 using System;
-using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using Microsoft.ClearScript.Util.COM;
-using Microsoft.Win32;
 using TYPEFLAGS = System.Runtime.InteropServices.ComTypes.TYPEFLAGS;
 using TYPEKIND = System.Runtime.InteropServices.ComTypes.TYPEKIND;
 
 namespace Microsoft.ClearScript.Util
 {
-    internal static class ObjectHelpers
+    internal static partial class ObjectHelpers
     {
         public static Type GetTypeOrTypeInfo(this object value)
         {
@@ -165,37 +163,6 @@ namespace Microsoft.ClearScript.Util
             return null;
 
             // ReSharper restore EmptyGeneralCatchClause
-        }
-
-        private static bool GetPrimaryInteropAssembly(Guid libid, int major, int minor, out string name, out string codeBase)
-        {
-            name = null;
-            codeBase = null;
-
-            using (var containerKey = Registry.ClassesRoot.OpenSubKey("TypeLib", false))
-            {
-                if (containerKey != null)
-                {
-                    var typeLibName = "{" + libid.ToString().ToUpper(CultureInfo.InvariantCulture) + "}";
-                    using (var typeLibKey = containerKey.OpenSubKey(typeLibName))
-                    {
-                        if (typeLibKey != null)
-                        {
-                            var versionName = major.ToString("x", CultureInfo.InvariantCulture) + "." + minor.ToString("x", CultureInfo.InvariantCulture);
-                            using (var versionKey = typeLibKey.OpenSubKey(versionName, false))
-                            {
-                                if (versionKey != null)
-                                {
-                                    name = (string)versionKey.GetValue("PrimaryInteropAssemblyName");
-                                    codeBase = (string)versionKey.GetValue("PrimaryInteropAssemblyCodeBase");
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return name != null;
         }
 
         public static string GetFriendlyName(this object value)

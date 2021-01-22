@@ -36,3 +36,4 @@ V8/build/
 .vs/
 packages/
 NuGet/Private/
+[Bb]undle[Aa]rtifacts/

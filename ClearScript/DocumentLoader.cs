@@ -66,7 +66,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public virtual Document LoadDocument(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
-            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
 
             try
             {
@@ -395,8 +395,8 @@ namespace Microsoft.ClearScript
 
             public override async Task<Document> LoadDocumentAsync(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
             {
-                MiscHelpers.VerifyNonNullArgument(settings, "settings");
-                MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+                MiscHelpers.VerifyNonNullArgument(settings, nameof(settings));
+                MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
 
                 if ((settings.AccessFlags & DocumentAccessFlags.EnableAllLoading) == DocumentAccessFlags.None)
                 {

@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>netcoreapp3.1;net5.0-windows</TargetFrameworks>
         <UseWPF>true</UseWPF>
-        <RootNamespace>Microsoft.ClearScript</RootNamespace>
+        <RootNamespace>Microsoft.ClearScript.Windows</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
 
@@ -37,23 +37,15 @@
 
     <ItemGroup>
         <Compile Include="..\..\ClearScript\Properties\AssemblyInfo.Windows.cs" Link="Properties\AssemblyInfo.Windows.cs" />
-        <Compile Include="..\..\ClearScript\Windows\ActiveXDebugging.cs" Link="Windows\ActiveXDebugging.cs" />
-        <Compile Include="..\..\ClearScript\Windows\ActiveXScripting.cs" Link="Windows\ActiveXScripting.cs" />
-        <Compile Include="..\..\ClearScript\Windows\ActiveXWrappers.cs" Link="Windows\ActiveXWrappers.cs" />
-        <Compile Include="..\..\ClearScript\Windows\IHostWindow.cs" Link="Windows\IHostWindow.cs" />
-        <Compile Include="..\..\ClearScript\Windows\IWindowsScriptObject.cs" Link="Windows\IWindowsScriptObject.cs" />
-        <Compile Include="..\..\ClearScript\Windows\JScriptEngine.cs" Link="Windows\JScriptEngine.cs" />
-        <Compile Include="..\..\ClearScript\Windows\Nothing.cs" Link="Windows\Nothing.cs" />
-        <Compile Include="..\..\ClearScript\Windows\VBScriptEngine.cs" Link="Windows\VBScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\DispatcherSyncInvoker.cs" Link="Windows\DispatcherSyncInvoker.cs" />
         <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.cs" Link="Windows\WindowsScriptEngine.cs" />
-        <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.Debug.cs" Link="Windows\WindowsScriptEngine.Debug.cs" />
-        <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.Site.cs" Link="Windows\WindowsScriptEngine.Site.cs" />
-        <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngineFlags.cs" Link="Windows\WindowsScriptEngineFlags.cs" />
-        <Compile Include="..\..\ClearScript\Windows\WindowsScriptItem.cs" Link="Windows\WindowsScriptItem.cs" />
+        <Compile Include="..\..\ClearScript\Windows\JScriptEngine.cs" Link="Windows\JScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\VBScriptEngine.cs" Link="Windows\VBScriptEngine.cs" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
+        <ProjectReference Include="..\ClearScript.Windows.Core\ClearScript.Windows.Core.csproj" />
     </ItemGroup>
 
 </Project>

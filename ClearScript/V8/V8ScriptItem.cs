@@ -319,7 +319,7 @@ namespace Microsoft.ClearScript.V8
 
             public void CopyTo(Array array, int index)
             {
-                MiscHelpers.VerifyNonNullArgument(array, "array");
+                MiscHelpers.VerifyNonNullArgument(array, nameof(array));
 
                 if (array.Rank > 1)
                 {

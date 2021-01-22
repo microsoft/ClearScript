@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Condition="('$(TargetFramework)' == '' Or '$(TargetFramework.TrimEnd(`0123456789`))' == 'net') and ('$(PlatformTarget)' == '' Or '$(PlatformTarget)' == 'AnyCPU' Or '$(PlatformTarget)' == 'arm64')">
+    <None Include="$(MSBuildThisFileDirectory)..\runtimes\win-arm64\native\ClearScriptV8.win-arm64.dll">
+      <Link>ClearScriptV8.win-arm64.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+</Project>

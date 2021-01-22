@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.IO;
 using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace Microsoft.ClearScript.V8
@@ -40,5 +41,7 @@ namespace Microsoft.ClearScript.V8
         public abstract void CollectCpuProfileSample();
 
         public abstract uint CpuProfileSampleInterval { get; set; }
+
+        public abstract void WriteHeapSnapshot(Stream stream);
     }
 }

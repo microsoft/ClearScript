@@ -38,7 +38,7 @@ namespace Microsoft.ClearScript
         public DocumentInfo(Uri uri)
             : this()
         {
-            MiscHelpers.VerifyNonNullArgument(uri, "uri");
+            MiscHelpers.VerifyNonNullArgument(uri, nameof(uri));
             Uri = uri.IsAbsoluteUri ? uri : new Uri(Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + uri);
             name = Path.GetFileName(Uri.AbsolutePath);
             uniqueId = Interlocked.Increment(ref lastUniqueId).ToUnsigned();

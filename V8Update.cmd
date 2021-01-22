@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set v8testedrev=8.7.220.25
+set v8testedrev=8.8.278.14
 
 ::-----------------------------------------------------------------------------
 :: process arguments
@@ -73,11 +73,9 @@ goto Exit
 :CheckOSDone
 
 :CheckMSVS
-if "%VisualStudioVersion%"=="15.0" goto CheckMSVSDone
 if "%VisualStudioVersion%"=="16.0" goto CheckMSVSDone
-echo Error: This script requires a Visual Studio 2017 or Visual Studio 2019
-echo Developer Command Prompt. Browse to http://www.visualstudio.com for more
-echo information.
+echo Error: This script requires a Visual Studio 2019 Developer Command Prompt.
+echo Browse to http://www.visualstudio.com for more information.
 goto Exit
 :CheckMSVSDone
 
@@ -199,10 +197,10 @@ cd ..
 :Build32Bit
 cd v8
 setlocal
-call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x86 >nul
+call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64_x86 >nul
 if errorlevel 1 goto Build32BitError
-echo Building 32-bit V8 ...
-call gn gen out\Win32\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_i18n_support=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-Win32-%mode%.log
+echo Building V8 (x86) ...
+call gn gen out\Win32\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-Win32-%mode%.log
 if errorlevel 1 goto Build32BitError
 ninja -C out\Win32\%mode% obj\v8_monolith.lib >build-Win32-%mode%.log
 if errorlevel 1 goto Build32BitError
@@ -219,8 +217,8 @@ cd v8
 setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64 >nul
 if errorlevel 1 goto Build64BitError
-echo Building 64-bit V8 ...
-call gn gen out\x64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_i18n_support=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x64\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-x64-%mode%.log
+echo Building V8 (x64) ...
+call gn gen out\x64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x64\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-x64-%mode%.log
 if errorlevel 1 goto Build64BitError
 ninja -C out\x64\%mode% obj\v8_monolith.lib >build-x64-%mode%.log
 if errorlevel 1 goto Build64BitError
@@ -231,6 +229,24 @@ goto Build64BitDone
 endlocal
 goto Error
 :Build64BitDone
+
+:BuildArm64Bit
+cd v8
+setlocal
+call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64_arm64 >nul
+if errorlevel 1 goto BuildArm64BitError
+echo Building V8 (arm64) ...
+call gn gen out\arm64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"arm64\" use_custom_libcxx=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"arm64\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-arm64-%mode%.log
+if errorlevel 1 goto BuildArm64BitError
+ninja -C out\arm64\%mode% obj\v8_monolith.lib >build-arm64-%mode%.log
+if errorlevel 1 goto BuildArm64BitError
+endlocal
+cd ..
+goto BuildArm64BitDone
+:BuildArm64BitError
+endlocal
+goto Error
+:BuildArm64BitDone
 
 :BuildDone
 

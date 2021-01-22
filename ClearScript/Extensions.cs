@@ -31,8 +31,8 @@ namespace Microsoft.ClearScript
         /// <returns>A host type for use with script code.</returns>
         public static object ToHostType(this Type type, ScriptEngine engine)
         {
-            MiscHelpers.VerifyNonNullArgument(type, "type");
-            MiscHelpers.VerifyNonNullArgument(engine, "engine");
+            MiscHelpers.VerifyNonNullArgument(type, nameof(type));
+            MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
             return HostItem.Wrap(engine, HostType.Wrap(type));
         }
 
@@ -58,8 +58,8 @@ namespace Microsoft.ClearScript
         /// <returns>A host object with the specified type restriction.</returns>
         public static object ToRestrictedHostObject<T>(this T target, ScriptEngine engine)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
-            MiscHelpers.VerifyNonNullArgument(engine, "engine");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
+            MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
             return HostItem.Wrap(engine, target, typeof(T));
         }
     }

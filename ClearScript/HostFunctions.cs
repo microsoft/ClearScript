@@ -143,7 +143,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object newObj(IDynamicMetaObjectProvider target, params object[] args)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
 
             if (target.GetMetaObject(Expression.Constant(target)).TryCreateInstance(args, out var result))
             {
@@ -1068,7 +1068,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object getProperty(IPropertyBag target, string name)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
 
             if (target.TryGetValue(name, out var result))
             {
@@ -1090,7 +1090,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object setProperty(IPropertyBag target, string name, object value)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
             return target[name] = value;
         }
 
@@ -1105,7 +1105,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public bool removeProperty(IPropertyBag target, string name)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
             return target.Remove(name);
         }
 
@@ -1120,7 +1120,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object getProperty(IDynamicMetaObjectProvider target, string name)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
 
             if (target.GetMetaObject(Expression.Constant(target)).TryGetMember(name, out var result))
             {
@@ -1142,7 +1142,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object setProperty(IDynamicMetaObjectProvider target, string name, object value)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
 
             if (target.GetMetaObject(Expression.Constant(target)).TrySetMember(name, value, out var result))
             {
@@ -1163,7 +1163,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public bool removeProperty(IDynamicMetaObjectProvider target, string name)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
 
             if (target.GetMetaObject(Expression.Constant(target)).TryDeleteMember(name, out var result))
             {
@@ -1184,7 +1184,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object getElement(IDynamicMetaObjectProvider target, params object[] indices)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
 
             if (target.GetMetaObject(Expression.Constant(target)).TryGetIndex(indices, out var result))
             {
@@ -1207,7 +1207,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object setElement(IDynamicMetaObjectProvider target, object value, params object[] indices)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
 
             if (target.GetMetaObject(Expression.Constant(target)).TrySetIndex(indices, value, out var result))
             {
@@ -1228,7 +1228,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public bool removeElement(IDynamicMetaObjectProvider target, params object[] indices)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
 
             if (target.GetMetaObject(Expression.Constant(target)).TryDeleteIndex(indices, out var result))
             {
@@ -1301,8 +1301,8 @@ namespace Microsoft.ClearScript
         /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
         public bool tryCatch(object tryFunc, object catchFunc, object finallyFunc = null)
         {
-            MiscHelpers.VerifyNonNullArgument(tryFunc, "tryFunc");
-            MiscHelpers.VerifyNonNullArgument(catchFunc, "catchFunc");
+            MiscHelpers.VerifyNonNullArgument(tryFunc, nameof(tryFunc));
+            MiscHelpers.VerifyNonNullArgument(catchFunc, nameof(catchFunc));
 
             try
             {
@@ -1365,7 +1365,7 @@ namespace Microsoft.ClearScript
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         void IScriptableObject.OnExposedToScriptCode(ScriptEngine engine)
         {
-            MiscHelpers.VerifyNonNullArgument(engine, "engine");
+            MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
             this.engine = engine;
         }
 
@@ -1646,7 +1646,7 @@ namespace Microsoft.ClearScript
         /// <returns>A host type collection: <paramref name="collection"/> if it is not <c>null</c>, a new host type collection otherwise.</returns>
         public HostTypeCollection typeLibEnums<T>(T obj, HostTypeCollection collection = null) where T : class
         {
-            MiscHelpers.VerifyNonNullArgument(obj, "obj");
+            MiscHelpers.VerifyNonNullArgument(obj, nameof(obj));
             if (collection == null)
             {
                 collection = new HostTypeCollection();

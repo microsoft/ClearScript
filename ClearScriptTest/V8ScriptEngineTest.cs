@@ -3146,6 +3146,80 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(engine.Script.EngineInternal.isPromise(engine.Script.value));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_I18n()
+        {
+            Assert.AreEqual(1, engine.Evaluate("'a'.localeCompare('A', 'en', { 'caseFirst': 'upper'})"));
+            Assert.AreEqual(-1, engine.Evaluate("'a'.localeCompare('A', 'en', { 'caseFirst': 'lower'})"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_WriteRuntimeHeapSnapshot()
+        {
+            using (var stream = new MemoryStream())
+            {
+                engine.WriteRuntimeHeapSnapshot(stream);
+                stream.Seek(0, SeekOrigin.Begin);
+                using (var reader = new StreamReader(stream, Encoding.ASCII))
+                {
+                    var snapshot = JObject.Parse(reader.ReadToEnd());
+                    Assert.AreEqual(JTokenType.Object, snapshot["snapshot"].Type);
+                    Assert.AreEqual(JTokenType.Array, snapshot["nodes"].Type);
+                    Assert.AreEqual(JTokenType.Array, snapshot["edges"].Type);
+                    Assert.AreEqual(JTokenType.Array, snapshot["strings"].Type);
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_WriteRuntimeHeapSnapshot_StreamError()
+        {
+            TestUtil.AssertException<NotSupportedException>(() =>
+            {
+                using (var stream = new MemoryStream(new byte[100]))
+                {
+                    engine.WriteRuntimeHeapSnapshot(stream);
+                }
+            });
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Runtime_WriteHeapSnapshot()
+        {
+            using (var runtime = new V8Runtime(V8RuntimeFlags.EnableDebugging))
+            {
+                using (var stream = new MemoryStream())
+                {
+                    runtime.WriteHeapSnapshot(stream);
+                    stream.Seek(0, SeekOrigin.Begin);
+                    using (var reader = new StreamReader(stream, Encoding.ASCII))
+                    {
+                        var snapshot = JObject.Parse(reader.ReadToEnd());
+                        Assert.AreEqual(JTokenType.Object, snapshot["snapshot"].Type);
+                        Assert.AreEqual(JTokenType.Array, snapshot["nodes"].Type);
+                        Assert.AreEqual(JTokenType.Array, snapshot["edges"].Type);
+                        Assert.AreEqual(JTokenType.Array, snapshot["strings"].Type);
+                    }
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Runtime_WriteHeapSnapshot_StreamError()
+        {
+            using (var runtime = new V8Runtime(V8RuntimeFlags.EnableDebugging))
+            {
+                TestUtil.AssertException<NotSupportedException>(() =>
+                {
+                    using (var stream = new MemoryStream(new byte[100]))
+                    {
+                        // ReSharper disable once AccessToDisposedClosure
+                        runtime.WriteHeapSnapshot(stream);
+                    }
+                });
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFrameworks>net45;net471</TargetFrameworks>
-        <RootNamespace>Microsoft.ClearScript</RootNamespace>
+        <RootNamespace>Microsoft.ClearScript.V8</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
 
@@ -92,6 +92,13 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Include="..\..\V8\build\v8\third_party\icu\common\icudtl.dat" Link="ClearScriptV8.ICU.dat">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>false</Visible>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
         <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X86' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.dll" Link="ClearScriptV8.win-x86.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
@@ -110,19 +117,11 @@
         </None>
     </ItemGroup>
     <ItemGroup>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm.dll" Link="ClearScriptV8.win-arm.dll">
+        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64'" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm64.dll" Link="ClearScriptV8.win-arm64.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm.pdb" Link="ClearScriptV8.win-arm.pdb">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm64.dll" Link="ClearScriptV8.win-arm64.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm64.pdb" Link="ClearScriptV8.win-arm64.pdb">
+        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64'" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm64.pdb" Link="ClearScriptV8.win-arm64.pdb">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>

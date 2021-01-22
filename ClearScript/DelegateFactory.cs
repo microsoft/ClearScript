@@ -40,7 +40,7 @@ namespace Microsoft.ClearScript
 
         public static Delegate CreateDelegate(ScriptEngine engine, object target, Type delegateType)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
             if (!typeof(Delegate).IsAssignableFrom(delegateType))
             {
                 throw new ArgumentException("Invalid delegate type");

@@ -61,6 +61,8 @@ public:
     virtual uint32_t GetCpuProfileSampleInterval() override;
     virtual void SetCpuProfileSampleInterval(uint32_t value) override;
 
+    virtual void WriteIsolateHeapSnapshot(void* pvStream) override;
+
     virtual void Flush() override;
     virtual void Destroy() override;
 

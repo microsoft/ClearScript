@@ -3,6 +3,7 @@
 <head>
 <meta http-equiv=Content-Type content="text/html; charset=utf-8">
 <meta name=Generator content="Microsoft Word 15 (filtered)">
+<title>Building, Integrating, and Deploying ClearScript</title>
 <style>
 <!--
  /* Font Definitions */
@@ -199,9 +200,9 @@ href="https://docs.microsoft.com/en-us/previous-versions/windows/internet-explor
 .5in;margin-bottom:.0001pt;text-indent:-.5in'><span style='font:7.0pt "Times New Roman"'> </span>II.
 ClearScript NuGet package</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>Now that an official ClearScript
-NuGet package is available, you can simply add it to your project and skip to <a
-href="#_Debugging_with_ClearScript_2">Section VII</a> below.</p>
+<p class=MsoNormal style='margin-left:.25in'>Now that official ClearScript
+NuGet packages are available, you can simply add one to your project and skip
+to <a href="#_Debugging_with_ClearScript_2">Section VII</a> below.</p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 9.35pt;margin-bottom:.0001pt'>Windows</h2>
@@ -213,26 +214,29 @@ href="https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-add-package"><b>
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>dotnet add
 package</span></b></a> to add the <a
 href="https://www.nuget.org/packages/Microsoft.ClearScript">Microsoft.ClearScript</a>
+(x86/x64) or <a
+href="https://www.nuget.org/packages/Microsoft.ClearScript.win-arm64">Microsoft.ClearScript.win-arm64</a>
 package to your project. Remember to use the <b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas'>-v</span></b> option on the <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>dotnet</span></b>
 command line to add pre-release packages.</p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-9.35pt;margin-bottom:.0001pt'>Linux (x64)</h2>
+9.35pt;margin-bottom:.0001pt'>Linux</h2>
 
 <p class=MsoNormal style='margin-left:.25in'>Use <a
 href="https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-add-package"><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>dotnet add
 package</span></b></a> to add the <a
 href="https://www.nuget.org/packages/Microsoft.ClearScript.linux-x64">Microsoft.ClearScript.linux-x64</a>
+or <a href="https://www.nuget.org/packages/Microsoft.ClearScript.linux-arm64">Microsoft.ClearScript.linux-arm64</a>
 package to your project. Remember to use the <b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas'>-v</span></b> option on the <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>dotnet</span></b>
 command line to add pre-release packages.</p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-9.35pt;margin-bottom:.0001pt'>macOS (x64)</h2>
+9.35pt;margin-bottom:.0001pt'>macOS</h2>
 
 <p class=MsoNormal style='margin-left:.25in'>Use <a
 href="https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-add-package"><b><span
@@ -250,6 +254,10 @@ command line to add pre-release packages.</p>
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 9.0pt;margin-bottom:.0001pt'><a name="OLE_LINK13"></a><a name="OLE_LINK19"></a><a
 name="OLE_LINK15"></a><a name="OLE_LINK20">Windows</a></h2>
+
+<p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:
+</span></b>This procedure requires a 64-bit Windows operating system running on
+x64 hardware.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>The ClearScript source code <a
 name="OLE_LINK25">is hosted </a>in a <a
@@ -298,10 +306,10 @@ ClearScript root directory does not contain spaces or non-ASCII characters.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
-style='color:red'>Important:</span></b> The V8 build requires a 64-bit
-operating system. Your Visual Studio installation must include the <b>.NET
-desktop development</b> and <b>Desktop development with C++</b> workloads. Once
-built, ClearScript can still be deployed in a 32-bit environment.</p>
+style='color:red'>Important:</span></b> Your Visual Studio installation must
+include the <b>.NET desktop development</b>, <b>Desktop development with C++</b>,
+and <b>Universal Windows Platform Development</b> workloads, as well as the <b>C++
+ARM build tools </b>and<b> C++ ARM64</b> <b>build tools</b> components.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
@@ -325,9 +333,9 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>V8Upd
 [/N] [Debug|<a name="OLE_LINK16">Release</a>] [Latest|Tested|&lt;Revision&gt;]</span></b></p>
 
 <p class=MsoNormal style='margin-left:.75in'>This script downloads the V8
-source code and its dependencies and builds 32-bit and 64-bit V8 libraries in the
-specified configuration. It requires approximately 8GB of additional disk space
-and does not perform any permanent software installation on your machine.</p>
+source code and its dependencies and builds x86, x64, and arm64 V8 libraries in
+the specified configuration. It requires approximately 12GB of additional disk
+space and does not perform any permanent software installation on your machine.</p>
 
 <p class=MsoNormal style='margin-left:.75in'>The optional <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>/N</span></b>
@@ -370,8 +378,9 @@ The first time you open the solution, Visual Studio may prompt you to upgrade
 one or more projects to the latest platform toolset or .NET Framework. We
 recommend that you select <b>Cancel</b> or <b>Don't Upgrade</b>. If you
 encounter issues building ClearScript’s unmanaged projects (<b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-32</span></b>
-and <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8-64</span></b>),
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8.win-x86</span></b>,
+<b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8.win-x64</span></b>,
+and <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScriptV8.win-arm64</span></b>),
 ensure that their <b>Windows SDK Version</b> properties are set to an installed
 version of the Windows SDK.</p>
 
@@ -385,6 +394,10 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScript\doc\[
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 9.35pt;margin-bottom:.0001pt'>Linux</h2>
+
+<p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:
+</span></b>This procedure requires a 64-bit Linux operating system running on
+x64 hardware.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>Here’s how to acquire and build V8
 and ClearScript on Linux:</p>
@@ -425,7 +438,7 @@ the following command from your ClearScript root directory:</p>
 line-height:115%;font-family:Consolas;color:gray'>user@host:/path/to/ClearScript$</span><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>make
--f Unix/Makefile [DEBUG=1]</span></b></p>
+-f Unix/Makefile [DEBUG=1] [CPU=arm64]</span></b></p>
 
 <p class=MsoNormal style='margin-left:.75in'>Specifying <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>DEBUG=1</span></b>
@@ -433,8 +446,18 @@ is optional; the default configuration is <b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas'>Release</span></b>. The output directory
 is <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin/[Debug|Release]</span></b>.</p>
 
+<p class=MsoNormal style='margin-left:.75in'>Specify <b><span style='font-size:
+10.0pt;line-height:115%;font-family:Consolas'>CPU=arm64</span></b> to
+cross-build for the arm64 architecture. This requires arm64 C++ cross-build tools,
+such as <a href="https://packages.ubuntu.com/xenial/devel/g++-aarch64-linux-gnu">g++-aarch64-linux-gnu</a>
+on Ubuntu.</p>
+
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 9.35pt;margin-bottom:.0001pt'>macOS</h2>
+
+<p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:
+</span></b>This procedure requires a recent macOS version running on x64
+hardware.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>Here’s how to acquire and build V8
 and ClearScript on macOS:</p>
@@ -458,8 +481,8 @@ into a convenient directory. Avoid very long directory paths.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
-style='color:red'>Important:</span></b> Ensure that the path to your
-ClearScript root directory does not contain spaces or non-ASCII characters.</p>
+style='color:red'>Important:</span></b> Ensure that the path to your ClearScript
+root directory does not contain spaces or non-ASCII characters.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Run
@@ -482,7 +505,7 @@ is <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin/[
 .5in;margin-bottom:.0001pt;text-indent:-.5in'>IV. Building strong-named
 ClearScript assemblies (optional, Windows only)</h1>
 
-<p class=MsoNormal style='margin-left:.25in'>ClearScript now includes optional
+<p class=MsoNormal style='margin-left:.25in'>ClearScript includes optional
 support for building strong-named assemblies. Use the following one-time
 procedure to enable this feature:</p>
 
@@ -521,7 +544,7 @@ the ClearScript assemblies you build will have strong names.</p>
 </span>V. Integrating and deploying ClearScript with your application</h1>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-9.0pt;margin-bottom:.0001pt'>Windows</h2>
+9.0pt;margin-bottom:.0001pt'>Windows (x86/x64)</h2>
 
 <p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript,
 here's how to add it to your application:</p>
@@ -534,8 +557,8 @@ your project in Visual Studio and select <b>Add Reference</b>.</p>
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>In
 the Reference Manager window, click <b>Browse</b> and locate your ClearScript
 output directory (see above). Select <b>ClearScript.Core.dll</b>, <b>ClearScript.Windows.dll</b>,
-and <b>ClearScript.V8.dll</b>, click <b>Add</b>, and then click <b>OK</b> to
-exit Reference Manager.</p>
+<b>ClearScript.Windows.Core.dll</b>, and <b>ClearScript.V8.dll</b>, click <b>Add</b>,
+and then click <b>OK</b> to exit Reference Manager.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
@@ -552,7 +575,7 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>Clear
 line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.win-x64.dll</span></b></p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-9.0pt;margin-bottom:.0001pt'>Linux (x64)</h2>
+9.0pt;margin-bottom:.0001pt'>Windows (arm64)</h2>
 
 <p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript,
 here's how to reference it in your application:</p>
@@ -578,10 +601,39 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>Clear
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:.5in;background:#F2F2F2'><b><span style='font-size:10.0pt;
-line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.linux-x64.so</span></b></p>
+line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.win-arm64.so</span></b></p>
 
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
-9.0pt;margin-bottom:.0001pt'>macOS (x64)</h2>
+9.0pt;margin-bottom:.0001pt'>Linux</h2>
+
+<p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript,
+here's how to reference it in your application:</p>
+
+<p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
+14.0pt;margin-left:.5in;background:#F2F2F2'><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:gray'>user@host:/path/to/MyApp$</span><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>dotnet
+add reference /path/to/ClearScript/NetCore/ClearScript.V8</span></b></p>
+
+<p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:</span></b>
+If your application fails to load ClearScript, ensure that the following ClearScript
+output files are present in your application’s output directory:</p>
+
+<p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.Core.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.V8.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+14.0pt;margin-left:.5in;background:#F2F2F2'><b><span style='font-size:10.0pt;
+line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.linux-[x64|arm64].so</span></b></p>
+
+<h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
+9.0pt;margin-bottom:.0001pt'>macOS</h2>
 
 <p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript,
 here's how to reference it in your application:</p>
@@ -611,10 +663,10 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>Clear
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'>VI. Machine-level (global) deployment
-(.NET Framework only)</h1>
+(.NET Framework only, x86/x64)</h1>
 
 <p class=MsoNormal style='margin-left:.25in'><a
-name="_Debugging_with_ClearScript_1"></a>You can now deploy ClearScript at the
+name="_Debugging_with_ClearScript_1"></a>You can deploy ClearScript at the
 machine level, making it available to all locally installed applications. For
 this to work, your ClearScript assemblies must have strong names. If you’re
 building ClearScript yourself, see <a href="#_Building_strong-named_ClearScript">Section

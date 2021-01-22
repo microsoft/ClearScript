@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.IO;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 
@@ -554,7 +555,7 @@ namespace Microsoft.ClearScript.V8
         /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
-            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
             var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents());
         }
@@ -607,7 +608,7 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
-            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
             var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents(), cacheKind, out cacheBytes);
         }
@@ -663,7 +664,7 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
-            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
             var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents(), cacheKind, cacheBytes, out cacheAccepted);
         }
@@ -758,6 +759,24 @@ namespace Microsoft.ClearScript.V8
             {
                 VerifyNotDisposed();
                 proxy.CpuProfileSampleInterval = value;
+            }
+        }
+
+        /// <summary>
+        /// Writes a heap snapshot to the given stream.
+        /// </summary>
+        /// <param name="stream">The stream to which to write the heap snapshot.</param>
+        /// <remarks>
+        /// This method generates a heap snapshot in JSON format with ASCII encoding.
+        /// </remarks>
+        public void WriteHeapSnapshot(Stream stream)
+        {
+            MiscHelpers.VerifyNonNullArgument(stream, nameof(stream));
+            VerifyNotDisposed();
+
+            using (var engine = CreateScriptEngine(Name))
+            {
+                engine.ScriptInvoke(() => proxy.WriteHeapSnapshot(stream));
             }
         }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Diagnostics;
 using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.Windows;
 
@@ -15,30 +16,46 @@ namespace Microsoft.ClearScript.Test
         private const string flavor = "Release";
     #endif
 
-        public static void Main()
+        public static void Main(string[] args)
         {
+            uint choice = 0;
+            var burn = (args.Length == 2) && (args[0] == "-b") && uint.TryParse(args[1], out choice) && (choice >= 1) && (choice <= 3);
+
             Console.Clear();
-            Console.WriteLine("ClearScript Benchmarks ({0}, {1})\n", flavor, Environment.Is64BitProcess ? "64-bit" : "32-bit");
+            if (!burn) Console.WriteLine("ClearScript Benchmarks ({0}, {1})\n", flavor, Environment.Is64BitProcess ? "64-bit" : "32-bit");
+
+            var count = 0UL;
 
             while (true)
             {
-                Console.WriteLine("1. SunSpider - JScript");
-                Console.WriteLine("2. SunSpider - V8 (default)");
-                Console.WriteLine("3. SunSpider - V8 (no GlobalMembers support)");
-                Console.WriteLine("4. Exit");
-                Console.WriteLine();
+                if (!burn)
+                {
+                    Console.WriteLine("1. SunSpider - JScript");
+                    Console.WriteLine("2. SunSpider - V8 (default)");
+                    Console.WriteLine("3. SunSpider - V8 (no GlobalMembers support)");
+                    Console.WriteLine("4. Exit");
+                    Console.WriteLine();
+                }
 
                 var exit = false;
 
                 while (true)
                 {
-                    Console.Write("-> ");
-                    var input = Console.ReadLine();
-
-                    if (!int.TryParse(input, out var selection))
+                    uint selection;
+                    if (burn)
                     {
-                        Console.WriteLine("Invalid selection");
-                        continue;
+                        selection = choice;
+                    }
+                    else
+                    {
+                        Console.Write("-> ");
+                        var input = Console.ReadLine();
+
+                        if (!uint.TryParse(input, out selection))
+                        {
+                            Console.WriteLine("Invalid selection");
+                            continue;
+                        }
                     }
 
                     var done = false;
@@ -46,17 +63,17 @@ namespace Microsoft.ClearScript.Test
                     switch (selection)
                     {
                         case 1:
-                            Run(() => new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode), SunSpider.RunSuite);
+                            Run(() => new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode), SunSpider.RunSuite, burn);
                             done = true;
                             break;
 
                         case 2:
-                            Run(() => new V8ScriptEngine(), SunSpider.RunSuite);
+                            Run(() => new V8ScriptEngine(), SunSpider.RunSuite, burn);
                             done = true;
                             break;
 
                         case 3:
-                            Run(() => new V8ScriptEngine(V8ScriptEngineFlags.DisableGlobalMembers), SunSpider.RunSuite);
+                            Run(() => new V8ScriptEngine(V8ScriptEngineFlags.DisableGlobalMembers), SunSpider.RunSuite, burn);
                             done = true;
                             break;
 
@@ -72,7 +89,8 @@ namespace Microsoft.ClearScript.Test
 
                     if (done)
                     {
-                        Console.WriteLine();
+                        if (!burn) Console.WriteLine();
+                        count += 1;
                         break;
                     }
                 }
@@ -81,15 +99,32 @@ namespace Microsoft.ClearScript.Test
                 {
                     break;
                 }
+
+                if (burn)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+
+                    using (var process = Process.GetCurrentProcess())
+                    {
+                        Console.WriteLine("{0:#,#} after {1:#,#} iterations", process.PrivateMemorySize64, count);
+                    }
+                }
             }
         }
 
-        private static void Run(Func<ScriptEngine> engineFactory, Action<ScriptEngine> benchmark)
+        private static void Run(Func<ScriptEngine> engineFactory, Action<ScriptEngine, bool> benchmark, bool quiet)
         {
-            Console.WriteLine();
+            if (!quiet) Console.WriteLine();
             using (var engine = engineFactory())
             {
-                benchmark(engine);
+                benchmark(engine, quiet);
             }
         }
     }

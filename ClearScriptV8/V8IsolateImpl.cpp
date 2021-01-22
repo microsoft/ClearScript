@@ -301,6 +301,59 @@ V8ArrayBufferAllocator::V8ArrayBufferAllocator()
 V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
 
 //-----------------------------------------------------------------------------
+// V8OutputStream
+//-----------------------------------------------------------------------------
+
+class V8OutputStream final: public v8::OutputStream
+{
+    PROHIBIT_COPY(V8OutputStream)
+
+public:
+
+    explicit V8OutputStream(void* pvStream):
+        m_pvStream(pvStream)
+    {
+    }
+
+    virtual int GetChunkSize() override;
+    virtual WriteResult WriteAsciiChunk(char* pData, int size) override;
+    virtual void EndOfStream() override;
+
+private:
+
+    void* m_pvStream;
+};
+
+//-----------------------------------------------------------------------------
+
+int V8OutputStream::GetChunkSize()
+{
+    return 64 * 1024;
+}
+
+//-----------------------------------------------------------------------------
+
+V8OutputStream::WriteResult V8OutputStream::WriteAsciiChunk(char* pData, int size)
+{
+    try
+    {
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(WriteBytesToStream, m_pvStream, reinterpret_cast<uint8_t*>(pData), size);
+        return kContinue;
+    }
+    catch (const HostException& exception)
+    {
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(ScheduleForwardingException, exception.GetException());
+        return kAbort;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8OutputStream::EndOfStream()
+{
+}
+
+//-----------------------------------------------------------------------------
 // V8IsolateImpl implementation
 //-----------------------------------------------------------------------------
 
@@ -771,6 +824,22 @@ void V8IsolateImpl::SetCpuProfileSampleInterval(uint32_t value)
 
             m_upCpuProfiler->SetSamplingInterval(static_cast<int>(m_CpuProfileSampleInterval));
         }
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::WriteHeapSnapshot(void* pvStream)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        auto pSnapshot = m_upIsolate->GetHeapProfiler()->TakeHeapSnapshot();
+
+        V8OutputStream stream(pvStream);
+        pSnapshot->Serialize(&stream);
+
+        const_cast<v8::HeapSnapshot*>(pSnapshot)->Delete();
 
     END_ISOLATE_SCOPE
 }

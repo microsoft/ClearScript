@@ -19,6 +19,7 @@ namespace Microsoft.ClearScript.Test
             var options = new CompilerParameters { GenerateInMemory = true };
             options.ReferencedAssemblies.Add("ClearScript.Core.dll");
             options.ReferencedAssemblies.Add("ClearScript.V8.dll");
+            options.ReferencedAssemblies.Add("ClearScript.Windows.Core.dll");
             options.ReferencedAssemblies.Add("ClearScript.Windows.dll");
             options.ReferencedAssemblies.Add("ClearScriptTest.dll");
             options.ReferencedAssemblies.Add("System.Runtime.dll");
@@ -61,6 +62,7 @@ namespace Microsoft.ClearScript.Test
             var options = new CompilerParameters { GenerateInMemory = true };
             options.ReferencedAssemblies.Add("ClearScript.Core.dll");
             options.ReferencedAssemblies.Add("ClearScript.V8.dll");
+            options.ReferencedAssemblies.Add("ClearScript.Windows.Core.dll");
             options.ReferencedAssemblies.Add("ClearScript.Windows.dll");
             options.ReferencedAssemblies.Add("ClearScriptTest.dll");
             options.ReferencedAssemblies.Add("System.Runtime.dll");

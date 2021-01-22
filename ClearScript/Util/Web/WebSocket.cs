@@ -152,7 +152,9 @@ namespace Microsoft.ClearScript.Util.Web
                     index += payload.LongLength;
                 }
 
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 Debug.Assert(isBinary.HasValue);
+
                 return new Message { IsBinary = isBinary.Value, Payload = fullPayload };
             }
         }

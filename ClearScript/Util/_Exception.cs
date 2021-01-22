@@ -4,10 +4,9 @@
 using System.Reflection;
 using System.Runtime.Serialization;
 
-// ReSharper disable InconsistentNaming
-
 namespace System.Runtime.InteropServices
 {
+    // ReSharper disable once InconsistentNaming
     internal interface _Exception
     {
         string ToString();
@@ -24,5 +23,3 @@ namespace System.Runtime.InteropServices
         MethodBase TargetSite { get; }
     }
 }
-
-// ReSharper restore InconsistentNaming

@@ -15,13 +15,13 @@ namespace Microsoft.ClearScript.Util
 
         public bool Contains(T item)
         {
-            MiscHelpers.VerifyNonNullArgument(item, "item");
+            MiscHelpers.VerifyNonNullArgument(item, nameof(item));
             return GetItems().Contains(item);
         }
 
         public bool TryAdd(T item)
         {
-            MiscHelpers.VerifyNonNullArgument(item, "item");
+            MiscHelpers.VerifyNonNullArgument(item, nameof(item));
             lock (dataLock)
             {
                 if (!GetItemsInternal().Contains(item))
@@ -36,7 +36,7 @@ namespace Microsoft.ClearScript.Util
 
         public void ForEach(Action<T> action)
         {
-            MiscHelpers.VerifyNonNullArgument(action, "action");
+            MiscHelpers.VerifyNonNullArgument(action, nameof(action));
             GetItems().ForEach(action);
         }
 

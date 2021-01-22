@@ -35,7 +35,7 @@ namespace Microsoft.ClearScript.Windows
 
         /// <summary>
         /// Specifies that script language features that enhance standards compliance are to be
-        /// enabled. This option only affects <see cref="JScriptEngine"/>.
+        /// enabled. This option only affects <see cref="Core.JScriptEngine"/>.
         /// </summary>
         EnableStandardsMode = 0x00000008,
 
@@ -69,7 +69,7 @@ namespace Microsoft.ClearScript.Windows
         /// extensions that otherwise interfere with some host object functionality. Virtual method
         /// table patching is a very low-level mechanism with global effect. This option specifies
         /// that virtual method table patching is not to be enabled on behalf of the current
-        /// <see cref="JScriptEngine"/> instance.
+        /// <see cref="Core.JScriptEngine"/> instance.
         /// </summary>
         DoNotEnableVTablePatching = 0x00000080,
 

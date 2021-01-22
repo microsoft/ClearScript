@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|arm64">
+      <Configuration>Debug</Configuration>
+      <Platform>arm64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|arm64">
+      <Configuration>Release</Configuration>
+      <Platform>arm64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{725B6D7A-ECC7-4A28-AF52-B1CB22C37134}</ProjectGuid>
+    <Keyword>ManagedCProj</Keyword>
+    <RootNamespace>ClearScriptV864</RootNamespace>
+    <ProjectName>ClearScriptV8.win-arm64</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|arm64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(VisualStudioVersion)'=='16.0'">
+    <PlatformToolset>v142</PlatformToolset>
+    <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)'==''">$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(VisualStudioVersion)'=='15.0'">
+    <PlatformToolset>v141</PlatformToolset>
+    <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)'==''">$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(VisualStudioVersion)'=='14.0'">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(VisualStudioVersion)'=='12.0'">
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|arm64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <CodeAnalysisRuleSet>MixedRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|arm64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <CodeAnalysisRuleSet>MixedRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)V8\build\v8\include;$(SolutionDir)ClearScript\Exports;$(IncludePath)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalUsingDirectories>$(OutDir)</AdditionalUsingDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SDLCheck>true</SDLCheck>
+      <OmitFramePointers>false</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
+      <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='14.0'">true</GenerateDebugInformation>
+      <AdditionalDependencies>dbghelp.lib;winmm.lib;advapi32.lib;$(SolutionDir)V8\build\v8\out\$(Platform)\$(Configuration)\obj\v8_monolith.lib</AdditionalDependencies>
+      <TurnOffAssemblyGeneration>true</TurnOffAssemblyGeneration>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|arm64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)V8\build\v8\include;$(SolutionDir)ClearScript\Exports;$(IncludePath)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>
+      </PrecompiledHeaderOutputFile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalUsingDirectories>$(OutDir)</AdditionalUsingDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <SDLCheck>true</SDLCheck>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <StringPooling>true</StringPooling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
+      <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='14.0'">true</GenerateDebugInformation>
+      <AdditionalDependencies>dbghelp.lib;winmm.lib;advapi32.lib;$(SolutionDir)V8\build\v8\out\$(Platform)\$(Configuration)\obj\v8_monolith.lib</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <TurnOffAssemblyGeneration>true</TurnOffAssemblyGeneration>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\ClearScript\Exports</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\HighResolutionClock.Windows.cpp" />
+    <ClCompile Include="..\HostObjectHolderImpl.cpp" />
+    <ClCompile Include="..\HostObjectUtil.cpp" />
+    <ClCompile Include="..\Mutex.cpp" />
+    <ClCompile Include="..\RefCount.cpp" />
+    <ClCompile Include="..\V8SplitProxyManaged.cpp" />
+    <ClCompile Include="..\StdString.cpp" />
+    <ClCompile Include="..\V8Context.cpp" />
+    <ClCompile Include="..\V8ContextImpl.cpp" />
+    <ClCompile Include="..\V8Isolate.cpp" />
+    <ClCompile Include="..\V8IsolateImpl.cpp" />
+    <ClCompile Include="..\V8ObjectHelpers.cpp" />
+    <ClCompile Include="..\V8ObjectHolderImpl.cpp" />
+    <ClCompile Include="..\V8ScriptHolderImpl.cpp" />
+    <ClCompile Include="..\V8SplitProxyNative.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\ClearScriptV8Native.h" />
+    <ClInclude Include="..\CommonPlatform.h" />
+    <ClInclude Include="..\HighResolutionClock.h" />
+    <ClInclude Include="..\HostException.h" />
+    <ClInclude Include="..\HostObjectHolder.h" />
+    <ClInclude Include="..\HostObjectHolderImpl.h" />
+    <ClInclude Include="..\HostObjectUtil.h" />
+    <ClInclude Include="..\V8SplitProxyManaged.h" />
+    <ClInclude Include="..\IV8Entity.h" />
+    <ClInclude Include="..\Mutex.h" />
+    <ClInclude Include="..\NativePlatform.h" />
+    <ClInclude Include="..\RefCount.h" />
+    <ClInclude Include="..\SharedPtr.h" />
+    <ClInclude Include="..\StdString.h" />
+    <ClInclude Include="..\Timer.h" />
+    <ClInclude Include="..\V8CacheType.h" />
+    <ClInclude Include="..\V8Context.h" />
+    <ClInclude Include="..\V8ContextImpl.h" />
+    <ClInclude Include="..\V8DocumentInfo.h" />
+    <ClInclude Include="..\V8Exception.h" />
+    <ClInclude Include="..\V8Isolate.h" />
+    <ClInclude Include="..\V8IsolateImpl.h" />
+    <ClInclude Include="..\V8ObjectHelpers.h" />
+    <ClInclude Include="..\V8ObjectHolder.h" />
+    <ClInclude Include="..\V8ObjectHolderImpl.h" />
+    <ClInclude Include="..\V8Platform.h" />
+    <ClInclude Include="..\V8ScriptHolder.h" />
+    <ClInclude Include="..\V8ScriptHolderImpl.h" />
+    <ClInclude Include="..\V8SplitProxyNative.h" />
+    <ClInclude Include="..\V8Value.h" />
+    <ClInclude Include="..\V8WeakContextBinding.h" />
+    <ClInclude Include="..\WeakRef.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Numerics" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

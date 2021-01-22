@@ -450,6 +450,8 @@ public:
     virtual uint32_t GetCpuProfileSampleInterval() override;
     virtual void SetCpuProfileSampleInterval(uint32_t value) override;
 
+    virtual void WriteHeapSnapshot(void* pvStream) override;
+
     virtual void runMessageLoopOnPause(int contextGroupId) override;
     virtual void quitMessageLoopOnPause() override;
     virtual void runIfWaitingForDebugger(int contextGroupId) override;

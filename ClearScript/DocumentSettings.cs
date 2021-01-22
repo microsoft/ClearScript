@@ -130,7 +130,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public void AddSystemDocument(string identifier, DocumentCategory category, string contents, DocumentContextCallback contextCallback)
         {
-            MiscHelpers.VerifyNonBlankArgument(identifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(identifier, nameof(identifier), "Invalid document specifier");
             var info = new DocumentInfo(Path.GetFileName(identifier)) { Category = category, ContextCallback = contextCallback };
             AddSystemDocument(identifier, new StringDocument(info, contents));
         }
@@ -149,7 +149,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public void AddSystemDocument(string identifier, Document document)
         {
-            MiscHelpers.VerifyNonNullArgument(document, "document");
+            MiscHelpers.VerifyNonNullArgument(document, nameof(document));
             systemDocumentMap[Tuple.Create(identifier, document.Info.Category)] = document;
         }
 

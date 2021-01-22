@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
@@ -195,6 +196,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             get => V8SplitProxyNative.Invoke(instance => instance.V8Isolate_GetCpuProfileSampleInterval(Handle));
             set => V8SplitProxyNative.Invoke(instance => instance.V8Isolate_SetCpuProfileSampleInterval(Handle, value));
+        }
+
+        public override void WriteHeapSnapshot(Stream stream)
+        {
+            using (var streamScope = V8ProxyHelpers.CreateAddRefHostObjectScope(stream))
+            {
+                var pStream = streamScope.Value;
+                V8SplitProxyNative.Invoke(instance => instance.V8Isolate_WriteHeapSnapshot(Handle, pStream));
+            }
         }
 
         #endregion

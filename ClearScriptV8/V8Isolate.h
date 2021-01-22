@@ -77,5 +77,7 @@ public:
     virtual uint32_t GetCpuProfileSampleInterval() = 0;
     virtual void SetCpuProfileSampleInterval(uint32_t value) = 0;
 
+    virtual void WriteHeapSnapshot(void* pvStream) = 0;
+
     virtual ~V8Isolate() {}
 };

@@ -36,8 +36,8 @@ namespace Microsoft.ClearScript.JavaScript
         /// <returns>A promise that represents the task's asynchronous operation.</returns>
         public static object ToPromise<TResult>(this Task<TResult> task, ScriptEngine engine)
         {
-            MiscHelpers.VerifyNonNullArgument(task, "task");
-            MiscHelpers.VerifyNonNullArgument(engine, "engine");
+            MiscHelpers.VerifyNonNullArgument(task, nameof(task));
+            MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
 
             var javaScriptEngine = engine as IJavaScriptEngine;
             if ((javaScriptEngine == null) || (javaScriptEngine.BaseLanguageVersion < 6))
@@ -70,8 +70,8 @@ namespace Microsoft.ClearScript.JavaScript
         /// <returns>A promise that represents the task's asynchronous operation.</returns>
         public static object ToPromise(this Task task, ScriptEngine engine)
         {
-            MiscHelpers.VerifyNonNullArgument(task, "task");
-            MiscHelpers.VerifyNonNullArgument(engine, "engine");
+            MiscHelpers.VerifyNonNullArgument(task, nameof(task));
+            MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
 
             var javaScriptEngine = engine as IJavaScriptEngine;
             if ((javaScriptEngine == null) || (javaScriptEngine.BaseLanguageVersion < 6))
@@ -91,7 +91,7 @@ namespace Microsoft.ClearScript.JavaScript
         /// <returns>A task that represents the promise's asynchronous operation.</returns>
         public static Task<object> ToTask(this object promise)
         {
-            MiscHelpers.VerifyNonNullArgument(promise, "promise");
+            MiscHelpers.VerifyNonNullArgument(promise, nameof(promise));
 
             var scriptObject = promise as ScriptObject;
             if (scriptObject == null)

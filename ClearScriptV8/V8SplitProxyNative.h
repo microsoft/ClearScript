@@ -157,6 +157,7 @@ DEFINE_V8_ENTITY_HANDLE(NativeCallbackHandle, IHostObjectUtil::NativeCallback, S
 //-----------------------------------------------------------------------------
 
 NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTable) noexcept;
+NATIVE_ENTRY_POINT(void) V8Environment_InitializeICU(const StdChar* pDataPath) noexcept;
 
 NATIVE_ENTRY_POINT(StdString*) StdString_New(const StdChar* pValue, int32_t length) noexcept;
 NATIVE_ENTRY_POINT(const StdChar*) StdString_GetValue(const StdString& string, int32_t& length) noexcept;
@@ -248,6 +249,7 @@ NATIVE_ENTRY_POINT(void) V8Isolate_EndCpuProfile(const V8IsolateHandle& handle, 
 NATIVE_ENTRY_POINT(void) V8Isolate_CollectCpuProfileSample(const V8IsolateHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(uint32_t) V8Isolate_GetCpuProfileSampleInterval(const V8IsolateHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8Isolate_SetCpuProfileSampleInterval(const V8IsolateHandle& handle, uint32_t value) noexcept;
+NATIVE_ENTRY_POINT(void) V8Isolate_WriteHeapSnapshot(const V8IsolateHandle& handle, void* pvStream) noexcept;
 
 NATIVE_ENTRY_POINT(size_t) V8Context_GetMaxIsolateHeapSize(const V8ContextHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_SetMaxIsolateHeapSize(const V8ContextHandle& handle, size_t size) noexcept;
@@ -275,6 +277,7 @@ NATIVE_ENTRY_POINT(void) V8Context_EndCpuProfile(const V8ContextHandle& handle, 
 NATIVE_ENTRY_POINT(void) V8Context_CollectCpuProfileSample(const V8ContextHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(uint32_t) V8Context_GetCpuProfileSampleInterval(const V8ContextHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_SetCpuProfileSampleInterval(const V8ContextHandle& handle, uint32_t value) noexcept;
+NATIVE_ENTRY_POINT(void) V8Context_WriteIsolateHeapSnapshot(const V8ContextHandle& handle, void* pvStream) noexcept;
 
 NATIVE_ENTRY_POINT(void) V8Object_GetNamedProperty(const V8ObjectHandle& handle, const StdString& name, V8Value& value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Object_SetNamedProperty(const V8ObjectHandle& handle, const StdString& name, const V8Value& value) noexcept;

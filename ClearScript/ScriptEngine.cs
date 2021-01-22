@@ -389,7 +389,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public void AddHostObject(string itemName, HostItemFlags flags, object target)
         {
-            MiscHelpers.VerifyNonNullArgument(target, "target");
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
             AddHostItem(itemName, flags, target);
         }
 
@@ -681,7 +681,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public void AddHostType(string itemName, HostItemFlags flags, Type type)
         {
-            MiscHelpers.VerifyNonNullArgument(type, "type");
+            MiscHelpers.VerifyNonNullArgument(type, nameof(type));
             AddHostItem(itemName, flags, HostType.Wrap(type));
         }
 
@@ -1057,7 +1057,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public void ExecuteDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
-            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
             var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             Execute(document.Info, document.GetTextContents());
         }
@@ -1320,7 +1320,7 @@ namespace Microsoft.ClearScript
         /// </remarks>
         public object EvaluateDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
-            MiscHelpers.VerifyNonBlankArgument(specifier, "specifier", "Invalid document specifier");
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
             var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Evaluate(document.Info, document.GetTextContents());
         }
@@ -1333,7 +1333,7 @@ namespace Microsoft.ClearScript
         /// <returns>The return value if a function was invoked, an undefined value otherwise.</returns>
         public object Invoke(string funcName, params object[] args)
         {
-            MiscHelpers.VerifyNonBlankArgument(funcName, "funcName", "Invalid function name");
+            MiscHelpers.VerifyNonBlankArgument(funcName, nameof(funcName), "Invalid function name");
             return ((IDynamic)Script).InvokeMethod(funcName, args ?? ArrayHelpers.GetEmptyArray<object>());
         }
 

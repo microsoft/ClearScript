@@ -139,6 +139,7 @@
         <Compile Include="..\..\ClearScript\Util\NativeMethods.cs" Link="Util\NativeMethods.cs" />
         <Compile Include="..\..\ClearScript\Util\Nonexistent.cs" Link="Util\Nonexistent.cs" />
         <Compile Include="..\..\ClearScript\Util\ObjectHelpers.cs" Link="Util\ObjectHelpers.cs" />
+        <Compile Include="..\..\ClearScript\Util\ObjectHelpers.Common.cs" Link="Util\ObjectHelpers.Common.cs" />
         <Compile Include="..\..\ClearScript\Util\OneWayFlag.cs" Link="Util\OneWayFlag.cs" />
         <Compile Include="..\..\ClearScript\Util\Scope.cs" Link="Util\Scope.cs" />
         <Compile Include="..\..\ClearScript\Util\SocketHelpers.cs" Link="Util\SocketHelpers.cs" />
@@ -163,7 +164,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Win32.Registry" Version="4.7.0" />
+        <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     </ItemGroup>
 
 </Project>

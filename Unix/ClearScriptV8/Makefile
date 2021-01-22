@@ -1,39 +1,85 @@
 ifdef DEBUG
-	CONFIG = Debug
-	CXXCONFIGFLAGS = -O0 -g
+    CONFIG = Debug
+    CXXCONFIGFLAGS = -O0 -g
 else
-	CONFIG = Release
-	CXXCONFIGFLAGS = -O3
+    CONFIG = Release
+    CXXCONFIGFLAGS = -O3
 endif
 
 KERNEL = $(shell uname -s)
 ifeq ($(KERNEL), Darwin)
-	KERNELSUFFIX = osx
-	EXTENSION = .dylib
+    OS = osx
+    EXTENSION = dylib
+    TARGETOS = darwin
+    TARGETARCH_X86 = i386
+    TARGETARCH_X64 = x86_64
+    TARGETARCH_ARM = arm
+    TARGETARCH_ARM64 = arm64
 else ifeq ($(KERNEL), Linux)
-	KERNELSUFFIX = linux
-	EXTENSION = .so
+    OS = linux
+    EXTENSION = so
+    TARGETOS = linux
+    TARGETARCH_X86 = i386
+    TARGETARCH_X64 = x86_64
+    TARGETARCH_ARM = aarch32
+    TARGETARCH_ARM64 = aarch64
 else
     $(error unsupported operating system '$(KERNEL)')
 endif
 
 ARCH = $(shell uname -m)
-ifeq ($(ARCH), x86_64)
-	ARCHSUFFIX = x64
-else ifeq ($(ARCH), i386)
-	ARCHSUFFIX = x86
+ifeq ($(ARCH), i386)
+    HOSTCPU = x86
+else ifeq ($(ARCH), x86_64)
+    HOSTCPU = x64
 else ifeq ($(ARCH), arm)
-	ARCHSUFFIX = arm
+    HOSTCPU = arm
 else ifeq ($(ARCH), arm32)
-	ARCHSUFFIX = arm
+    HOSTCPU = arm
 else ifeq ($(ARCH), aarch32)
-	ARCHSUFFIX = arm
+    HOSTCPU = arm
 else ifeq ($(ARCH), arm64)
-	ARCHSUFFIX = arm64
+    HOSTCPU = arm64
 else ifeq ($(ARCH), aarch64)
-	ARCHSUFFIX = arm64
+    HOSTCPU = arm64
 else
     $(error unsupported machine architecture '$(ARCH)')
+endif
+    
+ifndef CPU
+    CPU = $(HOSTCPU)
+endif
+
+ifeq ($(CPU), x86)
+    TARGETARCH = $(TARGETARCH_X86)
+else ifeq ($(CPU), x64)
+    TARGETARCH = $(TARGETARCH_X64)
+else ifeq ($(CPU), arm)
+    TARGETARCH = $(TARGETARCH_ARM)
+else ifeq ($(CPU), arm64)
+    TARGETARCH = $(TARGETARCH_ARM64)
+else
+    $(error unsupported target CPU '$(CPU)')
+endif
+
+STRIP = true
+ifeq ($(TARGETOS), linux)
+    TARGET = $(TARGETARCH)-$(TARGETOS)-gnu
+    ifndef DEBUG
+        CXXLINKFLAGS := -s
+    endif
+    CXXLINKFLAGS := $(CXXLINKFLAGS) -static-libstdc++ -static-libgcc
+    ifneq ($(HOSTCPU), $(CPU))
+        CXXCROSSFLAGS = -I/usr/$(TARGET)/include
+        CXXLINKFLAGS := -fuse-ld=/usr/$(TARGET)/bin/ld $(CXXLINKFLAGS)
+    endif
+else ifeq ($(TARGETOS), darwin)
+    TARGET = $(TARGETARCH)-$(TARGETOS)
+    ifndef DEBUG
+        STRIP = strip -r -u
+    endif
+else
+    $(error unsupported target operating system '$(TARGETOS)')
 endif
 
 MAKEFILE = $(word $(words $(MAKEFILE_LIST)), $(MAKEFILE_LIST))
@@ -46,35 +92,35 @@ V8ROOTDIR = $(ROOTDIR)/V8
 V8BUILDDIR = $(V8ROOTDIR)/build
 V8DIR = $(V8BUILDDIR)/v8
 V8INCDIR = $(V8DIR)/include
-V8OUTDIR = $(V8DIR)/out/Unix/$(CONFIG)
+V8OUTDIR = $(V8DIR)/out/$(CPU)/$(CONFIG)
 V8LIBDIR = $(V8OUTDIR)/obj
 
 OUTDIR = $(ROOTDIR)/bin/$(CONFIG)/Unix
-OBJDIR = $(OUTDIR)/obj
-CLEARSCRIPTV8 = $(OUTDIR)/ClearScriptV8.$(KERNELSUFFIX)-$(ARCHSUFFIX)$(EXTENSION)
+OBJDIR = $(OUTDIR)/obj/$(CPU)
+CLEARSCRIPTV8 = $(OUTDIR)/ClearScriptV8.$(OS)-$(CPU).$(EXTENSION)
 
 CXX = clang++
-CXXFLAGS = -std=c++17 -fvisibility=hidden -fPIC -fno-rtti $(CXXCONFIGFLAGS) -I$(V8INCDIR)
+CXXFLAGS = --target=$(TARGET) -std=c++17 -fvisibility=hidden -fPIC -fno-rtti $(CXXCONFIGFLAGS) -I$(V8INCDIR) $(CXXCROSSFLAGS)
 
 HEADERS = $(wildcard $(SRCDIR)/*.h)
 OBJECTS = \
-	$(OBJDIR)/HighResolutionClock.Unix.o \
-	$(OBJDIR)/HostObjectHolderImpl.o \
-	$(OBJDIR)/HostObjectUtil.o \
-	$(OBJDIR)/Mutex.o \
-	$(OBJDIR)/RefCount.o \
-	$(OBJDIR)/StdString.o \
-	$(OBJDIR)/V8Context.o \
-	$(OBJDIR)/V8ContextImpl.o \
-	$(OBJDIR)/V8Isolate.o \
-	$(OBJDIR)/V8IsolateImpl.o \
-	$(OBJDIR)/V8ObjectHelpers.o \
-	$(OBJDIR)/V8ObjectHolderImpl.o \
-	$(OBJDIR)/V8ScriptHolderImpl.o \
-	$(OBJDIR)/V8SplitProxyManaged.o \
-	$(OBJDIR)/V8SplitProxyNative.o
+    $(OBJDIR)/HighResolutionClock.Unix.o \
+    $(OBJDIR)/HostObjectHolderImpl.o \
+    $(OBJDIR)/HostObjectUtil.o \
+    $(OBJDIR)/Mutex.o \
+    $(OBJDIR)/RefCount.o \
+    $(OBJDIR)/StdString.o \
+    $(OBJDIR)/V8Context.o \
+    $(OBJDIR)/V8ContextImpl.o \
+    $(OBJDIR)/V8Isolate.o \
+    $(OBJDIR)/V8IsolateImpl.o \
+    $(OBJDIR)/V8ObjectHelpers.o \
+    $(OBJDIR)/V8ObjectHolderImpl.o \
+    $(OBJDIR)/V8ScriptHolderImpl.o \
+    $(OBJDIR)/V8SplitProxyManaged.o \
+    $(OBJDIR)/V8SplitProxyNative.o
 
-.PHONY: all objdir buildv8 clean cleanv8 zapv8
+.PHONY: all objdir clean buildv8 cleanv8 zapv8 buildall cleanall
 
 all: objdir $(CLEARSCRIPTV8)
 
@@ -82,22 +128,34 @@ objdir:
 	@mkdir -p $(OBJDIR)
 
 $(CLEARSCRIPTV8): $(V8LIBDIR)/libv8_monolith.a $(OBJECTS)
-	$(CXX) $(CXXFLAGS) --shared -L $(V8LIBDIR) $(OBJECTS) -o $@ -lv8_monolith -lpthread
+	$(CXX) $(CXXFLAGS) $(CXXLINKFLAGS) --shared -L$(V8LIBDIR) $(OBJECTS) -o $@ -pthread -lv8_monolith && $(STRIP) $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(V8LIBDIR)/libv8_monolith.a:
-	cd $(UNIXDIR); ./V8Update.sh -n -y $(CONFIG)
-
-buildv8:
-	cd $(UNIXDIR); ./V8Update.sh -n -y $(CONFIG)
+	cd $(UNIXDIR); ./V8Update.sh -n -y $(CPU) $(CONFIG)
 
 clean:
 	rm -rf $(CLEARSCRIPTV8) $(OBJDIR)
+
+buildv8:
+	cd $(UNIXDIR); ./V8Update.sh -n -y $(CPU) $(CONFIG)
 
 cleanv8:
 	rm -rf $(V8OUTDIR)
 
 zapv8:
 	rm -rf $(V8BUILDDIR)
+
+buildall:
+	make
+	make CPU=arm64
+	make DEBUG=1
+	make CPU=arm64 DEBUG=1
+
+cleanall:
+	make clean
+	make clean CPU=arm64
+	make clean DEBUG=1
+	make clean CPU=arm64 DEBUG=1

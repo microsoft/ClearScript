@@ -30,7 +30,7 @@ namespace Microsoft.ClearScript.Test
     {
         #region setup / teardown
 
-        private JScriptEngine engine;
+        private Windows.Core.WindowsScriptEngine engine;
 
         [TestInitialize]
         public void TestInitialize()
@@ -2657,6 +2657,14 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("value instanceof Promise")));
 
             Assert.IsFalse(engine.Script.EngineInternal.isPromise(engine.Script.value));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_Core()
+        {
+            engine.Dispose();
+            engine = new Windows.Core.JScriptEngine(WindowsScriptEngineFlags.EnableDebugging, Windows.Core.NullSyncInvoker.Instance);
+            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
         }
 
         // ReSharper restore InconsistentNaming

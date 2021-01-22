@@ -11,6 +11,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         IntPtr V8SplitProxyManaged_SetMethodTable(IntPtr pMethodTable);
 
+        void V8Environment_InitializeICU(string dataPath);
+
         #endregion
 
         #region StdString methods
@@ -145,6 +147,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         void V8Isolate_CollectCpuProfileSample(V8Isolate.Handle hIsolate);
         uint V8Isolate_GetCpuProfileSampleInterval(V8Isolate.Handle hIsolate);
         void V8Isolate_SetCpuProfileSampleInterval(V8Isolate.Handle hIsolate, uint value);
+        void V8Isolate_WriteHeapSnapshot(V8Isolate.Handle hIsolate, IntPtr pStream);
 
         #endregion
 
@@ -176,6 +179,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         void V8Context_CollectCpuProfileSample(V8Context.Handle hContext);
         uint V8Context_GetCpuProfileSampleInterval(V8Context.Handle hContext);
         void V8Context_SetCpuProfileSampleInterval(V8Context.Handle hContext, uint value);
+        void V8Context_WriteIsolateHeapSnapshot(V8Context.Handle hContext, IntPtr pStream);
 
         #endregion
 

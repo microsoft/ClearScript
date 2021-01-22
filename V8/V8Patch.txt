@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 94b598bc9a..3c00cacb98 100644
+index 1dc6c7d5ac..6bb8999ed7 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -663,7 +663,7 @@ config("toolchain") {
+@@ -680,7 +680,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
@@ -12,10 +12,10 @@ index 94b598bc9a..3c00cacb98 100644
  
    if (v8_current_cpu == "arm") {
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index 184a31c8a3..b59f3ec349 100644
+index ca340c69c8..4b4514b529 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -12124,6 +12124,11 @@ TNode<String> CodeStubAssembler::Typeof(SloppyTNode<Object> value) {
+@@ -12266,6 +12266,11 @@ TNode<String> CodeStubAssembler::Typeof(SloppyTNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -40,6 +40,97 @@ index 50e57bc5ad..fa687a760a 100644
      const InstructionOperand op = pair.first;
      const Assessment* assessment = pair.second;
      // Use operator<< so we can write the assessment on the same
+diff --git a/src/diagnostics/unwinding-info-win64.cc b/src/diagnostics/unwinding-info-win64.cc
+index f3b9a753af..14a7d3b9ce 100644
+--- a/src/diagnostics/unwinding-info-win64.cc
++++ b/src/diagnostics/unwinding-info-win64.cc
+@@ -457,6 +457,14 @@ void InitUnwindingRecord(Record* record, size_t code_size_in_bytes) {
+ namespace {
+ 
+ V8_DECLARE_ONCE(load_ntdll_unwinding_functions_once);
++
++#if defined(V8_OS_WIN_X64)
++static decltype(
++    &::RtlAddFunctionTable) add_function_table_func = nullptr;
++static decltype(
++    &::RtlDeleteFunctionTable) delete_function_table_func = nullptr;
++#endif  // V8_OS_WIN_X64
++
+ static decltype(
+     &::RtlAddGrowableFunctionTable) add_growable_function_table_func = nullptr;
+ static decltype(
+@@ -465,6 +473,19 @@ static decltype(
+ 
+ void LoadNtdllUnwindingFunctions() {
+   base::CallOnce(&load_ntdll_unwinding_functions_once, []() {
++
++#if defined(V8_OS_WIN_X64)
++    HMODULE kernel32_module =
++        LoadLibraryEx(L"kernel32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
++    DCHECK_NOT_NULL(kernel32_module);
++    add_function_table_func =
++        reinterpret_cast<decltype(&::RtlAddFunctionTable)>(
++            ::GetProcAddress(kernel32_module, "RtlAddFunctionTable"));
++    delete_function_table_func =
++        reinterpret_cast<decltype(&::RtlDeleteFunctionTable)>(
++            ::GetProcAddress(kernel32_module, "RtlDeleteFunctionTable"));
++#endif  // V8_OS_WIN_X64
++
+     // Load functions from the ntdll.dll module.
+     HMODULE ntdll_module =
+         LoadLibraryEx(L"ntdll.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+@@ -483,6 +504,21 @@ void LoadNtdllUnwindingFunctions() {
+   });
+ }
+ 
++#if defined(V8_OS_WIN_X64)
++BOOLEAN AddFunctionTable(PRUNTIME_FUNCTION FunctionTable,
++                         DWORD EntryCount,
++                         DWORD64 BaseAddress) {
++  LoadNtdllUnwindingFunctions();
++  DCHECK_NOT_NULL(add_function_table_func);
++  return add_function_table_func(FunctionTable, EntryCount, BaseAddress);
++}
++BOOLEAN DeleteFunctionTable(PRUNTIME_FUNCTION FunctionTable) {
++  LoadNtdllUnwindingFunctions();
++  DCHECK_NOT_NULL(delete_function_table_func);
++  return delete_function_table_func(FunctionTable);
++}
++#endif  // V8_OS_WIN_X64
++
+ bool AddGrowableFunctionTable(PVOID* DynamicTable,
+                               PRUNTIME_FUNCTION FunctionTable, DWORD EntryCount,
+                               DWORD MaximumEntryCount, ULONG_PTR RangeBase,
+@@ -534,7 +570,7 @@ void RegisterNonABICompliantCodeRange(void* start, size_t size_in_bytes) {
+       ExceptionHandlerRecord* record = new (start) ExceptionHandlerRecord();
+       InitUnwindingRecord(record, size_in_bytes);
+ 
+-      CHECK(::RtlAddFunctionTable(record->runtime_function,
++      CHECK(AddFunctionTable(record->runtime_function,
+                                   kDefaultRuntimeFunctionCount,
+                                   reinterpret_cast<DWORD64>(start)));
+ 
+@@ -572,7 +608,7 @@ void UnregisterNonABICompliantCodeRange(void* start) {
+     if (unhandled_exception_callback_g) {
+       ExceptionHandlerRecord* record =
+           reinterpret_cast<ExceptionHandlerRecord*>(start);
+-      CHECK(::RtlDeleteFunctionTable(record->runtime_function));
++      CHECK(DeleteFunctionTable(record->runtime_function));
+     }
+ #endif  // V8_OS_WIN_X64
+   } else {
+diff --git a/src/execution/isolate.h b/src/execution/isolate.h
+index 18fb4b6417..b385f08ac4 100644
+--- a/src/execution/isolate.h
++++ b/src/execution/isolate.h
+@@ -571,7 +571,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
+   // Returns the isolate inside which the current thread is running.
+   V8_INLINE static Isolate* Current() {
+     Isolate* isolate = TryGetCurrent();
+-    DCHECK_NOT_NULL(isolate);
+     return isolate;
+   }
+ 
 diff --git a/src/execution/stack-guard.cc b/src/execution/stack-guard.cc
 index a98fb07c93..6774605093 100644
 --- a/src/execution/stack-guard.cc
@@ -69,10 +160,10 @@ index 2b2194ca73..6f272842a7 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index bb33b5d097..0b6935f9ef 100644
+index 5c67fa388f..1f51762baa 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
-@@ -831,6 +831,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -829,6 +829,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();
