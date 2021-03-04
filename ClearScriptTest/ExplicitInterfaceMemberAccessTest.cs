@@ -26,7 +26,7 @@ namespace Microsoft.ClearScript.Test
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
             engine.AddHostObject("host", new ExtendedHostFunctions());
             engine.AddHostObject("mscorlib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));
-            engine.AddHostObject("ClearScriptTest", HostItemFlags.GlobalMembers, new HostTypeCollection("ClearScriptTest").GetNamespaceNode("Microsoft.ClearScript.Test"));
+            engine.AddHostObject("ClearScriptTest", HostItemFlags.GlobalMembers, new HostTypeCollection(typeof(ClearScriptTest).Assembly).GetNamespaceNode("Microsoft.ClearScript.Test"));
             engine.AddHostObject("testObject", testInterface = testObject = new TestObject());
             engine.Execute("var testInterface = host.cast(IExplicitTestInterface, testObject)");
         }

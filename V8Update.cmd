@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set v8testedrev=8.8.278.14
+set v8testedrev=8.9.255.20
 
 ::-----------------------------------------------------------------------------
 :: process arguments
@@ -143,6 +143,10 @@ if errorlevel 1 goto Error
 :EnsureBuildDirDone
 
 cd build
+
+if not exist ..\DepotTools.zip goto DownloadDepotTools
+copy ..\DepotTools.zip .\ >nul
+goto ExpandDepotTools
 
 :DownloadDepotTools
 echo Downloading Depot Tools ...

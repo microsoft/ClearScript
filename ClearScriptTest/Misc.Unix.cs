@@ -9,6 +9,7 @@ using System.Runtime.Loader;
 using System.Text;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
+using Microsoft.ClearScript.Windows.Core;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -26,6 +27,7 @@ namespace Microsoft.ClearScript.Test
                 MetadataReference.CreateFromFile(typeof(Assert).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ScriptEngine).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(V8ScriptEngine).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(WindowsScriptEngine).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ClearScriptTest).Assembly.Location),
                 MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location),
                 MetadataReference.CreateFromFile(Assembly.Load("Microsoft.VisualBasic.Core").Location)
@@ -84,6 +86,7 @@ namespace Microsoft.ClearScript.Test
                 MetadataReference.CreateFromFile(typeof(Assert).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ScriptEngine).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(V8ScriptEngine).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(WindowsScriptEngine).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ClearScriptTest).Assembly.Location),
                 MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location),
                 MetadataReference.CreateFromFile(Assembly.Load("Microsoft.VisualBasic.Core").Location)
@@ -131,6 +134,45 @@ namespace Microsoft.ClearScript.Test
                 stream.Seek(0, SeekOrigin.Begin);
                 return AssemblyLoadContext.Default.LoadFromStream(stream).GetType("TestModule").InvokeMember("TestFunction", BindingFlags.InvokeMethod, null, null, ArrayHelpers.GetEmptyArray<object>());
             }
+        }
+    }
+}
+
+namespace Microsoft.ClearScript.Windows
+{
+    public class JScriptEngine : Core.JScriptEngine
+    {
+        public JScriptEngine()
+            : this(WindowsScriptEngineFlags.None)
+        {
+        }
+
+        public JScriptEngine(WindowsScriptEngineFlags flags)
+            : this(null, flags)
+        {
+        }
+
+        public JScriptEngine(string name, WindowsScriptEngineFlags flags)
+            : base(name, flags, NullSyncInvoker.Instance)
+        {
+        }
+    }
+
+    public class VBScriptEngine : Core.VBScriptEngine
+    {
+        public VBScriptEngine()
+            : this(WindowsScriptEngineFlags.None)
+        {
+        }
+
+        public VBScriptEngine(WindowsScriptEngineFlags flags)
+            : this(null, flags)
+        {
+        }
+
+        public VBScriptEngine(string name, WindowsScriptEngineFlags flags)
+            : base(name, flags, NullSyncInvoker.Instance)
+        {
         }
     }
 }

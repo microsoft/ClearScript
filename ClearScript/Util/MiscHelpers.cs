@@ -456,6 +456,13 @@ namespace Microsoft.ClearScript.Util
                 {
                     Try(callback.Invoke);
                 }
+
+                // The above code appears to be problematic on some .NET runtimes, intermittently
+                // triggering premature finalization of the callback. That can lead to a crash if
+                // the callback's finalizer ends up racing against its Dispose method. The call
+                // below should prevent this condition in all cases.
+
+                GC.KeepAlive(callback);
             });
         }
 
@@ -523,6 +530,16 @@ namespace Microsoft.ClearScript.Util
         public static bool PlatformIsWindows()
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        }
+
+        public static bool PlatformIsLinux()
+        {
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        }
+
+        public static bool PlatformIsOSX()
+        {
+            return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
         }
 
         public static bool ProcessorArchitectureIsIntel()

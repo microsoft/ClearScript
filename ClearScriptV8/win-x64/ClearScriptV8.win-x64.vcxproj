@@ -72,7 +72,8 @@
       <PrecompiledHeaderOutputFile>
       </PrecompiledHeaderOutputFile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalUsingDirectories>$(OutDir)</AdditionalUsingDirectories>
+      <AdditionalUsingDirectories>
+      </AdditionalUsingDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
       <SDLCheck>true</SDLCheck>
@@ -101,7 +102,8 @@
       <PrecompiledHeaderOutputFile>
       </PrecompiledHeaderOutputFile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalUsingDirectories>$(OutDir)</AdditionalUsingDirectories>
+      <AdditionalUsingDirectories>
+      </AdditionalUsingDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
       <SDLCheck>true</SDLCheck>

@@ -479,7 +479,7 @@ public:
 
     static void ImportMetaInitializeCallback(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);
     static v8::MaybeLocal<v8::Promise> ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier);
-    static v8::MaybeLocal<v8::Module> ModuleResolveCallback(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer);
+    static v8::MaybeLocal<v8::Module> ModuleResolveCallback(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> importAssertions, v8::Local<v8::Module> hReferrer);
 
     void InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);
     v8::MaybeLocal<v8::Promise> ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier);
@@ -544,6 +544,8 @@ private:
     void FlushContextAsync(ContextEntry& contextEntry);
     void FlushContext(V8ContextImpl& contextImpl);
 
+    static size_t HeapExpansionCallback(void* pvData, size_t currentLimit, size_t initialLimit);
+
     StdString m_Name;
     UniqueDisposePtr<v8::Isolate> m_upIsolate;
     UniqueDisposePtr<v8::CpuProfiler> m_upCpuProfiler;
@@ -570,6 +572,7 @@ private:
     std::atomic<size_t> m_MaxHeapSize;
     std::atomic<double> m_HeapSizeSampleInterval;
     size_t m_HeapWatchLevel;
+    double m_HeapExpansionMultiplier;
     SharedPtr<Timer> m_spHeapWatchTimer;
     std::atomic<size_t> m_MaxStackUsage;
     std::atomic<uint32_t> m_CpuProfileSampleInterval;

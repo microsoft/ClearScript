@@ -21,7 +21,7 @@ else ifeq ($(KERNEL), Linux)
     TARGETOS = linux
     TARGETARCH_X86 = i386
     TARGETARCH_X64 = x86_64
-    TARGETARCH_ARM = aarch32
+    TARGETARCH_ARM = arm
     TARGETARCH_ARM64 = aarch64
 else
     $(error unsupported operating system '$(KERNEL)')
@@ -56,6 +56,7 @@ else ifeq ($(CPU), x64)
     TARGETARCH = $(TARGETARCH_X64)
 else ifeq ($(CPU), arm)
     TARGETARCH = $(TARGETARCH_ARM)
+    TARGETSUFFIX = eabihf
 else ifeq ($(CPU), arm64)
     TARGETARCH = $(TARGETARCH_ARM64)
 else
@@ -64,7 +65,7 @@ endif
 
 STRIP = true
 ifeq ($(TARGETOS), linux)
-    TARGET = $(TARGETARCH)-$(TARGETOS)-gnu
+    TARGET = $(TARGETARCH)-$(TARGETOS)-gnu$(TARGETSUFFIX)
     ifndef DEBUG
         CXXLINKFLAGS := -s
     endif
@@ -100,7 +101,7 @@ OBJDIR = $(OUTDIR)/obj/$(CPU)
 CLEARSCRIPTV8 = $(OUTDIR)/ClearScriptV8.$(OS)-$(CPU).$(EXTENSION)
 
 CXX = clang++
-CXXFLAGS = --target=$(TARGET) -std=c++17 -fvisibility=hidden -fPIC -fno-rtti $(CXXCONFIGFLAGS) -I$(V8INCDIR) $(CXXCROSSFLAGS)
+CXXFLAGS = --target=$(TARGET) -std=c++17 -fvisibility=default -fPIC -fno-rtti -Wno-ignored-attributes $(CXXCONFIGFLAGS) -I$(V8INCDIR) $(CXXCROSSFLAGS)
 
 HEADERS = $(wildcard $(SRCDIR)/*.h)
 OBJECTS = \

@@ -30,14 +30,14 @@
 //-----------------------------------------------------------------------------
 
 #if defined(_MSC_VER)
-    #define MANAGED_METHOD(TYPE) TYPE __cdecl
-    #define NATIVE_ENTRY_POINT(TYPE) extern "C" __declspec(dllexport) TYPE __cdecl
+    #define MANAGED_METHOD(TYPE) TYPE __stdcall
+    #define NATIVE_ENTRY_POINT(TYPE) extern "C" __declspec(dllexport) TYPE __stdcall
     #define DISABLE_WARNING(ID) __pragma(warning(disable:ID))
     #define DEFAULT_WARNING(ID) __pragma(warning(default:ID))
     #define NORETURN __declspec(noreturn)
 #elif defined(__clang__)
-    #define MANAGED_METHOD(TYPE) TYPE __cdecl
-    #define NATIVE_ENTRY_POINT(TYPE) extern "C" __attribute__((visibility("default"))) TYPE __cdecl
+    #define MANAGED_METHOD(TYPE) TYPE __stdcall
+    #define NATIVE_ENTRY_POINT(TYPE) extern "C" __attribute__((visibility("default"))) TYPE __stdcall
     #define DISABLE_WARNING(ID)
     #define DEFAULT_WARNING(ID)
     #define NORETURN __attribute__((noreturn))

@@ -10,12 +10,14 @@
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <DefineConstants>DEBUG;TRACE</DefineConstants>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <NoWarn>CA1416</NoWarn>
         <OutputPath>..\..\bin\Debug\Unix</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
         <DefineConstants>TRACE</DefineConstants>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <NoWarn>CA1416</NoWarn>
         <OutputPath>..\..\bin\Release\Unix</OutputPath>
     </PropertyGroup>
 
@@ -70,6 +72,21 @@
         <Compile Include="..\..\ClearScriptTest\V8ModuleTest.cs" Link="V8ModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.cs" Link="V8ScriptEngineTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.Unix.cs" Link="V8ScriptEngineTest.Unix.cs" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'">
+        <Compile Include="..\..\ClearScriptTest\JScriptCoreModuleTest.cs" Link="JScriptCoreModuleTest.cs" />
+        <Compile Include="..\..\ClearScriptTest\JScriptCoreEngineTest.cs" Link="JScriptCoreEngineTest.cs" />
+        <Compile Include="..\..\ClearScriptTest\VBScriptCoreEngineTest.cs" Link="VBScriptCoreEngineTest.cs" />
+        <COMReference Include="Scripting.dll">
+            <Guid>420b2830-e718-11cf-893d-00a0c9054228</Guid>
+            <VersionMajor>1</VersionMajor>
+            <VersionMinor>0</VersionMinor>
+            <WrapperTool>tlbimp</WrapperTool>
+            <Lcid>0</Lcid>
+            <Isolated>false</Isolated>
+            <EmbedInteropTypes>false</EmbedInteropTypes>
+        </COMReference>
     </ItemGroup>
 
     <ItemGroup>
@@ -203,6 +220,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\NetCore\ClearScript.Core\ClearScript.Core.csproj" />
+        <ProjectReference Include="..\..\NetCore\ClearScript.Windows.Core\ClearScript.Windows.Core.csproj" />
         <ProjectReference Include="..\..\NetCore\ClearScript.V8\ClearScript.V8.csproj" />
     </ItemGroup>
 

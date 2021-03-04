@@ -577,6 +577,12 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue((bool)engine.Evaluate("foo() === undefined"));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_HeapExpansionMultiplier()
+        {
+	        TestUtil.InvokeConsoleTest("V8ScriptEngine_HeapExpansionMultiplier");
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

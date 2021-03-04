@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System;
-using System.ComponentModel;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8
@@ -11,7 +10,7 @@ namespace Microsoft.ClearScript.V8
     {
         private static IntPtr LoadLibrary(string path)
         {
-            return NativeMethods.LoadLibraryW(path);
+            return NativeMethods.LoadLibrary(path);
         }
 
         private static void FreeLibrary(IntPtr hLibrary)
@@ -21,7 +20,7 @@ namespace Microsoft.ClearScript.V8
 
         private static string GetLoadLibraryErrorMessage()
         {
-            return new Win32Exception().Message;
+            return NativeMethods.GetLoadLibraryErrorMessage();
         }
     }
 }

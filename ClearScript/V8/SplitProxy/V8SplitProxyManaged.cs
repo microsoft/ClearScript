@@ -35,17 +35,17 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region method delegates
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawScheduleForwardingException(
             [In] V8Value.Ptr pException
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawScheduleInvalidOperationException(
             [In] StdString.Ptr pMessage
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawScheduleScriptEngineException(
             [In] StdString.Ptr pEngineName,
             [In] StdString.Ptr pMessage,
@@ -56,7 +56,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] V8Value.Ptr pInnerException
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawScheduleScriptInterruptedException(
             [In] StdString.Ptr pEngineName,
             [In] StdString.Ptr pMessage,
@@ -67,53 +67,53 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] V8Value.Ptr pInnerException
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawInvokeAction(
             [In] IntPtr pAction
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawProcessArrayBufferOrViewData(
             [In] IntPtr pData,
             [In] IntPtr pAction
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawProcessCpuProfile(
             [In] V8CpuProfile.Ptr pProfile,
             [In] IntPtr pAction
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate IntPtr RawCreateV8ObjectCache();
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawCacheV8Object(
             [In] IntPtr pCache,
             [In] IntPtr pObject,
             [In] IntPtr pV8Object
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate IntPtr RawGetCachedV8Object(
             [In] IntPtr pCache,
             [In] IntPtr pObject
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetAllCachedV8Objects(
             [In] IntPtr pCache,
             [In] StdPtrArray.Ptr pV8ObjectPtrs
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.I1)]
         private delegate bool RawRemoveV8ObjectCacheEntry(
             [In] IntPtr pCache,
             [In] IntPtr pObject
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate IntPtr RawCreateDebugAgent(
             [In] StdString.Ptr pName,
             [In] StdString.Ptr pVersion,
@@ -122,46 +122,46 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] V8DebugCallback.Handle hCallback
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawSendDebugMessage(
             [In] IntPtr pAgent,
             [In] StdString.Ptr pContent
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawDestroyDebugAgent(
             [In] IntPtr pAgent
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate uint RawGetMaxScriptCacheSize();
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate uint RawGetMaxModuleCacheSize();
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate IntPtr RawAddRefHostObject(
             [In] IntPtr pObject
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawReleaseHostObject(
             [In] IntPtr pObject
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate Invocability RawGetHostObjectInvocability(
             [In] IntPtr pObject
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetHostObjectNamedProperty(
             [In] IntPtr pObject,
             [In] StdString.Ptr pName,
             [In] V8Value.Ptr pValue
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetHostObjectNamedPropertyWithCacheability(
             [In] IntPtr pObject,
             [In] StdString.Ptr pName,
@@ -169,54 +169,54 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [Out] [MarshalAs(UnmanagedType.I1)] out bool isCacheable
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawSetHostObjectNamedProperty(
             [In] IntPtr pObject,
             [In] StdString.Ptr pName,
             [In] V8Value.Ptr pValue
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.I1)]
         private delegate bool RawDeleteHostObjectNamedProperty(
             [In] IntPtr pObject,
             [In] StdString.Ptr pName
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetHostObjectPropertyNames(
             [In] IntPtr pObject,
             [In] StdStringArray.Ptr pNames
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetHostObjectIndexedProperty(
             [In] IntPtr pObject,
             [In] int index,
             [In] V8Value.Ptr pValue
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawSetHostObjectIndexedProperty(
             [In] IntPtr pObject,
             [In] int index,
             [In] V8Value.Ptr pValue
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.I1)]
         private delegate bool RawDeleteHostObjectIndexedProperty(
             [In] IntPtr pObject,
             [In] int index
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetHostObjectPropertyIndices(
             [In] IntPtr pObject,
             [In] StdInt32Array.Ptr pIndices
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawInvokeHostObject(
             [In] IntPtr pObject,
             [In] [MarshalAs(UnmanagedType.I1)] bool asConstructor,
@@ -224,7 +224,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] V8Value.Ptr pResult
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawInvokeHostObjectMethod(
             [In] IntPtr pObject,
             [In] StdString.Ptr pName,
@@ -232,32 +232,32 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] V8Value.Ptr pResult
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetEnumeratorForHostObject(
             [In] IntPtr pObject,
             [In] V8Value.Ptr pResult
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.I1)]
         private delegate bool RawAdvanceEnumerator(
             [In] IntPtr pEnumerator,
             [In] V8Value.Ptr pValue
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawQueueNativeCallback(
             [In] NativeCallback.Handle hCallback
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate IntPtr RawCreateNativeCallbackTimer(
             [In] int dueTime,
             [In] int period,
             [In] NativeCallback.Handle hCallback
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.I1)]
         private delegate bool RawChangeNativeCallbackTimer(
             [In] IntPtr pTimer,
@@ -265,12 +265,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] int period
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawDestroyNativeCallbackTimer(
             [In] IntPtr pTimer
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawLoadModule(
             [In] IntPtr pSourceDocumentInfo,
             [In] StdString.Ptr pSpecifier,
@@ -282,21 +282,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [Out] out IntPtr pDocumentInfo
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawCreateModuleContext(
             [In] IntPtr pDocumentInfo,
             [In] StdStringArray.Ptr pNames,
             [In] StdV8ValueArray.Ptr pValues
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.I1)]
         private delegate bool RawTryParseInt32(
             [In] StdString.Ptr pText,
             [Out] out int result
         );
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawWriteBytesToStream(
             [In] IntPtr pStream,
             [In] IntPtr pBytes,

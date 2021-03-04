@@ -2964,14 +2964,14 @@ v8::ScriptOrigin V8ContextImpl::CreateScriptOrigin(const V8DocumentInfo& documen
 
         return v8::ScriptOrigin(
             FROM_MAYBE(CreateString(documentInfo.GetResourceName())),
-            v8::Local<v8::Integer>(),
-            v8::Local<v8::Integer>(),
-            v8::Local<v8::Boolean>(),
-            v8::Local<v8::Integer>(),
+            0,
+            0,
+            false,
+            -1,
             (documentInfo.GetSourceMapUrl().GetLength() > 0) ? FROM_MAYBE(CreateString(documentInfo.GetSourceMapUrl())) : v8::Local<v8::String>(),
-            v8::Local<v8::Boolean>(),
-            v8::Local<v8::Boolean>(),
-            documentInfo.IsModule() ? GetTrue() : GetFalse()
+            false,
+            false,
+            documentInfo.IsModule()
         );
 
     FROM_MAYBE_CATCH

@@ -24,6 +24,7 @@ public:
 
     struct Options final
     {
+        double HeapExpansionMultiplier = 0;
         bool EnableDebugging = false;
         bool EnableRemoteDebugging = false;
         bool EnableDynamicModuleImports = false;

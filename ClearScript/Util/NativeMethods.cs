@@ -2,17 +2,28 @@
 // Licensed under the MIT license.
 
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace Microsoft.ClearScript.Util
 {
     internal static class NativeMethods
     {
-        public static IntPtr LoadLibraryW(string path)
+        public static IntPtr LoadLibrary(string path)
         {
             if (MiscHelpers.PlatformIsWindows())
             {
                 return NativeWindowsMethods.LoadLibraryW(path);
+            }
+
+            if (MiscHelpers.PlatformIsLinux())
+            {
+                return NativeLinuxMethods.LoadLibrary(path);
+            }
+
+            if (MiscHelpers.PlatformIsOSX())
+            {
+                return NativeOSXMethods.LoadLibrary(path);
             }
 
             throw new PlatformNotSupportedException();
@@ -23,6 +34,36 @@ namespace Microsoft.ClearScript.Util
             if (MiscHelpers.PlatformIsWindows())
             {
                 return NativeWindowsMethods.FreeLibrary(hLibrary);
+            }
+
+            if (MiscHelpers.PlatformIsLinux())
+            {
+                return NativeLinuxMethods.FreeLibrary(hLibrary) == 0;
+            }
+
+            if (MiscHelpers.PlatformIsOSX())
+            {
+                return NativeOSXMethods.FreeLibrary(hLibrary) == 0;
+            }
+
+            throw new PlatformNotSupportedException();
+        }
+
+        public static string GetLoadLibraryErrorMessage()
+        {
+            if (MiscHelpers.PlatformIsWindows())
+            {
+                return new Win32Exception().Message;
+            }
+
+            if (MiscHelpers.PlatformIsLinux())
+            {
+                return Marshal.PtrToStringAnsi(NativeLinuxMethods.GetLoadLibraryErrorMessage());
+            }
+
+            if (MiscHelpers.PlatformIsOSX())
+            {
+                return Marshal.PtrToStringAnsi(NativeOSXMethods.GetLoadLibraryErrorMessage());
             }
 
             throw new PlatformNotSupportedException();
@@ -130,13 +171,13 @@ namespace Microsoft.ClearScript.Util
             throw new PlatformNotSupportedException();
         }
 
-        #region Nested type: WindowsNativeMethods
+        #region Nested type: NativeWindowsMethods
 
         private static class NativeWindowsMethods
         {
             // ReSharper disable MemberHidesStaticFromOuterClass
 
-            [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
+            [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
             public static extern IntPtr LoadLibraryW(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string path
             );
@@ -214,7 +255,91 @@ namespace Microsoft.ClearScript.Util
 
             // ReSharper restore MemberHidesStaticFromOuterClass
         }
+
+        #endregion
+
+        #region Nested type: NativeLinuxMethods
+
+        private static class NativeLinuxMethods
+        {
+            // ReSharper disable MemberHidesStaticFromOuterClass
+
+            [Flags]
+            public enum LoadLibraryFlags
+            {
+                // ReSharper disable UnusedMember.Local
+
+                None = 0,
+                Lazy = 0x0001,
+                Now = 0x0002,
+                BindingMask = 0x0003,
+                NoLoad = 0x0004,
+                DeepBind = 0x0008,
+                Local = None,
+                Global = 0x0100,
+                NoDelete = 0x1000
+
+                // ReSharper restore UnusedMember.Local
+            }
+
+            [DllImport("libdl.so", EntryPoint = "dlopen")]
+            public static extern IntPtr LoadLibrary(
+                [In] [MarshalAs(UnmanagedType.LPStr)] string path,
+                [In] LoadLibraryFlags flags = LoadLibraryFlags.Now | LoadLibraryFlags.Global
+            );
+
+            [DllImport("libdl.so", EntryPoint = "dlclose")]
+            public static extern int FreeLibrary(
+                [In] IntPtr hLibrary
+            );
+
+            [DllImport("libdl.so", EntryPoint = "dlerror")]
+            public static extern IntPtr GetLoadLibraryErrorMessage();
+
+            // ReSharper restore MemberHidesStaticFromOuterClass
+        }
+
+        #endregion
+
+        #region Nested type: NativeOSXMethods
+
+        private static class NativeOSXMethods
+        {
+            // ReSharper disable MemberHidesStaticFromOuterClass
+
+            [Flags]
+            public enum LoadLibraryFlags
+            {
+                // ReSharper disable UnusedMember.Local
+
+                None = 0,
+                Lazy = 0x01,
+                Now = 0x02,
+                Local = 0x04,
+                Global = 0x08,
+                NoLoad = 0x10,
+                NoDelete = 0x80
+
+                // ReSharper restore UnusedMember.Local
+            }
+
+            [DllImport("libdl.dylib", EntryPoint = "dlopen")]
+            public static extern IntPtr LoadLibrary(
+                [In] [MarshalAs(UnmanagedType.LPStr)] string path,
+                [In] LoadLibraryFlags flags = LoadLibraryFlags.Now | LoadLibraryFlags.Global
+            );
+
+            [DllImport("libdl.dylib", EntryPoint = "dlclose")]
+            public static extern int FreeLibrary(
+                [In] IntPtr hLibrary
+            );
+
+            [DllImport("libdl.dylib", EntryPoint = "dlerror")]
+            public static extern IntPtr GetLoadLibraryErrorMessage();
+
+            // ReSharper restore MemberHidesStaticFromOuterClass
+        }
+
+        #endregion
     }
-        
-    #endregion
 }

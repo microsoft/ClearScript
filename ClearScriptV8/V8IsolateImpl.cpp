@@ -214,7 +214,7 @@ void V8ForegroundTaskRunner::PostNonNestableDelayedTask(std::unique_ptr<v8::Task
 
 //-----------------------------------------------------------------------------
 
-void V8ForegroundTaskRunner::PostIdleTask(std::unique_ptr<v8::IdleTask> upTask)
+void V8ForegroundTaskRunner::PostIdleTask(std::unique_ptr<v8::IdleTask> /*upTask*/)
 {
     // unexpected call to unsupported method
     std::terminate();
@@ -397,6 +397,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     m_MaxHeapSize(0),
     m_HeapSizeSampleInterval(0.0),
     m_HeapWatchLevel(0),
+    m_HeapExpansionMultiplier(options.HeapExpansionMultiplier),
     m_MaxStackUsage(0),
     m_CpuProfileSampleInterval(1000U),
     m_StackWatchLevel(0),
@@ -424,6 +425,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
 
         v8::Isolate::Initialize(m_upIsolate.get(), params);
 
+        m_upIsolate->AddNearHeapLimitCallback(HeapExpansionCallback, this);
         m_upIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
         m_upIsolate->SetPromiseHook(PromiseHook);
 
@@ -1219,7 +1221,7 @@ v8::MaybeLocal<v8::Promise> V8IsolateImpl::ModuleImportCallback(v8::Local<v8::Co
 
 //-----------------------------------------------------------------------------
 
-v8::MaybeLocal<v8::Module> V8IsolateImpl::ModuleResolveCallback(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer)
+v8::MaybeLocal<v8::Module> V8IsolateImpl::ModuleResolveCallback(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> /*importAssertions*/, v8::Local<v8::Module> hReferrer)
 {
     return GetInstanceFromIsolate(hContext->GetIsolate())->ResolveModule(hContext, hSpecifier, hReferrer);
 }
@@ -1379,6 +1381,7 @@ V8IsolateImpl::~V8IsolateImpl()
     m_upIsolate->SetHostInitializeImportMetaObjectCallback(nullptr);
     m_upIsolate->SetPromiseHook(nullptr);
     m_upIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
+    m_upIsolate->RemoveNearHeapLimitCallback(HeapExpansionCallback, 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -1643,7 +1646,7 @@ V8IsolateImpl::ExecutionScope* V8IsolateImpl::EnterExecutionScope(ExecutionScope
             else
             {
                 // check stack address limit sanity
-                _ASSERTE((pStackMarker - pStackLimit) >= (s_StackBreathingRoom / sizeof(size_t)));
+                _ASSERTE(static_cast<size_t>(pStackMarker - pStackLimit) >= (s_StackBreathingRoom / sizeof(size_t)));
             }
 
             // set and record stack address limit
@@ -1862,4 +1865,20 @@ void V8IsolateImpl::FlushContext(V8ContextImpl& contextImpl)
     }
 
     contextImpl.Flush();
+}
+
+//-----------------------------------------------------------------------------
+
+size_t V8IsolateImpl::HeapExpansionCallback(void* pvData, size_t currentLimit, size_t /*initialLimit*/)
+{
+    if (pvData)
+    {
+        auto multiplier = static_cast<const V8IsolateImpl*>(pvData)->m_HeapExpansionMultiplier;
+        if (multiplier > 1.0)
+        {
+            return static_cast<size_t>(multiplier * currentLimit);
+        }
+    }
+
+    return currentLimit;
 }

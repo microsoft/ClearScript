@@ -29,7 +29,7 @@ namespace Microsoft.ClearScript.Test
     {
         #region setup / teardown
 
-        private Windows.Core.WindowsScriptEngine engine;
+        private VBScriptEngine engine;
 
         [TestInitialize]
         public void TestInitialize()
@@ -2829,16 +2829,6 @@ namespace Microsoft.ClearScript.Test
             ");
 
             Assert.IsFalse(engine.Script.EngineInternal.isPromise(engine.Script.value));
-        }
-
-        [TestMethod, TestCategory("VBScriptEngine")]
-        public void VBScriptEngine_Core()
-        {
-            engine.Dispose();
-            engine = new Windows.Core.VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging, Windows.Core.NullSyncInvoker.Instance);
-            engine.Execute("function pi : pi = 4 * atn(1) : end function");
-            engine.Execute("function e : e = exp(1) : end function");
-            Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("e * pi"));
         }
 
         // ReSharper restore InconsistentNaming

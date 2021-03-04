@@ -58,6 +58,9 @@
         <Compile Include="..\..\ClearScriptTest\IExplicitTestInterface.cs" Link="IExplicitTestInterface.cs" />
         <Compile Include="..\..\ClearScriptTest\InterfaceMemberAccessTest.cs" Link="InterfaceMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\ITestInterface.cs" Link="ITestInterface.cs" />
+        <Compile Include="..\..\ClearScriptTest\JScriptCoreEngineTest.cs" Link="JScriptCoreEngineTest.cs" />
+        <Compile Include="..\..\ClearScriptTest\JScriptCoreEngineTest.Windows.cs" Link="JScriptCoreEngineTest.Windows.cs" />
+        <Compile Include="..\..\ClearScriptTest\JScriptCoreModuleTest.cs" Link="JScriptCoreModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\JScriptEngineTest.cs" Link="JScriptEngineTest.cs" />
         <Compile Include="..\..\ClearScriptTest\JScriptModuleTest.cs" Link="JScriptModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\MemberAccessTest.cs" Link="MemberAccessTest.cs" />
@@ -75,6 +78,8 @@
         <Compile Include="..\..\ClearScriptTest\V8ModuleTest.cs" Link="V8ModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.cs" Link="V8ScriptEngineTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.Windows.cs" Link="V8ScriptEngineTest.Windows.cs" />
+        <Compile Include="..\..\ClearScriptTest\VBScriptCoreEngineTest.cs" Link="VBScriptCoreEngineTest.cs" />
+        <Compile Include="..\..\ClearScriptTest\VBScriptCoreEngineTest.Windows.cs" Link="VBScriptCoreEngineTest.Windows.cs" />
         <Compile Include="..\..\ClearScriptTest\VBScriptEngineTest.cs" Link="VBScriptEngineTest.cs" />
     </ItemGroup>
 

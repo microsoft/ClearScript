@@ -79,5 +79,19 @@ namespace Microsoft.ClearScript.V8
             get => MaxNewSpaceSize;
             set => MaxNewSpaceSize = value;
         }
+
+        /// <summary>
+        /// Gets or sets the heap expansion multiplier.
+        /// </summary>
+        /// <remarks>
+        /// When set to a value greater than 1, this property enables on-demand heap expansion,
+        /// which automatically increases the maximum heap size by the specified multiplier
+        /// whenever the script engine is close to exceeding the current limit. Note that a buggy
+        /// or malicious script can still cause an application to fail by exhausting its address
+        /// space or total available memory. On-demand heap expansion is recommended for use in
+        /// conjunction with heap size monitoring (see <see cref="V8Runtime.MaxHeapSize"/>,
+        /// <see cref="V8ScriptEngine.MaxRuntimeHeapSize"/>) to help contain runaway scripts.
+        /// </remarks>
+        public double HeapExpansionMultiplier { get; set; }
     }
 }

@@ -92,68 +92,70 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\..\V8\build\v8\third_party\icu\common\icudtl.dat" Link="ClearScriptV8.ICU.dat">
+        <None Condition="Exists('..\..\V8\build\v8\third_party\icu\common\icudtl.dat')" Include="..\..\V8\build\v8\third_party\icu\common\icudtl.dat" Link="ClearScriptV8.ICU.dat">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>false</Visible>
+        </None>
+        <None Condition="!Exists('..\..\V8\build\v8\third_party\icu\common\icudtl.dat') And Exists('..\..\V8\ClearScriptV8.ICU.dat')" Include="..\..\V8\ClearScriptV8.ICU.dat" Link="ClearScriptV8.ICU.dat">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>
     </ItemGroup>
 
-    <ItemGroup>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X86' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.dll" Link="ClearScriptV8.win-x86.dll">
+    <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'">
+        <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.dll" Link="ClearScriptV8.win-x86.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X86' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.pdb" Link="ClearScriptV8.win-x86.pdb">
+        <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.pdb" Link="ClearScriptV8.win-x86.pdb">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X86' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x64.dll" Link="ClearScriptV8.win-x64.dll">
+        <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x64.dll" Link="ClearScriptV8.win-x64.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And ('$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X86' Or '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64')" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x64.pdb" Link="ClearScriptV8.win-x64.pdb">
+        <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x64.pdb" Link="ClearScriptV8.win-x64.pdb">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>
-    </ItemGroup>
-    <ItemGroup>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64'" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm64.dll" Link="ClearScriptV8.win-arm64.dll">
+        <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm64.dll" Link="ClearScriptV8.win-arm64.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64'" Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm64.pdb" Link="ClearScriptV8.win-arm64.pdb">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64'" Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.linux-x64.so" Link="ClearScriptV8.linux-x64.so">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
-    </ItemGroup>
-    <ItemGroup>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm'" Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.linux-arm.so" Link="ClearScriptV8.linux-arm.so">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
-    </ItemGroup>
-    <ItemGroup>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64'" Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.linux-arm64.so" Link="ClearScriptV8.linux-arm64.so">
+        <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-arm64.pdb" Link="ClearScriptV8.win-arm64.pdb">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>
     </ItemGroup>
 
-    <ItemGroup>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64'" Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.osx-x64.dylib" Link="ClearScriptV8.osx-x64.dylib">
+    <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64'">
+        <None Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.linux-x64.so" Link="ClearScriptV8.linux-x64.so">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>
     </ItemGroup>
-    <ItemGroup>
-        <None Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64'" Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.osx-arm64.dylib" Link="ClearScriptV8.osx-arm64.dylib">
+    <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm'">
+        <None Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.linux-arm.so" Link="ClearScriptV8.linux-arm.so">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>false</Visible>
+        </None>
+    </ItemGroup>
+    <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64'">
+        <None Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.linux-arm64.so" Link="ClearScriptV8.linux-arm64.so">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>false</Visible>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='X64'">
+        <None Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.osx-x64.dylib" Link="ClearScriptV8.osx-x64.dylib">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>false</Visible>
+        </None>
+    </ItemGroup>
+    <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' And '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)'=='Arm64'">
+        <None Include="..\..\bin\$(Configuration)\Unix\ClearScriptV8.osx-arm64.dylib" Link="ClearScriptV8.osx-arm64.dylib">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>false</Visible>
         </None>

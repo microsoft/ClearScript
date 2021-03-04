@@ -15,6 +15,7 @@
     ("Windows", "Arm64", "win-arm64.dll"),
     ("Linux", "X64", "linux-x64.so"),
     ("Linux", "Arm64", "linux-arm64.so"),
+    ("Linux", "Arm", "linux-arm.so"),
     ("OSX", "X64", "osx-x64.dylib"),
     ("OSX", "Arm64", "osx-arm64.dylib")
 };

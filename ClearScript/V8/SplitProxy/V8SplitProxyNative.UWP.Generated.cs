@@ -440,11 +440,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
                 }
             }
 
@@ -1016,12 +1016,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region initialization
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr V8SplitProxyManaged_SetMethodTable(
                 [In] IntPtr pMethodTable
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string dataPath
             );
@@ -1030,26 +1030,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdString methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdString.Ptr StdString_New(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdString_GetValue(
                 [In] StdString.Ptr pString,
                 [Out] out int length
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdString_SetValue(
                 [In] StdString.Ptr pString,
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdString_Delete(
                 [In] StdString.Ptr pString
             );
@@ -1058,30 +1058,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdStringArray methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdStringArray.Ptr StdStringArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdStringArray_GetElementCount(
                 [In] StdStringArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdStringArray_SetElementCount(
                 [In] StdStringArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdStringArray_GetElement(
                 [In] StdStringArray.Ptr pArray,
                 [In] int index,
                 [Out] out int length
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdStringArray_SetElement(
                 [In] StdStringArray.Ptr pArray,
                 [In] int index,
@@ -1089,7 +1089,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdStringArray_Delete(
                 [In] StdStringArray.Ptr pArray
             );
@@ -1098,28 +1098,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdByteArray methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdByteArray.Ptr StdByteArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdByteArray_GetElementCount(
                 [In] StdByteArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdByteArray_SetElementCount(
                 [In] StdByteArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdByteArray_GetData(
                 [In] StdByteArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdByteArray_Delete(
                 [In] StdByteArray.Ptr pArray
             );
@@ -1128,28 +1128,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdInt32Array methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdInt32Array.Ptr StdInt32Array_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdInt32Array_GetElementCount(
                 [In] StdInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdInt32Array_SetElementCount(
                 [In] StdInt32Array.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdInt32Array_GetData(
                 [In] StdInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdInt32Array_Delete(
                 [In] StdInt32Array.Ptr pArray
             );
@@ -1158,28 +1158,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdUInt32Array methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdUInt32Array.Ptr StdUInt32Array_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdUInt32Array_GetElementCount(
                 [In] StdUInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt32Array_SetElementCount(
                 [In] StdUInt32Array.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdUInt32Array_GetData(
                 [In] StdUInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt32Array_Delete(
                 [In] StdUInt32Array.Ptr pArray
             );
@@ -1188,28 +1188,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdUInt64Array methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdUInt64Array.Ptr StdUInt64Array_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdUInt64Array_GetElementCount(
                 [In] StdUInt64Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt64Array_SetElementCount(
                 [In] StdUInt64Array.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdUInt64Array_GetData(
                 [In] StdUInt64Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt64Array_Delete(
                 [In] StdUInt64Array.Ptr pArray
             );
@@ -1218,28 +1218,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdPtrArray methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdPtrArray.Ptr StdPtrArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdPtrArray_GetElementCount(
                 [In] StdPtrArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdPtrArray_SetElementCount(
                 [In] StdPtrArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdPtrArray_GetData(
                 [In] StdPtrArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdPtrArray_Delete(
                 [In] StdPtrArray.Ptr pArray
             );
@@ -1248,28 +1248,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdV8ValueArray methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdV8ValueArray.Ptr StdV8ValueArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdV8ValueArray_GetElementCount(
                 [In] StdV8ValueArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdV8ValueArray_SetElementCount(
                 [In] StdV8ValueArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Value.Ptr StdV8ValueArray_GetData(
                 [In] StdV8ValueArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdV8ValueArray_Delete(
                 [In] StdV8ValueArray.Ptr pArray
             );
@@ -1278,62 +1278,62 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8Value methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Value.Ptr V8Value_New();
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetNonexistent(
                 [In] V8Value.Ptr pV8Value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetUndefined(
                 [In] V8Value.Ptr pV8Value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetNull(
                 [In] V8Value.Ptr pV8Value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetBoolean(
                 [In] V8Value.Ptr pV8Value,
                 [In] [MarshalAs(UnmanagedType.I1)] bool value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetNumber(
                 [In] V8Value.Ptr pV8Value,
                 [In] double value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetInt32(
                 [In] V8Value.Ptr pV8Value,
                 [In] int value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetUInt32(
                 [In] V8Value.Ptr pV8Value,
                 [In] uint value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetString(
                 [In] V8Value.Ptr pV8Value,
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetDateTime(
                 [In] V8Value.Ptr pV8Value,
                 [In] double value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetBigInt(
                 [In] V8Value.Ptr pV8Value,
                 [In] int signBit,
@@ -1341,20 +1341,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
                 [In] V8Value.Subtype subtype
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetHostObject(
                 [In] V8Value.Ptr pV8Value,
                 [In] IntPtr pObject
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Value.Type V8Value_Decode(
                 [In] V8Value.Ptr pV8Value,
                 [Out] out int intValue,
@@ -1363,7 +1363,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out IntPtr ptrOrHandle
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_Delete(
                 [In] V8Value.Ptr pV8Value
             );
@@ -1372,7 +1372,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8CpuProfile methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8CpuProfile_GetInfo(
                 [In] V8CpuProfile.Ptr pProfile,
                 [In] V8Entity.Handle hEntity,
@@ -1383,7 +1383,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out V8CpuProfile.Node.Ptr pRootNode
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8CpuProfile_GetSample(
                 [In] V8CpuProfile.Ptr pProfile,
@@ -1392,7 +1392,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong timestamp
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8CpuProfileNode_GetInfo(
                 [In] V8CpuProfile.Node.Ptr pNode,
                 [In] V8Entity.Handle hEntity,
@@ -1408,7 +1408,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out int childCount
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8CpuProfileNode_GetHitLines(
                 [In] V8CpuProfile.Node.Ptr pNode,
@@ -1416,7 +1416,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdUInt32Array.Ptr pHitCounts
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8CpuProfile.Node.Ptr V8CpuProfileNode_GetChildNode(
                 [In] V8CpuProfile.Node.Ptr pNode,
                 [In] int index
@@ -1426,18 +1426,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Isolate.Handle V8Isolate_Create(
                 [In] StdString.Ptr pName,
                 [In] int maxNewSpaceSize,
                 [In] int maxOldSpaceSize,
+                [In] double heapExpansionMultiplier,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
                 [In] int debugPort
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
@@ -1449,45 +1450,45 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int debugPort
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Isolate_GetMaxHeapSize(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetMaxHeapSize(
                 [In] V8Isolate.Handle hIsolate,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern double V8Isolate_GetHeapSizeSampleInterval(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetHeapSizeSampleInterval(
                 [In] V8Isolate.Handle hIsolate,
                 [In] double milliseconds
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Isolate_GetMaxStackUsage(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetMaxStackUsage(
                 [In] V8Isolate.Handle hIsolate,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_AwaitDebuggerAndPause(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_Compile(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -1498,7 +1499,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pCode
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_CompileProducingCache(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -1511,7 +1512,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdByteArray.Ptr pCacheBytes
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_CompileConsumingCache(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -1525,7 +1526,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_GetHeapStatistics(
                 [In] V8Isolate.Handle hIsolate,
                 [Out] out ulong totalHeapSize,
@@ -1535,7 +1536,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong heapSizeLimit
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_GetStatistics(
                 [In] V8Isolate.Handle hIsolate,
                 [Out] out ulong scriptCount,
@@ -1545,13 +1546,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdUInt64Array.Ptr pInvokedTaskCounts
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_CollectGarbage(
                 [In] V8Isolate.Handle hIsolate,
                 [In] [MarshalAs(UnmanagedType.I1)] bool exhaustive
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Isolate_BeginCpuProfile(
                 [In] V8Isolate.Handle hIsolate,
@@ -1559,30 +1560,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool recordSamples
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_EndCpuProfile(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
                 [In] IntPtr pAction
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_CollectCpuProfileSample(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern uint V8Isolate_GetCpuProfileSampleInterval(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetCpuProfileSampleInterval(
                 [In] V8Isolate.Handle hIsolate,
                 [In] uint value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_WriteHeapSnapshot(
                 [In] V8Isolate.Handle hIsolate,
                 [In] IntPtr pStream
@@ -1592,52 +1593,52 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 context methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Context_GetMaxIsolateHeapSize(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetMaxIsolateHeapSize(
                 [In] V8Context.Handle hContext,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern double V8Context_GetIsolateHeapSizeSampleInterval(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetIsolateHeapSizeSampleInterval(
                 [In] V8Context.Handle hContext,
                 [In] double milliseconds
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Context_GetMaxIsolateStackUsage(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetMaxIsolateStackUsage(
                 [In] V8Context.Handle hContext,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_InvokeWithLock(
                 [In] V8Context.Handle hContext,
                 [In] IntPtr pAction
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetRootItem(
                 [In] V8Context.Handle hContext,
                 [In] V8Value.Ptr pItem
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AddGlobalItem(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pName,
@@ -1645,12 +1646,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool globalMembers
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AwaitDebuggerAndPause(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_ExecuteCode(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -1663,7 +1664,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_Compile(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -1674,7 +1675,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pCode
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_CompileProducingCache(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -1687,7 +1688,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdByteArray.Ptr pCacheBytes
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_CompileConsumingCache(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -1701,7 +1702,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_ExecuteScript(
                 [In] V8Context.Handle hContext,
                 [In] V8Script.Handle hScript,
@@ -1709,12 +1710,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_Interrupt(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetIsolateHeapStatistics(
                 [In] V8Context.Handle hContext,
                 [Out] out ulong totalHeapSize,
@@ -1724,7 +1725,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong heapSizeLimit
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetIsolateStatistics(
                 [In] V8Context.Handle hContext,
                 [Out] out ulong scriptCount,
@@ -1734,7 +1735,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdUInt64Array.Ptr pInvokedTaskCounts
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetStatistics(
                 [In] V8Context.Handle hContext,
                 [Out] out ulong scriptCount,
@@ -1742,18 +1743,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong moduleCacheSize
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_CollectGarbage(
                 [In] V8Context.Handle hContext,
                 [In] [MarshalAs(UnmanagedType.I1)] bool exhaustive
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_OnAccessSettingsChanged(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Context_BeginCpuProfile(
                 [In] V8Context.Handle hContext,
@@ -1761,30 +1762,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool recordSamples
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_EndCpuProfile(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pName,
                 [In] IntPtr pAction
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_CollectCpuProfileSample(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern uint V8Context_GetCpuProfileSampleInterval(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetCpuProfileSampleInterval(
                 [In] V8Context.Handle hContext,
                 [In] uint value
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_WriteIsolateHeapSnapshot(
                 [In] V8Context.Handle hContext,
                 [In] IntPtr pStream
@@ -1794,61 +1795,61 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 object methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_SetNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Object_DeleteNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetPropertyNames(
                 [In] V8Object.Handle hObject,
                 [In] StdStringArray.Ptr pNames
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetIndexedProperty(
                 [In] V8Object.Handle hObject,
                 [In] int index,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_SetIndexedProperty(
                 [In] V8Object.Handle hObject,
                 [In] int index,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Object_DeleteIndexedProperty(
                 [In] V8Object.Handle hObject,
                 [In] int index
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetPropertyIndices(
                 [In] V8Object.Handle hObject,
                 [In] StdInt32Array.Ptr pIndices
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_Invoke(
                 [In] V8Object.Handle hObject,
                 [In] [MarshalAs(UnmanagedType.I1)] bool asConstructor,
@@ -1856,7 +1857,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_InvokeMethod(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
@@ -1864,7 +1865,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetArrayBufferOrViewInfo(
                 [In] V8Object.Handle hObject,
                 [In] V8Value.Ptr pArrayBuffer,
@@ -1873,7 +1874,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong length
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_InvokeWithArrayBufferOrViewData(
                 [In] V8Object.Handle hObject,
                 [In] IntPtr pAction
@@ -1883,18 +1884,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 debug callback methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8DebugCallback_ConnectClient(
                 [In] V8DebugCallback.Handle hCallback
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8DebugCallback_SendCommand(
                 [In] V8DebugCallback.Handle hCallback,
                 [In] StdString.Ptr pCommand
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8DebugCallback_DisconnectClient(
                 [In] V8DebugCallback.Handle hCallback
             );
@@ -1903,7 +1904,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region native callback methods
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void NativeCallback_Invoke(
                 [In] NativeCallback.Handle hCallback
             );
@@ -1912,12 +1913,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 entity cleanup
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Entity_Release(
                 [In] V8Entity.Handle hEntity
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Entity_DestroyHandle(
                 [In] V8Entity.Handle hEntity
             );
@@ -1926,7 +1927,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region error handling
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void HostException_Schedule(
                 [In] StdString.Ptr pMessage,
                 [In] V8Value.Ptr pException
@@ -1936,12 +1937,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region unit test support
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8UnitTestSupport_GetTextDigest(
                 [In] StdString.Ptr pString
             );
 
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8UnitTestSupport_GetStatistics(
                 [Out] out ulong isolateCount,
                 [Out] out ulong contextCount
@@ -2347,11 +2348,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
                 }
             }
 
@@ -2923,12 +2924,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region initialization
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr V8SplitProxyManaged_SetMethodTable(
                 [In] IntPtr pMethodTable
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string dataPath
             );
@@ -2937,26 +2938,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdString methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdString.Ptr StdString_New(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdString_GetValue(
                 [In] StdString.Ptr pString,
                 [Out] out int length
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdString_SetValue(
                 [In] StdString.Ptr pString,
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdString_Delete(
                 [In] StdString.Ptr pString
             );
@@ -2965,30 +2966,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdStringArray methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdStringArray.Ptr StdStringArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdStringArray_GetElementCount(
                 [In] StdStringArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdStringArray_SetElementCount(
                 [In] StdStringArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdStringArray_GetElement(
                 [In] StdStringArray.Ptr pArray,
                 [In] int index,
                 [Out] out int length
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdStringArray_SetElement(
                 [In] StdStringArray.Ptr pArray,
                 [In] int index,
@@ -2996,7 +2997,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdStringArray_Delete(
                 [In] StdStringArray.Ptr pArray
             );
@@ -3005,28 +3006,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdByteArray methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdByteArray.Ptr StdByteArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdByteArray_GetElementCount(
                 [In] StdByteArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdByteArray_SetElementCount(
                 [In] StdByteArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdByteArray_GetData(
                 [In] StdByteArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdByteArray_Delete(
                 [In] StdByteArray.Ptr pArray
             );
@@ -3035,28 +3036,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdInt32Array methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdInt32Array.Ptr StdInt32Array_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdInt32Array_GetElementCount(
                 [In] StdInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdInt32Array_SetElementCount(
                 [In] StdInt32Array.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdInt32Array_GetData(
                 [In] StdInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdInt32Array_Delete(
                 [In] StdInt32Array.Ptr pArray
             );
@@ -3065,28 +3066,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdUInt32Array methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdUInt32Array.Ptr StdUInt32Array_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdUInt32Array_GetElementCount(
                 [In] StdUInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt32Array_SetElementCount(
                 [In] StdUInt32Array.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdUInt32Array_GetData(
                 [In] StdUInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt32Array_Delete(
                 [In] StdUInt32Array.Ptr pArray
             );
@@ -3095,28 +3096,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdUInt64Array methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdUInt64Array.Ptr StdUInt64Array_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdUInt64Array_GetElementCount(
                 [In] StdUInt64Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt64Array_SetElementCount(
                 [In] StdUInt64Array.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdUInt64Array_GetData(
                 [In] StdUInt64Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt64Array_Delete(
                 [In] StdUInt64Array.Ptr pArray
             );
@@ -3125,28 +3126,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdPtrArray methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdPtrArray.Ptr StdPtrArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdPtrArray_GetElementCount(
                 [In] StdPtrArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdPtrArray_SetElementCount(
                 [In] StdPtrArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdPtrArray_GetData(
                 [In] StdPtrArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdPtrArray_Delete(
                 [In] StdPtrArray.Ptr pArray
             );
@@ -3155,28 +3156,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdV8ValueArray methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdV8ValueArray.Ptr StdV8ValueArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdV8ValueArray_GetElementCount(
                 [In] StdV8ValueArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdV8ValueArray_SetElementCount(
                 [In] StdV8ValueArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Value.Ptr StdV8ValueArray_GetData(
                 [In] StdV8ValueArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdV8ValueArray_Delete(
                 [In] StdV8ValueArray.Ptr pArray
             );
@@ -3185,62 +3186,62 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8Value methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Value.Ptr V8Value_New();
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetNonexistent(
                 [In] V8Value.Ptr pV8Value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetUndefined(
                 [In] V8Value.Ptr pV8Value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetNull(
                 [In] V8Value.Ptr pV8Value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetBoolean(
                 [In] V8Value.Ptr pV8Value,
                 [In] [MarshalAs(UnmanagedType.I1)] bool value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetNumber(
                 [In] V8Value.Ptr pV8Value,
                 [In] double value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetInt32(
                 [In] V8Value.Ptr pV8Value,
                 [In] int value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetUInt32(
                 [In] V8Value.Ptr pV8Value,
                 [In] uint value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetString(
                 [In] V8Value.Ptr pV8Value,
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetDateTime(
                 [In] V8Value.Ptr pV8Value,
                 [In] double value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetBigInt(
                 [In] V8Value.Ptr pV8Value,
                 [In] int signBit,
@@ -3248,20 +3249,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
                 [In] V8Value.Subtype subtype
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetHostObject(
                 [In] V8Value.Ptr pV8Value,
                 [In] IntPtr pObject
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Value.Type V8Value_Decode(
                 [In] V8Value.Ptr pV8Value,
                 [Out] out int intValue,
@@ -3270,7 +3271,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out IntPtr ptrOrHandle
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_Delete(
                 [In] V8Value.Ptr pV8Value
             );
@@ -3279,7 +3280,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8CpuProfile methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8CpuProfile_GetInfo(
                 [In] V8CpuProfile.Ptr pProfile,
                 [In] V8Entity.Handle hEntity,
@@ -3290,7 +3291,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out V8CpuProfile.Node.Ptr pRootNode
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8CpuProfile_GetSample(
                 [In] V8CpuProfile.Ptr pProfile,
@@ -3299,7 +3300,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong timestamp
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8CpuProfileNode_GetInfo(
                 [In] V8CpuProfile.Node.Ptr pNode,
                 [In] V8Entity.Handle hEntity,
@@ -3315,7 +3316,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out int childCount
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8CpuProfileNode_GetHitLines(
                 [In] V8CpuProfile.Node.Ptr pNode,
@@ -3323,7 +3324,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdUInt32Array.Ptr pHitCounts
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8CpuProfile.Node.Ptr V8CpuProfileNode_GetChildNode(
                 [In] V8CpuProfile.Node.Ptr pNode,
                 [In] int index
@@ -3333,18 +3334,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Isolate.Handle V8Isolate_Create(
                 [In] StdString.Ptr pName,
                 [In] int maxNewSpaceSize,
                 [In] int maxOldSpaceSize,
+                [In] double heapExpansionMultiplier,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
                 [In] int debugPort
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
@@ -3356,45 +3358,45 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int debugPort
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Isolate_GetMaxHeapSize(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetMaxHeapSize(
                 [In] V8Isolate.Handle hIsolate,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern double V8Isolate_GetHeapSizeSampleInterval(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetHeapSizeSampleInterval(
                 [In] V8Isolate.Handle hIsolate,
                 [In] double milliseconds
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Isolate_GetMaxStackUsage(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetMaxStackUsage(
                 [In] V8Isolate.Handle hIsolate,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_AwaitDebuggerAndPause(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_Compile(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -3405,7 +3407,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pCode
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_CompileProducingCache(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -3418,7 +3420,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdByteArray.Ptr pCacheBytes
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_CompileConsumingCache(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -3432,7 +3434,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_GetHeapStatistics(
                 [In] V8Isolate.Handle hIsolate,
                 [Out] out ulong totalHeapSize,
@@ -3442,7 +3444,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong heapSizeLimit
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_GetStatistics(
                 [In] V8Isolate.Handle hIsolate,
                 [Out] out ulong scriptCount,
@@ -3452,13 +3454,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdUInt64Array.Ptr pInvokedTaskCounts
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_CollectGarbage(
                 [In] V8Isolate.Handle hIsolate,
                 [In] [MarshalAs(UnmanagedType.I1)] bool exhaustive
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Isolate_BeginCpuProfile(
                 [In] V8Isolate.Handle hIsolate,
@@ -3466,30 +3468,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool recordSamples
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_EndCpuProfile(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
                 [In] IntPtr pAction
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_CollectCpuProfileSample(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern uint V8Isolate_GetCpuProfileSampleInterval(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetCpuProfileSampleInterval(
                 [In] V8Isolate.Handle hIsolate,
                 [In] uint value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_WriteHeapSnapshot(
                 [In] V8Isolate.Handle hIsolate,
                 [In] IntPtr pStream
@@ -3499,52 +3501,52 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 context methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Context_GetMaxIsolateHeapSize(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetMaxIsolateHeapSize(
                 [In] V8Context.Handle hContext,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern double V8Context_GetIsolateHeapSizeSampleInterval(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetIsolateHeapSizeSampleInterval(
                 [In] V8Context.Handle hContext,
                 [In] double milliseconds
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Context_GetMaxIsolateStackUsage(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetMaxIsolateStackUsage(
                 [In] V8Context.Handle hContext,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_InvokeWithLock(
                 [In] V8Context.Handle hContext,
                 [In] IntPtr pAction
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetRootItem(
                 [In] V8Context.Handle hContext,
                 [In] V8Value.Ptr pItem
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AddGlobalItem(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pName,
@@ -3552,12 +3554,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool globalMembers
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AwaitDebuggerAndPause(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_ExecuteCode(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -3570,7 +3572,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_Compile(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -3581,7 +3583,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pCode
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_CompileProducingCache(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -3594,7 +3596,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdByteArray.Ptr pCacheBytes
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_CompileConsumingCache(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -3608,7 +3610,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_ExecuteScript(
                 [In] V8Context.Handle hContext,
                 [In] V8Script.Handle hScript,
@@ -3616,12 +3618,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_Interrupt(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetIsolateHeapStatistics(
                 [In] V8Context.Handle hContext,
                 [Out] out ulong totalHeapSize,
@@ -3631,7 +3633,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong heapSizeLimit
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetIsolateStatistics(
                 [In] V8Context.Handle hContext,
                 [Out] out ulong scriptCount,
@@ -3641,7 +3643,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdUInt64Array.Ptr pInvokedTaskCounts
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetStatistics(
                 [In] V8Context.Handle hContext,
                 [Out] out ulong scriptCount,
@@ -3649,18 +3651,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong moduleCacheSize
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_CollectGarbage(
                 [In] V8Context.Handle hContext,
                 [In] [MarshalAs(UnmanagedType.I1)] bool exhaustive
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_OnAccessSettingsChanged(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Context_BeginCpuProfile(
                 [In] V8Context.Handle hContext,
@@ -3668,30 +3670,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool recordSamples
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_EndCpuProfile(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pName,
                 [In] IntPtr pAction
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_CollectCpuProfileSample(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern uint V8Context_GetCpuProfileSampleInterval(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetCpuProfileSampleInterval(
                 [In] V8Context.Handle hContext,
                 [In] uint value
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_WriteIsolateHeapSnapshot(
                 [In] V8Context.Handle hContext,
                 [In] IntPtr pStream
@@ -3701,61 +3703,61 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 object methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_SetNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Object_DeleteNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetPropertyNames(
                 [In] V8Object.Handle hObject,
                 [In] StdStringArray.Ptr pNames
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetIndexedProperty(
                 [In] V8Object.Handle hObject,
                 [In] int index,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_SetIndexedProperty(
                 [In] V8Object.Handle hObject,
                 [In] int index,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Object_DeleteIndexedProperty(
                 [In] V8Object.Handle hObject,
                 [In] int index
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetPropertyIndices(
                 [In] V8Object.Handle hObject,
                 [In] StdInt32Array.Ptr pIndices
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_Invoke(
                 [In] V8Object.Handle hObject,
                 [In] [MarshalAs(UnmanagedType.I1)] bool asConstructor,
@@ -3763,7 +3765,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_InvokeMethod(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
@@ -3771,7 +3773,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetArrayBufferOrViewInfo(
                 [In] V8Object.Handle hObject,
                 [In] V8Value.Ptr pArrayBuffer,
@@ -3780,7 +3782,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong length
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_InvokeWithArrayBufferOrViewData(
                 [In] V8Object.Handle hObject,
                 [In] IntPtr pAction
@@ -3790,18 +3792,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 debug callback methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8DebugCallback_ConnectClient(
                 [In] V8DebugCallback.Handle hCallback
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8DebugCallback_SendCommand(
                 [In] V8DebugCallback.Handle hCallback,
                 [In] StdString.Ptr pCommand
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8DebugCallback_DisconnectClient(
                 [In] V8DebugCallback.Handle hCallback
             );
@@ -3810,7 +3812,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region native callback methods
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void NativeCallback_Invoke(
                 [In] NativeCallback.Handle hCallback
             );
@@ -3819,12 +3821,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 entity cleanup
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Entity_Release(
                 [In] V8Entity.Handle hEntity
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Entity_DestroyHandle(
                 [In] V8Entity.Handle hEntity
             );
@@ -3833,7 +3835,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region error handling
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void HostException_Schedule(
                 [In] StdString.Ptr pMessage,
                 [In] V8Value.Ptr pException
@@ -3843,12 +3845,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region unit test support
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8UnitTestSupport_GetTextDigest(
                 [In] StdString.Ptr pString
             );
 
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8UnitTestSupport_GetStatistics(
                 [Out] out ulong isolateCount,
                 [Out] out ulong contextCount
@@ -4254,11 +4256,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
                 }
             }
 
@@ -4830,12 +4832,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region initialization
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr V8SplitProxyManaged_SetMethodTable(
                 [In] IntPtr pMethodTable
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string dataPath
             );
@@ -4844,26 +4846,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdString methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdString.Ptr StdString_New(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdString_GetValue(
                 [In] StdString.Ptr pString,
                 [Out] out int length
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdString_SetValue(
                 [In] StdString.Ptr pString,
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdString_Delete(
                 [In] StdString.Ptr pString
             );
@@ -4872,30 +4874,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdStringArray methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdStringArray.Ptr StdStringArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdStringArray_GetElementCount(
                 [In] StdStringArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdStringArray_SetElementCount(
                 [In] StdStringArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdStringArray_GetElement(
                 [In] StdStringArray.Ptr pArray,
                 [In] int index,
                 [Out] out int length
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdStringArray_SetElement(
                 [In] StdStringArray.Ptr pArray,
                 [In] int index,
@@ -4903,7 +4905,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdStringArray_Delete(
                 [In] StdStringArray.Ptr pArray
             );
@@ -4912,28 +4914,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdByteArray methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdByteArray.Ptr StdByteArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdByteArray_GetElementCount(
                 [In] StdByteArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdByteArray_SetElementCount(
                 [In] StdByteArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdByteArray_GetData(
                 [In] StdByteArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdByteArray_Delete(
                 [In] StdByteArray.Ptr pArray
             );
@@ -4942,28 +4944,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdInt32Array methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdInt32Array.Ptr StdInt32Array_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdInt32Array_GetElementCount(
                 [In] StdInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdInt32Array_SetElementCount(
                 [In] StdInt32Array.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdInt32Array_GetData(
                 [In] StdInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdInt32Array_Delete(
                 [In] StdInt32Array.Ptr pArray
             );
@@ -4972,28 +4974,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdUInt32Array methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdUInt32Array.Ptr StdUInt32Array_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdUInt32Array_GetElementCount(
                 [In] StdUInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt32Array_SetElementCount(
                 [In] StdUInt32Array.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdUInt32Array_GetData(
                 [In] StdUInt32Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt32Array_Delete(
                 [In] StdUInt32Array.Ptr pArray
             );
@@ -5002,28 +5004,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdUInt64Array methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdUInt64Array.Ptr StdUInt64Array_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdUInt64Array_GetElementCount(
                 [In] StdUInt64Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt64Array_SetElementCount(
                 [In] StdUInt64Array.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdUInt64Array_GetData(
                 [In] StdUInt64Array.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdUInt64Array_Delete(
                 [In] StdUInt64Array.Ptr pArray
             );
@@ -5032,28 +5034,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdPtrArray methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdPtrArray.Ptr StdPtrArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdPtrArray_GetElementCount(
                 [In] StdPtrArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdPtrArray_SetElementCount(
                 [In] StdPtrArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern IntPtr StdPtrArray_GetData(
                 [In] StdPtrArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdPtrArray_Delete(
                 [In] StdPtrArray.Ptr pArray
             );
@@ -5062,28 +5064,28 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region StdV8ValueArray methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern StdV8ValueArray.Ptr StdV8ValueArray_New(
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern int StdV8ValueArray_GetElementCount(
                 [In] StdV8ValueArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdV8ValueArray_SetElementCount(
                 [In] StdV8ValueArray.Ptr pArray,
                 [In] int elementCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Value.Ptr StdV8ValueArray_GetData(
                 [In] StdV8ValueArray.Ptr pArray
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void StdV8ValueArray_Delete(
                 [In] StdV8ValueArray.Ptr pArray
             );
@@ -5092,62 +5094,62 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8Value methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Value.Ptr V8Value_New();
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetNonexistent(
                 [In] V8Value.Ptr pV8Value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetUndefined(
                 [In] V8Value.Ptr pV8Value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetNull(
                 [In] V8Value.Ptr pV8Value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetBoolean(
                 [In] V8Value.Ptr pV8Value,
                 [In] [MarshalAs(UnmanagedType.I1)] bool value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetNumber(
                 [In] V8Value.Ptr pV8Value,
                 [In] double value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetInt32(
                 [In] V8Value.Ptr pV8Value,
                 [In] int value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetUInt32(
                 [In] V8Value.Ptr pV8Value,
                 [In] uint value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetString(
                 [In] V8Value.Ptr pV8Value,
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetDateTime(
                 [In] V8Value.Ptr pV8Value,
                 [In] double value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetBigInt(
                 [In] V8Value.Ptr pV8Value,
                 [In] int signBit,
@@ -5155,20 +5157,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int length
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
                 [In] V8Value.Subtype subtype
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetHostObject(
                 [In] V8Value.Ptr pV8Value,
                 [In] IntPtr pObject
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Value.Type V8Value_Decode(
                 [In] V8Value.Ptr pV8Value,
                 [Out] out int intValue,
@@ -5177,7 +5179,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out IntPtr ptrOrHandle
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_Delete(
                 [In] V8Value.Ptr pV8Value
             );
@@ -5186,7 +5188,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8CpuProfile methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8CpuProfile_GetInfo(
                 [In] V8CpuProfile.Ptr pProfile,
                 [In] V8Entity.Handle hEntity,
@@ -5197,7 +5199,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out V8CpuProfile.Node.Ptr pRootNode
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8CpuProfile_GetSample(
                 [In] V8CpuProfile.Ptr pProfile,
@@ -5206,7 +5208,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong timestamp
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8CpuProfileNode_GetInfo(
                 [In] V8CpuProfile.Node.Ptr pNode,
                 [In] V8Entity.Handle hEntity,
@@ -5222,7 +5224,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out int childCount
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8CpuProfileNode_GetHitLines(
                 [In] V8CpuProfile.Node.Ptr pNode,
@@ -5230,7 +5232,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdUInt32Array.Ptr pHitCounts
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8CpuProfile.Node.Ptr V8CpuProfileNode_GetChildNode(
                 [In] V8CpuProfile.Node.Ptr pNode,
                 [In] int index
@@ -5240,18 +5242,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Isolate.Handle V8Isolate_Create(
                 [In] StdString.Ptr pName,
                 [In] int maxNewSpaceSize,
                 [In] int maxOldSpaceSize,
+                [In] double heapExpansionMultiplier,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
                 [In] int debugPort
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
@@ -5263,45 +5266,45 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int debugPort
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Isolate_GetMaxHeapSize(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetMaxHeapSize(
                 [In] V8Isolate.Handle hIsolate,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern double V8Isolate_GetHeapSizeSampleInterval(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetHeapSizeSampleInterval(
                 [In] V8Isolate.Handle hIsolate,
                 [In] double milliseconds
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Isolate_GetMaxStackUsage(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetMaxStackUsage(
                 [In] V8Isolate.Handle hIsolate,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_AwaitDebuggerAndPause(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_Compile(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -5312,7 +5315,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pCode
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_CompileProducingCache(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -5325,7 +5328,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdByteArray.Ptr pCacheBytes
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_CompileConsumingCache(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -5339,7 +5342,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_GetHeapStatistics(
                 [In] V8Isolate.Handle hIsolate,
                 [Out] out ulong totalHeapSize,
@@ -5349,7 +5352,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong heapSizeLimit
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_GetStatistics(
                 [In] V8Isolate.Handle hIsolate,
                 [Out] out ulong scriptCount,
@@ -5359,13 +5362,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdUInt64Array.Ptr pInvokedTaskCounts
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_CollectGarbage(
                 [In] V8Isolate.Handle hIsolate,
                 [In] [MarshalAs(UnmanagedType.I1)] bool exhaustive
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Isolate_BeginCpuProfile(
                 [In] V8Isolate.Handle hIsolate,
@@ -5373,30 +5376,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool recordSamples
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_EndCpuProfile(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
                 [In] IntPtr pAction
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_CollectCpuProfileSample(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern uint V8Isolate_GetCpuProfileSampleInterval(
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_SetCpuProfileSampleInterval(
                 [In] V8Isolate.Handle hIsolate,
                 [In] uint value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_WriteHeapSnapshot(
                 [In] V8Isolate.Handle hIsolate,
                 [In] IntPtr pStream
@@ -5406,52 +5409,52 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 context methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Context_GetMaxIsolateHeapSize(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetMaxIsolateHeapSize(
                 [In] V8Context.Handle hContext,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern double V8Context_GetIsolateHeapSizeSampleInterval(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetIsolateHeapSizeSampleInterval(
                 [In] V8Context.Handle hContext,
                 [In] double milliseconds
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8Context_GetMaxIsolateStackUsage(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetMaxIsolateStackUsage(
                 [In] V8Context.Handle hContext,
                 [In] UIntPtr size
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_InvokeWithLock(
                 [In] V8Context.Handle hContext,
                 [In] IntPtr pAction
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetRootItem(
                 [In] V8Context.Handle hContext,
                 [In] V8Value.Ptr pItem
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AddGlobalItem(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pName,
@@ -5459,12 +5462,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool globalMembers
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AwaitDebuggerAndPause(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_ExecuteCode(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -5477,7 +5480,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_Compile(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -5488,7 +5491,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pCode
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_CompileProducingCache(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -5501,7 +5504,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdByteArray.Ptr pCacheBytes
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Context_CompileConsumingCache(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -5515,7 +5518,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_ExecuteScript(
                 [In] V8Context.Handle hContext,
                 [In] V8Script.Handle hScript,
@@ -5523,12 +5526,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_Interrupt(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetIsolateHeapStatistics(
                 [In] V8Context.Handle hContext,
                 [Out] out ulong totalHeapSize,
@@ -5538,7 +5541,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong heapSizeLimit
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetIsolateStatistics(
                 [In] V8Context.Handle hContext,
                 [Out] out ulong scriptCount,
@@ -5548,7 +5551,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdUInt64Array.Ptr pInvokedTaskCounts
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetStatistics(
                 [In] V8Context.Handle hContext,
                 [Out] out ulong scriptCount,
@@ -5556,18 +5559,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong moduleCacheSize
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_CollectGarbage(
                 [In] V8Context.Handle hContext,
                 [In] [MarshalAs(UnmanagedType.I1)] bool exhaustive
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_OnAccessSettingsChanged(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Context_BeginCpuProfile(
                 [In] V8Context.Handle hContext,
@@ -5575,30 +5578,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool recordSamples
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_EndCpuProfile(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pName,
                 [In] IntPtr pAction
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_CollectCpuProfileSample(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern uint V8Context_GetCpuProfileSampleInterval(
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetCpuProfileSampleInterval(
                 [In] V8Context.Handle hContext,
                 [In] uint value
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_WriteIsolateHeapSnapshot(
                 [In] V8Context.Handle hContext,
                 [In] IntPtr pStream
@@ -5608,61 +5611,61 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 object methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_SetNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Object_DeleteNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetPropertyNames(
                 [In] V8Object.Handle hObject,
                 [In] StdStringArray.Ptr pNames
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetIndexedProperty(
                 [In] V8Object.Handle hObject,
                 [In] int index,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_SetIndexedProperty(
                 [In] V8Object.Handle hObject,
                 [In] int index,
                 [In] V8Value.Ptr pValue
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             [return: MarshalAs(UnmanagedType.I1)]
             private static extern bool V8Object_DeleteIndexedProperty(
                 [In] V8Object.Handle hObject,
                 [In] int index
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetPropertyIndices(
                 [In] V8Object.Handle hObject,
                 [In] StdInt32Array.Ptr pIndices
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_Invoke(
                 [In] V8Object.Handle hObject,
                 [In] [MarshalAs(UnmanagedType.I1)] bool asConstructor,
@@ -5670,7 +5673,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_InvokeMethod(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
@@ -5678,7 +5681,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Value.Ptr pResult
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetArrayBufferOrViewInfo(
                 [In] V8Object.Handle hObject,
                 [In] V8Value.Ptr pArrayBuffer,
@@ -5687,7 +5690,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong length
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_InvokeWithArrayBufferOrViewData(
                 [In] V8Object.Handle hObject,
                 [In] IntPtr pAction
@@ -5697,18 +5700,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 debug callback methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8DebugCallback_ConnectClient(
                 [In] V8DebugCallback.Handle hCallback
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8DebugCallback_SendCommand(
                 [In] V8DebugCallback.Handle hCallback,
                 [In] StdString.Ptr pCommand
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8DebugCallback_DisconnectClient(
                 [In] V8DebugCallback.Handle hCallback
             );
@@ -5717,7 +5720,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region native callback methods
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void NativeCallback_Invoke(
                 [In] NativeCallback.Handle hCallback
             );
@@ -5726,12 +5729,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 entity cleanup
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Entity_Release(
                 [In] V8Entity.Handle hEntity
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Entity_DestroyHandle(
                 [In] V8Entity.Handle hEntity
             );
@@ -5740,7 +5743,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region error handling
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void HostException_Schedule(
                 [In] StdString.Ptr pMessage,
                 [In] V8Value.Ptr pException
@@ -5750,12 +5753,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region unit test support
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern UIntPtr V8UnitTestSupport_GetTextDigest(
                 [In] StdString.Ptr pString
             );
 
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.Cdecl)]
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8UnitTestSupport_GetStatistics(
                 [Out] out ulong isolateCount,
                 [Out] out ulong contextCount
