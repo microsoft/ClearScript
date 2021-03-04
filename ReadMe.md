@@ -14,6 +14,10 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
   * (Objects) Indexers, extension methods, conversion operators, explicitly implemented interfaces
   * (Types) Constructors, nested types
 * Full support for generic types and methods, including C#-like type inference and explicit type arguments
+* Exposed .NET collections support native script iteration mechanisms:
+  * (V8) [`for...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of)
+  * (JScript) [`Enumerator`](https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2010/x32bxwys(v=vs.100))
+  * (VBScript) [`For Each...Next`](https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/tywtbxd0(v=vs.84))
 * Scripts can invoke methods with output parameters, optional parameters, and parameter arrays
 * Script delegates enable callbacks into script code
 * Support for exposing all the types defined in one or more assemblies in one step
