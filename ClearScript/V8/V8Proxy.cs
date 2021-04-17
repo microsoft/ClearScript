@@ -133,7 +133,11 @@ namespace Microsoft.ClearScript.V8
 
         private static void InitializeICU()
         {
-            var paths = GetDirPaths(null, null).Select(dirPath => Path.Combine(dirPath, deploymentDirName, "ClearScriptV8.ICU.dat")).Distinct();
+            // ReSharper disable RedundantJumpStatement
+
+            const string fileName = "ClearScriptV8.ICU.dat";
+
+            var paths = GetDirPaths(null, null).Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
             foreach (var path in paths)
             {
                 if (File.Exists(path))
@@ -142,6 +146,18 @@ namespace Microsoft.ClearScript.V8
                     return;
                 }
             }
+
+            if (string.IsNullOrEmpty(deploymentDirName))
+            {
+                var systemPath = Path.Combine(Environment.SystemDirectory, fileName);
+                if (File.Exists(systemPath))
+                {
+                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Environment_InitializeICU(systemPath));
+                    return;
+                }
+            }
+
+            // ReSharper restore RedundantJumpStatement
         }
 
         private static IEnumerable<string> GetDirPaths(string platform, string architecture)
@@ -164,6 +180,15 @@ namespace Microsoft.ClearScript.V8
             yield return appDomain.BaseDirectory;
 
             var searchPath = appDomain.RelativeSearchPath;
+            if (!string.IsNullOrWhiteSpace(searchPath))
+            {
+                foreach (var dirPath in searchPath.SplitSearchPath())
+                {
+                    yield return dirPath;
+                }
+            }
+
+            searchPath = HostSettings.AuxiliarySearchPath;
             if (!string.IsNullOrWhiteSpace(searchPath))
             {
                 foreach (var dirPath in searchPath.SplitSearchPath())

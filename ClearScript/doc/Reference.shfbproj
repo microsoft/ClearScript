@@ -20,20 +20,16 @@
     <Language>en-US</Language>
     <HelpTitle>ClearScript Library</HelpTitle>
     <DocumentationSources>
-      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Core.dll" />
-      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Core.xml" />
-      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.V8.dll" />
-      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.V8.xml" />
-      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Windows.dll" />
-      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Windows.xml" />
-      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Windows.Core.dll" />
-      <DocumentationSource sourceFile="..\..\bin\Release\net45\ClearScript.Windows.Core.xml" />
+      <DocumentationSource sourceFile="..\..\NetCore\ClearScript.Core\ClearScript.Core.csproj" />
+      <DocumentationSource sourceFile="..\..\NetCore\ClearScript.V8\ClearScript.V8.csproj" />
+      <DocumentationSource sourceFile="..\..\NetCore\ClearScript.Windows\ClearScript.Windows.csproj" />
+      <DocumentationSource sourceFile="..\..\NetCore\ClearScript.Windows.Core\ClearScript.Windows.Core.csproj" />
     </DocumentationSources>
     <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, SealedProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <MissingTags>Summary, Parameter, Returns, TypeParameter</MissingTags>
     <FeedbackEMailAddress>ClearScript%40microsoft.com</FeedbackEMailAddress>
     <FeedbackEMailLinkText>Microsoft</FeedbackEMailLinkText>
-    <FrameworkVersion>.NET Framework 4.5</FrameworkVersion>
+    <FrameworkVersion>.NET Core/.NET Standard/.NET 5.0+</FrameworkVersion>
     <PresentationStyle>VS2013</PresentationStyle>
     <Preliminary>False</Preliminary>
     <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>

@@ -15,6 +15,8 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8
 {
+    // ReSharper disable once PartialTypeWithSinglePart
+
     /// <summary>
     /// Represents an instance of the V8 JavaScript engine.
     /// </summary>
@@ -25,7 +27,7 @@ namespace Microsoft.ClearScript.V8
     /// instance. Script delegates and event handlers are invoked on the calling thread without
     /// marshaling.
     /// </remarks>
-    public sealed class V8ScriptEngine : ScriptEngine, IJavaScriptEngine
+    public sealed partial class V8ScriptEngine : ScriptEngine, IJavaScriptEngine
     {
         #region data
 
@@ -928,7 +930,7 @@ namespace Microsoft.ClearScript.V8
                 {
                     statistics.CommonJSModuleCacheSize = CommonJSManager.ModuleCacheSize;
                 }
-                
+
                 return statistics;
             });
         }
@@ -1137,6 +1139,8 @@ namespace Microsoft.ClearScript.V8
             Script.EngineInternal.completePromise(wait, resolve, reject);
         }
 
+        partial void TryConvertValueTaskToPromise(object obj, Action<object> setResult);
+
         #endregion
 
         #region ScriptEngine overrides (public members)
@@ -1339,11 +1343,15 @@ namespace Microsoft.ClearScript.V8
                 {
                     if (testObject.GetType().IsAssignableToGenericType(typeof(Task<>), out var typeArgs))
                     {
-                        obj = typeof(TaskConverter<>).MakeSpecificType(typeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] {testObject, this});
+                        obj = typeof(TaskConverter<>).MakeSpecificType(typeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] { testObject, this });
                     }
                     else if (testObject is Task task)
                     {
                         obj = task.ToPromise(this);
+                    }
+                    else if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableValueTaskPromiseConversion))
+                    {
+                        TryConvertValueTaskToPromise(testObject, result => obj = result);
                     }
                 }
             }

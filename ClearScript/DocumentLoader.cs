@@ -139,7 +139,7 @@ namespace Microsoft.ClearScript
                 }
                 else
                 {
-                    foreach (var testUri in ApplyFileNameExtensions(sourceInfo, uri, settings.FileNameExtensions))
+                    foreach (var testUri in ApplyExtensions(sourceInfo, uri, settings.FileNameExtensions))
                     {
                         if (await IsCandidateUriAsync(settings, testUri).ConfigureAwait(false))
                         {
@@ -158,7 +158,7 @@ namespace Microsoft.ClearScript
                 var rawUris = GetRawUris(settings, sourceInfo, specifier).Distinct();
                 if (!string.IsNullOrWhiteSpace(settings.FileNameExtensions))
                 {
-                    rawUris = rawUris.SelectMany(uri => ApplyFileNameExtensions(sourceInfo, uri, settings.FileNameExtensions));
+                    rawUris = rawUris.SelectMany(uri => ApplyExtensions(sourceInfo, uri, settings.FileNameExtensions));
                 }
 
                 foreach (var testUri in rawUris)
@@ -218,34 +218,48 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            private static IEnumerable<Uri> ApplyFileNameExtensions(DocumentInfo? sourceInfo, Uri uri, string fileNameExtensions)
+            private static IEnumerable<Uri> ApplyExtensions(DocumentInfo? sourceInfo, Uri uri, string extensions)
             {
                 yield return uri;
 
                 var builder = new UriBuilder(uri);
-
                 var path = builder.Path;
-                if (!string.IsNullOrEmpty(Path.GetFileName(path)) && !Path.HasExtension(path))
+
+                if (!string.IsNullOrEmpty(Path.GetFileName(path)))
                 {
-                    string sourceFileNameExtension = null;
-                    if (sourceInfo.HasValue)
+                    var existingExtension = Path.GetExtension(path);
+                    var compatibleExtensions = GetCompatibleExtensions(sourceInfo, extensions).ToList();
+
+                    if (!compatibleExtensions.Contains(existingExtension, StringComparer.OrdinalIgnoreCase))
                     {
-                        sourceFileNameExtension = Path.GetExtension((sourceInfo.Value.Uri != null) ? new UriBuilder(sourceInfo.Value.Uri).Path : sourceInfo.Value.Name);
-                        if (!string.IsNullOrEmpty(sourceFileNameExtension))
+                        foreach (var compatibleExtension in compatibleExtensions)
                         {
-                            builder.Path = Path.ChangeExtension(path, sourceFileNameExtension);
+                            builder.Path = Path.ChangeExtension(path, existingExtension + compatibleExtension);
                             yield return builder.Uri;
                         }
                     }
+                }
+            }
 
-                    foreach (var fileNameExtension in fileNameExtensions.SplitSearchPath())
+            private static IEnumerable<string> GetCompatibleExtensions(DocumentInfo? sourceInfo, string extensions)
+            {
+                string sourceExtension = null;
+
+                if (sourceInfo.HasValue)
+                {
+                    sourceExtension = Path.GetExtension((sourceInfo.Value.Uri != null) ? new UriBuilder(sourceInfo.Value.Uri).Path : sourceInfo.Value.Name);
+                    if (!string.IsNullOrEmpty(sourceExtension))
                     {
-                        var testFileNameExtension = fileNameExtension.StartsWith(".", StringComparison.Ordinal) ? fileNameExtension : "." + fileNameExtension;
-                        if (!testFileNameExtension.Equals(sourceFileNameExtension, StringComparison.OrdinalIgnoreCase))
-                        {
-                            builder.Path = Path.ChangeExtension(path, testFileNameExtension);
-                            yield return builder.Uri;
-                        }
+                        yield return sourceExtension;
+                    }
+                }
+
+                foreach (var extension in extensions.SplitSearchPath())
+                {
+                    var tempExtension = extension.StartsWith(".", StringComparison.Ordinal) ? extension : "." + extension;
+                    if (!tempExtension.Equals(sourceExtension, StringComparison.OrdinalIgnoreCase))
+                    {
+                        yield return tempExtension;
                     }
                 }
             }

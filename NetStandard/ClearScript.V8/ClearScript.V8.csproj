@@ -67,6 +67,7 @@
         <Compile Include="..\..\ClearScript\V8\V8RuntimeHeapInfo.cs" Link="V8\V8RuntimeHeapInfo.cs" />
         <Compile Include="..\..\ClearScript\V8\V8Script.cs" Link="V8\V8Script.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.cs" Link="V8\V8ScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.NetStandard.cs" Link="V8\V8ScriptEngine.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngineFlags.cs" Link="V8\V8ScriptEngineFlags.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptItem.cs" Link="V8\V8ScriptItem.cs" />
         <Compile Include="..\..\ClearScript\V8\V8TestProxy.cs" Link="V8\V8TestProxy.cs" />

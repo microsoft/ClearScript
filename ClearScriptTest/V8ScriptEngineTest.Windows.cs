@@ -580,7 +580,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_HeapExpansionMultiplier()
         {
-	        TestUtil.InvokeConsoleTest("V8ScriptEngine_HeapExpansionMultiplier");
+            TestUtil.InvokeConsoleTest("V8ScriptEngine_HeapExpansionMultiplier");
         }
 
         // ReSharper restore InconsistentNaming

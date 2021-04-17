@@ -48,6 +48,16 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8Module")]
+        public void V8Module_Standard_File_ForeignExtension()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                import * as Arithmetic from 'JavaScript/StandardModule/Arithmetic/Arithmetic.bogus';
+                Arithmetic.BogusAdd(123, 456);
+            "));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
         public void V8Module_Standard_File_MixedImport()
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
@@ -712,6 +722,16 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"
                 let Arithmetic = require('JavaScript/CommonJS/Arithmetic/Arithmetic');
                 return Arithmetic.Add(123, 456);
+            "));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_CommonJS_File_ForeignExtension()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"
+                let Arithmetic = require('JavaScript/CommonJS/Arithmetic/Arithmetic.bogus');
+                return Arithmetic.BogusAdd(123, 456);
             "));
         }
 

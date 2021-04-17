@@ -40,6 +40,7 @@
         <Compile Include="..\..\ClearScript\Windows\DispatcherSyncInvoker.cs" Link="Windows\DispatcherSyncInvoker.cs" />
         <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.cs" Link="Windows\WindowsScriptEngine.cs" />
         <Compile Include="..\..\ClearScript\Windows\JScriptEngine.cs" Link="Windows\JScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\JScriptEngine.NetStandard.cs" Link="Windows\JScriptEngine.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\Windows\VBScriptEngine.cs" Link="Windows\VBScriptEngine.cs" />
     </ItemGroup>
 

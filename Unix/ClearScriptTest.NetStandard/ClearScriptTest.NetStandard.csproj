@@ -39,7 +39,6 @@
         <Compile Include="..\..\ClearScriptTest\BaseTestObject.cs" Link="BaseTestObject.cs" />
         <Compile Include="..\..\ClearScriptTest\BindSignatureTest.cs" Link="BindSignatureTest.cs" />
         <Compile Include="..\..\ClearScriptTest\BugFixTest.cs" Link="BugFixTest.cs" />
-        <Compile Include="..\..\ClearScriptTest\BugFixTest.NetCore.cs" Link="BugFixTest.NetCore.cs" />
         <Compile Include="..\..\ClearScriptTest\ClearScriptTest.cs" Link="ClearScriptTest.cs" />
         <Compile Include="..\..\ClearScriptTest\DynamicHostItemTest.cs" Link="DynamicHostItemTest.cs" />
         <Compile Include="..\..\ClearScriptTest\DynamicHostItemTest.Unix.cs" Link="DynamicHostItemTest.Unix.cs" />
@@ -72,7 +71,7 @@
         <Compile Include="..\..\ClearScriptTest\V8ArrayBufferOrViewTest.cs" Link="V8ArrayBufferOrViewTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ModuleTest.cs" Link="V8ModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.cs" Link="V8ScriptEngineTest.cs" />
-        <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.Unix.cs" Link="V8ScriptEngineTest.Unix.cs" />
+        <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.NetStandard.cs" Link="V8ScriptEngineTest.NetStandard.cs" />
     </ItemGroup>
 
     <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'">
@@ -103,6 +102,9 @@
 
     <ItemGroup>
         <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\Arithmetic\Arithmetic.js" Link="JavaScript\CommonJS\Arithmetic\Arithmetic.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\Arithmetic\Arithmetic.bogus.js" Link="JavaScript\CommonJS\Arithmetic\Arithmetic.bogus.js">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\JavaScript\CommonJS\Geometry\Geometry.js" Link="JavaScript\CommonJS\Geometry\Geometry.js">
@@ -141,6 +143,9 @@
         <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js" Link="JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.bogus.js" Link="JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.bogus.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Geometry\Geometry.js" Link="JavaScript\LegacyCommonJS\Geometry\Geometry.js">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
@@ -169,6 +174,9 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\Arithmetic\Arithmetic.js" Link="JavaScript\StandardModule\Arithmetic\Arithmetic.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\Arithmetic\Arithmetic.bogus.js" Link="JavaScript\StandardModule\Arithmetic\Arithmetic.bogus.js">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\JavaScript\StandardModule\Geometry\Geometry.js" Link="JavaScript\StandardModule\Geometry\Geometry.js">

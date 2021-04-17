@@ -23,6 +23,8 @@ using Newtonsoft.Json;
 
 namespace Microsoft.ClearScript.Test
 {
+    // ReSharper disable once PartialTypeWithSinglePart
+
     [TestClass]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
     [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "Typos in test code are acceptable.")]

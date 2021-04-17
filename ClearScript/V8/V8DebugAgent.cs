@@ -175,7 +175,8 @@ namespace Microsoft.ClearScript.V8
                             "  \"title\": \"{2}\",\r\n" +
                             "  \"url\": \"{3}\",\r\n" +
                             "  \"faviconUrl\": \"{6}\",\r\n" +
-                            "  \"devtoolsFrontendUrl\": \"chrome-devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws={4}:{5}/{0}\",\r\n" +
+                            "  \"devtoolsFrontendUrl\": \"devtools://devtools/bundled/js_app.html?experiments=true&v8only=true&ws={4}:{5}/{0}\",\r\n" +
+                            "  \"devtoolsFrontendUrlCompat\": \"devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws={4}:{5}/{0}\",\r\n" +
                             "  \"webSocketDebuggerUrl\": \"ws://{4}:{5}/{0}\"\r\n" +
                         "}} ]\r\n",
                         targetId,
@@ -192,7 +193,7 @@ namespace Microsoft.ClearScript.V8
             {
                 SendWebResponse(webContext, MiscHelpers.FormatInvariant(
                     "{{\r\n" +
-                        "  \"Browser\": \"ClearScript {0} [V8 {1}]\",\r\n" +
+                        "  \"Browser\": \"ClearScript/v{0}, V8 {1}\",\r\n" +
                         "  \"Protocol-Version\": \"1.1\"\r\n" +
                     "}}\r\n",
                     ClearScriptVersion.Informational,

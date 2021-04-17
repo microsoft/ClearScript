@@ -296,6 +296,11 @@ public:
         return result;
     }
 
+    v8::ScriptOrigin CreateScriptOrigin(v8::Local<v8::Value> hResourceName, int lineOffset = 0, int columnOffset = 0, bool isSharedCrossOrigin = false, int scriptId = -1, v8::Local<v8::Value> hSourceMapUrl = v8::Local<v8::Value>(), bool isOpaque = false, bool isWasm = false, bool isModule = false, v8::Local<v8::PrimitiveArray> hHostDefinedOptions = v8::Local<v8::PrimitiveArray>())
+    {
+        return v8::ScriptOrigin(m_upIsolate.get(), hResourceName, lineOffset, columnOffset, isSharedCrossOrigin, scriptId, hSourceMapUrl, isOpaque, isWasm, isModule, hHostDefinedOptions);
+    }
+
     template <typename T>
     v8::Local<T> CreateLocal(v8::Local<T> hTarget)
     {
@@ -478,7 +483,7 @@ public:
     void NORETURN ThrowOutOfMemoryException();
 
     static void ImportMetaInitializeCallback(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);
-    static v8::MaybeLocal<v8::Promise> ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier);
+    static v8::MaybeLocal<v8::Promise> ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> importAssertions);
     static v8::MaybeLocal<v8::Module> ModuleResolveCallback(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> importAssertions, v8::Local<v8::Module> hReferrer);
 
     void InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);

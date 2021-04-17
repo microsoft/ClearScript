@@ -13,6 +13,8 @@ namespace Microsoft.ClearScript.Windows.Core
     {
     }
 
+    // ReSharper disable once PartialTypeWithSinglePart
+
     /// <summary>
     /// Represents an instance of the JScript engine.
     /// </summary>
@@ -20,7 +22,7 @@ namespace Microsoft.ClearScript.Windows.Core
     /// This class can be used in non-desktop environments such as server applications. An
     /// implementation of <see cref="ISyncInvoker"/> is required to enforce thread affinity.
     /// </remarks>
-    public class JScriptEngine : WindowsScriptEngine, IJavaScriptEngine, IJScriptEngine
+    public partial class JScriptEngine : WindowsScriptEngine, IJavaScriptEngine, IJScriptEngine
     {
         #region data
 

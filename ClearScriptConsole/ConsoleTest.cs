@@ -96,17 +96,17 @@ namespace Microsoft.ClearScript.Test
             using (var engine = new V8ScriptEngine(new V8RuntimeConstraints { HeapExpansionMultiplier = 1.25 }))
             {
                 engine.Execute(@"
-					let node = [];
-					for (let j = 0; j < 15; ++j) {
-						const offset = Math.round((Math.random() - 0.5) * 12345);
-						for (let i = 0; i < 10000000; ++i) {
-							node.push(i + offset);
-						}
-						const next = [];
-						next.push(node);
-						node = next;
-					}
-				");
+                    let node = [];
+                    for (let j = 0; j < 15; ++j) {
+                        const offset = Math.round((Math.random() - 0.5) * 12345);
+                        for (let i = 0; i < 10000000; ++i) {
+                            node.push(i + offset);
+                        }
+                        const next = [];
+                        next.push(node);
+                        node = next;
+                    }
+                ");
             }
         }
 

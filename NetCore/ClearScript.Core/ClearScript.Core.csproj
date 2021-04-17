@@ -83,8 +83,10 @@
         <Compile Include="..\..\ClearScript\JavaScript\IArrayBufferView.cs" Link="JavaScript\IArrayBufferView.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\IDataView.cs" Link="JavaScript\IDataView.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\IJavaScriptEngine.cs" Link="JavaScript\IJavaScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\JavaScript\IJavaScriptEngine.NetStandard.cs" Link="JavaScript\IJavaScriptEngine.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\ITypedArray.cs" Link="JavaScript\ITypedArray.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptExtensions.cs" Link="JavaScript\JavaScriptExtensions.cs" />
+        <Compile Include="..\..\ClearScript\JavaScript\JavaScriptExtensions.NetStandard.cs" Link="JavaScript\JavaScriptExtensions.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\ModuleCategory.cs" Link="JavaScript\ModuleCategory.cs" />
         <Compile Include="..\..\ClearScript\NoDefaultScriptAccessAttribute.cs" Link="NoDefaultScriptAccessAttribute.cs" />
         <Compile Include="..\..\ClearScript\NoScriptAccessAttribute.cs" Link="NoScriptAccessAttribute.cs" />

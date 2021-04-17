@@ -25,5 +25,14 @@ namespace Microsoft.ClearScript
         /// </para>
         /// </remarks>
         public static bool UseAssemblyTable { get; set; }
+
+        /// <summary>
+        /// Gets or sets a semicolon-delimited list of directory paths to search for auxiliary files.
+        /// </summary>
+        /// <remarks>
+        /// This property allows the host to augment ClearScript's algorithm for locating unmanaged
+        /// resources such as native assemblies and related data files.
+        /// </remarks>
+        public static string AuxiliarySearchPath { get; set; }
     }
 }

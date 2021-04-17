@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript.JavaScript
 {
-    internal interface IJavaScriptEngine
+    // ReSharper disable once PartialTypeWithSinglePart
+    internal partial interface IJavaScriptEngine
     {
         uint BaseLanguageVersion { get; }
 

@@ -83,6 +83,31 @@ namespace Microsoft.ClearScript.V8
         /// This conversion is bidirectional and lossy. A <c>Task</c> object constructed from a
         /// JavaScript promise always has a result type of <see cref="object"/>.
         /// </summary>
-        EnableTaskPromiseConversion = 0x00000100
+        EnableTaskPromiseConversion = 0x00000100,
+
+    #if NETFRAMEWORK || UWP
+
+        /// <summary>
+        /// Specifies that the script engine is to perform automatic conversion from
+        /// .NET <c>ValueTask</c> and <c>ValueTask&lt;TResult&gt;</c> structures to JavaScript
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promises</see>.
+        /// This conversion is unidirectional and lossy. This option is ignored if
+        /// <see cref="EnableTaskPromiseConversion"/> is not specified.
+        /// </summary>
+        EnableValueTaskPromiseConversion = 0x00000200
+
+    #else
+
+        /// <summary>
+        /// Specifies that the script engine is to perform automatic conversion from
+        /// .NET <see cref="ValueTask"/> and <see cref="ValueTask{T}"/> structures to JavaScript
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promises</see>.
+        /// This conversion is unidirectional and lossy. This option is ignored if
+        /// <see cref="EnableTaskPromiseConversion"/> is not specified.
+        /// </summary>
+        EnableValueTaskPromiseConversion = 0x00000200
+
+    #endif
+
     }
 }

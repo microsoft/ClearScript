@@ -51,6 +51,16 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreModule")]
+        public void JScriptCoreModule_CommonJS_File_ForeignExtension()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, @"
+                var Arithmetic = require('JavaScript/LegacyCommonJS/Arithmetic/Arithmetic.bogus');
+                return Arithmetic.BogusAdd(123, 456);
+            "));
+        }
+
+        [TestMethod, TestCategory("JScriptCoreModule")]
         public void JScriptCoreModule_CommonJS_File_Nested()
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;

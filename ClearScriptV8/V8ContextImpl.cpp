@@ -2962,7 +2962,7 @@ v8::ScriptOrigin V8ContextImpl::CreateScriptOrigin(const V8DocumentInfo& documen
 {
     FROM_MAYBE_TRY
 
-        return v8::ScriptOrigin(
+        return CreateScriptOrigin(
             FROM_MAYBE(CreateString(documentInfo.GetResourceName())),
             0,
             0,

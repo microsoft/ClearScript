@@ -1214,7 +1214,7 @@ void V8IsolateImpl::ImportMetaInitializeCallback(v8::Local<v8::Context> hContext
 
 //-----------------------------------------------------------------------------
 
-v8::MaybeLocal<v8::Promise> V8IsolateImpl::ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier)
+v8::MaybeLocal<v8::Promise> V8IsolateImpl::ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> /*importAssertions*/)
 {
     return GetInstanceFromIsolate(hContext->GetIsolate())->ImportModule(hContext, hReferrer, hSpecifier);
 }
@@ -1377,7 +1377,7 @@ V8IsolateImpl::~V8IsolateImpl()
     }
 
     Dispose(m_hHostObjectHolderKey);
-    m_upIsolate->SetHostImportModuleDynamicallyCallback(nullptr);
+    m_upIsolate->SetHostImportModuleDynamicallyCallback(static_cast<v8::HostImportModuleDynamicallyWithImportAssertionsCallback>(nullptr));
     m_upIsolate->SetHostInitializeImportMetaObjectCallback(nullptr);
     m_upIsolate->SetPromiseHook(nullptr);
     m_upIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
@@ -1806,7 +1806,7 @@ void V8IsolateImpl::PromiseHook(v8::PromiseHookType type, v8::Local<v8::Promise>
 {
     if ((type == v8::PromiseHookType::kResolve) && !hPromise.IsEmpty())
     {
-        auto hContext = hPromise->CreationContext();
+        auto hContext = hPromise->GetCreationContext().FromMaybe(v8::Local<v8::Context>());
         if (!hContext.IsEmpty())
         {
             GetInstanceFromIsolate(hContext->GetIsolate())->FlushContextAsync(hContext);

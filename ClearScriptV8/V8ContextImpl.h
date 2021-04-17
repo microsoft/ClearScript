@@ -256,6 +256,11 @@ private:
         return result;
     }
 
+    v8::ScriptOrigin CreateScriptOrigin(v8::Local<v8::Value> hResourceName, int lineOffset = 0, int columnOffset = 0, bool isSharedCrossOrigin = false, int scriptId = -1, v8::Local<v8::Value> hSourceMapUrl = v8::Local<v8::Value>(), bool isOpaque = false, bool isWasm = false, bool isModule = false, v8::Local<v8::PrimitiveArray> hHostDefinedOptions = v8::Local<v8::PrimitiveArray>())
+    {
+        return m_spIsolateImpl->CreateScriptOrigin(hResourceName, lineOffset, columnOffset, isSharedCrossOrigin, scriptId, hSourceMapUrl, isOpaque, isWasm, isModule, hHostDefinedOptions);
+    }
+
     template <typename T>
     v8::Local<T> CreateLocal(v8::Local<T> hTarget)
     {

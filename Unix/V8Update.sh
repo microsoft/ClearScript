@@ -1,6 +1,11 @@
 #!/bin/bash
 
-v8testedrev=8.9.255.20
+v8testedrev=9.0.257.19
+v8testedcommit=
+
+if [[ $v8testedcommit == "" ]]; then
+    v8testedcommit=$v8testedrev
+fi
 
 function usage {
     echo
@@ -37,6 +42,7 @@ function continue {
 }
 
 v8rev=$v8testedrev
+v8commit=$v8testedcommit
 download=true
 mode=Release
 isdebug=false
@@ -70,6 +76,7 @@ while [[ $# -gt 0 ]]; do
         isofficial=true
     else
         v8rev=$1
+        v8commit=$1
     fi
     shift
 done
@@ -124,9 +131,11 @@ if [[ $download == true ]]; then
 
     if [[ $v8rev == tested || $v8rev == $v8testedrev ]]; then
         v8rev=$v8testedrev
+        v8commit=$v8testedcommit
         echo "V8 revision: Tested ($v8testedrev)"
     elif [[ $v8rev == latest ]]; then
         v8rev=master
+        v8commit=master
         echo "V8 revision: Latest"
         continue '*** WARNING: THIS V8 REVISION MAY NOT BE COMPATIBLE WITH CLEARSCRIPT ***'
     else
@@ -152,7 +161,7 @@ if [[ $download == true ]]; then
 
     echo "Downloading V8 and dependencies ..."
     gclient config https://chromium.googlesource.com/v8/v8 >config.log || fail
-    gclient sync -r $v8rev >sync.log || fail
+    gclient sync -r $v8commit >sync.log || fail
 
     echo "Applying patches ..."
     cd v8 || abort

@@ -9,6 +9,8 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.Windows
 {
+    // ReSharper disable once PartialTypeWithSinglePart
+
     /// <summary>
     /// Represents an instance of the JScript engine in a desktop environment.
     /// </summary>
@@ -18,7 +20,7 @@ namespace Microsoft.ClearScript.Windows
     /// Attempting to execute script code on a different thread results in an exception. Script
     /// delegates and event handlers are marshaled synchronously onto the correct thread.
     /// </remarks>
-    public class JScriptEngine : WindowsScriptEngine, IJavaScriptEngine, Core.IJScriptEngine
+    public partial class JScriptEngine : WindowsScriptEngine, IJavaScriptEngine, Core.IJScriptEngine
     {
         #region data
 

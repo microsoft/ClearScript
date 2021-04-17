@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -134,13 +135,21 @@ namespace Microsoft.ClearScript.V8
 
             if ((Samples != null) && (Samples.Count > 0))
             {
+                const ulong maxSafeInteger = 9007199254740991UL; // 2^53 - 1
+
                 writer.Write(",\"timeDeltas\":[");
                 {
                     writer.Write(Samples[0].Timestamp - StartTimestamp);
                     for (var index = 1; index < Samples.Count; index++)
                     {
+                        var current = Samples[index].Timestamp;
+                        var previous = Samples[index - 1].Timestamp;
+
+                        var delta = (current > previous) ? (current - previous) : 0;
+                        delta = Math.Min(delta, maxSafeInteger);
+
                         writer.Write(',');
-                        writer.Write(Samples[index].Timestamp - Samples[index - 1].Timestamp);
+                        writer.Write(delta);
                     }
                 }
                 writer.Write(']');
