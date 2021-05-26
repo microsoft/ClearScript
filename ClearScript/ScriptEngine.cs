@@ -53,6 +53,7 @@ namespace Microsoft.ClearScript
         {
             Name = nameManager.GetUniqueName(name, GetType().GetRootName());
             defaultDocumentSettings.FileNameExtensions = fileNameExtensions;
+            extensionMethodTable = realExtensionMethodTable = new ExtensionMethodTable();
         }
 
         #endregion
@@ -156,6 +157,31 @@ namespace Microsoft.ClearScript
             {
                 exposeHostObjectStaticMembers = value;
                 OnAccessSettingsChanged();
+            }
+        }
+
+        /// <summary>
+        /// Enables or disables extension method support.
+        /// </summary>
+        public bool DisableExtensionMethods
+        {
+            get => extensionMethodTable == emptyExtensionMethodTable;
+
+            set
+            {
+                var newExtensionMethodTable = value ? emptyExtensionMethodTable : realExtensionMethodTable;
+                if (newExtensionMethodTable != extensionMethodTable)
+                {
+                    ScriptInvoke(() =>
+                    {
+                        if (newExtensionMethodTable != extensionMethodTable)
+                        {
+                            extensionMethodTable = newExtensionMethodTable;
+                            bindCache.Clear();
+                            OnAccessSettingsChanged();
+                        }
+                    });
+                }
             }
         }
 
@@ -780,6 +806,40 @@ namespace Microsoft.ClearScript
         public void AddHostType(string itemName, HostItemFlags flags, string typeName, string assemblyName, params Type[] typeArgs)
         {
             AddHostItem(itemName, flags, TypeHelpers.ImportType(typeName, assemblyName, true, typeArgs));
+        }
+
+        /// <summary>
+        /// Exposes host types to script code.
+        /// </summary>
+        /// <param name="types">The types to expose.</param>
+        /// <remarks>
+        /// <para>
+        /// This method uses each specified type's name for the new global script item that will
+        /// represent it.
+        /// </para>
+        /// <para>
+        /// Host types are exposed to script code in the form of objects whose properties and
+        /// methods are bound to the type's static members and nested types. If the type has
+        /// generic parameters, the corresponding object will be invocable with type arguments to
+        /// yield a specific type.
+        /// </para>
+        /// <para>
+        /// For more information about the mapping between host members and script-callable
+        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// </para>
+        /// </remarks>
+        public void AddHostTypes(params Type[] types)
+        {
+            if (types != null)
+            {
+                foreach (var type in types)
+                {
+                    if (type != null)
+                    {
+                        AddHostType(type);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -1609,13 +1669,19 @@ namespace Microsoft.ClearScript
 
         #region extension method table
 
-        private readonly ExtensionMethodTable extensionMethodTable = new ExtensionMethodTable();
+        private static readonly ExtensionMethodTable emptyExtensionMethodTable = new ExtensionMethodTable();
+
+        private readonly ExtensionMethodTable realExtensionMethodTable;
+        private ExtensionMethodTable extensionMethodTable;
 
         internal void ProcessExtensionMethodType(Type type)
         {
-            if (extensionMethodTable.ProcessType(type, AccessContext, DefaultAccess))
+            if (extensionMethodTable != emptyExtensionMethodTable)
             {
-                bindCache.Clear();
+                if (extensionMethodTable.ProcessType(type, AccessContext, DefaultAccess))
+                {
+                    bindCache.Clear();
+                }
             }
         }
 
@@ -1623,7 +1689,10 @@ namespace Microsoft.ClearScript
 
         internal void RebuildExtensionMethodSummary()
         {
-            extensionMethodTable.RebuildSummary();
+            if (extensionMethodTable != emptyExtensionMethodTable)
+            {
+                extensionMethodTable.RebuildSummary();
+            }
         }
 
         #endregion

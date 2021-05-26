@@ -7,5 +7,6 @@ namespace Microsoft.ClearScript.Util
     {
         public static string Default = MiscHelpers.GetDispIDName(SpecialDispIDs.Default);
         public static string NewEnum = MiscHelpers.GetDispIDName(SpecialDispIDs.NewEnum);
+        public static string NewAsyncEnum = MiscHelpers.GetDispIDName(SpecialDispIDs.NewAsyncEnum);
     }
 }

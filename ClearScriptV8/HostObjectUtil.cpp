@@ -104,13 +104,15 @@ public:
     virtual V8Value GetEnumerator(void* pvObject) override
     {
         V8Value result(V8Value::Nonexistent);
-        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(GetEnumeratorForHostObject, pvObject, result);
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(GetHostObjectEnumerator, pvObject, result);
         return result;
     }
 
-    virtual bool AdvanceEnumerator(void* pvEnumerator, V8Value& value) override
+    virtual V8Value GetAsyncEnumerator(void* pvObject) override
     {
-        return V8_SPLIT_PROXY_MANAGED_INVOKE(StdBool, AdvanceEnumerator, pvEnumerator, value);
+        V8Value result(V8Value::Nonexistent);
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(GetHostObjectAsyncEnumerator, pvObject, result);
+        return result;
     }
 
     virtual void* CreateV8ObjectCache() override
@@ -212,11 +214,6 @@ public:
     virtual size_t GetMaxModuleCacheSize() override
     {
         return V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(int32_t, GetMaxModuleCacheSize);
-    }
-
-    virtual bool TryParseInt32(const StdString& text, int32_t& result) override
-    {
-        return V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(StdBool, TryParseInt32, text, result);
     }
 
 private:

@@ -1401,6 +1401,23 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(true, engine.Script.result);
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8ScriptEngine_PropertyNamesAndIndices()
+        {
+            engine.Execute(@"
+                obj = {};
+                obj['0'] = 'foo';
+                obj['01'] = 'bar';
+                obj['2'] = 'baz';
+                obj[2.5] = 'qux';
+                obj[3] = 'quux';
+            ");
+
+            var obj = engine.Script.obj as ScriptObject;
+            Assert.AreEqual("01,2.5", string.Join(",", obj.PropertyNames));
+            Assert.AreEqual("0,2,3", string.Join(",", obj.PropertyIndices));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

@@ -44,7 +44,7 @@ struct IHostObjectUtil
     virtual Invocability GetInvocability(void* pvObject) = 0;
 
     virtual V8Value GetEnumerator(void* pvObject) = 0;
-    virtual bool AdvanceEnumerator(void* pvEnumerator, V8Value& value) = 0;
+    virtual V8Value GetAsyncEnumerator(void* pvObject) = 0;
 
     virtual void* CreateV8ObjectCache() = 0;
     virtual void CacheV8Object(void* pvCache, void* pvObject, void* pvV8Object) = 0;
@@ -75,8 +75,6 @@ struct IHostObjectUtil
 
     virtual size_t GetMaxScriptCacheSize() = 0;
     virtual size_t GetMaxModuleCacheSize() = 0;
-
-    virtual bool TryParseInt32(const StdString& text, int32_t& result) = 0;
 };
 
 //-----------------------------------------------------------------------------

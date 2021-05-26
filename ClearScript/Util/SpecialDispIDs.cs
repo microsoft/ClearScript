@@ -12,5 +12,6 @@ namespace Microsoft.ClearScript.Util
         public const int NewEnum = -4;
         public const int This = -613;
         public const int GetEnumerator = -1024 * 96;
+        public const int NewAsyncEnum = -1024 * 256;
     }
 }

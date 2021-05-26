@@ -53,8 +53,8 @@
     V8_SPLIT_PROXY_MANAGED_METHOD(void, InvokeHostObject, void* pvObject, StdBool asConstructor, const std::vector<V8Value>& args, V8Value& result) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, InvokeHostObjectMethod, void* pvObject, const StdString& name, const std::vector<V8Value>& args, V8Value& result) \
     \
-    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetEnumeratorForHostObject, void* pvObject, V8Value& result) \
-    V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, AdvanceEnumerator, void* pvEnumerator, V8Value& value) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectEnumerator, void* pvObject, V8Value& result) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectAsyncEnumerator, void* pvObject, V8Value& result) \
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, QueueNativeCallback, NativeCallbackHandle* pCallbackHandle) \
     \
@@ -65,8 +65,8 @@
     V8_SPLIT_PROXY_MANAGED_METHOD(void, LoadModule, void* pvSourceDocumentInfo, const StdString& specifier, StdString& resourceName, StdString& sourceMapUrl, uint64_t& uniqueId, StdBool& isModule, StdString& code, void*& pvDocumentInfo) \
     V8_SPLIT_PROXY_MANAGED_METHOD(int32_t, CreateModuleContext, void* pvDocumentInfo, std::vector<StdString>& names, std::vector<V8Value>& values) \
     \
-    V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, TryParseInt32, const StdString& text, int32_t& result) \
-    V8_SPLIT_PROXY_MANAGED_METHOD(void, WriteBytesToStream, void* pvStream, const uint8_t* pBytes, int32_t count)
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, WriteBytesToStream, void* pvStream, const uint8_t* pBytes, int32_t count) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, GetTopLevelAwait)
 
 //-----------------------------------------------------------------------------
 // V8SplitProxyManaged

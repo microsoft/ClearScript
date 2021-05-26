@@ -47,6 +47,11 @@ void V8Platform::EnsureInstalled()
     {
         v8::V8::InitializePlatform(&ms_Instance);
         ASSERT_EVAL(v8::V8::Initialize());
+
+        if (!V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(StdBool, GetTopLevelAwait))
+        {
+            v8::V8::SetFlagsFromString("--no_harmony_top_level_await");
+        }
     });
 }
 

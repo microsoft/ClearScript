@@ -147,6 +147,11 @@ private:
         return m_spIsolateImpl->GetIteratorSymbol();
     }
 
+    v8::Local<v8::Symbol> GetAsyncIteratorSymbol()
+    {
+        return m_spIsolateImpl->GetAsyncIteratorSymbol();
+    }
+
     v8::Local<v8::Object> CreateObject()
     {
         return m_spIsolateImpl->CreateObject();
@@ -383,8 +388,8 @@ private:
     static void GetGlobalPropertyIndices(const v8::PropertyCallbackInfo<v8::Array>& info);
 
     static void HostObjectConstructorCallHandler(const v8::FunctionCallbackInfo<v8::Value>& info);
-    static void GetIteratorForHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
-    static void AdvanceHostObjectIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void GetHostObjectIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void GetHostObjectAsyncIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void CreateFunctionForHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void InvokeHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
 
@@ -435,9 +440,6 @@ private:
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
     Persistent<v8::Symbol> m_hIsHostObjectKey;
     Persistent<v8::String> m_hHostExceptionKey;
-    Persistent<v8::Private> m_hEnumeratorKey;
-    Persistent<v8::String> m_hDoneKey;
-    Persistent<v8::String> m_hValueKey;
     Persistent<v8::Private> m_hCacheKey;
     Persistent<v8::Private> m_hAccessTokenKey;
     Persistent<v8::Object> m_hAccessToken;
@@ -450,7 +452,8 @@ private:
     Persistent<v8::FunctionTemplate> m_hHostObjectTemplate;
     Persistent<v8::FunctionTemplate> m_hHostInvocableTemplate;
     Persistent<v8::FunctionTemplate> m_hHostDelegateTemplate;
-    Persistent<v8::FunctionTemplate> m_hHostIteratorTemplate;
+    Persistent<v8::Function> m_hToIteratorFunction;
+    Persistent<v8::Function> m_hToAsyncIteratorFunction;
     Persistent<v8::Function> m_hFlushFunction;
     Persistent<v8::Value> m_hTerminationException;
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;

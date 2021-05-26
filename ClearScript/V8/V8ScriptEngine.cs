@@ -322,7 +322,20 @@ namespace Microsoft.ClearScript.V8
                                         return exception.stack;
                                     }
                                     return '';
+                                },
+
+                                toIterator: function* (enumerator) {
+                                    while (enumerator.MoveNext()) {
+                                        yield enumerator.Current;
+                                    }
+                                },
+
+                                toAsyncIterator: async function* (asyncEnumerator) {
+                                    while (await asyncEnumerator.MoveNextPromise()) {
+                                        yield asyncEnumerator.Current;
+                                    }
                                 }
+
                             });
                         })() });
                     "

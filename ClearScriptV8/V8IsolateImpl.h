@@ -187,6 +187,11 @@ public:
         return v8::Symbol::GetIterator(m_upIsolate.get());
     }
 
+    v8::Local<v8::Symbol> GetAsyncIteratorSymbol()
+    {
+        return v8::Symbol::GetAsyncIterator(m_upIsolate.get());
+    }
+
     v8::Local<v8::Object> CreateObject()
     {
         return v8::Object::New(m_upIsolate.get());

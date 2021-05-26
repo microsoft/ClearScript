@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index a9ab6783fa..0201de13e4 100644
+index d2bfb6129d..564eac4dd5 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -779,7 +779,7 @@ config("toolchain") {
+@@ -814,7 +814,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
@@ -12,10 +12,10 @@ index a9ab6783fa..0201de13e4 100644
  
    if (v8_current_cpu == "arm") {
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index 76ee8c2d06..2e8c97c89b 100644
+index 0b039e40fa..c8be191e52 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -12718,6 +12718,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
+@@ -13127,6 +13127,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -28,10 +28,10 @@ index 76ee8c2d06..2e8c97c89b 100644
        Word32And(LoadMapBitField(map),
                  Int32Constant(Map::Bits1::IsCallableBit::kMask |
 diff --git a/src/compiler/backend/register-allocator-verifier.cc b/src/compiler/backend/register-allocator-verifier.cc
-index 50e57bc5ad..fa687a760a 100644
+index 1587f0ee18..25a9161375 100644
 --- a/src/compiler/backend/register-allocator-verifier.cc
 +++ b/src/compiler/backend/register-allocator-verifier.cc
-@@ -352,7 +352,7 @@ bool BlockAssessments::IsStaleReferenceStackSlot(InstructionOperand op) {
+@@ -360,7 +360,7 @@ bool BlockAssessments::IsStaleReferenceStackSlot(InstructionOperand op) {
  
  void BlockAssessments::Print() const {
    StdoutStream os;
@@ -120,10 +120,10 @@ index 9a5f7069e7..0e1a7aaebb 100644
  #endif  // V8_OS_WIN_X64
    } else {
 diff --git a/src/execution/isolate.h b/src/execution/isolate.h
-index 6c458860e8..688a826bef 100644
+index 61934d5619..9e488ac429 100644
 --- a/src/execution/isolate.h
 +++ b/src/execution/isolate.h
-@@ -576,7 +576,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
+@@ -578,7 +578,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
    // Returns the isolate inside which the current thread is running.
    V8_INLINE static Isolate* Current() {
      Isolate* isolate = TryGetCurrent();
@@ -132,10 +132,10 @@ index 6c458860e8..688a826bef 100644
    }
  
 diff --git a/src/execution/stack-guard.cc b/src/execution/stack-guard.cc
-index 941532e40d..6479d17ba2 100644
+index dd32f58b98..aeb0853ef7 100644
 --- a/src/execution/stack-guard.cc
 +++ b/src/execution/stack-guard.cc
-@@ -200,8 +200,10 @@ void StackGuard::FreeThreadResources() {
+@@ -213,8 +213,10 @@ void StackGuard::FreeThreadResources() {
  void StackGuard::ThreadLocal::Initialize(Isolate* isolate,
                                           const ExecutionAccess& lock) {
    const uintptr_t kLimitSize = FLAG_stack_size * KB;
@@ -148,10 +148,10 @@ index 941532e40d..6479d17ba2 100644
    set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
    real_climit_ = limit;
 diff --git a/src/init/v8.cc b/src/init/v8.cc
-index 921efe631b..0aef56b6bb 100644
+index fbf120b1b6..1706c4d38c 100644
 --- a/src/init/v8.cc
 +++ b/src/init/v8.cc
-@@ -161,7 +161,6 @@ void V8::InitializeOncePerProcess() {
+@@ -170,7 +170,6 @@ void V8::InitializeOncePerProcess() {
  }
  
  void V8::InitializePlatform(v8::Platform* platform) {
@@ -160,7 +160,7 @@ index 921efe631b..0aef56b6bb 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/objects/intl-objects.h b/src/objects/intl-objects.h
-index 8530a278e6..8bdd19e3c0 100644
+index d4b4feed68..5c132ef7a1 100644
 --- a/src/objects/intl-objects.h
 +++ b/src/objects/intl-objects.h
 @@ -287,7 +287,7 @@ class Intl {
@@ -173,7 +173,7 @@ index 8530a278e6..8bdd19e3c0 100644
        std::vector<std::string> all_locales;
        const char* loc;
 diff --git a/src/objects/js-date-time-format.cc b/src/objects/js-date-time-format.cc
-index 42c9c6f31c..72f66267f8 100644
+index 89ac294a0c..3e5d21b6d3 100644
 --- a/src/objects/js-date-time-format.cc
 +++ b/src/objects/js-date-time-format.cc
 @@ -1534,8 +1534,13 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
@@ -192,10 +192,10 @@ index 42c9c6f31c..72f66267f8 100644
    if (maybe_resolve_locale.IsNothing()) {
      THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError),
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index d9cb7486be..4ee7c09b2e 100644
+index 122bc8718b..481310413b 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
-@@ -842,6 +842,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -852,6 +852,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();

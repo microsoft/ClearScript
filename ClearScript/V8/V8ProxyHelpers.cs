@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
@@ -173,32 +172,24 @@ namespace Microsoft.ClearScript.V8
             return hostItem.Invocability;
         }
 
-        public static object GetEnumeratorForHostObject(IntPtr pObject)
+        public static object GetHostObjectEnumerator(IntPtr pObject)
         {
-            return GetEnumeratorForHostObject(GetHostObject(pObject));
+            return GetHostObjectEnumerator(GetHostObject(pObject));
         }
 
-        public static object GetEnumeratorForHostObject(object obj)
+        public static object GetHostObjectEnumerator(object obj)
         {
             return ((IDynamic)obj).GetProperty(SpecialMemberNames.NewEnum);
         }
 
-        public static bool AdvanceEnumerator(IntPtr pEnumerator, out object value)
+        public static object GetHostObjectAsyncEnumerator(IntPtr pObject)
         {
-            return AdvanceEnumerator(GetHostObject(pEnumerator), out value);
+            return GetHostObjectAsyncEnumerator(GetHostObject(pObject));
         }
 
-        public static bool AdvanceEnumerator(object enumerator, out object value)
+        public static object GetHostObjectAsyncEnumerator(object obj)
         {
-            var wrapper = (IScriptMarshalWrapper)enumerator;
-            if (((IEnumerator)wrapper.Unwrap()).MoveNext())
-            {
-                value = ((IDynamic)enumerator).GetProperty("Current");
-                return true;
-            }
-
-            value = null;
-            return false;
+            return ((IDynamic)obj).GetProperty(SpecialMemberNames.NewAsyncEnum);
         }
 
         #endregion

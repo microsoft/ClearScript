@@ -33,6 +33,7 @@ _ReSharper*/
 *.shfbproj_*
 *.VC.db
 V8/build/
+V8/DepotTools.zip
 .vs/
 packages/
 NuGet/Private/

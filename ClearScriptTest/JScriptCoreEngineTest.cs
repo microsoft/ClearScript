@@ -221,6 +221,13 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_AddHostTypes()
+        {
+            engine.AddHostTypes(typeof(Dictionary<,>), typeof(int), typeof(double));
+            Assert.IsInstanceOfType(engine.Evaluate("new Dictionary(Int32, Double, 100)"), typeof(Dictionary<int, double>));
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
         public void JScriptCoreEngine_Evaluate()
         {
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
@@ -2610,6 +2617,29 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("value instanceof Promise")));
 
             Assert.IsFalse(engine.Script.EngineInternal.isPromise(engine.Script.value));
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_DisableExtensionMethods()
+        {
+            engine.AddHostType("Str", typeof(string));
+            engine.AddHostType(typeof(Enumerable));
+            engine.AddHostType("Filter", typeof(Func<int, bool>));
+            engine.Script.array = Enumerable.Range(0, 10).ToArray();
+
+            Assert.IsFalse(engine.DisableExtensionMethods);
+            Assert.IsFalse(engine.Evaluate("array.Where") is Undefined);
+            Assert.AreEqual("1,3,5,7,9", engine.Evaluate("Str.Join(',', array.Where(new Filter(function (n) { return (n & 1) === 1; })))"));
+
+            engine.DisableExtensionMethods = true;
+            Assert.IsTrue(engine.DisableExtensionMethods);
+            Assert.IsTrue(engine.Evaluate("array.Where") is Undefined);
+            TestUtil.AssertException<MissingMemberException>(() => engine.Evaluate("Str.Join(',', array.Where(new Filter(function (n) { return (n & 1) === 1; })))"));
+
+            engine.DisableExtensionMethods = false;
+            Assert.IsFalse(engine.DisableExtensionMethods);
+            Assert.IsFalse(engine.Evaluate("array.Where") is Undefined);
+            Assert.AreEqual("1,3,5,7,9", engine.Evaluate("Str.Join(',', array.Where(new Filter(function (n) { return (n & 1) === 1; })))"));
         }
 
         // ReSharper restore InconsistentNaming

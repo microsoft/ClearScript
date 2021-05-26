@@ -15,7 +15,7 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
   * (Types) Constructors, nested types
 * Full support for generic types and methods, including C#-like type inference and explicit type arguments
 * Exposed .NET collections support native script iteration mechanisms:
-  * [![V8](https://img.shields.io/badge/-V8-blue)](#) [JavaScript iteration](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols) and [`for...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of)
+  * [![V8](https://img.shields.io/badge/-V8-blue)](#) [`for...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of) and [`for await...of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of)
   * [![JScript](https://img.shields.io/badge/-JScript-orange)](#) [`Enumerator`](https://docs.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2010/x32bxwys(v=vs.100))
   * [![VBScript](https://img.shields.io/badge/-VBScript-violet)](#) [`For Each...Next`](https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/tywtbxd0(v=vs.84))
 * Scripts can invoke methods with output parameters, optional parameters, and parameter arrays
@@ -27,11 +27,11 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
 * [![V8](https://img.shields.io/badge/-V8-blue)](#) Support for fast data transfer to and from [JavaScript typed arrays](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays)
 * [![V8](https://img.shields.io/badge/-V8-blue)](#) Support for [JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
 * [![V8](https://img.shields.io/badge/-V8-blue)](#) [![JScript](https://img.shields.io/badge/-JScript-orange)](#) Support for [CommonJS modules](http://wiki.commonjs.org/wiki/Modules)
-* [![New](https://img.shields.io/badge/-New!-green)](#) [![V8](https://img.shields.io/badge/-V8-blue)](#) Automatic conversion between .NET [`BigInteger`](https://docs.microsoft.com/en-us/dotnet/api/system.numerics.biginteger) and JavaScript [`BigInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt).
-* [![New](https://img.shields.io/badge/-New!-green)](#) [![V8](https://img.shields.io/badge/-V8-blue)](#) Optional automatic conversion between .NET [`DateTime`](https://docs.microsoft.com/en-us/dotnet/api/system.datetime) and JavaScript [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date).
-* [![New](https://img.shields.io/badge/-New!-green)](#) [![V8](https://img.shields.io/badge/-V8-blue)](#) Optional automatic conversion between .NET [tasks](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task) and JavaScript [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
-* [![New](https://img.shields.io/badge/-New!-green)](#) Support for .NET 5.0, .NET Core 3.1, .NET Framework 4.5, and .NET Standard 2.1.
-* [![New](https://img.shields.io/badge/-New!-green)](#) Support for Windows (x86/x64/arm64), Linux (x64/arm/arm64), and macOS (x64).
+* [![V8](https://img.shields.io/badge/-V8-blue)](#) Automatic conversion between .NET [`BigInteger`](https://docs.microsoft.com/en-us/dotnet/api/system.numerics.biginteger) and JavaScript [`BigInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt).
+* [![V8](https://img.shields.io/badge/-V8-blue)](#) Optional automatic conversion between .NET [`DateTime`](https://docs.microsoft.com/en-us/dotnet/api/system.datetime) and JavaScript [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date).
+* [![V8](https://img.shields.io/badge/-V8-blue)](#) Optional automatic conversion between .NET [tasks](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task) and JavaScript [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
+* Support for .NET 5.0, .NET Core 3.1, .NET Framework 4.5, and .NET Standard 2.1.
+* Support for Windows (x86/x64/arm64), Linux (x64/arm/arm64), and macOS (x64).
 
 # Installation
 ### Composite packages

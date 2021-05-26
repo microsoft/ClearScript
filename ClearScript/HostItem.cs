@@ -1031,7 +1031,12 @@ namespace Microsoft.ClearScript
 
                 if (name == SpecialMemberNames.NewEnum)
                 {
-                    return HostObject.Wrap(TargetPropertyBag.GetEnumerator(), typeof(IEnumerator));
+                    return CreateEnumerator(TargetPropertyBag);
+                }
+
+                if (name == SpecialMemberNames.NewAsyncEnum)
+                {
+                    return CreateAsyncEnumerator(TargetPropertyBag);
                 }
 
                 if (!TargetPropertyBag.TryGetValue(name, out value))
@@ -1079,7 +1084,12 @@ namespace Microsoft.ClearScript
 
                 if (name == SpecialMemberNames.NewEnum)
                 {
-                    return HostObject.Wrap(TargetPropertyBag.GetEnumerator(), typeof(IEnumerator));
+                    return CreateEnumerator(TargetPropertyBag);
+                }
+
+                if (name == SpecialMemberNames.NewAsyncEnum)
+                {
+                    return CreateAsyncEnumerator(TargetPropertyBag);
                 }
 
                 if (args.Length < 1)
@@ -1272,19 +1282,12 @@ namespace Microsoft.ClearScript
 
                 if (name == SpecialMemberNames.NewEnum)
                 {
-                    if ((Target is HostObject) || (Target is IHostVariable) || (Target is IByRefArg))
-                    {
-                        if (BindSpecialTarget(out IEnumerable _))
-                        {
-                            var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
-                            if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this)))
-                            {
-                                return enumerator;
-                            }
-                        }
-                    }
+                    return CreateEnumerator();
+                }
 
-                    throw new NotSupportedException("The object is not enumerable");
+                if (name == SpecialMemberNames.NewAsyncEnum)
+                {
+                    return CreateAsyncEnumerator();
                 }
 
                 if ((TargetDynamicMetaObject != null) && TargetDynamicMetaObject.HasMember(name, invokeFlags.HasFlag(BindingFlags.IgnoreCase)))
@@ -1381,19 +1384,12 @@ namespace Microsoft.ClearScript
 
             if (name == SpecialMemberNames.NewEnum)
             {
-                if ((Target is HostObject) || (Target is IHostVariable) || (Target is IByRefArg))
-                {
-                    if (BindSpecialTarget(out IEnumerable _))
-                    {
-                        var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
-                        if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this)))
-                        {
-                            return enumerator;
-                        }
-                    }
-                }
+                return CreateEnumerator();
+            }
 
-                throw new NotSupportedException("The object is not enumerable");
+            if (name == SpecialMemberNames.NewAsyncEnum)
+            {
+                return CreateAsyncEnumerator();
             }
 
             if ((TargetDynamicMetaObject != null) && (args.Length < 1))
@@ -1691,6 +1687,28 @@ namespace Microsoft.ClearScript
             }
 
             throw new ArgumentException("Invalid property assignment");
+        }
+
+        private static object CreateEnumerator<T>(IEnumerable<T> enumerable)
+        {
+            return HostObject.Wrap(enumerable.GetEnumerator(), typeof(IEnumerator<T>));
+        }
+
+        private object CreateEnumerator()
+        {
+            if ((Target is HostObject) || (Target is IHostVariable) || (Target is IByRefArg))
+            {
+                if (BindSpecialTarget(out IEnumerable _))
+                {
+                    var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
+                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this)))
+                    {
+                        return enumerator;
+                    }
+                }
+            }
+
+            throw new NotSupportedException("The object is not enumerable");
         }
 
         #endregion

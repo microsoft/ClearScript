@@ -262,8 +262,8 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         auto hContextImpl = CreateExternal(this);
 
         v8::Local<v8::FunctionTemplate> hGetIteratorFunction;
+        v8::Local<v8::FunctionTemplate> hGetAsyncIteratorFunction;
         v8::Local<v8::FunctionTemplate> hToFunctionFunction;
-        v8::Local<v8::FunctionTemplate> hNextFunction;
 
         BEGIN_CONTEXT_SCOPE
 
@@ -271,9 +271,6 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             FROM_MAYBE(m_hContext->Global()->Set(m_hContext, FROM_MAYBE(CreateString(StdString(SL("isHostObjectKey")))), m_hIsHostObjectKey));
 
             m_hHostExceptionKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("hostException")))));
-            m_hEnumeratorKey = CreatePersistent(CreatePrivate());
-            m_hDoneKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("done")))));
-            m_hValueKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("value")))));
             m_hCacheKey = CreatePersistent(CreatePrivate());
             m_hAccessTokenKey = CreatePersistent(CreatePrivate());
             m_hInternalUseOnly = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("The invoked function is for ClearScript internal use only")))));
@@ -283,9 +280,9 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             m_hPropertyValueNotInvocable = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("Property value does not support invocation")))));
             m_hInvalidModuleRequest = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("Invalid module load request")))));
 
-            hGetIteratorFunction = CreateFunctionTemplate(GetIteratorForHostObject, hContextImpl);
+            hGetIteratorFunction = CreateFunctionTemplate(GetHostObjectIterator, hContextImpl);
+            hGetAsyncIteratorFunction = CreateFunctionTemplate(GetHostObjectAsyncIterator, hContextImpl);
             hToFunctionFunction = CreateFunctionTemplate(CreateFunctionForHostDelegate, hContextImpl);
-            hNextFunction = CreateFunctionTemplate(AdvanceHostObjectIterator, hContextImpl);
             m_hAccessToken = CreatePersistent(CreateObject());
             m_hFlushFunction = CreatePersistent(FROM_MAYBE(v8::Function::New(m_hContext, FlushCallback)));
             m_hTerminationException = CreatePersistent(v8::Exception::Error(FROM_MAYBE(CreateString(StdString(SL("Script execution was interrupted"))))));
@@ -298,6 +295,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
         m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
+        m_hHostObjectTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
 
         m_hHostInvocableTemplate = CreatePersistent(CreateFunctionTemplate());
         m_hHostInvocableTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(SL("HostInvocable")))));
@@ -305,6 +303,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostInvocableTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
         m_hHostInvocableTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
         m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
+        m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
         m_hHostInvocableTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
 
         m_hHostDelegateTemplate = CreatePersistent(CreateFunctionTemplate());
@@ -313,14 +312,10 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
         m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
+        m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
         m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
         m_hHostDelegateTemplate->InstanceTemplate()->SetImmutableProto(); // instructs our patched V8 typeof implementation to return "function" 
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(FROM_MAYBE(CreateString(StdString(SL("toFunction")))), hToFunctionFunction);
-
-        m_hHostIteratorTemplate = CreatePersistent(CreateFunctionTemplate());
-        m_hHostIteratorTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(SL("HostIterator")))));
-        m_hHostIteratorTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
-        m_hHostIteratorTemplate->PrototypeTemplate()->Set(FROM_MAYBE(CreateString(StdString(SL("next")))), hNextFunction);
 
         m_pvV8ObjectCache = HostObjectUtil::GetInstance().CreateV8ObjectCache();
         m_spIsolateImpl->AddContext(this, options);
@@ -1474,7 +1469,8 @@ void V8ContextImpl::Teardown()
         Dispose(it->second);
     }
 
-    Dispose(m_hHostIteratorTemplate);
+    Dispose(m_hToAsyncIteratorFunction);
+    Dispose(m_hToIteratorFunction);
     Dispose(m_hHostDelegateTemplate);
     Dispose(m_hHostInvocableTemplate);
     Dispose(m_hHostObjectTemplate);
@@ -1489,9 +1485,6 @@ void V8ContextImpl::Teardown()
     Dispose(m_hAccessToken);
     Dispose(m_hAccessTokenKey);
     Dispose(m_hCacheKey);
-    Dispose(m_hValueKey);
-    Dispose(m_hDoneKey);
-    Dispose(m_hEnumeratorKey);
     Dispose(m_hHostExceptionKey);
     Dispose(m_hIsHostObjectKey);
 
@@ -1617,19 +1610,16 @@ void V8ContextImpl::GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std:
 
     FROM_MAYBE_TRY
 
-        auto hNames = FROM_MAYBE(hObject->GetPropertyNames(m_hContext, v8::KeyCollectionMode::kIncludePrototypes, static_cast<v8::PropertyFilter>(filter | v8::SKIP_SYMBOLS), v8::IndexFilter::kSkipIndices));
+        auto hNames = FROM_MAYBE(hObject->GetPropertyNames(m_hContext, v8::KeyCollectionMode::kIncludePrototypes, static_cast<v8::PropertyFilter>(filter | v8::SKIP_SYMBOLS), v8::IndexFilter::kSkipIndices, v8::KeyConversionMode::kConvertToString));
         auto nameCount = static_cast<int>(hNames->Length());
 
         names.reserve(nameCount);
         for (auto index = 0; index < nameCount; index++)
         {
             auto hName = FROM_MAYBE(hNames->Get(m_hContext, index));
-            auto name = CreateStdString(hName);
-
-            int propertyIndex;
-            if (!HostObjectUtil::GetInstance().TryParseInt32(name, propertyIndex))
+            if (hName->IsString())
             {
-                names.push_back(std::move(name));
+                names.push_back(CreateStdString(hName));
             }
         }
 
@@ -1644,19 +1634,32 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, st
 
     FROM_MAYBE_TRY
 
-        auto hNames = FROM_MAYBE(hObject->GetPropertyNames(m_hContext, v8::KeyCollectionMode::kIncludePrototypes, static_cast<v8::PropertyFilter>(filter | v8::SKIP_SYMBOLS), v8::IndexFilter::kIncludeIndices));
+        auto hNames = FROM_MAYBE(hObject->GetPropertyNames(m_hContext, v8::KeyCollectionMode::kIncludePrototypes, static_cast<v8::PropertyFilter>(filter | v8::SKIP_SYMBOLS), v8::IndexFilter::kIncludeIndices, v8::KeyConversionMode::kKeepNumbers));
         auto nameCount = static_cast<int>(hNames->Length());
 
         indices.reserve(nameCount);
         for (auto index = 0; index < nameCount; index++)
         {
             auto hName = FROM_MAYBE(hNames->Get(m_hContext, index));
-            auto name = CreateStdString(hName);
-
-            int propertyIndex;
-            if (HostObjectUtil::GetInstance().TryParseInt32(name, propertyIndex))
+            if (hName->IsInt32())
             {
-                indices.push_back(propertyIndex);
+                indices.push_back(FROM_MAYBE(hName->Int32Value(m_hContext)));
+            }
+            else if (hName->IsUint32())
+            {
+                auto value = FROM_MAYBE(hName->Uint32Value(m_hContext));
+                if (value <= static_cast<uint32_t>(INT_MAX))
+                {
+                    indices.push_back(static_cast<int>(value));
+                }
+            }
+            else if (hName->IsNumber())
+            {
+                auto value = FROM_MAYBE(hName->NumberValue(m_hContext));
+                if (value == std::round(value) && (value >= static_cast<double>(INT_MIN)) && (value <= static_cast<double>(INT_MAX)))
+                {
+                    indices.push_back(static_cast<int>(value));
+                }
             }
         }
 
@@ -2032,7 +2035,7 @@ void V8ContextImpl::HostObjectConstructorCallHandler(const v8::FunctionCallbackI
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::GetIteratorForHostObject(const v8::FunctionCallbackInfo<v8::Value>& info)
+void V8ContextImpl::GetHostObjectIterator(const v8::FunctionCallbackInfo<v8::Value>& info)
 {
     FROM_MAYBE_TRY
 
@@ -2044,15 +2047,15 @@ void V8ContextImpl::GetIteratorForHostObject(const v8::FunctionCallbackInfo<v8::
             {
                 try
                 {
-                    auto hEnumerator = pContextImpl->ImportValue(HostObjectUtil::GetInstance().GetEnumerator(pvObject));
+                    if (pContextImpl->m_hToIteratorFunction.IsEmpty())
+                    {
+                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hGlobal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("EngineInternal")))))).As<v8::Object>();
+                        pContextImpl->m_hToIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("toIterator")))))).As<v8::Function>());
+                    }
 
-                    v8::Local<v8::Object> hIterator;
-                    BEGIN_PULSE_VALUE_SCOPE(&pContextImpl->m_AllowHostObjectConstructorCall, true)
-                        hIterator = FROM_MAYBE(pContextImpl->m_hHostIteratorTemplate->InstanceTemplate()->NewInstance(pContextImpl->m_hContext));
-                    END_PULSE_VALUE_SCOPE
-
-                    ASSERT_EVAL(FROM_MAYBE(hIterator->SetPrivate(pContextImpl->m_hContext, pContextImpl->m_hEnumeratorKey, hEnumerator)));
-                    CALLBACK_RETURN(hIterator);
+                    v8::Local<v8::Value> args[1];
+                    args[0] = pContextImpl->ImportValue(HostObjectUtil::GetInstance().GetEnumerator(pvObject));
+                    CALLBACK_RETURN(FROM_MAYBE(pContextImpl->m_hToIteratorFunction->Call(pContextImpl->m_hContext, pContextImpl->GetUndefined(), 1, args)));
                 }
                 catch (const HostException& exception)
                 {
@@ -2066,47 +2069,32 @@ void V8ContextImpl::GetIteratorForHostObject(const v8::FunctionCallbackInfo<v8::
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::AdvanceHostObjectIterator(const v8::FunctionCallbackInfo<v8::Value>& info)
+void V8ContextImpl::GetHostObjectAsyncIterator(const v8::FunctionCallbackInfo<v8::Value>& info)
 {
     FROM_MAYBE_TRY
 
         auto pContextImpl = ::GetContextImplFromData(info);
         if (pContextImpl != nullptr)
         {
-            try
+            auto pvObject = pContextImpl->GetHostObject(info.Holder());
+            if (pvObject != nullptr)
             {
-                auto hHolder = ::ValueAsObject(info.Holder());
-                if (!hHolder.IsEmpty())
+                try
                 {
-                    auto hEnumerator = ::ValueAsObject(FROM_MAYBE(hHolder->GetPrivate(pContextImpl->m_hContext, pContextImpl->m_hEnumeratorKey)));
-                    if (!hEnumerator.IsEmpty())
+                    if (pContextImpl->m_hToAsyncIteratorFunction.IsEmpty())
                     {
-                        auto pvObject = pContextImpl->GetHostObject(hEnumerator);
-                        if (pvObject != nullptr)
-                        {
-                            auto hResult = pContextImpl->CreateObject();
-
-                            V8Value value(V8Value::Undefined);
-                            if (HostObjectUtil::GetInstance().AdvanceEnumerator(pvObject, value))
-                            {
-                                ASSERT_EVAL(FROM_MAYBE(hResult->Set(pContextImpl->m_hContext, pContextImpl->m_hDoneKey, pContextImpl->GetFalse())));
-                                ASSERT_EVAL(FROM_MAYBE(hResult->Set(pContextImpl->m_hContext, pContextImpl->m_hValueKey, pContextImpl->ImportValue(value))));
-                            }
-                            else
-                            {
-                                ASSERT_EVAL(FROM_MAYBE(hResult->Set(pContextImpl->m_hContext, pContextImpl->m_hDoneKey, pContextImpl->GetTrue())));
-                            }
-
-                            CALLBACK_RETURN(hResult);
-                        }
+                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hGlobal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("EngineInternal")))))).As<v8::Object>();
+                        pContextImpl->m_hToAsyncIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("toAsyncIterator")))))).As<v8::Function>());
                     }
+
+                    v8::Local<v8::Value> args[1];
+                    args[0] = pContextImpl->ImportValue(HostObjectUtil::GetInstance().GetAsyncEnumerator(pvObject));
+                    CALLBACK_RETURN(FROM_MAYBE(pContextImpl->m_hToAsyncIteratorFunction->Call(pContextImpl->m_hContext, pContextImpl->GetUndefined(), 1, args)));
                 }
-
-
-            }
-            catch (const HostException& exception)
-            {
-                pContextImpl->ThrowScriptException(exception);
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
             }
         }
 

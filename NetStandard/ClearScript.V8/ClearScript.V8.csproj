@@ -70,6 +70,7 @@
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.NetStandard.cs" Link="V8\V8ScriptEngine.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngineFlags.cs" Link="V8\V8ScriptEngineFlags.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptItem.cs" Link="V8\V8ScriptItem.cs" />
+        <Compile Include="..\..\ClearScript\V8\V8Settings.cs" Link="V8\V8Settings.cs" />
         <Compile Include="..\..\ClearScript\V8\V8TestProxy.cs" Link="V8\V8TestProxy.cs" />
     </ItemGroup>
     

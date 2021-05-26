@@ -233,16 +233,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        private delegate void RawGetEnumeratorForHostObject(
+        private delegate void RawGetHostObjectEnumerator(
             [In] IntPtr pObject,
             [In] V8Value.Ptr pResult
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool RawAdvanceEnumerator(
-            [In] IntPtr pEnumerator,
-            [In] V8Value.Ptr pValue
+        private delegate void RawGetHostObjectAsyncEnumerator(
+            [In] IntPtr pObject,
+            [In] V8Value.Ptr pResult
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -303,6 +302,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] int count
         );
 
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool RawGetTopLevelAwait();
+
         #endregion
 
         #region method table construction
@@ -346,16 +349,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 GetMethodPtr<RawGetHostObjectPropertyIndices>(GetHostObjectPropertyIndices),
                 GetMethodPtr<RawInvokeHostObject>(InvokeHostObject),
                 GetMethodPtr<RawInvokeHostObjectMethod>(InvokeHostObjectMethod),
-                GetMethodPtr<RawGetEnumeratorForHostObject>(GetEnumeratorForHostObject),
-                GetMethodPtr<RawAdvanceEnumerator>(AdvanceEnumerator),
+                GetMethodPtr<RawGetHostObjectEnumerator>(GetHostObjectEnumerator),
+                GetMethodPtr<RawGetHostObjectAsyncEnumerator>(GetHostObjectAsyncEnumerator),
                 GetMethodPtr<RawQueueNativeCallback>(QueueNativeCallback),
                 GetMethodPtr<RawCreateNativeCallbackTimer>(CreateNativeCallbackTimer),
                 GetMethodPtr<RawChangeNativeCallbackTimer>(ChangeNativeCallbackTimer),
                 GetMethodPtr<RawDestroyNativeCallbackTimer>(DestroyNativeCallbackTimer),
                 GetMethodPtr<RawLoadModule>(LoadModule),
                 GetMethodPtr<RawCreateModuleContext>(CreateModuleContext),
-                GetMethodPtr<RawTryParseInt32>(TryParseInt32),
-                GetMethodPtr<RawWriteBytesToStream>(WriteBytesToStream)
+                GetMethodPtr<RawWriteBytesToStream>(WriteBytesToStream),
+                GetMethodPtr<RawGetTopLevelAwait>(GetTopLevelAwait)
             };
 
             var pMethodTable = Marshal.AllocCoTaskMem(IntPtr.Size * methodPtrs.Length);
@@ -668,11 +671,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        private static void GetEnumeratorForHostObject(IntPtr pObject, V8Value.Ptr pResult)
+        private static void GetHostObjectEnumerator(IntPtr pObject, V8Value.Ptr pResult)
         {
             try
             {
-                V8Value.Set(pResult, V8ProxyHelpers.GetEnumeratorForHostObject(pObject));
+                V8Value.Set(pResult, V8ProxyHelpers.GetHostObjectEnumerator(pObject));
             }
             catch (Exception exception)
             {
@@ -680,23 +683,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        private static bool AdvanceEnumerator(IntPtr pEnumerator, V8Value.Ptr pValue)
+        private static void GetHostObjectAsyncEnumerator(IntPtr pObject, V8Value.Ptr pResult)
         {
             try
             {
-                var result = V8ProxyHelpers.AdvanceEnumerator(pEnumerator, out object value);
-                if (result)
-                {
-                    V8Value.Set(pValue, value);
-                    return true;
-                }
-
-                return false;
+                V8Value.Set(pResult, V8ProxyHelpers.GetHostObjectAsyncEnumerator(pObject));
             }
             catch (Exception exception)
             {
-                ScheduleHostException(pEnumerator, exception);
-                return default;
+                ScheduleHostException(pObject, exception);
             }
         }
 
@@ -772,11 +767,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        private static bool TryParseInt32(StdString.Ptr pText, out int result)
-        {
-            return int.TryParse(StdString.GetValue(pText), out result);
-        }
-
         private static void WriteBytesToStream(IntPtr pStream, IntPtr pBytes, int count)
         {
             try
@@ -789,6 +779,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 ScheduleHostException(exception);
             }
+        }
+
+        private static bool GetTopLevelAwait()
+        {
+            return V8Settings.EnableTopLevelAwait;
         }
 
         #endregion

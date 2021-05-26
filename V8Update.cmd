@@ -1,11 +1,13 @@
 @echo off
 setlocal
 
-set v8testedrev=9.0.257.19
+set v8testedrev=9.1.269.28
 set v8testedcommit=
 
 if not "%v8testedcommit%"=="" goto ProcessArgs
 set v8testedcommit=%v8testedrev%
+
+set jsontag=v3.9.1
 
 ::-----------------------------------------------------------------------------
 :: process arguments
@@ -188,6 +190,16 @@ call git apply --reject --ignore-whitespace ..\..\V8Patch.txt 2>applyV8Patch.log
 if errorlevel 1 goto Error
 cd ..
 :ApplyPatchesDone
+
+:DownloadMiscDone
+echo Downloading additional libraries ...
+call git clone -n https://github.com/nlohmann/json.git 2>cloneJson.log
+if errorlevel 1 goto Error
+cd json
+call git checkout %jsontag% 2>checkout.log
+if errorlevel 1 goto Error
+cd ..
+:DownloadMiscDone
 
 :DownloadDone
 

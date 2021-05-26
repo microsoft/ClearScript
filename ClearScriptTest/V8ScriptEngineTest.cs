@@ -237,6 +237,13 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AddHostTypes()
+        {
+            engine.AddHostTypes(typeof(Dictionary<,>), typeof(int), typeof(double));
+            Assert.IsInstanceOfType(engine.Evaluate("new Dictionary(Int32, Double, 100)"), typeof(Dictionary<int, double>));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_Evaluate()
         {
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("Math.E * Math.PI"));
@@ -3220,6 +3227,28 @@ namespace Microsoft.ClearScript.Test
                     }
                 });
             }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DisableExtensionMethods()
+        {
+            engine.AddHostType(typeof(Enumerable));
+            engine.AddHostType("Filter", typeof(Func<int, bool>));
+            engine.Script.array = Enumerable.Range(0, 10).ToArray();
+
+            Assert.IsFalse(engine.DisableExtensionMethods);
+            Assert.IsFalse(engine.Evaluate("array.Where") is Undefined);
+            Assert.AreEqual("1,3,5,7,9", engine.Evaluate("Array.from(array.Where(new Filter(n => (n & 1) === 1))).toString()"));
+
+            engine.DisableExtensionMethods = true;
+            Assert.IsTrue(engine.DisableExtensionMethods);
+            Assert.IsTrue(engine.Evaluate("array.Where") is Undefined);
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate("Array.from(array.Where(new Filter(n => (n & 1) === 1))).toString()"));
+
+            engine.DisableExtensionMethods = false;
+            Assert.IsFalse(engine.DisableExtensionMethods);
+            Assert.IsFalse(engine.Evaluate("array.Where") is Undefined);
+            Assert.AreEqual("1,3,5,7,9", engine.Evaluate("Array.from(array.Where(new Filter(n => (n & 1) === 1))).toString()"));
         }
 
         // ReSharper restore InconsistentNaming

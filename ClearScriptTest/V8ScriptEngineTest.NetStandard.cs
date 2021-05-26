@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime;
 using System.Threading;
 using Microsoft.ClearScript.V8;
@@ -84,6 +86,165 @@ namespace Microsoft.ClearScript.Test
             Thread.Sleep(250);
             engine.Execute("promise.then(value => result = value, value => error = value);");
             Assert.IsInstanceOfType(engine.Script.error.hostException.GetBaseException(), typeof(AmbiguousImplementationException));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_PropertyBag()
+        {
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = new PropertyBag { ["foo"] = 123, ["bar"] = "blah" };
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    for await (var item of enumerable) {
+                        result += item.Value;
+                    }
+                    done.Set();
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_List()
+        {
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = new List<object> { 123, "blah" };
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    for await (var item of enumerable) {
+                        result += item;
+                    }
+                    done.Set();
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_ArrayList()
+        {
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = new ArrayList { 123, "blah" };
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    for await (var item of enumerable) {
+                        result += item;
+                    }
+                    done.Set();
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_Array()
+        {
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = new object[] { 123, "blah" };
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    for await (var item of enumerable) {
+                        result += item;
+                    }
+                    done.Set();
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable()
+        {
+            static async IAsyncEnumerable<object> GetItems()
+            {
+                await Task.Delay(10);
+                yield return 123;
+                await Task.Delay(10);
+                yield return "blah";
+            }
+
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = GetItems();
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    for await (var item of enumerable) {
+                        result += item;
+                    }
+                    done.Set();
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable_Exception()
+        {
+            const string errorMessage = "Well, this is bogus!";
+            static async IAsyncEnumerable<object> GetItems()
+            {
+                await Task.Delay(10);
+                yield return 123;
+                await Task.Delay(10);
+                yield return "blah";
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = GetItems();
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    try {
+                        for await (var item of enumerable) {
+                            result += item;
+                        }
+                    }
+                    catch (error) {
+                        errorMessage = error.message;
+                        throw error;
+                    }
+                    finally {
+                        done.Set();
+                    }
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            Assert.AreEqual(errorMessage, engine.Script.errorMessage);
         }
 
         // ReSharper restore InconsistentNaming

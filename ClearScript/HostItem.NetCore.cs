@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -25,6 +26,41 @@ namespace Microsoft.ClearScript
 
             return TargetSupportsExpandoMembers(target, flags) ? new DispatchExHostItem(engine, target, flags) : new HostItem(engine, target, flags);
         }
+
+        #endregion
+
+        #region internal members
+
+        #region member invocation
+
+        private object CreateAsyncEnumerator<T>(IEnumerable<T> enumerable)
+        {
+            return HostObject.Wrap(enumerable.GetEnumerator().ToAsyncEnumerator(Engine), typeof(IAsyncEnumeratorPromise<T>));
+        }
+
+        private object CreateAsyncEnumerator()
+        {
+            if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IAsyncEnumerable<>), out _))
+            {
+                var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
+                if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                {
+                    return enumerator;
+                }
+            }
+            else if (BindSpecialTarget(out IEnumerable _))
+            {
+                var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
+                if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                {
+                    return enumerator;
+                }
+            }
+
+            throw new NotSupportedException("The object is not async-enumerable");
+        }
+
+        #endregion
 
         #endregion
 

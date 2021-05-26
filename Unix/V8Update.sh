@@ -1,11 +1,13 @@
 #!/bin/bash
 
-v8testedrev=9.0.257.19
+v8testedrev=9.1.269.28
 v8testedcommit=
 
 if [[ $v8testedcommit == "" ]]; then
     v8testedcommit=$v8testedrev
 fi
+
+jsontag=v3.9.1
 
 function usage {
     echo
@@ -168,6 +170,12 @@ if [[ $download == true ]]; then
     git config user.name ClearScript || fail
     git config user.email "ClearScript@microsoft.com" || fail
     git apply --reject --ignore-whitespace ../../V8Patch.txt 2>applyV8Patch.log || fail
+    cd ..
+    
+    echo "Downloading additional libraries ..."
+    git clone -n https://github.com/nlohmann/json.git 2>cloneJson.log || fail
+    cd json || abort
+    git checkout $jsontag 2>checkout.log || fail
     cd ..
 
     cd ..

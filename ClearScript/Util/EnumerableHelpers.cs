@@ -11,7 +11,8 @@ using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Util
 {
-    internal static class EnumerableHelpers
+    // ReSharper disable once PartialTypeWithSinglePart
+    internal static partial class EnumerableHelpers
     {
         public static readonly HostType HostType = HostType.Wrap(typeof(EnumerableHelpers));
 
@@ -34,17 +35,6 @@ namespace Microsoft.ClearScript.Util
             foreach (var element in source)
             {
                 action(element, index++);
-            }
-        }
-
-        public static IEnumerable<T> ToSafeEnumerable<T>(this IEnumerable<T> source)
-        {
-            if (source != null)
-            {
-                foreach (var element in source)
-                {
-                    yield return element;
-                }
             }
         }
 
@@ -96,11 +86,6 @@ namespace Microsoft.ClearScript.Util
         public static IEnumerator GetEnumerator(IEnumerable source)
         {
             return source.GetEnumerator();
-        }
-
-        public static IEnumerator GetEnumerator(object source)
-        {
-            return ((IEnumerable)source).GetEnumerator();
         }
     }
 

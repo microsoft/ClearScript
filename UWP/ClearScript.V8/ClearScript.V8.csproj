@@ -89,6 +89,7 @@
     <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.cs" Link="V8\V8ScriptEngine.cs" />
     <Compile Include="..\..\ClearScript\V8\V8ScriptEngineFlags.cs" Link="V8\V8ScriptEngineFlags.cs" />
     <Compile Include="..\..\ClearScript\V8\V8ScriptItem.cs" Link="V8\V8ScriptItem.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8Settings.cs" Link="V8\V8Settings.cs" />
     <Compile Include="..\..\ClearScript\V8\V8TestProxy.cs" Link="V8\V8TestProxy.cs" />
   </ItemGroup>
   <PropertyGroup>
@@ -99,7 +100,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.11</Version>
+      <Version>6.2.12</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

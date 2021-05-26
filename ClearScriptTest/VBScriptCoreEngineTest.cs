@@ -224,6 +224,14 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptCoreEngine")]
+        public void VBScriptCoreEngine_AddHostTypes()
+        {
+            engine.AddHostObject("host", new HostFunctions());
+            engine.AddHostTypes(typeof(Dictionary<,>), typeof(int), typeof(decimal));
+            Assert.IsInstanceOfType(engine.Evaluate("host.newObj(Dictionary(Int32, Decimal), 100)"), typeof(Dictionary<int, decimal>));
+        }
+
+        [TestMethod, TestCategory("VBScriptCoreEngine")]
         public void VBScriptCoreEngine_Evaluate()
         {
             Assert.AreEqual(Math.E * Math.PI, engine.Evaluate("e * pi"));
