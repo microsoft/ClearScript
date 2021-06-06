@@ -183,7 +183,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var valueType = value.GetType();
-            if (valueType == type)
+            if (valueType == type || type.IsAssignableFrom(valueType))
             {
                 return true;
             }
