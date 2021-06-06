@@ -283,6 +283,14 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
+        public void BaseMemberAccess_ObjectTypedArgMethod()
+        {
+            var arg = new TestArg() as BaseTestArg;
+            engine.AddRestrictedHostObject("arg", arg);
+            Assert.AreEqual(testObject.ObjectTypedArgMethod(arg), engine.Evaluate("testObject.ObjectTypedArgMethod(arg)"));
+        }
+        
+        [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_BindTestMethod_Interface()
         {
             var arg = new TestArg() as ITestArg;

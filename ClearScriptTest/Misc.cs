@@ -24,6 +24,7 @@ namespace Microsoft.ClearScript.Test
 
     public class TestArg : BaseTestArg, ITestArg
     {
+        public static implicit operator string(TestArg arg) => "";
     }
 
     public enum TestEnum : short
