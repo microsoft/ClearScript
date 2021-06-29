@@ -46,8 +46,6 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(new Guid("c0f52143-a775-4b71-b206-a759285a35a5"), this, typeof(T), arg);
         }
 
-        public object ObjectTypedArgMethod(object arg) => arg;
-
         #region Implementation of IBaseTestInterface
 
         public int[] BaseInterfaceProperty { get; set; }

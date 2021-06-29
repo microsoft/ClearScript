@@ -192,7 +192,7 @@ index 89ac294a0c..3e5d21b6d3 100644
    if (maybe_resolve_locale.IsNothing()) {
      THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError),
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index 122bc8718b..481310413b 100644
+index 18e659a910..f2b26540f9 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
 @@ -852,6 +852,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {

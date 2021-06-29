@@ -97,7 +97,7 @@ namespace Microsoft.ClearScript.Test
             var bag = new PropertyBag();
             engine.AddHostObject("bag", bag);
 
-            const int threadCount = 256;
+            var threadCount = Environment.Is64BitProcess ? 1024 : 256;
             var engineCount = 0;
 
             // 32-bit V8 starts failing requests to create new contexts rather quickly. This is
@@ -105,7 +105,7 @@ namespace Microsoft.ClearScript.Test
             // reservation. 64-bit V8 reserves much larger blocks but benefits from the enormous
             // available address space.
 
-            var maxV8Count = Environment.Is64BitProcess ? 128 : 16;
+            var maxV8Count = Environment.Is64BitProcess ? 512 : 16;
             var maxJScriptCount = (threadCount - maxV8Count) / 2;
 
             var startEvent = new ManualResetEventSlim(false);

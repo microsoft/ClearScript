@@ -148,6 +148,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public void Dispose()
         {
             holder.ReleaseEntity();
+            GC.KeepAlive(this);
         }
 
         ~V8ObjectImpl()

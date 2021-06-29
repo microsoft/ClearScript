@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
+
 namespace Microsoft.ClearScript.V8.SplitProxy
 {
     internal sealed class V8DebugListenerImpl : IV8DebugListener
@@ -38,6 +40,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public void Dispose()
         {
             holder.ReleaseEntity();
+            GC.KeepAlive(this);
         }
 
         ~V8DebugListenerImpl()

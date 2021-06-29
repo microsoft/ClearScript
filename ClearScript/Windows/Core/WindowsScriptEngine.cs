@@ -760,11 +760,11 @@ namespace Microsoft.ClearScript.Windows.Core
         /// </remarks>
         protected override void Dispose(bool disposing)
         {
-            if (disposedFlag.Set())
+            if (disposing)
             {
-                base.Dispose(disposing);
-                if (disposing)
+                if (disposedFlag.Set())
                 {
+                    base.Dispose(true);
                     syncInvoker.VerifyAccess();
 
                     if (sourceManagement)
@@ -781,6 +781,10 @@ namespace Microsoft.ClearScript.Windows.Core
                     ((IDisposable)script).Dispose();
                     activeScript.Close();
                 }
+            }
+            else
+            {
+                base.Dispose(false);
             }
         }
 

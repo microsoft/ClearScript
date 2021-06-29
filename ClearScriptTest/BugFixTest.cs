@@ -1338,7 +1338,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_ImplicitConversionOperators()
+        public void BugFix_ImplicitConversion()
         {
             engine.Script.doc = XDocument.Parse("<doc><foo>bar</foo><baz>qux</baz></doc>");
             engine.AddHostType(typeof(Enumerable));
@@ -1347,6 +1347,16 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("<foo>bar</foo>", engine.Evaluate("doc.Root.Elements('foo').First().ToString()"));
             Assert.AreEqual(1, engine.Evaluate("doc.Root.Elements(new XmlName('foo')).Count()"));
             Assert.AreEqual("<foo>bar</foo>", engine.Evaluate("doc.Root.Elements(new XmlName('foo')).First().ToString()"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_ImplicitConversion_Invalid()
+        {
+            Func<object, object> testMethod = arg => arg;
+            var testArg = new XmlName("foo");
+            engine.Script.testMethod = testMethod;
+            engine.Script.testArg = testArg;
+            Assert.AreEqual(testMethod(testArg), engine.Evaluate("testMethod(testArg)"));
         }
 
         [TestMethod, TestCategory("BugFix")]

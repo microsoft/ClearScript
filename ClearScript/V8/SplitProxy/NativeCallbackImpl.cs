@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8.SplitProxy
@@ -30,6 +31,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public void Dispose()
         {
             holder.ReleaseEntity();
+            GC.KeepAlive(this);
         }
 
         ~NativeCallbackImpl()

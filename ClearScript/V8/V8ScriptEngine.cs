@@ -211,7 +211,9 @@ namespace Microsoft.ClearScript.V8
         internal V8ScriptEngine(V8Runtime runtime, string name, V8RuntimeConstraints constraints, V8ScriptEngineFlags flags, int debugPort)
             : base((runtime != null) ? runtime.Name + ":" + name : name, "js")
         {
-            using (var localRuntime = (runtime != null) ? null : new V8Runtime(name, constraints))
+            var localRuntime = (runtime != null) ? null : new V8Runtime(name, constraints);
+
+            using (localRuntime)
             {
                 var activeRuntime = runtime ?? localRuntime;
                 DocumentNameManager = activeRuntime.DocumentNameManager;
@@ -346,6 +348,13 @@ namespace Microsoft.ClearScript.V8
                     awaitDebuggerAndPause = true;
                 }
             }
+
+            // The above code appears to be problematic on some .NET runtimes, intermittently
+            // triggering premature finalization of the V8 isolate proxy. That can lead to a crash
+            // if the proxy's finalizer ends up racing against its Dispose method. The call below
+            // should prevent this condition in all cases.
+
+            GC.KeepAlive(localRuntime);
         }
 
         #endregion
@@ -1536,14 +1545,18 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         protected override void Dispose(bool disposing)
         {
-            if (disposedFlag.Set())
+            if (disposing)
             {
-                base.Dispose(disposing);
-                if (disposing)
+                if (disposedFlag.Set())
                 {
+                    base.Dispose(true);
                     ((IDisposable)script).Dispose();
                     proxy.Dispose();
                 }
+            }
+            else
+            {
+                base.Dispose(false);
             }
         }
 

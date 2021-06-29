@@ -165,11 +165,9 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsAssignableFrom(this Type type, ref object value)
         {
-            var isByRef = false;
             if (type.IsByRef)
             {
                 type = type.GetElementType();
-                isByRef = true;
             }
 
             if (type.IsNullable())
@@ -183,23 +181,18 @@ namespace Microsoft.ClearScript.Util
             }
 
             var valueType = value.GetType();
-            if (valueType == type || type.IsAssignableFrom(valueType))
+            if ((valueType == type) || type.IsAssignableFrom(valueType))
             {
                 return true;
             }
 
-            if (!isByRef && type.IsImplicitlyConvertibleFrom(valueType, ref value))
+            if (type.IsImplicitlyConvertibleFrom(valueType, ref value))
             {
                 return true;
             }
 
             if (!type.IsValueType)
             {
-                if (type.IsAssignableFrom(valueType))
-                {
-                    return true;
-                }
-
                 if (type.IsInterface && type.IsImport && valueType.IsCOMObject)
                 {
                     var result = false;

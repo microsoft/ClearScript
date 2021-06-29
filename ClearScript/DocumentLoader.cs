@@ -46,7 +46,7 @@ namespace Microsoft.ClearScript
         public virtual uint MaxCacheSize
         {
             get => 0;
-            set => throw new NotSupportedException("Loader does not support caching");
+            set => throw new NotSupportedException("The document loader does not support caching");
         }
 
         /// <summary>
@@ -100,6 +100,30 @@ namespace Microsoft.ClearScript
         /// are not required to manage document caches of unlimited size.
         /// </remarks>
         public abstract Task<Document> LoadDocumentAsync(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback);
+
+        /// <summary>
+        /// Searches for a cached document by <see cref="DocumentInfo.Uri">URI</see>.
+        /// </summary>
+        /// <param name="uri">The document URI for which to search.</param>
+        /// <returns>The cached document if it was found, <c>null</c> otherwise.</returns>
+        public virtual Document GetCachedDocument(Uri uri)
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Stores a document in the cache.
+        /// </summary>
+        /// <param name="document">The document to store in the cache.</param>
+        /// <param name="replace"><c>True</c> to replace any existing document with the same URI, <c>false</c> otherwise.</param>
+        /// <returns>The cached document, which may be different from <paramref name="document"/> if <paramref name="replace"/> is <c>false</c>.</returns>
+        /// <remarks>
+        /// A cached document must have an absolute <see cref="DocumentInfo.Uri">URI</see>.
+        /// </remarks>
+        public virtual Document CacheDocument(Document document, bool replace)
+        {
+            throw new NotSupportedException("The document loader does not support caching");
+        }
 
         /// <summary>
         /// Discards all cached documents.
@@ -359,48 +383,7 @@ namespace Microsoft.ClearScript
                 var callback = settings.LoadCallback;
                 callback?.Invoke(ref documentInfo);
 
-                return CacheDocument(new StringDocument(documentInfo, contents));
-            }
-
-            private Document GetCachedDocument(Uri uri)
-            {
-                lock (cache)
-                {
-                    for (var index = 0; index < cache.Count; index++)
-                    {
-                        var cachedDocument = cache[index];
-                        if (cachedDocument.Info.Uri == uri)
-                        {
-                            cache.RemoveAt(index);
-                            cache.Insert(0, cachedDocument);
-                            return cachedDocument;
-                        }
-                    }
-
-                    return null;
-                }
-            }
-
-            private Document CacheDocument(Document document)
-            {
-                lock (cache)
-                {
-                    var cachedDocument = cache.FirstOrDefault(testDocument => testDocument.Info.Uri == document.Info.Uri);
-                    if (cachedDocument != null)
-                    {
-                        Debug.Assert(cachedDocument.Contents.ReadToEnd().SequenceEqual(document.Contents.ReadToEnd()));
-                        return cachedDocument;
-                    }
-
-                    var maxCacheSize = Math.Max(16, Convert.ToInt32(Math.Min(MaxCacheSize, int.MaxValue)));
-                    while (cache.Count >= maxCacheSize)
-                    {
-                        cache.RemoveAt(cache.Count - 1);
-                    }
-
-                    cache.Insert(0, document);
-                    return document;
-                }
+                return CacheDocument(new StringDocument(documentInfo, contents), false);
             }
 
             #region DocumentLoader overrides
@@ -481,14 +464,71 @@ namespace Microsoft.ClearScript
                 throw new AggregateException(exceptions).Flatten();
             }
 
+            public override Document GetCachedDocument(Uri uri)
+            {
+                lock (cache)
+                {
+                    for (var index = 0; index < cache.Count; index++)
+                    {
+                        var cachedDocument = cache[index];
+                        if (cachedDocument.Info.Uri == uri)
+                        {
+                            cache.RemoveAt(index);
+                            cache.Insert(0, cachedDocument);
+                            return cachedDocument;
+                        }
+                    }
+
+                    return null;
+                }
+            }
+
+            public override Document CacheDocument(Document document, bool replace)
+            {
+                MiscHelpers.VerifyNonNullArgument(document, nameof(document));
+                if (!document.Info.Uri.IsAbsoluteUri)
+                {
+                    throw new ArgumentException("The document must have an absolute URI");
+                }
+
+                lock (cache)
+                {
+                    for (var index = 0; index < cache.Count;)
+                    {
+                        var cachedDocument = cache[index];
+                        if (cachedDocument.Info.Uri != document.Info.Uri)
+                        {
+                            index++;
+                        }
+                        else
+                        {
+                            if (!replace)
+                            {
+                                Debug.Assert(cachedDocument.Contents.ReadToEnd().SequenceEqual(document.Contents.ReadToEnd()));
+                                return cachedDocument;
+                            }
+
+                            cache.RemoveAt(index);
+                        }
+                    }
+
+                    var maxCacheSize = Math.Max(16, Convert.ToInt32(Math.Min(MaxCacheSize, int.MaxValue)));
+                    while (cache.Count >= maxCacheSize)
+                    {
+                        cache.RemoveAt(cache.Count - 1);
+                    }
+
+                    cache.Insert(0, document);
+                    return document;
+                }
+            }
+
             public override void DiscardCachedDocuments()
             {
                 lock (cache)
                 {
                     cache.Clear();
                 }
-
-                base.DiscardCachedDocuments();
             }
 
             #endregion

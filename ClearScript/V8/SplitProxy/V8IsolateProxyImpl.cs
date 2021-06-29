@@ -215,6 +215,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public override void Dispose()
         {
             holder.ReleaseEntity();
+            GC.KeepAlive(this);
         }
 
         ~V8IsolateProxyImpl()
