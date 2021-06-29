@@ -31,7 +31,7 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
 * [![V8](https://img.shields.io/badge/-V8-blue)](#) Optional automatic conversion between .NET [`DateTime`](https://docs.microsoft.com/en-us/dotnet/api/system.datetime) and JavaScript [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date).
 * [![V8](https://img.shields.io/badge/-V8-blue)](#) Optional automatic conversion between .NET [tasks](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task) and JavaScript [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
 * Support for .NET 5.0, .NET Core 3.1, .NET Framework 4.5, and .NET Standard 2.1.
-* Support for Windows (x86/x64/arm64), Linux (x64/arm/arm64), and macOS (x64).
+* Support for Windows (x86/x64/arm64), Linux (x64/arm/arm64), and macOS (x64/arm64).
 
 # Installation
 ### Composite packages
@@ -41,7 +41,7 @@ Everything you need for one platform.
 | :---: | --- |
 | Windows | [![ClearScript](https://img.shields.io/nuget/vpre/Microsoft.ClearScript?label=Windows%20(x86/x64)&logo=Windows&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript) [![ClearScript.win-arm64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.win-arm64?label=Windows%20(arm64)&logo=Windows&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.win-arm64) |
 | Linux | [![ClearScript.linux-x64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.linux-x64?label=Linux%20(x64)&logo=Linux&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.linux-x64) [![ClearScript.linux-arm](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.linux-arm?label=Linux%20(arm)&logo=Linux&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.linux-arm) [![ClearScript.linux-arm64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.linux-arm64?label=Linux%20(arm64)&logo=Linux&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.linux-arm64) |
-| macOS | [![ClearScript.osx-x64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.osx-x64?label=macOS%20(x64)&logo=Apple&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.osx-x64) |
+| macOS | [![ClearScript.osx-x64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.osx-x64?label=macOS%20(x64)&logo=Apple&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.osx-x64) [![ClearScript.osx-arm64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.osx-arm64?label=macOS%20(arm64)&logo=Apple&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.osx-arm64) |
 
 ### Component packages
 Cross-platform libraries and data.
@@ -59,7 +59,7 @@ Platform-specific V8 libraries.
 | :---: | --- |
 | Windows | [![ClearScript.V8.Native.win-x86](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.win-x86?label=Windows%20(x86)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.win-x86) [![ClearScript.V8.Native.win-x64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.win-x64?label=Windows%20(x64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.win-x64) [![ClearScript.V8.Native.win-arm64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.win-arm64?label=Windows%20(arm64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.win-arm64) |
 | Linux | [![ClearScript.V8.Native.linux-x64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.linux-x64?label=Linux%20(x64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.linux-x64) [![ClearScript.V8.Native.linux-arm](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.linux-arm?label=Linux%20(arm)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.linux-arm) [![ClearScript.V8.Native.linux-arm64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.linux-arm64?label=Linux%20(arm64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.linux-arm64) |
-| macOS | [![ClearScript.V8.Native.osx-x64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.osx-x64?label=macOS%20(x64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.osx-x64) |
+| macOS | [![ClearScript.V8.Native.osx-x64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.osx-x64?label=macOS%20(x64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.osx-x64) [![ClearScript.V8.Native.osx-arm64](https://img.shields.io/nuget/vpre/Microsoft.ClearScript.V8.Native.osx-arm64?label=macOS%20(arm64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.osx-arm64) |
 
 # Documentation
 * [Examples](https://microsoft.github.io/ClearScript/Examples/Examples.html)
