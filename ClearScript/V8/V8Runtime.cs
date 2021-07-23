@@ -189,6 +189,13 @@ namespace Microsoft.ClearScript.V8
         /// Exceeding this limit causes the V8 runtime to interrupt script execution and throw an
         /// exception. To re-enable script execution, set this property to a new value.
         /// </para>
+        /// <para>
+        /// Note that
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see>
+        /// memory is allocated outside the runtime's heap and is therefore not tracked by heap
+        /// size monitoring. See <see cref="V8RuntimeConstraints.MaxArrayBufferAllocation"/> for
+        /// additional information.
+        /// </para>
         /// </remarks>
         public UIntPtr MaxHeapSize
         {

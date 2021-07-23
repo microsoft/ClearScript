@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Microsoft.ClearScript.V8;
 
 namespace Microsoft.ClearScript.Test
@@ -21,7 +22,7 @@ namespace Microsoft.ClearScript.Test
             var burn = (args.Length == 2) && (args[0] == "-b") && uint.TryParse(args[1], out choice) && (choice >= 1) && (choice <= 2);
 
             Console.Clear();
-            if (!burn) Console.WriteLine("ClearScript Benchmarks ({0}, {1})\n", flavor, Environment.Is64BitProcess ? "64-bit" : "32-bit");
+            if (!burn) Console.WriteLine("ClearScript Benchmarks ({0}, {1}, {2} {3})\n", RuntimeInformation.FrameworkDescription, RuntimeInformation.OSDescription, RuntimeInformation.ProcessArchitecture, flavor);
 
             var count = 0UL;
 
@@ -106,7 +107,7 @@ namespace Microsoft.ClearScript.Test
 
                     using (var process = Process.GetCurrentProcess())
                     {
-                        Console.WriteLine("{0:#,#} after {1:#,#} iterations", process.PrivateMemorySize64, count);
+                        Console.WriteLine("{0:#,#} after {1:#,#} iterations", process.WorkingSet64, count);
                     }
                 }
             }

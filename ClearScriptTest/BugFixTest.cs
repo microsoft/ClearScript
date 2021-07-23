@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -1428,6 +1429,73 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("0,2,3", string.Join(",", obj.PropertyIndices));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_RestrictedPrototypeObject()
+        {
+            var test = new RestrictedPrototypeObject(true);
+            engine.Script.test = test;
+            Assert.AreEqual("bar", engine.Evaluate("test.Foo"));
+            engine.Execute("test.Foo = 'qux'");
+            Assert.AreEqual("qux", engine.Evaluate("test.Foo"));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("delete test.Foo")));
+            Assert.AreEqual("bar", engine.Evaluate("test.Foo"));
+
+            test = new RestrictedPrototypeObject(false);
+            engine.Script.test = test;
+            Assert.IsInstanceOfType(engine.Evaluate("test.Foo"), typeof(Undefined));
+            engine.Script.Object.setPrototypeOf(test, test.GetPrototype(engine));
+            Assert.AreEqual("bar", engine.Evaluate("test.Foo"));
+            engine.Execute("test.Foo = 'qux'");
+            Assert.AreEqual("qux", engine.Evaluate("test.Foo"));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("delete test.Foo")));
+            Assert.AreEqual("bar", engine.Evaluate("test.Foo"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DefaultDocumentLoader_RedundantFileChecks()
+        {
+            var info = new DocumentInfo(new Uri(@"X:\Bogus\Example\Docs\Nothing.txt"));
+            DocumentLoader.Default.CacheDocument(new StringDocument(info, "Move along."), false);
+
+            var settings = new DocumentSettings { AccessFlags = DocumentAccessFlags.EnableFileLoading };
+            settings.SearchPath = @"Q:\Heinous\Example\Docs;X:\Bogus\Example\Docs";
+            settings.FileNameExtensions = "foo;bar;baz;txt";
+
+            var statistics = (DocumentLoader.IStatistics)DocumentLoader.Default;
+            statistics.ResetCheckCounts();
+
+            TestUtil.AssertException<FileLoadException>(() => DocumentLoader.Default.LoadDocument(settings, null, "Nonsense", null, null));
+            var count = statistics.FileCheckCount;
+            Assert.IsTrue(count >= 10);
+            Assert.AreEqual(0, statistics.WebCheckCount);
+
+            Assert.AreEqual("Move along.", DocumentLoader.Default.LoadDocument(settings, null, "Nothing", null, null).GetTextContents());
+            Assert.AreEqual(count, statistics.FileCheckCount);
+            Assert.AreEqual(0, statistics.WebCheckCount);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DefaultDocumentLoader_RedundantWebChecks()
+        {
+            var info = new DocumentInfo(new Uri("http://bogus.example.com/docs/nothing.txt"));
+            DocumentLoader.Default.CacheDocument(new StringDocument(info, "Nothing to see here."), false);
+
+            var settings = new DocumentSettings { AccessFlags = DocumentAccessFlags.EnableWebLoading };
+            settings.SearchPath = "http://heinous.example.com/docs;http://bogus.example.com/docs";
+            settings.FileNameExtensions = "foo;bar;baz;txt";
+
+            var statistics = (DocumentLoader.IStatistics)DocumentLoader.Default;
+            statistics.ResetCheckCounts();
+
+            TestUtil.AssertException<FileLoadException>(() => DocumentLoader.Default.LoadDocument(settings, null, "nonsense", null, null));
+            Assert.AreEqual(0, statistics.FileCheckCount);
+            Assert.AreEqual(10, statistics.WebCheckCount);
+
+            Assert.AreEqual("Nothing to see here.", DocumentLoader.Default.LoadDocument(settings, null, "nothing", null, null).GetTextContents());
+            Assert.AreEqual(0, statistics.FileCheckCount);
+            Assert.AreEqual(10, statistics.WebCheckCount);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1750,6 +1818,44 @@ namespace Microsoft.ClearScript.Test
 
         #pragma warning restore 1998
 
+        }
+
+        public class RestrictedPrototypeObjectBase : Dictionary<string, object>
+        {
+            public string Foo => "bar";
+        }
+
+        public class RestrictedPrototypeObject : RestrictedPrototypeObjectBase, IPropertyBag, IScriptableObject
+        {
+            private readonly Dictionary<ScriptEngine, object> map = new Dictionary<ScriptEngine, object>();
+            private readonly bool setPrototypeOnExpose;
+
+            public RestrictedPrototypeObject(bool setPrototypeOnExpose)
+            {
+                this.setPrototypeOnExpose = setPrototypeOnExpose;
+            }
+
+            public object GetPrototype(ScriptEngine engine)
+            {
+                if (map.TryGetValue(engine, out var prototype))
+                {
+                    return prototype;
+                }
+
+                return null;
+            }
+
+            void IScriptableObject.OnExposedToScriptCode(ScriptEngine engine)
+            {
+                if (!map.ContainsKey(engine))
+                {
+                    map[engine] = this.ToRestrictedHostObject<RestrictedPrototypeObjectBase>(engine);
+                    if (setPrototypeOnExpose)
+                    {
+                        engine.Script.Object.setPrototypeOf(this, map[engine]);
+                    }
+                }
+            }
         }
 
         #endregion

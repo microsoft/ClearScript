@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index d2bfb6129d..564eac4dd5 100644
+index 5e3045bfdc..56c6d2c1eb 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -814,7 +814,7 @@ config("toolchain") {
+@@ -866,7 +866,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
@@ -12,10 +12,10 @@ index d2bfb6129d..564eac4dd5 100644
  
    if (v8_current_cpu == "arm") {
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index 0b039e40fa..c8be191e52 100644
+index 5995a766d1..4d36f360ac 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -13127,6 +13127,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
+@@ -13222,6 +13222,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -28,10 +28,10 @@ index 0b039e40fa..c8be191e52 100644
        Word32And(LoadMapBitField(map),
                  Int32Constant(Map::Bits1::IsCallableBit::kMask |
 diff --git a/src/compiler/backend/register-allocator-verifier.cc b/src/compiler/backend/register-allocator-verifier.cc
-index 1587f0ee18..25a9161375 100644
+index b4099c5fad..9073b18b8d 100644
 --- a/src/compiler/backend/register-allocator-verifier.cc
 +++ b/src/compiler/backend/register-allocator-verifier.cc
-@@ -360,7 +360,7 @@ bool BlockAssessments::IsStaleReferenceStackSlot(InstructionOperand op) {
+@@ -362,7 +362,7 @@ bool BlockAssessments::IsStaleReferenceStackSlot(InstructionOperand op) {
  
  void BlockAssessments::Print() const {
    StdoutStream os;
@@ -41,7 +41,7 @@ index 1587f0ee18..25a9161375 100644
      const Assessment* assessment = pair.second;
      // Use operator<< so we can write the assessment on the same
 diff --git a/src/diagnostics/unwinding-info-win64.cc b/src/diagnostics/unwinding-info-win64.cc
-index 9a5f7069e7..0e1a7aaebb 100644
+index 6127c0a786..1d93c65f6b 100644
 --- a/src/diagnostics/unwinding-info-win64.cc
 +++ b/src/diagnostics/unwinding-info-win64.cc
 @@ -458,6 +458,14 @@ void InitUnwindingRecord(Record* record, size_t code_size_in_bytes) {
@@ -59,28 +59,28 @@ index 9a5f7069e7..0e1a7aaebb 100644
  static decltype(
      &::RtlAddGrowableFunctionTable) add_growable_function_table_func = nullptr;
  static decltype(
-@@ -466,6 +474,19 @@ static decltype(
+@@ -465,6 +473,19 @@ static decltype(
+     nullptr;
  
- void LoadNtdllUnwindingFunctions() {
-   base::CallOnce(&load_ntdll_unwinding_functions_once, []() {
+ void LoadNtdllUnwindingFunctionsOnce() {
 +
 +#if defined(V8_OS_WIN_X64)
-+    HMODULE kernel32_module =
-+        LoadLibraryEx(L"kernel32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-+    DCHECK_NOT_NULL(kernel32_module);
-+    add_function_table_func =
-+        reinterpret_cast<decltype(&::RtlAddFunctionTable)>(
-+            ::GetProcAddress(kernel32_module, "RtlAddFunctionTable"));
-+    delete_function_table_func =
-+        reinterpret_cast<decltype(&::RtlDeleteFunctionTable)>(
-+            ::GetProcAddress(kernel32_module, "RtlDeleteFunctionTable"));
++  HMODULE kernel32_module =
++	LoadLibraryEx(L"kernel32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
++  DCHECK_NOT_NULL(kernel32_module);
++  add_function_table_func =
++	reinterpret_cast<decltype(&::RtlAddFunctionTable)>(
++		::GetProcAddress(kernel32_module, "RtlAddFunctionTable"));
++  delete_function_table_func =
++	reinterpret_cast<decltype(&::RtlDeleteFunctionTable)>(
++		::GetProcAddress(kernel32_module, "RtlDeleteFunctionTable"));
 +#endif  // V8_OS_WIN_X64
 +
-     // Load functions from the ntdll.dll module.
-     HMODULE ntdll_module =
-         LoadLibraryEx(L"ntdll.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-@@ -484,6 +505,21 @@ void LoadNtdllUnwindingFunctions() {
-   });
+   // Load functions from the ntdll.dll module.
+   HMODULE ntdll_module =
+       LoadLibraryEx(L"ntdll.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+@@ -487,6 +508,21 @@ void LoadNtdllUnwindingFunctions() {
+                  &LoadNtdllUnwindingFunctionsOnce);
  }
  
 +#if defined(V8_OS_WIN_X64)
@@ -101,7 +101,7 @@ index 9a5f7069e7..0e1a7aaebb 100644
  bool AddGrowableFunctionTable(PVOID* DynamicTable,
                                PRUNTIME_FUNCTION FunctionTable, DWORD EntryCount,
                                DWORD MaximumEntryCount, ULONG_PTR RangeBase,
-@@ -535,7 +571,7 @@ void RegisterNonABICompliantCodeRange(void* start, size_t size_in_bytes) {
+@@ -538,7 +574,7 @@ void RegisterNonABICompliantCodeRange(void* start, size_t size_in_bytes) {
        ExceptionHandlerRecord* record = new (start) ExceptionHandlerRecord();
        InitUnwindingRecord(record, size_in_bytes);
  
@@ -110,20 +110,20 @@ index 9a5f7069e7..0e1a7aaebb 100644
                                    kDefaultRuntimeFunctionCount,
                                    reinterpret_cast<DWORD64>(start)));
  
-@@ -573,7 +609,7 @@ void UnregisterNonABICompliantCodeRange(void* start) {
+@@ -576,7 +612,7 @@ void UnregisterNonABICompliantCodeRange(void* start) {
      if (unhandled_exception_callback_g) {
        ExceptionHandlerRecord* record =
            reinterpret_cast<ExceptionHandlerRecord*>(start);
 -      CHECK(::RtlDeleteFunctionTable(record->runtime_function));
 +      CHECK(DeleteFunctionTable(record->runtime_function));
-     }
- #endif  // V8_OS_WIN_X64
-   } else {
+ 
+       // Unprotect reserved page.
+       DWORD old_protect;
 diff --git a/src/execution/isolate.h b/src/execution/isolate.h
-index 61934d5619..9e488ac429 100644
+index f55af20acd..6f6c86d16d 100644
 --- a/src/execution/isolate.h
 +++ b/src/execution/isolate.h
-@@ -578,7 +578,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
+@@ -590,7 +590,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
    // Returns the isolate inside which the current thread is running.
    V8_INLINE static Isolate* Current() {
      Isolate* isolate = TryGetCurrent();
@@ -132,10 +132,10 @@ index 61934d5619..9e488ac429 100644
    }
  
 diff --git a/src/execution/stack-guard.cc b/src/execution/stack-guard.cc
-index dd32f58b98..aeb0853ef7 100644
+index 0bbdf1444a..71182179ae 100644
 --- a/src/execution/stack-guard.cc
 +++ b/src/execution/stack-guard.cc
-@@ -213,8 +213,10 @@ void StackGuard::FreeThreadResources() {
+@@ -214,8 +214,10 @@ void StackGuard::FreeThreadResources() {
  void StackGuard::ThreadLocal::Initialize(Isolate* isolate,
                                           const ExecutionAccess& lock) {
    const uintptr_t kLimitSize = FLAG_stack_size * KB;
@@ -148,10 +148,10 @@ index dd32f58b98..aeb0853ef7 100644
    set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
    real_climit_ = limit;
 diff --git a/src/init/v8.cc b/src/init/v8.cc
-index fbf120b1b6..1706c4d38c 100644
+index e14d02efbd..19b4de2b23 100644
 --- a/src/init/v8.cc
 +++ b/src/init/v8.cc
-@@ -170,7 +170,6 @@ void V8::InitializeOncePerProcess() {
+@@ -193,7 +193,6 @@ void V8::InitializeOncePerProcess() {
  }
  
  void V8::InitializePlatform(v8::Platform* platform) {
@@ -160,7 +160,7 @@ index fbf120b1b6..1706c4d38c 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/objects/intl-objects.h b/src/objects/intl-objects.h
-index d4b4feed68..5c132ef7a1 100644
+index ec0eb93873..b25fa0aac1 100644
 --- a/src/objects/intl-objects.h
 +++ b/src/objects/intl-objects.h
 @@ -287,7 +287,7 @@ class Intl {
@@ -192,7 +192,7 @@ index 89ac294a0c..3e5d21b6d3 100644
    if (maybe_resolve_locale.IsNothing()) {
      THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError),
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index 18e659a910..f2b26540f9 100644
+index 74b970b545..c436fdb0cd 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
 @@ -852,6 +852,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {

@@ -22,6 +22,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 constraints?.MaxNewSpaceSize ?? -1,
                 constraints?.MaxOldSpaceSize ?? -1,
                 constraints?.HeapExpansionMultiplier ?? 0,
+                constraints?.MaxArrayBufferAllocation ?? ulong.MaxValue,
                 flags.HasFlag(V8RuntimeFlags.EnableDebugging),
                 flags.HasFlag(V8RuntimeFlags.EnableRemoteDebugging),
                 flags.HasFlag(V8RuntimeFlags.EnableDynamicModuleImports),

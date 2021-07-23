@@ -370,7 +370,7 @@ namespace Microsoft.ClearScript.Util
 
         #region primitive marshaling
 
-        public static bool TryMarshalPrimitiveToHost(object obj, out object result)
+        public static bool TryMarshalPrimitiveToHost(object obj, bool disableFloatNarrowing, out object result)
         {
             if (obj is IConvertible convertible)
             {
@@ -383,7 +383,7 @@ namespace Microsoft.ClearScript.Util
 
                     case TypeCode.Double:
                     case TypeCode.Single:
-                        result = MarshalDoubleToHost(convertible.ToDouble(CultureInfo.InvariantCulture));
+                        result = MarshalDoubleToHost(convertible.ToDouble(CultureInfo.InvariantCulture), disableFloatNarrowing);
                         return true;
 
                     case TypeCode.SByte:
@@ -405,7 +405,7 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        public static object MarshalDoubleToHost(double value)
+        public static object MarshalDoubleToHost(double value, bool disableFloatNarrowing)
         {
             // ReSharper disable CompareOfFloatsByEqualityOperator
 
@@ -423,7 +423,7 @@ namespace Microsoft.ClearScript.Util
                     return longValue;
                 }
             }
-            else
+            else if (!disableFloatNarrowing)
             {
                 var floatValue = Convert.ToSingle(value);
                 if (value == floatValue)
@@ -461,6 +461,15 @@ namespace Microsoft.ClearScript.Util
                 // triggering premature finalization of the callback. That can lead to a crash if
                 // the callback's finalizer ends up racing against its Dispose method. The call
                 // below should prevent this condition in all cases.
+                //
+                // UPDATE: The observed behavior is actually documented. As Dispose is invoked via
+                // the callback's only reference, the callback may become eligible for finalization
+                // during the call. Typically Dispose invokes GC.SuppressFinalize just before
+                // exiting, which, in addition to canceling finalization, extends the object's
+                // lifetime until Dispose has done its job. The callback here is unusual in that it
+                // requires finalization regardless of disposal, so the correct fix is for Dispose
+                // to invoke GC.KeepAlive as its final step. The original fix is retained here for
+                // regression avoidance.
 
                 GC.KeepAlive(callback);
             });

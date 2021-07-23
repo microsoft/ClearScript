@@ -683,7 +683,7 @@ NATIVE_ENTRY_POINT(const v8::CpuProfileNode*) V8CpuProfileNode_GetChildNode(cons
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int32_t maxNewSpaceSize, int32_t maxOldSpaceSize, double heapExpansionMultiplier, StdBool enableDebugging, StdBool enableRemoteDebugging, StdBool enableDynamicModuleImports, int32_t debugPort) noexcept
+NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int32_t maxNewSpaceSize, int32_t maxOldSpaceSize, double heapExpansionMultiplier, uint64_t maxArrayBufferAllocation, StdBool enableDebugging, StdBool enableRemoteDebugging, StdBool enableDynamicModuleImports, int32_t debugPort) noexcept
 {
     v8::ResourceConstraints* pConstraints = nullptr;
 
@@ -701,6 +701,11 @@ NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int
     options.EnableRemoteDebugging = enableRemoteDebugging;
     options.EnableDynamicModuleImports = enableDynamicModuleImports;
     options.DebugPort = debugPort;
+
+    if (maxArrayBufferAllocation < SIZE_MAX)
+    {
+        options.MaxArrayBufferAllocation = static_cast<size_t>(maxArrayBufferAllocation);
+    }
 
     try
     {

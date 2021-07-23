@@ -396,7 +396,7 @@ namespace Microsoft.ClearScript.Windows.Core
                 return null;
             }
 
-            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, out var result))
+            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, DisableFloatNarrowing, out var result))
             {
                 return result;
             }

@@ -289,13 +289,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool RawTryParseInt32(
-            [In] StdString.Ptr pText,
-            [Out] out int result
-        );
-
-        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawWriteBytesToStream(
             [In] IntPtr pStream,
             [In] IntPtr pBytes,

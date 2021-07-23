@@ -484,6 +484,10 @@ public:
     void RunTaskWithLockDelayed(bool allowNesting, std::unique_ptr<v8::Task> upTask, double delayInSeconds);
     std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner();
 
+    void* AllocateArrayBuffer(size_t size);
+    void* AllocateUninitializedArrayBuffer(size_t size);
+    void FreeArrayBuffer(void* pvData, size_t size);
+
     void CallWithLockNoWait(bool allowNesting, CallWithLockCallback&& callback);
     void NORETURN ThrowOutOfMemoryException();
 
@@ -579,6 +583,8 @@ private:
     bool m_InMessageLoop;
     bool m_QuitMessageLoop;
     bool m_AbortMessageLoop;
+    size_t m_MaxArrayBufferAllocation;
+    size_t m_ArrayBufferAllocation;
     std::atomic<size_t> m_MaxHeapSize;
     std::atomic<double> m_HeapSizeSampleInterval;
     size_t m_HeapWatchLevel;

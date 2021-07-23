@@ -278,21 +278,37 @@ V8ArrayBufferAllocator& V8ArrayBufferAllocator::GetInstance()
 
 void* V8ArrayBufferAllocator::Allocate(size_t size)
 {
-    return ::calloc(1, size);
+    auto pIsolate = v8::Isolate::GetCurrent();
+    if (pIsolate)
+    {
+        return V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->AllocateArrayBuffer(size);
+    }
+
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
 
 void* V8ArrayBufferAllocator::AllocateUninitialized(size_t size)
 {
-    return ::malloc(size);
+    auto pIsolate = v8::Isolate::GetCurrent();
+    if (pIsolate)
+    {
+        return V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->AllocateUninitializedArrayBuffer(size);
+    }
+
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
 
-void V8ArrayBufferAllocator::Free(void* pvData, size_t /*size*/)
+void V8ArrayBufferAllocator::Free(void* pvData, size_t size)
 {
-    ::free(pvData);
+    auto pIsolate = v8::Isolate::GetCurrent();
+    if (pIsolate)
+    {
+        V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->FreeArrayBuffer(pvData, size);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -399,6 +415,8 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     m_InMessageLoop(false),
     m_QuitMessageLoop(false),
     m_AbortMessageLoop(false),
+    m_MaxArrayBufferAllocation(options.MaxArrayBufferAllocation),
+    m_ArrayBufferAllocation(0),
     m_MaxHeapSize(0),
     m_HeapSizeSampleInterval(0.0),
     m_HeapWatchLevel(0),
@@ -1171,6 +1189,56 @@ std::shared_ptr<v8::TaskRunner> V8IsolateImpl::GetForegroundTaskRunner()
         return m_spForegroundTaskRunner;
 
     END_MUTEX_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void* V8IsolateImpl::AllocateArrayBuffer(size_t size)
+{
+    auto newArrayBufferAllocation = m_ArrayBufferAllocation + size;
+    if ((newArrayBufferAllocation >= m_ArrayBufferAllocation) && (newArrayBufferAllocation <= m_MaxArrayBufferAllocation))
+    {
+        auto pvData = ::calloc(1, size);
+        if (pvData)
+        {
+            m_ArrayBufferAllocation = newArrayBufferAllocation;
+            return pvData;
+        }
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+void* V8IsolateImpl::AllocateUninitializedArrayBuffer(size_t size)
+{
+    auto newArrayBufferAllocation = m_ArrayBufferAllocation + size;
+    if ((newArrayBufferAllocation >= m_ArrayBufferAllocation) && (newArrayBufferAllocation <= m_MaxArrayBufferAllocation))
+    {
+        auto pvData = ::malloc(size);
+        if (pvData)
+        {
+            m_ArrayBufferAllocation = newArrayBufferAllocation;
+            return pvData;
+        }
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::FreeArrayBuffer(void* pvData, size_t size)
+{
+    if (pvData)
+    {
+        ::free(pvData);
+        if (m_ArrayBufferAllocation >= size)
+        {
+            m_ArrayBufferAllocation -= size;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------

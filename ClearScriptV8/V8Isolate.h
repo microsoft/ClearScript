@@ -25,6 +25,7 @@ public:
     struct Options final
     {
         double HeapExpansionMultiplier = 0;
+        size_t MaxArrayBufferAllocation = SIZE_MAX;
         bool EnableDebugging = false;
         bool EnableRemoteDebugging = false;
         bool EnableDynamicModuleImports = false;

@@ -192,6 +192,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Reference Include="Microsoft.CSharp" />
         <Reference Include="System.Net.Http" />
     </ItemGroup>

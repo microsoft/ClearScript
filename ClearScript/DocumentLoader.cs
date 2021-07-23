@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript
@@ -132,9 +133,20 @@ namespace Microsoft.ClearScript
         {
         }
 
+        #region Nested type: IStatistics
+
+        internal interface IStatistics
+        {
+            long FileCheckCount { get; }
+            long WebCheckCount { get; }
+            void ResetCheckCounts();
+        }
+
+        #endregion
+
         #region Nested type: DefaultImpl
 
-        private sealed class DefaultImpl : DocumentLoader
+        private sealed class DefaultImpl : DocumentLoader, IStatistics
         {
             public static readonly DefaultImpl Instance = new DefaultImpl();
 
@@ -147,45 +159,49 @@ namespace Microsoft.ClearScript
             };
 
             private readonly List<Document> cache = new List<Document>();
+            private long fileCheckCount;
+            private long webCheckCount;
 
             private DefaultImpl()
             {
                 MaxCacheSize = 1024;
             }
 
-            private static async Task<List<Uri>> GetCandidateUrisAsync(DocumentSettings settings, DocumentInfo? sourceInfo, Uri uri)
+            private Task<(Document, List<Uri>)> GetCachedDocumentOrCandidateUrisAsync(DocumentSettings settings, DocumentInfo? sourceInfo, Uri uri)
             {
-                var candidateUris = new List<Uri>();
-
-                if (string.IsNullOrWhiteSpace(settings.FileNameExtensions))
-                {
-                    candidateUris.Add(uri);
-                }
-                else
-                {
-                    foreach (var testUri in ApplyExtensions(sourceInfo, uri, settings.FileNameExtensions))
-                    {
-                        if (await IsCandidateUriAsync(settings, testUri).ConfigureAwait(false))
-                        {
-                            candidateUris.Add(testUri);
-                        }
-                    }
-                }
-
-                return candidateUris;
+                return GetCachedDocumentOrCandidateUrisWorkerAsync(settings, sourceInfo, uri.ToEnumerable());
             }
 
-            private static async Task<List<Uri>> GetCandidateUrisAsync(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier)
+            private Task<(Document, List<Uri>)> GetCachedDocumentOrCandidateUrisAsync(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier)
             {
-                var candidateUris = new List<Uri>();
+                return GetCachedDocumentOrCandidateUrisWorkerAsync(settings, sourceInfo, GetRawUris(settings, sourceInfo, specifier).Distinct());
+            }
 
-                var rawUris = GetRawUris(settings, sourceInfo, specifier).Distinct();
+            private async Task<(Document, List<Uri>)> GetCachedDocumentOrCandidateUrisWorkerAsync(DocumentSettings settings, DocumentInfo? sourceInfo, IEnumerable<Uri> rawUris)
+            {
                 if (!string.IsNullOrWhiteSpace(settings.FileNameExtensions))
                 {
                     rawUris = rawUris.SelectMany(uri => ApplyExtensions(sourceInfo, uri, settings.FileNameExtensions));
                 }
 
-                foreach (var testUri in rawUris)
+                var testUris = rawUris.ToList();
+
+                foreach (var testUri in testUris)
+                {
+                    var flag = testUri.IsFile ? DocumentAccessFlags.EnableFileLoading : DocumentAccessFlags.EnableWebLoading;
+                    if (settings.AccessFlags.HasFlag(flag))
+                    {
+                        var document = GetCachedDocument(testUri);
+                        if (document != null)
+                        {
+                            return (document, null);
+                        }
+                    }
+                }
+
+                var candidateUris = new List<Uri>();
+
+                foreach (var testUri in testUris)
                 {
                     if (await IsCandidateUriAsync(settings, testUri).ConfigureAwait(false))
                     {
@@ -193,7 +209,7 @@ namespace Microsoft.ClearScript
                     }
                 }
 
-                return candidateUris;
+                return (null, candidateUris);
             }
 
             private static IEnumerable<Uri> GetRawUris(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier)
@@ -321,22 +337,36 @@ namespace Microsoft.ClearScript
                 return Uri.TryCreate(searchUri, specifier, out uri);
             }
 
-            private static async Task<bool> IsCandidateUriAsync(DocumentSettings settings, Uri uri)
+            private async Task<bool> IsCandidateUriAsync(DocumentSettings settings, Uri uri)
             {
                 return uri.IsFile ?
-                    settings.AccessFlags.HasFlag(DocumentAccessFlags.EnableFileLoading) && File.Exists(uri.LocalPath) :
+                    settings.AccessFlags.HasFlag(DocumentAccessFlags.EnableFileLoading) && await FileDocumentExistsAsync(uri.LocalPath).ConfigureAwait(false) :
                     settings.AccessFlags.HasFlag(DocumentAccessFlags.EnableWebLoading) && await WebDocumentExistsAsync(uri).ConfigureAwait(false);
             }
 
-            private static async Task<bool> WebDocumentExistsAsync(Uri uri)
+            private Task<bool> FileDocumentExistsAsync(string path)
             {
+                Interlocked.Increment(ref fileCheckCount);
+                return Task.FromResult(File.Exists(path));
+            }
+
+            private async Task<bool> WebDocumentExistsAsync(Uri uri)
+            {
+                Interlocked.Increment(ref webCheckCount);
                 using (var client = new HttpClient())
                 {
                     using (var request = new HttpRequestMessage(HttpMethod.Head, uri))
                     {
-                        using (var response = await client.SendAsync(request).ConfigureAwait(false))
+                        try
                         {
-                            return response.IsSuccessStatusCode;
+                            using (var response = await client.SendAsync(request).ConfigureAwait(false))
+                            {
+                                return response.IsSuccessStatusCode;
+                            }
+                        }
+                        catch (HttpRequestException)
+                        {
+                            return false;
                         }
                     }
                 }
@@ -344,6 +374,21 @@ namespace Microsoft.ClearScript
 
             private async Task<Document> LoadDocumentAsync(DocumentSettings settings, Uri uri, DocumentCategory category, DocumentContextCallback contextCallback)
             {
+                if (uri.IsFile)
+                {
+                    if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.EnableFileLoading))
+                    {
+                        throw new UnauthorizedAccessException("The script engine is not configured for loading documents from the file system");
+                    }
+                }
+                else
+                {
+                    if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.EnableWebLoading))
+                    {
+                        throw new UnauthorizedAccessException("The script engine is not configured for downloading documents from the Web");
+                    }
+                }
+
                 var cachedDocument = GetCachedDocument(uri);
                 if (cachedDocument != null)
                 {
@@ -351,15 +396,9 @@ namespace Microsoft.ClearScript
                 }
 
                 string contents;
-                var flags = settings.AccessFlags;
 
                 if (uri.IsFile)
                 {
-                    if (!flags.HasFlag(DocumentAccessFlags.EnableFileLoading))
-                    {
-                        throw new UnauthorizedAccessException("The script engine is not configured for loading documents from the file system");
-                    }
-
                     using (var reader = new StreamReader(uri.LocalPath))
                     {
                         contents = await reader.ReadToEndAsync().ConfigureAwait(false);
@@ -367,11 +406,6 @@ namespace Microsoft.ClearScript
                 }
                 else
                 {
-                    if (!flags.HasFlag(DocumentAccessFlags.EnableWebLoading))
-                    {
-                        throw new UnauthorizedAccessException("The script engine is not configured for downloading documents from the Web");
-                    }
-
                     using (var client = new WebClient())
                     {
                         contents = await client.DownloadStringTaskAsync(uri).ConfigureAwait(false);
@@ -405,30 +439,35 @@ namespace Microsoft.ClearScript
                     category = sourceInfo.HasValue ? sourceInfo.Value.Category : DocumentCategory.Script;
                 }
 
-                List<Uri> candidateUris;
+                (Document Document, List<Uri> CandidateUris) result;
 
                 if (Uri.TryCreate(specifier, UriKind.RelativeOrAbsolute, out var uri) && uri.IsAbsoluteUri)
                 {
-                    candidateUris = await GetCandidateUrisAsync(settings, sourceInfo, uri).ConfigureAwait(false);
+                    result = await GetCachedDocumentOrCandidateUrisAsync(settings, sourceInfo, uri).ConfigureAwait(false);
                 }
                 else
                 {
-                    candidateUris = await GetCandidateUrisAsync(settings, sourceInfo, specifier).ConfigureAwait(false);
+                    result = await GetCachedDocumentOrCandidateUrisAsync(settings, sourceInfo, specifier).ConfigureAwait(false);
                 }
 
-                if (candidateUris.Count < 1)
+                if (result.Document != null)
+                {
+                    return result.Document;
+                }
+
+                if (result.CandidateUris.Count < 1)
                 {
                     throw new FileNotFoundException(null, specifier);
                 }
 
-                if (candidateUris.Count == 1)
+                if (result.CandidateUris.Count == 1)
                 {
-                    return await LoadDocumentAsync(settings, candidateUris[0], category, contextCallback).ConfigureAwait(false);
+                    return await LoadDocumentAsync(settings, result.CandidateUris[0], category, contextCallback).ConfigureAwait(false);
                 }
 
-                var exceptions = new List<Exception>(candidateUris.Count);
+                var exceptions = new List<Exception>(result.CandidateUris.Count);
 
-                foreach (var candidateUri in candidateUris)
+                foreach (var candidateUri in result.CandidateUris)
                 {
                     var task = LoadDocumentAsync(settings, candidateUri, category, contextCallback);
                     try
@@ -529,6 +568,20 @@ namespace Microsoft.ClearScript
                 {
                     cache.Clear();
                 }
+            }
+
+            #endregion
+
+            #region IStatistics implementation
+
+            long IStatistics.FileCheckCount => Interlocked.Read(ref fileCheckCount);
+
+            long IStatistics.WebCheckCount => Interlocked.Read(ref webCheckCount);
+
+            void IStatistics.ResetCheckCounts()
+            {
+                Interlocked.Exchange(ref fileCheckCount, 0);
+                Interlocked.Exchange(ref webCheckCount, 0);
             }
 
             #endregion

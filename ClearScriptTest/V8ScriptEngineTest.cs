@@ -3251,6 +3251,38 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("1,3,5,7,9", engine.Evaluate("Array.from(array.Where(new Filter(n => (n & 1) === 1))).toString()"));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_MaxArrayBufferAllocation()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(new V8RuntimeConstraints { MaxArrayBufferAllocation = 8192 }, V8ScriptEngineFlags.EnableDebugging);
+
+            engine.Execute("a1 = new Uint8Array(8192)");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("a2 = new Uint8Array(8192)"));
+
+            engine.Execute("a1 = null");
+            engine.CollectGarbage(true);
+
+            engine.Execute("a1 = new Int16Array(2048)");
+            engine.Execute("a2 = new Int16Array(2048)");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute("a3 = new Int16Array(2048)"));
+
+            engine.Execute("a1 = null");
+            engine.Execute("a2 = null");
+            engine.CollectGarbage(true);
+
+            engine.Execute("a1 = new Float64Array(1024)");
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DisableFloatNarrowing()
+        {
+	        engine.AddHostType("StringT", typeof(string));
+	        Assert.AreEqual("123,456.80", engine.Evaluate("StringT.Format('{0:###,###.00}', 123456.75)"));
+	        engine.DisableFloatNarrowing = true;
+	        Assert.AreEqual("123,456.75", engine.Evaluate("StringT.Format('{0:###,###.00}', 123456.75)"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

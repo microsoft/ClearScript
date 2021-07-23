@@ -93,5 +93,18 @@ namespace Microsoft.ClearScript.V8
         /// <see cref="V8ScriptEngine.MaxRuntimeHeapSize"/>) to help contain runaway scripts.
         /// </remarks>
         public double HeapExpansionMultiplier { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum amount of
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see>
+        /// memory the runtime may allocate.
+        /// </summary>
+        /// <remarks>
+        /// This property is specified in bytes. <c>ArrayBuffer</c> memory is allocated outside the
+        /// runtime's heap and released when its garbage collector reclaims the corresponding
+        /// JavaScript <c>ArrayBuffer</c> object. Leave this property at its default value to
+        /// enforce no limit.
+        /// </remarks>
+        public ulong MaxArrayBufferAllocation { get; set; } = ulong.MaxValue;
     }
 }

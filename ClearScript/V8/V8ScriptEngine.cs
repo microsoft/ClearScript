@@ -353,6 +353,14 @@ namespace Microsoft.ClearScript.V8
             // triggering premature finalization of the V8 isolate proxy. That can lead to a crash
             // if the proxy's finalizer ends up racing against its Dispose method. The call below
             // should prevent this condition in all cases.
+            //
+            // UPDATE: The observed behavior is actually documented. As Dispose is invoked via
+            // the proxy's only reference, the proxy may become eligible for finalization during
+            // the call. Typically Dispose invokes GC.SuppressFinalize just before exiting, which,
+            // in addition to canceling finalization, extends the object's lifetime until Dispose
+            // has done its job. The proxy here is unusual in that it requires finalization
+            // regardless of disposal, so the correct fix is for Dispose to invoke GC.KeepAlive as
+            // its final step. The original fix is retained here for regression avoidance.
 
             GC.KeepAlive(localRuntime);
         }
@@ -381,6 +389,13 @@ namespace Microsoft.ClearScript.V8
         /// <para>
         /// Exceeding this limit causes the V8 runtime to interrupt script execution and throw an
         /// exception. To re-enable script execution, set this property to a new value.
+        /// </para>
+        /// <para>
+        /// Note that
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see>
+        /// memory is allocated outside the runtime's heap and is therefore not tracked by heap
+        /// size monitoring. See <see cref="V8RuntimeConstraints.MaxArrayBufferAllocation"/> for
+        /// additional information.
         /// </para>
         /// </remarks>
         public UIntPtr MaxRuntimeHeapSize
@@ -1417,7 +1432,7 @@ namespace Microsoft.ClearScript.V8
                 return null;
             }
 
-            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, out var result))
+            if (MiscHelpers.TryMarshalPrimitiveToHost(obj, DisableFloatNarrowing, out var result))
             {
                 return result;
             }

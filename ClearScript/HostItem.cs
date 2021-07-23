@@ -44,11 +44,6 @@ namespace Microsoft.ClearScript
 
             BindSpecialTarget();
             BindTargetMemberData();
-
-            if (target.Target is IScriptableObject scriptableObject)
-            {
-                scriptableObject.OnExposedToScriptCode(engine);
-            }
         }
 
         #endregion

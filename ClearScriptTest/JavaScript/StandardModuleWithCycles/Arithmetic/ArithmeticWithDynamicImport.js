@@ -3,7 +3,7 @@
 
 let Geometry;
 (async function() {
-	// ReSharper disable once UseOfImplicitGlobalInFunctionScope
+    // ReSharper disable once UseOfImplicitGlobalInFunctionScope
     Geometry = await import('../Geometry/GeometryWithDynamicImport.js');
 })();
 

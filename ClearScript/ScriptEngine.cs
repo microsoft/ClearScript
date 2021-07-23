@@ -253,6 +253,17 @@ namespace Microsoft.ClearScript
         public bool EnableNullResultWrapping { get; set; }
 
         /// <summary>
+        /// Enables or disables floating point narrowing.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, no attempt is made to convert floating-point
+        /// values imported from the script engine to the narrowest equivalent .NET representation.
+        /// The default behavior is more likely to result in successful method binding in specific
+        /// scenarios, so setting this property to <c>true</c> is not recommended.
+        /// </remarks>
+        public bool DisableFloatNarrowing { get; set; }
+
+        /// <summary>
         /// Enables or disables the use of reflection-based method binding as a fallback.
         /// </summary>
         /// <remarks>
@@ -1745,7 +1756,7 @@ namespace Microsoft.ClearScript
                 return GetOrCreateHostItemForHostObject(hostIndexedProperty, hostIndexedProperty, flags, createHostItem);
             }
 
-            return createHostItem(this, target, flags);
+            return CreateHostItem(target, flags, createHostItem, null);
         }
 
         private HostItem GetOrCreateHostItemForHostObject(HostTarget hostTarget, object target, HostItemFlags flags, HostItem.CreateFunc createHostItem)
@@ -1788,16 +1799,14 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            var newHostItem = createHostItem(this, hostTarget, flags);
-            cacheEntry.Add(new WeakReference(newHostItem));
-            return newHostItem;
+            return CreateHostItem(hostTarget, flags, createHostItem, cacheEntry);
         }
 
         private HostItem GetOrCreateHostItemForHostType(HostType hostType, HostItemFlags flags, HostItem.CreateFunc createHostItem)
         {
             if (hostType.Types.Length != 1)
             {
-                return createHostItem(this, hostType, flags);
+                return CreateHostItem(hostType, flags, createHostItem, null);
             }
 
             var cacheEntry = hostTypeHostItemCache.GetOrCreateValue(hostType.Types[0]);
@@ -1838,8 +1847,23 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            var newHostItem = createHostItem(this, hostType, flags);
-            cacheEntry.Add(new WeakReference(newHostItem));
+            return CreateHostItem(hostType, flags, createHostItem, cacheEntry);
+        }
+
+        private HostItem CreateHostItem(HostTarget hostTarget, HostItemFlags flags, HostItem.CreateFunc createHostItem, List<WeakReference> cacheEntry)
+        {
+            var newHostItem = createHostItem(this, hostTarget, flags);
+
+            if (cacheEntry != null)
+            {
+                cacheEntry.Add(new WeakReference(newHostItem));
+            }
+
+            if (hostTarget.Target is IScriptableObject scriptableObject)
+            {
+                scriptableObject.OnExposedToScriptCode(this);
+            }
+
             return newHostItem;
         }
 
