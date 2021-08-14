@@ -1452,6 +1452,27 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
+        public void BugFix_RestrictedPrototypeMagicallyChanging()
+        {
+            var test = new RestrictedPrototypeObject(true);
+            engine.Script.Assert = HostType.Wrap(typeof(Assert));
+            engine.Script.test = test;
+
+            engine.Execute(@"
+                Assert.AreEqual('function', typeof test.Add);
+                Assert.AreEqual('function', typeof test.Inner.Add);
+
+                // Emulate heavy load
+                var arr = [];
+                for (let i = 0; i < 1000000; i++) arr.push({});
+
+                // Assert again
+                Assert.AreEqual('function', typeof test.Add);
+                Assert.AreEqual('function', typeof test.Inner.Add);
+            ");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
         public void BugFix_DefaultDocumentLoader_RedundantFileChecks()
         {
             var info = new DocumentInfo(new Uri(@"X:\Bogus\Example\Docs\Nothing.txt"));
@@ -1823,6 +1844,9 @@ namespace Microsoft.ClearScript.Test
         public class RestrictedPrototypeObjectBase : Dictionary<string, object>
         {
             public string Foo => "bar";
+
+            public RestrictedPrototypeObject inner;
+            public RestrictedPrototypeObject Inner => inner ?? (inner = new RestrictedPrototypeObject(true));
         }
 
         public class RestrictedPrototypeObject : RestrictedPrototypeObjectBase, IPropertyBag, IScriptableObject
