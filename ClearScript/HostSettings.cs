@@ -34,5 +34,14 @@ namespace Microsoft.ClearScript
         /// resources such as native assemblies and related data files.
         /// </remarks>
         public static string AuxiliarySearchPath { get; set; }
+
+        /// <summary>
+        /// Sets the runtime platform to android and loads android native binaries.
+        /// </summary>
+        /// <remarks>
+        /// This property allows ClearScript to load android native assemblies instead of 
+        /// linux assemblies on Android Mono
+        /// </remarks>
+        public static bool IsAndroid { get; set; }
     }
 }

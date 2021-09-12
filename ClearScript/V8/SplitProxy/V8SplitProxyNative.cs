@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8.SplitProxy
@@ -74,6 +75,76 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             if (V8SplitProxyManaged.ScheduledException != null)
             {
                 throw V8SplitProxyManaged.ScheduledException;
+            }
+        }
+
+        private static bool IsOSPlatform(string os)
+        {
+            if (os == "Android")
+            {
+                return HostSettings.IsAndroid;
+            }
+
+            if (os == "Windows")
+            {
+                return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            }
+
+            if (os == "Linux")
+            {
+                return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+            }
+
+            if (os == "OSX")
+            {
+                return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+            }
+
+            return false;
+        }
+
+
+        private static bool IsArchitecture(string os, string arch)
+        {
+            var architecture = RuntimeInformation.ProcessArchitecture;
+
+            if (os == "Android")
+            {
+                if (arch == "X86" || arch == "Arm")
+                {
+                    return architecture == Architecture.X86 || architecture == Architecture.Arm;
+                }
+                else if (arch == "X64" || arch == "Arm64")
+                {
+                    return architecture == Architecture.X64 || architecture == Architecture.Arm64;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (arch == "X86")
+                {
+                    return architecture == Architecture.X86;
+                }
+                else if (arch == "X64")
+                {
+                    return architecture == Architecture.X64;
+                }
+                else if (arch == "Arm")
+                {
+                    return architecture == Architecture.Arm;
+                }
+                else if (arch == "Arm64")
+                {
+                    return architecture == Architecture.Arm64;
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
     }
