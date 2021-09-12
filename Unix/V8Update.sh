@@ -13,10 +13,11 @@ function usage {
     echo
     echo 'Downloads and builds V8 for use with ClearScript.'
     echo
-    echo 'V8Update.sh [-n] [-y] [cpu] [mode] [revision]'
+    echo 'V8Update.sh [-n] [-y] [-a|android] [cpu] [mode] [revision]'
     echo
     echo '  -n        Do not download; use previously downloaded files if possible.'
     echo '  -y        Reply "yes" automatically when prompted to continue.'
+    echo '  -a        Build for android'
     echo '  cpu       Target CPU: "x86", "x64", "arm", or "arm64".'
     echo '  mode      Build mode: "Debug" or "Release" (default).'
     echo '  revision  V8 revision: "Latest", "Tested" (default) or branch/commit/tag.'
@@ -50,6 +51,7 @@ mode=Release
 isdebug=false
 isofficial=true
 autoreply=false
+android=false
 
 shopt -s nocasematch
 
@@ -60,6 +62,10 @@ while [[ $# -gt 0 ]]; do
         download=false
     elif [[ $1 == "-y" ]]; then
         autoreply=true
+    elif [[ $1 == "-a" ]]; then
+        android=true
+    elif [[ $1 == android ]]; then
+        android=true
     elif [[ $1 == x86 ]]; then
         cpu=x86
     elif [[ $1 == x64 ]]; then
@@ -163,6 +169,7 @@ if [[ $download == true ]]; then
 
     echo "Downloading V8 and dependencies ..."
     gclient config https://chromium.googlesource.com/v8/v8 >config.log || fail
+    echo "target_os = ['android', 'unix']" >> .gclient
     gclient sync -r $v8commit >sync.log || fail
 
     echo "Applying patches ..."
@@ -197,8 +204,14 @@ echo "Building V8 ..."
 if [[ $linux == true ]]; then
     build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu
 fi
-gn gen out/$cpu/$mode --args="enable_precompiled_headers=false fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug is_official_build=$isofficial target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\" chrome_pgo_phase=0" >gn-$cpu-$mode.log || fail
-ninja -C out/$cpu/$mode obj/libv8_monolith.a >build-$cpu-$mode.log || fail
+
+if [[ $android == true ]]; then
+    gn gen out/android_$cpu/$mode --args="enable_precompiled_headers=false fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug is_official_build=$isofficial target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\" target_os=\"android\" use_goma=false v8_static_library=true use_custom_libcxx_for_host=false v8_enable_i18n_support=false v8_android_log_stdout=true chrome_pgo_phase=0" >gn-android-$cpu-$mode.log || fail
+    ninja -C out/android_$cpu/$mode obj/libv8_monolith.a >build-android-$cpu-$mode.log || fail
+else
+    gn gen out/$cpu/$mode --args="enable_precompiled_headers=false fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug is_official_build=$isofficial target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\" chrome_pgo_phase=0" >gn-$cpu-$mode.log || fail
+    ninja -C out/$cpu/$mode obj/libv8_monolith.a >build-$cpu-$mode.log || fail
+fi
 
 cd ../..
 

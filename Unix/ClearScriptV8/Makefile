@@ -7,6 +7,12 @@ else
 endif
 
 KERNEL = $(shell uname -s)
+
+TARGETSUFFIX = gnu
+TARGETARCHSUFFIX =
+TARGETSUFFIXVER =
+UPDATEFLAGS =
+
 ifeq ($(KERNEL), Darwin)
     OS = osx
     EXTENSION = dylib
@@ -15,6 +21,9 @@ ifeq ($(KERNEL), Darwin)
     TARGETARCH_X64 = x86_64
     TARGETARCH_ARM = arm
     TARGETARCH_ARM64 = arm64
+    ifdef ANDROID
+        $(error Linux is required to build android)
+    endif
 else ifeq ($(KERNEL), Linux)
     OS = linux
     EXTENSION = so
@@ -23,6 +32,17 @@ else ifeq ($(KERNEL), Linux)
     TARGETARCH_X64 = x86_64
     TARGETARCH_ARM = arm
     TARGETARCH_ARM64 = aarch64
+    
+    ifdef ANDROID
+        OS = android
+        TARGETARCH_X86 = i686
+        TARGETARCH_X64 = x86_64
+        TARGETARCH_ARM = arm
+        TARGETARCH_ARM64 = aarch64
+        TARGETSUFFIX = android
+        TARGETSUFFIXVER = 21
+        UPDATEFLAGS = -a
+    endif
 else
     $(error unsupported operating system '$(KERNEL)')
 endif
@@ -56,32 +76,17 @@ else ifeq ($(CPU), x64)
     TARGETARCH = $(TARGETARCH_X64)
 else ifeq ($(CPU), arm)
     TARGETARCH = $(TARGETARCH_ARM)
-    TARGETSUFFIX = eabihf
+    TARGETSUFFIX = gnueabihf
+    ifdef ANDROID
+        TARGETARCHSUFFIX = v7a
+        TARGETSUFFIX = androideabi
+    endif
 else ifeq ($(CPU), arm64)
     TARGETARCH = $(TARGETARCH_ARM64)
 else
     $(error unsupported target CPU '$(CPU)')
 endif
 
-STRIP = true
-ifeq ($(TARGETOS), linux)
-    TARGET = $(TARGETARCH)-$(TARGETOS)-gnu$(TARGETSUFFIX)
-    ifndef DEBUG
-        CXXLINKFLAGS := -s
-    endif
-    CXXLINKFLAGS := $(CXXLINKFLAGS) -static-libstdc++ -static-libgcc
-    ifneq ($(HOSTCPU), $(CPU))
-        CXXCROSSFLAGS = -I/usr/$(TARGET)/include
-        CXXLINKFLAGS := -fuse-ld=/usr/$(TARGET)/bin/ld $(CXXLINKFLAGS)
-    endif
-else ifeq ($(TARGETOS), darwin)
-    TARGET = $(TARGETARCH)-$(TARGETOS)
-    ifndef DEBUG
-        STRIP = strip -r -u
-    endif
-else
-    $(error unsupported target operating system '$(TARGETOS)')
-endif
 
 MAKEFILE = $(word $(words $(MAKEFILE_LIST)), $(MAKEFILE_LIST))
 MAKEDIR = $(dir $(abspath $(MAKEFILE)))
@@ -94,13 +99,45 @@ V8BUILDDIR = $(V8ROOTDIR)/build
 V8DIR = $(V8BUILDDIR)/v8
 V8INCDIR = $(V8DIR)/include
 V8OUTDIR = $(V8DIR)/out/$(CPU)/$(CONFIG)
+
+ifdef ANDROID
+    V8OUTDIR = $(V8DIR)/out/android_$(CPU)/$(CONFIG)
+endif
+
 V8LIBDIR = $(V8OUTDIR)/obj
+CXX = clang++
+
+NDK = $(V8DIR)/third_party/android_ndk
+LLVM = $(NDK)/toolchains/llvm/prebuilt/$(TARGETOS)-$(ARCH)
+TOOLS = $(TARGETARCH)-$(TARGETOS)-$(TARGETSUFFIX)
+
+STRIP = true
+ifeq ($(TARGETOS), linux)
+    TARGET = $(TARGETARCH)$(TARGETARCHSUFFIX)-$(TARGETOS)-$(TARGETSUFFIX)$(TARGETSUFFIXVER)
+    ifndef DEBUG
+        CXXLINKFLAGS := -s
+    endif
+    CXXLINKFLAGS := $(CXXLINKFLAGS) -static-libstdc++ -static-libgcc
+    ifdef ANDROID
+        CXXLINKFLAGS := -fuse-ld=$(LLVM)/$(TOOLS)/bin/ld $(CXXLINKFLAGS)
+        CXX = $(LLVM)/bin/$(TARGET)-clang++
+    else ifneq ($(HOSTCPU), $(CPU))
+        CXXCROSSFLAGS = -I/usr/$(TARGET)/include
+        CXXLINKFLAGS := -fuse-ld=/usr/$(TARGET)/bin/ld $(CXXLINKFLAGS)
+    endif
+else ifeq ($(TARGETOS), darwin)
+    TARGET = $(TARGETARCH)-$(TARGETOS)
+    ifndef DEBUG
+        STRIP = strip -r -u
+    endif
+else
+    $(error unsupported target operating system '$(TARGETOS)')
+endif
 
 OUTDIR = $(ROOTDIR)/bin/$(CONFIG)/Unix
 OBJDIR = $(OUTDIR)/obj/$(CPU)
 CLEARSCRIPTV8 = $(OUTDIR)/ClearScriptV8.$(OS)-$(CPU).$(EXTENSION)
 
-CXX = clang++
 CXXFLAGS = --target=$(TARGET) -std=c++17 -fvisibility=default -fPIC -fno-rtti -Wno-ignored-attributes $(CXXCONFIGFLAGS) -I$(V8INCDIR) $(CXXCROSSFLAGS)
 
 HEADERS = $(wildcard $(SRCDIR)/*.h)
@@ -135,13 +172,13 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(V8LIBDIR)/libv8_monolith.a:
-	cd $(UNIXDIR); ./V8Update.sh -n -y $(CPU) $(CONFIG)
+	cd $(UNIXDIR); ./V8Update.sh -n -y $(UPDATEFLAGS) $(CPU) $(CONFIG)
 
 clean:
 	rm -rf $(CLEARSCRIPTV8) $(OBJDIR)
 
 buildv8:
-	cd $(UNIXDIR); ./V8Update.sh -n -y $(CPU) $(CONFIG)
+	cd $(UNIXDIR); ./V8Update.sh -n -y $(UPDATEFLAGS) $(CPU) $(CONFIG)
 
 cleanv8:
 	rm -rf $(V8OUTDIR)
