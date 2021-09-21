@@ -2786,10 +2786,10 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("VBScriptCoreEngine")]
         public void VBScriptCoreEngine_DisableFloatNarrowing()
         {
-	        engine.AddHostType("StringT", typeof(string));
-	        Assert.AreEqual("123,456.80", engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
-	        engine.DisableFloatNarrowing = true;
-	        Assert.AreEqual("123,456.75", engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
+            engine.AddHostType("StringT", typeof(string));
+            Assert.AreEqual("123,456.80", engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
+            engine.DisableFloatNarrowing = true;
+            Assert.AreEqual("123,456.75", engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
         }
 
         // ReSharper restore InconsistentNaming

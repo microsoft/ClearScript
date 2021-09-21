@@ -481,6 +481,13 @@ namespace Microsoft.ClearScript.Windows.Core
                         throw new ScriptEngineException(Name, hostException.Message, null, HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
                     }
                 }
+                else
+                {
+                    // It's likely that an error occurred in a DirectAccess object. Throw the exception
+                    // in the script frame if one is available; otherwise do nothing.
+
+                    ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
+                }
             }
             else
             {

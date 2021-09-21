@@ -1180,6 +1180,46 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScript_ErrorDetails_DirectAccess_ReadOnlyProperty()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging);
+
+            engine.AddHostObject("foo", HostItemFlags.DirectAccess, new Variable());
+            engine.Execute("sub test\nfoo.Description = \"bogus\"\nend sub");
+
+            try
+            {
+                engine.Invoke("test");
+                Assert.Fail();
+            }
+            catch (ScriptEngineException exception)
+            {
+                Assert.IsTrue(exception.ErrorDetails.Contains("at test (Script:1:0) -> foo.Description = \"bogus\""));
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_VBScript_ErrorDetails_DirectAccess_ReadOnlyProperty_NoDebugger()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            engine.AddHostObject("foo", HostItemFlags.DirectAccess, new Variable());
+            engine.Execute("sub test\nfoo.Description = \"bogus\"\nend sub");
+
+            try
+            {
+                engine.Invoke("test");
+                Assert.Fail();
+            }
+            catch (ScriptEngineException exception)
+            {
+                Assert.IsTrue(exception.ErrorDetails.Contains("at ([unknown]:1:0)"));
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
         public void BugFix_VBScript_TargetInvocationException()
         {
             engine.Dispose();

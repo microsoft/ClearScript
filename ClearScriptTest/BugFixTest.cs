@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1443,12 +1444,21 @@ namespace Microsoft.ClearScript.Test
             test = new RestrictedPrototypeObject(false);
             engine.Script.test = test;
             Assert.IsInstanceOfType(engine.Evaluate("test.Foo"), typeof(Undefined));
-            engine.Script.Object.setPrototypeOf(test, test.GetPrototype(engine));
+            Assert.IsTrue(test.SetPrototype(engine));
             Assert.AreEqual("bar", engine.Evaluate("test.Foo"));
             engine.Execute("test.Foo = 'qux'");
             Assert.AreEqual("qux", engine.Evaluate("test.Foo"));
             Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("delete test.Foo")));
             Assert.AreEqual("bar", engine.Evaluate("test.Foo"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_RestrictedPrototypeObject_ProxyPreservation()
+        {
+            engine.Script.test = new { obj = new RestrictedPrototypeObject(true) };
+            Assert.AreEqual("function", engine.Evaluate("typeof test.obj.Add"));
+            engine.CollectGarbage(true);
+            Assert.AreEqual("function", engine.Evaluate("typeof test.obj.Add"));
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -1799,6 +1809,7 @@ namespace Microsoft.ClearScript.Test
         {
             public int Value { get; set; }
             public bool IsValid { get; set; }
+            public string Description => "Test variable object";
         }
 
         public class TaskPromiseConversionTest
@@ -1827,7 +1838,7 @@ namespace Microsoft.ClearScript.Test
 
         public class RestrictedPrototypeObject : RestrictedPrototypeObjectBase, IPropertyBag, IScriptableObject
         {
-            private readonly Dictionary<ScriptEngine, object> map = new Dictionary<ScriptEngine, object>();
+            private readonly ConditionalWeakTable<ScriptEngine, Entry> map = new ConditionalWeakTable<ScriptEngine, Entry>();
             private readonly bool setPrototypeOnExpose;
 
             public RestrictedPrototypeObject(bool setPrototypeOnExpose)
@@ -1835,27 +1846,44 @@ namespace Microsoft.ClearScript.Test
                 this.setPrototypeOnExpose = setPrototypeOnExpose;
             }
 
-            public object GetPrototype(ScriptEngine engine)
+            public bool SetPrototype(ScriptEngine engine)
             {
-                if (map.TryGetValue(engine, out var prototype))
+                var entry = map.GetOrCreateValue(engine);
+
+                if (entry.Prototype == null)
                 {
-                    return prototype;
+                    entry.Prototype = this.ToRestrictedHostObject<RestrictedPrototypeObjectBase>(engine);
                 }
 
-                return null;
+                if (entry.ProxyHolder == null)
+                {
+                    engine.Script.Object.setPrototypeOf(this, entry.Prototype);
+                    entry.ProxyHolder = engine.Script.Object.create(this);
+                    return true;
+                }
+
+                return false;
             }
 
             void IScriptableObject.OnExposedToScriptCode(ScriptEngine engine)
             {
-                if (!map.ContainsKey(engine))
+                if (setPrototypeOnExpose)
                 {
-                    map[engine] = this.ToRestrictedHostObject<RestrictedPrototypeObjectBase>(engine);
-                    if (setPrototypeOnExpose)
-                    {
-                        engine.Script.Object.setPrototypeOf(this, map[engine]);
-                    }
+                    SetPrototype(engine);
                 }
             }
+
+            // ReSharper disable ClassNeverInstantiated.Local
+            // ReSharper disable NotAccessedField.Local
+
+            private class Entry
+            {
+                public object Prototype;
+                public object ProxyHolder;
+            }
+
+            // ReSharper restore NotAccessedField.Local
+            // ReSharper restore ClassNeverInstantiated.Local
         }
 
         #endregion

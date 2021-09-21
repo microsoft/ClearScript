@@ -1,6 +1,6 @@
 #!/bin/bash
 
-v8testedrev=9.2.230.21
+v8testedrev=9.4.146.16
 v8testedcommit=
 
 if [[ $v8testedcommit == "" ]]; then
@@ -197,7 +197,7 @@ echo "Building V8 ..."
 if [[ $linux == true ]]; then
     build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu
 fi
-gn gen out/$cpu/$mode --args="enable_precompiled_headers=false fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug is_official_build=$isofficial target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\" chrome_pgo_phase=0" >gn-$cpu-$mode.log || fail
+gn gen out/$cpu/$mode --args="enable_precompiled_headers=false fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug is_official_build=$isofficial target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\" chrome_pgo_phase=0" >gn-$cpu-$mode.log || fail
 ninja -C out/$cpu/$mode obj/libv8_monolith.a >build-$cpu-$mode.log || fail
 
 cd ../..
