@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set v8testedrev=9.4.146.16
+set v8testedrev=9.5.172.13
 set v8testedcommit=
 
 if not "%v8testedcommit%"=="" goto ProcessArgs
@@ -223,7 +223,7 @@ setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64_x86 >nul
 if errorlevel 1 goto Build32BitError
 echo Building V8 (x86) ...
-call gn gen out\Win32\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-Win32-%mode%.log
+call gn gen out\Win32\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x86\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-Win32-%mode%.log
 if errorlevel 1 goto Build32BitError
 ninja -C out\Win32\%mode% obj\v8_monolith.lib >build-Win32-%mode%.log
 if errorlevel 1 goto Build32BitError
@@ -241,7 +241,7 @@ setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64 >nul
 if errorlevel 1 goto Build64BitError
 echo Building V8 (x64) ...
-call gn gen out\x64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_monolithic=true v8_target_cpu=\"x64\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-x64-%mode%.log
+call gn gen out\x64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"x64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x64\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-x64-%mode%.log
 if errorlevel 1 goto Build64BitError
 ninja -C out\x64\%mode% obj\v8_monolith.lib >build-x64-%mode%.log
 if errorlevel 1 goto Build64BitError
@@ -259,7 +259,7 @@ setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64_arm64 >nul
 if errorlevel 1 goto BuildArm64BitError
 echo Building V8 (arm64) ...
-call gn gen out\arm64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"arm64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_monolithic=true v8_target_cpu=\"arm64\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-arm64-%mode%.log
+call gn gen out\arm64\%mode% --args="enable_precompiled_headers=false fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% is_official_build=%isofficial% target_cpu=\"arm64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"arm64\" v8_use_external_startup_data=false chrome_pgo_phase=0" >gn-arm64-%mode%.log
 if errorlevel 1 goto BuildArm64BitError
 ninja -C out\arm64\%mode% obj\v8_monolith.lib >build-arm64-%mode%.log
 if errorlevel 1 goto BuildArm64BitError
