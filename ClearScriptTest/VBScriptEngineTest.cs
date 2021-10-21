@@ -2138,7 +2138,11 @@ namespace Microsoft.ClearScript.Test
 
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
-            thread.Join();
+
+            if (!thread.Join(TimeSpan.FromSeconds(5)))
+            {
+                Assert.Inconclusive("The Httpbin service request timed out");
+            }
 
             Assert.AreEqual(200, status);
             Assert.AreEqual("Hello, world!", data);
@@ -2842,10 +2846,10 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_DisableFloatNarrowing()
         {
-	        engine.AddHostType("StringT", typeof(string));
-	        Assert.AreEqual("123,456.80", engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
-	        engine.DisableFloatNarrowing = true;
-	        Assert.AreEqual("123,456.75", engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
+            engine.AddHostType("StringT", typeof(string));
+            Assert.AreEqual("123,456.80", engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
+            engine.DisableFloatNarrowing = true;
+            Assert.AreEqual("123,456.75", engine.Evaluate("StringT.Format(\"{0:###,###.00}\", 123456.75)"));
         }
 
         // ReSharper restore InconsistentNaming

@@ -436,7 +436,6 @@ private:
     SharedPtr<V8IsolateImpl> m_spIsolateImpl;
     bool m_DateTimeConversionEnabled;
     Persistent<v8::Context> m_hContext;
-    Persistent<v8::Object> m_hGlobal;
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
     Persistent<v8::Symbol> m_hIsHostObjectKey;
     Persistent<v8::String> m_hHostExceptionKey;

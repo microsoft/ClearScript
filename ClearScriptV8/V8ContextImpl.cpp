@@ -254,8 +254,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             auto hGlobal = ::ValueAsObject(m_hContext->Global()->GetPrototype());
             if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
             {
-                m_hGlobal = CreatePersistent(hGlobal);
-                m_hGlobal->SetAlignedPointerInInternalField(0, this);
+                hGlobal->SetAlignedPointerInInternalField(0, this);
             }
         }
 
@@ -1491,14 +1490,10 @@ void V8ContextImpl::Teardown()
     // As of V8 3.16.0, the global property getter for a disposed context
     // may be invoked during GC after the V8ContextImpl instance is gone.
 
-    if (!m_hGlobal.IsEmpty())
+    auto hGlobal = ::ValueAsObject(m_hContext->Global()->GetPrototype());
+    if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
     {
-        if (m_hGlobal->InternalFieldCount() > 0)
-        {
-            m_hGlobal->SetAlignedPointerInInternalField(0, nullptr);
-        }
-
-        Dispose(m_hGlobal);
+        hGlobal->SetAlignedPointerInInternalField(0, nullptr);
     }
 
     Dispose(m_hContext);
@@ -2049,7 +2044,7 @@ void V8ContextImpl::GetHostObjectIterator(const v8::FunctionCallbackInfo<v8::Val
                 {
                     if (pContextImpl->m_hToIteratorFunction.IsEmpty())
                     {
-                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hGlobal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("EngineInternal")))))).As<v8::Object>();
+                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("EngineInternal")))))).As<v8::Object>();
                         pContextImpl->m_hToIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("toIterator")))))).As<v8::Function>());
                     }
 
@@ -2083,7 +2078,7 @@ void V8ContextImpl::GetHostObjectAsyncIterator(const v8::FunctionCallbackInfo<v8
                 {
                     if (pContextImpl->m_hToAsyncIteratorFunction.IsEmpty())
                     {
-                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hGlobal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("EngineInternal")))))).As<v8::Object>();
+                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("EngineInternal")))))).As<v8::Object>();
                         pContextImpl->m_hToAsyncIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("toAsyncIterator")))))).As<v8::Function>());
                     }
 

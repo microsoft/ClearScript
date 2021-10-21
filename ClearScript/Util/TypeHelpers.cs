@@ -405,6 +405,18 @@ namespace Microsoft.ClearScript.Util
 
         public static EventInfo GetScriptableEvent(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
+            try
+            {
+                var eventInfo = type.GetScriptableEventInternal(name, bindFlags, accessContext, defaultAccess);
+                if (eventInfo != null)
+                {
+                    return eventInfo;
+                }
+            }
+            catch (AmbiguousMatchException)
+            {
+            }
+
             return type.GetScriptableEvents(bindFlags, accessContext, defaultAccess).FirstOrDefault(eventInfo => eventInfo.GetScriptName() == name);
         }
 
@@ -415,6 +427,12 @@ namespace Microsoft.ClearScript.Util
 
         public static FieldInfo GetScriptableField(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
+            var candidate = type.GetField(name, bindFlags);
+            if ((candidate != null) && candidate.IsScriptable(accessContext, defaultAccess) && (candidate.GetScriptName() == name))
+            {
+                return candidate;
+            }
+
             return type.GetScriptableFields(bindFlags, accessContext, defaultAccess).FirstOrDefault(field => field.GetScriptName() == name);
         }
 
@@ -469,8 +487,42 @@ namespace Microsoft.ClearScript.Util
             return type.GetScriptableProperties(bindFlags, accessContext, defaultAccess).Where(property => property.GetScriptName() == name);
         }
 
+        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        {
+            var candidates = type.GetProperty(name, bindFlags)?.ToEnumerable() ?? Enumerable.Empty<PropertyInfo>();
+            if (type.IsInterface)
+            {
+                candidates = candidates.Concat(type.GetInterfaces().Select(interfaceType => interfaceType.GetScriptableProperty(name, bindFlags, accessContext, defaultAccess)));
+            }
+
+            try
+            {
+                // ReSharper disable once RedundantEnumerableCastCall
+                return candidates.OfType<PropertyInfo>().SingleOrDefault(property => (property.GetIndexParameters().Length < 1) && property.IsScriptable(accessContext, defaultAccess) && (property.GetScriptName() == name));
+            }
+            catch (InvalidOperationException exception)
+            {
+                throw new AmbiguousMatchException($"Multiple matches found for property name '{name}'", exception);
+            }
+        }
+
         public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
         {
+            if (bindArgs.Length < 1)
+            {
+                try
+                {
+                    var property = type.GetScriptableProperty(name, bindFlags, accessContext, defaultAccess);
+                    if (property != null)
+                    {
+                        return property;
+                    }
+                }
+                catch (AmbiguousMatchException)
+                {
+                }
+            }
+
             var candidates = type.GetScriptableProperties(name, bindFlags, accessContext, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
             return SelectProperty(candidates, bindFlags, bindArgs);
         }
@@ -683,6 +735,25 @@ namespace Microsoft.ClearScript.Util
             var name = getBaseName(type.GetGenericTypeDefinition());
             var paramList = string.Join(",", typeArgs.Select(typeArg => typeArg.GetFriendlyName(getBaseName)));
             return MiscHelpers.FormatInvariant("{0}{1}<{2}>", parentPrefix, name, paramList);
+        }
+
+        private static EventInfo GetScriptableEventInternal(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        {
+            var candidates = type.GetEvent(name, bindFlags)?.ToEnumerable() ?? Enumerable.Empty<EventInfo>();
+            if (type.IsInterface)
+            {
+                candidates = candidates.Concat(type.GetInterfaces().Select(interfaceType => interfaceType.GetScriptableEventInternal(name, bindFlags, accessContext, defaultAccess)));
+            }
+
+            try
+            {
+                // ReSharper disable once RedundantEnumerableCastCall
+                return candidates.OfType<EventInfo>().SingleOrDefault(eventInfo => eventInfo.IsScriptable(accessContext, defaultAccess) && (eventInfo.GetScriptName() == name));
+            }
+            catch (InvalidOperationException exception)
+            {
+                throw new AmbiguousMatchException($"Multiple matches found for event name '{name}'", exception);
+            }
         }
 
         private static Invocability GetInvocabilityInternal(Tuple<Type, BindingFlags, Type, ScriptAccess, bool> args)

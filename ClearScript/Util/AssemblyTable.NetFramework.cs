@@ -25,12 +25,18 @@ namespace Microsoft.ClearScript.Util
 
             static AssemblyTableImpl()
             {
+                // ReSharper disable ConditionIsAlwaysTrueOrFalse
+                // ReSharper disable HeuristicUnreachableCode
+
                 LoadAssemblyTable();
                 if (table != null)
                 {
                     AppDomain.CurrentDomain.AssemblyLoad += (sender, args) => table.TryAdd(args.LoadedAssembly.GetName().Name, args.LoadedAssembly.FullName);
                     AppDomain.CurrentDomain.GetAssemblies().ForEach(assembly => table.TryAdd(assembly.GetName().Name, assembly.FullName));
                 }
+
+                // ReSharper restore HeuristicUnreachableCode
+                // ReSharper restore ConditionIsAlwaysTrueOrFalse
             }
 
             public static string GetFullAssemblyNameImpl(string name)

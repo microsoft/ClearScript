@@ -1,21 +1,21 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 5e3045bfdc..56c6d2c1eb 100644
+index 5c7d931b27..665f145a6a 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -866,7 +866,7 @@ config("toolchain") {
+@@ -970,7 +970,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
 -  cflags = []
-+  cflags = [ "-Wno-invalid-offsetof" ]
++  cflags = [ "-Wno-invalid-offsetof", "-Wno-unused-result", "-Wno-deprecated-copy-with-user-provided-copy" ]
    ldflags = []
  
    if (v8_current_cpu == "arm") {
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index 5995a766d1..4d36f360ac 100644
+index 92686eff12..1c323efcce 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -13222,6 +13222,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
+@@ -13355,6 +13355,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -41,10 +41,10 @@ index b4099c5fad..9073b18b8d 100644
      const Assessment* assessment = pair.second;
      // Use operator<< so we can write the assessment on the same
 diff --git a/src/diagnostics/unwinding-info-win64.cc b/src/diagnostics/unwinding-info-win64.cc
-index 6127c0a786..1d93c65f6b 100644
+index d50767421a..f3fa0f3a70 100644
 --- a/src/diagnostics/unwinding-info-win64.cc
 +++ b/src/diagnostics/unwinding-info-win64.cc
-@@ -458,6 +458,14 @@ void InitUnwindingRecord(Record* record, size_t code_size_in_bytes) {
+@@ -463,6 +463,14 @@ void InitUnwindingRecord(Record* record, size_t code_size_in_bytes) {
  namespace {
  
  V8_DECLARE_ONCE(load_ntdll_unwinding_functions_once);
@@ -59,7 +59,7 @@ index 6127c0a786..1d93c65f6b 100644
  static decltype(
      &::RtlAddGrowableFunctionTable) add_growable_function_table_func = nullptr;
  static decltype(
-@@ -465,6 +473,19 @@ static decltype(
+@@ -470,6 +478,19 @@ static decltype(
      nullptr;
  
  void LoadNtdllUnwindingFunctionsOnce() {
@@ -79,7 +79,7 @@ index 6127c0a786..1d93c65f6b 100644
    // Load functions from the ntdll.dll module.
    HMODULE ntdll_module =
        LoadLibraryEx(L"ntdll.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-@@ -487,6 +508,21 @@ void LoadNtdllUnwindingFunctions() {
+@@ -492,6 +513,21 @@ void LoadNtdllUnwindingFunctions() {
                   &LoadNtdllUnwindingFunctionsOnce);
  }
  
@@ -101,7 +101,7 @@ index 6127c0a786..1d93c65f6b 100644
  bool AddGrowableFunctionTable(PVOID* DynamicTable,
                                PRUNTIME_FUNCTION FunctionTable, DWORD EntryCount,
                                DWORD MaximumEntryCount, ULONG_PTR RangeBase,
-@@ -538,7 +574,7 @@ void RegisterNonABICompliantCodeRange(void* start, size_t size_in_bytes) {
+@@ -543,7 +579,7 @@ void RegisterNonABICompliantCodeRange(void* start, size_t size_in_bytes) {
        ExceptionHandlerRecord* record = new (start) ExceptionHandlerRecord();
        InitUnwindingRecord(record, size_in_bytes);
  
@@ -110,7 +110,7 @@ index 6127c0a786..1d93c65f6b 100644
                                    kDefaultRuntimeFunctionCount,
                                    reinterpret_cast<DWORD64>(start)));
  
-@@ -576,7 +612,7 @@ void UnregisterNonABICompliantCodeRange(void* start) {
+@@ -581,7 +617,7 @@ void UnregisterNonABICompliantCodeRange(void* start) {
      if (unhandled_exception_callback_g) {
        ExceptionHandlerRecord* record =
            reinterpret_cast<ExceptionHandlerRecord*>(start);
@@ -120,10 +120,10 @@ index 6127c0a786..1d93c65f6b 100644
        // Unprotect reserved page.
        DWORD old_protect;
 diff --git a/src/execution/isolate.h b/src/execution/isolate.h
-index f55af20acd..6f6c86d16d 100644
+index e7908eac6a..f0f62475e9 100644
 --- a/src/execution/isolate.h
 +++ b/src/execution/isolate.h
-@@ -590,7 +590,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
+@@ -598,7 +598,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
    // Returns the isolate inside which the current thread is running.
    V8_INLINE static Isolate* Current() {
      Isolate* isolate = TryGetCurrent();
@@ -132,7 +132,7 @@ index f55af20acd..6f6c86d16d 100644
    }
  
 diff --git a/src/execution/stack-guard.cc b/src/execution/stack-guard.cc
-index 0bbdf1444a..71182179ae 100644
+index 3f2968b55b..58d07d6023 100644
 --- a/src/execution/stack-guard.cc
 +++ b/src/execution/stack-guard.cc
 @@ -214,8 +214,10 @@ void StackGuard::FreeThreadResources() {
@@ -148,10 +148,10 @@ index 0bbdf1444a..71182179ae 100644
    set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
    real_climit_ = limit;
 diff --git a/src/init/v8.cc b/src/init/v8.cc
-index e14d02efbd..19b4de2b23 100644
+index 7258ba8d93..14d3f0b3f7 100644
 --- a/src/init/v8.cc
 +++ b/src/init/v8.cc
-@@ -193,7 +193,6 @@ void V8::InitializeOncePerProcess() {
+@@ -206,7 +206,6 @@ void V8::InitializeOncePerProcess() {
  }
  
  void V8::InitializePlatform(v8::Platform* platform) {
@@ -160,10 +160,10 @@ index e14d02efbd..19b4de2b23 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/objects/intl-objects.h b/src/objects/intl-objects.h
-index ec0eb93873..b25fa0aac1 100644
+index 122ca4b746..c00bc6ddca 100644
 --- a/src/objects/intl-objects.h
 +++ b/src/objects/intl-objects.h
-@@ -287,7 +287,7 @@ class Intl {
+@@ -292,7 +292,7 @@ class Intl {
        UErrorCode status = U_ZERO_ERROR;
        UEnumeration* uenum =
            uloc_openAvailableByType(ULOC_AVAILABLE_WITH_LEGACY_ALIASES, &status);
@@ -173,10 +173,10 @@ index ec0eb93873..b25fa0aac1 100644
        std::vector<std::string> all_locales;
        const char* loc;
 diff --git a/src/objects/js-date-time-format.cc b/src/objects/js-date-time-format.cc
-index 89ac294a0c..3e5d21b6d3 100644
+index 868b0a3be2..c946dfb548 100644
 --- a/src/objects/js-date-time-format.cc
 +++ b/src/objects/js-date-time-format.cc
-@@ -1534,8 +1534,13 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
+@@ -1549,8 +1549,13 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
    //     requestedLocales, opt, %DateTimeFormat%.[[RelevantExtensionKeys]],
    //     localeData).
    //
@@ -192,10 +192,10 @@ index 89ac294a0c..3e5d21b6d3 100644
    if (maybe_resolve_locale.IsNothing()) {
      THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError),
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index 74b970b545..c436fdb0cd 100644
+index 68482fe68f..f52247799a 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
-@@ -852,6 +852,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -877,6 +877,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();

@@ -105,7 +105,7 @@ namespace Microsoft.ClearScript.Test
             // reservation. 64-bit V8 reserves much larger blocks but benefits from the enormous
             // available address space.
 
-            var maxV8Count = Environment.Is64BitProcess ? 512 : 16;
+            var maxV8Count = Environment.Is64BitProcess ? 256 : 16;
             var maxJScriptCount = (threadCount - maxV8Count) / 2;
 
             var startEvent = new ManualResetEventSlim(false);

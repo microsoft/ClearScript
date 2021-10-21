@@ -563,7 +563,11 @@ namespace Microsoft.ClearScript.Test
 
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
-            thread.Join();
+
+            if (!thread.Join(TimeSpan.FromSeconds(5)))
+            {
+                Assert.Inconclusive("The Httpbin service request timed out");
+            }
 
             Assert.AreEqual(200, status);
             Assert.AreEqual("Hello, world!", data);
