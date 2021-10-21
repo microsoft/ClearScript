@@ -18,10 +18,9 @@ UNIXDIR = $(ROOTDIR)/Unix
 NETCOREDIR = $(ROOTDIR)/NetCore
 NETSTANDARDDIR = $(ROOTDIR)/NetStandard
 
-.PHONY: all test clean buildv8 cleanv8 zapv8 buildall cleanall
+.PHONY: all test clean v8 buildv8 cleanv8 zapv8 buildall cleanall
 
-all:
-	make -f $(UNIXDIR)/ClearScriptV8/Makefile
+all: v8
 	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(NETCOREDIR)/ClearScript.Core/ClearScript.Core.csproj
 	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(NETCOREDIR)/ClearScript.V8/ClearScript.V8.csproj
 	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(NETSTANDARDDIR)/ClearScript.Core/ClearScript.Core.csproj
@@ -45,6 +44,9 @@ clean:
 	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(UNIXDIR)/ClearScriptBenchmarks/ClearScriptBenchmarks.csproj
 	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(UNIXDIR)/ClearScriptTest/ClearScriptTest.csproj
 	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(UNIXDIR)/ClearScriptTest.NetStandard/ClearScriptTest.NetStandard.csproj
+
+v8:
+	make -f $(UNIXDIR)/ClearScriptV8/Makefile
 
 buildv8:
 	make -f $(UNIXDIR)/ClearScriptV8/Makefile buildv8
