@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Text;
 
 namespace Microsoft.ClearScript.Test
@@ -113,9 +113,9 @@ namespace Microsoft.ClearScript.Test
 
         private static string DownloadFileAsString(string name)
         {
-            using (var client = new WebClient())
+            using (var client = new HttpClient())
             {
-                return client.DownloadString(baseUrl + name);
+                return client.GetStringAsync(baseUrl + name).Result;
             }
         }
 

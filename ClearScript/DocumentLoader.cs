@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -406,9 +405,9 @@ namespace Microsoft.ClearScript
                 }
                 else
                 {
-                    using (var client = new WebClient())
+                    using (var client = new HttpClient())
                     {
-                        contents = await client.DownloadStringTaskAsync(uri).ConfigureAwait(false);
+                        contents = await client.GetStringAsync(uri).ConfigureAwait(false);
                     }
                 }
 

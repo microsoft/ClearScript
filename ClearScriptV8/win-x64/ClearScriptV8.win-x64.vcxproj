@@ -28,6 +28,10 @@
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(VisualStudioVersion)'=='17.0'">
+    <PlatformToolset>v143</PlatformToolset>
+    <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)'==''">$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)'=='16.0'">
     <PlatformToolset>v142</PlatformToolset>
     <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)'==''">$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
@@ -83,6 +87,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
+      <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='17.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='16.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='14.0'">true</GenerateDebugInformation>
@@ -119,6 +124,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
+      <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='17.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='16.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='15.0'">DebugFull</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='14.0'">true</GenerateDebugInformation>
