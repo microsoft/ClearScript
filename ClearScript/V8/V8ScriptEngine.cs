@@ -33,6 +33,9 @@ namespace Microsoft.ClearScript.V8
 
         private static readonly DocumentInfo initScriptInfo = new DocumentInfo(MiscHelpers.FormatInvariant("{0} [internal]", nameof(V8ScriptEngine)));
 
+        private readonly V8Runtime runtime;
+        private readonly bool usingPrivateRuntime;
+
         private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
         private readonly object script;
@@ -211,163 +214,164 @@ namespace Microsoft.ClearScript.V8
         internal V8ScriptEngine(V8Runtime runtime, string name, V8RuntimeConstraints constraints, V8ScriptEngineFlags flags, int debugPort)
             : base((runtime != null) ? runtime.Name + ":" + name : name, "js")
         {
-            var localRuntime = (runtime != null) ? null : new V8Runtime(name, constraints);
-
-            using (localRuntime)
+            if (runtime != null)
             {
-                var activeRuntime = runtime ?? localRuntime;
-                DocumentNameManager = activeRuntime.DocumentNameManager;
-                HostItemCollateral = activeRuntime.HostItemCollateral;
-
-                engineFlags = flags;
-                proxy = V8ContextProxy.Create(activeRuntime.IsolateProxy, Name, flags, debugPort);
-                script = GetRootItem();
-
-                Execute(initScriptInfo,
-                    @"
-                        Object.defineProperty(this, 'EngineInternal', { value: (function () {
-
-                            function convertArgs(args) {
-                                let result = [];
-                                let count = args.Length;
-                                for (let i = 0; i < count; i++) {
-                                    result.push(args[i]);
-                                }
-                                return result;
-                            }
-
-                            function construct() {
-                                return new this(...arguments);
-                            }
-
-                            const isHostObjectKey = this.isHostObjectKey;
-                            delete this.isHostObjectKey;
-
-                            const savedPromise = Promise;
-
-                            return Object.freeze({
-
-                                commandHolder: {
-                                },
-
-                                getCommandResult: function (value) {
-                                    if (value == null) {
-                                        return value;
-                                    }
-                                    if (typeof(value.hasOwnProperty) != 'function') {
-                                        if (value[Symbol.toStringTag] == 'Module') {
-                                            return '[module]';
-                                        }
-                                        return '[external]';
-                                    }
-                                    if (value[isHostObjectKey] === true) {
-                                        return value;
-                                    }
-                                    if (typeof(value.toString) != 'function') {
-                                        return '[' + typeof(value) + ']';
-                                    }
-                                    return value.toString();
-                                },
-
-                                invokeConstructor: function (constructor, args) {
-                                    if (typeof(constructor) != 'function') {
-                                        throw new Error('Function expected');
-                                    }
-                                    return construct.apply(constructor, convertArgs(args));
-                                },
-
-                                invokeMethod: function (target, method, args) {
-                                    if (typeof(method) != 'function') {
-                                        throw new Error('Function expected');
-                                    }
-                                    return method.apply(target, convertArgs(args));
-                                },
-
-                                createPromise: function () {
-                                    return new savedPromise(...arguments);
-                                },
-
-                                isPromise: function (value) {
-                                    return value instanceof savedPromise;
-                                },
-
-                                completePromiseWithResult: function (getResult, resolve, reject) {
-                                    try {
-                                        resolve(getResult());
-                                    }
-                                    catch (exception) {
-                                        reject(exception);
-                                    }
-                                    return undefined;
-                                },
-
-                                completePromise: function (wait, resolve, reject) {
-                                    try {
-                                        wait();
-                                        resolve();
-                                    }
-                                    catch (exception) {
-                                        reject(exception);
-                                    }
-                                    return undefined;
-                                },
-
-                                throwValue: function (value) {
-                                    throw value;
-                                },
-
-                                getStackTrace: function () {
-                                    try {
-                                        throw new Error('[stack trace]');
-                                    }
-                                    catch (exception) {
-                                        return exception.stack;
-                                    }
-                                    return '';
-                                },
-
-                                toIterator: function* (enumerator) {
-                                    while (enumerator.MoveNext()) {
-                                        yield enumerator.Current;
-                                    }
-                                },
-
-                                toAsyncIterator: async function* (asyncEnumerator) {
-                                    while (await asyncEnumerator.MoveNextPromise()) {
-                                        yield asyncEnumerator.Current;
-                                    }
-                                }
-
-                            });
-                        })() });
-                    "
-                );
-
-                if (flags.HasFlag(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart))
-                {
-                    awaitDebuggerAndPause = true;
-                }
+                this.runtime = runtime;
+            }
+            else
+            {
+                this.runtime = runtime = new V8Runtime(name, constraints);
+                usingPrivateRuntime = true;
             }
 
-            // The above code appears to be problematic on some .NET runtimes, intermittently
-            // triggering premature finalization of the V8 isolate proxy. That can lead to a crash
-            // if the proxy's finalizer ends up racing against its Dispose method. The call below
-            // should prevent this condition in all cases.
-            //
-            // UPDATE: The observed behavior is actually documented. As Dispose is invoked via
-            // the proxy's only reference, the proxy may become eligible for finalization during
-            // the call. Typically Dispose invokes GC.SuppressFinalize just before exiting, which,
-            // in addition to canceling finalization, extends the object's lifetime until Dispose
-            // has done its job. The proxy here is unusual in that it requires finalization
-            // regardless of disposal, so the correct fix is for Dispose to invoke GC.KeepAlive as
-            // its final step. The original fix is retained here for regression avoidance.
+            DocumentNameManager = runtime.DocumentNameManager;
+            HostItemCollateral = runtime.HostItemCollateral;
 
-            GC.KeepAlive(localRuntime);
+            engineFlags = flags;
+            proxy = V8ContextProxy.Create(runtime.IsolateProxy, Name, flags, debugPort);
+            script = GetRootItem();
+
+            Execute(initScriptInfo,
+                @"
+                    Object.defineProperty(this, 'EngineInternal', { value: (function () {
+
+                        function convertArgs(args) {
+                            let result = [];
+                            let count = args.Length;
+                            for (let i = 0; i < count; i++) {
+                                result.push(args[i]);
+                            }
+                            return result;
+                        }
+
+                        function construct() {
+                            return new this(...arguments);
+                        }
+
+                        const isHostObjectKey = this.isHostObjectKey;
+                        delete this.isHostObjectKey;
+
+                        const savedPromise = Promise;
+
+                        return Object.freeze({
+
+                            commandHolder: {
+                            },
+
+                            getCommandResult: function (value) {
+                                if (value == null) {
+                                    return value;
+                                }
+                                if (typeof(value.hasOwnProperty) != 'function') {
+                                    if (value[Symbol.toStringTag] == 'Module') {
+                                        return '[module]';
+                                    }
+                                    return '[external]';
+                                }
+                                if (value[isHostObjectKey] === true) {
+                                    return value;
+                                }
+                                if (typeof(value.toString) != 'function') {
+                                    return '[' + typeof(value) + ']';
+                                }
+                                return value.toString();
+                            },
+
+                            invokeConstructor: function (constructor, args) {
+                                if (typeof(constructor) != 'function') {
+                                    throw new Error('Function expected');
+                                }
+                                return construct.apply(constructor, convertArgs(args));
+                            },
+
+                            invokeMethod: function (target, method, args) {
+                                if (typeof(method) != 'function') {
+                                    throw new Error('Function expected');
+                                }
+                                return method.apply(target, convertArgs(args));
+                            },
+
+                            createPromise: function () {
+                                return new savedPromise(...arguments);
+                            },
+
+                            isPromise: function (value) {
+                                return value instanceof savedPromise;
+                            },
+
+                            completePromiseWithResult: function (getResult, resolve, reject) {
+                                try {
+                                    resolve(getResult());
+                                }
+                                catch (exception) {
+                                    reject(exception);
+                                }
+                                return undefined;
+                            },
+
+                            completePromise: function (wait, resolve, reject) {
+                                try {
+                                    wait();
+                                    resolve();
+                                }
+                                catch (exception) {
+                                    reject(exception);
+                                }
+                                return undefined;
+                            },
+
+                            throwValue: function (value) {
+                                throw value;
+                            },
+
+                            getStackTrace: function () {
+                                try {
+                                    throw new Error('[stack trace]');
+                                }
+                                catch (exception) {
+                                    return exception.stack;
+                                }
+                                return '';
+                            },
+
+                            toIterator: function* (enumerator) {
+                                while (enumerator.MoveNext()) {
+                                    yield enumerator.Current;
+                                }
+                            },
+
+                            toAsyncIterator: async function* (asyncEnumerator) {
+                                while (await asyncEnumerator.MoveNextPromise()) {
+                                    yield asyncEnumerator.Current;
+                                }
+                            }
+
+                        });
+                    })() });
+                "
+            );
+
+            if (flags.HasFlag(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart))
+            {
+                awaitDebuggerAndPause = true;
+            }
         }
 
         #endregion
 
         #region public members
+
+        /// <summary>
+        /// Resumes script execution if the script engine is waiting for a debugger connection.
+        /// </summary>
+        /// <remarks>
+        /// This method can be called safely from any thread.
+        /// </remarks>
+        public void CancelAwaitDebugger()
+        {
+            VerifyNotDisposed();
+            proxy.CancelAwaitDebugger();
+        }
 
         /// <summary>
         /// Gets or sets a soft limit for the size of the V8 runtime's heap.
@@ -1325,7 +1329,7 @@ namespace Microsoft.ClearScript.V8
                 return obj;
             }
 
-            if (obj.GetType().IsGuidType<TypeGuidMocks.Nothing>())
+            if (obj is INothingTag)
             {
                 return null;
             }
@@ -1411,7 +1415,12 @@ namespace Microsoft.ClearScript.V8
 
             if (obj is ScriptItem scriptItem)
             {
-                if (scriptItem.Engine == this)
+                if ((scriptItem.Engine is V8ScriptEngine that) && (that.runtime == runtime))
+                {
+                    return scriptItem.Unwrap();
+                }
+
+                if ((scriptItem is V8ScriptItem v8ScriptItem) && v8ScriptItem.IsShared)
                 {
                     return scriptItem.Unwrap();
                 }
@@ -1453,7 +1462,7 @@ namespace Microsoft.ClearScript.V8
             }
 
             var scriptItem = V8ScriptItem.Wrap(this, obj);
-            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && (obj is IV8Object v8Object) && v8Object.IsPromise())
+            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && (obj is IV8Object v8Object) && v8Object.IsPromise)
             {
                 return scriptItem.ToTask();
             }
@@ -1565,8 +1574,14 @@ namespace Microsoft.ClearScript.V8
                 if (disposedFlag.Set())
                 {
                     base.Dispose(true);
+
                     ((IDisposable)script).Dispose();
                     proxy.Dispose();
+
+                    if (usingPrivateRuntime)
+                    {
+                        runtime.Dispose();
+                    }
                 }
             }
             else
@@ -1599,7 +1614,7 @@ namespace Microsoft.ClearScript.V8
 
         Task<object> IJavaScriptEngine.CreateTaskForPromise(ScriptObject promise)
         {
-            if (!(promise is V8ScriptItem v8Promise) || !v8Promise.IsPromise())
+            if (!(promise is V8ScriptItem v8ScriptItem) || !v8ScriptItem.IsPromise)
             {
                 throw new ArgumentException("The object is not a V8 promise", nameof(promise));
             }
@@ -1623,7 +1638,7 @@ namespace Microsoft.ClearScript.V8
                 }
             };
 
-            v8Promise.InvokeMethod(false, "then", onResolved, onRejected);
+            v8ScriptItem.InvokeMethod(false, "then", onResolved, onRejected);
 
             return source.Task;
         }

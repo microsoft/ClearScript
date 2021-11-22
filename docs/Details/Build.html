@@ -462,10 +462,6 @@ on Ubuntu.</p>
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 9.35pt;margin-bottom:.0001pt'>macOS</h2>
 
-<p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:
-</span></b>This procedure requires a recent macOS version running on x64
-hardware.</p>
-
 <p class=MsoNormal style='margin-left:.25in'>Here’s how to acquire and build V8
 and ClearScript on macOS:</p>
 
@@ -492,6 +488,19 @@ style='color:red'>Important:</span></b> Ensure that the path to your
 ClearScript root directory does not contain spaces or non-ASCII characters.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Launch
+the <a href="https://en.wikipedia.org/wiki/Terminal_(macOS)">Terminal</a> app. <b><span
+style='color:red'>Important: </span></b>If you’re on an M1 machine, open a
+Rosetta shell as follows:</p>
+
+<p class=MsoListParagraph style='margin-top:10.0pt;margin-right:36.7pt;
+margin-bottom:14.0pt;margin-left:1.0in;background:#F2F2F2'><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'>user@host:~$</span><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>arch
+-x86_64 zsh</span></b></p>
+
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>6.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Run
 the following command from your ClearScript root directory:</p>
 
@@ -500,13 +509,17 @@ the following command from your ClearScript root directory:</p>
 line-height:115%;font-family:Consolas;color:gray'>user@host:/path/to/ClearScript$</span><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>make
--f Unix/Makefile [DEBUG=1]</span></b></p>
+-f Unix/Makefile [DEBUG=1] [CPU=[arm64]]</span></b></p>
 
 <p class=MsoNormal style='margin-left:.75in'>Specifying <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>DEBUG=1</span></b>
 is optional; the default configuration is <b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas'>Release</span></b>. The output directory
 is <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin/[Debug|Release]</span></b>.</p>
+
+<p class=MsoNormal style='margin-left:.75in'>Specify <b><span style='font-size:
+10.0pt;line-height:115%;font-family:Consolas'>CPU=arm64</span></b> to
+cross-build for the arm64 (M1) architecture.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'>IV. Building strong-named
@@ -613,8 +626,8 @@ line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.win-arm64.dll</
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 9.0pt;margin-bottom:.0001pt'>Linux</h2>
 
-<p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript,
-here's how to reference it in your application:</p>
+<p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript, here's
+how to reference it in your application:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:.5in;background:#F2F2F2'><span style='font-size:10.0pt;

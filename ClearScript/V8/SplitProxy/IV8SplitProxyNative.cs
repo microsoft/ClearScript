@@ -108,7 +108,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         void V8Value_SetString(V8Value.Ptr pV8Value, string value);
         void V8Value_SetDateTime(V8Value.Ptr pV8Value, double value);
         void V8Value_SetBigInt(V8Value.Ptr pV8Value, int signBit, byte[] bytes);
-        void V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype);
+        void V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags);
         void V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject);
         V8Value.Type V8Value_Decode(V8Value.Ptr pV8Value, out int intValue, out uint uintValue, out double doubleValue, out IntPtr ptrOrHandle);
         void V8Value_Delete(V8Value.Ptr pV8Value);
@@ -136,6 +136,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         UIntPtr V8Isolate_GetMaxStackUsage(V8Isolate.Handle hIsolate);
         void V8Isolate_SetMaxStackUsage(V8Isolate.Handle hIsolate, UIntPtr size);
         void V8Isolate_AwaitDebuggerAndPause(V8Isolate.Handle hIsolate);
+        void V8Isolate_CancelAwaitDebugger(V8Isolate.Handle hIsolate);
         V8Script.Handle V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code);
         V8Script.Handle V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
         V8Script.Handle V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
@@ -163,6 +164,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         object V8Context_GetRootItem(V8Context.Handle hContext);
         void V8Context_AddGlobalItem(V8Context.Handle hContext, string name, object value, bool globalMembers);
         void V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext);
+        void V8Context_CancelAwaitDebugger(V8Context.Handle hContext);
         object V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate);
         V8Script.Handle V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code);
         V8Script.Handle V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);

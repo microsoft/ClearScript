@@ -82,6 +82,7 @@
         <Compile Include="..\..\ClearScriptTest\V8ModuleTest.cs" Link="V8ModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.cs" Link="V8ScriptEngineTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.Windows.cs" Link="V8ScriptEngineTest.Windows.cs" />
+        <Compile Include="..\..\ClearScriptTest\V8SharedObjectTest.cs" Link="V8SharedObjectTest.cs" />
         <Compile Include="..\..\ClearScriptTest\VBScriptCoreEngineTest.cs" Link="VBScriptCoreEngineTest.cs" />
         <Compile Include="..\..\ClearScriptTest\VBScriptCoreEngineTest.Windows.cs" Link="VBScriptCoreEngineTest.Windows.cs" />
         <Compile Include="..\..\ClearScriptTest\VBScriptEngineTest.cs" Link="VBScriptEngineTest.cs" />

@@ -1385,6 +1385,310 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigUint64Array()
+        {
+            var typedArray = (ITypedArray<ulong>)engine.Evaluate("new BigUint64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(123456UL, typedArray.ArrayBuffer.Size);
+            Assert.AreEqual(128UL, typedArray.Offset);
+            Assert.AreEqual(8192UL, typedArray.Size);
+            Assert.AreEqual(1024UL, typedArray.Length);
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigUint64Array_GetBytes()
+        {
+            engine.Execute(@"
+                typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((ulong)index)).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<ulong>)engine.Script.typedArray).GetBytes()));
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<ulong>)engine.Script.typedArray).GetBytes()));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigUint64Array_ReadBytes()
+        {
+            engine.Execute(@"
+                typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((ulong)index)).ToArray();
+
+            var readValues = new byte[512];
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.Skip(128).Take(256).SequenceEqual(readValues.Skip(256)));
+
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                readValues = new byte[512];
+                Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.Skip(128).Take(256).SequenceEqual(readValues.Skip(256)));
+            }
+
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(16384, 1024, readValues, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(0, 1024, readValues, 16384));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigUint64Array_WriteBytes()
+        {
+            var testValues = Enumerable.Range(0, 64).SelectMany(index => BitConverter.GetBytes((ulong)index)).ToArray();
+
+            engine.Execute("typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512];
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.Skip(256).Take(256).SequenceEqual(readValues.Skip(256)));
+
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                engine.Execute("typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024)");
+                Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+                readValues = new byte[512];
+                Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.Skip(256).Take(256).SequenceEqual(readValues.Skip(256)));
+            }
+
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).WriteBytes(testValues, 0, 512, 16384));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).WriteBytes(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigUint64Array_ToArray()
+        {
+            engine.Execute(@"
+                typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (ulong)index).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<ulong>)engine.Script.typedArray).ToArray()));
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<ulong>)engine.Script.typedArray).ToArray()));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigUint64Array_Read()
+        {
+            engine.Execute(@"
+                typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (ulong)index).ToArray();
+
+            var readValues = new ulong[512];
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.Skip(128).Take(256).SequenceEqual(readValues.Skip(256)));
+
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                readValues = new ulong[512];
+                Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.Skip(128).Take(256).SequenceEqual(readValues.Skip(256)));
+            }
+
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).Read(16384, 1024, readValues, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).Read(0, 1024, readValues, 16384));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigUint64Array_Write()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => (ulong)index).ToArray();
+
+            engine.Execute("typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new ulong[512];
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.Skip(256).Take(256).SequenceEqual(readValues.Skip(256)));
+
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                engine.Execute("typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024)");
+                Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+                readValues = new ulong[512];
+                Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.Skip(256).Take(256).SequenceEqual(readValues.Skip(256)));
+            }
+
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigInt64Array()
+        {
+            var typedArray = (ITypedArray<long>)engine.Evaluate("new BigInt64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(123456UL, typedArray.ArrayBuffer.Size);
+            Assert.AreEqual(128UL, typedArray.Offset);
+            Assert.AreEqual(8192UL, typedArray.Size);
+            Assert.AreEqual(1024UL, typedArray.Length);
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigInt64Array_GetBytes()
+        {
+            engine.Execute(@"
+                typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((long)index)).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<long>)engine.Script.typedArray).GetBytes()));
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<long>)engine.Script.typedArray).GetBytes()));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigInt64Array_ReadBytes()
+        {
+            engine.Execute(@"
+                typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((long)index)).ToArray();
+
+            var readValues = new byte[512];
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.Skip(128).Take(256).SequenceEqual(readValues.Skip(256)));
+
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                readValues = new byte[512];
+                Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.Skip(128).Take(256).SequenceEqual(readValues.Skip(256)));
+            }
+
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(16384, 1024, readValues, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(0, 1024, readValues, 16384));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigInt64Array_WriteBytes()
+        {
+            var testValues = Enumerable.Range(0, 64).SelectMany(index => BitConverter.GetBytes((long)index)).ToArray();
+
+            engine.Execute("typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512];
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.Skip(256).Take(256).SequenceEqual(readValues.Skip(256)));
+
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                engine.Execute("typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024)");
+                Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+                readValues = new byte[512];
+                Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.Skip(256).Take(256).SequenceEqual(readValues.Skip(256)));
+            }
+
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).WriteBytes(testValues, 0, 512, 16384));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).WriteBytes(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigInt64Array_ToArray()
+        {
+            engine.Execute(@"
+                typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (long)index).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<long>)engine.Script.typedArray).ToArray()));
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<long>)engine.Script.typedArray).ToArray()));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigInt64Array_Read()
+        {
+            engine.Execute(@"
+                typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (long)index).ToArray();
+
+            var readValues = new long[512];
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.Skip(128).Take(256).SequenceEqual(readValues.Skip(256)));
+
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                readValues = new long[512];
+                Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.Skip(128).Take(256).SequenceEqual(readValues.Skip(256)));
+            }
+
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).Read(16384, 1024, readValues, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).Read(0, 1024, readValues, 16384));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigInt64Array_Write()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => (long)index).ToArray();
+
+            engine.Execute("typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new long[512];
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.Skip(256).Take(256).SequenceEqual(readValues.Skip(256)));
+
+            using (Scope.Create(() => MiscHelpers.Exchange(ref UnmanagedMemoryHelpers.DisableMarshalCopy, true), value => UnmanagedMemoryHelpers.DisableMarshalCopy = value))
+            {
+                engine.Execute("typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024)");
+                Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+                readValues = new long[512];
+                Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.Skip(256).Take(256).SequenceEqual(readValues.Skip(256)));
+            }
+
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Float32Array()
         {
             var typedArray = (ITypedArray<float>)engine.Evaluate("new Float32Array(new ArrayBuffer(123456), 128, 1024)");

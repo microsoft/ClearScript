@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.Windows.Core
@@ -15,8 +14,7 @@ namespace Microsoft.ClearScript.Windows.Core
     /// This class can be used in non-desktop environments such as server applications. An
     /// implementation of <see cref="ISyncInvoker"/> is required to enforce thread affinity.
     /// </remarks>
-    [Guid(TypeGuids.VBScriptEngine)]
-    public class VBScriptEngine : WindowsScriptEngine
+    public class VBScriptEngine : WindowsScriptEngine, IVBScriptEngineTag
     {
         #region data
 

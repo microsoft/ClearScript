@@ -64,6 +64,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8SplitProxyNative.Invoke(instance => instance.V8Context_AwaitDebuggerAndPause(Handle));
         }
 
+        public override void CancelAwaitDebugger()
+        {
+            V8SplitProxyNative.Invoke(instance => instance.V8Context_CancelAwaitDebugger(Handle));
+        }
+
         public override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
         {
             return V8SplitProxyNative.Invoke(instance => instance.V8Context_ExecuteCode(

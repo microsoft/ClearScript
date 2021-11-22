@@ -455,6 +455,13 @@ void V8ContextImpl::AwaitDebuggerAndPause()
 
 //-----------------------------------------------------------------------------
 
+void V8ContextImpl::CancelAwaitDebugger()
+{
+    m_spIsolateImpl->CancelAwaitDebugger();
+}
+
+//-----------------------------------------------------------------------------
+
 V8Value V8ContextImpl::Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate)
 {
     BEGIN_CONTEXT_SCOPE
@@ -1174,6 +1181,16 @@ void V8ContextImpl::GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& ar
             return;
         }
 
+        if (hObject->IsSharedArrayBuffer())
+        {
+            auto hSharedArrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(hObject);
+            arrayBuffer = ExportValue(hObject);
+            offset = 0;
+            size = hSharedArrayBuffer->ByteLength();
+            length = size;
+            return;
+        }
+
         if (hObject->IsDataView())
         {
             auto hDataView = v8::Local<v8::DataView>::Cast(hObject);
@@ -1211,6 +1228,14 @@ void V8ContextImpl::InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8Ob
         {
             auto hArrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(hObject);
             auto spBackingStore = hArrayBuffer->GetBackingStore();
+            (*pCallback)(spBackingStore->Data(), pvArg);
+            return;
+        }
+
+        if (hObject->IsSharedArrayBuffer())
+        {
+            auto hSharedArrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(hObject);
+            auto spBackingStore = hSharedArrayBuffer->GetBackingStore();
             (*pCallback)(spBackingStore->Data(), pvArg);
             return;
         }
@@ -2751,9 +2776,67 @@ v8::Local<v8::Value> V8ContextImpl::ImportValue(const V8Value& value)
         {
             V8ObjectHolder* pHolder;
             V8Value::Subtype subtype;
-            if (value.AsV8Object(pHolder, subtype))
+            V8Value::Flags flags;
+            if (value.AsV8Object(pHolder, subtype, flags))
             {
-                return CreateLocal(::HandleFromPtr<v8::Object>(pHolder->GetObject()));
+                if (pHolder->IsSameIsolate(m_spIsolateImpl))
+                {
+                    return CreateLocal(::HandleFromPtr<v8::Object>(pHolder->GetObject()));
+                }
+
+                if (HasFlag(flags, V8Value::Flags::Shared))
+                {
+                    const auto& spSharedObjectInfo = pHolder->GetSharedObjectInfo();
+                    if (!spSharedObjectInfo.IsEmpty())
+                    {
+                        switch (subtype)
+                        {
+                            case V8Value::Subtype::ArrayBuffer:
+                                return CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore());
+
+                            case V8Value::Subtype::DataView:
+                                return v8::DataView::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetSize());
+
+                            case V8Value::Subtype::Uint8Array:
+                                return v8::Uint8Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::Uint8ClampedArray:
+                                return v8::Uint8ClampedArray::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::Int8Array:
+                                return v8::Int8Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::Uint16Array:
+                                return v8::Uint16Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::Int16Array:
+                                return v8::Int16Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::Uint32Array:
+                                return v8::Uint32Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::Int32Array:
+                                return v8::Int32Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::BigUint64Array:
+                                return v8::BigUint64Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::BigInt64Array:
+                                return v8::BigInt64Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::Float32Array:
+                                return v8::Float32Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            case V8Value::Subtype::Float64Array:
+                                return v8::Float64Array::New(CreateSharedArrayBuffer(spSharedObjectInfo->GetBackingStore()), spSharedObjectInfo->GetOffset(), spSharedObjectInfo->GetLength());
+
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                return GetUndefined();
             }
         }
 
@@ -2857,6 +2940,9 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
             }
 
             auto subtype = V8Value::Subtype::None;
+            auto flags = V8Value::Flags::None;
+            SharedPtr<V8SharedObjectInfo> spSharedObjectInfo;
+
             if (hObject->IsPromise())
             {
                 subtype = V8Value::Subtype::Promise;
@@ -2869,11 +2955,34 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
             {
                 subtype = V8Value::Subtype::ArrayBuffer;
             }
+            else if (hObject->IsSharedArrayBuffer())
+            {
+                subtype = V8Value::Subtype::ArrayBuffer;
+                flags = CombineFlags(flags, V8Value::Flags::Shared);
+
+                auto hSharedArrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(hObject);
+                auto size = hSharedArrayBuffer->ByteLength();
+                spSharedObjectInfo = new V8SharedObjectInfo(hSharedArrayBuffer->GetBackingStore(), 0, size, size);
+            }
             else if (hObject->IsArrayBufferView())
             {
+                auto hArrayBufferView = v8::Local<v8::ArrayBufferView>::Cast(hObject);
+                auto offset = hArrayBufferView->ByteOffset();
+                auto size = hArrayBufferView->ByteLength();
+
+                auto spBackingStore = hArrayBufferView->Buffer()->GetBackingStore();
+                if (spBackingStore->IsShared())
+                {
+                    flags = CombineFlags(flags, V8Value::Flags::Shared);
+                }
+
                 if (hObject->IsDataView())
                 {
                     subtype = V8Value::Subtype::DataView;
+                    if (HasFlag(flags, V8Value::Flags::Shared))
+                    {
+                        spSharedObjectInfo = new V8SharedObjectInfo(std::move(spBackingStore), offset, size, size);
+                    }
                 }
                 else if (hObject->IsTypedArray())
                 {
@@ -2905,6 +3014,14 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
                     {
                         subtype = V8Value::Subtype::Int32Array;
                     }
+                    else if (hObject->IsBigUint64Array())
+                    {
+                        subtype = V8Value::Subtype::BigUint64Array;
+                    }
+                    else if (hObject->IsBigInt64Array())
+                    {
+                        subtype = V8Value::Subtype::BigInt64Array;
+                    }
                     else if (hObject->IsFloat32Array())
                     {
                         subtype = V8Value::Subtype::Float32Array;
@@ -2913,10 +3030,16 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
                     {
                         subtype = V8Value::Subtype::Float64Array;
                     }
+
+                    if (HasFlag(flags, V8Value::Flags::Shared) && (subtype != V8Value::Subtype::None))
+                    {
+                        auto hTypedArray = v8::Local<v8::TypedArray>::Cast(hObject);
+                        spSharedObjectInfo = new V8SharedObjectInfo(std::move(spBackingStore), offset, size, hTypedArray->Length());
+                    }
                 }
             }
 
-            return V8Value(new V8ObjectHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hObject))), subtype);
+            return V8Value(new V8ObjectHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hObject)), spSharedObjectInfo), subtype, flags);
         }
 
     FROM_MAYBE_CATCH_CONSUME

@@ -218,7 +218,7 @@ NATIVE_ENTRY_POINT(void) V8Value_SetUInt32(V8Value* pV8Value, uint32_t value) no
 NATIVE_ENTRY_POINT(void) V8Value_SetString(V8Value* pV8Value, const StdChar* pValue, int32_t length) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetDateTime(V8Value* pV8Value, double value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetBigInt(V8Value* pV8Value, int32_t signBit, const uint8_t* pBytes, int32_t length) noexcept;
-NATIVE_ENTRY_POINT(void) V8Value_SetV8Object(V8Value* pV8Value, const V8ObjectHandle& handle, V8Value::Subtype subtype) noexcept;
+NATIVE_ENTRY_POINT(void) V8Value_SetV8Object(V8Value* pV8Value, const V8ObjectHandle& handle, V8Value::Subtype subtype, V8Value::Flags flags) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetHostObject(V8Value* pV8Value, void* pvObject) noexcept;
 NATIVE_ENTRY_POINT(V8Value::Type) V8Value_Decode(const V8Value& value, int32_t& intValue, uint32_t& uintValue, double& doubleValue, const void*& pvData) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_Delete(V8Value* pV8Value) noexcept;
@@ -238,6 +238,7 @@ NATIVE_ENTRY_POINT(void) V8Isolate_SetHeapSizeSampleInterval(const V8IsolateHand
 NATIVE_ENTRY_POINT(size_t) V8Isolate_GetMaxStackUsage(const V8IsolateHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8Isolate_SetMaxStackUsage(const V8IsolateHandle& handle, size_t size) noexcept;
 NATIVE_ENTRY_POINT(void) V8Isolate_AwaitDebuggerAndPause(const V8IsolateHandle& handle) noexcept;
+NATIVE_ENTRY_POINT(void) V8Isolate_CancelAwaitDebugger(const V8IsolateHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_Compile(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code) noexcept;
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileProducingCache(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) noexcept;
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileConsumingCache(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, StdBool& cacheAccepted) noexcept;
@@ -261,6 +262,7 @@ NATIVE_ENTRY_POINT(void) V8Context_InvokeWithLock(const V8ContextHandle& handle,
 NATIVE_ENTRY_POINT(void) V8Context_GetRootItem(const V8ContextHandle& handle, V8Value& item) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_AddGlobalItem(const V8ContextHandle& handle, const StdString& name, const V8Value& value, StdBool globalMembers) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_AwaitDebuggerAndPause(const V8ContextHandle& handle) noexcept;
+NATIVE_ENTRY_POINT(void) V8Context_CancelAwaitDebugger(const V8ContextHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_ExecuteCode(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, const StdString& code, StdBool evaluate, V8Value& result) noexcept;
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_Compile(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code) noexcept;
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileProducingCache(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) noexcept;

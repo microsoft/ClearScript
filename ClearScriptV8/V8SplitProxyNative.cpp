@@ -490,12 +490,12 @@ NATIVE_ENTRY_POINT(void) V8Value_SetBigInt(V8Value* pV8Value, int32_t signBit, c
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8Value_SetV8Object(V8Value* pV8Value, const V8ObjectHandle& handle, V8Value::Subtype subtype) noexcept
+NATIVE_ENTRY_POINT(void) V8Value_SetV8Object(V8Value* pV8Value, const V8ObjectHandle& handle, V8Value::Subtype subtype, V8Value::Flags flags) noexcept
 {
     auto spV8ObjectHolder = handle.GetEntity();
     if (!spV8ObjectHolder.IsEmpty())
     {
-        *pV8Value = V8Value(spV8ObjectHolder->Clone(), subtype);
+        *pV8Value = V8Value(spV8ObjectHolder->Clone(), subtype, flags);
     }
 }
 
@@ -579,10 +579,12 @@ NATIVE_ENTRY_POINT(V8Value::Type) V8Value_Decode(const V8Value& value, int32_t& 
     {
         V8ObjectHolder* pHolder;
         V8Value::Subtype subtype;
-        if (value.AsV8Object(pHolder, subtype))
+        V8Value::Flags flags;
+        if (value.AsV8Object(pHolder, subtype, flags))
         {
             pvData = new V8ObjectHandle(pHolder->Clone());
             uintValue = static_cast<std::underlying_type_t<V8Value::Subtype>>(subtype);
+            intValue = static_cast<std::underlying_type_t<V8Value::Flags>>(flags);
             return V8Value::Type::V8Object;
         }
     }
@@ -810,7 +812,25 @@ NATIVE_ENTRY_POINT(void) V8Isolate_AwaitDebuggerAndPause(const V8IsolateHandle& 
     auto spIsolate = handle.GetEntity();
     if (!spIsolate.IsEmpty())
     {
-        spIsolate->AwaitDebuggerAndPause();
+        try
+        {
+            spIsolate->AwaitDebuggerAndPause();
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ScheduleScriptEngineException();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) V8Isolate_CancelAwaitDebugger(const V8IsolateHandle& handle) noexcept
+{
+    auto spIsolate = handle.GetEntity();
+    if (!spIsolate.IsEmpty())
+    {
+        spIsolate->CancelAwaitDebugger();
     }
 }
 
@@ -1148,6 +1168,17 @@ NATIVE_ENTRY_POINT(void) V8Context_AwaitDebuggerAndPause(const V8ContextHandle& 
         {
             exception.ScheduleScriptEngineException();
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) V8Context_CancelAwaitDebugger(const V8ContextHandle& handle) noexcept
+{
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        spContext->CancelAwaitDebugger();
     }
 }
 
@@ -1636,9 +1667,9 @@ NATIVE_ENTRY_POINT(void) V8Object_GetArrayBufferOrViewInfo(const V8ObjectHandle&
     {
         try
         {
-            size_t tempOffset;
-            size_t tempSize;
-            size_t tempLength;
+            size_t tempOffset = 0;
+            size_t tempSize = 0;
+            size_t tempLength = 0;
             V8ObjectHelpers::GetArrayBufferOrViewInfo(spV8ObjectHolder, arrayBuffer, tempOffset, tempSize, tempLength);
 
             offset = tempOffset;

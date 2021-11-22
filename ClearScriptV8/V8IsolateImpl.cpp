@@ -411,10 +411,6 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     m_Name(name),
     m_CallWithLockLevel(0),
     m_DebuggingEnabled(false),
-    m_AwaitingDebugger(false),
-    m_InMessageLoop(false),
-    m_QuitMessageLoop(false),
-    m_AbortMessageLoop(false),
     m_MaxArrayBufferAllocation(options.MaxArrayBufferAllocation),
     m_ArrayBufferAllocation(0),
     m_MaxHeapSize(0),
@@ -663,9 +659,20 @@ void V8IsolateImpl::AwaitDebuggerAndPause()
 
         if (m_DebuggingEnabled)
         {
-            if (!m_upInspectorSession && !RunMessageLoop(true))
+            if (!m_upInspectorSession)
             {
-                throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(SL("Script execution interrupted by host while awaiting debugger connection")), false);
+                auto exitReason = RunMessageLoop(RunMessageLoopReason::AwaitingDebugger);
+                switch (exitReason)
+                {
+                    case ExitMessageLoopReason::TerminatedExecution:
+                        throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(SL("Script execution interrupted by host while awaiting debugger connection")), false);
+
+                    case ExitMessageLoopReason::CanceledAwaitDebugger:
+                        return;
+
+                    default:
+                        _ASSERTE(exitReason == ExitMessageLoopReason::ResumedExecution);
+                }
             }
 
             _ASSERTE(m_upInspectorSession);
@@ -677,6 +684,21 @@ void V8IsolateImpl::AwaitDebuggerAndPause()
         }
 
     END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::CancelAwaitDebugger()
+{
+    BEGIN_MUTEX_SCOPE(m_DataMutex)
+
+        if (m_optRunMessageLoopReason == RunMessageLoopReason::AwaitingDebugger)
+        {
+            m_optExitMessageLoopReason = ExitMessageLoopReason::CanceledAwaitDebugger;
+            m_CallWithLockQueueChanged.notify_one();
+        }
+
+    END_MUTEX_SCOPE
 }
 
 //-----------------------------------------------------------------------------
@@ -873,7 +895,7 @@ void V8IsolateImpl::WriteHeapSnapshot(void* pvStream)
 
 void V8IsolateImpl::runMessageLoopOnPause(int /*contextGroupId*/)
 {
-    RunMessageLoop(false);
+    RunMessageLoop(RunMessageLoopReason::PausedInDebugger);
 }
 
 //-----------------------------------------------------------------------------
@@ -883,7 +905,7 @@ void V8IsolateImpl::quitMessageLoopOnPause()
     _ASSERTE(IsCurrent() && IsLocked());
 
     BEGIN_MUTEX_SCOPE(m_DataMutex)
-        m_QuitMessageLoop = true;
+        m_optExitMessageLoopReason = ExitMessageLoopReason::ResumedExecution;
     END_MUTEX_SCOPE
 }
 
@@ -1459,19 +1481,17 @@ V8IsolateImpl::~V8IsolateImpl()
 
 //-----------------------------------------------------------------------------
 
-bool V8IsolateImpl::RunMessageLoop(bool awaitingDebugger)
+V8IsolateImpl::ExitMessageLoopReason V8IsolateImpl::RunMessageLoop(RunMessageLoopReason reason)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
     std::unique_lock<std::mutex> lock(m_DataMutex.GetImpl());
 
-    if (!m_InMessageLoop)
+    if (!m_optRunMessageLoopReason)
     {
-        m_QuitMessageLoop = false;
-        m_AbortMessageLoop = false;
+        m_optExitMessageLoopReason.reset();
 
-        BEGIN_PULSE_VALUE_SCOPE(&m_AwaitingDebugger, awaitingDebugger)
-        BEGIN_PULSE_VALUE_SCOPE(&m_InMessageLoop, true)
+        BEGIN_PULSE_VALUE_SCOPE(&m_optRunMessageLoopReason, reason)
 
             ProcessCallWithLockQueue(lock);
 
@@ -1480,20 +1500,19 @@ bool V8IsolateImpl::RunMessageLoop(bool awaitingDebugger)
                 m_CallWithLockQueueChanged.wait(lock);
                 ProcessCallWithLockQueue(lock);
 
-                if (m_QuitMessageLoop || m_AbortMessageLoop)
+                if (m_optExitMessageLoopReason)
                 {
                     break;
                 }
             }
 
         END_PULSE_VALUE_SCOPE
-        END_PULSE_VALUE_SCOPE
 
         ProcessCallWithLockQueue(lock);
-        return m_QuitMessageLoop;
+        return *m_optExitMessageLoopReason;
     }
 
-    return false;
+    return ExitMessageLoopReason::NestedInvocation;
 }
 
 //-----------------------------------------------------------------------------
@@ -1506,7 +1525,7 @@ void V8IsolateImpl::CallWithLockAsync(bool allowNesting, CallWithLockCallback&& 
 
             m_CallWithLockQueue.push(std::make_pair(allowNesting, std::move(callback)));
 
-            if (m_InMessageLoop)
+            if (m_optRunMessageLoopReason)
             {
                 m_CallWithLockQueueChanged.notify_one();
                 return;

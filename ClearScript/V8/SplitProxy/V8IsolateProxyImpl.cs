@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
@@ -67,6 +67,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public override void AwaitDebuggerAndPause()
         {
             V8SplitProxyNative.Invoke(instance => instance.V8Isolate_AwaitDebuggerAndPause(Handle));
+        }
+
+        public override void CancelAwaitDebugger()
+        {
+            V8SplitProxyNative.Invoke(instance => instance.V8Isolate_CancelAwaitDebugger(Handle));
         }
 
         public override V8.V8Script Compile(UniqueDocumentInfo documentInfo, string code)

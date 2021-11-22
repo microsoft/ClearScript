@@ -127,8 +127,17 @@ public:
         Int16Array,
         Uint32Array,
         Int32Array,
+        BigUint64Array,
+        BigInt64Array,
         Float32Array,
         Float64Array
+    };
+
+    enum class Flags : uint16_t
+    {
+        // IMPORTANT: maintain bitwise equivalence with managed enum V8.SplitProxy.V8Value.Flags
+        None = 0,
+        Shared = 1
     };
 
     explicit V8Value(NonexistentInitializer):
@@ -188,9 +197,10 @@ public:
         m_Data.pBigInt = pBigInt;
     }
 
-    V8Value(V8ObjectHolder* pV8ObjectHolder, Subtype subtype):
+    V8Value(V8ObjectHolder* pV8ObjectHolder, Subtype subtype, Flags flags):
         m_Type(Type::V8Object),
-        m_Subtype(subtype)
+        m_Subtype(subtype),
+        m_Flags(flags)
     {
         m_Data.pV8ObjectHolder = pV8ObjectHolder;
     }
@@ -317,12 +327,13 @@ public:
         return false;
     }
 
-    bool AsV8Object(V8ObjectHolder*& pV8ObjectHolder, Subtype& subtype) const
+    bool AsV8Object(V8ObjectHolder*& pV8ObjectHolder, Subtype& subtype, Flags& flags) const
     {
         if (m_Type == Type::V8Object)
         {
             pV8ObjectHolder = m_Data.pV8ObjectHolder;
             subtype = m_Subtype;
+            flags = m_Flags;
             return true;
         }
 
@@ -368,6 +379,7 @@ private:
     {
         m_Type = that.m_Type;
         m_Subtype = that.m_Subtype;
+        m_Flags = that.m_Flags;
 
         if (m_Type == Type::Boolean)
         {
@@ -411,6 +423,7 @@ private:
     {
         m_Type = that.m_Type;
         m_Subtype = that.m_Subtype;
+        m_Flags = that.m_Flags;
         m_Data = that.m_Data;
         that.m_Type = Type::Undefined;
     }
@@ -437,7 +450,8 @@ private:
 
     Type m_Type;
     Subtype m_Subtype;
-    int32_t m_Padding;
+    Flags m_Flags;
+    int16_t m_Padding;
     Data m_Data;
 };
 

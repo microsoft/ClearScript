@@ -447,9 +447,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetBigInt(pV8Value, signBit, bytes, bytes.Length);
             }
 
-            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype)
+            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetV8Object(pV8Value, hObject, subtype);
+                V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
@@ -575,6 +575,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Isolate_AwaitDebuggerAndPause(V8Isolate.Handle hIsolate)
             {
                 V8Isolate_AwaitDebuggerAndPause(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_CancelAwaitDebugger(V8Isolate.Handle hIsolate)
+            {
+                V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
             V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
@@ -748,6 +753,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext)
             {
                 V8Context_AwaitDebuggerAndPause(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_CancelAwaitDebugger(V8Context.Handle hContext)
+            {
+                V8Context_CancelAwaitDebugger(hContext);
             }
 
             object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
@@ -5251,7 +5261,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
-                [In] V8Value.Subtype subtype
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.android-arm64.so", CallingConvention = CallingConvention.StdCall)]
@@ -5395,7 +5406,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.android-arm64.so", CallingConvention = CallingConvention.StdCall)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_CancelAwaitDebugger(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_Compile(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -5558,7 +5574,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.android-arm64.so", CallingConvention = CallingConvention.StdCall)]
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_CancelAwaitDebugger(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_ExecuteCode(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -6177,9 +6198,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetBigInt(pV8Value, signBit, bytes, bytes.Length);
             }
 
-            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype)
+            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetV8Object(pV8Value, hObject, subtype);
+                V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
@@ -6305,6 +6326,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Isolate_AwaitDebuggerAndPause(V8Isolate.Handle hIsolate)
             {
                 V8Isolate_AwaitDebuggerAndPause(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_CancelAwaitDebugger(V8Isolate.Handle hIsolate)
+            {
+                V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
             V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
@@ -6478,6 +6504,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext)
             {
                 V8Context_AwaitDebuggerAndPause(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_CancelAwaitDebugger(V8Context.Handle hContext)
+            {
+                V8Context_CancelAwaitDebugger(hContext);
             }
 
             object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
@@ -7161,7 +7192,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
-                [In] V8Value.Subtype subtype
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.android-arm.so", CallingConvention = CallingConvention.StdCall)]
@@ -7305,7 +7337,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Isolate.Handle hIsolate
             );
 
-            [DllImport("ClearScriptV8.android-arm.so", CallingConvention = CallingConvention.StdCall)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_CancelAwaitDebugger(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern V8Script.Handle V8Isolate_Compile(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pResourceName,
@@ -7468,7 +7505,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] V8Context.Handle hContext
             );
 
-            [DllImport("ClearScriptV8.android-arm.so", CallingConvention = CallingConvention.StdCall)]
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_CancelAwaitDebugger(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_ExecuteCode(
                 [In] V8Context.Handle hContext,
                 [In] StdString.Ptr pResourceName,
@@ -8087,9 +8129,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetBigInt(pV8Value, signBit, bytes, bytes.Length);
             }
 
-            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype)
+            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetV8Object(pV8Value, hObject, subtype);
+                V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
@@ -8215,6 +8257,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Isolate_AwaitDebuggerAndPause(V8Isolate.Handle hIsolate)
             {
                 V8Isolate_AwaitDebuggerAndPause(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_CancelAwaitDebugger(V8Isolate.Handle hIsolate)
+            {
+                V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
             V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
@@ -8388,6 +8435,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext)
             {
                 V8Context_AwaitDebuggerAndPause(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_CancelAwaitDebugger(V8Context.Handle hContext)
+            {
+                V8Context_CancelAwaitDebugger(hContext);
             }
 
             object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
@@ -9071,7 +9123,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
-                [In] V8Value.Subtype subtype
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -9212,6 +9265,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_AwaitDebuggerAndPause(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_CancelAwaitDebugger(
                 [In] V8Isolate.Handle hIsolate
             );
 
@@ -9375,6 +9433,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AwaitDebuggerAndPause(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_CancelAwaitDebugger(
                 [In] V8Context.Handle hContext
             );
 
@@ -9997,9 +10060,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetBigInt(pV8Value, signBit, bytes, bytes.Length);
             }
 
-            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype)
+            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetV8Object(pV8Value, hObject, subtype);
+                V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
@@ -10125,6 +10188,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Isolate_AwaitDebuggerAndPause(V8Isolate.Handle hIsolate)
             {
                 V8Isolate_AwaitDebuggerAndPause(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_CancelAwaitDebugger(V8Isolate.Handle hIsolate)
+            {
+                V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
             V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
@@ -10298,6 +10366,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext)
             {
                 V8Context_AwaitDebuggerAndPause(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_CancelAwaitDebugger(V8Context.Handle hContext)
+            {
+                V8Context_CancelAwaitDebugger(hContext);
             }
 
             object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
@@ -10981,7 +11054,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
-                [In] V8Value.Subtype subtype
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
@@ -11122,6 +11196,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_AwaitDebuggerAndPause(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_CancelAwaitDebugger(
                 [In] V8Isolate.Handle hIsolate
             );
 
@@ -11285,6 +11364,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AwaitDebuggerAndPause(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_CancelAwaitDebugger(
                 [In] V8Context.Handle hContext
             );
 
@@ -11907,9 +11991,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetBigInt(pV8Value, signBit, bytes, bytes.Length);
             }
 
-            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype)
+            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetV8Object(pV8Value, hObject, subtype);
+                V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
@@ -12035,6 +12119,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Isolate_AwaitDebuggerAndPause(V8Isolate.Handle hIsolate)
             {
                 V8Isolate_AwaitDebuggerAndPause(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_CancelAwaitDebugger(V8Isolate.Handle hIsolate)
+            {
+                V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
             V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
@@ -12208,6 +12297,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext)
             {
                 V8Context_AwaitDebuggerAndPause(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_CancelAwaitDebugger(V8Context.Handle hContext)
+            {
+                V8Context_CancelAwaitDebugger(hContext);
             }
 
             object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
@@ -12891,7 +12985,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
-                [In] V8Value.Subtype subtype
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
@@ -13032,6 +13127,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_AwaitDebuggerAndPause(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_CancelAwaitDebugger(
                 [In] V8Isolate.Handle hIsolate
             );
 
@@ -13195,6 +13295,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AwaitDebuggerAndPause(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_CancelAwaitDebugger(
                 [In] V8Context.Handle hContext
             );
 
@@ -13817,9 +13922,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetBigInt(pV8Value, signBit, bytes, bytes.Length);
             }
 
-            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype)
+            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetV8Object(pV8Value, hObject, subtype);
+                V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
@@ -13945,6 +14050,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Isolate_AwaitDebuggerAndPause(V8Isolate.Handle hIsolate)
             {
                 V8Isolate_AwaitDebuggerAndPause(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_CancelAwaitDebugger(V8Isolate.Handle hIsolate)
+            {
+                V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
             V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
@@ -14118,6 +14228,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext)
             {
                 V8Context_AwaitDebuggerAndPause(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_CancelAwaitDebugger(V8Context.Handle hContext)
+            {
+                V8Context_CancelAwaitDebugger(hContext);
             }
 
             object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
@@ -14801,7 +14916,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
-                [In] V8Value.Subtype subtype
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
@@ -14942,6 +15058,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_AwaitDebuggerAndPause(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_CancelAwaitDebugger(
                 [In] V8Isolate.Handle hIsolate
             );
 
@@ -15105,6 +15226,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AwaitDebuggerAndPause(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_CancelAwaitDebugger(
                 [In] V8Context.Handle hContext
             );
 
@@ -15727,9 +15853,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetBigInt(pV8Value, signBit, bytes, bytes.Length);
             }
 
-            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype)
+            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetV8Object(pV8Value, hObject, subtype);
+                V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
@@ -15855,6 +15981,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Isolate_AwaitDebuggerAndPause(V8Isolate.Handle hIsolate)
             {
                 V8Isolate_AwaitDebuggerAndPause(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_CancelAwaitDebugger(V8Isolate.Handle hIsolate)
+            {
+                V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
             V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
@@ -16028,6 +16159,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext)
             {
                 V8Context_AwaitDebuggerAndPause(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_CancelAwaitDebugger(V8Context.Handle hContext)
+            {
+                V8Context_CancelAwaitDebugger(hContext);
             }
 
             object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
@@ -16711,7 +16847,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
-                [In] V8Value.Subtype subtype
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
@@ -16852,6 +16989,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_AwaitDebuggerAndPause(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_CancelAwaitDebugger(
                 [In] V8Isolate.Handle hIsolate
             );
 
@@ -17015,6 +17157,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AwaitDebuggerAndPause(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_CancelAwaitDebugger(
                 [In] V8Context.Handle hContext
             );
 
@@ -17637,9 +17784,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetBigInt(pV8Value, signBit, bytes, bytes.Length);
             }
 
-            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype)
+            void IV8SplitProxyNative.V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetV8Object(pV8Value, hObject, subtype);
+                V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
@@ -17765,6 +17912,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Isolate_AwaitDebuggerAndPause(V8Isolate.Handle hIsolate)
             {
                 V8Isolate_AwaitDebuggerAndPause(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_CancelAwaitDebugger(V8Isolate.Handle hIsolate)
+            {
+                V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
             V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
@@ -17938,6 +18090,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext)
             {
                 V8Context_AwaitDebuggerAndPause(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_CancelAwaitDebugger(V8Context.Handle hContext)
+            {
+                V8Context_CancelAwaitDebugger(hContext);
             }
 
             object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
@@ -18621,7 +18778,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Value_SetV8Object(
                 [In] V8Value.Ptr pV8Value,
                 [In] V8Object.Handle hObject,
-                [In] V8Value.Subtype subtype
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
@@ -18762,6 +18920,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_AwaitDebuggerAndPause(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_CancelAwaitDebugger(
                 [In] V8Isolate.Handle hIsolate
             );
 
@@ -18925,6 +19088,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_AwaitDebuggerAndPause(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_CancelAwaitDebugger(
                 [In] V8Context.Handle hContext
             );
 

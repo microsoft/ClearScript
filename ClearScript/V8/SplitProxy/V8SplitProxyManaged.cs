@@ -12,7 +12,8 @@ using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8.SplitProxy
 {
-    internal static class V8SplitProxyManaged
+    // ReSharper disable once PartialTypeWithSinglePart
+    internal static partial class V8SplitProxyManaged
     {
         public static IntPtr MethodTable { get; } = CreateMethodTable();
 
@@ -34,6 +35,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         }
 
         #region method delegates
+
+        // ReSharper disable UnusedType.Local
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawScheduleForwardingException(
@@ -299,6 +302,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         [return: MarshalAs(UnmanagedType.I1)]
         private delegate bool RawGetTopLevelAwait();
 
+        // ReSharper restore UnusedType.Local
+
         #endregion
 
         #region method table construction
@@ -315,12 +320,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 GetMethodPtr<RawScheduleInvalidOperationException>(ScheduleInvalidOperationException),
                 GetMethodPtr<RawScheduleScriptEngineException>(ScheduleScriptEngineException),
                 GetMethodPtr<RawScheduleScriptInterruptedException>(ScheduleScriptInterruptedException),
+
+            #if NET5_0_OR_GREATER
+                InvokeHostActionFastMethodPtr,
+            #else
                 GetMethodPtr<RawInvokeAction>(InvokeHostAction),
+            #endif
+
                 GetMethodPtr<RawProcessArrayBufferOrViewData>(ProcessArrayBufferOrViewData),
                 GetMethodPtr<RawProcessCpuProfile>(ProcessCpuProfile),
                 GetMethodPtr<RawCreateV8ObjectCache>(CreateV8ObjectCache),
+
+            #if NET5_0_OR_GREATER
+                CacheV8ObjectFastMethodPtr,
+                GetCachedV8ObjectFastMethodPtr,
+            #else
                 GetMethodPtr<RawCacheV8Object>(CacheV8Object),
                 GetMethodPtr<RawGetCachedV8Object>(GetCachedV8Object),
+            #endif
+
                 GetMethodPtr<RawGetAllCachedV8Objects>(GetAllCachedV8Objects),
                 GetMethodPtr<RawRemoveV8ObjectCacheEntry>(RemoveV8ObjectCacheEntry),
                 GetMethodPtr<RawCreateDebugAgent>(CreateDebugAgent),
@@ -328,20 +346,49 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 GetMethodPtr<RawDestroyDebugAgent>(DestroyDebugAgent),
                 GetMethodPtr<RawGetMaxScriptCacheSize>(GetMaxScriptCacheSize),
                 GetMethodPtr<RawGetMaxModuleCacheSize>(GetMaxModuleCacheSize),
+
+            #if NET5_0_OR_GREATER
+                AddRefHostObjectFastMethodPtr,
+                ReleaseHostObjectFastMethodPtr,
+                GetHostObjectInvocabilityFastMethodPtr,
+            #else
                 GetMethodPtr<RawAddRefHostObject>(AddRefHostObject),
                 GetMethodPtr<RawReleaseHostObject>(ReleaseHostObject),
                 GetMethodPtr<RawGetHostObjectInvocability>(GetHostObjectInvocability),
+            #endif
+
+            #if NET5_0_OR_GREATER
+                GetHostObjectNamedPropertyFastMethodPtr,
+                GetHostObjectNamedPropertyWithCacheabilityFastMethodPtr,
+                SetHostObjectNamedPropertyFastMethodPtr,
+            #else
                 GetMethodPtr<RawGetHostObjectNamedProperty>(GetHostObjectNamedProperty),
                 GetMethodPtr<RawGetHostObjectNamedPropertyWithCacheability>(GetHostObjectNamedPropertyWithCacheability),
                 GetMethodPtr<RawSetHostObjectNamedProperty>(SetHostObjectNamedProperty),
+            #endif
+
                 GetMethodPtr<RawDeleteHostObjectNamedProperty>(DeleteHostObjectNamedProperty),
                 GetMethodPtr<RawGetHostObjectPropertyNames>(GetHostObjectPropertyNames),
+
+            #if NET5_0_OR_GREATER
+                GetHostObjectIndexedPropertyFastMethodPtr,
+                SetHostObjectIndexedPropertyFastMethodPtr,
+            #else
                 GetMethodPtr<RawGetHostObjectIndexedProperty>(GetHostObjectIndexedProperty),
                 GetMethodPtr<RawSetHostObjectIndexedProperty>(SetHostObjectIndexedProperty),
+            #endif
+
                 GetMethodPtr<RawDeleteHostObjectIndexedProperty>(DeleteHostObjectIndexedProperty),
                 GetMethodPtr<RawGetHostObjectPropertyIndices>(GetHostObjectPropertyIndices),
+
+            #if NET5_0_OR_GREATER
+                InvokeHostObjectFastMethodPtr,
+                InvokeHostObjectMethodFastMethodPtr,
+            #else
                 GetMethodPtr<RawInvokeHostObject>(InvokeHostObject),
                 GetMethodPtr<RawInvokeHostObjectMethod>(InvokeHostObjectMethod),
+            #endif
+
                 GetMethodPtr<RawGetHostObjectEnumerator>(GetHostObjectEnumerator),
                 GetMethodPtr<RawGetHostObjectAsyncEnumerator>(GetHostObjectAsyncEnumerator),
                 GetMethodPtr<RawQueueNativeCallback>(QueueNativeCallback),

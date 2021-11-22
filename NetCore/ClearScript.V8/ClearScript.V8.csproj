@@ -46,6 +46,7 @@
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ScriptImpl.cs" Link="V8\SplitProxy\V8ScriptImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyHelpers.cs" Link="V8\SplitProxy\V8SplitProxyHelpers.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyManaged.cs" Link="V8\SplitProxy\V8SplitProxyManaged.cs" />
+        <Compile Condition="'$(TargetFramework)'=='net5.0'" Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyManaged.Net5.cs" Link="V8\SplitProxy\V8SplitProxyManaged.Net5.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.cs" Link="V8\SplitProxy\V8SplitProxyNative.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Generated.cs" Link="V8\SplitProxy\V8SplitProxyNative.Generated.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8TestProxyImpl.cs" Link="V8\SplitProxy\V8TestProxyImpl.cs" />

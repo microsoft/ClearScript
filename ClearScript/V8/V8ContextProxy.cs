@@ -28,6 +28,8 @@ namespace Microsoft.ClearScript.V8
 
         public abstract void AwaitDebuggerAndPause();
 
+        public abstract void CancelAwaitDebugger();
+
         public abstract object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate);
 
         public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code);
