@@ -15,6 +15,7 @@ ifeq ($(KERNEL), Darwin)
     TARGETARCH_X64 = x86_64
     TARGETARCH_ARM = arm
     TARGETARCH_ARM64 = arm64
+    MAKELINUX = true
 else ifeq ($(KERNEL), Linux)
     OS = linux
     EXTENSION = so
@@ -23,6 +24,7 @@ else ifeq ($(KERNEL), Linux)
     TARGETARCH_X64 = x86_64
     TARGETARCH_ARM = arm
     TARGETARCH_ARM64 = aarch64
+    MAKELINUX = make
 else
     $(error unsupported operating system '$(KERNEL)')
 endif
@@ -150,13 +152,17 @@ zapv8:
 	rm -rf $(V8BUILDDIR)
 
 buildall:
-	make
+	make CPU=x64
 	make CPU=arm64
-	make DEBUG=1
+	$(MAKELINUX) CPU=arm
+	make CPU=x64 DEBUG=1
 	make CPU=arm64 DEBUG=1
+	$(MAKELINUX) CPU=arm DEBUG=1
 
 cleanall:
-	make clean
+	make clean CPU=x64
 	make clean CPU=arm64
-	make clean DEBUG=1
+	$(MAKELINUX) clean CPU=arm
+	make clean CPU=x64 DEBUG=1
 	make clean CPU=arm64 DEBUG=1
+	$(MAKELINUX) clean CPU=arm DEBUG=1

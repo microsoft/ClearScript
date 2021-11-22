@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 5c7d931b27..665f145a6a 100644
+index f491f2a4e6..3dad973c06 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -970,7 +970,7 @@ config("toolchain") {
+@@ -971,7 +971,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
@@ -12,10 +12,10 @@ index 5c7d931b27..665f145a6a 100644
  
    if (v8_current_cpu == "arm") {
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index 92686eff12..1c323efcce 100644
+index e61933b05a..5456d10f64 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -13355,6 +13355,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
+@@ -13362,6 +13362,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -120,10 +120,10 @@ index d50767421a..f3fa0f3a70 100644
        // Unprotect reserved page.
        DWORD old_protect;
 diff --git a/src/execution/isolate.h b/src/execution/isolate.h
-index e7908eac6a..f0f62475e9 100644
+index 2edc34a3e6..c73437eab3 100644
 --- a/src/execution/isolate.h
 +++ b/src/execution/isolate.h
-@@ -598,7 +598,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
+@@ -600,7 +600,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
    // Returns the isolate inside which the current thread is running.
    V8_INLINE static Isolate* Current() {
      Isolate* isolate = TryGetCurrent();
@@ -148,10 +148,10 @@ index 3f2968b55b..58d07d6023 100644
    set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
    real_climit_ = limit;
 diff --git a/src/init/v8.cc b/src/init/v8.cc
-index 7258ba8d93..14d3f0b3f7 100644
+index a7b558bbad..d6b891733d 100644
 --- a/src/init/v8.cc
 +++ b/src/init/v8.cc
-@@ -206,7 +206,6 @@ void V8::InitializeOncePerProcess() {
+@@ -208,7 +208,6 @@ void V8::InitializeOncePerProcess() {
  }
  
  void V8::InitializePlatform(v8::Platform* platform) {
@@ -160,10 +160,10 @@ index 7258ba8d93..14d3f0b3f7 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/objects/intl-objects.h b/src/objects/intl-objects.h
-index 122ca4b746..c00bc6ddca 100644
+index a696e09410..8880ed2e40 100644
 --- a/src/objects/intl-objects.h
 +++ b/src/objects/intl-objects.h
-@@ -292,7 +292,7 @@ class Intl {
+@@ -227,7 +227,7 @@ class Intl {
        UErrorCode status = U_ZERO_ERROR;
        UEnumeration* uenum =
            uloc_openAvailableByType(ULOC_AVAILABLE_WITH_LEGACY_ALIASES, &status);
@@ -173,10 +173,10 @@ index 122ca4b746..c00bc6ddca 100644
        std::vector<std::string> all_locales;
        const char* loc;
 diff --git a/src/objects/js-date-time-format.cc b/src/objects/js-date-time-format.cc
-index 868b0a3be2..c946dfb548 100644
+index 2258a1ffdf..3c497347c0 100644
 --- a/src/objects/js-date-time-format.cc
 +++ b/src/objects/js-date-time-format.cc
-@@ -1549,8 +1549,13 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
+@@ -1555,8 +1555,13 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
    //     requestedLocales, opt, %DateTimeFormat%.[[RelevantExtensionKeys]],
    //     localeData).
    //
@@ -192,7 +192,7 @@ index 868b0a3be2..c946dfb548 100644
    if (maybe_resolve_locale.IsNothing()) {
      THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError),
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index 68482fe68f..f52247799a 100644
+index db5a905f9c..ecc7b5dfbc 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
 @@ -877,6 +877,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {

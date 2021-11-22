@@ -22,6 +22,8 @@ namespace Microsoft.ClearScript.V8
 
         public abstract void AwaitDebuggerAndPause();
 
+        public abstract void CancelAwaitDebugger();
+
         public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code);
 
         public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);

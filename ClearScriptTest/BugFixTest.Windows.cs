@@ -1026,7 +1026,7 @@ namespace Microsoft.ClearScript.Test
             engine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging);
 
             var recordSet = new ADODB.Recordset();
-            recordSet.Fields.Append("foo", ADODB.DataTypeEnum.adVarChar, 20);
+            recordSet.Fields._Append("foo", ADODB.DataTypeEnum.adVarChar, 20);
             recordSet.Open(Missing.Value, Missing.Value, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic, 0);
             recordSet.AddNew(Missing.Value, Missing.Value);
             recordSet.Fields["foo"].Value = "bar";

@@ -328,21 +328,6 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        public static bool IsGuidType<T>(this Type type)
-        {
-            while (type != null)
-            {
-                if (type.GUID == typeof(T).GUID)
-                {
-                    return true;
-                }
-
-                type = type.BaseType;
-            }
-
-            return false;
-        }
-
         public static string GetRootName(this Type type)
         {
             return StripGenericSuffix(type.Name);

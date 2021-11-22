@@ -277,6 +277,11 @@ public:
         return v8::FunctionTemplate::New(m_upIsolate.get(), callback, data, signature, length);
     }
 
+    v8::Local<v8::SharedArrayBuffer> CreateSharedArrayBuffer(const std::shared_ptr<v8::BackingStore>& spBackingStore)
+    {
+        return v8::SharedArrayBuffer::New(m_upIsolate.get(), spBackingStore);
+    }
+
     v8::MaybeLocal<v8::UnboundScript> CompileUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions, v8::ScriptCompiler::NoCacheReason noCacheReason = v8::ScriptCompiler::kNoCacheNoReason)
     {
         auto result = v8::ScriptCompiler::CompileUnboundScript(m_upIsolate.get(), pSource, options, noCacheReason);
@@ -362,9 +367,9 @@ public:
     {
         BEGIN_MUTEX_SCOPE(m_DataMutex)
 
-            if (m_AwaitingDebugger)
+            if (m_optRunMessageLoopReason == RunMessageLoopReason::AwaitingDebugger)
             {
-                m_AbortMessageLoop = true;
+                m_optExitMessageLoopReason = ExitMessageLoopReason::TerminatedExecution;
                 m_CallWithLockQueueChanged.notify_one();
                 return;
             }
@@ -447,6 +452,8 @@ public:
     virtual void SetMaxStackUsage(size_t value) override;
 
     virtual void AwaitDebuggerAndPause() override;
+    virtual void CancelAwaitDebugger() override;
+
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
@@ -530,7 +537,21 @@ private:
         Persistent<v8::UnboundScript> hScript;
     };
 
-    bool RunMessageLoop(bool awaitingDebugger);
+    enum class RunMessageLoopReason
+    {
+        AwaitingDebugger,
+        PausedInDebugger
+    };
+
+    enum class ExitMessageLoopReason
+    {
+        ResumedExecution,
+        TerminatedExecution,
+        CanceledAwaitDebugger,
+        NestedInvocation
+    };
+
+    ExitMessageLoopReason RunMessageLoop(RunMessageLoopReason reason);
 
     void CallWithLockAsync(bool allowNesting, CallWithLockCallback&& callback);
     static void ProcessCallWithLockQueue(v8::Isolate* pIsolate, void* pvIsolateImpl);
@@ -579,10 +600,8 @@ private:
     void* m_pvDebugAgent;
     std::unique_ptr<v8_inspector::V8Inspector> m_upInspector;
     std::unique_ptr<v8_inspector::V8InspectorSession> m_upInspectorSession;
-    bool m_AwaitingDebugger;
-    bool m_InMessageLoop;
-    bool m_QuitMessageLoop;
-    bool m_AbortMessageLoop;
+    std::optional<RunMessageLoopReason> m_optRunMessageLoopReason;
+    std::optional<ExitMessageLoopReason> m_optExitMessageLoopReason;
     size_t m_MaxArrayBufferAllocation;
     size_t m_ArrayBufferAllocation;
     std::atomic<size_t> m_MaxHeapSize;

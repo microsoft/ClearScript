@@ -7,9 +7,10 @@
 // V8ObjectHolderImpl implementation
 //-----------------------------------------------------------------------------
 
-V8ObjectHolderImpl::V8ObjectHolderImpl(const SharedPtr<V8WeakContextBinding>& pBinding, void* pvObject):
-    m_spBinding(pBinding),
-    m_pvObject(pvObject)
+V8ObjectHolderImpl::V8ObjectHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvObject, const SharedPtr<V8SharedObjectInfo>& spSharedObjectInfo):
+    m_spBinding(spBinding),
+    m_pvObject(pvObject),
+    m_spSharedObjectInfo(spSharedObjectInfo)
 {
 }
 
@@ -17,7 +18,20 @@ V8ObjectHolderImpl::V8ObjectHolderImpl(const SharedPtr<V8WeakContextBinding>& pB
 
 V8ObjectHolderImpl* V8ObjectHolderImpl::Clone() const
 {
-    return new V8ObjectHolderImpl(m_spBinding, m_spBinding->GetIsolateImpl()->AddRefV8Object(m_pvObject));
+    return new V8ObjectHolderImpl(m_spBinding, m_spBinding->GetIsolateImpl()->AddRefV8Object(m_pvObject), m_spSharedObjectInfo);
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8ObjectHolderImpl::IsSameIsolate(const SharedPtr<V8IsolateImpl>& spThat) const
+{
+    SharedPtr<V8IsolateImpl> spIsolateImpl;
+    if (m_spBinding->TryGetIsolateImpl(spIsolateImpl))
+    {
+        return spIsolateImpl == spThat;
+    }
+
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -25,6 +39,13 @@ V8ObjectHolderImpl* V8ObjectHolderImpl::Clone() const
 void* V8ObjectHolderImpl::GetObject() const
 {
     return m_pvObject;
+}
+
+//-----------------------------------------------------------------------------
+
+const SharedPtr<V8SharedObjectInfo>& V8ObjectHolderImpl::GetSharedObjectInfo() const
+{
+    return m_spSharedObjectInfo;
 }
 
 //-----------------------------------------------------------------------------

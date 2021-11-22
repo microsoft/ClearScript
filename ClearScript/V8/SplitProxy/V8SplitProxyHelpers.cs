@@ -35,10 +35,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -136,10 +133,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -231,10 +225,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -326,10 +317,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -421,10 +409,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -516,10 +501,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -611,10 +593,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -720,10 +699,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -956,7 +932,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     return TryGetBigInteger(intValue, (int)uintValue, ptrOrHandle, out var result) ? (object)result : null;
 
                 case Type.V8Object:
-                    return new V8ObjectImpl((V8Object.Handle)ptrOrHandle, (Subtype)uintValue);
+                    return new V8ObjectImpl((V8Object.Handle)ptrOrHandle, (Subtype)uintValue, (Flags)intValue);
 
                 case Type.HostObject:
                     return V8ProxyHelpers.GetHostObject(ptrOrHandle);
@@ -1053,7 +1029,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void SetV8Object(Ptr pV8Value, V8ObjectImpl v8ObjectImpl)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetV8Object(pV8Value, v8ObjectImpl.Handle, v8ObjectImpl.Subtype));
+            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetV8Object(pV8Value, v8ObjectImpl.Handle, v8ObjectImpl.Subtype, v8ObjectImpl.Flags));
         }
 
         private static void SetHostObject(Ptr pV8Value, object obj)
@@ -1082,7 +1058,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #endregion
 
-        #region Nested type: Subtype : ushort
+        #region Nested type: Subtype
 
         public enum Subtype : ushort
         {
@@ -1099,8 +1075,22 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             Int16Array,
             Uint32Array,
             Int32Array,
+            BigUint64Array,
+            BigInt64Array,
             Float32Array,
             Float64Array
+        }
+
+        #endregion
+
+        #region Nested type: Flags
+
+        [Flags]
+        public enum Flags : ushort
+        {
+            // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Flags
+            None = 0,
+            Shared = 0x0001
         }
 
         #endregion
@@ -1111,10 +1101,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -1140,10 +1127,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public static void ProcessProfile(V8Entity.Handle hEntity, Ptr pProfile, V8.V8CpuProfile profile)
         {
             string name = null;
-            ulong startTimestamp = 0;
-            ulong endTimestamp = 0;
-            int sampleCount = 0;
-            Node.Ptr pRootNode = Node.Ptr.Null;
+            var startTimestamp = 0UL;
+            var endTimestamp = 0UL;
+            var sampleCount = 0;
+            var pRootNode = Node.Ptr.Null;
             V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfile_GetInfo(pProfile, hEntity, out name, out startTimestamp, out endTimestamp, out sampleCount, out pRootNode));
 
             profile.Name = name;
@@ -1161,8 +1148,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
                 for (var index = 0; index < sampleCount; index++)
                 {
-                    ulong nodeId = 0;
-                    ulong timestamp = 0;
+                    var nodeId = 0UL;
+                    var timestamp = 0UL;
                     var sampleIndex = index;
                     var found = V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfile_GetSample(pProfile, sampleIndex, out nodeId, out timestamp));
                     if (found)
@@ -1184,16 +1171,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static V8.V8CpuProfile.Node CreateNode(V8Entity.Handle hEntity, Node.Ptr pNode)
         {
-            ulong nodeId = 0;
-            long scriptId = 0;
+            var nodeId = 0UL;
+            var scriptId = 0L;
             string scriptName = null;
             string functionName = null;
             string bailoutReason = null;
-            long lineNumber = 0;
-            long columnNumber = 0;
-            ulong hitCount = 0;
-            uint hitLineCount = 0;
-            int childCount = 0;
+            var lineNumber = 0L;
+            var columnNumber = 0L;
+            var hitCount = 0UL;
+            var hitLineCount = 0U;
+            var childCount = 0;
             V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfileNode_GetInfo(pNode, hEntity, out nodeId, out scriptId, out scriptName, out functionName, out bailoutReason, out lineNumber, out columnNumber, out hitCount, out hitLineCount, out childCount));
 
             var node = new V8.V8CpuProfile.Node
@@ -1259,10 +1246,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr bits;
 
-            private Ptr(IntPtr bits)
-            {
-                this.bits = bits;
-            }
+            private Ptr(IntPtr bits) => this.bits = bits;
 
             public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -1293,10 +1277,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 private readonly IntPtr bits;
 
-                private Ptr(IntPtr bits)
-                {
-                    this.bits = bits;
-                }
+                private Ptr(IntPtr bits) => this.bits = bits;
 
                 public static readonly Ptr Null = new Ptr(IntPtr.Zero);
 
@@ -1332,10 +1313,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr guts;
 
-            private Handle(IntPtr guts)
-            {
-                this.guts = guts;
-            }
+            private Handle(IntPtr guts) => this.guts = guts;
 
             public static readonly Handle Empty = new Handle(IntPtr.Zero);
 
@@ -1364,10 +1342,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr guts;
 
-            private Handle(IntPtr guts)
-            {
-                this.guts = guts;
-            }
+            private Handle(IntPtr guts) => this.guts = guts;
 
             public static readonly Handle Empty = new Handle(IntPtr.Zero);
 
@@ -1399,10 +1374,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr guts;
 
-            private Handle(IntPtr guts)
-            {
-                this.guts = guts;
-            }
+            private Handle(IntPtr guts) => this.guts = guts;
 
             public static readonly Handle Empty = new Handle(IntPtr.Zero);
 
@@ -1434,10 +1406,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr guts;
 
-            private Handle(IntPtr guts)
-            {
-                this.guts = guts;
-            }
+            private Handle(IntPtr guts) => this.guts = guts;
 
             public static readonly Handle Empty = new Handle(IntPtr.Zero);
 
@@ -1469,10 +1438,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr guts;
 
-            private Handle(IntPtr guts)
-            {
-                this.guts = guts;
-            }
+            private Handle(IntPtr guts) => this.guts = guts;
 
             public static readonly Handle Empty = new Handle(IntPtr.Zero);
 
@@ -1504,10 +1470,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr guts;
 
-            private Handle(IntPtr guts)
-            {
-                this.guts = guts;
-            }
+            private Handle(IntPtr guts) => this.guts = guts;
 
             public static readonly Handle Empty = new Handle(IntPtr.Zero);
 
@@ -1539,10 +1502,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             private readonly IntPtr guts;
 
-            private Handle(IntPtr guts)
-            {
-                this.guts = guts;
-            }
+            private Handle(IntPtr guts) => this.guts = guts;
 
             public static readonly Handle Empty = new Handle(IntPtr.Zero);
 

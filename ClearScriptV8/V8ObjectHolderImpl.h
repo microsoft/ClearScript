@@ -13,10 +13,12 @@ class V8ObjectHolderImpl final: public V8ObjectHolder
 
 public:
 
-    V8ObjectHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvObject);
+    V8ObjectHolderImpl(const SharedPtr<V8WeakContextBinding>& spBinding, void* pvObject, const SharedPtr<V8SharedObjectInfo>& spSharedObjectInfo);
 
     virtual V8ObjectHolderImpl* Clone() const override;
+    virtual bool IsSameIsolate(const SharedPtr<V8IsolateImpl>& spThat) const override;
     virtual void* GetObject() const override;
+    virtual const SharedPtr<V8SharedObjectInfo>& GetSharedObjectInfo() const override;
 
     V8Value GetProperty(const StdString& name) const;
     void SetProperty(const StdString& name, const V8Value& value) const;
@@ -40,4 +42,5 @@ private:
 
     SharedPtr<V8WeakContextBinding> m_spBinding;
     void* m_pvObject;
+    SharedPtr<V8SharedObjectInfo> m_spSharedObjectInfo;
 };

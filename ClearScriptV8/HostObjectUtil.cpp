@@ -41,7 +41,7 @@ public:
         V8Value value(V8Value::Nonexistent);
         StdBool tempIsCacheable;
         V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(GetHostObjectNamedPropertyWithCacheability, pvObject, name, value, tempIsCacheable);
-        isCacheable = tempIsCacheable;
+        isCacheable = (tempIsCacheable != 0);
         return value;
     }
 

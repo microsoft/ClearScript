@@ -35,12 +35,12 @@ namespace Microsoft.ClearScript.V8
 
             if (obj is IV8Object target)
             {
-                if (target.IsArray())
+                if (target.IsArray)
                 {
                     return new V8Array(engine, target);
                 }
 
-                if (!target.IsArrayBufferOrView())
+                if (!target.IsArrayBufferOrView)
                 {
                     return new V8ScriptItem(engine, target);
                 }
@@ -64,6 +64,10 @@ namespace Microsoft.ClearScript.V8
                         return new V8TypedArray<uint>(engine, target);
                     case V8ArrayBufferOrViewKind.Int32Array:
                         return new V8TypedArray<int>(engine, target);
+                    case V8ArrayBufferOrViewKind.BigUint64Array:
+                        return new V8TypedArray<ulong>(engine, target);
+                    case V8ArrayBufferOrViewKind.BigInt64Array:
+                        return new V8TypedArray<long>(engine, target);
                     case V8ArrayBufferOrViewKind.Float32Array:
                         return new V8TypedArray<float>(engine, target);
                     case V8ArrayBufferOrViewKind.Float64Array:
@@ -76,10 +80,9 @@ namespace Microsoft.ClearScript.V8
             return obj;
         }
 
-        public bool IsPromise()
-        {
-            return target.IsPromise();
-        }
+        public bool IsPromise => target.IsPromise;
+
+        public bool IsShared => target.IsShared;
 
         public object InvokeMethod(bool marshalResult, string name, params object[] args)
         {

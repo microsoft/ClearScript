@@ -56,17 +56,17 @@ zapv8:
 	make -f $(UNIXDIR)/ClearScriptV8/Makefile zapv8
 
 buildall:
-	make
+	make CPU=x64
 	make CPU=arm64
 	$(MAKELINUX) CPU=arm
-	make DEBUG=1
+	make CPU=x64 DEBUG=1
 	make CPU=arm64 DEBUG=1
 	$(MAKELINUX) CPU=arm DEBUG=1
 
 cleanall:
-	make clean
+	make clean CPU=x64
 	make clean CPU=arm64
 	$(MAKELINUX) clean CPU=arm
-	make clean DEBUG=1
+	make clean CPU=x64 DEBUG=1
 	make clean CPU=arm64 DEBUG=1
 	$(MAKELINUX) clean CPU=arm DEBUG=1

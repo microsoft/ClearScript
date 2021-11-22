@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.Windows
@@ -17,8 +16,7 @@ namespace Microsoft.ClearScript.Windows
     /// Attempting to execute script code on a different thread results in an exception. Script
     /// delegates and event handlers are marshaled synchronously onto the correct thread.
     /// </remarks>
-    [Guid(TypeGuids.VBScriptEngine)]
-    public class VBScriptEngine : WindowsScriptEngine
+    public class VBScriptEngine : WindowsScriptEngine, IVBScriptEngineTag
     {
         #region constructors
 

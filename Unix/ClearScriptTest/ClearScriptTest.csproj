@@ -71,6 +71,7 @@
         <Compile Include="..\..\ClearScriptTest\V8ModuleTest.cs" Link="V8ModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.cs" Link="V8ScriptEngineTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.NetStandard.cs" Link="V8ScriptEngineTest.NetStandard.cs" />
+        <Compile Include="..\..\ClearScriptTest\V8SharedObjectTest.cs" Link="V8SharedObjectTest.cs" />
     </ItemGroup>
 
     <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'">

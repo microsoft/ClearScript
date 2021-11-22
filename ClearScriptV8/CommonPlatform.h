@@ -95,6 +95,15 @@
 //-----------------------------------------------------------------------------
 
 template <typename TFlag>
+inline bool HasFlag(TFlag mask, TFlag flag)
+{
+    using TUnderlying = std::underlying_type_t<TFlag>;
+    return (static_cast<TUnderlying>(mask) & static_cast<TUnderlying>(flag)) != 0;
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag>
 inline TFlag CombineFlags(TFlag flag1, TFlag flag2)
 {
     using TUnderlying = std::underlying_type_t<TFlag>;

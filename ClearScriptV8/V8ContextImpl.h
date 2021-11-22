@@ -40,8 +40,9 @@ public:
     virtual void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers) override;
 
     virtual void AwaitDebuggerAndPause() override;
-    virtual V8Value Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate) override;
+    virtual void CancelAwaitDebugger() override;
 
+    virtual V8Value Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
@@ -235,6 +236,11 @@ private:
     v8::Local<v8::FunctionTemplate> CreateFunctionTemplate(v8::FunctionCallback callback = 0, v8::Local<v8::Value> data = v8::Local<v8::Value>(), v8::Local<v8::Signature> signature = v8::Local<v8::Signature>(), int length = 0)
     {
         return m_spIsolateImpl->CreateFunctionTemplate(callback, data, signature, length);
+    }
+
+    v8::Local<v8::SharedArrayBuffer> CreateSharedArrayBuffer(const std::shared_ptr<v8::BackingStore>& spBackingStore)
+    {
+        return m_spIsolateImpl->CreateSharedArrayBuffer(spBackingStore);
     }
 
     v8::MaybeLocal<v8::UnboundScript> CompileUnboundScript(v8::ScriptCompiler::Source* pSource, v8::ScriptCompiler::CompileOptions options = v8::ScriptCompiler::kNoCompileOptions, v8::ScriptCompiler::NoCacheReason noCacheReason = v8::ScriptCompiler::kNoCacheNoReason)

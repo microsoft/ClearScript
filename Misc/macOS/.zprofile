@@ -1,0 +1,1 @@
+export PROFILEPATH=$PATH

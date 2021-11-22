@@ -1641,11 +1641,13 @@ namespace Microsoft.ClearScript
             }
 
             var value = args[args.Length - 1];
-            if ((value != null) && Engine.GetType().IsGuidType<TypeGuidMocks.VBScriptEngine>())
+
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if ((value != null) && (Engine is IVBScriptEngineTag))
             {
                 // special case to emulate VBScript's default property handling
 
-                if (value.GetType().IsGuidType<TypeGuidMocks.WindowsScriptItem>())
+                if (value is IWindowsScriptItemTag)
                 {
                     var defaultValue = ((IDynamic)value).GetProperty(SpecialMemberNames.Default);
                     if (!(defaultValue is Undefined))

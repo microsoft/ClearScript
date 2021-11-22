@@ -3283,6 +3283,64 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("123,456.75", engine.Evaluate("StringT.Format('{0:###,###.00}', 123456.75)"));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CancelAwaitDebugger()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart);
+
+            ThreadPool.QueueUserWorkItem(state =>
+            {
+                Thread.Sleep(1000);
+                engine.CancelAwaitDebugger();
+            });
+
+            engine.Execute("foo = Math.E * Math.PI");
+            Assert.AreEqual(Math.E * Math.PI, engine.Script.foo);
+            Assert.AreEqual(Math.Sqrt(Math.E * Math.PI), engine.Evaluate("Math.sqrt(Math.E * Math.PI)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ForeignScriptObject_DirectAccess()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var foreignEngine = runtime.CreateScriptEngine())
+                {
+                    engine.Script.foreignFunction = foreignEngine.Script.Function;
+                    Assert.AreEqual("object", engine.Evaluate("typeof foreignFunction"));
+                    Assert.AreEqual("function Function() { [native code] }", engine.Evaluate("foreignFunction.toString()"));
+
+                    engine.Dispose();
+                    engine = runtime.CreateScriptEngine();
+
+                    engine.Script.foreignFunction = foreignEngine.Script.Function;
+                    Assert.AreEqual("function", engine.Evaluate("typeof foreignFunction"));
+                    Assert.AreEqual("function Function() { [native code] }", engine.Evaluate("foreignFunction.toString()"));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ForeignScriptObject_DirectAccess_DisposedEngine()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                object function;
+                using (var foreignEngine = runtime.CreateScriptEngine())
+                {
+                    function = foreignEngine.Script.Function;
+                }
+
+                engine.Dispose();
+                engine = runtime.CreateScriptEngine();
+
+                engine.Script.foreignFunction = function;
+                Assert.AreEqual("function", engine.Evaluate("typeof foreignFunction"));
+                Assert.AreEqual("function Function() { [native code] }", engine.Evaluate("foreignFunction.toString()"));
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

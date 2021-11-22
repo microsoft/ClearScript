@@ -150,10 +150,9 @@
         <Compile Include="..\..\ClearScript\Util\SpecialMemberNames.cs" Link="Util\SpecialMemberNames.cs" />
         <Compile Include="..\..\ClearScript\Util\SpecialParamNames.cs" Link="Util\SpecialParamNames.cs" />
         <Compile Include="..\..\ClearScript\Util\Test\AccessContextTestObject.cs" Link="Util\Test\AccessContextTestObject.cs" />
-        <Compile Include="..\..\ClearScript\Util\TypeGuidMocks.cs" Link="Util\TypeGuidMocks.cs" />
-        <Compile Include="..\..\ClearScript\Util\TypeGuids.cs" Link="Util\TypeGuids.cs" />
         <Compile Include="..\..\ClearScript\Util\TypeHelpers.cs" Link="Util\TypeHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\TypeHelpers.NetCore.cs" Link="Util\TypeHelpers.NetCore.cs" />
+        <Compile Include="..\..\ClearScript\Util\TypeTags.cs" Link="Util\TypeTags.cs" />
         <Compile Include="..\..\ClearScript\Util\UniqueNameManager.cs" Link="Util\UniqueNameManager.cs" />
         <Compile Include="..\..\ClearScript\Util\UnmanagedMemoryHelpers.cs" Link="Util\UnmanagedMemoryHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\VTableHelpers.cs" Link="Util\VTableHelpers.cs" />

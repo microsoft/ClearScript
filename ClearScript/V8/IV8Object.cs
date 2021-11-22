@@ -20,10 +20,11 @@ namespace Microsoft.ClearScript.V8
         object Invoke(bool asConstructor, object[] args);
         object InvokeMethod(string name, object[] args);
 
-        bool IsPromise();
-        bool IsArray();
+        bool IsPromise { get; }
+        bool IsArray { get; }
+        bool IsShared { get; }
 
-        bool IsArrayBufferOrView();
+        bool IsArrayBufferOrView { get; }
         V8ArrayBufferOrViewKind GetArrayBufferOrViewKind();
         V8ArrayBufferOrViewInfo GetArrayBufferOrViewInfo();
         void InvokeWithArrayBufferOrViewData(Action<IntPtr> action);
