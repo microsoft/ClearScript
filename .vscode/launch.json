@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/opt/dotnet/dotnet",
+            "args": ["${workspaceFolder}/MuslTest/bin/Debug/net6.0/MuslTest.dll"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "sourceFileMap":{
+                "/usr/include": "${workspaceFolder}/V8/build/v8/build/linux/debian_sid_amd64-sysroot/usr/include",
+                "./../../../src": "${workspaceFolder}/V8/build/v8/src",
+                "./../../../third_party": "${workspaceFolder}/V8/build/v8/third_party",
+                "./../../../build/linux/debian_sid_amd64-sysroot/usr/lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/": "/usr/include/c++/10.3.1/",
+                "./../../../build/linux/debian_sid_amd64-sysroot/usr/lib/gcc/x86_64-linux-gnu/10/../../../../include/x86_64-linux-gnu/c++/10/bits": "/usr/include/c++/10.3.1/x86_64-alpine-linux-musl/bits/"
+            }
+        },
+        {
+            "name": ".NET Core Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            // "preLaunchTask": "build",
+            "program": "${workspaceFolder}/MuslTest/bin/Debug/net6.0/MuslTest.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+        },
+    ]
+}
