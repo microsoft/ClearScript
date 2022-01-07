@@ -23,9 +23,10 @@
                 }
             ],
             "sourceFileMap":{
-                "/usr/include": "${workspaceFolder}/V8/build/v8/build/linux/debian_sid_amd64-sysroot/usr/include",
+                // "/usr/include": "${workspaceFolder}/V8/build/v8/build/linux/debian_sid_amd64-sysroot/usr/include",
                 "./../../../src": "${workspaceFolder}/V8/build/v8/src",
                 "./../../../third_party": "${workspaceFolder}/V8/build/v8/third_party",
+                "/usr/include/c++/10/": "/usr/include/c++/10.3.1/",
                 "./../../../build/linux/debian_sid_amd64-sysroot/usr/lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/": "/usr/include/c++/10.3.1/",
                 "./../../../build/linux/debian_sid_amd64-sysroot/usr/lib/gcc/x86_64-linux-gnu/10/../../../../include/x86_64-linux-gnu/c++/10/bits": "/usr/include/c++/10.3.1/x86_64-alpine-linux-musl/bits/"
             }

@@ -16,7 +16,7 @@ ENV PYTHONUNBUFFERED=1
 # RUN python3 -m ensurepip
 # RUN pip3 install --no-cache --upgrade pip setuptools
 RUN apk add --update --no-cache python2
-RUN python -m ensurepipcd
+RUN python -m ensurepip
 RUN pip install --no-cache --upgrade pip setuptools
 
 
