@@ -242,6 +242,8 @@ NATIVE_ENTRY_POINT(void) V8Isolate_CancelAwaitDebugger(const V8IsolateHandle& ha
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_Compile(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code) noexcept;
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileProducingCache(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) noexcept;
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileConsumingCache(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, StdBool& cacheAccepted) noexcept;
+NATIVE_ENTRY_POINT(StdBool) V8Isolate_GetEnableInterruptPropagation(const V8IsolateHandle& handle) noexcept;
+NATIVE_ENTRY_POINT(void) V8Isolate_SetEnableInterruptPropagation(const V8IsolateHandle& handle, StdBool value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Isolate_GetHeapStatistics(const V8IsolateHandle& handle, uint64_t& totalHeapSize, uint64_t& totalHeapSizeExecutable, uint64_t& totalPhysicalSize, uint64_t& usedHeapSize, uint64_t& heapSizeLimit) noexcept;
 NATIVE_ENTRY_POINT(void) V8Isolate_GetStatistics(const V8IsolateHandle& handle, uint64_t& scriptCount, uint64_t& scriptCacheSize, uint64_t& moduleCount, std::vector<uint64_t>& postedTaskCounts, std::vector<uint64_t>& invokedTaskCounts) noexcept;
 NATIVE_ENTRY_POINT(void) V8Isolate_CollectGarbage(const V8IsolateHandle& handle, StdBool exhaustive) noexcept;
@@ -269,6 +271,9 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileProducingCache(const V8Cont
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileConsumingCache(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, StdBool& cacheAccepted) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_ExecuteScript(const V8ContextHandle& handle, const V8ScriptHandle& scriptHandle, StdBool evaluate, V8Value& result) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_Interrupt(const V8ContextHandle& handle) noexcept;
+NATIVE_ENTRY_POINT(void) V8Context_CancelInterrupt(const V8ContextHandle& handle) noexcept;
+NATIVE_ENTRY_POINT(StdBool) V8Context_GetEnableIsolateInterruptPropagation(const V8ContextHandle& handle) noexcept;
+NATIVE_ENTRY_POINT(void) V8Context_SetEnableIsolateInterruptPropagation(const V8ContextHandle& handle, StdBool value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_GetIsolateHeapStatistics(const V8ContextHandle& handle, uint64_t& totalHeapSize, uint64_t& totalHeapSizeExecutable, uint64_t& totalPhysicalSize, uint64_t& usedHeapSize, uint64_t& heapSizeLimit) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_GetIsolateStatistics(const V8ContextHandle& handle, uint64_t& scriptCount, uint64_t& scriptCacheSize, uint64_t& moduleCount, std::vector<uint64_t>& postedTaskCounts, std::vector<uint64_t>& invokedTaskCounts) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_GetStatistics(const V8ContextHandle& handle, uint64_t& scriptCount, uint64_t& moduleCount, uint64_t& moduleCacheSize) noexcept;

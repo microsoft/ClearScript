@@ -1,6 +1,7 @@
 <html>
 
 <head>
+<link rel="shortcut icon" type="image/png" href="../favicon.png">
 <meta http-equiv=Content-Type content="text/html; charset=utf-8">
 <meta name=Generator content="Microsoft Word 15 (filtered)">
 <title>Building, Integrating, and Deploying ClearScript</title>
@@ -280,7 +281,9 @@ into a convenient directory. Use a directory at or near the root of a drive to
 avoid path length issues.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>The provided project and solution
-files support <a href="https://www.visualstudio.com/downloads/">Visual Studio 2019</a>
+files support <a href="https://visualstudio.microsoft.com/downloads/">Visual
+Studio 2022</a> and <a
+href="https://visualstudio.microsoft.com/vs/older-downloads/">Visual Studio 2019</a>
 Version 16.4 or later. They produce architecture-neutral managed libraries that
 target .NET Framework 4.5, .NET Framework 4.7.1, .NET Core 3.1, and .NET 5.0.
 ClearScript does not support older environments. The output directory is <b><span
@@ -302,29 +305,35 @@ support, you must first acquire and build V8:</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
+style='color:red'>Important:</span></b> This procedure currently requires <a
+href="https://visualstudio.microsoft.com/vs/older-downloads/">Visual Studio
+2019</a>. The V8 build does not yet support newer versions.</p>
+
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
+style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> Ensure that the path to your
 ClearScript root directory does not contain spaces or non-ASCII characters.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> Your Visual Studio installation must
 include the <b>.NET desktop development</b>, <b>Desktop development with C++</b>,
 and <b>Universal Windows Platform Development</b> workloads, as well as the <b>C++
 ARM build tools </b>and<b> C++ ARM64</b> <b>build tools</b> components.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> The V8 build also requires <a
 href="https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/">Windows
 10 SDK</a> version 10.0.19041.0 or later. Your Windows SDK installation must
 include the <b>Debugging Tools for Windows</b> feature.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Open
-a <a href="https://www.visualstudio.com/downloads/">Visual Studio 2019</a> developer
-command prompt and run the <b><span style='font-size:10.0pt;line-height:115%;
-font-family:Consolas'>V8Update</span></b> script from your ClearScript root
-directory:</p>
+a <a href="https://visualstudio.microsoft.com/vs/older-downloads/">Visual
+Studio 2019</a> developer command prompt and run the <b><span style='font-size:
+10.0pt;line-height:115%;font-family:Consolas'>V8Update</span></b> script from
+your ClearScript root directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><span style='font-size:10.0pt;
@@ -372,7 +381,7 @@ revision history.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>You are now ready to build the full
 <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScript</span></b>
-solution using Visual Studio 2019.</p>
+solution using Visual Studio 2019 or 2022.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Note:</span></b>
 The first time you open the solution, Visual Studio may prompt you to upgrade
@@ -583,8 +592,8 @@ and then click <b>OK</b> to exit Reference Manager.</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> If you're using V8, you must also copy
-the following files from your ClearScript output directory to your
-application's directory:</p>
+the following files from your ClearScript output directory to your application's
+directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
@@ -626,8 +635,8 @@ line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.win-arm64.dll</
 <h2 style='margin-top:6.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 9.0pt;margin-bottom:.0001pt'>Linux</h2>
 
-<p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript, here's
-how to reference it in your application:</p>
+<p class=MsoNormal style='margin-left:.25in'>Once you've built ClearScript,
+here's how to reference it in your application:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:.5in;background:#F2F2F2'><span style='font-size:10.0pt;
@@ -706,8 +715,8 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </spa
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>gacutil
 /i ClearScript.dll</span></b></p>
 
-<p class=MsoNormal style='margin-left:.25in'>Additionally, you must copy ClearScript’s
-V8 assemblies to the system folder:</p>
+<p class=MsoNormal style='margin-left:.25in'>Additionally, you must copy
+ClearScript’s V8 assemblies to the system folder:</p>
 
 <p class=MsoNormal style='margin-left:.5in'>On 32-bit Windows:</p>
 
@@ -934,15 +943,26 @@ debugging of script, managed, and native code.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>We’d like to thank:</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><a
-href="https://code.google.com/p/v8/people/list">The V8 team</a>.</p>
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'><span
+style='font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><a href="https://code.google.com/p/v8/people/list">The V8 team</a>.</p>
 
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><a
-href="http://kennethreitz.org">Kenneth Reitz</a> for generously providing the <a
-href="http://httpbin.org"><b><span style='font-size:10.0pt;line-height:115%;
-font-family:Consolas'>Httpbin</span></b></a> service.</p>
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'><span
+style='font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><a href="https://jekyllrb.com/team/">The Jekyll team</a>.</p>
+
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'><span
+style='font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><a href="http://kennethreitz.org">Kenneth Reitz</a> for
+generously providing the <a href="http://httpbin.org"><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>Httpbin</span></b></a>
+service.</p>
+
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'><span
+style='font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><a href="https://mademistakes.com/">Michael Rose</a> for
+generously providing the <a href="https://mmistakes.github.io/so-simple-theme/">So
+Simple</a> Jekyll theme.</p>
 
 </div>
 

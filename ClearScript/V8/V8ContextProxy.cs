@@ -14,11 +14,11 @@ namespace Microsoft.ClearScript.V8
             return new V8ContextProxyImpl(isolateProxy, name, flags, debugPort);
         }
 
-        public abstract UIntPtr MaxRuntimeHeapSize { get; set; }
+        public abstract UIntPtr MaxIsolateHeapSize { get; set; }
 
-        public abstract TimeSpan RuntimeHeapSizeSampleInterval { get; set; }
+        public abstract TimeSpan IsolateHeapSizeSampleInterval { get; set; }
 
-        public abstract UIntPtr MaxRuntimeStackUsage { get; set; }
+        public abstract UIntPtr MaxIsolateStackUsage { get; set; }
 
         public abstract void InvokeWithLock(Action action);
 
@@ -42,9 +42,13 @@ namespace Microsoft.ClearScript.V8
 
         public abstract void Interrupt();
 
-        public abstract V8RuntimeHeapInfo GetRuntimeHeapInfo();
+        public abstract void CancelInterrupt();
 
-        public abstract V8Runtime.Statistics GetRuntimeStatistics();
+        public abstract bool EnableIsolateInterruptPropagation { get; set; }
+
+        public abstract V8RuntimeHeapInfo GetIsolateHeapInfo();
+
+        public abstract V8Runtime.Statistics GetIsolateStatistics();
 
         public abstract V8ScriptEngine.Statistics GetStatistics();
 
@@ -60,6 +64,6 @@ namespace Microsoft.ClearScript.V8
 
         public abstract uint CpuProfileSampleInterval { get; set; }
 
-        public abstract void WriteRuntimeHeapSnapshot(Stream stream);
+        public abstract void WriteIsolateHeapSnapshot(Stream stream);
     }
 }

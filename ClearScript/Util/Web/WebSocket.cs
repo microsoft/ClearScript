@@ -204,6 +204,7 @@ namespace Microsoft.ClearScript.Util.Web
             Debug.Assert(length < long.MaxValue);
             var payload = new byte[length];
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (length <= int.MaxValue)
             {
                 await socket.ReceiveBytesAsync(payload, 0, Convert.ToInt32(length)).ConfigureAwait(false);

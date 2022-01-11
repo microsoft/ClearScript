@@ -1525,6 +1525,32 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("baz", ((dynamic)engine.Evaluate("Array.from(data)"))[2]);
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8_HostPrototypes()
+        {
+            engine.Script.random = new Random();
+            engine.Script.cb = new Func<double>(() => Math.E);
+            engine.AddHostType(typeof(Console));
+            engine.Execute(@"
+                function extendHostObject(hostObject) {
+                    let proto = {};
+                    proto._proto = proto;
+                    Object.setPrototypeOf(proto, Object.getPrototypeOf(hostObject));
+                    Object.setPrototypeOf(hostObject, proto);
+                }
+                extendHostObject(random);
+                random._proto.E = Math.E
+                extendHostObject(cb);
+                cb._proto.SQRT2 = Math.SQRT2;
+                extendHostObject(Console);
+                Console._proto.PI = Math.PI;
+            ");
+
+            Assert.AreEqual(Math.E, engine.Evaluate("random.E"));
+            Assert.AreEqual(Math.Sqrt(2), engine.Evaluate("cb.SQRT2"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("Console.PI"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

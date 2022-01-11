@@ -1,13 +1,13 @@
 #!/bin/bash
 
-v8testedrev=9.6.180.14
+v8testedrev=9.7.106.18
 v8testedcommit=
 
 if [[ $v8testedcommit == "" ]]; then
     v8testedcommit=$v8testedrev
 fi
 
-jsontag=v3.9.1
+jsontag=v3.10.4
 
 function usage {
     echo

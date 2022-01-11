@@ -920,6 +920,25 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileConsumingCache(const V8Isol
 
 //-----------------------------------------------------------------------------
 
+NATIVE_ENTRY_POINT(StdBool) V8Isolate_GetEnableInterruptPropagation(const V8IsolateHandle& handle) noexcept
+{
+    auto spIsolate = handle.GetEntity();
+    return !spIsolate.IsEmpty() ? spIsolate->GetEnableInterruptPropagation() : false;
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) V8Isolate_SetEnableInterruptPropagation(const V8IsolateHandle& handle, StdBool value) noexcept
+{
+    auto spIsolate = handle.GetEntity();
+    if (!spIsolate.IsEmpty())
+    {
+        spIsolate->SetEnableInterruptPropagation(value);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 NATIVE_ENTRY_POINT(void) V8Isolate_GetHeapStatistics(const V8IsolateHandle& handle, uint64_t& totalHeapSize, uint64_t& totalHeapSizeExecutable, uint64_t& totalPhysicalSize, uint64_t& usedHeapSize, uint64_t& heapSizeLimit) noexcept
 {
     totalHeapSize = 0UL;
@@ -1316,6 +1335,36 @@ NATIVE_ENTRY_POINT(void) V8Context_Interrupt(const V8ContextHandle& handle) noex
     if (!spContext.IsEmpty())
     {
         spContext->Interrupt();
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) V8Context_CancelInterrupt(const V8ContextHandle& handle) noexcept
+{
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        spContext->CancelInterrupt();
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(StdBool) V8Context_GetEnableIsolateInterruptPropagation(const V8ContextHandle& handle) noexcept
+{
+    auto spContext = handle.GetEntity();
+    return !spContext.IsEmpty() ? spContext->GetEnableIsolateInterruptPropagation() : false;
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) V8Context_SetEnableIsolateInterruptPropagation(const V8ContextHandle& handle, StdBool value) noexcept
+{
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        spContext->SetEnableIsolateInterruptPropagation(value);
     }
 }
 

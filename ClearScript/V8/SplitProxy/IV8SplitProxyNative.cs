@@ -140,6 +140,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         V8Script.Handle V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code);
         V8Script.Handle V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
         V8Script.Handle V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
+        bool V8Isolate_GetEnableInterruptPropagation(V8Isolate.Handle hIsolate);
+        void V8Isolate_SetEnableInterruptPropagation(V8Isolate.Handle hIsolate, bool value);
         void V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit);
         void V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts);
         void V8Isolate_CollectGarbage(V8Isolate.Handle hIsolate, bool exhaustive);
@@ -171,6 +173,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         V8Script.Handle V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
         object V8Context_ExecuteScript(V8Context.Handle hContext, V8Script.Handle hScript, bool evaluate);
         void V8Context_Interrupt(V8Context.Handle hContext);
+        void V8Context_CancelInterrupt(V8Context.Handle hContext);
+        bool V8Context_GetEnableIsolateInterruptPropagation(V8Context.Handle hContext);
+        void V8Context_SetEnableIsolateInterruptPropagation(V8Context.Handle hContext, bool value);
         void V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit);
         void V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts);
         void V8Context_GetStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong moduleCount, out ulong moduleCacheSize);

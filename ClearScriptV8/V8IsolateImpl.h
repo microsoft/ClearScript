@@ -457,6 +457,10 @@ public:
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
+
+    virtual bool GetEnableInterruptPropagation() override;
+    virtual void SetEnableInterruptPropagation(bool value) override;
+
     virtual void GetHeapStatistics(v8::HeapStatistics& heapStatistics) override;
     virtual Statistics GetStatistics() override;
     virtual void CollectGarbage(bool exhaustive) override;
@@ -610,6 +614,7 @@ private:
     double m_HeapExpansionMultiplier;
     SharedPtr<Timer> m_spHeapWatchTimer;
     std::atomic<size_t> m_MaxStackUsage;
+    std::atomic<bool> m_EnableInterruptPropagation;
     std::atomic<uint32_t> m_CpuProfileSampleInterval;
     size_t m_StackWatchLevel;
     size_t* m_pStackLimit;

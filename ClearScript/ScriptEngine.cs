@@ -307,7 +307,7 @@ namespace Microsoft.ClearScript
         public ContinuationCallback ContinuationCallback { get; set; }
 
         /// <summary>
-        /// Allows the host to access script resources directly.
+        /// Allows the host to access script resources dynamically.
         /// </summary>
         /// <remarks>
         /// The value of this property is an object that is bound to the script engine's root
@@ -315,6 +315,17 @@ namespace Microsoft.ClearScript
         /// script objects and functions.
         /// </remarks>
         public abstract dynamic Script { get; }
+
+        /// <summary>
+        /// Allows the host to access script resources.
+        /// </summary>
+        /// <remarks>
+        /// The value of this property is an object that is bound to the script engine's root
+        /// namespace. It allows you to access global script resources via the
+        /// <see cref="ScriptObject"/> class interface. Doing so is likely to perform better than
+        /// dynamic access via <see cref="Script"/>.
+        /// </remarks>
+        public abstract ScriptObject Global { get; }
 
         /// <summary>
         /// Gets or sets the script engine's document settings.
