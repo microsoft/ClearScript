@@ -3341,6 +3341,99 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EnableRuntimeInterruptPropagation_Plumbing()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var engine1 = runtime.CreateScriptEngine())
+                {
+                    using (var engine2 = runtime.CreateScriptEngine())
+                    {
+                        Assert.IsFalse(runtime.EnableInterruptPropagation);
+                        Assert.IsFalse(engine1.EnableRuntimeInterruptPropagation);
+                        Assert.IsFalse(engine2.EnableRuntimeInterruptPropagation);
+
+                        runtime.EnableInterruptPropagation = true;
+                        Assert.IsTrue(runtime.EnableInterruptPropagation);
+                        Assert.IsTrue(engine1.EnableRuntimeInterruptPropagation);
+                        Assert.IsTrue(engine2.EnableRuntimeInterruptPropagation);
+
+                        engine1.EnableRuntimeInterruptPropagation = false;
+                        Assert.IsFalse(runtime.EnableInterruptPropagation);
+                        Assert.IsFalse(engine1.EnableRuntimeInterruptPropagation);
+                        Assert.IsFalse(engine2.EnableRuntimeInterruptPropagation);
+                    }
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EnableRuntimeInterruptPropagation()
+        {
+            var interrupt = new Action(() =>
+            {
+                engine.Interrupt();
+                engine.Execute("while (true);");
+            });
+
+            var code = @"
+                try {
+                    interrupt();
+                }
+                catch {
+                }
+                123
+            ";
+
+            engine.Script.interrupt = interrupt;
+            Assert.AreEqual(123, engine.Evaluate(code));
+
+            engine.EnableRuntimeInterruptPropagation = true;
+            TestUtil.AssertException<ScriptInterruptedException>(() => engine.Evaluate(code));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_EnableRuntimeInterruptPropagation_CancelInterrupt()
+        {
+            var catchAndCancel = false;
+
+            var interrupt = new Action(() =>
+            {
+                // ReSharper disable AccessToModifiedClosure
+
+                try
+                {
+                    engine.Interrupt();
+                    engine.Execute("while (true);");
+                }
+                catch (ScriptInterruptedException) when (catchAndCancel)
+                {
+                    engine.CancelInterrupt();
+                }
+
+                // ReSharper restore AccessToModifiedClosure
+            });
+
+            var code = @"
+                try {
+                    interrupt();
+                }
+                catch {
+                }
+                123
+            ";
+
+            engine.Script.interrupt = interrupt;
+            Assert.AreEqual(123, engine.Evaluate(code));
+
+            engine.EnableRuntimeInterruptPropagation = true;
+            TestUtil.AssertException<ScriptInterruptedException>(() => engine.Evaluate(code));
+
+            catchAndCancel = true;
+            Assert.AreEqual(123, engine.Evaluate(code));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

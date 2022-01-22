@@ -136,11 +136,14 @@ else
     $(error unsupported target operating system '$(TARGETOS)')
 endif
 
+JSONDIR = $(V8BUILDDIR)/json
+JSONINCDIR = $(JSONDIR)/single_include
+
 OUTDIR = $(ROOTDIR)/bin/$(CONFIG)/Unix
 OBJDIR = $(OUTDIR)/obj/$(CPU)
 CLEARSCRIPTV8 = $(OUTDIR)/ClearScriptV8.$(OS)-$(CPU).$(EXTENSION)
 
-CXXFLAGS = --target=$(TARGET) -std=c++17 -fvisibility=default -fPIC -fno-rtti -Wno-ignored-attributes $(CXXCONFIGFLAGS) -I$(V8INCDIR) $(CXXCROSSFLAGS)
+CXXFLAGS = --target=$(TARGET) -std=c++17 -fvisibility=default -fPIC -fno-rtti -Wno-ignored-attributes $(CXXCONFIGFLAGS) -I$(V8INCDIR) -I$(JSONINCDIR) $(CXXCROSSFLAGS)
 
 HEADERS = $(wildcard $(SRCDIR)/*.h)
 OBJECTS = \

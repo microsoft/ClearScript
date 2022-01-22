@@ -22,19 +22,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region V8ContextProxy overrides
 
-        public override UIntPtr MaxRuntimeHeapSize
+        public override UIntPtr MaxIsolateHeapSize
         {
             get => V8SplitProxyNative.Invoke(instance => instance.V8Context_GetMaxIsolateHeapSize(Handle));
             set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetMaxIsolateHeapSize(Handle, value));
         }
 
-        public override TimeSpan RuntimeHeapSizeSampleInterval
+        public override TimeSpan IsolateHeapSizeSampleInterval
         {
             get => V8SplitProxyNative.Invoke(instance => TimeSpan.FromMilliseconds(instance.V8Context_GetIsolateHeapSizeSampleInterval(Handle)));
             set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetIsolateHeapSizeSampleInterval(Handle, value.TotalMilliseconds));
         }
 
-        public override UIntPtr MaxRuntimeStackUsage
+        public override UIntPtr MaxIsolateStackUsage
         {
             get => V8SplitProxyNative.Invoke(instance => instance.V8Context_GetMaxIsolateStackUsage(Handle));
             set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetMaxIsolateStackUsage(Handle, value));
@@ -172,7 +172,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8SplitProxyNative.Invoke(instance => instance.V8Context_Interrupt(Handle));
         }
 
-        public override V8RuntimeHeapInfo GetRuntimeHeapInfo()
+        public override void CancelInterrupt()
+        {
+            V8SplitProxyNative.Invoke(instance => instance.V8Context_CancelInterrupt(Handle));
+        }
+
+        public override bool EnableIsolateInterruptPropagation
+        {
+            get => V8SplitProxyNative.Invoke(instance => instance.V8Context_GetEnableIsolateInterruptPropagation(Handle));
+            set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetEnableIsolateInterruptPropagation(Handle, value));
+        }
+
+        public override V8RuntimeHeapInfo GetIsolateHeapInfo()
         {
             var totalHeapSize = 0UL;
             var totalHeapSizeExecutable = 0UL;
@@ -191,7 +202,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             };
         }
 
-        public override V8Runtime.Statistics GetRuntimeStatistics()
+        public override V8Runtime.Statistics GetIsolateStatistics()
         {
             var statistics = new V8Runtime.Statistics();
             V8SplitProxyNative.Invoke(instance => instance.V8Context_GetIsolateStatistics(Handle, out statistics.ScriptCount, out statistics.ScriptCacheSize, out statistics.ModuleCount, out statistics.PostedTaskCounts, out statistics.InvokedTaskCounts));
@@ -245,7 +256,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetCpuProfileSampleInterval(Handle, value));
         }
 
-        public override void WriteRuntimeHeapSnapshot(Stream stream)
+        public override void WriteIsolateHeapSnapshot(Stream stream)
         {
             using (var streamScope = V8ProxyHelpers.CreateAddRefHostObjectScope(stream))
             {

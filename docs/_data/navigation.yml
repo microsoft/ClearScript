@@ -1,0 +1,10 @@
+- title: Home
+  url: /
+- title: About
+  url: /about
+- title: Search
+  url: /search
+- title: Archive
+  url: /archive
+- title: GitHub
+  url: https://github.com/microsoft/ClearScript

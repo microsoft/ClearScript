@@ -30,7 +30,7 @@ namespace Microsoft.ClearScript.Windows.Core
         private WindowsScriptEngineFlags engineFlags;
 
         private readonly HostItemMap hostItemMap = new HostItemMap();
-        private readonly object script;
+        private readonly WindowsScriptItem script;
 
         private ProcessDebugManagerWrapper processDebugManager;
         private DebugApplicationWrapper debugApplication;
@@ -65,7 +65,7 @@ namespace Microsoft.ClearScript.Windows.Core
             MiscHelpers.VerifyNonNullArgument(syncInvoker, nameof(syncInvoker));
             this.syncInvoker = syncInvoker;
 
-            script = base.ScriptInvoke(() =>
+            script = (WindowsScriptItem)base.ScriptInvoke(() =>
             {
                 activeScript = ActiveScriptWrapper.Create(progID, flags);
                 engineFlags = flags;
@@ -148,7 +148,7 @@ namespace Microsoft.ClearScript.Windows.Core
             return scriptDispatch;
         }
 
-        private void Parse(UniqueDocumentInfo documentInfo, string code, ScriptTextFlags flags, IntPtr pVarResult, out EXCEPINFO excepInfo)
+        private void Parse(UniqueDocumentInfo documentInfo, string code, ScriptTextFlags flags, IntPtr pVarResult)
         {
             var sourceContext = CreateDebugDocument(documentInfo, code, out var debugDocument);
             if (sourceContext != UIntPtr.Zero)
@@ -158,7 +158,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
             try
             {
-                activeScript.ParseScriptText(code, null, null, null, sourceContext, 0, flags, pVarResult, out excepInfo);
+                activeScript.ParseScriptText(code, null, null, null, sourceContext, 0, flags, pVarResult, out _);
             }
             finally
             {
@@ -503,7 +503,7 @@ namespace Microsoft.ClearScript.Windows.Core
         #region ScriptEngine overrides (public members)
 
         /// <summary>
-        /// Allows the host to access script resources directly.
+        /// Allows the host to access script resources dynamically.
         /// </summary>
         /// <remarks>
         /// The value of this property is an object that is bound to the script engine's root
@@ -511,6 +511,24 @@ namespace Microsoft.ClearScript.Windows.Core
         /// script objects and functions.
         /// </remarks>
         public override dynamic Script
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return script;
+            }
+        }
+
+        /// <summary>
+        /// Allows the host to access script resources.
+        /// </summary>
+        /// <remarks>
+        /// The value of this property is an object that is bound to the script engine's root
+        /// namespace. It allows you to access global script resources via the
+        /// <see cref="ScriptObject"/> class interface. Doing so is likely to perform better than
+        /// dynamic access via <see cref="Script"/>.
+        /// </remarks>
+        public override ScriptObject Global
         {
             get
             {
@@ -653,14 +671,14 @@ namespace Microsoft.ClearScript.Windows.Core
             if (!evaluate)
             {
                 const ScriptTextFlags flags = ScriptTextFlags.IsVisible;
-                Parse(documentInfo, code, flags, IntPtr.Zero, out _);
+                Parse(documentInfo, code, flags, IntPtr.Zero);
                 return null;
             }
 
             using (var resultVariantBlock = new CoTaskMemVariantBlock())
             {
                 const ScriptTextFlags flags = ScriptTextFlags.IsExpression;
-                Parse(documentInfo, code, flags, resultVariantBlock.Addr, out _);
+                Parse(documentInfo, code, flags, resultVariantBlock.Addr);
                 return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
             }
         }
@@ -785,7 +803,7 @@ namespace Microsoft.ClearScript.Windows.Core
                         debugApplication.Close();
                     }
 
-                    ((IDisposable)script).Dispose();
+                    script.Dispose();
                     activeScript.Close();
                 }
             }

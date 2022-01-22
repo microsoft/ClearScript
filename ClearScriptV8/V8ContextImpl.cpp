@@ -313,7 +313,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
         m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
-        m_hHostDelegateTemplate->InstanceTemplate()->SetImmutableProto(); // instructs our patched V8 typeof implementation to return "function" 
+        m_hHostDelegateTemplate->InstanceTemplate()->SetHostDelegate(); // instructs our patched V8 typeof implementation to return "function" 
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(FROM_MAYBE(CreateString(StdString(SL("toFunction")))), hToFunctionFunction);
 
         m_pvV8ObjectCache = HostObjectUtil::GetInstance().CreateV8ObjectCache();
@@ -831,6 +831,27 @@ V8Value V8ContextImpl::Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool e
 void V8ContextImpl::Interrupt()
 {
     TerminateExecution();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::CancelInterrupt()
+{
+    CancelTerminateExecution();
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8ContextImpl::GetEnableIsolateInterruptPropagation()
+{
+    return m_spIsolateImpl->GetEnableInterruptPropagation();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::SetEnableIsolateInterruptPropagation(bool value)
+{
+    m_spIsolateImpl->SetEnableInterruptPropagation(value);
 }
 
 //-----------------------------------------------------------------------------

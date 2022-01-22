@@ -273,6 +273,32 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
+        /// Enables or disables interrupt propagation in the V8 runtime.
+        /// </summary>
+        /// <remarks>
+        /// By default, when nested script execution is interrupted via
+        /// <see cref="ScriptEngine.Interrupt"/>, an instance of
+        /// <see cref="ScriptInterruptedException"/>, if not handled by the host, is wrapped and
+        /// delivered to the parent script frame as a normal exception that JavaScript code can
+        /// catch. Setting this property to <c>true</c> causes the V8 runtime to remain in the
+        /// interrupted state until its outermost script frame has been processed.
+        /// </remarks>
+        public bool EnableInterruptPropagation
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.EnableInterruptPropagation;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                proxy.EnableInterruptPropagation = value;
+            }
+        }
+
+        /// <summary>
         /// Creates a new V8 script engine instance.
         /// </summary>
         /// <returns>A new V8 script engine instance.</returns>

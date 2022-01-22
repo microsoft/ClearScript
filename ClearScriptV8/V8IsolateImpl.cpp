@@ -418,6 +418,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     m_HeapWatchLevel(0),
     m_HeapExpansionMultiplier(options.HeapExpansionMultiplier),
     m_MaxStackUsage(0),
+    m_EnableInterruptPropagation(false),
     m_CpuProfileSampleInterval(1000U),
     m_StackWatchLevel(0),
     m_pStackLimit(nullptr),
@@ -735,6 +736,20 @@ V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
         return spContextImpl->Compile(documentInfo, std::move(code), cacheType, cacheBytes, cacheAccepted);
 
     END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8IsolateImpl::GetEnableInterruptPropagation()
+{
+    return m_EnableInterruptPropagation;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SetEnableInterruptPropagation(bool value)
+{
+    m_EnableInterruptPropagation = value;
 }
 
 //-----------------------------------------------------------------------------
@@ -1780,8 +1795,12 @@ void V8IsolateImpl::ExitExecutionScope(ExecutionScope* pPreviousExecutionScope)
     // reset execution scope
     m_pExecutionScope = pPreviousExecutionScope;
 
-    // cancel termination to allow remaining script frames to execute
-    CancelTerminateExecution();
+    // is interrupt propagation enabled?
+    if (!m_EnableInterruptPropagation)
+    {
+        // no; cancel termination to allow remaining script frames to execute
+        CancelTerminateExecution();
+    }
 
     // is stack usage monitoring in progress?
     if (m_StackWatchLevel > 0)

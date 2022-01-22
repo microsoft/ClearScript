@@ -1,13 +1,13 @@
 @echo off
 setlocal
 
-set v8testedrev=9.6.180.14
+set v8testedrev=9.7.106.18
 set v8testedcommit=
 
 if not "%v8testedcommit%"=="" goto ProcessArgs
 set v8testedcommit=%v8testedrev%
 
-set jsontag=v3.9.1
+set jsontag=v3.10.4
 
 ::-----------------------------------------------------------------------------
 :: process arguments

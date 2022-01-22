@@ -30,7 +30,7 @@ ClearScript is a library that makes it easy to add scripting to your .NET applic
 * [![V8](https://img.shields.io/badge/-V8-blue)](#) Automatic conversion between .NET [`BigInteger`](https://docs.microsoft.com/en-us/dotnet/api/system.numerics.biginteger) and JavaScript [`BigInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt).
 * [![V8](https://img.shields.io/badge/-V8-blue)](#) Optional automatic conversion between .NET [`DateTime`](https://docs.microsoft.com/en-us/dotnet/api/system.datetime) and JavaScript [`Date`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date).
 * [![V8](https://img.shields.io/badge/-V8-blue)](#) Optional automatic conversion between .NET [tasks](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task) and JavaScript [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
-* Support for .NET 5.0, .NET Core 3.1, .NET Framework 4.5, and .NET Standard 2.1.
+* Support for .NET 5.0+, .NET Framework 4.5+, .NET Core 3.1, and .NET Standard 2.1.
 * Support for Windows (x86/x64/arm64), Linux (x64/arm/arm64), and macOS (x64/arm64).
 
 # Installation
@@ -66,4 +66,10 @@ Platform-specific V8 libraries.
 * [Tutorial](https://microsoft.github.io/ClearScript/Tutorial/FAQtorial.html)
 * [API reference](https://microsoft.github.io/ClearScript/Reference/index.html)
 * [Building, integrating, and deploying ClearScript](https://microsoft.github.io/ClearScript/Details/Build.html)
-* [Old project site on CodePlex](https://clearscript.codeplex.com/)
+
+# Acknowledgments
+We'd like to thank:
+* [The V8 team](https://code.google.com/p/v8/people/list).
+* [The Jekyll team](https://jekyllrb.com/team/).
+* [Kenneth Reitz](http://kennethreitz.org/) for generously providing the [`Httpbin`](http://httpbin.org/) service.
+* [Michael Rose](https://mademistakes.com/) for generously providing the [So Simple](https://mmistakes.github.io/so-simple-theme/) Jekyll theme.

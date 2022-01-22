@@ -56,6 +56,10 @@ public:
     virtual V8Value Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool evaluate) = 0;
 
     virtual void Interrupt() = 0;
+    virtual void CancelInterrupt() = 0;
+    virtual bool GetEnableIsolateInterruptPropagation() = 0;
+    virtual void SetEnableIsolateInterruptPropagation(bool value) = 0;
+
     virtual void GetIsolateHeapStatistics(v8::HeapStatistics& heapStatistics) = 0;
     virtual V8Isolate::Statistics GetIsolateStatistics() = 0;
     virtual Statistics GetStatistics() = 0;

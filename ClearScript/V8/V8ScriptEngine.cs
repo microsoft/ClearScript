@@ -38,7 +38,7 @@ namespace Microsoft.ClearScript.V8
 
         private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
-        private readonly object script;
+        private readonly V8ScriptItem script;
         private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
 
         private const int continuationInterval = 2000;
@@ -229,7 +229,7 @@ namespace Microsoft.ClearScript.V8
 
             engineFlags = flags;
             proxy = V8ContextProxy.Create(runtime.IsolateProxy, Name, flags, debugPort);
-            script = GetRootItem();
+            script = (V8ScriptItem)GetRootItem();
 
             Execute(initScriptInfo,
                 @"
@@ -407,13 +407,13 @@ namespace Microsoft.ClearScript.V8
             get
             {
                 VerifyNotDisposed();
-                return proxy.MaxRuntimeHeapSize;
+                return proxy.MaxIsolateHeapSize;
             }
 
             set
             {
                 VerifyNotDisposed();
-                proxy.MaxRuntimeHeapSize = value;
+                proxy.MaxIsolateHeapSize = value;
             }
         }
 
@@ -429,13 +429,13 @@ namespace Microsoft.ClearScript.V8
             get
             {
                 VerifyNotDisposed();
-                return proxy.RuntimeHeapSizeSampleInterval;
+                return proxy.IsolateHeapSizeSampleInterval;
             }
 
             set
             {
                 VerifyNotDisposed();
-                proxy.RuntimeHeapSizeSampleInterval = value;
+                proxy.IsolateHeapSizeSampleInterval = value;
             }
         }
 
@@ -458,13 +458,13 @@ namespace Microsoft.ClearScript.V8
             get
             {
                 VerifyNotDisposed();
-                return proxy.MaxRuntimeStackUsage;
+                return proxy.MaxIsolateStackUsage;
             }
 
             set
             {
                 VerifyNotDisposed();
-                proxy.MaxRuntimeStackUsage = value;
+                proxy.MaxIsolateStackUsage = value;
             }
         }
 
@@ -513,6 +513,31 @@ namespace Microsoft.ClearScript.V8
             {
                 suppressExtensionMethodEnumeration = value;
                 RebuildExtensionMethodSummary();
+            }
+        }
+
+        /// <summary>
+        /// Enables or disables interrupt propagation in the V8 runtime.
+        /// </summary>
+        /// <remarks>
+        /// By default, when nested script execution is interrupted via <see cref="Interrupt"/>, an
+        /// instance of <see cref="ScriptInterruptedException"/>, if not handled by the host, is
+        /// wrapped and delivered to the parent script frame as a normal exception that JavaScript
+        /// code can catch. Setting this property to <c>true</c> causes the V8 runtime to remain in
+        /// the interrupted state until its outermost script frame has been processed.
+        /// </remarks>
+        public bool EnableRuntimeInterruptPropagation
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.EnableIsolateInterruptPropagation;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                proxy.EnableIsolateInterruptPropagation = value;
             }
         }
 
@@ -853,13 +878,26 @@ namespace Microsoft.ClearScript.V8
         // ReSharper restore ParameterHidesMember
 
         /// <summary>
+        /// Cancels any pending request to interrupt script execution.
+        /// </summary>
+        /// <remarks>
+        /// This method can be called safely from any thread.
+        /// </remarks>
+        /// <seealso cref="Interrupt"/>
+        public void CancelInterrupt()
+        {
+            VerifyNotDisposed();
+            proxy.CancelInterrupt();
+        }
+
+        /// <summary>
         /// Returns memory usage information for the V8 runtime.
         /// </summary>
         /// <returns>A <see cref="V8RuntimeHeapInfo"/> object containing memory usage information for the V8 runtime.</returns>
         public V8RuntimeHeapInfo GetRuntimeHeapInfo()
         {
             VerifyNotDisposed();
-            return proxy.GetRuntimeHeapInfo();
+            return proxy.GetIsolateHeapInfo();
         }
 
         /// <summary>
@@ -947,7 +985,7 @@ namespace Microsoft.ClearScript.V8
             MiscHelpers.VerifyNonNullArgument(stream, nameof(stream));
             VerifyNotDisposed();
 
-            ScriptInvoke(() => proxy.WriteRuntimeHeapSnapshot(stream));
+            ScriptInvoke(() => proxy.WriteIsolateHeapSnapshot(stream));
         }
 
         #endregion
@@ -957,7 +995,7 @@ namespace Microsoft.ClearScript.V8
         internal V8Runtime.Statistics GetRuntimeStatistics()
         {
             VerifyNotDisposed();
-            return proxy.GetRuntimeStatistics();
+            return proxy.GetIsolateStatistics();
         }
 
         internal Statistics GetStatistics()
@@ -1163,8 +1201,7 @@ namespace Microsoft.ClearScript.V8
         private object CreatePromise(Action<object, object> executor)
         {
             VerifyNotDisposed();
-            var v8Script = (V8ScriptItem)script;
-            var v8Internal = (V8ScriptItem)v8Script.GetProperty("EngineInternal");
+            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
             return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createPromise", executor));
         }
 
@@ -1195,7 +1232,7 @@ namespace Microsoft.ClearScript.V8
         public override string FileNameExtension => "js";
 
         /// <summary>
-        /// Allows the host to access script resources directly.
+        /// Allows the host to access script resources dynamically.
         /// </summary>
         /// <remarks>
         /// The value of this property is an object that is bound to the script engine's root
@@ -1203,6 +1240,24 @@ namespace Microsoft.ClearScript.V8
         /// script objects and functions.
         /// </remarks>
         public override dynamic Script
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return script;
+            }
+        }
+
+        /// <summary>
+        /// Allows the host to access script resources.
+        /// </summary>
+        /// <remarks>
+        /// The value of this property is an object that is bound to the script engine's root
+        /// namespace. It allows you to access global script resources via the
+        /// <see cref="ScriptObject"/> class interface. Doing so is likely to perform better than
+        /// dynamic access via <see cref="Script"/>.
+        /// </remarks>
+        public override ScriptObject Global
         {
             get
             {
@@ -1259,6 +1314,7 @@ namespace Microsoft.ClearScript.V8
         /// <remarks>
         /// This method can be called safely from any thread.
         /// </remarks>
+        /// <seealso cref="CancelInterrupt"/>
         public override void Interrupt()
         {
             VerifyNotDisposed();

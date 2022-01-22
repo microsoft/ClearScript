@@ -144,6 +144,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        public override bool EnableInterruptPropagation
+        {
+            get => V8SplitProxyNative.Invoke(instance => instance.V8Isolate_GetEnableInterruptPropagation(Handle));
+            set => V8SplitProxyNative.Invoke(instance => instance.V8Isolate_SetEnableInterruptPropagation(Handle, value));
+        }
+
         public override V8RuntimeHeapInfo GetHeapInfo()
         {
             var totalHeapSize = 0UL;
