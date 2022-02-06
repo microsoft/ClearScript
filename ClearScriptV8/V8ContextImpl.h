@@ -88,7 +88,7 @@ public:
     void InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8ObjectHelpers::ArrayBufferOrViewDataCallback* pCallback, void* pvArg);
 
     void InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);
-    v8::MaybeLocal<v8::Promise> ImportModule(v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier);
+    v8::MaybeLocal<v8::Promise> ImportModule(v8::Local<v8::Data> hHostDefinedOptions, v8::Local<v8::Value> hResourceName, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> hImportAssertions);
     v8::MaybeLocal<v8::Module> ResolveModule(v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer);
 
 private:

@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
+
 namespace Microsoft.ClearScript.JavaScript
 {
     /// <summary>
@@ -50,5 +52,29 @@ namespace Microsoft.ClearScript.JavaScript
         /// <param name="offset">The offset within the view at which to store the first copied byte.</param>
         /// <returns>The number of bytes copied.</returns>
         ulong WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset);
+
+        /// <summary>
+        /// Invokes a delegate that returns no value, giving it direct access to the view's contents.
+        /// </summary>
+        /// <param name="action">The delegate to invoke.</param>
+        /// <remarks>
+        /// This method invokes the specified delegate, passing in the memory address of the view's
+        /// contents. This memory address is valid only while the delegate is executing. The
+        /// delegate must not access memory outside the view's range.
+        /// </remarks>
+        void InvokeWithDirectAccess(Action<IntPtr> action);
+
+        /// <summary>
+        /// Invokes a delegate that returns a value, giving it direct access to the view's contents.
+        /// </summary>
+        /// <typeparam name="T">The delegate's return type.</typeparam>
+        /// <param name="func">The delegate to invoke.</param>
+        /// <returns>The delegate's return value.</returns>
+        /// <remarks>
+        /// This method invokes the specified delegate, passing in the memory address of the view's
+        /// contents. This memory address is valid only while the delegate is executing. The
+        /// delegate must not access memory outside the view's range.
+        /// </remarks>
+        T InvokeWithDirectAccess<T>(Func<IntPtr, T> func);
     }
 }

@@ -18,15 +18,15 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("ClearScriptTest")]
 
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("7.2.1")]
-[assembly: AssemblyFileVersion("7.2.1")]
-[assembly: AssemblyInformationalVersion("7.2.1")]
+[assembly: AssemblyVersion("7.2.2")]
+[assembly: AssemblyFileVersion("7.2.2")]
+[assembly: AssemblyInformationalVersion("7.2.2")]
 
 namespace Microsoft.ClearScript.Properties
 {
     internal static class ClearScriptVersion
     {
-        public const string Triad = "7.2.1";
-        public const string Informational = "7.2.1";
+        public const string Triad = "7.2.2";
+        public const string Informational = "7.2.2";
     }
 }

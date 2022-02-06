@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set v8testedrev=9.7.106.18
+set v8testedrev=9.8.177.9
 set v8testedcommit=
 
 if not "%v8testedcommit%"=="" goto ProcessArgs

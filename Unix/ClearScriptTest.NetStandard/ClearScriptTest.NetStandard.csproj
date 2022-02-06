@@ -66,6 +66,8 @@
         <Compile Include="..\..\ClearScriptTest\ScriptAccessTest.cs" Link="ScriptAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\StaticMemberAccessTest.cs" Link="StaticMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\StaticTestClass.cs" Link="StaticTestClass.cs" />
+        <Compile Include="..\..\ClearScriptTest\TestEnumerable.cs" Link="TestEnumerable.cs" />
+        <Compile Include="..\..\ClearScriptTest\TestEnumerable.NetStandard.cs" Link="TestEnumerable.NetStandard.cs" />
         <Compile Include="..\..\ClearScriptTest\TestObject.cs" Link="TestObject.cs" />
         <Compile Include="..\..\ClearScriptTest\TypeRestrictionTest.cs" Link="TypeRestrictionTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ArrayBufferOrViewTest.cs" Link="V8ArrayBufferOrViewTest.cs" />

@@ -11,6 +11,11 @@ using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Util
 {
+    /// <exclude/>
+    public interface IDisposableEnumerator : IEnumerator, IDisposable
+    {
+    }
+
     // ReSharper disable once PartialTypeWithSinglePart
     internal static partial class EnumerableHelpers
     {
@@ -83,17 +88,44 @@ namespace Microsoft.ClearScript.Util
             return source.GetEnumerator();
         }
 
-        public static IEnumerator GetEnumerator(IEnumerable source)
+        public static IDisposableEnumerator GetEnumerator(IEnumerable source)
         {
-            return source.GetEnumerator();
+            return new DisposableEnumeratorOnEnumerator(source.GetEnumerator());
         }
     }
 
-    internal sealed class EnumeratorWrapper : IEnumerator
+    internal sealed class DisposableEnumeratorOnEnumerator : IDisposableEnumerator
+    {
+        private readonly IEnumerator enumerator;
+
+        public DisposableEnumeratorOnEnumerator(IEnumerator enumerator)
+        {
+            this.enumerator = enumerator;
+        }
+
+        public object Current => enumerator.Current;
+
+        public bool MoveNext()
+        {
+            return enumerator.MoveNext();
+        }
+
+        public void Reset()
+        {
+            enumerator.Reset();
+        }
+
+        public void Dispose()
+        {
+            (enumerator as IDisposable)?.Dispose();
+        }
+    }
+
+    internal sealed class DisposableEnumeratorOnEnumVariant : IDisposableEnumerator
     {
         private readonly IEnumVARIANT enumVariant;
 
-        public EnumeratorWrapper(IEnumVARIANT enumVariant)
+        public DisposableEnumeratorOnEnumVariant(IEnumVARIANT enumVariant)
         {
             this.enumVariant = enumVariant;
         }
@@ -116,5 +148,9 @@ namespace Microsoft.ClearScript.Util
         }
 
         public object Current { get; private set; }
+
+        public void Dispose()
+        {
+        }
     }
 }

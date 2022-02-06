@@ -159,5 +159,8 @@
     <ClInclude Include="..\V8SplitProxyNative.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\V8GlobalFlags.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

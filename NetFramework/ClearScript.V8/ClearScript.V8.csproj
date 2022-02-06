@@ -65,9 +65,10 @@
         <Compile Include="..\..\ClearScript\V8\V8CpuProfileFlags.cs" Link="V8\V8CpuProfileFlags.cs" />
         <Compile Include="..\..\ClearScript\V8\V8DebugAgent.cs" Link="V8\V8DebugAgent.cs" />
         <Compile Include="..\..\ClearScript\V8\V8DebugClient.cs" Link="V8\V8DebugClient.cs" />
+        <Compile Include="..\..\ClearScript\V8\V8GlobalFlags.cs" Link="V8\V8GlobalFlags.cs" />
         <Compile Include="..\..\ClearScript\V8\V8IsolateProxy.cs" Link="V8\V8IsolateProxy.cs" />
         <Compile Include="..\..\ClearScript\V8\V8Proxy.cs" Link="V8\V8Proxy.cs" />
-        <Compile Include="..\..\ClearScript\V8\V8Proxy.NetFramework.cs" Link="V8\V8Proxy.NetFramework.cs" />
+        <Compile Include="..\..\ClearScript\V8\V8Proxy.NetStandard.cs" Link="V8\V8Proxy.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ProxyHelpers.cs" Link="V8\V8ProxyHelpers.cs" />
         <Compile Include="..\..\ClearScript\V8\V8Runtime.cs" Link="V8\V8Runtime.cs" />
         <Compile Include="..\..\ClearScript\V8\V8RuntimeConstraints.cs" Link="V8\V8RuntimeConstraints.cs" />

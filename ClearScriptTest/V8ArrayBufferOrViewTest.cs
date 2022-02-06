@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
@@ -68,6 +69,20 @@ namespace Microsoft.ClearScript.Test
             {
                 Assert.IsTrue(testValues.SequenceEqual(((IArrayBuffer)engine.Script.typedArray.buffer).GetBytes()));
             }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_ArrayBuffer_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Uint8Array(new ArrayBuffer(1024));
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((byte)index)).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((IArrayBuffer)engine.Script.typedArray.buffer).GetBytesManually()));
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -151,6 +166,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_DataView_GetBytesManually()
+        {
+            engine.Execute(@"
+                dataView = new DataView(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    dataView.setUint8(i, i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((byte)index)).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((IDataView)engine.Script.dataView).GetBytesManually()));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_DataView_ReadBytes()
         {
             engine.Execute(@"
@@ -229,6 +258,20 @@ namespace Microsoft.ClearScript.Test
             {
                 Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<byte>)engine.Script.typedArray).GetBytes()));
             }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_Uint8Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Uint8Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((byte)index)).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<byte>)engine.Script.typedArray).GetBytesManually()));
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -384,6 +427,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_Uint8ClampedArray_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Uint8ClampedArray(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (byte)(Math.Min(index, 255))).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<byte>)engine.Script.typedArray).GetBytesManually()));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Uint8ClampedArray_ReadBytes()
         {
             engine.Execute(@"
@@ -533,6 +590,20 @@ namespace Microsoft.ClearScript.Test
             {
                 Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<sbyte>)engine.Script.typedArray).GetBytes()));
             }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_Int8Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Int8Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i - 512;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((byte)(index - 512))).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<sbyte>)engine.Script.typedArray).GetBytesManually()));
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -703,6 +774,26 @@ namespace Microsoft.ClearScript.Test
                 {
                     Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<char>)engine.Script.typedArray).GetBytes()));
                 }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_Uint16Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Uint16Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            {
+                var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((ushort)index)).ToArray();
+                Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<ushort>)engine.Script.typedArray).GetBytesManually()));
+            }
+            {
+                var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((char)index)).ToArray();
+                Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<char>)engine.Script.typedArray).GetBytesManually()));
             }
         }
 
@@ -957,6 +1048,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_Int16Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Int16Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i - 512;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((short)(index - 512))).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<short>)engine.Script.typedArray).GetBytesManually()));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Int16Array_ReadBytes()
         {
             engine.Execute(@"
@@ -1106,6 +1211,20 @@ namespace Microsoft.ClearScript.Test
             {
                 Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<uint>)engine.Script.typedArray).GetBytes()));
             }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_Uint32Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Uint32Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((uint)index)).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<uint>)engine.Script.typedArray).GetBytesManually()));
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -1261,6 +1380,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_Int32Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Int32Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(BitConverter.GetBytes).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<int>)engine.Script.typedArray).GetBytesManually()));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Int32Array_ReadBytes()
         {
             engine.Execute(@"
@@ -1410,6 +1543,20 @@ namespace Microsoft.ClearScript.Test
             {
                 Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<ulong>)engine.Script.typedArray).GetBytes()));
             }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigUint64Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((ulong)index)).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<ulong>)engine.Script.typedArray).GetBytesManually()));
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -1565,6 +1712,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_BigInt64Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((long)index)).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<long>)engine.Script.typedArray).GetBytesManually()));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_BigInt64Array_ReadBytes()
         {
             engine.Execute(@"
@@ -1714,6 +1875,20 @@ namespace Microsoft.ClearScript.Test
             {
                 Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<float>)engine.Script.typedArray).GetBytes()));
             }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_Float32Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Float32Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i * Math.PI;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes(Convert.ToSingle(index * Math.PI))).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<float>)engine.Script.typedArray).GetBytesManually()));
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -1869,6 +2044,20 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public void V8ArrayBufferOrView_Float64Array_GetBytesManually()
+        {
+            engine.Execute(@"
+                typedArray = new Float64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i * Math.PI;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes(index * Math.PI)).ToArray();
+            Assert.IsTrue(testValues.SequenceEqual(((ITypedArray<double>)engine.Script.typedArray).GetBytesManually()));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Float64Array_ReadBytes()
         {
             engine.Execute(@"
@@ -1995,5 +2184,25 @@ namespace Microsoft.ClearScript.Test
         // ReSharper restore InconsistentNaming
 
         #endregion
+    }
+
+    internal static class ArrayBufferOrViewExtensions
+    {
+        public static byte[] GetBytesManually(this IArrayBuffer arrayBuffer)
+        {
+            return GetBytesManually(arrayBuffer.InvokeWithDirectAccess, Convert.ToInt32(arrayBuffer.Size));
+        }
+
+        public static byte[] GetBytesManually(this IArrayBufferView arrayBufferView)
+        {
+            return GetBytesManually(arrayBufferView.InvokeWithDirectAccess, Convert.ToInt32(arrayBufferView.Size));
+        }
+
+        private static byte[] GetBytesManually(Action<Action<IntPtr>> action, int size)
+        {
+            var result = new byte[size];
+            action(pData => Marshal.Copy(pData, result, 0, size));
+            return result;
+        }
     }
 }

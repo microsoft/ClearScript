@@ -130,7 +130,7 @@
     <Compile Include="..\..\ClearScript\Util\ArrayHelpers.cs" Link="Util\ArrayHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.cs" Link="Util\AssemblyHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.NetFramework.cs" Link="Util\AssemblyHelpers.NetFramework.cs" />
-    <Compile Include="..\..\ClearScript\Util\AssemblyTable.NetCore.cs" Link="Util\AssemblyTable.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\AssemblyTable.NetStandard.cs" Link="Util\AssemblyTable.NetStandard.cs" />
     <Compile Include="..\..\ClearScript\Util\BitwiseHelpers.cs" Link="Util\BitwiseHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\Collateral.cs" Link="Util\Collateral.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\ActivationHelpers.cs" Link="Util\COM\ActivationHelpers.cs" />
@@ -141,13 +141,14 @@
     <Compile Include="..\..\ClearScript\Util\COM\HResult.cs" Link="Util\COM\HResult.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\StructHelpers.cs" Link="Util\COM\StructHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\TypeInfoHelpers.cs" Link="Util\COM\TypeInfoHelpers.cs" />
-    <Compile Include="..\..\ClearScript\Util\COM\TypeInfoHelpers.NetCore.cs" Link="Util\COM\TypeInfoHelpers.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\COM\TypeInfoHelpers.NetStandard.cs" Link="Util\COM\TypeInfoHelpers.NetStandard.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\TypeLibHelpers.cs" Link="Util\COM\TypeLibHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\COM\UnknownHelpers.cs" Link="Util\COM\UnknownHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\ConcurrentWeakSet.cs" Link="Util\ConcurrentWeakSet.cs" />
     <Compile Include="..\..\ClearScript\Util\CoTaskMemBlock.cs" Link="Util\CoTaskMemBlock.cs" />
     <Compile Include="..\..\ClearScript\Util\DynamicHelpers.cs" Link="Util\DynamicHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.cs" Link="Util\EnumerableHelpers.cs" />
+    <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.NetFramework.cs" Link="Util\EnumerableHelpers.NetFramework.cs" />
     <Compile Include="..\..\ClearScript\Util\Holder.cs" Link="Util\Holder.cs" />
     <Compile Include="..\..\ClearScript\Util\IDynamic.cs" Link="Util\IDynamic.cs" />
     <Compile Include="..\..\ClearScript\Util\IExpando.cs" Link="Util\IExpando.cs" />
@@ -172,7 +173,7 @@
     <Compile Include="..\..\ClearScript\Util\SpecialParamNames.cs" Link="Util\SpecialParamNames.cs" />
     <Compile Include="..\..\ClearScript\Util\Test\AccessContextTestObject.cs" Link="Util\Test\AccessContextTestObject.cs" />
     <Compile Include="..\..\ClearScript\Util\TypeHelpers.cs" Link="Util\TypeHelpers.cs" />
-    <Compile Include="..\..\ClearScript\Util\TypeHelpers.NetCore.cs" Link="Util\TypeHelpers.NetCore.cs" />
+    <Compile Include="..\..\ClearScript\Util\TypeHelpers.NetStandard.cs" Link="Util\TypeHelpers.NetStandard.cs" />
     <Compile Include="..\..\ClearScript\Util\TypeTags.cs" Link="Util\TypeTags.cs" />
     <Compile Include="..\..\ClearScript\Util\UniqueNameManager.cs" Link="Util\UniqueNameManager.cs" />
     <Compile Include="..\..\ClearScript\Util\UnmanagedMemoryHelpers.cs" Link="Util\UnmanagedMemoryHelpers.cs" />

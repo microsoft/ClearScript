@@ -335,14 +335,24 @@ namespace Microsoft.ClearScript.V8
                             },
 
                             toIterator: function* (enumerator) {
-                                while (enumerator.MoveNext()) {
-                                    yield enumerator.Current;
+                                try {
+                                    while (enumerator.MoveNext()) {
+                                        yield enumerator.Current;
+                                    }
+                                }
+                                finally {
+                                    enumerator.Dispose();
                                 }
                             },
 
                             toAsyncIterator: async function* (asyncEnumerator) {
-                                while (await asyncEnumerator.MoveNextPromise()) {
-                                    yield asyncEnumerator.Current;
+                                try {
+                                    while (await asyncEnumerator.MoveNextPromise()) {
+                                        yield asyncEnumerator.Current;
+                                    }
+                                }
+                                finally {
+                                    await asyncEnumerator.DisposePromise();
                                 }
                             }
 

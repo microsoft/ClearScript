@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System;
-using System.Collections;
 using System.Reflection;
 using System.Runtime.InteropServices.ComTypes;
 using Microsoft.ClearScript.Util;
@@ -33,8 +32,8 @@ namespace Microsoft.ClearScript
             {
                 if (target is IEnumVARIANT enumVariant)
                 {
-                    target = new EnumeratorWrapper(enumVariant);
-                    type = typeof(IEnumerator);
+                    target = new DisposableEnumeratorOnEnumVariant(enumVariant);
+                    type = typeof(IDisposableEnumerator);
                 }
             }
 

@@ -48,9 +48,33 @@ void V8Platform::EnsureInstalled()
         v8::V8::InitializePlatform(&ms_Instance);
         ASSERT_EVAL(v8::V8::Initialize());
 
-        if (!V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(StdBool, GetTopLevelAwait))
+        auto globalFlags = V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(V8GlobalFlags, GetGlobalFlags);
+        std::vector<std::string> flagStrings;
+
+    #ifdef CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
+
+        if (!HasFlag(globalFlags, V8GlobalFlags::EnableTopLevelAwait))
         {
-            v8::V8::SetFlagsFromString("--no_harmony_top_level_await");
+            flagStrings.push_back("--no_harmony_top_level_await");
+        }
+
+    #endif // CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
+
+        if (HasFlag(globalFlags, V8GlobalFlags::DisableJITCompilation))
+        {
+            flagStrings.push_back("--jitless");
+        }
+
+        if (!flagStrings.empty())
+        {
+            std::string flagsString(flagStrings[0]);
+            for (size_t index = 1; index < flagStrings.size(); ++index)
+            {
+                flagsString += " ";
+                flagsString += flagStrings[index];
+            }
+
+            v8::V8::SetFlagsFromString(flagsString.c_str(), flagsString.length());
         }
     });
 }
@@ -1324,9 +1348,9 @@ void V8IsolateImpl::ImportMetaInitializeCallback(v8::Local<v8::Context> hContext
 
 //-----------------------------------------------------------------------------
 
-v8::MaybeLocal<v8::Promise> V8IsolateImpl::ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> /*importAssertions*/)
+v8::MaybeLocal<v8::Promise> V8IsolateImpl::ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::Data> hHostDefinedOptions, v8::Local<v8::Value> hResourceName, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> hImportAssertions)
 {
-    return GetInstanceFromIsolate(hContext->GetIsolate())->ImportModule(hContext, hReferrer, hSpecifier);
+    return GetInstanceFromIsolate(hContext->GetIsolate())->ImportModule(hContext, hHostDefinedOptions, hResourceName, hSpecifier, hImportAssertions);
 }
 
 //-----------------------------------------------------------------------------
@@ -1351,14 +1375,14 @@ void V8IsolateImpl::InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Lo
 
 //-----------------------------------------------------------------------------
 
-v8::MaybeLocal<v8::Promise> V8IsolateImpl::ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier)
+v8::MaybeLocal<v8::Promise> V8IsolateImpl::ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::Data> hHostDefinedOptions, v8::Local<v8::Value> hResourceName, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> hImportAssertions)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
     auto pContextImpl = FindContext(hContext);
     if (pContextImpl)
     {
-        return pContextImpl->ImportModule(hReferrer, hSpecifier);
+        return pContextImpl->ImportModule(hHostDefinedOptions, hResourceName, hSpecifier, hImportAssertions);
     }
 
     return v8::MaybeLocal<v8::Promise>();
@@ -1487,7 +1511,7 @@ V8IsolateImpl::~V8IsolateImpl()
     }
 
     Dispose(m_hHostObjectHolderKey);
-    m_upIsolate->SetHostImportModuleDynamicallyCallback(static_cast<v8::HostImportModuleDynamicallyWithImportAssertionsCallback>(nullptr));
+    m_upIsolate->SetHostImportModuleDynamicallyCallback(static_cast<v8::HostImportModuleDynamicallyCallback>(nullptr));
     m_upIsolate->SetHostInitializeImportMetaObjectCallback(nullptr);
     m_upIsolate->SetPromiseHook(nullptr);
     m_upIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);

@@ -2,7 +2,9 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
@@ -21,15 +23,23 @@ namespace Microsoft.ClearScript
 
         #region member invocation
 
-        // ReSharper disable once UnusedParameter.Local
-        private static object CreateAsyncEnumerator<T>(IEnumerable<T> enumerable)
+        private object CreateAsyncEnumerator<T>(IEnumerable<T> enumerable)
         {
-            throw new PlatformNotSupportedException("Async enumerators are not supported on this platform");
+            return HostObject.Wrap(enumerable.GetEnumerator().ToAsyncEnumerator(Engine), typeof(IAsyncEnumeratorPromise<T>));
         }
 
         private object CreateAsyncEnumerator()
         {
-            throw new PlatformNotSupportedException("Async enumerators are not supported on this platform");
+            if (BindSpecialTarget(out IEnumerable _))
+            {
+                var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
+                if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                {
+                    return enumerator;
+                }
+            }
+
+            throw new NotSupportedException("The object is not async-enumerable");
         }
 
         #endregion

@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime;
 using System.Threading;
@@ -77,7 +76,7 @@ namespace Microsoft.ClearScript.Test
 
             var cancelSource = new CancellationTokenSource();
             cancelSource.Cancel();
-            engine.Script.promise = new ValueTask(Task.Factory.StartNew(() => { }, cancelSource.Token));
+            engine.Script.promise = new ValueTask(Task.Factory.StartNew(() => {}, cancelSource.Token));
             engine.Execute("promise.then(value => result = value, value => error = value);");
             Assert.IsInstanceOfType(engine.Script.error.hostException.GetBaseException(), typeof(TaskCanceledException));
 
@@ -89,36 +88,16 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AsyncIteration_PropertyBag()
+        public void V8ScriptEngine_NativeEnumerator_Disposal_AsyncSource()
         {
+            var source = TestEnumerable.CreateAsync("foo", "bar", "baz");
+
             engine.Script.done = new ManualResetEventSlim();
-            engine.Script.enumerable = new PropertyBag { ["foo"] = 123, ["bar"] = "blah" };
+            engine.AddRestrictedHostObject("source", source);
             engine.Execute(@"
                 result = '';
                 (async function () {
-                    for await (var item of enumerable) {
-                        result += item.Value;
-                    }
-                    done.Set();
-                })();
-            ");
-            engine.Script.done.Wait();
-
-            var result = (string)engine.Script.result;
-            Assert.AreEqual(7, result.Length);
-            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
-            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AsyncIteration_List()
-        {
-            engine.Script.done = new ManualResetEventSlim();
-            engine.Script.enumerable = new List<object> { 123, "blah" };
-            engine.Execute(@"
-                result = '';
-                (async function () {
-                    for await (var item of enumerable) {
+                    for await (let item of source) {
                         result += item;
                     }
                     done.Set();
@@ -126,54 +105,8 @@ namespace Microsoft.ClearScript.Test
             ");
             engine.Script.done.Wait();
 
-            var result = (string)engine.Script.result;
-            Assert.AreEqual(7, result.Length);
-            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
-            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AsyncIteration_ArrayList()
-        {
-            engine.Script.done = new ManualResetEventSlim();
-            engine.Script.enumerable = new ArrayList { 123, "blah" };
-            engine.Execute(@"
-                result = '';
-                (async function () {
-                    for await (var item of enumerable) {
-                        result += item;
-                    }
-                    done.Set();
-                })();
-            ");
-            engine.Script.done.Wait();
-
-            var result = (string)engine.Script.result;
-            Assert.AreEqual(7, result.Length);
-            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
-            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
-        }
-
-        [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AsyncIteration_Array()
-        {
-            engine.Script.done = new ManualResetEventSlim();
-            engine.Script.enumerable = new object[] { 123, "blah" };
-            engine.Execute(@"
-                result = '';
-                (async function () {
-                    for await (var item of enumerable) {
-                        result += item;
-                    }
-                    done.Set();
-                })();
-            ");
-            engine.Script.done.Wait();
-
-            var result = (string)engine.Script.result;
-            Assert.AreEqual(7, result.Length);
-            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
-            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            Assert.AreEqual("foobarbaz", engine.Script.result);
+            Assert.AreEqual(1, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]

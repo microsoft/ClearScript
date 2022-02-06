@@ -66,7 +66,7 @@
     V8_SPLIT_PROXY_MANAGED_METHOD(int32_t, CreateModuleContext, void* pvDocumentInfo, std::vector<StdString>& names, std::vector<V8Value>& values) \
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, WriteBytesToStream, void* pvStream, const uint8_t* pBytes, int32_t count) \
-    V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, GetTopLevelAwait)
+    V8_SPLIT_PROXY_MANAGED_METHOD(V8GlobalFlags, GetGlobalFlags)
 
 //-----------------------------------------------------------------------------
 // V8SplitProxyManaged

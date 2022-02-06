@@ -495,6 +495,27 @@ V8Value V8ContextImpl::Execute(const V8DocumentInfo& documentInfo, const StdStri
             if (hModule->GetStatus() == v8::Module::kInstantiated)
             {
                 hResult = VERIFY_MAYBE(hModule->Evaluate(m_hContext));
+                if (!hModule->IsGraphAsync() && hResult->IsPromise())
+                {
+                    auto hPromise = hResult.As<v8::Promise>();
+                    if (hPromise->State() == v8::Promise::PromiseState::kFulfilled)
+                    {
+                        hResult = hPromise->Result();
+                    }
+                    else if (hPromise->State() == v8::Promise::PromiseState::kRejected)
+                    {
+                        auto hException = hPromise->Result();
+
+                        if (hException->IsObject())
+                        {
+                            auto hExceptionObject = hException.As<v8::Object>();
+                            auto hHostException = FROM_MAYBE(hExceptionObject->Get(m_hContext, m_hHostExceptionKey));
+                            throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hExceptionObject), CreateStdString(FROM_MAYBE(hExceptionObject->Get(m_hContext, m_hStackKey))), EXECUTION_STARTED, ExportValue(hException), ExportValue(hHostException));
+                        }
+
+                        throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hException), StdString(), EXECUTION_STARTED, ExportValue(hException), V8Value(V8Value::Undefined));
+                    }
+                }
             }
             else
             {
@@ -796,6 +817,27 @@ V8Value V8ContextImpl::Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool e
             if (hModule->GetStatus() == v8::Module::kInstantiated)
             {
                 hResult = VERIFY_MAYBE(hModule->Evaluate(m_hContext));
+                if (!hModule->IsGraphAsync() && hResult->IsPromise())
+                {
+                    auto hPromise = hResult.As<v8::Promise>();
+                    if (hPromise->State() == v8::Promise::PromiseState::kFulfilled)
+                    {
+                        hResult = hPromise->Result();
+                    }
+                    else if (hPromise->State() == v8::Promise::PromiseState::kRejected)
+                    {
+                        auto hException = hPromise->Result();
+
+                        if (hException->IsObject())
+                        {
+                            auto hExceptionObject = hException.As<v8::Object>();
+                            auto hHostException = FROM_MAYBE(hExceptionObject->Get(m_hContext, m_hHostExceptionKey));
+                            throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hExceptionObject), CreateStdString(FROM_MAYBE(hExceptionObject->Get(m_hContext, m_hStackKey))), EXECUTION_STARTED, ExportValue(hException), ExportValue(hHostException));
+                        }
+
+                        throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hException), StdString(), EXECUTION_STARTED, ExportValue(hException), V8Value(V8Value::Undefined));
+                    }
+                }
             }
             else
             {
@@ -814,7 +856,6 @@ V8Value V8ContextImpl::Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool e
         }
 
         return ExportValue(hResult);
-
 
     FROM_MAYBE_CATCH
 
@@ -1108,7 +1149,7 @@ V8Value V8ContextImpl::InvokeV8Object(void* pvObject, bool asConstructor, const 
             FROM_MAYBE_TRY
 
                 auto hError = v8::Exception::TypeError(m_hObjectNotInvocable).As<v8::Object>();
-                throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hError), CreateStdString(FROM_MAYBE(hError->Get(m_hContext, m_hStackKey))), EXECUTION_STARTED, V8Value(V8Value::Null), V8Value(V8Value::Undefined));
+                throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hError), CreateStdString(FROM_MAYBE(hError->Get(m_hContext, m_hStackKey))), EXECUTION_STARTED, ExportValue(hError), V8Value(V8Value::Undefined));
 
             FROM_MAYBE_CATCH
 
@@ -1147,7 +1188,7 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const StdString& nam
             FROM_MAYBE_TRY
 
                 auto hError = v8::Exception::TypeError(m_hMethodOrPropertyNotFound).As<v8::Object>();
-                throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hError), CreateStdString(FROM_MAYBE(hError->Get(m_hContext, m_hStackKey))), EXECUTION_STARTED, V8Value(V8Value::Null), V8Value(V8Value::Undefined));
+                throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hError), CreateStdString(FROM_MAYBE(hError->Get(m_hContext, m_hStackKey))), EXECUTION_STARTED, ExportValue(hError), V8Value(V8Value::Undefined));
 
             FROM_MAYBE_CATCH
 
@@ -1161,7 +1202,7 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const StdString& nam
             FROM_MAYBE_TRY
 
                 auto hError = v8::Exception::TypeError(m_hPropertyValueNotInvocable).As<v8::Object>();
-                throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hError), CreateStdString(FROM_MAYBE(hError->Get(m_hContext, m_hStackKey))), EXECUTION_STARTED, V8Value(V8Value::Null), V8Value(V8Value::Undefined));
+                throw V8Exception(V8Exception::Type::General, m_Name, CreateStdString(hError), CreateStdString(FROM_MAYBE(hError->Get(m_hContext, m_hStackKey))), EXECUTION_STARTED, ExportValue(hError), V8Value(V8Value::Undefined));
 
             FROM_MAYBE_CATCH
 
@@ -1194,7 +1235,7 @@ void V8ContextImpl::GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& ar
 
         if (hObject->IsArrayBuffer())
         {
-            auto hArrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(hObject);
+            auto hArrayBuffer = hObject.As<v8::ArrayBuffer>();
             arrayBuffer = ExportValue(hObject);
             offset = 0;
             size = hArrayBuffer->ByteLength();
@@ -1204,7 +1245,7 @@ void V8ContextImpl::GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& ar
 
         if (hObject->IsSharedArrayBuffer())
         {
-            auto hSharedArrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(hObject);
+            auto hSharedArrayBuffer = hObject.As<v8::SharedArrayBuffer>();
             arrayBuffer = ExportValue(hObject);
             offset = 0;
             size = hSharedArrayBuffer->ByteLength();
@@ -1214,7 +1255,7 @@ void V8ContextImpl::GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& ar
 
         if (hObject->IsDataView())
         {
-            auto hDataView = v8::Local<v8::DataView>::Cast(hObject);
+            auto hDataView = hObject.As<v8::DataView>();
             arrayBuffer = ExportValue(hDataView->Buffer());
             offset = hDataView->ByteOffset();
             size = hDataView->ByteLength();
@@ -1224,7 +1265,7 @@ void V8ContextImpl::GetV8ObjectArrayBufferOrViewInfo(void* pvObject, V8Value& ar
 
         if (hObject->IsTypedArray())
         {
-            auto hTypedArray = v8::Local<v8::TypedArray>::Cast(hObject);
+            auto hTypedArray = hObject.As<v8::TypedArray>();
             arrayBuffer = ExportValue(hTypedArray->Buffer());
             offset = hTypedArray->ByteOffset();
             size = hTypedArray->ByteLength();
@@ -1247,7 +1288,7 @@ void V8ContextImpl::InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8Ob
 
         if (hObject->IsArrayBuffer())
         {
-            auto hArrayBuffer = v8::Local<v8::ArrayBuffer>::Cast(hObject);
+            auto hArrayBuffer = hObject.As<v8::ArrayBuffer>();
             auto spBackingStore = hArrayBuffer->GetBackingStore();
             (*pCallback)(spBackingStore->Data(), pvArg);
             return;
@@ -1255,7 +1296,7 @@ void V8ContextImpl::InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8Ob
 
         if (hObject->IsSharedArrayBuffer())
         {
-            auto hSharedArrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(hObject);
+            auto hSharedArrayBuffer = hObject.As<v8::SharedArrayBuffer>();
             auto spBackingStore = hSharedArrayBuffer->GetBackingStore();
             (*pCallback)(spBackingStore->Data(), pvArg);
             return;
@@ -1263,7 +1304,7 @@ void V8ContextImpl::InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8Ob
 
         if (hObject->IsDataView())
         {
-            auto hDataView = v8::Local<v8::DataView>::Cast(hObject);
+            auto hDataView = hObject.As<v8::DataView>();
             auto spBackingStore = hDataView->Buffer()->GetBackingStore();
             (*pCallback)(static_cast<uint8_t*>(spBackingStore->Data()) + hDataView->ByteOffset(), pvArg);
             return;
@@ -1271,7 +1312,7 @@ void V8ContextImpl::InvokeWithV8ObjectArrayBufferOrViewData(void* pvObject, V8Ob
 
         if (hObject->IsTypedArray())
         {
-            auto hTypedArray = v8::Local<v8::TypedArray>::Cast(hObject);
+            auto hTypedArray = hObject.As<v8::TypedArray>();
             auto spBackingStore = hTypedArray->Buffer()->GetBackingStore();
             (*pCallback)(static_cast<uint8_t*>(spBackingStore->Data()) + hTypedArray->ByteOffset(), pvArg);
             return;
@@ -1315,21 +1356,24 @@ void V8ContextImpl::InitializeImportMeta(v8::Local<v8::Context> /*hContext*/, v8
 
 //-----------------------------------------------------------------------------
 
-v8::MaybeLocal<v8::Promise> V8ContextImpl::ImportModule(v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier)
+v8::MaybeLocal<v8::Promise> V8ContextImpl::ImportModule(v8::Local<v8::Data> hHostDefinedOptions, v8::Local<v8::Value> /*hResourceName*/, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> /*hImportAssertions*/)
 {
     V8DocumentInfo sourceDocumentInfo;
     const V8DocumentInfo* pSourceDocumentInfo = nullptr;
 
-    auto hOptions = hReferrer->GetHostDefinedOptions();
-    if (hOptions->Length() > 0)
+    if (!hHostDefinedOptions.IsEmpty())
     {
-        auto hUniqueId = ::ValueAsBigInt(GetPrimitiveArrayItem(hOptions, 0));
-        if (!hUniqueId.IsEmpty())
+        auto hOptions = hHostDefinedOptions.As<v8::PrimitiveArray>();
+        if (hOptions->Length() > 0)
         {
-            auto uniqueId = hUniqueId->Uint64Value();
-            if (TryGetCachedScriptInfo(uniqueId, sourceDocumentInfo) || TryGetCachedModuleInfo(uniqueId, sourceDocumentInfo))
+            auto hUniqueId = ::ValueAsBigInt(GetPrimitiveArrayItem(hOptions, 0));
+            if (!hUniqueId.IsEmpty())
             {
-                pSourceDocumentInfo = &sourceDocumentInfo;
+                auto uniqueId = hUniqueId->Uint64Value();
+                if (TryGetCachedScriptInfo(uniqueId, sourceDocumentInfo) || TryGetCachedModuleInfo(uniqueId, sourceDocumentInfo))
+                {
+                    pSourceDocumentInfo = &sourceDocumentInfo;
+                }
             }
         }
     }
@@ -2981,13 +3025,13 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
                 subtype = V8Value::Subtype::ArrayBuffer;
                 flags = CombineFlags(flags, V8Value::Flags::Shared);
 
-                auto hSharedArrayBuffer = v8::Local<v8::SharedArrayBuffer>::Cast(hObject);
+                auto hSharedArrayBuffer = hObject.As<v8::SharedArrayBuffer>();
                 auto size = hSharedArrayBuffer->ByteLength();
                 spSharedObjectInfo = new V8SharedObjectInfo(hSharedArrayBuffer->GetBackingStore(), 0, size, size);
             }
             else if (hObject->IsArrayBufferView())
             {
-                auto hArrayBufferView = v8::Local<v8::ArrayBufferView>::Cast(hObject);
+                auto hArrayBufferView = hObject.As<v8::ArrayBufferView>();
                 auto offset = hArrayBufferView->ByteOffset();
                 auto size = hArrayBufferView->ByteLength();
 
@@ -3054,7 +3098,7 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
 
                     if (HasFlag(flags, V8Value::Flags::Shared) && (subtype != V8Value::Subtype::None))
                     {
-                        auto hTypedArray = v8::Local<v8::TypedArray>::Cast(hObject);
+                        auto hTypedArray = hObject.As<v8::TypedArray>();
                         spSharedObjectInfo = new V8SharedObjectInfo(std::move(spBackingStore), offset, size, hTypedArray->Length());
                     }
                 }
@@ -3089,6 +3133,12 @@ v8::ScriptOrigin V8ContextImpl::CreateScriptOrigin(const V8DocumentInfo& documen
 {
     FROM_MAYBE_TRY
 
+        auto uniqueId = documentInfo.GetUniqueId();
+        _ASSERTE(uniqueId > 0);
+
+        auto hHostDefinedOptions = CreatePrimitiveArray(1);
+        SetPrimitiveArrayItem(hHostDefinedOptions, 0, CreateBigInt(uniqueId));
+
         return CreateScriptOrigin(
             FROM_MAYBE(CreateString(documentInfo.GetResourceName())),
             0,
@@ -3098,7 +3148,8 @@ v8::ScriptOrigin V8ContextImpl::CreateScriptOrigin(const V8DocumentInfo& documen
             (documentInfo.GetSourceMapUrl().GetLength() > 0) ? FROM_MAYBE(CreateString(documentInfo.GetSourceMapUrl())) : v8::Local<v8::String>(),
             false,
             false,
-            documentInfo.IsModule()
+            documentInfo.IsModule(),
+            hHostDefinedOptions
         );
 
     FROM_MAYBE_CATCH

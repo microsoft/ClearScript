@@ -299,8 +299,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        [return: MarshalAs(UnmanagedType.I1)]
-        private delegate bool RawGetTopLevelAwait();
+        private delegate V8GlobalFlags RawGetGlobalFlags();
 
         // ReSharper restore UnusedType.Local
 
@@ -398,7 +397,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 GetMethodPtr<RawLoadModule>(LoadModule),
                 GetMethodPtr<RawCreateModuleContext>(CreateModuleContext),
                 GetMethodPtr<RawWriteBytesToStream>(WriteBytesToStream),
-                GetMethodPtr<RawGetTopLevelAwait>(GetTopLevelAwait)
+                GetMethodPtr<RawGetGlobalFlags>(GetGlobalFlags)
             };
 
             var pMethodTable = Marshal.AllocCoTaskMem(IntPtr.Size * methodPtrs.Length);
@@ -821,9 +820,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        private static bool GetTopLevelAwait()
+        private static V8GlobalFlags GetGlobalFlags()
         {
-            return V8Settings.EnableTopLevelAwait;
+            return V8Settings.GlobalFlags;
         }
 
         #endregion
