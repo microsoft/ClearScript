@@ -43,6 +43,7 @@ namespace Microsoft.ClearScript.Test
             var cancelSource = new CancellationTokenSource();
             cancelSource.Cancel();
             engine.Script.promise = new ValueTask<string>(Task<string>.Factory.StartNew(() => "baz", cancelSource.Token));
+            Thread.Sleep(250);
             engine.Execute("promise.then(value => result = value, value => error = value);");
             Assert.IsInstanceOfType(engine.Script.error.hostException.GetBaseException(), typeof(TaskCanceledException));
 
@@ -77,6 +78,7 @@ namespace Microsoft.ClearScript.Test
             var cancelSource = new CancellationTokenSource();
             cancelSource.Cancel();
             engine.Script.promise = new ValueTask(Task.Factory.StartNew(() => {}, cancelSource.Token));
+            Thread.Sleep(250);
             engine.Execute("promise.then(value => result = value, value => error = value);");
             Assert.IsInstanceOfType(engine.Script.error.hostException.GetBaseException(), typeof(TaskCanceledException));
 

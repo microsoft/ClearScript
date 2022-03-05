@@ -218,6 +218,12 @@
         <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\ModuleWithSideEffects.js" Link="JavaScript\StandardModuleWithCycles\ModuleWithSideEffects.js">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\WebAssembly\HelloWorld.js" Link="JavaScript\WebAssembly\HelloWorld.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\WebAssembly\HelloWorld.wasm" Link="JavaScript\WebAssembly\HelloWorld.wasm">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Include="..\..\ClearScriptTest\VBScript\Expression.vbs" Link="VBScript\Expression.vbs">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

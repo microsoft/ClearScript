@@ -522,6 +522,29 @@ private:
     using CallWithLockEntry = std::pair<bool /*allowNesting*/, CallWithLockCallback>;
     using CallWithLockQueue = std::queue<CallWithLockEntry>;
 
+    class PromiseHookScope final
+    {
+        PROHIBIT_COPY(PromiseHookScope)
+        PROHIBIT_HEAP(PromiseHookScope)
+
+    public:
+
+        explicit PromiseHookScope(V8IsolateImpl& isolateImpl) :
+            m_IsolateImpl(isolateImpl)
+        {
+            m_IsolateImpl.m_upIsolate->SetPromiseHook(PromiseHook);
+        }
+
+        ~PromiseHookScope()
+        {
+            m_IsolateImpl.m_upIsolate->SetPromiseHook(nullptr);
+        }
+
+    private:
+
+        V8IsolateImpl& m_IsolateImpl;
+    };
+
     struct ContextEntry final
     {
         V8ContextImpl* pContextImpl;

@@ -780,6 +780,11 @@ V8Value V8ContextImpl::Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool e
     BEGIN_EXECUTION_SCOPE
     FROM_MAYBE_TRY
 
+        if (!CanExecute(spHolder))
+        {
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Invalid compiled script")), false /*executionStarted*/);
+        }
+
         v8::Local<v8::Value> hResult;
 
         if (spHolder->GetDocumentInfo().IsModule())

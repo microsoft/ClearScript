@@ -27,6 +27,13 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Specifies that just-in-time compilation is to be disabled.
         /// </summary>
-        DisableJITCompilation = 0x00000002
+        DisableJITCompilation = 0x00000002,
+
+        /// <summary>
+        /// Specifies that background work is to be disabled. By default, V8 performs various tasks
+        /// in the background, accelerating garbage collection, just-in-time compilation, and other
+        /// activities. Use this option if you encounter issues related to V8's background work.
+        /// </summary>
+        DisableBackgroundWork = 0x00000004
     }
 }

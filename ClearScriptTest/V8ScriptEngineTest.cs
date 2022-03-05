@@ -3586,6 +3586,52 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(123, engine.Evaluate(code));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_WebAssembly()
+        {
+            dynamic setup = engine.Evaluate(@"
+                (function (dirPath, readFile) {
+                    return new Promise((resolve, reject) => {
+                        globalThis.console = {
+                            log: text => resolve(text),
+                            warn: text => reject(text)
+                        };
+                        globalThis.process = {
+                            versions: { node: '14.0' },
+                            argv: [],
+                            on: () => {}
+                        };
+                        globalThis.require = function (name) {
+                            if (name == 'fs') return { readFileSync: path => readFile(path) };
+                            if (name == 'path') return { normalize: path => path };
+                        };
+                        globalThis.__dirname = dirPath;
+                    });
+                })
+            ");
+
+            var dirPath = Path.Combine(Directory.GetCurrentDirectory(), "JavaScript", "WebAssembly");
+            var readFile = new Func<string, object>(path =>
+            {
+                // ReSharper disable AccessToDisposedClosure
+
+                var bytes = File.ReadAllBytes(path);
+                ScriptObject uint8ArrayClass = engine.Script.Uint8Array;
+                var typedArray = (ITypedArray<byte>)uint8ArrayClass.Invoke(true, bytes.Length);
+                typedArray.WriteBytes(bytes, 0, Convert.ToUInt64(bytes.Length), 0);
+                return typedArray;
+
+                // ReSharper restore AccessToDisposedClosure
+            });
+
+            var task = ((object)setup(dirPath, readFile)).ToTask();
+
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+            engine.ExecuteDocument("JavaScript/WebAssembly/HelloWorld.js");
+
+            Assert.AreEqual("hello, world!", task.Result);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

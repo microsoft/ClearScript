@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 19731feebe..05a2812293 100644
+index 7304e8c3f9..172d2ffc84 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -970,7 +970,7 @@ config("toolchain") {
+@@ -981,7 +981,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
@@ -40,7 +40,7 @@ index 75109e35b7..659f44852a 100644
      // Keep prototypes in slow-mode. Let them be lazily turned fast later on.
      // TODO(dcarney): is this necessary?
 diff --git a/src/api/api.cc b/src/api/api.cc
-index 7e9c504f8e..eb6432f243 100644
+index ff8febe4ae..e09587f9e3 100644
 --- a/src/api/api.cc
 +++ b/src/api/api.cc
 @@ -1966,6 +1966,17 @@ void ObjectTemplate::SetImmutableProto() {
@@ -61,6 +61,19 @@ index 7e9c504f8e..eb6432f243 100644
  bool ObjectTemplate::IsCodeLike() const {
    return Utils::OpenHandle(this)->code_like();
  }
+diff --git a/src/base/platform/platform.h b/src/base/platform/platform.h
+index 8bf135709b..6630424d6c 100644
+--- a/src/base/platform/platform.h
++++ b/src/base/platform/platform.h
+@@ -45,6 +45,8 @@
+ #include <sanitizer/asan_interface.h>
+ #endif  // V8_USE_ADDRESS_SANITIZER
+ 
++#define V8_NO_FAST_TLS
++
+ #ifndef V8_NO_FAST_TLS
+ #if V8_CC_MSVC && V8_HOST_ARCH_IA32
+ // __readfsdword is supposed to be declared in intrin.h but it is missing from
 diff --git a/src/builtins/builtins-async-module.cc b/src/builtins/builtins-async-module.cc
 index 7128ad7e9d..46d6e2b958 100644
 --- a/src/builtins/builtins-async-module.cc
@@ -76,7 +89,7 @@ index 7128ad7e9d..46d6e2b958 100644
  }
  
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index db50f7d3e4..4ff909ce74 100644
+index af863948f7..8c0f9f692d 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
 @@ -1915,6 +1915,10 @@ TNode<Uint32T> CodeStubAssembler::LoadMapBitField3(TNode<Map> map) {
@@ -90,7 +103,7 @@ index db50f7d3e4..4ff909ce74 100644
  TNode<Uint16T> CodeStubAssembler::LoadMapInstanceType(TNode<Map> map) {
    return LoadObjectField<Uint16T>(map, Map::kInstanceTypeOffset);
  }
-@@ -13451,6 +13455,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
+@@ -13459,6 +13463,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -103,10 +116,10 @@ index db50f7d3e4..4ff909ce74 100644
        Word32And(LoadMapBitField(map),
                  Int32Constant(Map::Bits1::IsCallableBit::kMask |
 diff --git a/src/codegen/code-stub-assembler.h b/src/codegen/code-stub-assembler.h
-index 109bd9cfa4..e284897980 100644
+index e01975e3a8..552e78a2e9 100644
 --- a/src/codegen/code-stub-assembler.h
 +++ b/src/codegen/code-stub-assembler.h
-@@ -1375,6 +1375,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
+@@ -1378,6 +1378,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
    TNode<Int32T> LoadMapBitField2(TNode<Map> map);
    // Load bit field 3 of a map.
    TNode<Uint32T> LoadMapBitField3(TNode<Map> map);
@@ -208,10 +221,10 @@ index d50767421a..f3fa0f3a70 100644
        // Unprotect reserved page.
        DWORD old_protect;
 diff --git a/src/execution/isolate.h b/src/execution/isolate.h
-index 65a85dac9e..f5585188ae 100644
+index 89e09c3f4e..c9370d8b4c 100644
 --- a/src/execution/isolate.h
 +++ b/src/execution/isolate.h
-@@ -616,7 +616,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
+@@ -618,7 +618,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
    // Returns the isolate inside which the current thread is running.
    V8_INLINE static Isolate* Current() {
      Isolate* isolate = TryGetCurrent();
@@ -236,10 +249,10 @@ index 9a7c8cb6eb..ee58676047 100644
    set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
    real_climit_ = limit;
 diff --git a/src/heap/factory.cc b/src/heap/factory.cc
-index 9e05c52472..3f3eefbf70 100644
+index 92c2b1432e..db36c9e1bc 100644
 --- a/src/heap/factory.cc
 +++ b/src/heap/factory.cc
-@@ -1830,6 +1830,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
+@@ -1849,6 +1849,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
        Map::Bits3::IsExtensibleBit::encode(true);
    map.set_bit_field3(bit_field3);
    DCHECK(!map.is_in_retained_map_list());
@@ -248,7 +261,7 @@ index 9e05c52472..3f3eefbf70 100644
    map.set_elements_kind(elements_kind);
    isolate()->counters()->maps_created()->Increment();
 diff --git a/src/heap/setup-heap-internal.cc b/src/heap/setup-heap-internal.cc
-index 4e7b2afbdc..68c26ad704 100644
+index 1a950d50dd..7ced652c5a 100644
 --- a/src/heap/setup-heap-internal.cc
 +++ b/src/heap/setup-heap-internal.cc
 @@ -182,6 +182,7 @@ AllocationResult Heap::AllocatePartialMap(InstanceType instance_type,
@@ -260,22 +273,22 @@ index 4e7b2afbdc..68c26ad704 100644
    map.set_elements_kind(TERMINAL_FAST_ELEMENTS_KIND);
    return map;
 diff --git a/src/init/v8.cc b/src/init/v8.cc
-index 5172d5da9a..645365fa5f 100644
+index 746bdbbfda..c08f94ef8f 100644
 --- a/src/init/v8.cc
 +++ b/src/init/v8.cc
-@@ -204,7 +204,6 @@ void V8::InitializeOncePerProcess() {
- }
+@@ -90,7 +90,6 @@ V8_DECLARE_ONCE(init_snapshot_once);
  
  void V8::InitializePlatform(v8::Platform* platform) {
+   AdvanceStartupState(V8StartupState::kPlatformInitializing);
 -  CHECK(!platform_);
-   CHECK(platform);
+   CHECK_NOT_NULL(platform);
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/objects/intl-objects.h b/src/objects/intl-objects.h
-index 7ac37894ad..eb5734dc86 100644
+index 2d38231744..e66c173c28 100644
 --- a/src/objects/intl-objects.h
 +++ b/src/objects/intl-objects.h
-@@ -235,7 +235,7 @@ class Intl {
+@@ -236,7 +236,7 @@ class Intl {
        UErrorCode status = U_ZERO_ERROR;
        UEnumeration* uenum =
            uloc_openAvailableByType(ULOC_AVAILABLE_WITH_LEGACY_ALIASES, &status);
@@ -285,10 +298,10 @@ index 7ac37894ad..eb5734dc86 100644
        std::vector<std::string> all_locales;
        const char* loc;
 diff --git a/src/objects/js-date-time-format.cc b/src/objects/js-date-time-format.cc
-index 923580e6e6..1ee821afb2 100644
+index 61eaa618b2..0f9280f539 100644
 --- a/src/objects/js-date-time-format.cc
 +++ b/src/objects/js-date-time-format.cc
-@@ -1546,8 +1546,12 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
+@@ -1569,8 +1569,12 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
    //     requestedLocales, opt, %DateTimeFormat%.[[RelevantExtensionKeys]],
    //     localeData).
    //
@@ -303,7 +316,7 @@ index 923580e6e6..1ee821afb2 100644
    if (maybe_resolve_locale.IsNothing()) {
      THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError),
 diff --git a/src/objects/js-objects.cc b/src/objects/js-objects.cc
-index 1df13df72c..8c8ca065b9 100644
+index a3a64311a9..4f87a29262 100644
 --- a/src/objects/js-objects.cc
 +++ b/src/objects/js-objects.cc
 @@ -4947,6 +4947,13 @@ void JSObject::SetImmutableProto(Handle<JSObject> object) {
@@ -321,7 +334,7 @@ index 1df13df72c..8c8ca065b9 100644
                                          JavaScriptArguments* args,
                                          uint32_t arg_count,
 diff --git a/src/objects/js-objects.h b/src/objects/js-objects.h
-index ff7a268470..a51c5c5e9c 100644
+index fa61c8a63a..2a0af282fa 100644
 --- a/src/objects/js-objects.h
 +++ b/src/objects/js-objects.h
 @@ -709,6 +709,8 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
@@ -348,10 +361,10 @@ index 37d189b67a..9a2d16d545 100644
    DCHECK(has_named_interceptor());
    FunctionTemplateInfo info = GetFunctionTemplateInfo(cage_base);
 diff --git a/src/objects/map.cc b/src/objects/map.cc
-index 47a0e36ee3..d365dde13a 100644
+index ea6ad0a27c..451224222e 100644
 --- a/src/objects/map.cc
 +++ b/src/objects/map.cc
-@@ -1149,6 +1149,7 @@ Handle<Map> Map::RawCopy(Isolate* isolate, Handle<Map> map, int instance_size,
+@@ -1150,6 +1150,7 @@ Handle<Map> Map::RawCopy(Isolate* isolate, Handle<Map> map, int instance_size,
    }
    // Same as bit_field comment above.
    result->set_bit_field3(new_bit_field3);
@@ -359,7 +372,7 @@ index 47a0e36ee3..d365dde13a 100644
    result->clear_padding();
    return result;
  }
-@@ -1267,6 +1268,12 @@ Handle<Map> Map::TransitionToImmutableProto(Isolate* isolate, Handle<Map> map) {
+@@ -1268,6 +1269,12 @@ Handle<Map> Map::TransitionToImmutableProto(Isolate* isolate, Handle<Map> map) {
    return new_map;
  }
  
@@ -433,7 +446,7 @@ index a8b367ff82..98637087ee 100644
    prototype: JSReceiver|Null;
    constructor_or_back_pointer_or_native_context: Object;
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index 1d180f7e30..59be450444 100644
+index 05433226be..828f6e2909 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
 @@ -877,6 +877,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {

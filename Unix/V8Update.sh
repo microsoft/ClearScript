@@ -1,6 +1,6 @@
 #!/bin/bash
 
-v8testedrev=9.8.177.9
+v8testedrev=9.9.115.8
 v8testedcommit=
 
 if [[ $v8testedcommit == "" ]]; then
