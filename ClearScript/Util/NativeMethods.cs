@@ -282,18 +282,18 @@ namespace Microsoft.ClearScript.Util
                 // ReSharper restore UnusedMember.Local
             }
 
-            [DllImport("libdl.so", EntryPoint = "dlopen")]
+            [DllImport("libdl.so.2", EntryPoint = "dlopen")]
             public static extern IntPtr LoadLibrary(
                 [In] [MarshalAs(UnmanagedType.LPStr)] string path,
                 [In] LoadLibraryFlags flags = LoadLibraryFlags.Now | LoadLibraryFlags.Global
             );
 
-            [DllImport("libdl.so", EntryPoint = "dlclose")]
+            [DllImport("libdl.so.2", EntryPoint = "dlclose")]
             public static extern int FreeLibrary(
                 [In] IntPtr hLibrary
             );
 
-            [DllImport("libdl.so", EntryPoint = "dlerror")]
+            [DllImport("libdl.so.2", EntryPoint = "dlerror")]
             public static extern IntPtr GetLoadLibraryErrorMessage();
 
             // ReSharper restore MemberHidesStaticFromOuterClass

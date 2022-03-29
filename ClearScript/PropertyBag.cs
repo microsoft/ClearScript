@@ -43,7 +43,7 @@ namespace Microsoft.ClearScript
         #region constructors
 
         /// <summary>
-        /// Initializes a new writable <see cref="PropertyBag"/>.
+        /// Initializes a new writable <see cref="PropertyBag"/> with the default property name comparer.
         /// </summary>
         public PropertyBag()
             : this(false)
@@ -51,7 +51,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="PropertyBag"/>.
+        /// Initializes a new <see cref="PropertyBag"/> with the default property name comparer.
         /// </summary>
         /// <param name="isReadOnly"><c>True</c> to make the <see cref="PropertyBag"/> read-only, <c>false</c> to make it writable.</param>
         /// <remarks>
@@ -61,8 +61,27 @@ namespace Microsoft.ClearScript
         /// <see cref="ClearNoCheck">ClearNoCheck</see>.
         /// </remarks>
         public PropertyBag(bool isReadOnly)
+            : this(isReadOnly, null)
         {
-            dictionary = new Dictionary<string, object>();
+        }
+
+        /// <summary>
+        /// Initializes a new writable <see cref="PropertyBag"/>.
+        /// </summary>
+        /// <param name="comparer">The comparer to use for property names, or <c>null</c> to use the default string comparer.</param>
+        public PropertyBag(IEqualityComparer<string> comparer)
+            : this(false, comparer)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="PropertyBag"/>.
+        /// </summary>
+        /// <param name="isReadOnly"><c>True</c> to make the <see cref="PropertyBag"/> read-only, <c>false</c> to make it writable.</param>
+        /// <param name="comparer">The comparer to use for property names, or <c>null</c> to use the default string comparer.</param>
+        public PropertyBag(bool isReadOnly, IEqualityComparer<string> comparer)
+        {
+            dictionary = new Dictionary<string, object>(comparer);
             collection = dictionary;
             this.isReadOnly = isReadOnly;
         }
@@ -70,6 +89,11 @@ namespace Microsoft.ClearScript
         #endregion
 
         #region public members
+
+        /// <summary>
+        /// Gets the property name comparer for the <see cref="PropertyBag"/>.
+        /// </summary>
+        public IEqualityComparer<string> Comparer => dictionary.Comparer;
 
         /// <summary>
         /// Sets a property value without checking whether the <see cref="PropertyBag"/> is read-only.

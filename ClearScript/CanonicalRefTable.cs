@@ -38,7 +38,7 @@ namespace Microsoft.ClearScript
                         type == typeof(DateTime) ||
                         type == typeof(DateTimeOffset) ||
                         type == typeof(TimeSpan) ||
-                        type.GetCustomAttributes(typeof(ImmutableValueAttribute), false).Any())
+                        type.GetOrLoadCustomAttributes<ImmutableValueAttribute>(false).Any())
                     {
                         map = (ICanonicalRefMap)typeof(CanonicalRefMap<>).MakeGenericType(type).CreateInstance();
                     }

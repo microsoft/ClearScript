@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -261,6 +262,16 @@ namespace Microsoft.ClearScript.Util
         public static IEnumerable<string> SplitSearchPath(this string searchPath)
         {
             return searchPath.Split(searchPathSeparators, StringSplitOptions.RemoveEmptyEntries).Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+
+        public static StringComparison GetMemberNameComparison(this BindingFlags bindFlags)
+        {
+            return bindFlags.HasFlag(BindingFlags.IgnoreCase) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        }
+
+        public static StringComparer GetMemberNameComparer(this BindingFlags bindFlags)
+        {
+            return bindFlags.HasFlag(BindingFlags.IgnoreCase) ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         }
 
         #endregion

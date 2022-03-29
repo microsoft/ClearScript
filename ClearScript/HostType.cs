@@ -164,7 +164,7 @@ namespace Microsoft.ClearScript
             var type = GetSpecificTypeNoThrow();
             if (type != null)
             {
-                var nestedTypes = type.GetScriptableNestedTypes(invokeFlags, context.AccessContext, context.DefaultAccess).Where(testType => testType.GetRootName() == name).ToIList();
+                var nestedTypes = type.GetScriptableNestedTypes(invokeFlags, context.AccessContext, context.DefaultAccess).Where(testType => string.Equals(testType.GetRootName(), name, invokeFlags.GetMemberNameComparison())).ToIList();
                 if (nestedTypes.Count > 0)
                 {
                     var tempResult = Wrap(nestedTypes.Select(testType => testType.ApplyTypeArguments(type.GetGenericArguments())).ToArray());

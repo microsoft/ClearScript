@@ -3632,6 +3632,25 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("hello, world!", task.Result);
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CaseInsensitiveMemberBinding()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.UseCaseInsensitiveMemberBinding);
+
+            TestCamelCaseMemberBinding();
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CustomAttributeLoader()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+                TestCamelCaseMemberBinding();
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -3760,6 +3779,205 @@ namespace Microsoft.ClearScript.Test
             Assert.IsInstanceOfType(engine.Evaluate("value"), typeof(BigInteger));
             Assert.AreEqual(value, engine.Evaluate("value"));
             Assert.AreEqual(value.ToString(), engine.Evaluate("value.toString()"));
+        }
+
+        private void TestCamelCaseMemberBinding()
+        {
+            var random = MiscHelpers.CreateSeededRandom();
+            var makeIntArray = new Func<int[]>(() => Enumerable.Range(0, random.Next(5, 25)).Select(_ => random.Next(int.MinValue, int.MaxValue)).ToArray());
+            var makeShort = new Func<short>(() => Convert.ToInt16(random.Next(short.MinValue, short.MaxValue)));
+            var makeEnum = new Func<TestEnum>(() => (TestEnum)random.Next(0, 5));
+            var makeTimeSpan = new Func<TimeSpan>(() => TimeSpan.FromMilliseconds(makeShort()));
+
+            var testObject = new TestObject
+            {
+                BaseField = makeIntArray(),
+                BaseScalarField = makeShort(),
+                BaseEnumField = makeEnum(),
+                BaseStructField = makeTimeSpan(),
+
+                BaseProperty = makeIntArray(),
+                BaseScalarProperty = makeShort(),
+                BaseEnumProperty = makeEnum(),
+                BaseStructProperty = makeTimeSpan(),
+
+                BaseInterfaceProperty = makeIntArray(),
+                BaseInterfaceScalarProperty = makeShort(),
+                BaseInterfaceEnumProperty = makeEnum(),
+                BaseInterfaceStructProperty = makeTimeSpan(),
+
+                Field = new[] { 0, 9, 1, 8, 2, 7, 3, 6, 4, 5 },
+                ScalarField = makeShort(),
+                EnumField = makeEnum(),
+                StructField = makeTimeSpan(),
+
+                Property = makeIntArray(),
+                ScalarProperty = makeShort(),
+                EnumProperty = makeEnum(),
+                StructProperty = makeTimeSpan(),
+
+                InterfaceProperty = makeIntArray(),
+                InterfaceScalarProperty = makeShort(),
+                InterfaceEnumProperty = makeEnum(),
+                InterfaceStructProperty = makeTimeSpan(),
+            };
+
+            var explicitBaseTestInterface = (IExplicitBaseTestInterface)testObject;
+            explicitBaseTestInterface.ExplicitBaseInterfaceProperty = makeIntArray();
+            explicitBaseTestInterface.ExplicitBaseInterfaceScalarProperty = makeShort();
+            explicitBaseTestInterface.ExplicitBaseInterfaceEnumProperty = makeEnum();
+            explicitBaseTestInterface.ExplicitBaseInterfaceStructProperty = makeTimeSpan();
+
+            var explicitTestInterface = (IExplicitTestInterface)testObject;
+            explicitTestInterface.ExplicitInterfaceProperty = makeIntArray();
+            explicitTestInterface.ExplicitInterfaceScalarProperty = makeShort();
+            explicitTestInterface.ExplicitInterfaceEnumProperty = makeEnum();
+            explicitTestInterface.ExplicitInterfaceStructProperty = makeTimeSpan();
+
+            engine.AddHostType(typeof(TestEnum));
+            engine.Script.testObject = testObject;
+            engine.Script.testBaseInterface = testObject.ToRestrictedHostObject<IBaseTestInterface>(engine);
+            engine.Script.testInterface = testObject.ToRestrictedHostObject<ITestInterface>(engine);
+            engine.Script.explicitBaseTestInterface = testObject.ToRestrictedHostObject<IExplicitBaseTestInterface>(engine);
+            engine.Script.explicitTestInterface = testObject.ToRestrictedHostObject<IExplicitTestInterface>(engine);
+
+            Assert.IsTrue(testObject.BaseField.SequenceEqual((int[])engine.Evaluate("testObject.baseField")));
+            Assert.AreEqual(testObject.BaseScalarField, Convert.ToInt16(engine.Evaluate("testObject.baseScalarField")));
+            Assert.AreEqual(testObject.BaseEnumField, engine.Evaluate("testObject.baseEnumField"));
+            Assert.AreEqual(testObject.BaseStructField, engine.Evaluate("testObject.baseStructField"));
+
+            Assert.IsTrue(testObject.BaseProperty.SequenceEqual((int[])engine.Evaluate("testObject.baseProperty")));
+            Assert.AreEqual(testObject.BaseScalarProperty, Convert.ToInt16(engine.Evaluate("testObject.baseScalarProperty")));
+            Assert.AreEqual(testObject.BaseEnumProperty, engine.Evaluate("testObject.baseEnumProperty"));
+            Assert.AreEqual(testObject.BaseStructProperty, engine.Evaluate("testObject.baseStructProperty"));
+            Assert.AreEqual(testObject.BaseReadOnlyProperty, Convert.ToByte(engine.Evaluate("testObject.baseReadOnlyProperty")));
+
+            engine.Execute("var connection = testObject.baseEvent.connect((sender, args) => sender.baseScalarProperty = args.arg);");
+            var arg = makeShort();
+            testObject.BaseFireEvent(arg);
+            Assert.AreEqual(arg, testObject.BaseScalarProperty);
+            engine.Execute("connection.disconnect();");
+            testObject.BaseFireEvent(makeShort());
+            Assert.AreEqual(arg, testObject.BaseScalarProperty);
+
+            Assert.AreEqual(testObject.BaseMethod("foo", 4), engine.Evaluate("testObject.baseMethod('foo', 4)"));
+            Assert.AreEqual(testObject.BaseMethod("foo", 4, TestEnum.Second), engine.Evaluate("testObject.baseMethod('foo', 4, TestEnum.second)"));
+            Assert.AreEqual(testObject.BaseMethod<TestEnum>(4), engine.Evaluate("testObject.baseMethod(TestEnum, 4)"));
+            Assert.AreEqual(testObject.BaseBindTestMethod(Math.PI), engine.Evaluate("testObject.baseBindTestMethod(Math.PI)"));
+
+            Assert.IsTrue(testObject.BaseInterfaceProperty.SequenceEqual((int[])engine.Evaluate("testObject.baseInterfaceProperty")));
+            Assert.AreEqual(testObject.BaseInterfaceScalarProperty, Convert.ToInt16(engine.Evaluate("testObject.baseInterfaceScalarProperty")));
+            Assert.AreEqual(testObject.BaseInterfaceEnumProperty, engine.Evaluate("testObject.baseInterfaceEnumProperty"));
+            Assert.AreEqual(testObject.BaseInterfaceStructProperty, engine.Evaluate("testObject.baseInterfaceStructProperty"));
+            Assert.AreEqual(testObject.BaseInterfaceReadOnlyProperty, Convert.ToByte(engine.Evaluate("testObject.baseInterfaceReadOnlyProperty")));
+
+            engine.Execute("var connection = testObject.baseInterfaceEvent.connect((sender, args) => sender.baseInterfaceScalarProperty = args.arg);");
+            arg = makeShort();
+            testObject.BaseInterfaceFireEvent(arg);
+            Assert.AreEqual(arg, testObject.BaseInterfaceScalarProperty);
+            engine.Execute("connection.disconnect();");
+            testObject.BaseInterfaceFireEvent(makeShort());
+            Assert.AreEqual(arg, testObject.BaseInterfaceScalarProperty);
+
+            Assert.AreEqual(testObject.BaseInterfaceMethod("foo", 4), engine.Evaluate("testObject.baseInterfaceMethod('foo', 4)"));
+            Assert.AreEqual(testObject.BaseInterfaceMethod("foo", 4, TestEnum.Second), engine.Evaluate("testObject.baseInterfaceMethod('foo', 4, TestEnum.second)"));
+            Assert.AreEqual(testObject.BaseInterfaceMethod<TestEnum>(4), engine.Evaluate("testObject.baseInterfaceMethod(TestEnum, 4)"));
+            Assert.AreEqual(testObject.BaseInterfaceBindTestMethod(Math.PI), engine.Evaluate("testObject.baseInterfaceBindTestMethod(Math.PI)"));
+
+            Assert.IsTrue(testObject.Field.SequenceEqual((int[])engine.Evaluate("testObject.field")));
+            Assert.AreEqual(testObject.ScalarField, Convert.ToInt16(engine.Evaluate("testObject.scalarField")));
+            Assert.AreEqual(testObject.EnumField, engine.Evaluate("testObject.enumField"));
+            Assert.AreEqual(testObject.StructField, engine.Evaluate("testObject.structField"));
+
+            Assert.IsTrue(testObject.Property.SequenceEqual((int[])engine.Evaluate("testObject.property")));
+            Assert.AreEqual(testObject.ScalarProperty, Convert.ToInt16(engine.Evaluate("testObject.scalarProperty")));
+            Assert.AreEqual(testObject.EnumProperty, engine.Evaluate("testObject.enumProperty"));
+            Assert.AreEqual(testObject.StructProperty, engine.Evaluate("testObject.structProperty"));
+            Assert.AreEqual(testObject.ReadOnlyProperty, Convert.ToByte(engine.Evaluate("testObject.readOnlyProperty")));
+
+            engine.Execute("var connection = testObject.event.connect((sender, args) => sender.scalarProperty = args.arg);");
+            arg = makeShort();
+            testObject.FireEvent(arg);
+            Assert.AreEqual(arg, testObject.ScalarProperty);
+            engine.Execute("connection.disconnect();");
+            testObject.FireEvent(makeShort());
+            Assert.AreEqual(arg, testObject.ScalarProperty);
+
+            Assert.AreEqual(testObject.Method("foo", 4), engine.Evaluate("testObject.method('foo', 4)"));
+            Assert.AreEqual(testObject.Method("foo", 4, TestEnum.Second), engine.Evaluate("testObject.method('foo', 4, TestEnum.second)"));
+            Assert.AreEqual(testObject.Method<TestEnum>(4), engine.Evaluate("testObject.method(TestEnum, 4)"));
+            Assert.AreEqual(testObject.BindTestMethod(Math.PI), engine.Evaluate("testObject.bindTestMethod(Math.PI)"));
+
+            Assert.IsTrue(testObject.InterfaceProperty.SequenceEqual((int[])engine.Evaluate("testObject.interfaceProperty")));
+            Assert.AreEqual(testObject.InterfaceScalarProperty, Convert.ToInt16(engine.Evaluate("testObject.interfaceScalarProperty")));
+            Assert.AreEqual(testObject.InterfaceEnumProperty, engine.Evaluate("testObject.interfaceEnumProperty"));
+            Assert.AreEqual(testObject.InterfaceStructProperty, engine.Evaluate("testObject.interfaceStructProperty"));
+            Assert.AreEqual(testObject.InterfaceReadOnlyProperty, Convert.ToByte(engine.Evaluate("testObject.interfaceReadOnlyProperty")));
+
+            engine.Execute("var connection = testObject.interfaceEvent.connect((sender, args) => sender.interfaceScalarProperty = args.arg);");
+            arg = makeShort();
+            testObject.InterfaceFireEvent(arg);
+            Assert.AreEqual(arg, testObject.InterfaceScalarProperty);
+            engine.Execute("connection.disconnect();");
+            testObject.InterfaceFireEvent(makeShort());
+            Assert.AreEqual(arg, testObject.InterfaceScalarProperty);
+
+            Assert.AreEqual(testObject.InterfaceMethod("foo", 4), engine.Evaluate("testObject.interfaceMethod('foo', 4)"));
+            Assert.AreEqual(testObject.InterfaceMethod("foo", 4, TestEnum.Second), engine.Evaluate("testObject.interfaceMethod('foo', 4, TestEnum.second)"));
+            Assert.AreEqual(testObject.InterfaceMethod<TestEnum>(4), engine.Evaluate("testObject.interfaceMethod(TestEnum, 4)"));
+            Assert.AreEqual(testObject.InterfaceBindTestMethod(Math.PI), engine.Evaluate("testObject.interfaceBindTestMethod(Math.PI)"));
+
+            Assert.IsTrue(explicitBaseTestInterface.ExplicitBaseInterfaceProperty.SequenceEqual((int[])engine.Evaluate("explicitBaseTestInterface.explicitBaseInterfaceProperty")));
+            Assert.AreEqual(explicitBaseTestInterface.ExplicitBaseInterfaceScalarProperty, Convert.ToInt16(engine.Evaluate("explicitBaseTestInterface.explicitBaseInterfaceScalarProperty")));
+            Assert.AreEqual(explicitBaseTestInterface.ExplicitBaseInterfaceEnumProperty, engine.Evaluate("explicitBaseTestInterface.explicitBaseInterfaceEnumProperty"));
+            Assert.AreEqual(explicitBaseTestInterface.ExplicitBaseInterfaceStructProperty, engine.Evaluate("explicitBaseTestInterface.explicitBaseInterfaceStructProperty"));
+            Assert.AreEqual(explicitBaseTestInterface.ExplicitBaseInterfaceReadOnlyProperty, Convert.ToByte(engine.Evaluate("explicitBaseTestInterface.explicitBaseInterfaceReadOnlyProperty")));
+
+            engine.Execute("var connection = explicitBaseTestInterface.explicitBaseInterfaceEvent.connect((sender, args) => explicitBaseTestInterface.explicitBaseInterfaceScalarProperty = args.arg);");
+            arg = makeShort();
+            explicitBaseTestInterface.ExplicitBaseInterfaceFireEvent(arg);
+            Assert.AreEqual(arg, explicitBaseTestInterface.ExplicitBaseInterfaceScalarProperty);
+            engine.Execute("connection.disconnect();");
+            explicitBaseTestInterface.ExplicitBaseInterfaceFireEvent(makeShort());
+            Assert.AreEqual(arg, explicitBaseTestInterface.ExplicitBaseInterfaceScalarProperty);
+
+            Assert.AreEqual(explicitBaseTestInterface.ExplicitBaseInterfaceMethod("foo", 4), engine.Evaluate("explicitBaseTestInterface.explicitBaseInterfaceMethod('foo', 4)"));
+            Assert.AreEqual(explicitBaseTestInterface.ExplicitBaseInterfaceMethod("foo", 4, TestEnum.Second), engine.Evaluate("explicitBaseTestInterface.explicitBaseInterfaceMethod('foo', 4, TestEnum.second)"));
+            Assert.AreEqual(explicitBaseTestInterface.ExplicitBaseInterfaceMethod<TestEnum>(4), engine.Evaluate("explicitBaseTestInterface.explicitBaseInterfaceMethod(TestEnum, 4)"));
+            Assert.AreEqual(explicitBaseTestInterface.ExplicitBaseInterfaceBindTestMethod(Math.PI), engine.Evaluate("explicitBaseTestInterface.explicitBaseInterfaceBindTestMethod(Math.PI)"));
+
+            Assert.IsTrue(explicitTestInterface.ExplicitInterfaceProperty.SequenceEqual((int[])engine.Evaluate("explicitTestInterface.explicitInterfaceProperty")));
+            Assert.AreEqual(explicitTestInterface.ExplicitInterfaceScalarProperty, Convert.ToInt16(engine.Evaluate("explicitTestInterface.explicitInterfaceScalarProperty")));
+            Assert.AreEqual(explicitTestInterface.ExplicitInterfaceEnumProperty, engine.Evaluate("explicitTestInterface.explicitInterfaceEnumProperty"));
+            Assert.AreEqual(explicitTestInterface.ExplicitInterfaceStructProperty, engine.Evaluate("explicitTestInterface.explicitInterfaceStructProperty"));
+            Assert.AreEqual(explicitTestInterface.ExplicitInterfaceReadOnlyProperty, Convert.ToByte(engine.Evaluate("explicitTestInterface.explicitInterfaceReadOnlyProperty")));
+
+            engine.Execute("var connection = explicitTestInterface.explicitInterfaceEvent.connect((sender, args) => explicitTestInterface.explicitInterfaceScalarProperty = args.arg);");
+            arg = makeShort();
+            explicitTestInterface.ExplicitInterfaceFireEvent(arg);
+            Assert.AreEqual(arg, explicitTestInterface.ExplicitInterfaceScalarProperty);
+            engine.Execute("connection.disconnect();");
+            explicitTestInterface.ExplicitInterfaceFireEvent(makeShort());
+            Assert.AreEqual(arg, explicitTestInterface.ExplicitInterfaceScalarProperty);
+
+            Assert.AreEqual(explicitTestInterface.ExplicitInterfaceMethod("foo", 4), engine.Evaluate("explicitTestInterface.explicitInterfaceMethod('foo', 4)"));
+            Assert.AreEqual(explicitTestInterface.ExplicitInterfaceMethod("foo", 4, TestEnum.Second), engine.Evaluate("explicitTestInterface.explicitInterfaceMethod('foo', 4, TestEnum.second)"));
+            Assert.AreEqual(explicitTestInterface.ExplicitInterfaceMethod<TestEnum>(4), engine.Evaluate("explicitTestInterface.explicitInterfaceMethod(TestEnum, 4)"));
+            Assert.AreEqual(explicitTestInterface.ExplicitInterfaceBindTestMethod(Math.PI), engine.Evaluate("explicitTestInterface.explicitInterfaceBindTestMethod(Math.PI)"));
+        }
+
+        private sealed class CamelCaseAttributeLoader : CustomAttributeLoader
+        {
+            public override T[] LoadCustomAttributes<T>(ICustomAttributeProvider resource, bool inherit)
+            {
+                if (typeof(T) == typeof(ScriptMemberAttribute) && (resource is MemberInfo member))
+                {
+                    var name = char.ToLowerInvariant(member.Name[0]) + member.Name.Substring(1);
+                    return new[] { new ScriptMemberAttribute(name) } as T[];
+                }
+
+                return base.LoadCustomAttributes<T>(resource, inherit);
+            }
         }
 
         // ReSharper disable UnusedMember.Local

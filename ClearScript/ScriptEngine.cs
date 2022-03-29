@@ -1453,6 +1453,8 @@ namespace Microsoft.ClearScript
 
         internal virtual bool EnumerateExtensionMethods => EnumerateInstanceMethods;
 
+        internal virtual bool UseCaseInsensitiveMemberBinding => false;
+
         internal abstract void AddHostItem(string itemName, HostItemFlags flags, object item);
 
         internal object PrepareResult<T>(T result, ScriptMemberFlags flags, bool isListIndexResult)

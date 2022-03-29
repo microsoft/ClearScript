@@ -72,7 +72,7 @@ ifeq ($(TARGETOS), linux)
     ifndef DEBUG
         CXXLINKFLAGS := -s
     endif
-    CXXLINKFLAGS := $(CXXLINKFLAGS) -static-libstdc++ -static-libgcc
+    CXXLINKFLAGS := $(CXXLINKFLAGS) -static-libstdc++ -static-libgcc -ldl -lrt --no-undefined
     ifneq ($(HOSTCPU), $(CPU))
         CXXCROSSFLAGS = -I/usr/$(TARGET)/include
         CXXLINKFLAGS := -fuse-ld=/usr/$(TARGET)/bin/ld $(CXXLINKFLAGS)

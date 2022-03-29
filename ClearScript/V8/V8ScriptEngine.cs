@@ -1351,6 +1351,8 @@ namespace Microsoft.ClearScript.V8
 
         internal override bool EnumerateExtensionMethods => base.EnumerateExtensionMethods && !SuppressExtensionMethodEnumeration;
 
+        internal override bool UseCaseInsensitiveMemberBinding => engineFlags.HasFlag(V8ScriptEngineFlags.UseCaseInsensitiveMemberBinding);
+
         internal override void AddHostItem(string itemName, HostItemFlags flags, object item)
         {
             VerifyNotDisposed();

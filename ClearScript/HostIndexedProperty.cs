@@ -53,13 +53,13 @@ namespace Microsoft.ClearScript
         {
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
-                if (memberName == "get")
+                if (string.Equals(memberName, "get", invokeFlags.GetMemberNameComparison()))
                 {
                     result = target.InvokeMember(name, BindingFlags.GetProperty, args, bindArgs, null, true);
                     return true;
                 }
 
-                if (memberName == "set")
+                if (string.Equals(memberName, "set", invokeFlags.GetMemberNameComparison()))
                 {
                     result = target.InvokeMember(name, BindingFlags.SetProperty, args, bindArgs, null, true);
                     return true;

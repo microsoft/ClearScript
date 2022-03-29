@@ -39,6 +39,9 @@
         <Compile Include="..\..\ClearScript\ByRefArg.cs" Link="ByRefArg.cs" />
         <Compile Include="..\..\ClearScript\CanonicalRefTable.cs" Link="CanonicalRefTable.cs" />
         <Compile Include="..\..\ClearScript\ContinuationCallback.cs" Link="ContinuationCallback.cs" />
+        <Compile Include="..\..\ClearScript\CustomAttributeLoader.cs" Link="CustomAttributeLoader.cs" />
+        <Compile Include="..\..\ClearScript\CustomAttributes.cs" Link="CustomAttributes.cs" />
+        <Compile Include="..\..\ClearScript\CustomAttributes.NetStandard.cs" Link="CustomAttributes.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\DefaultScriptUsageAttribute.cs" Link="DefaultScriptUsageAttribute.cs" />
         <Compile Include="..\..\ClearScript\DelegateFactory.cs" Link="DelegateFactory.cs" />
         <Compile Include="..\..\ClearScript\DelegateFactory.Generated.cs" Link="DelegateFactory.Generated.cs" />

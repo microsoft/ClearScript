@@ -8,6 +8,9 @@ namespace Microsoft.ClearScript
     /// </summary>
     public static class HostSettings
     {
+        private static CustomAttributeLoader customAttributeLoader;
+        private static readonly CustomAttributeLoader defaultCustomAttributeLoader = new CustomAttributeLoader();
+
         /// <summary>
         /// Enables or disables assembly table usage.
         /// </summary>
@@ -34,5 +37,19 @@ namespace Microsoft.ClearScript
         /// resources such as native assemblies and related data files.
         /// </remarks>
         public static string AuxiliarySearchPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the custom attribute loader for ClearScript.
+        /// </summary>
+        public static CustomAttributeLoader CustomAttributeLoader
+        {
+            get => customAttributeLoader ?? defaultCustomAttributeLoader;
+
+            set
+            {
+                customAttributeLoader = value;
+                CustomAttributes.ClearCache();
+            }
+        }
     }
 }

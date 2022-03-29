@@ -21,7 +21,7 @@ namespace Microsoft.ClearScript.Util
             for (var index = 0; index < parameters.Length; index++)
             {
                 var param = parameters[index];
-                if (Attribute.IsDefined(param, typeof(ParamArrayAttribute)))
+                if (CustomAttributes.Has<ParamArrayAttribute>(param, false))
                 {
                     if ((index != (args.Length - 1)) || !param.ParameterType.IsInstanceOfType(args[index]))
                     {

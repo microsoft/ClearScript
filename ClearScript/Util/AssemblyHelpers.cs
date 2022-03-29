@@ -74,14 +74,19 @@ namespace Microsoft.ClearScript.Util
             return null;
         }
 
-        public static T GetAttribute<T>(this Assembly assembly, bool inherit) where T : Attribute
+        public static T GetOrLoadCustomAttribute<T>(this Assembly assembly, bool inherit = true) where T : Attribute
         {
-            return Attribute.GetCustomAttributes(assembly, typeof(T), inherit).SingleOrDefault() as T;
+            return CustomAttributes.GetOrLoad<T>(assembly, inherit).SingleOrDefault();
         }
 
-        public static IEnumerable<T> GetAttributes<T>(this Assembly assembly, bool inherit) where T : Attribute
+        public static IEnumerable<T> GetOrLoadCustomAttributes<T>(this Assembly assembly, bool inherit = true) where T : Attribute
         {
-            return Attribute.GetCustomAttributes(assembly, typeof(T), inherit).OfType<T>();
+            return CustomAttributes.GetOrLoad<T>(assembly, inherit);
+        }
+
+        public static bool HasCustomAttributes<T>(this Assembly assembly, bool inherit = true) where T : Attribute
+        {
+            return CustomAttributes.Has<T>(assembly, inherit);
         }
 
         public static bool IsFriendOf(this Assembly thisAssembly, Assembly thatAssembly)
@@ -92,7 +97,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var thisName = thisAssembly.GetName();
-            foreach (var attribute in thatAssembly.GetAttributes<InternalsVisibleToAttribute>(false))
+            foreach (var attribute in thatAssembly.GetOrLoadCustomAttributes<InternalsVisibleToAttribute>(false))
             {
                 var thatName = new AssemblyName(attribute.AssemblyName);
                 if (AssemblyName.ReferenceMatchesDefinition(thatName, thisName))

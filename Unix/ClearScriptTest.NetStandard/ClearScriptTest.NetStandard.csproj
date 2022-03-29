@@ -1,6 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
+        <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+        <IsPackable>false</IsPackable>
+        <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <AssemblyName>ClearScriptTest</AssemblyName>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(VisualStudioVersion)'&lt;'17.0'">
         <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
         <IsPackable>false</IsPackable>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>

@@ -62,12 +62,12 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsCompilerGenerated(this Type type)
         {
-            return type.IsDefined(typeof(CompilerGeneratedAttribute), false);
+            return type.HasCustomAttributes<CompilerGeneratedAttribute>(false);
         }
 
         public static bool IsFlagsEnum(this Type type)
         {
-            return type.IsEnum && type.IsDefined(typeof(FlagsAttribute), false);
+            return type.IsEnum && type.HasCustomAttributes<FlagsAttribute>(false);
         }
 
         public static bool IsImportable(this Type type)
@@ -105,7 +105,7 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
 
-            if (!Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false))
+            if (!type.IsCompilerGenerated())
             {
                 return false;
             }
@@ -277,7 +277,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool HasExtensionMethods(this Type type)
         {
-            return type.IsDefined(typeof(ExtensionAttribute), false);
+            return type.HasCustomAttributes<ExtensionAttribute>(false);
         }
 
         public static bool EqualsOrDeclares(this Type type, Type thatType)
@@ -313,13 +313,13 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsCOMVisible(this Type type)
         {
-            var attribute = type.GetAttribute<ComVisibleAttribute>(false);
+            var attribute = type.GetOrLoadCustomAttribute<ComVisibleAttribute>(false);
             if (attribute != null)
             {
                 return attribute.Value;
             }
 
-            attribute = type.Assembly.GetAttribute<ComVisibleAttribute>(false);
+            attribute = type.Assembly.GetOrLoadCustomAttribute<ComVisibleAttribute>(false);
             if (attribute != null)
             {
                 return attribute.Value;
@@ -402,7 +402,7 @@ namespace Microsoft.ClearScript.Util
             {
             }
 
-            return type.GetScriptableEvents(bindFlags, accessContext, defaultAccess).FirstOrDefault(eventInfo => eventInfo.GetScriptName() == name);
+            return type.GetScriptableEvents(bindFlags, accessContext, defaultAccess).FirstOrDefault(eventInfo => string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
         }
 
         public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
@@ -413,12 +413,12 @@ namespace Microsoft.ClearScript.Util
         public static FieldInfo GetScriptableField(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
             var candidate = type.GetField(name, bindFlags);
-            if ((candidate != null) && candidate.IsScriptable(accessContext, defaultAccess) && (candidate.GetScriptName() == name))
+            if ((candidate != null) && candidate.IsScriptable(accessContext, defaultAccess) && string.Equals(candidate.GetScriptName(), name, bindFlags.GetMemberNameComparison()))
             {
                 return candidate;
             }
 
-            return type.GetScriptableFields(bindFlags, accessContext, defaultAccess).FirstOrDefault(field => field.GetScriptName() == name);
+            return type.GetScriptableFields(bindFlags, accessContext, defaultAccess).FirstOrDefault(field => string.Equals(field.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
         }
 
         public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
@@ -435,7 +435,7 @@ namespace Microsoft.ClearScript.Util
 
         public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableMethods(bindFlags, accessContext, defaultAccess).Where(method => method.GetScriptName() == name);
+            return type.GetScriptableMethods(bindFlags, accessContext, defaultAccess).Where(method => string.Equals(method.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
         }
 
         public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
@@ -469,7 +469,7 @@ namespace Microsoft.ClearScript.Util
 
         public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
-            return type.GetScriptableProperties(bindFlags, accessContext, defaultAccess).Where(property => property.GetScriptName() == name);
+            return type.GetScriptableProperties(bindFlags, accessContext, defaultAccess).Where(property => string.Equals(property.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
         }
 
         public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
@@ -483,7 +483,7 @@ namespace Microsoft.ClearScript.Util
             try
             {
                 // ReSharper disable once RedundantEnumerableCastCall
-                return candidates.OfType<PropertyInfo>().SingleOrDefault(property => (property.GetIndexParameters().Length < 1) && property.IsScriptable(accessContext, defaultAccess) && (property.GetScriptName() == name));
+                return candidates.OfType<PropertyInfo>().SingleOrDefault(property => (property.GetIndexParameters().Length < 1) && property.IsScriptable(accessContext, defaultAccess) && string.Equals(property.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
             }
             catch (InvalidOperationException exception)
             {
@@ -733,7 +733,7 @@ namespace Microsoft.ClearScript.Util
             try
             {
                 // ReSharper disable once RedundantEnumerableCastCall
-                return candidates.OfType<EventInfo>().SingleOrDefault(eventInfo => eventInfo.IsScriptable(accessContext, defaultAccess) && (eventInfo.GetScriptName() == name));
+                return candidates.OfType<EventInfo>().SingleOrDefault(eventInfo => eventInfo.IsScriptable(accessContext, defaultAccess) && string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
             }
             catch (InvalidOperationException exception)
             {

@@ -94,7 +94,7 @@ namespace Microsoft.ClearScript.V8
         /// This conversion is unidirectional and lossy. This option is ignored if
         /// <see cref="EnableTaskPromiseConversion"/> is not specified.
         /// </summary>
-        EnableValueTaskPromiseConversion = 0x00000200
+        EnableValueTaskPromiseConversion = 0x00000200,
 
     #else
 
@@ -105,9 +105,15 @@ namespace Microsoft.ClearScript.V8
         /// This conversion is unidirectional and lossy. This option is ignored if
         /// <see cref="EnableTaskPromiseConversion"/> is not specified.
         /// </summary>
-        EnableValueTaskPromiseConversion = 0x00000200
+        EnableValueTaskPromiseConversion = 0x00000200,
 
     #endif
 
+        /// <summary>
+        /// Specifies that access to host object and class members is to be case-insensitive. This
+        /// option can introduce ambiguity if the host resource has distinct members whose names
+        /// differ only in case, so it should be used with caution.
+        /// </summary>
+        UseCaseInsensitiveMemberBinding = 0x00000400
     }
 }
