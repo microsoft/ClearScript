@@ -171,7 +171,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_CompiledScriptResult()
+        public void BugFix_V8CompiledScriptResult()
         {
             engine.Script.host = new HostFunctions();
             using (var script = ((V8ScriptEngine)engine).Compile("host"))
@@ -1549,6 +1549,20 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(Math.E, engine.Evaluate("random.E"));
             Assert.AreEqual(Math.Sqrt(2), engine.Evaluate("cb.SQRT2"));
             Assert.AreEqual(Math.PI, engine.Evaluate("Console.PI"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8CompiledScript_WrongIsolate()
+        {
+            using (var script = ((V8ScriptEngine)engine).Compile("function foo() {}"))
+            {
+                using (var tempEngine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging))
+                {
+                    // ReSharper disable AccessToDisposedClosure
+                    TestUtil.AssertException<ScriptEngineException>(() => tempEngine.Execute(script), false);
+                    // ReSharper restore AccessToDisposedClosure
+                }
+            }
         }
 
         // ReSharper restore InconsistentNaming

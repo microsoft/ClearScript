@@ -804,6 +804,12 @@ namespace Microsoft.ClearScript
 
         #region member invocation
 
+        private bool UseCaseInsensitiveMemberBinding => Engine.UseCaseInsensitiveMemberBinding;
+
+        private StringComparison MemberNameComparison => UseCaseInsensitiveMemberBinding ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+        private StringComparer MemberNameComparer => UseCaseInsensitiveMemberBinding ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+
         private T HostInvoke<T>(Func<T> func)
         {
             BindTargetMemberData();
@@ -822,6 +828,11 @@ namespace Microsoft.ClearScript
             if (TargetFlags.HasFlag(HostTargetFlags.AllowInstanceMembers))
             {
                 bindFlags |= BindingFlags.Instance;
+            }
+
+            if (UseCaseInsensitiveMemberBinding)
+            {
+                bindFlags |= BindingFlags.IgnoreCase;
             }
 
             return bindFlags;
@@ -872,6 +883,15 @@ namespace Microsoft.ClearScript
             else
             {
                 invokeFlags &= ~BindingFlags.Instance;
+            }
+
+            if (UseCaseInsensitiveMemberBinding)
+            {
+                invokeFlags |= BindingFlags.IgnoreCase;
+            }
+            else
+            {
+                invokeFlags &= ~BindingFlags.IgnoreCase;
             }
 
             if (invokeFlags.HasFlag(BindingFlags.GetProperty))
@@ -1293,7 +1313,7 @@ namespace Microsoft.ClearScript
                     }
                 }
 
-                if (ThisReflect.GetMethods(GetMethodBindFlags()).Any(method => method.Name == name))
+                if (ThisReflect.GetMethods(GetMethodBindFlags()).Any(method => string.Equals(method.Name, name, MemberNameComparison)))
                 {
                     // The target appears to have a method with the right name, but it could be an
                     // extension method that fails to bind. If that happens, we should attempt the
@@ -1416,7 +1436,7 @@ namespace Microsoft.ClearScript
                     {
                         if (HostMethodMap == null)
                         {
-                            HostMethodMap = new Dictionary<string, HostMethod>();
+                            HostMethodMap = new Dictionary<string, HostMethod>(MemberNameComparer);
                         }
 
                         if (!HostMethodMap.TryGetValue(name, out var hostMethod))
@@ -1490,12 +1510,12 @@ namespace Microsoft.ClearScript
                     return hostIndexedProperty;
                 }
 
-                var method = ThisReflect.GetMethods(GetMethodBindFlags()).FirstOrDefault(testMethod => testMethod.Name == name);
+                var method = ThisReflect.GetMethods(GetMethodBindFlags()).FirstOrDefault(testMethod => string.Equals(testMethod.Name, name, MemberNameComparison));
                 if (method != null)
                 {
                     if (HostMethodMap == null)
                     {
-                        HostMethodMap = new Dictionary<string, HostMethod>();
+                        HostMethodMap = new Dictionary<string, HostMethod>(MemberNameComparer);
                     }
 
                     if (!HostMethodMap.TryGetValue(name, out var hostMethod))
@@ -1819,7 +1839,7 @@ namespace Microsoft.ClearScript
 
         FieldInfo IReflect.GetField(string name, BindingFlags bindFlags)
         {
-            var fields = ThisReflect.GetFields(bindFlags).Where(field => field.Name == name).ToArray();
+            var fields = ThisReflect.GetFields(bindFlags).Where(field => string.Equals(field.Name, name, bindFlags.GetMemberNameComparison())).ToArray();
             if (fields.Length < 1)
             {
                 return null;
@@ -1849,7 +1869,7 @@ namespace Microsoft.ClearScript
 
         MemberInfo[] IReflect.GetMember(string name, BindingFlags bindFlags)
         {
-            return ThisReflect.GetMembers(bindFlags).Where(member => member.Name == name).ToArray();
+            return ThisReflect.GetMembers(bindFlags).Where(member => string.Equals(member.Name, name, bindFlags.GetMemberNameComparison())).ToArray();
         }
 
         MemberInfo[] IReflect.GetMembers(BindingFlags bindFlags)
@@ -1859,7 +1879,7 @@ namespace Microsoft.ClearScript
 
         MethodInfo IReflect.GetMethod(string name, BindingFlags bindFlags)
         {
-            var methods = ThisReflect.GetMethods(bindFlags).Where(method => method.Name == name).ToArray();
+            var methods = ThisReflect.GetMethods(bindFlags).Where(method => string.Equals(method.Name, name, bindFlags.GetMemberNameComparison())).ToArray();
             if (methods.Length < 1)
             {
                 return null;
@@ -1913,7 +1933,7 @@ namespace Microsoft.ClearScript
 
         PropertyInfo IReflect.GetProperty(string name, BindingFlags bindFlags)
         {
-            var properties = ThisReflect.GetProperties(bindFlags).Where(property => property.Name == name).ToArray();
+            var properties = ThisReflect.GetProperties(bindFlags).Where(property => string.Equals(property.Name, name, bindFlags.GetMemberNameComparison())).ToArray();
             if (properties.Length < 1)
             {
                 return null;

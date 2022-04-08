@@ -12,7 +12,8 @@ class V8Platform final: public v8::Platform
 public:
 
     static V8Platform& GetInstance();
-    static void EnsureInstalled();
+    void EnsureInitialized();
+    V8GlobalFlags GetGlobalFlags() const;
 
     virtual int NumberOfWorkerThreads() override;
     virtual std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner(v8::Isolate* pIsolate) override;
@@ -28,7 +29,8 @@ private:
     V8Platform();
 
     static V8Platform ms_Instance;
-    static OnceFlag ms_InstallationFlag;
+    OnceFlag m_InitializationFlag;
+    V8GlobalFlags m_GlobalFlags;
     v8::TracingController m_TracingController;
 };
 
@@ -41,16 +43,52 @@ V8Platform& V8Platform::GetInstance()
 
 //-----------------------------------------------------------------------------
 
-void V8Platform::EnsureInstalled()
+V8GlobalFlags V8Platform::GetGlobalFlags() const
 {
-    ms_InstallationFlag.CallOnce([]
+    return m_GlobalFlags;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8Platform::EnsureInitialized()
+{
+    m_InitializationFlag.CallOnce([this]
     {
         v8::V8::InitializePlatform(&ms_Instance);
         ASSERT_EVAL(v8::V8::Initialize());
 
-        if (!V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(StdBool, GetTopLevelAwait))
+        m_GlobalFlags = V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(V8GlobalFlags, GetGlobalFlags);
+        std::vector<std::string> flagStrings;
+
+    #ifdef CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
+
+        if (!HasFlag(globalFlags, V8GlobalFlags::EnableTopLevelAwait))
         {
-            v8::V8::SetFlagsFromString("--no_harmony_top_level_await");
+            flagStrings.push_back("--no_harmony_top_level_await");
+        }
+
+    #endif // CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
+
+        if (HasFlag(m_GlobalFlags, V8GlobalFlags::DisableJITCompilation))
+        {
+            flagStrings.push_back("--jitless");
+        }
+
+        if (HasFlag(m_GlobalFlags, V8GlobalFlags::DisableBackgroundWork))
+        {
+            flagStrings.push_back("--single_threaded");
+        }
+
+        if (!flagStrings.empty())
+        {
+            std::string flagsString(flagStrings[0]);
+            for (size_t index = 1; index < flagStrings.size(); ++index)
+            {
+                flagsString += " ";
+                flagsString += flagStrings[index];
+            }
+
+            v8::V8::SetFlagsFromString(flagsString.c_str(), flagsString.length());
         }
     });
 }
@@ -125,14 +163,14 @@ v8::TracingController* V8Platform::GetTracingController()
 
 //-----------------------------------------------------------------------------
 
-V8Platform::V8Platform()
+V8Platform::V8Platform():
+    m_GlobalFlags(V8GlobalFlags::None)
 {
 }
 
 //-----------------------------------------------------------------------------
 
 V8Platform V8Platform::ms_Instance;
-OnceFlag V8Platform::ms_InstallationFlag;
 
 //-----------------------------------------------------------------------------
 // V8ForegroundTaskRunner
@@ -398,6 +436,16 @@ void V8OutputStream::EndOfStream()
         IGNORE_UNUSED(t_IsolateScope); \
     }
 
+#define BEGIN_PROMISE_HOOK_SCOPE \
+    { \
+        DISABLE_WARNING(4456) /* declaration hides previous local declaration */ \
+        PromiseHookScope t_PromiseHookScope(*this); \
+        DEFAULT_WARNING(4456)
+
+#define END_PROMISE_HOOK_SCOPE \
+        IGNORE_UNUSED(t_PromiseHookScope); \
+    }
+
 //-----------------------------------------------------------------------------
 
 static std::atomic<size_t> s_InstanceCount(0);
@@ -428,7 +476,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     m_IsExecutionTerminating(false),
     m_Released(false)
 {
-    V8Platform::EnsureInstalled();
+    V8Platform::GetInstance().EnsureInitialized();
 
     v8::Isolate::CreateParams params;
     params.array_buffer_allocator = &V8ArrayBufferAllocator::GetInstance();
@@ -447,7 +495,6 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
 
         m_upIsolate->AddNearHeapLimitCallback(HeapExpansionCallback, this);
         m_upIsolate->AddBeforeCallEnteredCallback(OnBeforeCallEntered);
-        m_upIsolate->SetPromiseHook(PromiseHook);
 
         BEGIN_ISOLATE_SCOPE
 
@@ -1324,9 +1371,9 @@ void V8IsolateImpl::ImportMetaInitializeCallback(v8::Local<v8::Context> hContext
 
 //-----------------------------------------------------------------------------
 
-v8::MaybeLocal<v8::Promise> V8IsolateImpl::ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> /*importAssertions*/)
+v8::MaybeLocal<v8::Promise> V8IsolateImpl::ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::Data> hHostDefinedOptions, v8::Local<v8::Value> hResourceName, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> hImportAssertions)
 {
-    return GetInstanceFromIsolate(hContext->GetIsolate())->ImportModule(hContext, hReferrer, hSpecifier);
+    return GetInstanceFromIsolate(hContext->GetIsolate())->ImportModule(hContext, hHostDefinedOptions, hResourceName, hSpecifier, hImportAssertions);
 }
 
 //-----------------------------------------------------------------------------
@@ -1351,14 +1398,14 @@ void V8IsolateImpl::InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Lo
 
 //-----------------------------------------------------------------------------
 
-v8::MaybeLocal<v8::Promise> V8IsolateImpl::ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier)
+v8::MaybeLocal<v8::Promise> V8IsolateImpl::ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::Data> hHostDefinedOptions, v8::Local<v8::Value> hResourceName, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> hImportAssertions)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
     auto pContextImpl = FindContext(hContext);
     if (pContextImpl)
     {
-        return pContextImpl->ImportModule(hReferrer, hSpecifier);
+        return pContextImpl->ImportModule(hHostDefinedOptions, hResourceName, hSpecifier, hImportAssertions);
     }
 
     return v8::MaybeLocal<v8::Promise>();
@@ -1487,9 +1534,9 @@ V8IsolateImpl::~V8IsolateImpl()
     }
 
     Dispose(m_hHostObjectHolderKey);
-    m_upIsolate->SetHostImportModuleDynamicallyCallback(static_cast<v8::HostImportModuleDynamicallyWithImportAssertionsCallback>(nullptr));
+    m_upIsolate->SetHostImportModuleDynamicallyCallback(static_cast<v8::HostImportModuleDynamicallyCallback>(nullptr));
     m_upIsolate->SetHostInitializeImportMetaObjectCallback(nullptr);
-    m_upIsolate->SetPromiseHook(nullptr);
+
     m_upIsolate->RemoveBeforeCallEnteredCallback(OnBeforeCallEntered);
     m_upIsolate->RemoveNearHeapLimitCallback(HeapExpansionCallback, 0);
 }
@@ -1591,8 +1638,12 @@ void V8IsolateImpl::ProcessCallWithLockQueue(v8::Isolate* /*pIsolate*/, void* pv
 
 void V8IsolateImpl::ProcessCallWithLockQueue()
 {
-    std::unique_lock<std::mutex> lock(m_DataMutex.GetImpl());
-    ProcessCallWithLockQueue(lock);
+    BEGIN_PROMISE_HOOK_SCOPE
+
+        std::unique_lock<std::mutex> lock(m_DataMutex.GetImpl());
+        ProcessCallWithLockQueue(lock);
+
+    END_PROMISE_HOOK_SCOPE
 }
 
 //-----------------------------------------------------------------------------

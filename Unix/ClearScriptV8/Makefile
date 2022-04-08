@@ -89,7 +89,6 @@ else
     $(error unsupported target CPU '$(CPU)')
 endif
 
-
 MAKEFILE = $(word $(words $(MAKEFILE_LIST)), $(MAKEFILE_LIST))
 MAKEDIR = $(dir $(abspath $(MAKEFILE)))
 ROOTDIR = $(abspath $(MAKEDIR)/../..)
@@ -114,12 +113,13 @@ LLVM = $(NDK)/toolchains/llvm/prebuilt/$(TARGETOS)-$(ARCH)
 TOOLS = $(TARGETARCH)-$(TARGETOS)-$(TARGETSUFFIX)
 
 STRIP = true
+CODESIGN = true
 ifeq ($(TARGETOS), linux)
     TARGET = $(TARGETARCH)$(TARGETARCHSUFFIX)-$(TARGETOS)-$(TARGETSUFFIX)$(TARGETSUFFIXVER)
     ifndef DEBUG
         CXXLINKFLAGS := -s
     endif
-    CXXLINKFLAGS := $(CXXLINKFLAGS) -static-libstdc++ -static-libgcc
+    CXXLINKFLAGS := $(CXXLINKFLAGS) -static-libstdc++ -static-libgcc -ldl -lrt --no-undefined
     ifdef ANDROID
         CXXLINKFLAGS := -fuse-ld=$(LLVM)/$(TOOLS)/bin/ld $(CXXLINKFLAGS)
         CXX = $(LLVM)/bin/$(TARGET)-clang++
@@ -131,6 +131,8 @@ else ifeq ($(TARGETOS), darwin)
     TARGET = $(TARGETARCH)-$(TARGETOS)
     ifndef DEBUG
         STRIP = strip -r -u
+        ENTITLEMENTS = $(MAKEDIR)/entitlements.xml
+        CODESIGN = codesign --sign - --options linker-signed --entitlements $(ENTITLEMENTS) --force
     endif
 else
     $(error unsupported target operating system '$(TARGETOS)')
@@ -163,15 +165,15 @@ OBJECTS = \
     $(OBJDIR)/V8SplitProxyManaged.o \
     $(OBJDIR)/V8SplitProxyNative.o
 
-.PHONY: all objdir clean buildv8 cleanv8 zapv8 buildall cleanall
+.PHONY: all objdir clean buildv8 cleanv8 zapv8 buildallrelease buildalldebug buildall cleanall
 
 all: objdir $(CLEARSCRIPTV8)
 
 objdir:
 	@mkdir -p $(OBJDIR)
 
-$(CLEARSCRIPTV8): $(V8LIBDIR)/libv8_monolith.a $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(CXXLINKFLAGS) --shared -L$(V8LIBDIR) $(OBJECTS) -o $@ -pthread -lv8_monolith && $(STRIP) $@
+$(CLEARSCRIPTV8): $(V8LIBDIR)/libv8_monolith.a $(OBJECTS) $(ENTITLEMENTS)
+	$(CXX) $(CXXFLAGS) $(CXXLINKFLAGS) --shared -L$(V8LIBDIR) $(OBJECTS) -o $@ -pthread -lv8_monolith && $(STRIP) $@ && $(CODESIGN) $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -191,13 +193,17 @@ cleanv8:
 zapv8:
 	rm -rf $(V8BUILDDIR)
 
-buildall:
+buildallrelease:
 	make CPU=x64
 	make CPU=arm64
 	$(MAKELINUX) CPU=arm
+
+buildalldebug:
 	make CPU=x64 DEBUG=1
 	make CPU=arm64 DEBUG=1
 	$(MAKELINUX) CPU=arm DEBUG=1
+
+buildall: buildallrelease buildalldebug
 
 cleanall:
 	make clean CPU=x64

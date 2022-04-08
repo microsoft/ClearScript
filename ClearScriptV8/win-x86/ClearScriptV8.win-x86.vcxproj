@@ -165,6 +165,7 @@
     <ClInclude Include="..\HostObjectHolder.h" />
     <ClInclude Include="..\HostObjectHolderImpl.h" />
     <ClInclude Include="..\HostObjectUtil.h" />
+    <ClInclude Include="..\V8GlobalFlags.h" />
     <ClInclude Include="..\V8SplitProxyManaged.h" />
     <ClInclude Include="..\IV8Entity.h" />
     <ClInclude Include="..\Mutex.h" />

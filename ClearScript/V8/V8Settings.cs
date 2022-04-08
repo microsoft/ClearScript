@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
+
 namespace Microsoft.ClearScript.V8
 {
     /// <summary>
@@ -27,6 +29,17 @@ namespace Microsoft.ClearScript.V8
         /// reassignment will have no effect.
         /// </para>
         /// </remarks>
+        [Obsolete("V8 no longer supports Top-Level Await control. The feature is always enabled.")]
         public static bool EnableTopLevelAwait { get; set; }
+
+        /// <summary>
+        /// Gets or sets global V8 options.
+        /// </summary>
+        /// <remarks>
+        /// To override the default global options, set this property before instantiating
+        /// <see cref="V8ScriptEngine"/> or <see cref="V8Runtime"/> for the first time. Subsequent
+        /// reassignment will have no effect.
+        /// </remarks>
+        public static V8GlobalFlags GlobalFlags { get; set; }
     }
 }

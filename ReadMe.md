@@ -1,6 +1,6 @@
 [![Banner](https://github.com/microsoft/ClearScript/blob/master/docs/ClearScript7-ReadMe.png)](#)
 
-[![Follow](https://img.shields.io/twitter/follow/ClearScriptLib?label=Follow)](https://twitter.com/ClearScriptLib)
+[![Follow](https://img.shields.io/twitter/follow/ClearScriptLib?style=social&label=Follow)](https://twitter.com/ClearScriptLib)
 
 # Description
 ClearScript is a library that makes it easy to add scripting to your .NET applications. It currently supports JavaScript (via [V8](https://developers.google.com/v8/) and [JScript](https://docs.microsoft.com/en-us/previous-versions//hbxc2t98(v=vs.85))) and [VBScript](https://docs.microsoft.com/en-us/previous-versions//t0aew7h6(v=vs.85)).
@@ -62,6 +62,7 @@ Platform-specific V8 libraries.
 | macOS | [![ClearScript.V8.Native.osx-x64](https://img.shields.io/nuget/v/Microsoft.ClearScript.V8.Native.osx-x64?label=macOS%20(x64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.osx-x64) [![ClearScript.V8.Native.osx-arm64](https://img.shields.io/nuget/v/Microsoft.ClearScript.V8.Native.osx-arm64?label=macOS%20(arm64)&logo=V8&logoColor=white)](https://www.nuget.org/packages/Microsoft.ClearScript.V8.Native.osx-arm64) |
 
 # Documentation
+* [Main Site / Blog](https://microsoft.github.io/ClearScript/)
 * [Examples](https://microsoft.github.io/ClearScript/Examples/Examples.html)
 * [Tutorial](https://microsoft.github.io/ClearScript/Tutorial/FAQtorial.html)
 * [API reference](https://microsoft.github.io/ClearScript/Reference/index.html)

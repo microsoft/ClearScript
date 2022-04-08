@@ -92,7 +92,7 @@ namespace Microsoft.ClearScript
                 BindingFlags.PutDispProperty |
                 BindingFlags.PutRefDispProperty;
 
-            if (name == "out")
+            if (string.Equals(name, "out", invokeFlags.GetMemberNameComparison()))
             {
                 if ((invokeFlags & getPropertyFlags) != 0)
                 {
@@ -100,7 +100,7 @@ namespace Microsoft.ClearScript
                     return true;
                 }
             }
-            else if (name == "ref")
+            else if (string.Equals(name, "ref", invokeFlags.GetMemberNameComparison()))
             {
                 if ((invokeFlags & getPropertyFlags) != 0)
                 {
@@ -108,7 +108,7 @@ namespace Microsoft.ClearScript
                     return true;
                 }
             }
-            else if (name == "value")
+            else if (string.Equals(name, "value", invokeFlags.GetMemberNameComparison()))
             {
                 if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
                 {

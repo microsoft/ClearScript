@@ -503,11 +503,11 @@ public:
     void NORETURN ThrowOutOfMemoryException();
 
     static void ImportMetaInitializeCallback(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);
-    static v8::MaybeLocal<v8::Promise> ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> importAssertions);
+    static v8::MaybeLocal<v8::Promise> ModuleImportCallback(v8::Local<v8::Context> hContext, v8::Local<v8::Data> hHostDefinedOptions, v8::Local<v8::Value> hResourceName, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> hImportAssertions);
     static v8::MaybeLocal<v8::Module> ModuleResolveCallback(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> importAssertions, v8::Local<v8::Module> hReferrer);
 
     void InitializeImportMeta(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule, v8::Local<v8::Object> hMeta);
-    v8::MaybeLocal<v8::Promise> ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::ScriptOrModule> hReferrer, v8::Local<v8::String> hSpecifier);
+    v8::MaybeLocal<v8::Promise> ImportModule(v8::Local<v8::Context> hContext, v8::Local<v8::Data> hHostDefinedOptions, v8::Local<v8::Value> hResourceName, v8::Local<v8::String> hSpecifier, v8::Local<v8::FixedArray> hImportAssertions);
     v8::MaybeLocal<v8::Module> ResolveModule(v8::Local<v8::Context> hContext, v8::Local<v8::String> hSpecifier, v8::Local<v8::Module> hReferrer);
 
     bool TryGetCachedScriptInfo(uint64_t uniqueId, V8DocumentInfo& documentInfo);
@@ -521,6 +521,29 @@ private:
 
     using CallWithLockEntry = std::pair<bool /*allowNesting*/, CallWithLockCallback>;
     using CallWithLockQueue = std::queue<CallWithLockEntry>;
+
+    class PromiseHookScope final
+    {
+        PROHIBIT_COPY(PromiseHookScope)
+        PROHIBIT_HEAP(PromiseHookScope)
+
+    public:
+
+        explicit PromiseHookScope(V8IsolateImpl& isolateImpl) :
+            m_IsolateImpl(isolateImpl)
+        {
+            m_IsolateImpl.m_upIsolate->SetPromiseHook(PromiseHook);
+        }
+
+        ~PromiseHookScope()
+        {
+            m_IsolateImpl.m_upIsolate->SetPromiseHook(nullptr);
+        }
+
+    private:
+
+        V8IsolateImpl& m_IsolateImpl;
+    };
 
     struct ContextEntry final
     {

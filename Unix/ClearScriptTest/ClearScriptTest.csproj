@@ -1,6 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
+        <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+        <IsPackable>false</IsPackable>
+        <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(VisualStudioVersion)'&lt;'17.0'">
         <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
         <IsPackable>false</IsPackable>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
@@ -65,6 +72,8 @@
         <Compile Include="..\..\ClearScriptTest\ScriptAccessTest.cs" Link="ScriptAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\StaticMemberAccessTest.cs" Link="StaticMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\StaticTestClass.cs" Link="StaticTestClass.cs" />
+        <Compile Include="..\..\ClearScriptTest\TestEnumerable.cs" Link="TestEnumerable.cs" />
+        <Compile Include="..\..\ClearScriptTest\TestEnumerable.NetStandard.cs" Link="TestEnumerable.NetStandard.cs" />
         <Compile Include="..\..\ClearScriptTest\TestObject.cs" Link="TestObject.cs" />
         <Compile Include="..\..\ClearScriptTest\TypeRestrictionTest.cs" Link="TypeRestrictionTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ArrayBufferOrViewTest.cs" Link="V8ArrayBufferOrViewTest.cs" />
@@ -213,6 +222,12 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\JavaScript\StandardModuleWithCycles\ModuleWithSideEffects.js" Link="JavaScript\StandardModuleWithCycles\ModuleWithSideEffects.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\WebAssembly\HelloWorld.js" Link="JavaScript\WebAssembly\HelloWorld.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\WebAssembly\HelloWorld.wasm" Link="JavaScript\WebAssembly\HelloWorld.wasm">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\VBScript\Expression.vbs" Link="VBScript\Expression.vbs">

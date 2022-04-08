@@ -7,7 +7,6 @@ using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
@@ -1665,7 +1664,7 @@ namespace Microsoft.ClearScript
                     }
                 }
             }
-            else if (type.IsImport && (type.Assembly.GetCustomAttribute(typeof(ImportedFromTypeLibAttribute)) != null))
+            else if (type.IsImport && (type.Assembly.GetOrLoadCustomAttribute<ImportedFromTypeLibAttribute>(false) != null))
             {
                 type.Assembly.GetReferencedEnums().ForEach(collection.AddType);
                 return collection;

@@ -437,7 +437,7 @@ namespace Microsoft.ClearScript.V8
 
         #region Nested type: V8ArrayBufferOrView
 
-        private class V8ArrayBufferOrView : V8ScriptItem
+        private abstract class V8ArrayBufferOrView : V8ScriptItem
         {
             private V8ArrayBufferOrViewInfo info;
             private IArrayBuffer arrayBuffer;
@@ -457,16 +457,10 @@ namespace Microsoft.ClearScript.V8
 
             protected byte[] GetBytes()
             {
-                return engine.ScriptInvoke(() =>
-                {
-                    var result = new byte[Size];
-                    target.InvokeWithArrayBufferOrViewData(pData =>
-                    {
-                        UnmanagedMemoryHelpers.Copy(pData, Size, result, 0);
-                    });
-
-                    return result;
-                });
+                var size = Size;
+                var result = new byte[size];
+                InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(pData, size, result, 0));
+                return result;
             }
 
             protected ulong ReadBytes(ulong offset, ulong count, byte[] destination, ulong destinationIndex)
@@ -477,16 +471,7 @@ namespace Microsoft.ClearScript.V8
                     throw new ArgumentOutOfRangeException(nameof(offset));
                 }
 
-                count = Math.Min(count, size - offset);
-                return engine.ScriptInvoke(() =>
-                {
-                    target.InvokeWithArrayBufferOrViewData(pData =>
-                    {
-                        count = UnmanagedMemoryHelpers.Copy(GetPtrWithOffset(pData, offset), count, destination, destinationIndex);
-                    });
-
-                    return count;
-                });
+                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(GetPtrWithOffset(pData, offset), Math.Min(count, size - offset), destination, destinationIndex));
             }
 
             protected ulong WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
@@ -497,15 +482,21 @@ namespace Microsoft.ClearScript.V8
                     throw new ArgumentOutOfRangeException(nameof(offset));
                 }
 
-                count = Math.Min(count, size - offset);
+                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(source, sourceIndex, Math.Min(count, size - offset), GetPtrWithOffset(pData, offset)));
+            }
+
+            protected void InvokeWithDirectAccess(Action<IntPtr> action)
+            {
+                engine.ScriptInvoke(() => target.InvokeWithArrayBufferOrViewData(action));
+            }
+
+            protected T InvokeWithDirectAccess<T>(Func<IntPtr, T> func)
+            {
                 return engine.ScriptInvoke(() =>
                 {
-                    target.InvokeWithArrayBufferOrViewData(pData =>
-                    {
-                        count = UnmanagedMemoryHelpers.Copy(source, sourceIndex, count, GetPtrWithOffset(pData, offset));
-                    });
-
-                    return count;
+                    var result = default(T);
+                    target.InvokeWithArrayBufferOrViewData(pData => result = func(pData));
+                    return result;
                 });
             }
 
@@ -569,6 +560,18 @@ namespace Microsoft.ClearScript.V8
                 return WriteBytes(source, sourceIndex, count, offset);
             }
 
+            void IArrayBuffer.InvokeWithDirectAccess(Action<IntPtr> action)
+            {
+                MiscHelpers.VerifyNonNullArgument(action, nameof(action));
+                InvokeWithDirectAccess(action);
+            }
+
+            T IArrayBuffer.InvokeWithDirectAccess<T>(Func<IntPtr, T> func)
+            {
+                MiscHelpers.VerifyNonNullArgument(func, nameof(func));
+                return InvokeWithDirectAccess(func);
+            }
+
             #endregion
         }
 
@@ -576,7 +579,7 @@ namespace Microsoft.ClearScript.V8
 
         #region Nested type: V8ArrayBufferView
 
-        private class V8ArrayBufferView : V8ArrayBufferOrView, IArrayBufferView
+        private abstract class V8ArrayBufferView : V8ArrayBufferOrView, IArrayBufferView
         {
             protected V8ArrayBufferView(V8ScriptEngine engine, IV8Object target)
                 : base(engine, target)
@@ -604,6 +607,18 @@ namespace Microsoft.ClearScript.V8
             ulong IArrayBufferView.WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
             {
                 return WriteBytes(source, sourceIndex, count, offset);
+            }
+
+            void IArrayBufferView.InvokeWithDirectAccess(Action<IntPtr> action)
+            {
+                MiscHelpers.VerifyNonNullArgument(action, nameof(action));
+                InvokeWithDirectAccess(action);
+            }
+
+            T IArrayBufferView.InvokeWithDirectAccess<T>(Func<IntPtr, T> func)
+            {
+                MiscHelpers.VerifyNonNullArgument(func, nameof(func));
+                return InvokeWithDirectAccess(func);
             }
 
             #endregion
@@ -660,16 +675,10 @@ namespace Microsoft.ClearScript.V8
 
             T[] ITypedArray<T>.ToArray()
             {
-                return engine.ScriptInvoke(() =>
-                {
-                    var result = new T[Length];
-                    target.InvokeWithArrayBufferOrViewData(pData =>
-                    {
-                        UnmanagedMemoryHelpers.Copy(pData, Length, result, 0);
-                    });
-
-                    return result;
-                });
+                var length = Length;
+                var result = new T[length];
+                InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(pData, length, result, 0));
+                return result;
             }
 
             ulong ITypedArray<T>.Read(ulong index, ulong length, T[] destination, ulong destinationIndex)
@@ -680,16 +689,7 @@ namespace Microsoft.ClearScript.V8
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                length = Math.Min(length, totalLength - index);
-                return engine.ScriptInvoke(() =>
-                {
-                    target.InvokeWithArrayBufferOrViewData(pData =>
-                    {
-                        length = UnmanagedMemoryHelpers.Copy(GetPtrWithIndex(pData, index), length, destination, destinationIndex);
-                    });
-
-                    return length;
-                });
+                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(GetPtrWithIndex(pData, index), Math.Min(length, totalLength - index), destination, destinationIndex));
             }
 
             ulong ITypedArray<T>.Write(T[] source, ulong sourceIndex, ulong length, ulong index)
@@ -700,16 +700,7 @@ namespace Microsoft.ClearScript.V8
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                length = Math.Min(length, totalLength - index);
-                return engine.ScriptInvoke(() =>
-                {
-                    target.InvokeWithArrayBufferOrViewData(pData =>
-                    {
-                        length = UnmanagedMemoryHelpers.Copy(source, sourceIndex, length, GetPtrWithIndex(pData, index));
-                    });
-
-                    return length;
-                });
+                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(source, sourceIndex, Math.Min(length, totalLength - index), GetPtrWithIndex(pData, index)));
             }
 
             #endregion
@@ -732,16 +723,10 @@ namespace Microsoft.ClearScript.V8
 
             char[] ITypedArray<char>.ToArray()
             {
-                return engine.ScriptInvoke(() =>
-                {
-                    var result = new char[Length];
-                    target.InvokeWithArrayBufferOrViewData(pData =>
-                    {
-                        UnmanagedMemoryHelpers.Copy(pData, Length, result, 0);
-                    });
-
-                    return result;
-                });
+                var length = Length;
+                var result = new char[length];
+                InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(pData, length, result, 0));
+                return result;
             }
 
             ulong ITypedArray<char>.Read(ulong index, ulong length, char[] destination, ulong destinationIndex)
@@ -752,16 +737,7 @@ namespace Microsoft.ClearScript.V8
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                length = Math.Min(length, totalLength - index);
-                return engine.ScriptInvoke(() =>
-                {
-                    target.InvokeWithArrayBufferOrViewData(pData =>
-                    {
-                        length = UnmanagedMemoryHelpers.Copy(GetPtrWithIndex(pData, index), length, destination, destinationIndex);
-                    });
-
-                    return length;
-                });
+                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(GetPtrWithIndex(pData, index), Math.Min(length, totalLength - index), destination, destinationIndex));
             }
 
             ulong ITypedArray<char>.Write(char[] source, ulong sourceIndex, ulong length, ulong index)
@@ -772,16 +748,7 @@ namespace Microsoft.ClearScript.V8
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                length = Math.Min(length, totalLength - index);
-                return engine.ScriptInvoke(() =>
-                {
-                    target.InvokeWithArrayBufferOrViewData(pData =>
-                    {
-                        length = UnmanagedMemoryHelpers.Copy(source, sourceIndex, length, GetPtrWithIndex(pData, index));
-                    });
-
-                    return length;
-                });
+                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(source, sourceIndex, Math.Min(length, totalLength - index), GetPtrWithIndex(pData, index)));
             }
 
             #endregion

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-v8testedrev=9.7.106.18
+v8testedrev=10.0.139.8
 v8testedcommit=
 
 if [[ $v8testedcommit == "" ]]; then
@@ -200,11 +200,15 @@ cd build/v8 || abort
 echo "Creating/updating patches ..."
 git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createV8Patch.log || fail
 
-echo "Building V8 ..."
 if [[ $linux == true ]]; then
-    build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu
+    echo "Installing LKG sysroots ..."
+    cp ../../sysroots.json build/linux/sysroot_scripts
+    build/linux/sysroot_scripts/install-sysroot.py --arch=x64 || fail
+    build/linux/sysroot_scripts/install-sysroot.py --arch=i386 || fail
+    build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu || fail
 fi
 
+echo "Building V8 ..."
 if [[ $android == true ]]; then
     gn gen out/android_$cpu/$mode --args="enable_precompiled_headers=false fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug is_official_build=$isofficial target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\" target_os=\"android\" use_goma=false v8_static_library=true use_custom_libcxx_for_host=false v8_enable_i18n_support=false v8_android_log_stdout=true chrome_pgo_phase=0" >gn-android-$cpu-$mode.log || fail
     ninja -C out/android_$cpu/$mode obj/libv8_monolith.a >build-android-$cpu-$mode.log || fail

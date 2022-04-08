@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,10 +10,22 @@ using Microsoft.ClearScript.JavaScript;
 namespace Microsoft.ClearScript.Util
 {
     /// <exclude/>
-    public interface IAsyncEnumeratorPromise<out T> : IAsyncEnumerator<T>
+    public interface IAsyncEnumeratorPromise<out T>
     {
         /// <exclude/>
+        T Current { get; }
+
+        /// <exclude/>
+        Task<bool> MoveNextAsync();
+
+        /// <exclude/>
+        Task DisposeAsync();
+
+        /// <exclude/>
         object MoveNextPromise();
+
+        /// <exclude/>
+        object DisposePromise();
     }
 
     internal static partial class EnumerableHelpers
@@ -27,11 +40,6 @@ namespace Microsoft.ClearScript.Util
             return new AsyncEnumeratorPromiseOnEnumerator(engine, enumerator);
         }
 
-        public static IAsyncEnumeratorPromise<T> GetAsyncEnumerator<T>(IAsyncEnumerable<T> source, ScriptEngine engine)
-        {
-            return new AsyncEnumeratorPromiseOnAsyncEnumerator<T>(engine, source.GetAsyncEnumerator());
-        }
-
         public static IAsyncEnumeratorPromise<T> GetAsyncEnumerator<T>(IEnumerable<T> source, ScriptEngine engine)
         {
             return source.GetEnumerator().ToAsyncEnumerator(engine);
@@ -43,7 +51,12 @@ namespace Microsoft.ClearScript.Util
         }
     }
 
-    internal abstract class AsyncEnumeratorPromise<T> : IAsyncEnumeratorPromise<T>
+    internal abstract class AsyncEnumeratorPromiseBase
+    {
+        protected static readonly Task CompletedTask = Task.FromResult(0);
+    }
+
+    internal abstract class AsyncEnumeratorPromise<T> : AsyncEnumeratorPromiseBase, IAsyncEnumeratorPromise<T>
     {
         private readonly ScriptEngine engine;
 
@@ -54,37 +67,18 @@ namespace Microsoft.ClearScript.Util
 
         public abstract T Current { get; }
 
-        public abstract ValueTask<bool> MoveNextAsync();
+        public abstract Task<bool> MoveNextAsync();
+
+        public abstract Task DisposeAsync();
 
         public object MoveNextPromise()
         {
             return MoveNextAsync().ToPromise(engine);
         }
 
-        public abstract ValueTask DisposeAsync();
-    }
-
-
-    internal sealed class AsyncEnumeratorPromiseOnAsyncEnumerator<T> : AsyncEnumeratorPromise<T>
-    {
-        private readonly IAsyncEnumerator<T> enumerator;
-
-        public AsyncEnumeratorPromiseOnAsyncEnumerator(ScriptEngine engine, IAsyncEnumerator<T> enumerator)
-            : base(engine)
+        public object DisposePromise()
         {
-            this.enumerator = enumerator;
-        }
-
-        public override T Current => enumerator.Current;
-
-        public override ValueTask<bool> MoveNextAsync()
-        {
-            return enumerator.MoveNextAsync();
-        }
-
-        public override ValueTask DisposeAsync()
-        {
-            return enumerator.DisposeAsync();
+            return DisposeAsync().ToPromise(engine);
         }
     }
 
@@ -100,15 +94,15 @@ namespace Microsoft.ClearScript.Util
 
         public override T Current => enumerator.Current;
 
-        public override ValueTask<bool> MoveNextAsync()
+        public override Task<bool> MoveNextAsync()
         {
-            return new ValueTask<bool>(enumerator.MoveNext());
+            return Task.FromResult(enumerator.MoveNext());
         }
 
-        public override ValueTask DisposeAsync()
+        public override Task DisposeAsync()
         {
             enumerator.Dispose();
-            return default;
+            return CompletedTask;
         }
     }
 
@@ -124,14 +118,15 @@ namespace Microsoft.ClearScript.Util
 
         public override object Current => enumerator.Current;
 
-        public override ValueTask<bool> MoveNextAsync()
+        public override Task<bool> MoveNextAsync()
         {
-            return new ValueTask<bool>(enumerator.MoveNext());
+            return Task.FromResult(enumerator.MoveNext());
         }
 
-        public override ValueTask DisposeAsync()
+        public override Task DisposeAsync()
         {
-            return default;
+            (enumerator as IDisposable)?.Dispose();
+            return CompletedTask;
         }
     }
 }

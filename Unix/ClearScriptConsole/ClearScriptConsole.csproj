@@ -1,6 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
+        <OutputType>Exe</OutputType>
+        <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+        <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
+        <AssemblyName>ClearScriptConsole</AssemblyName>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(VisualStudioVersion)'&lt;'17.0'">
         <OutputType>Exe</OutputType>
         <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>

@@ -1,0 +1,19 @@
+The Linux arm (32-bit) cross-build is broken as of V8 9.9. The problem appears to be a bad i386 sysroot tarball.
+
+V8 bug: https://bugs.chromium.org/p/v8/issues/detail?id=12673
+
+Workaround:
+
+1: Build normally; the arm cross-build should fail.
+
+2: Edit V8/build/v8/build/linux/sysroot_scripts/sysroots.json, patching in the following LKG definition:
+
+    "sid_i386": {
+        "Sha1Sum": "4840dc83ec7c3816ae0262e9e93231736bf0a5b7",
+        "SysrootDir": "debian_sid_i386-sysroot",
+        "Tarball": "debian_sid_i386_sysroot.tar.xz"
+    }
+
+3: Run "V8/build/v8/build/linux/sysroot_scripts/install-sysroot.py --arch=i386"
+
+4: Build normally; all versions should now succeed.

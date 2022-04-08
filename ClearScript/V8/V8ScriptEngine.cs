@@ -335,14 +335,24 @@ namespace Microsoft.ClearScript.V8
                             },
 
                             toIterator: function* (enumerator) {
-                                while (enumerator.MoveNext()) {
-                                    yield enumerator.Current;
+                                try {
+                                    while (enumerator.MoveNext()) {
+                                        yield enumerator.Current;
+                                    }
+                                }
+                                finally {
+                                    enumerator.Dispose();
                                 }
                             },
 
                             toAsyncIterator: async function* (asyncEnumerator) {
-                                while (await asyncEnumerator.MoveNextPromise()) {
-                                    yield asyncEnumerator.Current;
+                                try {
+                                    while (await asyncEnumerator.MoveNextPromise()) {
+                                        yield asyncEnumerator.Current;
+                                    }
+                                }
+                                finally {
+                                    await asyncEnumerator.DisposePromise();
                                 }
                             }
 
@@ -1340,6 +1350,8 @@ namespace Microsoft.ClearScript.V8
         internal override bool EnumerateInstanceMethods => base.EnumerateInstanceMethods && !SuppressInstanceMethodEnumeration;
 
         internal override bool EnumerateExtensionMethods => base.EnumerateExtensionMethods && !SuppressExtensionMethodEnumeration;
+
+        internal override bool UseCaseInsensitiveMemberBinding => engineFlags.HasFlag(V8ScriptEngineFlags.UseCaseInsensitiveMemberBinding);
 
         internal override void AddHostItem(string itemName, HostItemFlags flags, object item)
         {

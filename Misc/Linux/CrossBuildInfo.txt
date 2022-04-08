@@ -1,0 +1,2 @@
+sudo apt install g++-10-aarch64-linux-gnu
+sudo apt install g++-10-arm-linux-gnueabihf

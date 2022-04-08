@@ -38,7 +38,7 @@ namespace Microsoft.ClearScript
 
         private static bool IsScriptableExtensionMethod(MethodInfo method, Type accessContext, ScriptAccess defaultAccess)
         {
-            return method.IsScriptable(accessContext, defaultAccess) && method.IsDefined(typeof(ExtensionAttribute), false);
+            return method.IsScriptable(accessContext, defaultAccess) && method.HasCustomAttributes<ExtensionAttribute>(false);
         }
     }
 

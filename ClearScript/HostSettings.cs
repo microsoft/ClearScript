@@ -8,6 +8,9 @@ namespace Microsoft.ClearScript
     /// </summary>
     public static class HostSettings
     {
+        private static CustomAttributeLoader customAttributeLoader;
+        private static readonly CustomAttributeLoader defaultCustomAttributeLoader = new CustomAttributeLoader();
+
         /// <summary>
         /// Enables or disables assembly table usage.
         /// </summary>
@@ -43,5 +46,19 @@ namespace Microsoft.ClearScript
         /// linux assemblies on Android Mono
         /// </remarks>
         public static bool IsAndroid { get; set; }
+
+        /// <summary>
+        /// Gets or sets the custom attribute loader for ClearScript.
+        /// </summary>
+        public static CustomAttributeLoader CustomAttributeLoader
+        {
+            get => customAttributeLoader ?? defaultCustomAttributeLoader;
+
+            set
+            {
+                customAttributeLoader = value;
+                CustomAttributes.ClearCache();
+            }
+        }
     }
 }

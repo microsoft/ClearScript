@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -221,7 +222,7 @@ namespace Microsoft.ClearScript.Util
 
         public static string GetScriptName(this MemberInfo member)
         {
-            var attribute = member.GetAttribute<ScriptMemberAttribute>(true);
+            var attribute = member.GetOrLoadCustomAttribute<ScriptMemberAttribute>();
             return attribute?.Name ?? member.GetShortName();
         }
 
@@ -237,7 +238,7 @@ namespace Microsoft.ClearScript.Util
 
         public static ScriptAccess GetScriptAccess(this MemberInfo member, ScriptAccess defaultValue, bool chain = true)
         {
-            var attribute = member.GetAttribute<ScriptUsageAttribute>(true);
+            var attribute = member.GetOrLoadCustomAttribute<ScriptUsageAttribute>();
             if (attribute != null)
             {
                 return attribute.Access;
@@ -253,14 +254,14 @@ namespace Microsoft.ClearScript.Util
                     {
                         if (testType.IsNested)
                         {
-                            var nestedTypeAttribute = testType.GetAttribute<ScriptUsageAttribute>(true);
+                            var nestedTypeAttribute = testType.GetOrLoadCustomAttribute<ScriptUsageAttribute>();
                             if (nestedTypeAttribute != null)
                             {
                                 return nestedTypeAttribute.Access;
                             }
                         }
 
-                        var typeAttribute = testType.GetAttribute<DefaultScriptUsageAttribute>(true);
+                        var typeAttribute = testType.GetOrLoadCustomAttribute<DefaultScriptUsageAttribute>();
                         if (typeAttribute != null)
                         {
                             return typeAttribute.Access;
@@ -270,7 +271,7 @@ namespace Microsoft.ClearScript.Util
 
                     } while (testType != null);
 
-                    var assemblyAttribute = declaringType.Assembly.GetAttribute<DefaultScriptUsageAttribute>(true);
+                    var assemblyAttribute = declaringType.Assembly.GetOrLoadCustomAttribute<DefaultScriptUsageAttribute>();
                     if (assemblyAttribute != null)
                     {
                         return assemblyAttribute.Access;
@@ -288,13 +289,13 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsDispID(this MemberInfo member, int dispid)
         {
-            var attribute = member.GetAttribute<DispIdAttribute>(true);
+            var attribute = member.GetOrLoadCustomAttribute<DispIdAttribute>();
             return (attribute != null) && (attribute.Value == dispid);
         }
 
         public static ScriptMemberFlags GetScriptMemberFlags(this MemberInfo member)
         {
-            var attribute = member.GetAttribute<ScriptMemberAttribute>(true);
+            var attribute = member.GetOrLoadCustomAttribute<ScriptMemberAttribute>();
             return attribute?.Flags ?? ScriptMemberFlags.None;
         }
 
@@ -305,11 +306,11 @@ namespace Microsoft.ClearScript.Util
             return (index >= 0) ? name.Substring(index + 1) : name;
         }
 
-        public static T GetAttribute<T>(this MemberInfo member, bool inherit) where T : Attribute
+        public static T GetOrLoadCustomAttribute<T>(this MemberInfo member, bool inherit = true) where T : Attribute
         {
             try
             {
-                return Attribute.GetCustomAttributes(member, typeof(T), inherit).SingleOrDefault() as T;
+                return CustomAttributes.GetOrLoad<T>(member, inherit).SingleOrDefault();
             }
             catch (AmbiguousMatchException)
             {
@@ -318,11 +319,21 @@ namespace Microsoft.ClearScript.Util
                     // this affects SqlDataReader and is indicative of a .NET issue described here:
                     // http://connect.microsoft.com/VisualStudio/feedback/details/646399/attribute-isdefined-throws-ambiguousmatchexception-for-indexer-properties-and-inherited-attributes
 
-                    return Attribute.GetCustomAttributes(member, typeof(T), false).SingleOrDefault() as T;
+                    return CustomAttributes.GetOrLoad<T>(member, false).SingleOrDefault();
                 }
 
                 throw;
             }
+        }
+
+        public static IEnumerable<T> GetOrLoadCustomAttributes<T>(this MemberInfo member, bool inherit = true) where T : Attribute
+        {
+            return CustomAttributes.GetOrLoad<T>(member, inherit);
+        }
+
+        public static bool HasCustomAttributes<T>(this MemberInfo member, bool inherit = true) where T : Attribute
+        {
+            return CustomAttributes.Has<T>(member, inherit);
         }
 
         private static bool IsExplicitImplementation(this MemberInfo member)

@@ -37,6 +37,9 @@
         <Compile Include="..\..\ClearScript\ByRefArg.cs" Link="ByRefArg.cs" />
         <Compile Include="..\..\ClearScript\CanonicalRefTable.cs" Link="CanonicalRefTable.cs" />
         <Compile Include="..\..\ClearScript\ContinuationCallback.cs" Link="ContinuationCallback.cs" />
+        <Compile Include="..\..\ClearScript\CustomAttributeLoader.cs" Link="CustomAttributeLoader.cs" />
+        <Compile Include="..\..\ClearScript\CustomAttributes.cs" Link="CustomAttributes.cs" />
+        <Compile Include="..\..\ClearScript\CustomAttributes.NetFramework.cs" Link="CustomAttributes.NetFramework.cs" />
         <Compile Include="..\..\ClearScript\DefaultScriptUsageAttribute.cs" Link="DefaultScriptUsageAttribute.cs" />
         <Compile Include="..\..\ClearScript\DelegateFactory.cs" Link="DelegateFactory.cs" />
         <Compile Include="..\..\ClearScript\DelegateFactory.Generated.cs">
@@ -130,6 +133,7 @@
         <Compile Include="..\..\ClearScript\Util\CoTaskMemBlock.cs" Link="Util\CoTaskMemBlock.cs" />
         <Compile Include="..\..\ClearScript\Util\DynamicHelpers.cs" Link="Util\DynamicHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.cs" Link="Util\EnumerableHelpers.cs" />
+        <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.NetFramework.cs" Link="Util\EnumerableHelpers.NetFramework.cs" />
         <Compile Include="..\..\ClearScript\Util\Holder.cs" Link="Util\Holder.cs" />
         <Compile Include="..\..\ClearScript\Util\IDynamic.cs" Link="Util\IDynamic.cs" />
         <Compile Include="..\..\ClearScript\Util\IHostInvokeContext.cs" Link="Util\IHostInvokeContext.cs" />
@@ -188,10 +192,7 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+        <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     </ItemGroup>
 
     <ItemGroup>
