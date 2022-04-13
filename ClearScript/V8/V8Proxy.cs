@@ -52,7 +52,14 @@ namespace Microsoft.ClearScript.V8
             string architecture;
             string extension;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            var isAndroid = HostSettings.IsAndroid;
+
+            if (isAndroid)
+            {
+                platform = "android";
+                extension = "so";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 platform = "win";
                 extension = "dll";
@@ -74,11 +81,25 @@ namespace Microsoft.ClearScript.V8
 
             if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
             {
-                architecture = "x64";
+                if (isAndroid)
+                {
+                    architecture = "arm64";
+                }
+                else
+                {
+                    architecture = "x64";
+                }
             }
             else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
             {
-                architecture = "x86";
+                if (isAndroid)
+                {
+                    architecture = "arm";
+                }
+                else
+                {
+                    architecture = "x86";
+                }
             }
             else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm)
             {
@@ -100,7 +121,12 @@ namespace Microsoft.ClearScript.V8
         {
             var fileName = $"{baseName}.{platform}-{architecture}.{extension}";
 
-            IntPtr hLibrary;
+            IntPtr hLibrary = LoadLibrary(fileName);
+            if (hLibrary != IntPtr.Zero)
+            {
+                return hLibrary;
+            }
+
             var messageBuilder = new StringBuilder();
 
             var paths = GetDirPaths(platform, architecture).Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
@@ -125,6 +151,11 @@ namespace Microsoft.ClearScript.V8
                 }
 
                 messageBuilder.AppendInvariant("\n{0}: {1}", systemPath, MiscHelpers.EnsureNonBlank(GetLoadLibraryErrorMessage(), "Unknown error"));
+            }
+
+            if (HostSettings.IsAndroid)
+            {
+                return IntPtr.Zero;
             }
 
             var message = MiscHelpers.FormatInvariant("Cannot load ClearScript V8 library. Load failure information for {0}:{1}", fileName, messageBuilder);
@@ -177,7 +208,14 @@ namespace Microsoft.ClearScript.V8
             }
 
             var appDomain = AppDomain.CurrentDomain;
-            yield return appDomain.BaseDirectory;
+            var baseDirectory = "";
+            try
+            {
+                baseDirectory = appDomain.BaseDirectory;
+            }
+            catch { }
+
+            if (!string.IsNullOrWhiteSpace(baseDirectory)) yield return baseDirectory;
 
             var searchPath = appDomain.RelativeSearchPath;
             if (!string.IsNullOrWhiteSpace(searchPath))

@@ -10,21 +10,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         private static IV8SplitProxyNative CreateInstance()
         {
-            var architecture = RuntimeInformation.ProcessArchitecture;
-
             <#
             foreach (var osPlatform in platforms.Select(testPlatform => testPlatform.Item1).Distinct())
             {
             #>
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.<#= osPlatform #>))
+            if (IsOSPlatform("<#= osPlatform #>"))
             {
                 <#
                 foreach (var platform in platforms.Where(testPlatform => testPlatform.Item1 == osPlatform))
                 {
                 #>
 
-                if (architecture == Architecture.<#= platform.Item2 #>)
+                if (IsArchitecture("<#= osPlatform #>", "<#= platform.Item2 #>"))
                 {
                     return new <#= $"Impl_{osPlatform}_{platform.Item2}" #>();
                 }

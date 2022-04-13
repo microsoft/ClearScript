@@ -554,7 +554,12 @@ namespace Microsoft.ClearScript.Util
 
         public static bool PlatformIsLinux()
         {
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+            return !HostSettings.IsAndroid && RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        }
+
+        public static bool PlatformIsAndroid()
+        {
+            return HostSettings.IsAndroid;
         }
 
         public static bool PlatformIsOSX()

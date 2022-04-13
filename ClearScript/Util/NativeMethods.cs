@@ -16,6 +16,11 @@ namespace Microsoft.ClearScript.Util
                 return NativeWindowsMethods.LoadLibraryW(path);
             }
 
+            if (MiscHelpers.PlatformIsAndroid())
+            {
+                return NativeAndroidMethods.LoadLibrary(path);
+            }
+
             if (MiscHelpers.PlatformIsLinux())
             {
                 return NativeLinuxMethods.LoadLibrary(path);
@@ -36,6 +41,11 @@ namespace Microsoft.ClearScript.Util
                 return NativeWindowsMethods.FreeLibrary(hLibrary);
             }
 
+            if (MiscHelpers.PlatformIsAndroid())
+            {
+                return NativeAndroidMethods.FreeLibrary(hLibrary) == 0;
+            }
+
             if (MiscHelpers.PlatformIsLinux())
             {
                 return NativeLinuxMethods.FreeLibrary(hLibrary) == 0;
@@ -54,6 +64,11 @@ namespace Microsoft.ClearScript.Util
             if (MiscHelpers.PlatformIsWindows())
             {
                 return new Win32Exception().Message;
+            }
+
+            if (MiscHelpers.PlatformIsAndroid())
+            {
+                return Marshal.PtrToStringAnsi(NativeAndroidMethods.GetLoadLibraryErrorMessage());
             }
 
             if (MiscHelpers.PlatformIsLinux())
@@ -284,7 +299,46 @@ namespace Microsoft.ClearScript.Util
 
             [DllImport("libdl.so.2", EntryPoint = "dlopen")]
             public static extern IntPtr LoadLibrary(
-                [In] [MarshalAs(UnmanagedType.LPStr)] string path,
+                [In][MarshalAs(UnmanagedType.LPStr)] string path,
+                [In] LoadLibraryFlags flags = LoadLibraryFlags.Now | LoadLibraryFlags.Global
+            );
+
+            [DllImport("libdl.so", EntryPoint = "dlclose")]
+            public static extern int FreeLibrary(
+                [In] IntPtr hLibrary
+            );
+
+            [DllImport("libdl.so", EntryPoint = "dlerror")]
+            public static extern IntPtr GetLoadLibraryErrorMessage();
+
+            // ReSharper restore MemberHidesStaticFromOuterClass
+        }
+
+        #endregion
+
+        #region Nested type: NativeLinuxMethods
+
+        private static class NativeAndroidMethods
+        {
+            // ReSharper disable MemberHidesStaticFromOuterClass
+
+            [Flags]
+            public enum LoadLibraryFlags
+            {
+                // ReSharper disable UnusedMember.Local
+
+                None = 0,
+                Now = 0,
+                Lazy = 1,
+                Local = 0,
+                Global = 2,
+
+                // ReSharper restore UnusedMember.Local
+            }
+
+            [DllImport("libdl.so", EntryPoint = "dlopen")]
+            public static extern IntPtr LoadLibrary(
+                [In][MarshalAs(UnmanagedType.LPStr)] string path,
                 [In] LoadLibraryFlags flags = LoadLibraryFlags.Now | LoadLibraryFlags.Global
             );
 
