@@ -460,6 +460,8 @@ public:
 
     virtual bool GetEnableInterruptPropagation() override;
     virtual void SetEnableInterruptPropagation(bool value) override;
+    virtual bool GetDisableHeapSizeViolationInterrupt() override;
+    virtual void SetDisableHeapSizeViolationInterrupt(bool value) override;
 
     virtual void GetHeapStatistics(v8::HeapStatistics& heapStatistics) override;
     virtual Statistics GetStatistics() override;
@@ -594,8 +596,8 @@ private:
     ExecutionScope* EnterExecutionScope(ExecutionScope* pExecutionScope, size_t* pStackMarker);
     void ExitExecutionScope(ExecutionScope* pPreviousExecutionScope);
 
-    void SetUpHeapWatchTimer(size_t maxHeapSize);
-    void CheckHeapSize(size_t maxHeapSize);
+    void SetUpHeapWatchTimer();
+    void CheckHeapSize(const std::optional<size_t>& optMaxHeapSize);
 
     static void OnBeforeCallEntered(v8::Isolate* pIsolate);
     void OnBeforeCallEntered();
@@ -638,6 +640,7 @@ private:
     SharedPtr<Timer> m_spHeapWatchTimer;
     std::atomic<size_t> m_MaxStackUsage;
     std::atomic<bool> m_EnableInterruptPropagation;
+    std::atomic<bool> m_DisableHeapSizeViolationInterrupt;
     std::atomic<uint32_t> m_CpuProfileSampleInterval;
     size_t m_StackWatchLevel;
     size_t* m_pStackLimit;

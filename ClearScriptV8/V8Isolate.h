@@ -73,6 +73,8 @@ public:
 
     virtual bool GetEnableInterruptPropagation() = 0;
     virtual void SetEnableInterruptPropagation(bool value) = 0;
+    virtual bool GetDisableHeapSizeViolationInterrupt() = 0;
+    virtual void SetDisableHeapSizeViolationInterrupt(bool value) = 0;
 
     virtual void GetHeapStatistics(v8::HeapStatistics& heapStatistics) = 0;
     virtual Statistics GetStatistics() = 0;

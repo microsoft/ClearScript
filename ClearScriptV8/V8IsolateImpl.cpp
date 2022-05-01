@@ -68,7 +68,17 @@ void V8Platform::EnsureInitialized()
         }
 
     #endif // CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
+    
+    #if defined(__APPLE__) && defined(__arm64__)
 
+        // WORKAROUND: On Apple M1 only, our lone WebAssembly test crashes consistently unless this
+        // option is disabled. The crash is indicative of corruption within the SplitProxyManaged
+        // pointer table or of its address in thread-local storage.
+
+        flagStrings.push_back("--no_wasm_async_compilation");
+
+    #endif // defined(__APPLE__) && defined(__arm64__)
+        
         if (HasFlag(m_GlobalFlags, V8GlobalFlags::DisableJITCompilation))
         {
             flagStrings.push_back("--jitless");
@@ -182,7 +192,7 @@ class V8ForegroundTaskRunner final: public v8::TaskRunner
 
 public:
 
-    V8ForegroundTaskRunner(V8IsolateImpl* pIsolateImpl);
+    V8ForegroundTaskRunner(V8IsolateImpl& isolateImpl);
 
     virtual void PostTask(std::unique_ptr<v8::Task> upTask) override;
     virtual void PostNonNestableTask(std::unique_ptr<v8::Task> upTask) override;
@@ -195,15 +205,15 @@ public:
 
 private:
 
-    V8IsolateImpl* m_pIsolateImpl;
+    V8IsolateImpl& m_IsolateImpl;
     WeakRef<V8Isolate> m_wrIsolate;
 };
 
 //-----------------------------------------------------------------------------
 
-V8ForegroundTaskRunner::V8ForegroundTaskRunner(V8IsolateImpl* pIsolateImpl):
-    m_pIsolateImpl(pIsolateImpl),
-    m_wrIsolate(pIsolateImpl->CreateWeakRef())
+V8ForegroundTaskRunner::V8ForegroundTaskRunner(V8IsolateImpl& isolateImpl):
+    m_IsolateImpl(isolateImpl),
+    m_wrIsolate(isolateImpl.CreateWeakRef())
 {
 }
 
@@ -218,7 +228,7 @@ void V8ForegroundTaskRunner::PostTask(std::unique_ptr<v8::Task> upTask)
     }
     else
     {
-        m_pIsolateImpl->RunTaskWithLockAsync(true /*allowNesting*/, std::move(upTask));
+        m_IsolateImpl.RunTaskWithLockAsync(true /*allowNesting*/, std::move(upTask));
     }
 }
 
@@ -229,7 +239,7 @@ void V8ForegroundTaskRunner::PostNonNestableTask(std::unique_ptr<v8::Task> upTas
     auto spIsolate = m_wrIsolate.GetTarget();
     if (!spIsolate.IsEmpty())
     {
-        m_pIsolateImpl->RunTaskWithLockAsync(false /*allowNesting*/, std::move(upTask));
+        m_IsolateImpl.RunTaskWithLockAsync(false /*allowNesting*/, std::move(upTask));
     }
 }
 
@@ -240,7 +250,7 @@ void V8ForegroundTaskRunner::PostDelayedTask(std::unique_ptr<v8::Task> upTask, d
     auto spIsolate = m_wrIsolate.GetTarget();
     if (!spIsolate.IsEmpty())
     {
-        m_pIsolateImpl->RunTaskWithLockDelayed(true /*allowNesting*/, std::move(upTask), delayInSeconds);
+        m_IsolateImpl.RunTaskWithLockDelayed(true /*allowNesting*/, std::move(upTask), delayInSeconds);
     }
 }
 
@@ -251,7 +261,7 @@ void V8ForegroundTaskRunner::PostNonNestableDelayedTask(std::unique_ptr<v8::Task
     auto spIsolate = m_wrIsolate.GetTarget();
     if (!spIsolate.IsEmpty())
     {
-        m_pIsolateImpl->RunTaskWithLockDelayed(false /*allowNesting*/, std::move(upTask), delayInSeconds);
+        m_IsolateImpl.RunTaskWithLockDelayed(false /*allowNesting*/, std::move(upTask), delayInSeconds);
     }
 }
 
@@ -292,7 +302,7 @@ class V8ArrayBufferAllocator final: public v8::ArrayBuffer::Allocator
 {
 public:
 
-    static V8ArrayBufferAllocator& GetInstance();
+    V8ArrayBufferAllocator(V8IsolateImpl& isolateImpl);
 
     virtual void* Allocate(size_t size) override;
     virtual void* AllocateUninitialized(size_t size) override;
@@ -300,26 +310,26 @@ public:
 
 private:
 
-    V8ArrayBufferAllocator();
-
-    static V8ArrayBufferAllocator ms_Instance;
+    V8IsolateImpl& m_IsolateImpl;
+    WeakRef<V8Isolate> m_wrIsolate;
 };
 
 //-----------------------------------------------------------------------------
 
-V8ArrayBufferAllocator& V8ArrayBufferAllocator::GetInstance()
+V8ArrayBufferAllocator::V8ArrayBufferAllocator(V8IsolateImpl& isolateImpl):
+    m_IsolateImpl(isolateImpl),
+    m_wrIsolate(isolateImpl.CreateWeakRef())
 {
-    return ms_Instance;
 }
 
 //-----------------------------------------------------------------------------
 
 void* V8ArrayBufferAllocator::Allocate(size_t size)
 {
-    auto pIsolate = v8::Isolate::GetCurrent();
-    if (pIsolate)
+    auto spIsolate = m_wrIsolate.GetTarget();
+    if (!spIsolate.IsEmpty())
     {
-        return V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->AllocateArrayBuffer(size);
+        return m_IsolateImpl.AllocateArrayBuffer(size);
     }
 
     return nullptr;
@@ -329,10 +339,10 @@ void* V8ArrayBufferAllocator::Allocate(size_t size)
 
 void* V8ArrayBufferAllocator::AllocateUninitialized(size_t size)
 {
-    auto pIsolate = v8::Isolate::GetCurrent();
-    if (pIsolate)
+    auto spIsolate = m_wrIsolate.GetTarget();
+    if (!spIsolate.IsEmpty())
     {
-        return V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->AllocateUninitializedArrayBuffer(size);
+        return m_IsolateImpl.AllocateUninitializedArrayBuffer(size);
     }
 
     return nullptr;
@@ -342,22 +352,16 @@ void* V8ArrayBufferAllocator::AllocateUninitialized(size_t size)
 
 void V8ArrayBufferAllocator::Free(void* pvData, size_t size)
 {
-    auto pIsolate = v8::Isolate::GetCurrent();
-    if (pIsolate)
+    auto spIsolate = m_wrIsolate.GetTarget();
+    if (!spIsolate.IsEmpty())
     {
-        V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->FreeArrayBuffer(pvData, size);
+        m_IsolateImpl.FreeArrayBuffer(pvData, size);
+    }
+    else if (pvData)
+    {
+        ::free(pvData);
     }
 }
-
-//-----------------------------------------------------------------------------
-
-V8ArrayBufferAllocator::V8ArrayBufferAllocator()
-{
-}
-
-//-----------------------------------------------------------------------------
-
-V8ArrayBufferAllocator V8ArrayBufferAllocator::ms_Instance;
 
 //-----------------------------------------------------------------------------
 // V8OutputStream
@@ -467,6 +471,7 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     m_HeapExpansionMultiplier(options.HeapExpansionMultiplier),
     m_MaxStackUsage(0),
     m_EnableInterruptPropagation(false),
+    m_DisableHeapSizeViolationInterrupt(false),
     m_CpuProfileSampleInterval(1000U),
     m_StackWatchLevel(0),
     m_pStackLimit(nullptr),
@@ -478,18 +483,18 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
 {
     V8Platform::GetInstance().EnsureInitialized();
 
-    v8::Isolate::CreateParams params;
-    params.array_buffer_allocator = &V8ArrayBufferAllocator::GetInstance();
-    if (pConstraints != nullptr)
-    {
-        params.constraints.set_max_young_generation_size_in_bytes(pConstraints->max_young_generation_size_in_bytes());
-        params.constraints.set_max_old_generation_size_in_bytes(pConstraints->max_old_generation_size_in_bytes());
-    }
-
     m_upIsolate.reset(v8::Isolate::Allocate());
     m_upIsolate->SetData(0, this);
 
     BEGIN_ADDREF_SCOPE
+
+        v8::Isolate::CreateParams params;
+        params.array_buffer_allocator_shared = std::make_shared<V8ArrayBufferAllocator>(*this);
+        if (pConstraints != nullptr)
+        {
+            params.constraints.set_max_young_generation_size_in_bytes(pConstraints->max_young_generation_size_in_bytes());
+            params.constraints.set_max_old_generation_size_in_bytes(pConstraints->max_old_generation_size_in_bytes());
+        }
 
         v8::Isolate::Initialize(m_upIsolate.get(), params);
 
@@ -797,6 +802,20 @@ bool V8IsolateImpl::GetEnableInterruptPropagation()
 void V8IsolateImpl::SetEnableInterruptPropagation(bool value)
 {
     m_EnableInterruptPropagation = value;
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8IsolateImpl::GetDisableHeapSizeViolationInterrupt()
+{
+    return m_DisableHeapSizeViolationInterrupt;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SetDisableHeapSizeViolationInterrupt(bool value)
+{
+    m_DisableHeapSizeViolationInterrupt = value;
 }
 
 //-----------------------------------------------------------------------------
@@ -1267,7 +1286,7 @@ std::shared_ptr<v8::TaskRunner> V8IsolateImpl::GetForegroundTaskRunner()
 
         if (!m_spForegroundTaskRunner)
         {
-            m_spForegroundTaskRunner = std::make_shared<V8ForegroundTaskRunner>(this);
+            m_spForegroundTaskRunner = std::make_shared<V8ForegroundTaskRunner>(*this);
         }
 
         return m_spForegroundTaskRunner;
@@ -1279,50 +1298,62 @@ std::shared_ptr<v8::TaskRunner> V8IsolateImpl::GetForegroundTaskRunner()
 
 void* V8IsolateImpl::AllocateArrayBuffer(size_t size)
 {
-    auto newArrayBufferAllocation = m_ArrayBufferAllocation + size;
-    if ((newArrayBufferAllocation >= m_ArrayBufferAllocation) && (newArrayBufferAllocation <= m_MaxArrayBufferAllocation))
-    {
-        auto pvData = ::calloc(1, size);
-        if (pvData)
-        {
-            m_ArrayBufferAllocation = newArrayBufferAllocation;
-            return pvData;
-        }
-    }
+    BEGIN_MUTEX_SCOPE(m_DataMutex)
 
-    return nullptr;
+        auto newArrayBufferAllocation = m_ArrayBufferAllocation + size;
+        if ((newArrayBufferAllocation >= m_ArrayBufferAllocation) && (newArrayBufferAllocation <= m_MaxArrayBufferAllocation))
+        {
+            auto pvData = ::calloc(1, size);
+            if (pvData)
+            {
+                m_ArrayBufferAllocation = newArrayBufferAllocation;
+                return pvData;
+            }
+        }
+
+        return nullptr;
+
+    END_MUTEX_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
 void* V8IsolateImpl::AllocateUninitializedArrayBuffer(size_t size)
 {
-    auto newArrayBufferAllocation = m_ArrayBufferAllocation + size;
-    if ((newArrayBufferAllocation >= m_ArrayBufferAllocation) && (newArrayBufferAllocation <= m_MaxArrayBufferAllocation))
-    {
-        auto pvData = ::malloc(size);
-        if (pvData)
-        {
-            m_ArrayBufferAllocation = newArrayBufferAllocation;
-            return pvData;
-        }
-    }
+    BEGIN_MUTEX_SCOPE(m_DataMutex)
 
-    return nullptr;
+        auto newArrayBufferAllocation = m_ArrayBufferAllocation + size;
+        if ((newArrayBufferAllocation >= m_ArrayBufferAllocation) && (newArrayBufferAllocation <= m_MaxArrayBufferAllocation))
+        {
+            auto pvData = ::malloc(size);
+            if (pvData)
+            {
+                m_ArrayBufferAllocation = newArrayBufferAllocation;
+                return pvData;
+            }
+        }
+
+        return nullptr;
+
+    END_MUTEX_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
 void V8IsolateImpl::FreeArrayBuffer(void* pvData, size_t size)
 {
-    if (pvData)
-    {
-        ::free(pvData);
-        if (m_ArrayBufferAllocation >= size)
+    BEGIN_MUTEX_SCOPE(m_DataMutex)
+
+        if (pvData)
         {
-            m_ArrayBufferAllocation -= size;
+            ::free(pvData);
+            if (m_ArrayBufferAllocation >= size)
+            {
+                m_ArrayBufferAllocation -= size;
+            }
         }
-    }
+
+    END_MUTEX_SCOPE
 }
 
 //-----------------------------------------------------------------------------
@@ -1534,6 +1565,7 @@ V8IsolateImpl::~V8IsolateImpl()
     }
 
     Dispose(m_hHostObjectHolderKey);
+
     m_upIsolate->SetHostImportModuleDynamicallyCallback(static_cast<v8::HostImportModuleDynamicallyCallback>(nullptr));
     m_upIsolate->SetHostInitializeImportMetaObjectCallback(nullptr);
 
@@ -1883,13 +1915,13 @@ void V8IsolateImpl::ExitExecutionScope(ExecutionScope* pPreviousExecutionScope)
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::SetUpHeapWatchTimer(size_t maxHeapSize)
+void V8IsolateImpl::SetUpHeapWatchTimer()
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
     // create heap watch timer
     auto wrIsolate = CreateWeakRef();
-    m_spHeapWatchTimer = new Timer(static_cast<int>(std::max(GetHeapSizeSampleInterval(), 125.0)), -1, [this, wrIsolate, maxHeapSize] (Timer* pTimer)
+    m_spHeapWatchTimer = new Timer(static_cast<int>(std::max(GetHeapSizeSampleInterval(), 125.0)), -1, [this, wrIsolate] (Timer* pTimer)
     {
         // heap watch callback; is the isolate still alive?
         auto spIsolate = wrIsolate.GetTarget();
@@ -1897,14 +1929,14 @@ void V8IsolateImpl::SetUpHeapWatchTimer(size_t maxHeapSize)
         {
             // yes; request callback on execution thread
             auto wrTimer = pTimer->CreateWeakRef();
-            CallWithLockAsync(true /*allowNesting*/, [wrTimer, maxHeapSize] (V8IsolateImpl* pIsolateImpl)
+            CallWithLockAsync(true /*allowNesting*/, [wrTimer] (V8IsolateImpl* pIsolateImpl)
             {
                 // execution thread callback; is the timer still alive?
                 auto spTimer = wrTimer.GetTarget();
                 if (!spTimer.IsEmpty())
                 {
                     // yes; check heap size
-                    pIsolateImpl->CheckHeapSize(maxHeapSize);
+                    pIsolateImpl->CheckHeapSize(std::nullopt);
                 }
             });
         }
@@ -1916,31 +1948,46 @@ void V8IsolateImpl::SetUpHeapWatchTimer(size_t maxHeapSize)
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::CheckHeapSize(size_t maxHeapSize)
+void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    // is the total heap size over the limit?
-    v8::HeapStatistics heapStatistics;
-    GetHeapStatistics(heapStatistics);
-    if (heapStatistics.total_heap_size() > maxHeapSize)
+    // do we have a heap size limit?
+    auto maxHeapSize = optMaxHeapSize.has_value() ? optMaxHeapSize.value() : m_MaxHeapSize.load();
+    if (maxHeapSize > 0)
     {
-        // yes; collect garbage
-        LowMemoryNotification();
-
-        // is the total heap size still over the limit?
+        // yes; is the total heap size over the limit?
+        v8::HeapStatistics heapStatistics;
         GetHeapStatistics(heapStatistics);
         if (heapStatistics.total_heap_size() > maxHeapSize)
         {
-            // yes; the isolate is out of memory; request script termination
-            m_IsOutOfMemory = true;
-            TerminateExecution();
-            return;
-        }
-    }
+            // yes; collect garbage
+            LowMemoryNotification();
 
-    // the isolate is not out of memory; restart heap watch timer
-    SetUpHeapWatchTimer(maxHeapSize);
+            // is the total heap size still over the limit?
+            GetHeapStatistics(heapStatistics);
+            if (heapStatistics.total_heap_size() > maxHeapSize)
+            {
+                // yes; the isolate is out of memory; act based on policy
+                if (m_DisableHeapSizeViolationInterrupt)
+                {
+                    m_MaxHeapSize = 0;
+                    m_upIsolate->ThrowError("The V8 runtime has exceeded its memory limit");
+                }
+                else
+                {
+                    m_IsOutOfMemory = true;
+                    TerminateExecution();
+                }
+
+                // exit to avoid restarting the timer
+                return;
+            }
+        }
+
+        // the isolate is not out of memory; restart heap watch timer
+        SetUpHeapWatchTimer();
+    }
 }
 
 //-----------------------------------------------------------------------------

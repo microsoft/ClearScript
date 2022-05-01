@@ -1479,9 +1479,8 @@ namespace Microsoft.ClearScript
             var eventInfo = Target.Type.GetScriptableEvent(name, invokeFlags, AccessContext, DefaultAccess);
             if (eventInfo != null)
             {
-                var type = typeof(EventSource<>).MakeSpecificType(eventInfo.EventHandlerType);
                 isCacheable = (TargetDynamicMetaObject == null);
-                return type.CreateInstance(BindingFlags.NonPublic, Engine, Target.InvokeTarget, eventInfo);
+                return typeof(EventSource<>).MakeSpecificType(eventInfo.EventHandlerType).CreateInstance(BindingFlags.NonPublic, Engine, Target.InvokeTarget, eventInfo);
             }
 
             var field = Target.Type.GetScriptableField(name, invokeFlags, AccessContext, DefaultAccess);

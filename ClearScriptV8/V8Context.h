@@ -59,6 +59,8 @@ public:
     virtual void CancelInterrupt() = 0;
     virtual bool GetEnableIsolateInterruptPropagation() = 0;
     virtual void SetEnableIsolateInterruptPropagation(bool value) = 0;
+    virtual bool GetDisableIsolateHeapSizeViolationInterrupt() = 0;
+    virtual void SetDisableIsolateHeapSizeViolationInterrupt(bool value) = 0;
 
     virtual void GetIsolateHeapStatistics(v8::HeapStatistics& heapStatistics) = 0;
     virtual V8Isolate::Statistics GetIsolateStatistics() = 0;

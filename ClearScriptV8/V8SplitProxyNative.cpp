@@ -939,6 +939,25 @@ NATIVE_ENTRY_POINT(void) V8Isolate_SetEnableInterruptPropagation(const V8Isolate
 
 //-----------------------------------------------------------------------------
 
+NATIVE_ENTRY_POINT(StdBool) V8Isolate_GetDisableHeapSizeViolationInterrupt(const V8IsolateHandle& handle) noexcept
+{
+    auto spIsolate = handle.GetEntity();
+    return !spIsolate.IsEmpty() ? spIsolate->GetDisableHeapSizeViolationInterrupt() : false;
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) V8Isolate_SetDisableHeapSizeViolationInterrupt(const V8IsolateHandle& handle, StdBool value) noexcept
+{
+    auto spIsolate = handle.GetEntity();
+    if (!spIsolate.IsEmpty())
+    {
+        spIsolate->SetDisableHeapSizeViolationInterrupt(value);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 NATIVE_ENTRY_POINT(void) V8Isolate_GetHeapStatistics(const V8IsolateHandle& handle, uint64_t& totalHeapSize, uint64_t& totalHeapSizeExecutable, uint64_t& totalPhysicalSize, uint64_t& usedHeapSize, uint64_t& heapSizeLimit) noexcept
 {
     totalHeapSize = 0UL;
@@ -1365,6 +1384,25 @@ NATIVE_ENTRY_POINT(void) V8Context_SetEnableIsolateInterruptPropagation(const V8
     if (!spContext.IsEmpty())
     {
         spContext->SetEnableIsolateInterruptPropagation(value);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(StdBool) V8Context_GetDisableIsolateHeapSizeViolationInterrupt(const V8ContextHandle& handle) noexcept
+{
+    auto spContext = handle.GetEntity();
+    return !spContext.IsEmpty() ? spContext->GetDisableIsolateHeapSizeViolationInterrupt() : false;
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) V8Context_SetDisableIsolateHeapSizeViolationInterrupt(const V8ContextHandle& handle, StdBool value) noexcept
+{
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        spContext->SetDisableIsolateHeapSizeViolationInterrupt(value);
     }
 }
 

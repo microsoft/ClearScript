@@ -55,7 +55,29 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static void Check(int result)
         {
-            Marshal.ThrowExceptionForHR(result);
+            if (Succeeded(result) || !MiscHelpers.Try(out var exception, () => Marshal.GetExceptionForHR(result)))
+            {
+                return;
+            }
+
+            if (exception.HResult != result)
+            {
+                // WORKAROUND: In some .NET test environments, Marshal.GetExceptionForHR sometimes
+                // converts COM error codes into unrelated exceptions that break critical features
+                // such as double execution prevention (see BugFix_DoubleExecution_JScript et al).
+
+                if (result == SCRIPT_E_REPORTED)
+                {
+                    throw new COMException("A script error has been reported", result);
+                }
+
+                if (result == CLEARSCRIPT_E_HOSTEXCEPTION)
+                {
+                    throw new COMException("A host exception has been reported", result);
+                }
+            }
+
+            throw exception;
         }
 
         public static bool Succeeded(uint result)

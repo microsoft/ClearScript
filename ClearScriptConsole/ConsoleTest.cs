@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -114,6 +115,14 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        public static void BugFix_V8ArrayBufferLeak()
+        {
+            for (var repetitions = 0; repetitions < 64; repetitions++)
+            {
+                CreateArrayBufferLeak();
+            }
+        }
+
         #endregion
 
         #region miscellaneous
@@ -130,6 +139,26 @@ namespace Microsoft.ClearScript.Test
             public void DisposeEngine()
             {
                 engine.Dispose();
+            }
+        }
+
+        private static void CreateArrayBufferLeak()
+        {
+            using (var engine = new V8ScriptEngine())
+            {
+                const int size = 4 * 1024;
+
+                var bytes = new byte[size];
+                new Random().NextBytes(bytes);
+
+                dynamic createByteArray = engine.Evaluate("(size => new Uint8Array(size))");
+                ITypedArray<byte> CreateByteArray(int count) => createByteArray(count);
+
+                for (var i = 0; i < 16 * 1024; i++)
+                {
+                    var typedArray = CreateByteArray(size);
+                    typedArray.Write(bytes, 0, size, 0);
+                }
             }
         }
 

@@ -183,6 +183,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetEnableIsolateInterruptPropagation(Handle, value));
         }
 
+        public override bool DisableIsolateHeapSizeViolationInterrupt
+        {
+            get => V8SplitProxyNative.Invoke(instance => instance.V8Context_GetDisableIsolateHeapSizeViolationInterrupt(Handle));
+            set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetDisableIsolateHeapSizeViolationInterrupt(Handle, value));
+        }
+
         public override V8RuntimeHeapInfo GetIsolateHeapInfo()
         {
             var totalHeapSize = 0UL;

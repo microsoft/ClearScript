@@ -252,6 +252,7 @@ namespace Microsoft.ClearScript.V8
                         delete this.isHostObjectKey;
 
                         const savedPromise = Promise;
+                        const checkpointSymbol = Symbol();
 
                         return Object.freeze({
 
@@ -354,6 +355,13 @@ namespace Microsoft.ClearScript.V8
                                 finally {
                                     await asyncEnumerator.DisposePromise();
                                 }
+                            },
+
+                            checkpoint: function () {
+                                const value = globalThis[checkpointSymbol];
+                                if (value) {
+                                    throw value;
+                                }
                             }
 
                         });
@@ -401,8 +409,8 @@ namespace Microsoft.ClearScript.V8
         /// monitoring results in slower script execution.
         /// </para>
         /// <para>
-        /// Exceeding this limit causes the V8 runtime to interrupt script execution and throw an
-        /// exception. To re-enable script execution, set this property to a new value.
+        /// Exceeding this limit causes the V8 runtime to behave in accordance with
+        /// <see cref="RuntimeHeapSizeViolationPolicy"/>.
         /// </para>
         /// <para>
         /// Note that
@@ -548,6 +556,36 @@ namespace Microsoft.ClearScript.V8
             {
                 VerifyNotDisposed();
                 proxy.EnableIsolateInterruptPropagation = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the V8 runtime's behavior in response to a violation of the maximum heap size.
+        /// </summary>
+        public V8RuntimeViolationPolicy RuntimeHeapSizeViolationPolicy
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.DisableIsolateHeapSizeViolationInterrupt ? V8RuntimeViolationPolicy.Exception : V8RuntimeViolationPolicy.Interrupt;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                switch (value)
+                {
+                    case V8RuntimeViolationPolicy.Interrupt:
+                        proxy.DisableIsolateHeapSizeViolationInterrupt = false;
+                        return;
+
+                    case V8RuntimeViolationPolicy.Exception:
+                        proxy.DisableIsolateHeapSizeViolationInterrupt = true;
+                        return;
+
+                    default:
+                        throw new ArgumentException(MiscHelpers.FormatInvariant("Invalid {0} value", nameof(V8RuntimeViolationPolicy)), nameof(value));
+                }
             }
         }
 

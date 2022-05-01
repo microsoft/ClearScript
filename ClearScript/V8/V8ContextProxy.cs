@@ -46,6 +46,8 @@ namespace Microsoft.ClearScript.V8
 
         public abstract bool EnableIsolateInterruptPropagation { get; set; }
 
+        public abstract bool DisableIsolateHeapSizeViolationInterrupt { get; set; }
+
         public abstract V8RuntimeHeapInfo GetIsolateHeapInfo();
 
         public abstract V8Runtime.Statistics GetIsolateStatistics();

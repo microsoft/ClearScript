@@ -757,7 +757,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_CollectGarbage()
         {
-            engine.Execute(@"x = {}; for (i = 0; i < 1024 * 1024; i++) { x = { next: x }; }");
+            engine.Execute("x = {}; for (i = 0; i < 1024 * 1024; i++) { x = { next: x }; }");
             var usedHeapSize = engine.GetRuntimeHeapInfo().UsedHeapSize;
             engine.CollectGarbage(true);
             Assert.IsTrue(usedHeapSize > engine.GetRuntimeHeapInfo().UsedHeapSize);
@@ -1540,7 +1540,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"x = {}; while (true) { x = { next: x }; }";
+            const string code = "x = {}; while (true) { x = { next: x }; }";
 
             engine.MaxRuntimeHeapSize = (UIntPtr)limit;
 
@@ -1578,7 +1578,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize_Recovery()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"x = {}; while (true) { x = { next: x }; }";
+            const string code = "x = {}; while (true) { x = { next: x }; }";
 
             engine.MaxRuntimeHeapSize = (UIntPtr)limit;
 
@@ -1604,7 +1604,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize_Dual()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"x = {}; for (i = 0; i < 16 * 1024 * 1024; i++) { x = { next: x }; }";
+            const string code = "x = {}; for (i = 0; i < 16 * 1024 * 1024; i++) { x = { next: x }; }";
 
             engine.Execute(code);
             engine.CollectGarbage(true);
@@ -1635,7 +1635,7 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_MaxRuntimeHeapSize_ShortBursts()
         {
             const int limit = 4 * 1024 * 1024;
-            const string code = @"for (i = 0; i < 1024 * 1024; i++) { x = { next: x }; }";
+            const string code = "for (i = 0; i < 1024 * 1024; i++) { x = { next: x }; }";
 
             engine.MaxRuntimeHeapSize = (UIntPtr)limit;
             engine.RuntimeHeapSizeSampleInterval = TimeSpan.FromMilliseconds(30000);
@@ -3155,6 +3155,22 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_VoidResultValue()
+        {
+            engine.Script.foo = new Action(() => {});
+            Assert.IsInstanceOfType(engine.Evaluate("foo()"), typeof(VoidResult));
+
+            engine.VoidResultValue = 123;
+            Assert.AreEqual(123, engine.Evaluate("foo()"));
+
+            engine.VoidResultValue = Undefined.Value;
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("typeof(foo()) === 'undefined'")));
+
+            engine.VoidResultValue = VoidResult.Value;
+            Assert.IsInstanceOfType(engine.Evaluate("foo()"), typeof(VoidResult));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_ExposeStaticMembersOnHostObjects()
         {
             engine.Script.utf8 = Encoding.UTF8;
@@ -3584,6 +3600,160 @@ namespace Microsoft.ClearScript.Test
 
             catchAndCancel = true;
             Assert.AreEqual(123, engine.Evaluate(code));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_RuntimeHeapSizeViolationPolicy_Plumbing()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var engine1 = runtime.CreateScriptEngine())
+                {
+                    using (var engine2 = runtime.CreateScriptEngine())
+                    {
+                        Assert.AreEqual(V8RuntimeViolationPolicy.Interrupt, runtime.HeapSizeViolationPolicy);
+                        Assert.AreEqual(V8RuntimeViolationPolicy.Interrupt, engine1.RuntimeHeapSizeViolationPolicy);
+                        Assert.AreEqual(V8RuntimeViolationPolicy.Interrupt, engine2.RuntimeHeapSizeViolationPolicy);
+
+                        runtime.HeapSizeViolationPolicy = V8RuntimeViolationPolicy.Exception;
+                        Assert.AreEqual(V8RuntimeViolationPolicy.Exception, runtime.HeapSizeViolationPolicy);
+                        Assert.AreEqual(V8RuntimeViolationPolicy.Exception, engine1.RuntimeHeapSizeViolationPolicy);
+                        Assert.AreEqual(V8RuntimeViolationPolicy.Exception, engine2.RuntimeHeapSizeViolationPolicy);
+
+                        engine1.RuntimeHeapSizeViolationPolicy = V8RuntimeViolationPolicy.Interrupt;
+                        Assert.AreEqual(V8RuntimeViolationPolicy.Interrupt, runtime.HeapSizeViolationPolicy);
+                        Assert.AreEqual(V8RuntimeViolationPolicy.Interrupt, engine1.RuntimeHeapSizeViolationPolicy);
+                        Assert.AreEqual(V8RuntimeViolationPolicy.Interrupt, engine2.RuntimeHeapSizeViolationPolicy);
+                    }
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_RuntimeHeapSizeViolationPolicy()
+        {
+            const int limit = 4 * 1024 * 1024;
+            const string code = @"
+                x = {};
+                for (var i = 0; true; ++i) {
+                    x = { next: x };
+                    if ((i % 20000) === 0) EngineInternal.checkpoint();
+                }
+            ";
+
+            engine.MaxRuntimeHeapSize = (UIntPtr)limit;
+            engine.RuntimeHeapSizeViolationPolicy = V8RuntimeViolationPolicy.Interrupt;
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute(code);
+                }
+                catch (ScriptEngineException exception)
+                {
+                    Assert.IsTrue(exception.IsFatal);
+                    Assert.IsNull(exception.ScriptException);
+                    Assert.AreEqual("The V8 runtime has exceeded its memory limit", exception.Message);
+                    throw;
+                }
+            });
+
+            Assert.AreEqual((UIntPtr)limit, engine.MaxRuntimeHeapSize);
+
+            engine.MaxRuntimeHeapSize = UIntPtr.Zero;
+            engine.Execute("delete x");
+            engine.CollectGarbage(true);
+
+            engine.MaxRuntimeHeapSize = (UIntPtr)limit;
+            engine.RuntimeHeapSizeViolationPolicy = V8RuntimeViolationPolicy.Exception;
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                try
+                {
+                    engine.Execute(code);
+                }
+                catch (ScriptEngineException exception)
+                {
+                    Assert.IsFalse(exception.IsFatal);
+                    Assert.IsNotNull(exception.ScriptException);
+                    Assert.AreEqual("Error: The V8 runtime has exceeded its memory limit", exception.Message);
+                    throw;
+                }
+            });
+
+            Assert.AreEqual(UIntPtr.Zero, engine.MaxRuntimeHeapSize);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_RuntimeHeapSizeViolationPolicy_Async()
+        {
+            const int limit = 4 * 1024 * 1024;
+            const string code = @"(async function() {
+                x = {};
+                for (var i = 0; true; ++i) {
+                    x = { next: x };
+                    if ((i % 20000) === 0) EngineInternal.checkpoint();
+                }
+            })()";
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableTaskPromiseConversion);
+
+            engine.MaxRuntimeHeapSize = (UIntPtr)limit;
+            engine.RuntimeHeapSizeViolationPolicy = V8RuntimeViolationPolicy.Interrupt;
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                Func<Task> test = async () =>
+                {
+                    try
+                    {
+                        await (Task)engine.Evaluate(code);
+                    }
+                    catch (ScriptEngineException exception)
+                    {
+                        Assert.IsTrue(exception.IsFatal);
+                        Assert.IsNull(exception.ScriptException);
+                        Assert.AreEqual("The V8 runtime has exceeded its memory limit", exception.Message);
+                        throw;
+                    }
+                };
+
+                test().Wait();
+            });
+
+            Assert.AreEqual((UIntPtr)limit, engine.MaxRuntimeHeapSize);
+
+            engine.MaxRuntimeHeapSize = UIntPtr.Zero;
+            engine.Execute("delete x");
+            engine.CollectGarbage(true);
+
+            engine.MaxRuntimeHeapSize = (UIntPtr)limit;
+            engine.RuntimeHeapSizeViolationPolicy = V8RuntimeViolationPolicy.Exception;
+
+            TestUtil.AssertException<ScriptEngineException>(() =>
+            {
+                Func<Task> test = async () =>
+                {
+                    try
+                    {
+                        await (Task)engine.Evaluate(code);
+                    }
+                    catch (ScriptEngineException exception)
+                    {
+                        Assert.IsFalse(exception.IsFatal);
+                        Assert.IsNotNull(exception.ScriptException);
+                        Assert.AreEqual("Error: The V8 runtime has exceeded its memory limit", exception.Message);
+                        throw;
+                    }
+                };
+
+                test().Wait();
+            });
+
+            Assert.AreEqual(UIntPtr.Zero, engine.MaxRuntimeHeapSize);
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]

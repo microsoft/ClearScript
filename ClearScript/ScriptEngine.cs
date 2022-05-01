@@ -297,6 +297,19 @@ namespace Microsoft.ClearScript
         public object UndefinedImportValue { get; set; } = Undefined.Value;
 
         /// <summary>
+        /// Gets or sets the engine's void result export value.
+        /// </summary>
+        /// <remarks>
+        /// Some script languages expect every subroutine call to return a value. When script code
+        /// written in such a language invokes a host method that explicitly returns no value (such
+        /// as a C#
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/void">void</see>
+        /// method), the script engine returns the value of this property as a dummy result. The
+        /// default value is <see cref="VoidResult.Value"/>.
+        /// </remarks>
+        public object VoidResultValue { get; set; } = VoidResult.Value;
+
+        /// <summary>
         /// Gets or sets a callback that can be used to halt script execution.
         /// </summary>
         /// <remarks>
@@ -1947,12 +1960,17 @@ namespace Microsoft.ClearScript
 
         private readonly EventConnectionMap eventConnectionMap = new EventConnectionMap();
 
+        internal EventConnection CreateEventConnection(Type handlerType, object source, EventInfo eventInfo, Delegate handler)
+        {
+            return eventConnectionMap.Create(this, handlerType, source, eventInfo, handler);
+        }
+
         internal EventConnection<T> CreateEventConnection<T>(object source, EventInfo eventInfo, Delegate handler)
         {
             return eventConnectionMap.Create<T>(this, source, eventInfo, handler);
         }
 
-        internal void BreakEventConnection(IEventConnection connection)
+        internal void BreakEventConnection(EventConnection connection)
         {
             eventConnectionMap.Break(connection);
         }
@@ -2035,13 +2053,25 @@ namespace Microsoft.ClearScript
 
         private sealed class EventConnectionMap : IDisposable
         {
-            private readonly HashSet<IEventConnection> map = new HashSet<IEventConnection>();
+            private readonly HashSet<EventConnection> map = new HashSet<EventConnection>();
             private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+
+            internal EventConnection Create(ScriptEngine engine, Type handlerType, object source, EventInfo eventInfo, Delegate handler)
+            {
+                var connection = (EventConnection)typeof(EventConnection<>).MakeGenericType(handlerType).CreateInstance(BindingFlags.NonPublic, engine, source, eventInfo, handler);
+                Add(connection);
+                return connection;
+            }
 
             internal EventConnection<T> Create<T>(ScriptEngine engine, object source, EventInfo eventInfo, Delegate handler)
             {
                 var connection = new EventConnection<T>(engine, source, eventInfo, handler);
+                Add(connection);
+                return connection;
+            }
 
+            private void Add(EventConnection connection)
+            {
                 if (!disposedFlag.IsSet)
                 {
                     lock (map)
@@ -2049,11 +2079,9 @@ namespace Microsoft.ClearScript
                         map.Add(connection);
                     }
                 }
-
-                return connection;
             }
 
-            internal void Break(IEventConnection connection)
+            internal void Break(EventConnection connection)
             {
                 var mustBreak = true;
 
@@ -2075,7 +2103,7 @@ namespace Microsoft.ClearScript
             {
                 if (disposedFlag.Set())
                 {
-                    var connections = new List<IEventConnection>();
+                    var connections = new List<EventConnection>();
 
                     lock (map)
                     {

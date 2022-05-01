@@ -117,7 +117,7 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                result = BindMethodInternal(AccessContext, bindFlags, Target, name, typeArgs, args, bindArgs);
+                result = BindMethodInternal(signature, AccessContext, bindFlags, Target, name, typeArgs, args, bindArgs);
                 if (!result.IsPreferredMethod(this, name))
                 {
                     if (result is MethodBindSuccess)
@@ -127,7 +127,7 @@ namespace Microsoft.ClearScript
 
                     foreach (var altName in GetAltMethodNames(name, bindFlags))
                     {
-                        var altResult = BindMethodInternal(AccessContext, bindFlags, Target, altName, typeArgs, args, bindArgs);
+                        var altResult = BindMethodInternal(null, AccessContext, bindFlags, Target, altName, typeArgs, args, bindArgs);
                         if (altResult.IsUnblockedMethod(this))
                         {
                             result = altResult;
@@ -151,12 +151,16 @@ namespace Microsoft.ClearScript
             return result;
         }
 
-        private static MethodBindResult BindMethodInternal(Type bindContext, BindingFlags bindFlags, HostTarget target, string name, Type[] typeArgs, object[] args, object[] bindArgs)
+        private static MethodBindResult BindMethodInternal(BindSignature signature, Type bindContext, BindingFlags bindFlags, HostTarget target, string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
-            // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
-            // will result in bugs that are difficult to diagnose. Create a copy if necessary.
+            if (signature == null)
+            {
+                // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
+                // will result in bugs that are difficult to diagnose. Create a copy if necessary.
 
-            var signature = new BindSignature(bindContext, bindFlags, target, name, typeArgs, bindArgs);
+                signature = new BindSignature(bindContext, bindFlags, target, name, typeArgs, bindArgs);
+            }
+
             MethodBindResult result;
 
             if (coreBindCache.TryGetValue(signature, out var rawResult))

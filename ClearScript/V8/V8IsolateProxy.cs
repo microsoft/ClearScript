@@ -32,6 +32,8 @@ namespace Microsoft.ClearScript.V8
 
         public abstract bool EnableInterruptPropagation { get; set; }
 
+        public abstract bool DisableHeapSizeViolationInterrupt { get; set; }
+
         public abstract V8RuntimeHeapInfo GetHeapInfo();
 
         public abstract V8Runtime.Statistics GetStatistics();

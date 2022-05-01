@@ -2557,6 +2557,22 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_VoidResultValue()
+        {
+            engine.Script.foo = new Action(() => {});
+            Assert.IsInstanceOfType(engine.Evaluate("foo()"), typeof(VoidResult));
+
+            engine.VoidResultValue = 123;
+            Assert.AreEqual(123, engine.Evaluate("foo()"));
+
+            engine.VoidResultValue = Undefined.Value;
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("typeof(foo()) === 'undefined'")));
+
+            engine.VoidResultValue = VoidResult.Value;
+            Assert.IsInstanceOfType(engine.Evaluate("foo()"), typeof(VoidResult));
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
         public void JScriptCoreEngine_ExposeStaticMembersOnHostObjects()
         {
             engine.Script.utf8 = Encoding.UTF8;

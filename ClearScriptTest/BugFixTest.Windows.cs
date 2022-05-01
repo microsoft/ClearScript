@@ -1284,6 +1284,12 @@ namespace Microsoft.ClearScript.Test
             ");
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8ArrayBufferLeak()
+        {
+            TestUtil.InvokeConsoleTest("BugFix_V8ArrayBufferLeak");
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

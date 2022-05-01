@@ -902,6 +902,20 @@ void V8ContextImpl::SetEnableIsolateInterruptPropagation(bool value)
 
 //-----------------------------------------------------------------------------
 
+bool V8ContextImpl::GetDisableIsolateHeapSizeViolationInterrupt()
+{
+    return m_spIsolateImpl->GetDisableHeapSizeViolationInterrupt();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::SetDisableIsolateHeapSizeViolationInterrupt(bool value)
+{
+    m_spIsolateImpl->SetDisableHeapSizeViolationInterrupt(value);
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ContextImpl::GetIsolateHeapStatistics(v8::HeapStatistics& heapStatistics)
 {
     m_spIsolateImpl->GetHeapStatistics(heapStatistics);

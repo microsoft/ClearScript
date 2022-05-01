@@ -1,7 +1,8 @@
 #!/bin/bash
 
-v8testedrev=10.0.139.8
+v8testedrev=10.1.124.11
 v8testedcommit=
+v8cherrypicks="6cf7330a611a5d97a772743d7e626e162b26828e"
 
 if [[ $v8testedcommit == "" ]]; then
     v8testedcommit=$v8testedrev
@@ -169,6 +170,9 @@ if [[ $download == true ]]; then
     cd v8 || abort
     git config user.name ClearScript || fail
     git config user.email "ClearScript@microsoft.com" || fail
+    if [[ $v8cherrypicks != "" ]]; then
+        git cherry-pick --allow-empty-message --keep-redundant-commits $v8cherrypicks >applyV8CherryPicks.log 2>applyV8CherryPicks.log || fail
+    fi
     git apply --reject --ignore-whitespace ../../V8Patch.txt 2>applyV8Patch.log || fail
     cd ..
     

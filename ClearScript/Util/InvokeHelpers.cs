@@ -113,7 +113,7 @@ namespace Microsoft.ClearScript.Util
             var type = method.ReturnType;
             if (type == typeof(void))
             {
-                return VoidResult.Value;
+                return context.Engine.VoidResultValue;
             }
 
             return context.Engine.PrepareResult(result, type, method.GetScriptMemberFlags(), false);

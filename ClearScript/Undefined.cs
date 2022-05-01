@@ -9,8 +9,9 @@ namespace Microsoft.ClearScript
     /// <remarks>
     /// Some script languages support one or more special non-<c>null</c> values that represent
     /// nonexistent, missing, unknown, or undefined data. The ClearScript library maps such values
-    /// to instances of this class.
+    /// to an instance of this class.
     /// </remarks>
+    /// <seealso cref="ScriptEngine.UndefinedImportValue"/>
     public class Undefined
     {
         /// <summary>

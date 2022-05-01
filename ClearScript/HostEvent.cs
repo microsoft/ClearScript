@@ -8,27 +8,23 @@ using Microsoft.ClearScript.Util;
 namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Represents a host event source.
+    /// Provides the base implementation for a host event source.
     /// </summary>
-    /// <typeparam name="T">The event handler delegate type.</typeparam>
-    public class EventSource<T>
+    public abstract class EventSource
     {
-        private readonly ScriptEngine engine;
-
         internal EventSource(ScriptEngine engine, object source, EventInfo eventInfo)
         {
             MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
             MiscHelpers.VerifyNonNullArgument(eventInfo, nameof(eventInfo));
 
-            if (eventInfo.EventHandlerType != typeof(T))
-            {
-                throw new ArgumentException("Invalid event type", nameof(eventInfo));
-            }
-
-            this.engine = engine;
+            Engine = engine;
             Source = source;
             EventInfo = eventInfo;
         }
+
+        internal ScriptEngine Engine { get; }
+
+        internal abstract Type HandlerType { get; }
 
         internal object Source { get; }
 
@@ -42,11 +38,11 @@ namespace Microsoft.ClearScript
         /// Connects the host event source to the specified script handler function.
         /// </summary>
         /// <param name="scriptFunc">The script function that will handle the event.</param>
-        /// <returns>An <see cref="EventConnection{T}"/> that represents the connection.</returns>
-        public EventConnection<T> connect(object scriptFunc)
+        /// <returns>An <see cref="EventConnection"/> that represents the connection.</returns>
+        public EventConnection connect(object scriptFunc)
         {
             MiscHelpers.VerifyNonNullArgument(scriptFunc, nameof(scriptFunc));
-            return engine.CreateEventConnection<T>(Source, EventInfo, DelegateFactory.CreateDelegate(engine, scriptFunc, typeof(T)));
+            return Engine.CreateEventConnection(HandlerType, Source, EventInfo, DelegateFactory.CreateDelegate(Engine, scriptFunc, HandlerType));
         }
 
         // ReSharper restore InconsistentNaming
@@ -54,21 +50,56 @@ namespace Microsoft.ClearScript
         #endregion
     }
 
-    internal interface IEventConnection
+    /// <summary>
+    /// Represents a host event source.
+    /// </summary>
+    /// <typeparam name="T">The event handler delegate type.</typeparam>
+    public sealed class EventSource<T> : EventSource
     {
-        void Break();
+        internal EventSource(ScriptEngine engine, object source, EventInfo eventInfo)
+            : base(engine, source, eventInfo)
+        {
+            if (eventInfo.EventHandlerType != typeof(T))
+            {
+                throw new ArgumentException("Invalid event type (handler type mismatch)", nameof(eventInfo));
+            }
+        }
+
+        #region EventSource overrides
+
+        internal override Type HandlerType => typeof(T);
+
+        #endregion
+
+        #region script-callable interface
+
+        // ReSharper disable InconsistentNaming
+
+        /// <summary>
+        /// Connects the host event source to the specified script handler function.
+        /// </summary>
+        /// <param name="scriptFunc">The script function that will handle the event.</param>
+        /// <returns>An <see cref="EventConnection{T}"/> that represents the connection.</returns>
+        public new EventConnection<T> connect(object scriptFunc)
+        {
+            MiscHelpers.VerifyNonNullArgument(scriptFunc, nameof(scriptFunc));
+            return Engine.CreateEventConnection<T>(Source, EventInfo, DelegateFactory.CreateDelegate(Engine, scriptFunc, typeof(T)));
+        }
+
+        // ReSharper restore InconsistentNaming
+
+        #endregion
     }
 
     /// <summary>
-    /// Represents a connection between a host event source and a script handler function.
+    /// Provides the base implementation for a connection between a host event source and a script handler function.
     /// </summary>
-    /// <typeparam name="T">The event handler delegate type.</typeparam>
-    public class EventConnection<T> : IEventConnection
+    public abstract class EventConnection
     {
         private readonly ScriptEngine engine;
         private readonly object source;
-        private readonly EventInfo eventInfo;
-        private readonly Delegate handler;
+        private readonly MethodInfo removeMethod;
+        private readonly object[] parameters;
         private readonly InterlockedOneWayFlag brokenFlag = new InterlockedOneWayFlag();
 
         internal EventConnection(ScriptEngine engine, object source, EventInfo eventInfo, Delegate handler)
@@ -77,17 +108,28 @@ namespace Microsoft.ClearScript
             MiscHelpers.VerifyNonNullArgument(handler, nameof(handler));
             MiscHelpers.VerifyNonNullArgument(eventInfo, nameof(eventInfo));
 
-            if (eventInfo.EventHandlerType != typeof(T))
+            if (!MiscHelpers.Try(out var addMethod, () => eventInfo.GetAddMethod(true)) || (addMethod == null))
             {
-                throw new ArgumentException("Invalid event type", nameof(eventInfo));
+                throw new ArgumentException("Invalid event type (no accessible add method)", nameof(eventInfo));
+            }
+
+            if (!MiscHelpers.Try(out removeMethod, () => eventInfo.GetRemoveMethod(true)) || (removeMethod == null))
+            {
+                throw new ArgumentException("Invalid event type (no accessible remove method)", nameof(eventInfo));
             }
 
             this.engine = engine;
             this.source = source;
-            this.eventInfo = eventInfo;
-            this.handler = handler;
 
-            eventInfo.AddEventHandler(source, handler);
+            addMethod.Invoke(source, parameters = new object[] { handler });
+        }
+
+        internal void Break()
+        {
+            if (brokenFlag.Set())
+            {
+                removeMethod.Invoke(source, parameters);
+            }
         }
 
         #region script-callable interface
@@ -105,17 +147,21 @@ namespace Microsoft.ClearScript
         // ReSharper restore InconsistentNaming
 
         #endregion
+    }
 
-        #region IEventConnection implementation
-
-        void IEventConnection.Break()
+    /// <summary>
+    /// Represents a connection between a host event source and a script handler function.
+    /// </summary>
+    /// <typeparam name="T">The event handler delegate type.</typeparam>
+    public sealed class EventConnection<T> : EventConnection
+    {
+        internal EventConnection(ScriptEngine engine, object source, EventInfo eventInfo, Delegate handler)
+            : base(engine, source, eventInfo, handler)
         {
-            if (brokenFlag.Set())
+            if (eventInfo.EventHandlerType != typeof(T))
             {
-                eventInfo.RemoveEventHandler(source, handler);
+                throw new ArgumentException("Invalid event type (handler type mismatch)", nameof(eventInfo));
             }
         }
-
-        #endregion 
     }
 }

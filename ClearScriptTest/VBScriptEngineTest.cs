@@ -2782,6 +2782,19 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_VoidResultValue()
+        {
+            engine.Script.foo = new Action(() => {});
+            Assert.IsInstanceOfType(engine.Evaluate("foo()"), typeof(VoidResult));
+
+            engine.VoidResultValue = 123;
+            Assert.AreEqual(123, engine.Evaluate("foo()"));
+
+            engine.VoidResultValue = VoidResult.Value;
+            Assert.IsInstanceOfType(engine.Evaluate("foo()"), typeof(VoidResult));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_ExposeStaticMembersOnHostObjects()
         {
             engine.Script.utf8 = Encoding.UTF8;

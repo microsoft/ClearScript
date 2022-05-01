@@ -1565,6 +1565,17 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_InaccessibleEventHandlerType()
+        {
+            var testObject = new InaccessibleEventHandlerTypeTestObject();
+            engine.AddHostObject("testObject", HostItemFlags.PrivateAccess, testObject);
+            engine.Execute("connection = testObject.TestEvent.connect(value => eventValue = value);");
+            testObject.FireTestEvent(12345);
+            Assert.AreEqual(12345, engine.Script.eventValue);
+            engine.Execute("connection.disconnect()");
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1943,6 +1954,18 @@ namespace Microsoft.ClearScript.Test
 
             // ReSharper restore NotAccessedField.Local
             // ReSharper restore ClassNeverInstantiated.Local
+        }
+
+        private class InaccessibleEventHandlerTypeTestObject
+        {
+            private delegate void TestEventHandler(int value);
+
+            private event TestEventHandler TestEvent;
+
+            public void FireTestEvent(int value)
+            {
+                TestEvent?.Invoke(value);
+            }
         }
 
         #endregion

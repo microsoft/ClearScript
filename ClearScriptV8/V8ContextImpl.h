@@ -53,6 +53,8 @@ public:
     virtual void CancelInterrupt() override;
     virtual bool GetEnableIsolateInterruptPropagation() override;
     virtual void SetEnableIsolateInterruptPropagation(bool value) override;
+    virtual bool GetDisableIsolateHeapSizeViolationInterrupt() override;
+    virtual void SetDisableIsolateHeapSizeViolationInterrupt(bool value) override;
 
     virtual void GetIsolateHeapStatistics(v8::HeapStatistics& heapStatistics) override;
     virtual V8Isolate::Statistics GetIsolateStatistics() override;

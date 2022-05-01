@@ -65,7 +65,10 @@
     <HelpKINode Title="V8ScriptEngine.CompileDocument Method " Url="html/Overload_Microsoft_ClearScript_V8_V8ScriptEngine_CompileDocument.htm" />
   </HelpKINode>
   <HelpKINode Title="comType method" Url="html/M_Microsoft_ClearScript_ExtendedHostFunctions_comType.htm" />
-  <HelpKINode Title="connect method" Url="html/M_Microsoft_ClearScript_EventSource_1_connect.htm" />
+  <HelpKINode Title="connect method">
+    <HelpKINode Title="EventSource(T).connect Method " Url="html/M_Microsoft_ClearScript_EventSource_1_connect.htm" />
+    <HelpKINode Title="EventSource.connect Method " Url="html/M_Microsoft_ClearScript_EventSource_connect.htm" />
+  </HelpKINode>
   <HelpKINode Title="ContainsKey method" Url="html/M_Microsoft_ClearScript_PropertyBag_ContainsKey.htm" />
   <HelpKINode Title="Contents property">
     <HelpKINode Title="Document.Contents Property " Url="html/P_Microsoft_ClearScript_Document_Contents.htm" />
@@ -115,7 +118,7 @@
   <HelpKINode Title="DisableSourceManagement enumeration member" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm" />
   <HelpKINode Title="DisableTypeRestriction property" Url="html/P_Microsoft_ClearScript_ScriptEngine_DisableTypeRestriction.htm" />
   <HelpKINode Title="DiscardCachedDocuments method" Url="html/M_Microsoft_ClearScript_DocumentLoader_DiscardCachedDocuments.htm" />
-  <HelpKINode Title="disconnect method" Url="html/M_Microsoft_ClearScript_EventConnection_1_disconnect.htm" />
+  <HelpKINode Title="disconnect method" Url="html/M_Microsoft_ClearScript_EventConnection_disconnect.htm" />
   <HelpKINode Title="Dispatcher property" Url="html/P_Microsoft_ClearScript_Windows_WindowsScriptEngine_Dispatcher.htm" />
   <HelpKINode Title="Dispose method">
     <HelpKINode Title="ScriptEngine.Dispose Method " Url="html/Overload_Microsoft_ClearScript_ScriptEngine_Dispose.htm" />
@@ -255,26 +258,35 @@
     <HelpKINode Title="V8ScriptEngine.Evaluate Method " Url="html/Overload_Microsoft_ClearScript_V8_V8ScriptEngine_Evaluate.htm" />
   </HelpKINode>
   <HelpKINode Title="EvaluateDocument method" Url="html/Overload_Microsoft_ClearScript_ScriptEngine_EvaluateDocument.htm" />
+  <HelpKINode Title="EventConnection class">
+    <HelpKINode Title="EventConnection Class" Url="html/T_Microsoft_ClearScript_EventConnection.htm" />
+    <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_EventConnection.htm" />
+  </HelpKINode>
   <HelpKINode Title="EventConnection(Of T) class">
     <HelpKINode Title="EventConnection(T) Class" Url="html/T_Microsoft_ClearScript_EventConnection_1.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_EventConnection_1.htm" />
   </HelpKINode>
-  <HelpKINode Title="EventConnection(Of T).disconnect method" Url="html/M_Microsoft_ClearScript_EventConnection_1_disconnect.htm" />
+  <HelpKINode Title="EventConnection.disconnect method" Url="html/M_Microsoft_ClearScript_EventConnection_disconnect.htm" />
   <HelpKINode Title="EventConnection&lt;T&gt; class">
     <HelpKINode Title="EventConnection(T) Class" Url="html/T_Microsoft_ClearScript_EventConnection_1.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_EventConnection_1.htm" />
   </HelpKINode>
-  <HelpKINode Title="EventConnection&lt;T&gt;.disconnect method" Url="html/M_Microsoft_ClearScript_EventConnection_1_disconnect.htm" />
+  <HelpKINode Title="EventSource class">
+    <HelpKINode Title="EventSource Class" Url="html/T_Microsoft_ClearScript_EventSource.htm" />
+    <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_EventSource.htm" />
+  </HelpKINode>
   <HelpKINode Title="EventSource(Of T) class">
     <HelpKINode Title="EventSource(T) Class" Url="html/T_Microsoft_ClearScript_EventSource_1.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_EventSource_1.htm" />
   </HelpKINode>
   <HelpKINode Title="EventSource(Of T).connect method" Url="html/M_Microsoft_ClearScript_EventSource_1_connect.htm" />
+  <HelpKINode Title="EventSource.connect method" Url="html/M_Microsoft_ClearScript_EventSource_connect.htm" />
   <HelpKINode Title="EventSource&lt;T&gt; class">
     <HelpKINode Title="EventSource(T) Class" Url="html/T_Microsoft_ClearScript_EventSource_1.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_EventSource_1.htm" />
   </HelpKINode>
   <HelpKINode Title="EventSource&lt;T&gt;.connect method" Url="html/M_Microsoft_ClearScript_EventSource_1_connect.htm" />
+  <HelpKINode Title="Exception enumeration member" Url="html/T_Microsoft_ClearScript_V8_V8RuntimeViolationPolicy.htm" />
   <HelpKINode Title="Execute method">
     <HelpKINode Title="ScriptEngine.Execute Method " Url="html/Overload_Microsoft_ClearScript_ScriptEngine_Execute.htm" />
     <HelpKINode Title="V8ScriptEngine.Execute Method " Url="html/Overload_Microsoft_ClearScript_V8_V8ScriptEngine_Execute.htm" />
@@ -316,12 +328,12 @@
   <HelpKINode Title="Extensions.ToHostType method" Url="html/Overload_Microsoft_ClearScript_Extensions_ToHostType.htm" />
   <HelpKINode Title="Extensions.ToRestrictedHostObject method" Url="html/Overload_Microsoft_ClearScript_Extensions_ToRestrictedHostObject.htm" />
   <HelpKINode Title="FileNameExtension property">
-    <HelpKINode Title="JScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_JScriptEngine_FileNameExtension.htm" />
     <HelpKINode Title="JScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_Core_JScriptEngine_FileNameExtension.htm" />
+    <HelpKINode Title="JScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_JScriptEngine_FileNameExtension.htm" />
     <HelpKINode Title="ScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_ScriptEngine_FileNameExtension.htm" />
     <HelpKINode Title="V8ScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_FileNameExtension.htm" />
-    <HelpKINode Title="VBScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_VBScriptEngine_FileNameExtension.htm" />
     <HelpKINode Title="VBScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_Core_VBScriptEngine_FileNameExtension.htm" />
+    <HelpKINode Title="VBScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_VBScriptEngine_FileNameExtension.htm" />
   </HelpKINode>
   <HelpKINode Title="FileNameExtensions property" Url="html/P_Microsoft_ClearScript_DocumentSettings_FileNameExtensions.htm" />
   <HelpKINode Title="Finalize method" Url="html/M_Microsoft_ClearScript_ScriptEngine_Finalize.htm" />
@@ -370,6 +382,7 @@
   <HelpKINode Title="HeapExpansionMultiplier property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeConstraints_HeapExpansionMultiplier.htm" />
   <HelpKINode Title="HeapSizeLimit property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_HeapSizeLimit.htm" />
   <HelpKINode Title="HeapSizeSampleInterval property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_HeapSizeSampleInterval.htm" />
+  <HelpKINode Title="HeapSizeViolationPolicy property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_HeapSizeViolationPolicy.htm" />
   <HelpKINode Title="HideDynamicMembers enumeration member" Url="html/T_Microsoft_ClearScript_HostItemFlags.htm" />
   <HelpKINode Title="HitCount field" Url="html/F_Microsoft_ClearScript_V8_V8CpuProfile_Node_HitLine_HitCount.htm" />
   <HelpKINode Title="HitCount property" Url="html/P_Microsoft_ClearScript_V8_V8CpuProfile_Node_HitCount.htm" />
@@ -491,6 +504,7 @@
   </HelpKINode>
   <HelpKINode Title="InnerException property" Url="html/P_Microsoft_ClearScript_IScriptEngineException_InnerException.htm" />
   <HelpKINode Title="Instance field" Url="html/F_Microsoft_ClearScript_Windows_Core_NullSyncInvoker_Instance.htm" />
+  <HelpKINode Title="Interrupt enumeration member" Url="html/T_Microsoft_ClearScript_V8_V8RuntimeViolationPolicy.htm" />
   <HelpKINode Title="Interrupt method">
     <HelpKINode Title="ScriptEngine.Interrupt Method " Url="html/M_Microsoft_ClearScript_ScriptEngine_Interrupt.htm" />
     <HelpKINode Title="V8ScriptEngine.Interrupt Method " Url="html/M_Microsoft_ClearScript_V8_V8ScriptEngine_Interrupt.htm" />
@@ -586,16 +600,16 @@
   <HelpKINode Title="JScriptEngine class">
     <HelpKINode Title="JScriptEngine Class" Url="html/T_Microsoft_ClearScript_Windows_JScriptEngine.htm" />
     <HelpKINode Title="JScriptEngine Class" Url="html/T_Microsoft_ClearScript_Windows_Core_JScriptEngine.htm" />
-    <HelpKINode Title="constructor" Url="html/Overload_Microsoft_ClearScript_Windows_Core_JScriptEngine__ctor.htm" />
     <HelpKINode Title="constructor" Url="html/Overload_Microsoft_ClearScript_Windows_JScriptEngine__ctor.htm" />
-    <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_Windows_JScriptEngine.htm" />
+    <HelpKINode Title="constructor" Url="html/Overload_Microsoft_ClearScript_Windows_Core_JScriptEngine__ctor.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_Windows_Core_JScriptEngine.htm" />
-    <HelpKINode Title="properties" Url="html/Properties_T_Microsoft_ClearScript_Windows_JScriptEngine.htm" />
+    <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_Windows_JScriptEngine.htm" />
     <HelpKINode Title="properties" Url="html/Properties_T_Microsoft_ClearScript_Windows_Core_JScriptEngine.htm" />
+    <HelpKINode Title="properties" Url="html/Properties_T_Microsoft_ClearScript_Windows_JScriptEngine.htm" />
   </HelpKINode>
   <HelpKINode Title="JScriptEngine.ExecuteCommand method">
-    <HelpKINode Title="JScriptEngine.ExecuteCommand Method " Url="html/M_Microsoft_ClearScript_Windows_JScriptEngine_ExecuteCommand.htm" />
     <HelpKINode Title="JScriptEngine.ExecuteCommand Method " Url="html/M_Microsoft_ClearScript_Windows_Core_JScriptEngine_ExecuteCommand.htm" />
+    <HelpKINode Title="JScriptEngine.ExecuteCommand Method " Url="html/M_Microsoft_ClearScript_Windows_JScriptEngine_ExecuteCommand.htm" />
   </HelpKINode>
   <HelpKINode Title="JScriptEngine.FileNameExtension property">
     <HelpKINode Title="JScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_Core_JScriptEngine_FileNameExtension.htm" />
@@ -650,8 +664,10 @@
   <HelpKINode Title="Microsoft.ClearScript.DocumentLoader class" Url="html/T_Microsoft_ClearScript_DocumentLoader.htm" />
   <HelpKINode Title="Microsoft.ClearScript.DocumentSettings class" Url="html/T_Microsoft_ClearScript_DocumentSettings.htm" />
   <HelpKINode Title="Microsoft.ClearScript.DynamicHostObject class" Url="html/T_Microsoft_ClearScript_DynamicHostObject.htm" />
+  <HelpKINode Title="Microsoft.ClearScript.EventConnection class" Url="html/T_Microsoft_ClearScript_EventConnection.htm" />
   <HelpKINode Title="Microsoft.ClearScript.EventConnection(Of T) class" Url="html/T_Microsoft_ClearScript_EventConnection_1.htm" />
   <HelpKINode Title="Microsoft.ClearScript.EventConnection&lt;T&gt; class" Url="html/T_Microsoft_ClearScript_EventConnection_1.htm" />
+  <HelpKINode Title="Microsoft.ClearScript.EventSource class" Url="html/T_Microsoft_ClearScript_EventSource.htm" />
   <HelpKINode Title="Microsoft.ClearScript.EventSource(Of T) class" Url="html/T_Microsoft_ClearScript_EventSource_1.htm" />
   <HelpKINode Title="Microsoft.ClearScript.EventSource&lt;T&gt; class" Url="html/T_Microsoft_ClearScript_EventSource_1.htm" />
   <HelpKINode Title="Microsoft.ClearScript.ExtendedHostFunctions class" Url="html/T_Microsoft_ClearScript_ExtendedHostFunctions.htm" />
@@ -698,6 +714,7 @@
   <HelpKINode Title="Microsoft.ClearScript.V8.V8RuntimeConstraints class" Url="html/T_Microsoft_ClearScript_V8_V8RuntimeConstraints.htm" />
   <HelpKINode Title="Microsoft.ClearScript.V8.V8RuntimeFlags enumeration" Url="html/T_Microsoft_ClearScript_V8_V8RuntimeFlags.htm" />
   <HelpKINode Title="Microsoft.ClearScript.V8.V8RuntimeHeapInfo class" Url="html/T_Microsoft_ClearScript_V8_V8RuntimeHeapInfo.htm" />
+  <HelpKINode Title="Microsoft.ClearScript.V8.V8RuntimeViolationPolicy enumeration" Url="html/T_Microsoft_ClearScript_V8_V8RuntimeViolationPolicy.htm" />
   <HelpKINode Title="Microsoft.ClearScript.V8.V8Script class" Url="html/T_Microsoft_ClearScript_V8_V8Script.htm" />
   <HelpKINode Title="Microsoft.ClearScript.V8.V8ScriptEngine class" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngine.htm" />
   <HelpKINode Title="Microsoft.ClearScript.V8.V8ScriptEngineFlags enumeration" Url="html/T_Microsoft_ClearScript_V8_V8ScriptEngineFlags.htm" />
@@ -826,6 +843,7 @@
   <HelpKINode Title="RemovePropertyNoCheck method" Url="html/M_Microsoft_ClearScript_PropertyBag_RemovePropertyNoCheck.htm" />
   <HelpKINode Title="RootNode property" Url="html/P_Microsoft_ClearScript_V8_V8CpuProfile_RootNode.htm" />
   <HelpKINode Title="RuntimeHeapSizeSampleInterval property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_RuntimeHeapSizeSampleInterval.htm" />
+  <HelpKINode Title="RuntimeHeapSizeViolationPolicy property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_RuntimeHeapSizeViolationPolicy.htm" />
   <HelpKINode Title="Sample class">
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_V8_V8CpuProfile_Sample.htm" />
     <HelpKINode Title="properties" Url="html/Properties_T_Microsoft_ClearScript_V8_V8CpuProfile_Sample.htm" />
@@ -883,6 +901,7 @@
   <HelpKINode Title="ScriptEngine.ScriptEngine constructor" Url="html/Overload_Microsoft_ClearScript_ScriptEngine__ctor.htm" />
   <HelpKINode Title="ScriptEngine.UndefinedImportValue property" Url="html/P_Microsoft_ClearScript_ScriptEngine_UndefinedImportValue.htm" />
   <HelpKINode Title="ScriptEngine.UseReflectionBindFallback property" Url="html/P_Microsoft_ClearScript_ScriptEngine_UseReflectionBindFallback.htm" />
+  <HelpKINode Title="ScriptEngine.VoidResultValue property" Url="html/P_Microsoft_ClearScript_ScriptEngine_VoidResultValue.htm" />
   <HelpKINode Title="ScriptEngineException class">
     <HelpKINode Title="ScriptEngineException Class" Url="html/T_Microsoft_ClearScript_ScriptEngineException.htm" />
     <HelpKINode Title="constructor" Url="html/Overload_Microsoft_ClearScript_ScriptEngineException__ctor.htm" />
@@ -953,8 +972,8 @@
   <HelpKINode Title="ScriptUsageAttribute.ScriptUsageAttribute constructor" Url="html/Overload_Microsoft_ClearScript_ScriptUsageAttribute__ctor.htm" />
   <HelpKINode Title="SearchPath property" Url="html/P_Microsoft_ClearScript_DocumentSettings_SearchPath.htm" />
   <HelpKINode Title="setElement method" Url="html/M_Microsoft_ClearScript_HostFunctions_setElement.htm" />
-  <HelpKINode Title="SetProperty method" Url="html/Overload_Microsoft_ClearScript_ScriptObject_SetProperty.htm" />
   <HelpKINode Title="setProperty method" Url="html/Overload_Microsoft_ClearScript_HostFunctions_setProperty.htm" />
+  <HelpKINode Title="SetProperty method" Url="html/Overload_Microsoft_ClearScript_ScriptObject_SetProperty.htm" />
   <HelpKINode Title="SetPropertyNoCheck method" Url="html/M_Microsoft_ClearScript_PropertyBag_SetPropertyNoCheck.htm" />
   <HelpKINode Title="Size property">
     <HelpKINode Title="IArrayBuffer.Size Property " Url="html/P_Microsoft_ClearScript_JavaScript_IArrayBuffer_Size.htm" />
@@ -997,6 +1016,7 @@
     <HelpKINode Title="ScriptEngineException.ToString Method " Url="html/M_Microsoft_ClearScript_ScriptEngineException_ToString.htm" />
     <HelpKINode Title="ScriptInterruptedException.ToString Method " Url="html/M_Microsoft_ClearScript_ScriptInterruptedException_ToString.htm" />
     <HelpKINode Title="Undefined.ToString Method " Url="html/M_Microsoft_ClearScript_Undefined_ToString.htm" />
+    <HelpKINode Title="VoidResult.ToString Method " Url="html/M_Microsoft_ClearScript_VoidResult_ToString.htm" />
   </HelpKINode>
   <HelpKINode Title="TotalHeapSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalHeapSize.htm" />
   <HelpKINode Title="TotalHeapSizeExecutable property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalHeapSizeExecutable.htm" />
@@ -1076,6 +1096,7 @@
   <HelpKINode Title="V8Runtime.FormatCode property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_FormatCode.htm" />
   <HelpKINode Title="V8Runtime.GetHeapInfo method" Url="html/M_Microsoft_ClearScript_V8_V8Runtime_GetHeapInfo.htm" />
   <HelpKINode Title="V8Runtime.HeapSizeSampleInterval property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_HeapSizeSampleInterval.htm" />
+  <HelpKINode Title="V8Runtime.HeapSizeViolationPolicy property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_HeapSizeViolationPolicy.htm" />
   <HelpKINode Title="V8Runtime.MaxHeapSize property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_MaxHeapSize.htm" />
   <HelpKINode Title="V8Runtime.MaxStackUsage property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_MaxStackUsage.htm" />
   <HelpKINode Title="V8Runtime.Name property" Url="html/P_Microsoft_ClearScript_V8_V8Runtime_Name.htm" />
@@ -1105,6 +1126,7 @@
   <HelpKINode Title="V8RuntimeHeapInfo.TotalHeapSizeExecutable property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalHeapSizeExecutable.htm" />
   <HelpKINode Title="V8RuntimeHeapInfo.TotalPhysicalSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_TotalPhysicalSize.htm" />
   <HelpKINode Title="V8RuntimeHeapInfo.UsedHeapSize property" Url="html/P_Microsoft_ClearScript_V8_V8RuntimeHeapInfo_UsedHeapSize.htm" />
+  <HelpKINode Title="V8RuntimeViolationPolicy enumeration" Url="html/T_Microsoft_ClearScript_V8_V8RuntimeViolationPolicy.htm" />
   <HelpKINode Title="V8Script class">
     <HelpKINode Title="V8Script Class" Url="html/T_Microsoft_ClearScript_V8_V8Script.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_V8_V8Script.htm" />
@@ -1141,6 +1163,7 @@
   <HelpKINode Title="V8ScriptEngine.MaxRuntimeHeapSize property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_MaxRuntimeHeapSize.htm" />
   <HelpKINode Title="V8ScriptEngine.MaxRuntimeStackUsage property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_MaxRuntimeStackUsage.htm" />
   <HelpKINode Title="V8ScriptEngine.RuntimeHeapSizeSampleInterval property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_RuntimeHeapSizeSampleInterval.htm" />
+  <HelpKINode Title="V8ScriptEngine.RuntimeHeapSizeViolationPolicy property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_RuntimeHeapSizeViolationPolicy.htm" />
   <HelpKINode Title="V8ScriptEngine.Script property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_Script.htm" />
   <HelpKINode Title="V8ScriptEngine.SuppressExtensionMethodEnumeration property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_SuppressExtensionMethodEnumeration.htm" />
   <HelpKINode Title="V8ScriptEngine.SuppressInstanceMethodEnumeration property" Url="html/P_Microsoft_ClearScript_V8_V8ScriptEngine_SuppressInstanceMethodEnumeration.htm" />
@@ -1156,25 +1179,26 @@
   <HelpKINode Title="Value field">
     <HelpKINode Title="Nothing.Value Field" Url="html/F_Microsoft_ClearScript_Windows_Nothing_Value.htm" />
     <HelpKINode Title="Undefined.Value Field" Url="html/F_Microsoft_ClearScript_Undefined_Value.htm" />
+    <HelpKINode Title="VoidResult.Value Field" Url="html/F_Microsoft_ClearScript_VoidResult_Value.htm" />
   </HelpKINode>
   <HelpKINode Title="Values property" Url="html/P_Microsoft_ClearScript_PropertyBag_Values.htm" />
   <HelpKINode Title="VBScriptEngine class">
-    <HelpKINode Title="VBScriptEngine Class" Url="html/T_Microsoft_ClearScript_Windows_Core_VBScriptEngine.htm" />
     <HelpKINode Title="VBScriptEngine Class" Url="html/T_Microsoft_ClearScript_Windows_VBScriptEngine.htm" />
+    <HelpKINode Title="VBScriptEngine Class" Url="html/T_Microsoft_ClearScript_Windows_Core_VBScriptEngine.htm" />
     <HelpKINode Title="constructor" Url="html/Overload_Microsoft_ClearScript_Windows_VBScriptEngine__ctor.htm" />
     <HelpKINode Title="constructor" Url="html/Overload_Microsoft_ClearScript_Windows_Core_VBScriptEngine__ctor.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_Windows_Core_VBScriptEngine.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_Windows_VBScriptEngine.htm" />
-    <HelpKINode Title="properties" Url="html/Properties_T_Microsoft_ClearScript_Windows_Core_VBScriptEngine.htm" />
     <HelpKINode Title="properties" Url="html/Properties_T_Microsoft_ClearScript_Windows_VBScriptEngine.htm" />
+    <HelpKINode Title="properties" Url="html/Properties_T_Microsoft_ClearScript_Windows_Core_VBScriptEngine.htm" />
   </HelpKINode>
   <HelpKINode Title="VBScriptEngine.ExecuteCommand method">
     <HelpKINode Title="VBScriptEngine.ExecuteCommand Method " Url="html/M_Microsoft_ClearScript_Windows_VBScriptEngine_ExecuteCommand.htm" />
     <HelpKINode Title="VBScriptEngine.ExecuteCommand Method " Url="html/M_Microsoft_ClearScript_Windows_Core_VBScriptEngine_ExecuteCommand.htm" />
   </HelpKINode>
   <HelpKINode Title="VBScriptEngine.FileNameExtension property">
-    <HelpKINode Title="VBScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_Core_VBScriptEngine_FileNameExtension.htm" />
     <HelpKINode Title="VBScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_VBScriptEngine_FileNameExtension.htm" />
+    <HelpKINode Title="VBScriptEngine.FileNameExtension Property " Url="html/P_Microsoft_ClearScript_Windows_Core_VBScriptEngine_FileNameExtension.htm" />
   </HelpKINode>
   <HelpKINode Title="VBScriptEngine.VBScriptEngine constructor">
     <HelpKINode Title="VBScriptEngine Constructor " Url="html/Overload_Microsoft_ClearScript_Windows_VBScriptEngine__ctor.htm" />
@@ -1187,8 +1211,12 @@
   </HelpKINode>
   <HelpKINode Title="VoidResult class">
     <HelpKINode Title="VoidResult Class" Url="html/T_Microsoft_ClearScript_VoidResult.htm" />
+    <HelpKINode Title="fields" Url="html/Fields_T_Microsoft_ClearScript_VoidResult.htm" />
     <HelpKINode Title="methods" Url="html/Methods_T_Microsoft_ClearScript_VoidResult.htm" />
   </HelpKINode>
+  <HelpKINode Title="VoidResult.ToString method" Url="html/M_Microsoft_ClearScript_VoidResult_ToString.htm" />
+  <HelpKINode Title="VoidResult.Value field" Url="html/F_Microsoft_ClearScript_VoidResult_Value.htm" />
+  <HelpKINode Title="VoidResultValue property" Url="html/P_Microsoft_ClearScript_ScriptEngine_VoidResultValue.htm" />
   <HelpKINode Title="WindowsScriptEngine class">
     <HelpKINode Title="WindowsScriptEngine Class" Url="html/T_Microsoft_ClearScript_Windows_WindowsScriptEngine.htm" />
     <HelpKINode Title="WindowsScriptEngine Class" Url="html/T_Microsoft_ClearScript_Windows_Core_WindowsScriptEngine.htm" />

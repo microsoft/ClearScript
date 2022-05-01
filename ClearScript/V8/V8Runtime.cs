@@ -186,8 +186,8 @@ namespace Microsoft.ClearScript.V8
         /// monitoring results in slower script execution.
         /// </para>
         /// <para>
-        /// Exceeding this limit causes the V8 runtime to interrupt script execution and throw an
-        /// exception. To re-enable script execution, set this property to a new value.
+        /// Exceeding this limit causes the V8 runtime to behave in accordance with
+        /// <see cref="HeapSizeViolationPolicy"/>.
         /// </para>
         /// <para>
         /// Note that
@@ -295,6 +295,36 @@ namespace Microsoft.ClearScript.V8
             {
                 VerifyNotDisposed();
                 proxy.EnableInterruptPropagation = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the V8 runtime's behavior in response to a violation of the maximum heap size.
+        /// </summary>
+        public V8RuntimeViolationPolicy HeapSizeViolationPolicy
+        {
+            get
+            {
+                VerifyNotDisposed();
+                return proxy.DisableHeapSizeViolationInterrupt ? V8RuntimeViolationPolicy.Exception : V8RuntimeViolationPolicy.Interrupt;
+            }
+
+            set
+            {
+                VerifyNotDisposed();
+                switch (value)
+                {
+                    case V8RuntimeViolationPolicy.Interrupt:
+                        proxy.DisableHeapSizeViolationInterrupt = false;
+                        return;
+
+                    case V8RuntimeViolationPolicy.Exception:
+                        proxy.DisableHeapSizeViolationInterrupt = true;
+                        return;
+
+                    default:
+                        throw new ArgumentException(MiscHelpers.FormatInvariant("Invalid {0} value", nameof(V8RuntimeViolationPolicy)), nameof(value));
+                }
             }
         }
 

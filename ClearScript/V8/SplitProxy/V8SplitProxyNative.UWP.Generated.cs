@@ -556,6 +556,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetEnableInterruptPropagation(hIsolate, value);
             }
 
+            bool IV8SplitProxyNative.V8Isolate_GetDisableHeapSizeViolationInterrupt(V8Isolate.Handle hIsolate)
+            {
+                return V8Isolate_GetDisableHeapSizeViolationInterrupt(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_SetDisableHeapSizeViolationInterrupt(V8Isolate.Handle hIsolate, bool value)
+            {
+                V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
+            }
+
             void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
             {
                 V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
@@ -779,6 +789,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_SetEnableIsolateInterruptPropagation(V8Context.Handle hContext, bool value)
             {
                 V8Context_SetEnableIsolateInterruptPropagation(hContext, value);
+            }
+
+            bool IV8SplitProxyNative.V8Context_GetDisableIsolateHeapSizeViolationInterrupt(V8Context.Handle hContext)
+            {
+                return V8Context_GetDisableIsolateHeapSizeViolationInterrupt(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_SetDisableIsolateHeapSizeViolationInterrupt(V8Context.Handle hContext, bool value)
+            {
+                V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
@@ -1581,6 +1601,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            [return: MarshalAs(UnmanagedType.I1)]
+            private static extern bool V8Isolate_GetDisableHeapSizeViolationInterrupt(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_SetDisableHeapSizeViolationInterrupt(
+                [In] V8Isolate.Handle hIsolate,
+                [In] [MarshalAs(UnmanagedType.I1)] bool value
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_GetHeapStatistics(
                 [In] V8Isolate.Handle hIsolate,
                 [Out] out ulong totalHeapSize,
@@ -1787,6 +1819,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetEnableIsolateInterruptPropagation(
+                [In] V8Context.Handle hContext,
+                [In] [MarshalAs(UnmanagedType.I1)] bool value
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            [return: MarshalAs(UnmanagedType.I1)]
+            private static extern bool V8Context_GetDisableIsolateHeapSizeViolationInterrupt(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_SetDisableIsolateHeapSizeViolationInterrupt(
                 [In] V8Context.Handle hContext,
                 [In] [MarshalAs(UnmanagedType.I1)] bool value
             );
@@ -2540,6 +2584,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetEnableInterruptPropagation(hIsolate, value);
             }
 
+            bool IV8SplitProxyNative.V8Isolate_GetDisableHeapSizeViolationInterrupt(V8Isolate.Handle hIsolate)
+            {
+                return V8Isolate_GetDisableHeapSizeViolationInterrupt(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_SetDisableHeapSizeViolationInterrupt(V8Isolate.Handle hIsolate, bool value)
+            {
+                V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
+            }
+
             void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
             {
                 V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
@@ -2763,6 +2817,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_SetEnableIsolateInterruptPropagation(V8Context.Handle hContext, bool value)
             {
                 V8Context_SetEnableIsolateInterruptPropagation(hContext, value);
+            }
+
+            bool IV8SplitProxyNative.V8Context_GetDisableIsolateHeapSizeViolationInterrupt(V8Context.Handle hContext)
+            {
+                return V8Context_GetDisableIsolateHeapSizeViolationInterrupt(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_SetDisableIsolateHeapSizeViolationInterrupt(V8Context.Handle hContext, bool value)
+            {
+                V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
@@ -3565,6 +3629,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            [return: MarshalAs(UnmanagedType.I1)]
+            private static extern bool V8Isolate_GetDisableHeapSizeViolationInterrupt(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_SetDisableHeapSizeViolationInterrupt(
+                [In] V8Isolate.Handle hIsolate,
+                [In] [MarshalAs(UnmanagedType.I1)] bool value
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_GetHeapStatistics(
                 [In] V8Isolate.Handle hIsolate,
                 [Out] out ulong totalHeapSize,
@@ -3771,6 +3847,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetEnableIsolateInterruptPropagation(
+                [In] V8Context.Handle hContext,
+                [In] [MarshalAs(UnmanagedType.I1)] bool value
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            [return: MarshalAs(UnmanagedType.I1)]
+            private static extern bool V8Context_GetDisableIsolateHeapSizeViolationInterrupt(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_SetDisableIsolateHeapSizeViolationInterrupt(
                 [In] V8Context.Handle hContext,
                 [In] [MarshalAs(UnmanagedType.I1)] bool value
             );
@@ -4524,6 +4612,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetEnableInterruptPropagation(hIsolate, value);
             }
 
+            bool IV8SplitProxyNative.V8Isolate_GetDisableHeapSizeViolationInterrupt(V8Isolate.Handle hIsolate)
+            {
+                return V8Isolate_GetDisableHeapSizeViolationInterrupt(hIsolate);
+            }
+
+            void IV8SplitProxyNative.V8Isolate_SetDisableHeapSizeViolationInterrupt(V8Isolate.Handle hIsolate, bool value)
+            {
+                V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
+            }
+
             void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
             {
                 V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
@@ -4747,6 +4845,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_SetEnableIsolateInterruptPropagation(V8Context.Handle hContext, bool value)
             {
                 V8Context_SetEnableIsolateInterruptPropagation(hContext, value);
+            }
+
+            bool IV8SplitProxyNative.V8Context_GetDisableIsolateHeapSizeViolationInterrupt(V8Context.Handle hContext)
+            {
+                return V8Context_GetDisableIsolateHeapSizeViolationInterrupt(hContext);
+            }
+
+            void IV8SplitProxyNative.V8Context_SetDisableIsolateHeapSizeViolationInterrupt(V8Context.Handle hContext, bool value)
+            {
+                V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
@@ -5549,6 +5657,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            [return: MarshalAs(UnmanagedType.I1)]
+            private static extern bool V8Isolate_GetDisableHeapSizeViolationInterrupt(
+                [In] V8Isolate.Handle hIsolate
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Isolate_SetDisableHeapSizeViolationInterrupt(
+                [In] V8Isolate.Handle hIsolate,
+                [In] [MarshalAs(UnmanagedType.I1)] bool value
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Isolate_GetHeapStatistics(
                 [In] V8Isolate.Handle hIsolate,
                 [Out] out ulong totalHeapSize,
@@ -5755,6 +5875,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_SetEnableIsolateInterruptPropagation(
+                [In] V8Context.Handle hContext,
+                [In] [MarshalAs(UnmanagedType.I1)] bool value
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            [return: MarshalAs(UnmanagedType.I1)]
+            private static extern bool V8Context_GetDisableIsolateHeapSizeViolationInterrupt(
+                [In] V8Context.Handle hContext
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_SetDisableIsolateHeapSizeViolationInterrupt(
                 [In] V8Context.Handle hContext,
                 [In] [MarshalAs(UnmanagedType.I1)] bool value
             );
