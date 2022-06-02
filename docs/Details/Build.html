@@ -306,6 +306,7 @@ support, you must first acquire and build V8:</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> This procedure currently requires <a
+href="https://visualstudio.microsoft.com/downloads/">Visual Studio 2022</a> or <a
 href="https://visualstudio.microsoft.com/vs/older-downloads/">Visual Studio
 2019</a>. The V8 build does not yet support newer versions.</p>
 
@@ -330,10 +331,9 @@ include the <b>Debugging Tools for Windows</b> feature.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Open
-a <a href="https://visualstudio.microsoft.com/vs/older-downloads/">Visual
-Studio 2019</a> developer command prompt and run the <b><span style='font-size:
-10.0pt;line-height:115%;font-family:Consolas'>V8Update</span></b> script from
-your ClearScript root directory:</p>
+a Visual Studio 2022 or 2019 developer command prompt and run the <b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8Update</span></b>
+script from your ClearScript root directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><span style='font-size:10.0pt;
@@ -381,7 +381,7 @@ revision history.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>You are now ready to build the full
 <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScript</span></b>
-solution using Visual Studio 2019 or 2022.</p>
+solution using Visual Studio 2022 or 2019.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Note:</span></b>
 The first time you open the solution, Visual Studio may prompt you to upgrade
@@ -498,27 +498,15 @@ ClearScript root directory does not contain spaces or non-ASCII characters.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Launch
-the <a href="https://en.wikipedia.org/wiki/Terminal_(macOS)">Terminal</a> app. <b><span
-style='color:red'>Important: </span></b>If you’re on an M1 machine, open a
-Rosetta shell as follows:</p>
-
-<p class=MsoListParagraph style='margin-top:10.0pt;margin-right:36.7pt;
-margin-bottom:14.0pt;margin-left:1.0in;background:#F2F2F2'><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'>user@host:~$</span><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
-style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>arch
--x86_64 zsh</span></b></p>
-
-<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>6.<span
-style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Run
-the following command from your ClearScript root directory:</p>
+the <a href="https://en.wikipedia.org/wiki/Terminal_(macOS)">Terminal</a> app
+and run the following command from your ClearScript root directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:1.0in;background:#F2F2F2'><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas;color:gray'>user@host:/path/to/ClearScript$</span><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:gray'> </span></b><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>make
--f Unix/Makefile [DEBUG=1] [CPU=[arm64]]</span></b></p>
+-f Unix/Makefile [DEBUG=1] [CPU=[x64|arm64]]</span></b></p>
 
 <p class=MsoNormal style='margin-left:.75in'>Specifying <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>DEBUG=1</span></b>
@@ -527,8 +515,10 @@ line-height:115%;font-family:Consolas'>Release</span></b>. The output directory
 is <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin/[Debug|Release]</span></b>.</p>
 
 <p class=MsoNormal style='margin-left:.75in'>Specify <b><span style='font-size:
-10.0pt;line-height:115%;font-family:Consolas'>CPU=arm64</span></b> to
-cross-build for the arm64 (M1) architecture.</p>
+10.0pt;line-height:115%;font-family:Consolas'>CPU=x64</span></b> or <b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas'>CPU=arm64</span></b>
+to build for the corresponding architecture; the default is the current
+architecture.</p>
 
 <h1 style='margin-top:14.0pt;margin-right:0in;margin-bottom:0in;margin-left:
 .5in;margin-bottom:.0001pt;text-indent:-.5in'>IV. Building strong-named
@@ -592,8 +582,8 @@ and then click <b>OK</b> to exit Reference Manager.</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>3.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> If you're using V8, you must also copy
-the following files from your ClearScript output directory to your application's
-directory:</p>
+the following files from your ClearScript output directory to your
+application's directory:</p>
 
 <p class=MsoNormal style='margin-top:10.0pt;margin-right:36.7pt;margin-bottom:
 0in;margin-left:1.0in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
@@ -629,6 +619,10 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>Clear
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.V8.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.V8.ICUData.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:.5in;background:#F2F2F2'><b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.win-arm64.dll</span></b></p>
 
@@ -658,6 +652,10 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>Clear
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.V8.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.V8.ICUData.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 14.0pt;margin-left:.5in;background:#F2F2F2'><b><span style='font-size:10.0pt;
 line-height:115%;font-family:Consolas;color:black'>ClearScriptV8.linux-[x64|arm64].so</span></b></p>
 
@@ -685,6 +683,10 @@ style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>Clear
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.V8.dll</span></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
+0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
+style='font-size:10.0pt;line-height:115%;font-family:Consolas;color:black'>ClearScript.V8.ICUData.dll</span></b></p>
 
 <p class=MsoNormal style='margin-top:0in;margin-right:36.7pt;margin-bottom:
 0in;margin-left:.5in;margin-bottom:.0001pt;background:#F2F2F2'><b><span
@@ -963,6 +965,12 @@ style='font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&n
 </span></span><a href="https://mademistakes.com/">Michael Rose</a> for
 generously providing the <a href="https://mmistakes.github.io/so-simple-theme/">So
 Simple</a> Jekyll theme.</p>
+
+<p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'><span
+style='font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></span><a href="https://www.toptal.com/">Toptal</a> for generously
+providing the <a href="https://www.toptal.com/developers/javascript-minifier">Toptal
+JavaScript Minifier</a>.</p>
 
 </div>
 

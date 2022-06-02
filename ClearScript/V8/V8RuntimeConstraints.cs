@@ -13,7 +13,7 @@ namespace Microsoft.ClearScript.V8
         // ReSharper disable EmptyConstructor
 
         /// <summary>
-        /// Initializes a new <see cref="V8RuntimeConstraints"/> instance.
+        /// Initializes a new <c><see cref="V8RuntimeConstraints"/></c> instance.
         /// </summary>
         public V8RuntimeConstraints()
         {
@@ -89,14 +89,14 @@ namespace Microsoft.ClearScript.V8
         /// whenever the script engine is close to exceeding the current limit. Note that a buggy
         /// or malicious script can still cause an application to fail by exhausting its address
         /// space or total available memory. On-demand heap expansion is recommended for use in
-        /// conjunction with heap size monitoring (see <see cref="V8Runtime.MaxHeapSize"/>,
-        /// <see cref="V8ScriptEngine.MaxRuntimeHeapSize"/>) to help contain runaway scripts.
+        /// conjunction with heap size monitoring (see <c><see cref="V8Runtime.MaxHeapSize"/></c>,
+        /// <c><see cref="V8ScriptEngine.MaxRuntimeHeapSize"/></c>) to help contain runaway scripts.
         /// </remarks>
         public double HeapExpansionMultiplier { get; set; }
 
         /// <summary>
         /// Gets or sets the maximum amount of
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see>
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see></c>
         /// memory the runtime may allocate.
         /// </summary>
         /// <remarks>

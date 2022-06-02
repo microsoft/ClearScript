@@ -46,7 +46,6 @@
 
     <ItemGroup>
         <Reference Include="Microsoft.CSharp" />
-        <Reference Include="System.Net.Http" />
     </ItemGroup>
 
     <ItemGroup>

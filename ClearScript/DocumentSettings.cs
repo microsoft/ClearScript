@@ -24,7 +24,7 @@ namespace Microsoft.ClearScript
         // ReSharper disable EmptyConstructor
 
         /// <summary>
-        /// Initializes a new <see cref="DocumentSettings"/> instance.
+        /// Initializes a new <c><see cref="DocumentSettings"/></c> instance.
         /// </summary>
         public DocumentSettings()
         {
@@ -67,7 +67,7 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <remarks>
         /// <para>
-        /// This property is used as an alternative to <see cref="DocumentInfo.ContextCallback"/>.
+        /// This property is used as an alternative to <c><see cref="DocumentInfo.ContextCallback"/></c>.
         /// If specified, the callback is invoked the first time a module attempts to retrieve its
         /// context information. The properties it returns are made available to the module
         /// implementation. This mechanism can be used to expose host resources selectively,
@@ -76,8 +76,8 @@ namespace Microsoft.ClearScript
         /// <para>
         /// Use 
         /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import.meta">import.meta</see></c>
-        /// to access the context information of a <see cref="ModuleCategory.Standard"/> JavaScript
-        /// module. In a <see cref="ModuleCategory.CommonJS"/> module, use <c>module.meta</c>.
+        /// to access the context information of a <c><see cref="ModuleCategory.Standard"/></c> JavaScript
+        /// module. In a <c><see cref="ModuleCategory.CommonJS"/></c> module, use <c>module.meta</c>.
         /// </para>
         /// </remarks>
         public DocumentContextCallback ContextCallback { get; set; }
@@ -90,7 +90,7 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// System documents take precedence over loaded documents. Once this method is invoked,
         /// document access using this configuration will always map the combination of
-        /// <paramref name="identifier"/> and <see cref="DocumentCategory.Script"/> to the
+        /// <paramref name="identifier"/> and <c><see cref="DocumentCategory.Script"/></c> to the
         /// specified document, bypassing the configuration's document loader.
         /// </remarks>
         public void AddSystemDocument(string identifier, string contents)

@@ -21,7 +21,7 @@ namespace Microsoft.ClearScript
         // ReSharper disable EmptyConstructor
 
         /// <summary>
-        /// Initializes a new <see cref="DocumentLoader"/> instance.
+        /// Initializes a new <c><see cref="DocumentLoader"/></c> instance.
         /// </summary>
         protected DocumentLoader()
         {
@@ -42,7 +42,7 @@ namespace Microsoft.ClearScript
         /// This property specifies the maximum number of documents to be cached by the document
         /// loader. For the default document loader, its initial value is 1024.
         /// </remarks>
-        /// <seealso cref="Default"/>
+        /// <c><seealso cref="Default"/></c>
         public virtual uint MaxCacheSize
         {
             get => 0;
@@ -57,11 +57,11 @@ namespace Microsoft.ClearScript
         /// <param name="specifier">A string specifying the document to be loaded.</param>
         /// <param name="category">An optional category for the requested document.</param>
         /// <param name="contextCallback">An optional context callback for the requested document.</param>
-        /// <returns>A <see cref="Document"/> instance that represents the loaded document.</returns>
+        /// <returns>A <c><see cref="Document"/></c> instance that represents the loaded document.</returns>
         /// <remarks>
         /// A loaded document must have an absolute <see cref="DocumentInfo.Uri">URI</see>. Once a
         /// load operation has completed successfully, subsequent requests that resolve to the same
-        /// URI are expected to return the same <see cref="Document"/> reference, although loaders
+        /// URI are expected to return the same <c><see cref="Document"/></c> reference, although loaders
         /// are not required to manage document caches of unlimited size.
         /// </remarks>
         public virtual Document LoadDocument(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
@@ -92,11 +92,11 @@ namespace Microsoft.ClearScript
         /// <param name="specifier">A string specifying the document to be loaded.</param>
         /// <param name="category">An optional category for the requested document.</param>
         /// <param name="contextCallback">An optional context callback for the requested document.</param>
-        /// <returns>A task that represents the asynchronous operation. Upon completion, the task's result is a <see cref="Document"/> instance that represents the loaded document.</returns>
+        /// <returns>A task that represents the asynchronous operation. Upon completion, the task's result is a <c><see cref="Document"/></c> instance that represents the loaded document.</returns>
         /// <remarks>
         /// A loaded document must have an absolute <see cref="DocumentInfo.Uri">URI</see>. Once a
         /// load operation has completed successfully, subsequent requests that resolve to the same
-        /// URI are expected to return the same <see cref="Document"/> reference, although loaders
+        /// URI are expected to return the same <c><see cref="Document"/></c> reference, although loaders
         /// are not required to manage document caches of unlimited size.
         /// </remarks>
         public abstract Task<Document> LoadDocumentAsync(DocumentSettings settings, DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback);

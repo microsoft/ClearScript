@@ -1,8 +1,9 @@
 #!/bin/bash
 
-v8testedrev=10.1.124.11
+v8testedrev=10.2.154.5
 v8testedcommit=
-v8cherrypicks="6cf7330a611a5d97a772743d7e626e162b26828e"
+v8cherrypicks=6cf7330a611a5d97a772743d7e626e162b26828e
+v8linuxbuildcommit=3d9590754d5d23e62d15472c5baf6777ca59df20
 
 if [[ $v8testedcommit == "" ]]; then
     v8testedcommit=$v8testedrev
@@ -163,21 +164,29 @@ if [[ $download == true ]]; then
     PATH=$PWD/depot_tools:$PATH
 
     echo "Downloading V8 and dependencies ..."
-    gclient config https://chromium.googlesource.com/v8/v8 >config.log || fail
-    gclient sync -r $v8commit >sync.log || fail
+    gclient config https://chromium.googlesource.com/v8/v8 >config.log 2>config.log || fail
+    gclient sync -r $v8commit >sync.log 2>sync.log || fail
 
     echo "Applying patches ..."
     cd v8 || abort
     git config user.name ClearScript || fail
     git config user.email "ClearScript@microsoft.com" || fail
     if [[ $v8cherrypicks != "" ]]; then
-        git cherry-pick --allow-empty-message --keep-redundant-commits $v8cherrypicks >applyV8CherryPicks.log 2>applyV8CherryPicks.log || fail
+        git cherry-pick --allow-empty-message --keep-redundant-commits $v8cherrypicks >apply-cherry-picks.log 2>apply-cherry-picks.log || fail
     fi
-    git apply --reject --ignore-whitespace ../../V8Patch.txt 2>applyV8Patch.log || fail
+    git apply --reject --ignore-whitespace ../../V8Patch.txt 2>apply-patch.log || fail
+    if [[ $linux == true ]]; then
+        cd build || abort
+        if [[ $v8linuxbuildcommit != "" ]]; then
+            git reset --hard $v8linuxbuildcommit >reset.log || fail
+        fi
+        cp ../../../sysroots.json linux/sysroot_scripts || fail
+        cd ..
+    fi
     cd ..
     
     echo "Downloading additional libraries ..."
-    git clone -n https://github.com/nlohmann/json.git 2>cloneJson.log || fail
+    git clone -n https://github.com/nlohmann/json.git 2>clone-json.log || fail
     cd json || abort
     git checkout $jsontag 2>checkout.log || fail
     cd ..
@@ -195,14 +204,13 @@ fi
 cd build/v8 || abort
 
 echo "Creating/updating patches ..."
-git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>createV8Patch.log || fail
+git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>create-patch.log || fail
 
 if [[ $linux == true ]]; then
     echo "Installing LKG sysroots ..."
-    cp ../../sysroots.json build/linux/sysroot_scripts
-    build/linux/sysroot_scripts/install-sysroot.py --arch=x64 || fail
-    build/linux/sysroot_scripts/install-sysroot.py --arch=i386 || fail
-    build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu || fail
+    build/linux/sysroot_scripts/install-sysroot.py --arch=x64 >install-x64-sysroot.log || fail
+    build/linux/sysroot_scripts/install-sysroot.py --arch=i386 >install-i386-sysroot.log || fail
+    build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu >install-$cpu-sysroot.log || fail
 fi
 
 echo "Building V8 ..."
@@ -213,5 +221,8 @@ cd ../..
 
 echo "Importing patches ..."
 cp build/v8/V8Patch.txt . || fail
+
+echo "Importing ICU data ..."
+cp build/v8/out/$cpu/$mode/icudtl.dat . || fail
 
 echo "Succeeded!"

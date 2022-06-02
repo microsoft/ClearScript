@@ -18,7 +18,7 @@ namespace Microsoft.ClearScript.Windows.Core
     /// </summary>
     /// <remarks>
     /// This class can be used in non-desktop environments such as server applications. An
-    /// implementation of <see cref="ISyncInvoker"/> is required to enforce thread affinity.
+    /// implementation of <c><see cref="ISyncInvoker"/></c> is required to enforce thread affinity.
     /// </remarks>
     public abstract partial class WindowsScriptEngine : ScriptEngine
     {
@@ -99,7 +99,7 @@ namespace Microsoft.ClearScript.Windows.Core
         #region public members
 
         /// <summary>
-        /// Gets the <see cref="ISyncInvoker"/> implementation associated with the current script engine.
+        /// Gets the <c><see cref="ISyncInvoker"/></c> implementation associated with the current script engine.
         /// </summary>
         public ISyncInvoker SyncInvoker
         {
@@ -525,8 +525,8 @@ namespace Microsoft.ClearScript.Windows.Core
         /// <remarks>
         /// The value of this property is an object that is bound to the script engine's root
         /// namespace. It allows you to access global script resources via the
-        /// <see cref="ScriptObject"/> class interface. Doing so is likely to perform better than
-        /// dynamic access via <see cref="Script"/>.
+        /// <c><see cref="ScriptObject"/></c> class interface. Doing so is likely to perform better than
+        /// dynamic access via <c><see cref="Script"/></c>.
         /// </remarks>
         public override ScriptObject Global
         {
@@ -547,7 +547,7 @@ namespace Microsoft.ClearScript.Windows.Core
         /// The stack trace text format is defined by the script engine.
         /// </para>
         /// <para>
-        /// The <see cref="WindowsScriptEngine"/> version of this method returns the empty string
+        /// The <c><see cref="WindowsScriptEngine"/></c> version of this method returns the empty string
         /// if script debugging features have not been enabled for the instance.
         /// </para>
         /// </remarks>
@@ -776,11 +776,11 @@ namespace Microsoft.ClearScript.Windows.Core
         /// </summary>
         /// <param name="disposing"><c>True</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         /// <remarks>
-        /// This method is called by the public <see cref="ScriptEngine.Dispose()"/> method and the
-        /// <see cref="ScriptEngine.Finalize">Finalize</see> method.
-        /// <see cref="ScriptEngine.Dispose()"/> invokes the protected <c>Dispose(Boolean)</c>
+        /// This method is called by the public <c><see cref="ScriptEngine.Dispose()"/></c> method and the
+        /// <c><see cref="ScriptEngine.Finalize">Finalize</see></c> method.
+        /// <c><see cref="ScriptEngine.Dispose()"/></c> invokes the protected <c>Dispose(Boolean)</c>
         /// method with the <paramref name="disposing"/> parameter set to <c>true</c>.
-        /// <see cref="ScriptEngine.Finalize">Finalize</see> invokes <c>Dispose(Boolean)</c> with
+        /// <c><see cref="ScriptEngine.Finalize">Finalize</see></c> invokes <c>Dispose(Boolean)</c> with
         /// <paramref name="disposing"/> set to <c>false</c>.
         /// </remarks>
         protected override void Dispose(bool disposing)

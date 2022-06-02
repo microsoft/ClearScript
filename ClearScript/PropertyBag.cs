@@ -16,7 +16,7 @@ namespace Microsoft.ClearScript
     /// </summary>
     /// <remarks>
     /// If an object that implements this interface is added to a script engine (see
-    /// <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>), script code
+    /// <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>), script code
     /// will be able to access the properties stored in the collection as if they were members of
     /// the object itself, using the script language's native syntax for member access. No
     /// other members of the object will be accessible. This interface also allows objects to
@@ -27,7 +27,7 @@ namespace Microsoft.ClearScript
     }
 
     /// <summary>
-    /// Provides a default <see cref="IPropertyBag"/> implementation.
+    /// Provides a default <c><see cref="IPropertyBag"/></c> implementation.
     /// </summary>
     public class PropertyBag : IPropertyBag, INotifyPropertyChanged, IScriptableObject
     {
@@ -43,7 +43,7 @@ namespace Microsoft.ClearScript
         #region constructors
 
         /// <summary>
-        /// Initializes a new writable <see cref="PropertyBag"/> with the default property name comparer.
+        /// Initializes a new writable <c><see cref="PropertyBag"/></c> with the default property name comparer.
         /// </summary>
         public PropertyBag()
             : this(false)
@@ -51,14 +51,14 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="PropertyBag"/> with the default property name comparer.
+        /// Initializes a new <c><see cref="PropertyBag"/></c> with the default property name comparer.
         /// </summary>
-        /// <param name="isReadOnly"><c>True</c> to make the <see cref="PropertyBag"/> read-only, <c>false</c> to make it writable.</param>
+        /// <param name="isReadOnly"><c>True</c> to make the <c><see cref="PropertyBag"/></c> read-only, <c>false</c> to make it writable.</param>
         /// <remarks>
-        /// The host can modify a read-only <see cref="PropertyBag"/> by calling
-        /// <see cref="SetPropertyNoCheck">SetPropertyNoCheck</see>,
-        /// <see cref="RemovePropertyNoCheck">RemovePropertyNoCheck</see>, or
-        /// <see cref="ClearNoCheck">ClearNoCheck</see>.
+        /// The host can modify a read-only <c><see cref="PropertyBag"/></c> by calling
+        /// <c><see cref="SetPropertyNoCheck">SetPropertyNoCheck</see></c>,
+        /// <c><see cref="RemovePropertyNoCheck">RemovePropertyNoCheck</see></c>, or
+        /// <c><see cref="ClearNoCheck">ClearNoCheck</see></c>.
         /// </remarks>
         public PropertyBag(bool isReadOnly)
             : this(isReadOnly, null)
@@ -66,7 +66,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new writable <see cref="PropertyBag"/>.
+        /// Initializes a new writable <c><see cref="PropertyBag"/></c>.
         /// </summary>
         /// <param name="comparer">The comparer to use for property names, or <c>null</c> to use the default string comparer.</param>
         public PropertyBag(IEqualityComparer<string> comparer)
@@ -75,9 +75,9 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="PropertyBag"/>.
+        /// Initializes a new <c><see cref="PropertyBag"/></c>.
         /// </summary>
-        /// <param name="isReadOnly"><c>True</c> to make the <see cref="PropertyBag"/> read-only, <c>false</c> to make it writable.</param>
+        /// <param name="isReadOnly"><c>True</c> to make the <c><see cref="PropertyBag"/></c> read-only, <c>false</c> to make it writable.</param>
         /// <param name="comparer">The comparer to use for property names, or <c>null</c> to use the default string comparer.</param>
         public PropertyBag(bool isReadOnly, IEqualityComparer<string> comparer)
         {
@@ -91,12 +91,12 @@ namespace Microsoft.ClearScript
         #region public members
 
         /// <summary>
-        /// Gets the property name comparer for the <see cref="PropertyBag"/>.
+        /// Gets the property name comparer for the <c><see cref="PropertyBag"/></c>.
         /// </summary>
         public IEqualityComparer<string> Comparer => dictionary.Comparer;
 
         /// <summary>
-        /// Sets a property value without checking whether the <see cref="PropertyBag"/> is read-only.
+        /// Sets a property value without checking whether the <c><see cref="PropertyBag"/></c> is read-only.
         /// </summary>
         /// <param name="name">The name of the property to set.</param>
         /// <param name="value">The property value.</param>
@@ -111,7 +111,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Removes a property without checking whether the <see cref="PropertyBag"/> is read-only.
+        /// Removes a property without checking whether the <c><see cref="PropertyBag"/></c> is read-only.
         /// </summary>
         /// <param name="name">The name of the property to remove.</param>
         /// <returns><c>True</c> if the property was found and removed, <c>false</c> otherwise.</returns>
@@ -130,7 +130,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Removes all properties without checking whether the <see cref="PropertyBag"/> is read-only.
+        /// Removes all properties without checking whether the <c><see cref="PropertyBag"/></c> is read-only.
         /// </summary>
         /// <remarks>
         /// This operation is never exposed to script code.
@@ -250,17 +250,17 @@ namespace Microsoft.ClearScript
         #region IDictionary<string, object> implementation
 
         /// <summary>
-        /// Determines whether the <see cref="PropertyBag"/> contains a property with the specified name.
+        /// Determines whether the <c><see cref="PropertyBag"/></c> contains a property with the specified name.
         /// </summary>
         /// <param name="key">The name of the property to locate.</param>
-        /// <returns><c>True</c> if the <see cref="PropertyBag"/> contains a property with the specified name, <c>false</c> otherwise.</returns>
+        /// <returns><c>True</c> if the <c><see cref="PropertyBag"/></c> contains a property with the specified name, <c>false</c> otherwise.</returns>
         public bool ContainsKey(string key)
         {
             return dictionary.ContainsKey(key);
         }
 
         /// <summary>
-        /// Adds a property to the <see cref="PropertyBag"/>.
+        /// Adds a property to the <c><see cref="PropertyBag"/></c>.
         /// </summary>
         /// <param name="key">The name of the property to add.</param>
         /// <param name="value">The property value.</param>
@@ -271,7 +271,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Removes a property from the <see cref="PropertyBag"/>.
+        /// Removes a property from the <c><see cref="PropertyBag"/></c>.
         /// </summary>
         /// <param name="key">The name of the property to remove.</param>
         /// <returns><c>True</c> if the property was successfully found and removed, <c>false</c> otherwise.</returns>
@@ -282,7 +282,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Looks up a property value in the <see cref="PropertyBag"/>.
+        /// Looks up a property value in the <c><see cref="PropertyBag"/></c>.
         /// </summary>
         /// <param name="key">The name of the property to locate.</param>
         /// <param name="value">The property value if the property was found, <c>null</c> otherwise.</param>
@@ -293,7 +293,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Gets or sets a property value in the <see cref="PropertyBag"/>.
+        /// Gets or sets a property value in the <c><see cref="PropertyBag"/></c>.
         /// </summary>
         /// <param name="key">The name of the property to get or set.</param>
         /// <returns>The property value.</returns>
@@ -309,12 +309,12 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Gets a collection of property names from the <see cref="PropertyBag"/>.
+        /// Gets a collection of property names from the <c><see cref="PropertyBag"/></c>.
         /// </summary>
         public ICollection<string> Keys => dictionary.Keys;
 
         /// <summary>
-        /// Gets a collection of property values from the <see cref="PropertyBag"/>.
+        /// Gets a collection of property values from the <c><see cref="PropertyBag"/></c>.
         /// </summary>
         public ICollection<object> Values => dictionary.Values;
 

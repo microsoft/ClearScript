@@ -26,7 +26,8 @@ namespace Microsoft.ClearScript
 
         private static readonly PropertyInfo[] reflectionProperties =
         {
-            typeof(Delegate).GetProperty("Method")
+            typeof(Delegate).GetProperty("Method"),
+            typeof(Exception).GetProperty("TargetSite")
         };
 
         internal static bool EnableVTablePatching;

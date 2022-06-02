@@ -7,14 +7,14 @@ using System.Text;
 namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Provides an in-memory <see cref="Document"/> implementation for a text document.
+    /// Provides an in-memory <c><see cref="Document"/></c> implementation for a text document.
     /// </summary>
     public class StringDocument : Document
     {
         private readonly byte[] contents;
 
         /// <summary>
-        /// Initializes a new <see cref="StringDocument"/> instance.
+        /// Initializes a new <c><see cref="StringDocument"/></c> instance.
         /// </summary>
         /// <param name="info">A structure containing meta-information for the document.</param>
         /// <param name="contents">A string containing the document's contents.</param>
@@ -35,8 +35,8 @@ namespace Microsoft.ClearScript
         /// Gets a stream that provides read access to the document.
         /// </summary>
         /// <remarks>
-        /// The <see cref="StringDocument"/> implementation of this property returns a
-        /// <see cref="MemoryStream"/> instance.
+        /// The <c><see cref="StringDocument"/></c> implementation of this property returns a
+        /// <c><see cref="MemoryStream"/></c> instance.
         /// </remarks>
         public override Stream Contents => new MemoryStream(contents, false);
 
@@ -44,7 +44,7 @@ namespace Microsoft.ClearScript
         /// Gets the document's character encoding.
         /// </summary>
         /// <remarks>
-        /// <see cref="StringDocument"/> instances return <see cref="System.Text.Encoding.UTF8"/> for this property.
+        /// <c><see cref="StringDocument"/></c> instances return <c><see cref="System.Text.Encoding.UTF8"/></c> for this property.
         /// </remarks>
         public override Encoding Encoding => Encoding.UTF8;
 

@@ -5,10 +5,39 @@ else
 endif
 
 KERNEL = $(shell uname -s)
-ifeq ($(KERNEL), Linux)
+ifeq ($(KERNEL), Darwin)
+    MAKELINUX = true
+else ifeq ($(KERNEL), Linux)
     MAKELINUX = make
 else
-    MAKELINUX = true
+    $(error unsupported operating system '$(KERNEL)')
+endif
+
+ARCH = $(shell uname -m)
+ifeq ($(ARCH), i386)
+    HOSTCPU = x86
+else ifeq ($(ARCH), x86_64)
+    HOSTCPU = x64
+else ifeq ($(ARCH), arm)
+    HOSTCPU = arm
+else ifeq ($(ARCH), arm32)
+    HOSTCPU = arm
+else ifeq ($(ARCH), aarch32)
+    HOSTCPU = arm
+else ifeq ($(ARCH), arm64)
+    HOSTCPU = arm64
+else ifeq ($(ARCH), aarch64)
+    HOSTCPU = arm64
+else
+    $(error unsupported machine architecture '$(ARCH)')
+endif
+
+ifeq ($(HOSTCPU), x64)
+    OTHERCPU = arm64
+else ifeq ($(HOSTCPU), arm64)
+    OTHERCPU = x64
+else
+    $(error unsupported build machine architecture '$(ARCH)')
 endif
 
 MAKEFILE = $(word $(words $(MAKEFILE_LIST)), $(MAKEFILE_LIST))
@@ -22,10 +51,6 @@ NETSTANDARDDIR = $(ROOTDIR)/NetStandard
 
 all:
 	make -f $(UNIXDIR)/ClearScriptV8/Makefile
-	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(NETCOREDIR)/ClearScript.Core/ClearScript.Core.csproj
-	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(NETCOREDIR)/ClearScript.V8/ClearScript.V8.csproj
-	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(NETSTANDARDDIR)/ClearScript.Core/ClearScript.Core.csproj
-	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(NETSTANDARDDIR)/ClearScript.V8/ClearScript.V8.csproj
 	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(UNIXDIR)/ClearScriptConsole/ClearScriptConsole.csproj
 	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(UNIXDIR)/ClearScriptBenchmarks/ClearScriptBenchmarks.csproj
 	dotnet build --nologo --verbosity quiet -c $(CONFIG) $(UNIXDIR)/ClearScriptTest/ClearScriptTest.csproj
@@ -37,10 +62,6 @@ test: all
 
 clean:
 	make -f $(UNIXDIR)/ClearScriptV8/Makefile clean
-	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(NETCOREDIR)/ClearScript.Core/ClearScript.Core.csproj
-	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(NETCOREDIR)/ClearScript.V8/ClearScript.V8.csproj
-	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(NETSTANDARDDIR)/ClearScript.Core/ClearScript.Core.csproj
-	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(NETSTANDARDDIR)/ClearScript.V8/ClearScript.V8.csproj
 	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(UNIXDIR)/ClearScriptConsole/ClearScriptConsole.csproj
 	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(UNIXDIR)/ClearScriptBenchmarks/ClearScriptBenchmarks.csproj
 	dotnet clean --nologo --verbosity quiet -c $(CONFIG) $(UNIXDIR)/ClearScriptTest/ClearScriptTest.csproj
@@ -56,21 +77,21 @@ zapv8:
 	make -f $(UNIXDIR)/ClearScriptV8/Makefile zapv8
 
 buildallrelease:
-	make CPU=x64
-	make CPU=arm64
+	make CPU=$(HOSTCPU)
+	make CPU=$(OTHERCPU)
 	$(MAKELINUX) CPU=arm
 
 buildalldebug:
-	make CPU=x64 DEBUG=1
-	make CPU=arm64 DEBUG=1
+	make CPU=$(HOSTCPU) DEBUG=1
+	make CPU=$(OTHERCPU) DEBUG=1
 	$(MAKELINUX) CPU=arm DEBUG=1
 
 buildall: buildallrelease buildalldebug
 
 cleanall:
-	make clean CPU=x64
-	make clean CPU=arm64
+	make clean CPU=$(HOSTCPU)
+	make clean CPU=$(OTHERCPU)
 	$(MAKELINUX) clean CPU=arm
-	make clean CPU=x64 DEBUG=1
-	make clean CPU=arm64 DEBUG=1
+	make clean CPU=$(HOSTCPU) DEBUG=1
+	make clean CPU=$(OTHERCPU) DEBUG=1
 	$(MAKELINUX) clean CPU=arm DEBUG=1

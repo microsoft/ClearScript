@@ -197,7 +197,7 @@ namespace Microsoft.ClearScript.V8
             /// <remarks>
             /// A value of zero indicates that no line number is available.
             /// </remarks>
-            /// <seealso cref="V8CpuProfileFlags"/>
+            /// <c><seealso cref="V8CpuProfileFlags"/></c>
             public long LineNumber { get; internal set; }
 
             /// <summary>
@@ -206,7 +206,7 @@ namespace Microsoft.ClearScript.V8
             /// <remarks>
             /// A value of zero indicates that no column number is available.
             /// </remarks>
-            /// <seealso cref="V8CpuProfileFlags"/>
+            /// <c><seealso cref="V8CpuProfileFlags"/></c>
             public long ColumnNumber { get; internal set; }
 
             /// <summary>

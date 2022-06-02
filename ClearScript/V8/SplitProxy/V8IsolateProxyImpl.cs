@@ -40,6 +40,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers),
                 flags.HasFlag(V8ScriptEngineFlags.EnableDateTimeConversion),
                 flags.HasFlag(V8ScriptEngineFlags.EnableDynamicModuleImports),
+                flags.HasFlag(V8ScriptEngineFlags.HideHostExceptions),
                 debugPort
             ));
         }

@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set v8testedrev=10.1.124.11
+set v8testedrev=10.2.154.5
 set v8testedcommit=
 
 if not "%v8testedcommit%"=="" goto ProcessArgs
@@ -81,7 +81,8 @@ goto Exit
 
 :CheckMSVS
 if "%VisualStudioVersion%"=="16.0" goto CheckMSVSDone
-echo Error: This script requires a Visual Studio 2019 Developer Command Prompt.
+if "%VisualStudioVersion%"=="17.0" goto CheckMSVSDone
+echo Error: This script requires a Visual Studio 2019 or 2022 Developer Command Prompt.
 echo Browse to http://www.visualstudio.com for more information.
 goto Exit
 :CheckMSVSDone
@@ -173,9 +174,9 @@ path %cd%\DepotTools;%path%
 
 :SyncClient
 echo Downloading V8 and dependencies ...
-call gclient config https://chromium.googlesource.com/v8/v8 >config.log
+call gclient config https://chromium.googlesource.com/v8/v8 >config.log 2>&1
 if errorlevel 1 goto Error
-call gclient sync -r %v8commit% >sync.log
+call gclient sync -r %v8commit% >sync.log 2>&1
 if errorlevel 1 goto Error
 :SyncClientDone
 
@@ -286,6 +287,12 @@ echo Importing patches ...
 copy build\v8\V8Patch.txt .\ >nul
 if errorlevel 1 goto Error
 :ImportPatchesDone
+
+:ImportICUData
+echo Importing ICU data ...
+copy build\v8\out\x64\%mode%\icudtl.dat .\ >nul
+if errorlevel 1 goto Error
+:ImportICUDataDone
 
 :ImportDone
 

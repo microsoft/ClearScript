@@ -1,0 +1,45 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ include file="..\..\Version.tt" #>
+
+<#@ assembly name="EnvDTE" #>
+<#@ import namespace="EnvDTE" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Reflection" #>
+
+<#
+var dte = (DTE)((IServiceProvider)Host).GetService(typeof(DTE));
+var solutionPath = Path.GetDirectoryName(dte.Solution.FullName);
+var keyFilePath = Path.Combine(solutionPath, "ClearScript.snk");
+var delaySignKeyFilePath = Path.Combine(solutionPath, "ClearScript.DelaySign.snk");
+var publicKeySpec = string.Empty;
+if (File.Exists(keyFilePath))
+{
+    using (var stream = new FileStream(keyFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+    {
+        var keyPair = new StrongNameKeyPair(stream);
+        publicKeySpec = ", PublicKey=" + BitConverter.ToString(keyPair.PublicKey).Replace("-", string.Empty);
+    }
+}
+else if (File.Exists(delaySignKeyFilePath))
+{
+    publicKeySpec = ", PublicKey=" + BitConverter.ToString(File.ReadAllBytes(delaySignKeyFilePath)).Replace("-", string.Empty);
+}
+#>
+
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+[assembly: AssemblyTitle("ClearScript V8 ICU Data Library")]
+[assembly: AssemblyProduct("ClearScript")]
+[assembly: AssemblyCopyright("(c) Microsoft Corporation")]
+[assembly: InternalsVisibleTo("<#= "ClearScript.V8" + publicKeySpec #>")]
+
+[assembly: ComVisible(false)]
+[assembly: AssemblyVersion("<#= version.ToString(3) #>")]
+[assembly: AssemblyFileVersion("<#= version.ToString(3) #>")]
+[assembly: AssemblyInformationalVersion("<#= version.ToString(3) + versionSuffix #>")]

@@ -6,7 +6,7 @@ using System;
 namespace Microsoft.ClearScript.Windows.Core
 {
     /// <summary>
-    /// Provides a null <see cref="ISyncInvoker"/> implementation.
+    /// Provides a null <c><see cref="ISyncInvoker"/></c> implementation.
     /// </summary>
     /// <remarks>
     /// This class does not enforce thread affinity and should be used with caution. Windows Script
@@ -15,7 +15,7 @@ namespace Microsoft.ClearScript.Windows.Core
     public class NullSyncInvoker : ISyncInvoker
     {
         /// <summary>
-        /// The sole instance of the <see cref="NullSyncInvoker"/> class.
+        /// The sole instance of the <c><see cref="NullSyncInvoker"/></c> class.
         /// </summary>
         public static readonly ISyncInvoker Instance = new NullSyncInvoker();
 
@@ -30,7 +30,7 @@ namespace Microsoft.ClearScript.Windows.Core
         /// </summary>
         /// <returns><c>True</c> if the calling thread has access to the script engine, <c>false</c> otherwise.</returns>
         /// <remarks>
-        /// The <see cref="NullSyncInvoker"/> implementation of this method always returns <c>true</c>.
+        /// The <c><see cref="NullSyncInvoker"/></c> implementation of this method always returns <c>true</c>.
         /// </remarks>
         public bool CheckAccess()
         {
@@ -41,7 +41,7 @@ namespace Microsoft.ClearScript.Windows.Core
         /// Enforces that the calling thread has access to the script engine.
         /// </summary>
         /// <remarks>
-        /// The <see cref="NullSyncInvoker"/> implementation of this method performs no action.
+        /// The <c><see cref="NullSyncInvoker"/></c> implementation of this method performs no action.
         /// </remarks>
         public void VerifyAccess()
         {
@@ -52,7 +52,7 @@ namespace Microsoft.ClearScript.Windows.Core
         /// </summary>
         /// <param name="action">The delegate to invoke on the script engine's thread.</param>
         /// <remarks>
-        /// The <see cref="NullSyncInvoker"/> implementation of this method invokes
+        /// The <c><see cref="NullSyncInvoker"/></c> implementation of this method invokes
         /// <paramref name="action"></paramref> without synchronization.
         /// </remarks>
         public void Invoke(Action action)
@@ -67,7 +67,7 @@ namespace Microsoft.ClearScript.Windows.Core
         /// <param name="func">The delegate to invoke on the script engine's thread.</param>
         /// <returns>The delegate's return value.</returns>
         /// <remarks>
-        /// The <see cref="NullSyncInvoker"/> implementation of this method invokes
+        /// The <c><see cref="NullSyncInvoker"/></c> implementation of this method invokes
         /// <paramref name="func"></paramref> without synchronization.
         /// </remarks>
         public T Invoke<T>(Func<T> func)

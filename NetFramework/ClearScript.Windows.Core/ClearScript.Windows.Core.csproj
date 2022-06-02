@@ -46,6 +46,11 @@
         <Compile Include="..\..\ClearScript\Windows\Core\NullSyncInvoker.cs" Link="Windows\Core\NullSyncInvoker.cs" />
         <Compile Include="..\..\ClearScript\Windows\IWindowsScriptObject.cs" Link="Windows\IWindowsScriptObject.cs" />
         <Compile Include="..\..\ClearScript\Windows\Core\JScriptEngine.cs" Link="Windows\Core\JScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\Windows\Core\JScriptEngine.InitScript.cs" Link="Windows\Core\JScriptEngine.InitScript.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>JScriptEngine.InitScript.tt</DependentUpon>
+        </Compile>
         <Compile Include="..\..\ClearScript\Windows\Nothing.cs" Link="Windows\Nothing.cs" />
         <Compile Include="..\..\ClearScript\Windows\Core\VBScriptEngine.cs" Link="Windows\Core\VBScriptEngine.cs" />
         <Compile Include="..\..\ClearScript\Windows\Core\WindowsScriptEngine.cs" Link="Windows\Core\WindowsScriptEngine.cs" />
@@ -60,6 +65,11 @@
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>AssemblyInfo.Windows.Core.cs</LastGenOutput>
         </None>
+        <None Include="..\..\ClearScript\Windows\Core\JScriptEngine.InitScript.tt" Link="Windows\Core\JScriptEngine.InitScript.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>JScriptEngine.InitScript.cs</LastGenOutput>
+        </None>
+        <None Include="..\..\ClearScript\Windows\Core\JScriptEngine.InitScript.js" Link="Windows\Core\JScriptEngine.InitScript.js"/>
     </ItemGroup>
 
     <ItemGroup>

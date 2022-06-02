@@ -30,7 +30,7 @@ namespace Microsoft.ClearScript
 
         /// <summary>
         /// Specifies that the host resource's dynamic members are not to be exposed. This option
-        /// applies only to objects that implement <see cref="IDynamicMetaObjectProvider"/>.
+        /// applies only to objects that implement <c><see cref="IDynamicMetaObjectProvider"/></c>.
         /// </summary>
         HideDynamicMembers = 0x00000004,
 

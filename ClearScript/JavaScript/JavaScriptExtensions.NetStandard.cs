@@ -10,7 +10,7 @@ namespace Microsoft.ClearScript.JavaScript
     public static partial class JavaScriptExtensions
     {
         /// <summary>
-        /// Converts a <see cref="ValueTask{T}"/> instance to a
+        /// Converts a <c><see cref="ValueTask{T}"/></c> instance to a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
         /// for use with script code currently running on the calling thread.
         /// </summary>
@@ -26,7 +26,7 @@ namespace Microsoft.ClearScript.JavaScript
         }
 
         /// <summary>
-        /// Converts a <see cref="ValueTask{T}"/> instance to a
+        /// Converts a <c><see cref="ValueTask{T}"/></c> instance to a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
         /// for use with script code running in the specified script engine.
         /// </summary>
@@ -52,7 +52,7 @@ namespace Microsoft.ClearScript.JavaScript
         }
 
         /// <summary>
-        /// Converts a <see cref="ValueTask"/> instance to a
+        /// Converts a <c><see cref="ValueTask"/></c> instance to a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
         /// for use with script code currently running on the calling thread.
         /// </summary>
@@ -67,7 +67,7 @@ namespace Microsoft.ClearScript.JavaScript
         }
 
         /// <summary>
-        /// Converts a <see cref="ValueTask"/> instance to a
+        /// Converts a <c><see cref="ValueTask"/></c> instance to a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
         /// for use with script code running in the specified script engine.
         /// </summary>

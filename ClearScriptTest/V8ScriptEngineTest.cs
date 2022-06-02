@@ -2137,6 +2137,32 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ExceptionMarshaling_Suppression()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.HideHostExceptions);
+
+            Exception exception = new IOException("something awful happened");
+            engine.AddRestrictedHostObject("exception", exception);
+
+            engine.Script.foo = new Action(() => throw exception);
+
+            engine.Execute(@"
+                function bar() {
+                    try {
+                        foo();
+                        return false;
+                    }
+                    catch (ex) {
+                        return typeof ex.hostException === 'undefined';
+                    }
+                }
+            ");
+
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("bar()")));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_Current()
         {
             using (var innerEngine = new V8ScriptEngine())
@@ -2763,39 +2789,52 @@ namespace Microsoft.ClearScript.Test
         {
             engine.Script.foo = new Random();
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
             Assert.AreEqual("function", engine.Evaluate("typeof foo.ToString"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo.ToString === 'function'"));
 
             engine.Script.foo = Enumerable.Range(0, 5).ToArray();
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
 
             engine.Script.foo = new ArrayList();
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
 
             engine.Script.foo = new BitArray(100);
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
 
             engine.Script.foo = new Hashtable();
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
 
             engine.Script.foo = new Queue();
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
 
             engine.Script.foo = new SortedList();
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
 
             engine.Script.foo = new Stack();
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
 
             engine.Script.foo = new List<string>();
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
             Assert.AreEqual("function", engine.Evaluate("typeof foo.Item"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo.Item === 'function'"));
 
             engine.Script.foo = new ExpandoObject();
             engine.Script.host = new HostFunctions();
             Assert.AreEqual("object", engine.Evaluate("typeof foo"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof foo === 'object'"));
             Assert.AreEqual("object", engine.Evaluate("typeof host.toStaticType(foo)"));
+            Assert.IsTrue((bool)engine.Evaluate("typeof host.toStaticType(foo) === 'object'"));
         }
-        
+
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_ArrayInvocability()
         {
@@ -3819,6 +3858,28 @@ namespace Microsoft.ClearScript.Test
                 HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
                 TestCamelCaseMemberBinding();
             }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_StringifyEnhancements()
+        {
+            engine.Script.hostObject = new Dictionary<string, object> { { "foo", 123 }, { "bar", "baz" }, { "qux", engine.Evaluate("({ quux: 456.789, quuz: 'corge' })") } };
+            Assert.IsInstanceOfType(engine.Evaluate("JSON.stringify(hostObject)"), typeof(Undefined));
+
+            engine.Execute("scriptObject = { grault: null, garply: hostObject }");
+            Assert.AreEqual("{\"grault\":null}", engine.Evaluate("JSON.stringify(scriptObject)"));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableStringifyEnhancements);
+
+            engine.Script.hostObject = new Dictionary<string, object> { { "foo", 123 }, { "bar", "baz" }, { "qux", engine.Evaluate("({ quux: 456.789, quuz: 'corge' })") } };
+            Assert.AreEqual("{\"foo\":123,\"bar\":\"baz\",\"qux\":{\"quux\":456.789,\"quuz\":\"corge\"}}", engine.Evaluate("JSON.stringify(hostObject)"));
+
+            engine.Execute("scriptObject = { grault: null, garply: hostObject }");
+            Assert.AreEqual("{\"grault\":null,\"garply\":{\"foo\":123,\"bar\":\"baz\",\"qux\":{\"quux\":456.789,\"quuz\":\"corge\"}}}", engine.Evaluate("JSON.stringify(scriptObject)"));
+
+            engine.Execute("hostObject.Add('jerry', scriptObject)");
+            TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("JSON.stringify(hostObject)"));
         }
 
         // ReSharper restore InconsistentNaming

@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
+using Newtonsoft.Json;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -231,143 +232,12 @@ namespace Microsoft.ClearScript.V8
             proxy = V8ContextProxy.Create(runtime.IsolateProxy, Name, flags, debugPort);
             script = (V8ScriptItem)GetRootItem();
 
-            Execute(initScriptInfo,
-                @"
-                    Object.defineProperty(this, 'EngineInternal', { value: (function () {
+            if (flags.HasFlag(V8ScriptEngineFlags.EnableStringifyEnhancements))
+            {
+                script.SetProperty("toJson", new Func<object, object, string>(new JsonHelper(this).ToJson));
+            }
 
-                        function convertArgs(args) {
-                            let result = [];
-                            let count = args.Length;
-                            for (let i = 0; i < count; i++) {
-                                result.push(args[i]);
-                            }
-                            return result;
-                        }
-
-                        function construct() {
-                            return new this(...arguments);
-                        }
-
-                        const isHostObjectKey = this.isHostObjectKey;
-                        delete this.isHostObjectKey;
-
-                        const savedPromise = Promise;
-                        const checkpointSymbol = Symbol();
-
-                        return Object.freeze({
-
-                            commandHolder: {
-                            },
-
-                            getCommandResult: function (value) {
-                                if (value == null) {
-                                    return value;
-                                }
-                                if (typeof(value.hasOwnProperty) != 'function') {
-                                    if (value[Symbol.toStringTag] == 'Module') {
-                                        return '[module]';
-                                    }
-                                    return '[external]';
-                                }
-                                if (value[isHostObjectKey] === true) {
-                                    return value;
-                                }
-                                if (typeof(value.toString) != 'function') {
-                                    return '[' + typeof(value) + ']';
-                                }
-                                return value.toString();
-                            },
-
-                            invokeConstructor: function (constructor, args) {
-                                if (typeof(constructor) != 'function') {
-                                    throw new Error('Function expected');
-                                }
-                                return construct.apply(constructor, convertArgs(args));
-                            },
-
-                            invokeMethod: function (target, method, args) {
-                                if (typeof(method) != 'function') {
-                                    throw new Error('Function expected');
-                                }
-                                return method.apply(target, convertArgs(args));
-                            },
-
-                            createPromise: function () {
-                                return new savedPromise(...arguments);
-                            },
-
-                            isPromise: function (value) {
-                                return value instanceof savedPromise;
-                            },
-
-                            completePromiseWithResult: function (getResult, resolve, reject) {
-                                try {
-                                    resolve(getResult());
-                                }
-                                catch (exception) {
-                                    reject(exception);
-                                }
-                                return undefined;
-                            },
-
-                            completePromise: function (wait, resolve, reject) {
-                                try {
-                                    wait();
-                                    resolve();
-                                }
-                                catch (exception) {
-                                    reject(exception);
-                                }
-                                return undefined;
-                            },
-
-                            throwValue: function (value) {
-                                throw value;
-                            },
-
-                            getStackTrace: function () {
-                                try {
-                                    throw new Error('[stack trace]');
-                                }
-                                catch (exception) {
-                                    return exception.stack;
-                                }
-                                return '';
-                            },
-
-                            toIterator: function* (enumerator) {
-                                try {
-                                    while (enumerator.MoveNext()) {
-                                        yield enumerator.Current;
-                                    }
-                                }
-                                finally {
-                                    enumerator.Dispose();
-                                }
-                            },
-
-                            toAsyncIterator: async function* (asyncEnumerator) {
-                                try {
-                                    while (await asyncEnumerator.MoveNextPromise()) {
-                                        yield asyncEnumerator.Current;
-                                    }
-                                }
-                                finally {
-                                    await asyncEnumerator.DisposePromise();
-                                }
-                            },
-
-                            checkpoint: function () {
-                                const value = globalThis[checkpointSymbol];
-                                if (value) {
-                                    throw value;
-                                }
-                            }
-
-                        });
-                    })() });
-                "
-            );
+            Execute(initScriptInfo, initScript);
 
             if (flags.HasFlag(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart))
             {
@@ -402,21 +272,21 @@ namespace Microsoft.ClearScript.V8
         /// </para>
         /// <para>
         /// A V8 runtime unconditionally terminates the process when it exceeds its resource
-        /// constraints (see <see cref="V8RuntimeConstraints"/>). This property enables external
+        /// constraints (see <c><see cref="V8RuntimeConstraints"/></c>). This property enables external
         /// heap size monitoring that can prevent termination in some scenarios. To be effective,
         /// it should be set to a value that is significantly lower than
-        /// <see cref="V8RuntimeConstraints.MaxOldSpaceSize"/>. Note that enabling heap size
+        /// <c><see cref="V8RuntimeConstraints.MaxOldSpaceSize"/></c>. Note that enabling heap size
         /// monitoring results in slower script execution.
         /// </para>
         /// <para>
         /// Exceeding this limit causes the V8 runtime to behave in accordance with
-        /// <see cref="RuntimeHeapSizeViolationPolicy"/>.
+        /// <c><see cref="RuntimeHeapSizeViolationPolicy"/></c>.
         /// </para>
         /// <para>
         /// Note that
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see>
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see></c>
         /// memory is allocated outside the runtime's heap and is therefore not tracked by heap
-        /// size monitoring. See <see cref="V8RuntimeConstraints.MaxArrayBufferAllocation"/> for
+        /// size monitoring. See <c><see cref="V8RuntimeConstraints.MaxArrayBufferAllocation"/></c> for
         /// additional information.
         /// </para>
         /// </remarks>
@@ -440,7 +310,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <remarks>
         /// This property is effective only when heap size monitoring is enabled (see
-        /// <see cref="MaxRuntimeHeapSize"/>).
+        /// <c><see cref="MaxRuntimeHeapSize"/></c>).
         /// </remarks>
         public TimeSpan RuntimeHeapSizeSampleInterval
         {
@@ -519,7 +389,7 @@ namespace Microsoft.ClearScript.V8
         /// invocable regardless of this property's value.
         /// </para>
         /// <para>
-        /// This property has no effect if <see cref="SuppressInstanceMethodEnumeration"/> is set
+        /// This property has no effect if <c><see cref="SuppressInstanceMethodEnumeration"/></c> is set
         /// to <c>true</c>.
         /// </para>
         /// </remarks>
@@ -538,8 +408,8 @@ namespace Microsoft.ClearScript.V8
         /// Enables or disables interrupt propagation in the V8 runtime.
         /// </summary>
         /// <remarks>
-        /// By default, when nested script execution is interrupted via <see cref="Interrupt"/>, an
-        /// instance of <see cref="ScriptInterruptedException"/>, if not handled by the host, is
+        /// By default, when nested script execution is interrupted via <c><see cref="Interrupt"/></c>, an
+        /// instance of <c><see cref="ScriptInterruptedException"/></c>, if not handled by the host, is
         /// wrapped and delivered to the parent script frame as a normal exception that JavaScript
         /// code can catch. Setting this property to <c>true</c> causes the V8 runtime to remain in
         /// the interrupted state until its outermost script frame has been processed.
@@ -633,7 +503,7 @@ namespace Microsoft.ClearScript.V8
         /// The generated cache data can be stored externally and is usable in other V8 script
         /// engines and application processes.
         /// </remarks>
-        /// <seealso cref="Compile(string, V8CacheKind, byte[], out bool)"/>
+        /// <c><seealso cref="Compile(string, V8CacheKind, byte[], out bool)"/></c>
         public V8Script Compile(string code, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
             return Compile(null, code, cacheKind, out cacheBytes);
@@ -651,7 +521,7 @@ namespace Microsoft.ClearScript.V8
         /// The generated cache data can be stored externally and is usable in other V8 script
         /// engines and application processes.
         /// </remarks>
-        /// <seealso cref="Compile(string, string, V8CacheKind, byte[], out bool)"/>
+        /// <c><seealso cref="Compile(string, string, V8CacheKind, byte[], out bool)"/></c>
         public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
             return Compile(new DocumentInfo(documentName), code, cacheKind, out cacheBytes);
@@ -669,7 +539,7 @@ namespace Microsoft.ClearScript.V8
         /// The generated cache data can be stored externally and is usable in other V8 script
         /// engines and application processes.
         /// </remarks>
-        /// <seealso cref="Compile(DocumentInfo, string, V8CacheKind, byte[], out bool)"/>
+        /// <c><seealso cref="Compile(DocumentInfo, string, V8CacheKind, byte[], out bool)"/></c>
         public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
             VerifyNotDisposed();
@@ -696,7 +566,7 @@ namespace Microsoft.ClearScript.V8
         /// To be accepted, the cache data must have been generated for identical script code by
         /// the same V8 build.
         /// </remarks>
-        /// <seealso cref="Compile(string, V8CacheKind, out byte[])"/>
+        /// <c><seealso cref="Compile(string, V8CacheKind, out byte[])"/></c>
         public V8Script Compile(string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             return Compile(null, code, cacheKind, cacheBytes, out cacheAccepted);
@@ -715,7 +585,7 @@ namespace Microsoft.ClearScript.V8
         /// To be accepted, the cache data must have been generated for identical script code by
         /// the same V8 build.
         /// </remarks>
-        /// <seealso cref="Compile(string, string, V8CacheKind, out byte[])"/>
+        /// <c><seealso cref="Compile(string, string, V8CacheKind, out byte[])"/></c>
         public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             return Compile(new DocumentInfo(documentName), code, cacheKind, cacheBytes, out cacheAccepted);
@@ -734,7 +604,7 @@ namespace Microsoft.ClearScript.V8
         /// To be accepted, the cache data must have been generated for identical script code by
         /// the same V8 build.
         /// </remarks>
-        /// <seealso cref="Compile(DocumentInfo, string, V8CacheKind, out byte[])"/>
+        /// <c><seealso cref="Compile(DocumentInfo, string, V8CacheKind, out byte[])"/></c>
         public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             VerifyNotDisposed();
@@ -902,7 +772,7 @@ namespace Microsoft.ClearScript.V8
         /// <returns>The result value.</returns>
         /// <remarks>
         /// For information about the types of result values that script code can return, see
-        /// <see cref="ScriptEngine.Evaluate(string, bool, string)"/>.
+        /// <c><see cref="ScriptEngine.Evaluate(string, bool, string)"/></c>.
         /// </remarks>
         public object Evaluate(V8Script script)
         {
@@ -914,7 +784,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <param name="script">The compiled script to execute.</param>
         /// <remarks>
-        /// This method is similar to <see cref="Evaluate(V8Script)"/> with the exception that it
+        /// This method is similar to <c><see cref="Evaluate(V8Script)"/></c> with the exception that it
         /// does not marshal a result value to the host. It can provide a performance advantage
         /// when the result value is not needed.
         /// </remarks>
@@ -931,7 +801,7 @@ namespace Microsoft.ClearScript.V8
         /// <remarks>
         /// This method can be called safely from any thread.
         /// </remarks>
-        /// <seealso cref="Interrupt"/>
+        /// <c><seealso cref="Interrupt"/></c>
         public void CancelInterrupt()
         {
             VerifyNotDisposed();
@@ -941,7 +811,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Returns memory usage information for the V8 runtime.
         /// </summary>
-        /// <returns>A <see cref="V8RuntimeHeapInfo"/> object containing memory usage information for the V8 runtime.</returns>
+        /// <returns>A <c><see cref="V8RuntimeHeapInfo"/></c> object containing memory usage information for the V8 runtime.</returns>
         public V8RuntimeHeapInfo GetRuntimeHeapInfo()
         {
             VerifyNotDisposed();
@@ -1275,7 +1145,7 @@ namespace Microsoft.ClearScript.V8
         /// Gets the script engine's recommended file name extension for script files.
         /// </summary>
         /// <remarks>
-        /// <see cref="V8ScriptEngine"/> instances return "js" for this property.
+        /// <c><see cref="V8ScriptEngine"/></c> instances return "js" for this property.
         /// </remarks>
         public override string FileNameExtension => "js";
 
@@ -1302,8 +1172,8 @@ namespace Microsoft.ClearScript.V8
         /// <remarks>
         /// The value of this property is an object that is bound to the script engine's root
         /// namespace. It allows you to access global script resources via the
-        /// <see cref="ScriptObject"/> class interface. Doing so is likely to perform better than
-        /// dynamic access via <see cref="Script"/>.
+        /// <c><see cref="ScriptObject"/></c> class interface. Doing so is likely to perform better than
+        /// dynamic access via <c><see cref="Script"/></c>.
         /// </remarks>
         public override ScriptObject Global
         {
@@ -1321,14 +1191,14 @@ namespace Microsoft.ClearScript.V8
         /// <returns>The command output.</returns>
         /// <remarks>
         /// <para>
-        /// This method is similar to <see cref="ScriptEngine.Evaluate(string)"/> but optimized for
+        /// This method is similar to <c><see cref="ScriptEngine.Evaluate(string)"/></c> but optimized for
         /// command consoles. The specified command must be limited to a single expression or
         /// statement. Script engines can override this method to customize command execution as
         /// well as the process of converting the result to a string for console output.
         /// </para>
         /// <para>
-        /// The <see cref="V8ScriptEngine"/> version of this method attempts to use
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/tostring">toString</see>
+        /// The <c><see cref="V8ScriptEngine"/></c> version of this method attempts to use
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/tostring">toString</see></c>
         /// to convert the return value.
         /// </para>
         /// </remarks>
@@ -1362,7 +1232,7 @@ namespace Microsoft.ClearScript.V8
         /// <remarks>
         /// This method can be called safely from any thread.
         /// </remarks>
-        /// <seealso cref="CancelInterrupt"/>
+        /// <c><seealso cref="CancelInterrupt"/></c>
         public override void Interrupt()
         {
             VerifyNotDisposed();
@@ -1666,11 +1536,11 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <param name="disposing"><c>True</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         /// <remarks>
-        /// This method is called by the public <see cref="ScriptEngine.Dispose()"/> method and the
-        /// <see cref="ScriptEngine.Finalize">Finalize</see> method.
-        /// <see cref="ScriptEngine.Dispose()"/> invokes the protected <c>Dispose(Boolean)</c>
+        /// This method is called by the public <c><see cref="ScriptEngine.Dispose()"/></c> method and the
+        /// <c><see cref="ScriptEngine.Finalize">Finalize</see></c> method.
+        /// <c><see cref="ScriptEngine.Dispose()"/></c> invokes the protected <c>Dispose(Boolean)</c>
         /// method with the <paramref name="disposing"/> parameter set to <c>true</c>.
-        /// <see cref="ScriptEngine.Finalize">Finalize</see> invokes <c>Dispose(Boolean)</c> with
+        /// <c><see cref="ScriptEngine.Finalize">Finalize</see></c> invokes <c>Dispose(Boolean)</c> with
         /// <paramref name="disposing"/> set to <c>false</c>.
         /// </remarks>
         protected override void Dispose(bool disposing)
@@ -1789,6 +1659,57 @@ namespace Microsoft.ClearScript.V8
             }
 
             // ReSharper restore UnusedMember.Local
+        }
+
+        #endregion
+
+        #region Nested type: JsonHelper
+
+        /// <exclude/>
+        public sealed class JsonHelper : JsonConverter
+        {
+            private readonly ScriptObject stringify;
+            private readonly HashSet<object> cycleDetectionSet = new HashSet<object>();
+
+            /// <exclude/>
+            public JsonHelper(ScriptEngine engine)
+            {
+                stringify = engine.Script.JSON.stringify;
+            }
+
+            /// <exclude/>
+            public string ToJson(object key, object value)
+            {
+                key = MiscHelpers.EnsureNonBlank(key.ToString(), "[root]");
+
+                if (cycleDetectionSet.Contains(value))
+                {
+                    throw new InvalidOperationException($"Cycle detected at key '{key}' during JSON serialization");
+                }
+
+                cycleDetectionSet.Add(value);
+                try
+                {
+                    return JsonConvert.SerializeObject(value, this);
+                }
+                finally
+                {
+                    cycleDetectionSet.Remove(value);
+                }
+            }
+
+            /// <exclude/>
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            {
+                var result = stringify.Invoke(false, value);
+                writer.WriteRawValue(result as string ?? "null");
+            }
+
+            /// <exclude/>
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) => throw new NotImplementedException();
+
+            /// <exclude/>
+            public override bool CanConvert(Type objectType) => typeof(V8ScriptItem).IsAssignableFrom(objectType);
         }
 
         #endregion

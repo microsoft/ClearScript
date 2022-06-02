@@ -19,7 +19,7 @@ namespace Microsoft.ClearScript.Windows
     public class Nothing : INothingTag
     {
         /// <summary>
-        /// The sole instance of the <see cref="Nothing"/> class.
+        /// The sole instance of the <c><see cref="Nothing"/></c> class.
         /// </summary>
         public static readonly Nothing Value = new Nothing();
 
@@ -34,7 +34,7 @@ namespace Microsoft.ClearScript.Windows
         /// </summary>
         /// <returns>A string that represents the current object.</returns>
         /// <remarks>
-        /// The <see cref="Nothing"/> version of this method returns "[nothing]".
+        /// The <c><see cref="Nothing"/></c> version of this method returns "[nothing]".
         /// </remarks>
         public override string ToString()
         {

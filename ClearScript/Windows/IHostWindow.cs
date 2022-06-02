@@ -8,7 +8,7 @@ namespace Microsoft.ClearScript.Windows
     /// <summary>
     /// Allows Windows Script engines to display dialogs within the host's user interface.
     /// </summary>
-    /// <seealso cref="Core.WindowsScriptEngine.HostWindow"/>
+    /// <c><seealso cref="Core.WindowsScriptEngine.HostWindow"/></c>
     public interface IHostWindow
     {
         /// <summary>

@@ -12,7 +12,7 @@ namespace Microsoft.ClearScript.Windows
     /// </summary>
     /// <remarks>
     /// Each Windows Script engine instance in a desktop environment has thread affinity and is
-    /// bound to a <see cref="System.Windows.Threading.Dispatcher"/> during instantiation.
+    /// bound to a <c><see cref="System.Windows.Threading.Dispatcher"/></c> during instantiation.
     /// Attempting to execute script code on a different thread results in an exception. Script
     /// delegates and event handlers are marshaled synchronously onto the correct thread.
     /// </remarks>
@@ -82,7 +82,7 @@ namespace Microsoft.ClearScript.Windows
         /// Gets the script engine's recommended file name extension for script files.
         /// </summary>
         /// <remarks>
-        /// <see cref="VBScriptEngine"/> instances return "vbs" for this property.
+        /// <c><see cref="VBScriptEngine"/></c> instances return "vbs" for this property.
         /// </remarks>
         public override string FileNameExtension => "vbs";
 
@@ -93,16 +93,16 @@ namespace Microsoft.ClearScript.Windows
         /// <returns>The command output.</returns>
         /// <remarks>
         /// <para>
-        /// This method is similar to <see cref="ScriptEngine.Evaluate(string)"/> but optimized for
+        /// This method is similar to <c><see cref="ScriptEngine.Evaluate(string)"/></c> but optimized for
         /// command consoles. The specified command must be limited to a single expression or
         /// statement. Script engines can override this method to customize command execution as
         /// well as the process of converting the result to a string for console output.
         /// </para>
         /// <para>
-        /// The <see cref="VBScriptEngine"/> version of this method supports both expressions and
+        /// The <c><see cref="VBScriptEngine"/></c> version of this method supports both expressions and
         /// statements. If the specified command begins with "eval " (not case-sensitive), the
         /// engine executes the remainder as an expression and attempts to use
-        /// <see href="https://docs.microsoft.com/en-us/previous-versions//0zk841e9(v=vs.85)">CStr</see>
+        /// <c><see href="https://docs.microsoft.com/en-us/previous-versions//0zk841e9(v=vs.85)">CStr</see></c>
         /// to convert the result value. Otherwise, it executes the command as a statement and does
         /// not return a value.
         /// </para>

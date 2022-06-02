@@ -15,14 +15,14 @@ namespace Microsoft.ClearScript
     public class ScriptUsageAttribute : Attribute
     {
         /// <summary>
-        /// Initializes a new <see cref="ScriptUsageAttribute"/> instance.
+        /// Initializes a new <c><see cref="ScriptUsageAttribute"/></c> instance.
         /// </summary>
         public ScriptUsageAttribute()
         {
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptUsageAttribute"/> instance with the specified script access setting.
+        /// Initializes a new <c><see cref="ScriptUsageAttribute"/></c> instance with the specified script access setting.
         /// </summary>
         /// <param name="access">The script access setting for the target type member.</param>
         public ScriptUsageAttribute(ScriptAccess access)

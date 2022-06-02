@@ -31,7 +31,6 @@
 
     <ItemGroup>
         <Compile Include="..\..\ClearScriptTest\AccessContextTest.cs" Link="AccessContextTest.cs" />
-        <Compile Include="..\..\ClearScriptTest\BadV8DeploymentTest.cs" Link="BadV8DeploymentTest.cs" />
         <Compile Include="..\..\ClearScriptTest\BaseInterfaceMemberAccessTest.cs" Link="BaseInterfaceMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\BaseMemberAccessTest.cs" Link="BaseMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\BaseTestObject.cs" Link="BaseTestObject.cs" />
@@ -120,10 +119,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
-        <PackageReference Include="MSTest.TestAdapter" Version="2.2.3" />
-        <PackageReference Include="MSTest.TestFramework" Version="2.2.3" />
-        <PackageReference Include="coverlet.collector" Version="3.0.3">
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+        <PackageReference Include="MSTest.TestAdapter" Version="2.2.10" />
+        <PackageReference Include="MSTest.TestFramework" Version="2.2.10" />
+        <PackageReference Include="coverlet.collector" Version="3.1.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

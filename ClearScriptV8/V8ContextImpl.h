@@ -194,6 +194,12 @@ private:
         return m_spIsolateImpl->CreateString(value, type);
     }
 
+    template <int N>
+    v8::Local<v8::String> CreateString(const char (&value)[N], v8::NewStringType type = v8::NewStringType::kNormal)
+    {
+        return m_spIsolateImpl->CreateString(value, type);
+    }
+
     virtual StdString CreateStdString(v8::Local<v8::Value> hValue) override
     {
         return m_spIsolateImpl->CreateStdString(hValue);
@@ -402,6 +408,7 @@ private:
     static void HostObjectConstructorCallHandler(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void GetHostObjectIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void GetHostObjectAsyncIterator(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void GetHostObjectJson(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void CreateFunctionForHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void InvokeHostDelegate(const v8::FunctionCallbackInfo<v8::Value>& info);
 
@@ -447,6 +454,7 @@ private:
     StdString m_Name;
     SharedPtr<V8IsolateImpl> m_spIsolateImpl;
     bool m_DateTimeConversionEnabled;
+    bool m_HideHostExceptions;
     Persistent<v8::Context> m_hContext;
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
     Persistent<v8::Symbol> m_hIsHostObjectKey;
@@ -465,6 +473,7 @@ private:
     Persistent<v8::FunctionTemplate> m_hHostDelegateTemplate;
     Persistent<v8::Function> m_hToIteratorFunction;
     Persistent<v8::Function> m_hToAsyncIteratorFunction;
+    Persistent<v8::Function> m_hToJsonFunction;
     Persistent<v8::Function> m_hFlushFunction;
     Persistent<v8::Value> m_hTerminationException;
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;

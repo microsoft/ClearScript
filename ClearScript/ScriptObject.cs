@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using Microsoft.ClearScript.Util;
@@ -8,7 +8,7 @@ namespace Microsoft.ClearScript
     /// <summary>
     /// Represents a script object.
     /// </summary>
-    /// <seealso cref="ScriptEngine.Evaluate(string, bool, string)"/>
+    /// <c><seealso cref="ScriptEngine.Evaluate(string, bool, string)"/></c>
     public abstract class ScriptObject : DynamicObject
     {
         internal ScriptObject()

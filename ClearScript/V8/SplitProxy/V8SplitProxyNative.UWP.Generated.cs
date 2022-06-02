@@ -63,9 +63,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return V8SplitProxyManaged_SetMethodTable(pMethodTable);
             }
 
-            void IV8SplitProxyNative.V8Environment_InitializeICU(string dataPath)
+            void IV8SplitProxyNative.V8Environment_InitializeICU(IntPtr pICUData, uint size)
             {
-                V8Environment_InitializeICU(dataPath);
+                V8Environment_InitializeICU(pICUData, size);
             }
 
             #endregion
@@ -448,11 +448,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
                 }
             }
 
@@ -1078,7 +1078,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
-                [In] [MarshalAs(UnmanagedType.LPWStr)] string dataPath
+                [In] IntPtr pICUData,
+				[In] uint size
             );
 
             #endregion
@@ -1504,6 +1505,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
                 [In] int debugPort
             );
 
@@ -2091,9 +2093,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return V8SplitProxyManaged_SetMethodTable(pMethodTable);
             }
 
-            void IV8SplitProxyNative.V8Environment_InitializeICU(string dataPath)
+            void IV8SplitProxyNative.V8Environment_InitializeICU(IntPtr pICUData, uint size)
             {
-                V8Environment_InitializeICU(dataPath);
+                V8Environment_InitializeICU(pICUData, size);
             }
 
             #endregion
@@ -2476,11 +2478,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
                 }
             }
 
@@ -3106,7 +3108,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
-                [In] [MarshalAs(UnmanagedType.LPWStr)] string dataPath
+                [In] IntPtr pICUData,
+				[In] uint size
             );
 
             #endregion
@@ -3532,6 +3535,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
                 [In] int debugPort
             );
 
@@ -4119,9 +4123,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return V8SplitProxyManaged_SetMethodTable(pMethodTable);
             }
 
-            void IV8SplitProxyNative.V8Environment_InitializeICU(string dataPath)
+            void IV8SplitProxyNative.V8Environment_InitializeICU(IntPtr pICUData, uint size)
             {
-                V8Environment_InitializeICU(dataPath);
+                V8Environment_InitializeICU(pICUData, size);
             }
 
             #endregion
@@ -4504,11 +4508,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
                 }
             }
 
@@ -5134,7 +5138,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
-                [In] [MarshalAs(UnmanagedType.LPWStr)] string dataPath
+                [In] IntPtr pICUData,
+				[In] uint size
             );
 
             #endregion
@@ -5560,6 +5565,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
                 [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
                 [In] int debugPort
             );
 

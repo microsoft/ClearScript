@@ -10,8 +10,8 @@ namespace Microsoft.ClearScript
     /// </summary>
     /// <remarks>
     /// This attribute is applicable to classes, enums, interfaces, structs, and assemblies. Use
-    /// <see cref="ScriptUsageAttribute"/>, <see cref="ScriptMemberAttribute"/>, or
-    /// <see cref="NoScriptAccessAttribute"/> to override it for individual type members. Note that
+    /// <c><see cref="ScriptUsageAttribute"/></c>, <c><see cref="ScriptMemberAttribute"/></c>, or
+    /// <c><see cref="NoScriptAccessAttribute"/></c> to override it for individual type members. Note that
     /// it has no effect on the method binding algorithm. If a script-based call is bound to a
     /// method that is blocked by this attribute, it will be rejected even if an overload exists
     /// that could receive the call.
@@ -20,7 +20,7 @@ namespace Microsoft.ClearScript
     public sealed class NoDefaultScriptAccessAttribute : DefaultScriptUsageAttribute
     {
         /// <summary>
-        /// Initializes a new <see cref="NoDefaultScriptAccessAttribute"/> instance.
+        /// Initializes a new <c><see cref="NoDefaultScriptAccessAttribute"/></c> instance.
         /// </summary>
         public NoDefaultScriptAccessAttribute()
             : base(ScriptAccess.None)

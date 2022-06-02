@@ -23,32 +23,32 @@ namespace Microsoft.ClearScript.V8
         EnableDebugging = 0x00000001,
 
         /// <summary>
-        /// Specifies that support for <see cref="HostItemFlags.GlobalMembers"/> behavior is to be
+        /// Specifies that support for <c><see cref="HostItemFlags.GlobalMembers"/></c> behavior is to be
         /// disabled. This option yields a significant performance benefit for global item access.
         /// </summary>
         DisableGlobalMembers = 0x00000002,
 
         /// <summary>
         /// Specifies that remote script debugging is to be enabled. This option is ignored if
-        /// <see cref="EnableDebugging"/> is not specified.
+        /// <c><see cref="EnableDebugging"/></c> is not specified.
         /// </summary>
         EnableRemoteDebugging = 0x00000004,
 
         /// <summary>
         /// Specifies that the script engine is to wait for a debugger connection and schedule a
         /// pause before executing the first line of application script code. This option is
-        /// ignored if <see cref="EnableDebugging"/> is not specified.
+        /// ignored if <c><see cref="EnableDebugging"/></c> is not specified.
         /// </summary>
         AwaitDebuggerAndPauseOnStart = 0x00000008,
 
         /// <summary>
         /// Specifies that the script engine is to perform automatic conversion between
-        /// .NET <see cref="DateTime"/> objects and JavaScript
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</see>
+        /// .NET <c><see cref="DateTime"/></c> objects and JavaScript
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</see></c>
         /// objects. This conversion is bidirectional and lossy. A <c>DateTime</c> object
         /// constructed from a JavaScript <c>Date</c> object always represents a Coordinated
-        /// Universal Timestamp (UTC) and has its <see cref="DateTime.Kind"/> property set to
-        /// <see cref="DateTimeKind.Utc"/>.
+        /// Universal Timestamp (UTC) and has its <c><see cref="DateTime.Kind"/></c> property set to
+        /// <c><see cref="DateTimeKind.Utc"/></c>.
         /// </summary>
         EnableDateTimeConversion = 0x00000010,
 
@@ -61,27 +61,27 @@ namespace Microsoft.ClearScript.V8
 
         /// <summary>
         /// Specifies that long integers with values greater than
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER">Number.MAX_SAFE_INTEGER</see>
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER">Number.MAX_SAFE_INTEGER</see></c>
         /// or less than
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_SAFE_INTEGER">Number.MIN_SAFE_INTEGER</see>
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_SAFE_INTEGER">Number.MIN_SAFE_INTEGER</see></c>
         /// are to be marshaled as
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt">BigInt</see>.
-        /// This option is ignored if <see cref="MarshalAllLongAsBigInt"/> is specified.
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt">BigInt</see></c>.
+        /// This option is ignored if <c><see cref="MarshalAllLongAsBigInt"/></c> is specified.
         /// </summary>
         MarshalUnsafeLongAsBigInt = 0x00000040,
 
         /// <summary>
         /// Specifies that all long integers are to be marshaled as
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt">BigInt</see>.
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt">BigInt</see></c>.
         /// </summary>
         MarshalAllLongAsBigInt = 0x00000080,
 
         /// <summary>
         /// Specifies that the script engine is to perform automatic conversion between
-        /// .NET <see cref="Task"/> objects and JavaScript
+        /// .NET <c><see cref="Task"/></c> objects and JavaScript
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promises</see>.
         /// This conversion is bidirectional and lossy. A <c>Task</c> object constructed from a
-        /// JavaScript promise always has a result type of <see cref="object"/>.
+        /// JavaScript promise always has a result type of <c><see cref="object"/></c>.
         /// </summary>
         EnableTaskPromiseConversion = 0x00000100,
 
@@ -92,7 +92,7 @@ namespace Microsoft.ClearScript.V8
         /// .NET <c>ValueTask</c> and <c>ValueTask&lt;TResult&gt;</c> structures to JavaScript
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promises</see>.
         /// This conversion is unidirectional and lossy. This option is ignored if
-        /// <see cref="EnableTaskPromiseConversion"/> is not specified.
+        /// <c><see cref="EnableTaskPromiseConversion"/></c> is not specified.
         /// </summary>
         EnableValueTaskPromiseConversion = 0x00000200,
 
@@ -100,10 +100,10 @@ namespace Microsoft.ClearScript.V8
 
         /// <summary>
         /// Specifies that the script engine is to perform automatic conversion from
-        /// .NET <see cref="ValueTask"/> and <see cref="ValueTask{T}"/> structures to JavaScript
+        /// .NET <c><see cref="ValueTask"/></c> and <c><see cref="ValueTask{T}"/></c> structures to JavaScript
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promises</see>.
         /// This conversion is unidirectional and lossy. This option is ignored if
-        /// <see cref="EnableTaskPromiseConversion"/> is not specified.
+        /// <c><see cref="EnableTaskPromiseConversion"/></c> is not specified.
         /// </summary>
         EnableValueTaskPromiseConversion = 0x00000200,
 
@@ -114,6 +114,24 @@ namespace Microsoft.ClearScript.V8
         /// option can introduce ambiguity if the host resource has distinct members whose names
         /// differ only in case, so it should be used with caution.
         /// </summary>
-        UseCaseInsensitiveMemberBinding = 0x00000400
+        UseCaseInsensitiveMemberBinding = 0x00000400,
+
+        /// <summary>
+        /// Specifies that
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify">JSON.stringify</see></c>
+        /// enhancements are to be enabled. These enhancements add support for host objects via the
+        /// <see href="https://www.newtonsoft.com/json">Json.NET</see> library.
+        /// </summary>
+        EnableStringifyEnhancements = 0x00000800,
+
+        /// <summary>
+        /// Specifies that host exceptions are to be hidden from script code. If an exception
+        /// thrown by the host reaches the script engine, it is caught automatically, and an
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</see></c>
+        /// object is thrown in its place. By default, ClearScript makes the managed exception
+        /// accessible to script code via the <c>Error</c> object's <c>hostException</c> property.
+        /// This option suppresses that behavior.
+        /// </summary>
+        HideHostExceptions = 0x00001000
     }
 }

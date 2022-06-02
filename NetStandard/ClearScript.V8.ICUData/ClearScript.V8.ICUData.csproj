@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard1.0</TargetFrameworks>
+        <RootNamespace>Microsoft.ClearScript.V8.ICUData</RootNamespace>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DefineConstants>TRACE;DEBUG</DefineConstants>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <OutputPath>..\..\bin\Debug</OutputPath>
+        <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.V8.ICUData.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <DefineConstants>TRACE</DefineConstants>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <OutputPath>..\..\bin\Release</OutputPath>
+        <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.V8.ICUData.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+    <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</AssemblyOriginatorKeyFile>
+        <DelaySign>true</DelaySign>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\..\ClearScript\Properties\AssemblyInfo.V8.ICUData.cs" Link="Properties\AssemblyInfo.V8.ICUData.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>AssemblyInfo.V8.ICUData.tt</DependentUpon>
+        </Compile>
+        <Compile Include="..\..\ClearScript\V8\ICUData\V8ICUData.cs" Link="V8\ICUData\V8ICUData.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\ClearScript\Properties\AssemblyInfo.V8.ICUData.tt" Link="Properties\AssemblyInfo.V8.ICUData.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>AssemblyInfo.V8.ICUData.cs</LastGenOutput>
+        </None>
+        <EmbeddedResource Include="..\..\V8\icudtl.dat" Link="icudtl.dat" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+    </ItemGroup>
+
+</Project>

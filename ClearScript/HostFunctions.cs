@@ -17,7 +17,7 @@ namespace Microsoft.ClearScript
     /// Provides optional script-callable utility functions.
     /// </summary>
     /// <remarks>
-    /// Use <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see> to expose a
+    /// Use <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c> to expose a
     /// <c>HostFunctions</c> instance to script code. Each instance can only be exposed in one
     /// script engine.
     /// </remarks>
@@ -28,7 +28,7 @@ namespace Microsoft.ClearScript
         // ReSharper disable EmptyConstructor
 
         /// <summary>
-        /// Initializes a new <see cref="HostFunctions"/> instance.
+        /// Initializes a new <c><see cref="HostFunctions"/></c> instance.
         /// </summary>
         public HostFunctions()
         {
@@ -48,13 +48,13 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// This function is provided for script languages that do not support external
         /// instantiation. It creates an object that supports dynamic property addition and
-        /// removal. The host can manipulate it via the <see cref="IPropertyBag"/> interface.
+        /// removal. The host can manipulate it via the <c><see cref="IPropertyBag"/></c> interface.
         /// </remarks>
         /// <example>
         /// The following code creates an empty host object and adds several properties to it.
-        /// It assumes that an instance of <see cref="HostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="HostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var item = host.newObj();
         /// item.label = "Widget";
@@ -76,30 +76,30 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// <para>
         /// This function is provided for script languages that do not support external
-        /// instantiation. It is overloaded with <see cref="newObj(object, object[])"/> and
+        /// instantiation. It is overloaded with <c><see cref="newObj(object, object[])"/></c> and
         /// selected at runtime if <typeparamref name="T"/> can be used as a type argument.
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see
-        /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// <c><see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see></c>.
         /// </para>
         /// </remarks>
         /// <example>
-        /// The following code imports the <see cref="System.Random"/> class, creates an
+        /// The following code imports the <c><see cref="System.Random"/></c> class, creates an
         /// instance using the
-        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.random.-ctor#System_Random__ctor_System_Int32_">Random(Int32)</see>
-        /// constructor, and calls the <see cref="System.Random.NextDouble"/> method.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.random.-ctor#System_Random__ctor_System_Int32_">Random(Int32)</see></c>
+        /// constructor, and calls the <c><see cref="System.Random.NextDouble"/></c> method.
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var RandomT = host.type("System.Random");
         /// var random = host.newObj(RandomT, 100);
         /// var value = random.NextDouble();
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public T newObj<T>(params object[] args)
         {
             return (T)typeof(T).CreateInstance(args);
@@ -115,14 +115,14 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// <para>
         /// This function is provided for script languages that do not support external
-        /// instantiation. It is overloaded with <see cref="newObj{T}"/> and selected at runtime if
+        /// instantiation. It is overloaded with <c><see cref="newObj{T}"/></c> and selected at runtime if
         /// <paramref name="type"/> cannot be used as a type argument. Note that this applies
         /// to some host types that support instantiation, such as certain COM/ActiveX types.
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see
-        /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// <c><see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see></c>.
         /// </para>
         /// </remarks>
         public object newObj(object type, params object[] args)
@@ -161,36 +161,36 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see
-        /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// <c><see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see></c>.
         /// </remarks>
         /// <example>
         /// The following code creates a 5x3 host array of strings.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var StringT = host.type("System.String");
         /// var array = host.newArr(StringT, 5, 3);
         /// </code>
         /// </example>
-        /// <seealso cref="HostFunctions.newArr(int[])"/>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="HostFunctions.newArr(int[])"/></c>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object newArr<T>(params int[] lengths)
         {
             return Array.CreateInstance(typeof(T), lengths);
         }
 
         /// <summary>
-        /// Creates a host array with <see cref="System.Object"/> as the element type.
+        /// Creates a host array with <c><see cref="System.Object"/></c> as the element type.
         /// </summary>
         /// <param name="lengths">One or more integers representing the array dimension lengths.</param>
-        /// <returns>A new host array with <see cref="System.Object"/> as the element type.</returns>
+        /// <returns>A new host array with <c><see cref="System.Object"/></c> as the element type.</returns>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
         /// and methods, see
-        /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// <c><see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see></c>.
         /// </remarks>
-        /// <seealso cref="HostFunctions.newArr{T}(int[])"/>
+        /// <c><seealso cref="HostFunctions.newArr{T}(int[])"/></c>
         public object newArr(params int[] lengths)
         {
             return newArr<object>(lengths);
@@ -237,9 +237,9 @@ namespace Microsoft.ClearScript
         /// <example>
         /// The following code demonstrates using a host variable to invoke a method with an
         /// <c>out</c> parameter.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import a dictionary type
         /// var StringT = host.type("System.String");
@@ -253,7 +253,7 @@ namespace Microsoft.ClearScript
         /// var found = dict.TryGetValue("baz", result.out);
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object newVar<T>(T initValue = default)
         {
             return new HostVariable<T>(initValue);
@@ -273,9 +273,9 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code demonstrates delegating a callback to a script function.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // create and populate an array of integers
         /// var EnumerableT = host.type("System.Linq.Enumerable", "System.Core");
@@ -289,8 +289,8 @@ namespace Microsoft.ClearScript
         /// ArrayT.ForEach(array, host.del(CallbackT, function (value) { sum += value; }));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, string, object[])"/>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, string, object[])"/></c>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public T del<T>(object scriptFunc)
         {
             return DelegateFactory.CreateDelegate<T>(GetEngine(), scriptFunc);
@@ -304,15 +304,15 @@ namespace Microsoft.ClearScript
         /// <returns>A new delegate that invokes the specified script function and returns no value.</returns>
         /// <remarks>
         /// This function creates a delegate that accepts <paramref name="argCount"/> arguments and
-        /// returns no value. The type of all parameters is <see cref="System.Object"/>. Such a
+        /// returns no value. The type of all parameters is <c><see cref="System.Object"/></c>. Such a
         /// delegate is often useful in strongly typed contexts because of
         /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/">contravariance</see>.
         /// </remarks>
         /// <example>
         /// The following code demonstrates delegating a callback to a script function.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // create and populate an array of strings
         /// var StringT = host.type("System.String");
@@ -326,8 +326,8 @@ namespace Microsoft.ClearScript
         /// ArrayT.ForEach(array, host.proc(1, function (value) { ConsoleT.WriteLine(value); }));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
-        /// <seealso cref="newArr{T}"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
+        /// <c><seealso cref="newArr{T}"/></c>
         public object proc(int argCount, object scriptFunc)
         {
             return DelegateFactory.CreateProc(GetEngine(), scriptFunc, argCount);
@@ -343,15 +343,15 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// This function creates a delegate that accepts <paramref name="argCount"/> arguments and
         /// returns a value of the specified type. The type of all parameters is
-        /// <see cref="System.Object"/>. Such a delegate is often useful in strongly typed contexts
+        /// <c><see cref="System.Object"/></c>. Such a delegate is often useful in strongly typed contexts
         /// because of
         /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/">contravariance</see>.
         /// </remarks>
         /// <example>
         /// The following code demonstrates delegating a callback to a script function.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // create and populate an array of strings
         /// var StringT = host.type("System.String");
@@ -366,9 +366,9 @@ namespace Microsoft.ClearScript
         /// array = array.Select(selector).ToArray();
         /// </code>
         /// </example>
-        /// <seealso cref="HostFunctions.func(int, object)"/>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
-        /// <seealso cref="ExtendedHostFunctions.type(string, string, object[])"/>
+        /// <c><seealso cref="HostFunctions.func(int, object)"/></c>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, string, object[])"/></c>
         public object func<T>(int argCount, object scriptFunc)
         {
             return DelegateFactory.CreateFunc<T>(GetEngine(), scriptFunc, argCount);
@@ -384,50 +384,50 @@ namespace Microsoft.ClearScript
         /// <para>
         /// This function creates a delegate that accepts <paramref name="argCount"/> arguments and
         /// returns the result of invoking <paramref name="scriptFunc"/>. The type of all
-        /// parameters and the return value is <see cref="System.Object"/>. Such a delegate is
+        /// parameters and the return value is <c><see cref="System.Object"/></c>. Such a delegate is
         /// often useful in strongly typed contexts because of
         /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/">contravariance</see>.
         /// </para>
         /// <para>
         /// For information about the types of result values that script code can return, see
-        /// <see cref="ScriptEngine.Evaluate(string, bool, string)"/>.
+        /// <c><see cref="ScriptEngine.Evaluate(string, bool, string)"/></c>.
         /// </para>
         /// </remarks>
-        /// <seealso cref="HostFunctions.func{T}(int, object)"/>
+        /// <c><seealso cref="HostFunctions.func{T}(int, object)"/></c>
         public object func(int argCount, object scriptFunc)
         {
             return func<object>(argCount, scriptFunc);
         }
 
         /// <summary>
-        /// Gets the <see cref="System.Type"/> for the specified host type. This version is invoked
+        /// Gets the <c><see cref="System.Type"/></c> for the specified host type. This version is invoked
         /// if the specified object can be used as a type argument.
         /// </summary>
-        /// <typeparam name="T">The host type for which to get the <see cref="System.Type"/>.</typeparam>
-        /// <returns>The <see cref="System.Type"/> for the specified host type.</returns>
+        /// <typeparam name="T">The host type for which to get the <c><see cref="System.Type"/></c>.</typeparam>
+        /// <returns>The <c><see cref="System.Type"/></c> for the specified host type.</returns>
         /// <remarks>
         /// <para>
         /// This function is similar to C#'s
         /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/typeof">typeof</see></c>
-        /// operator. It is overloaded with <see cref="typeOf(object)"/> and selected at runtime if
+        /// operator. It is overloaded with <c><see cref="typeOf(object)"/></c> and selected at runtime if
         /// <typeparamref name="T"/> can be used as a type argument.
         /// </para>
         /// <para>
         /// This function throws an exception if the script engine's
-        /// <see cref="ScriptEngine.AllowReflection"/> property is set to <c>false</c>.
+        /// <c><see cref="ScriptEngine.AllowReflection"/></c> property is set to <c>false</c>.
         /// </para>
         /// </remarks>
         /// <example>
         /// The following code retrieves the assembly-qualified name of a host type.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var StringT = host.type("System.String");
         /// var name = host.typeOf(StringT).AssemblyQualifiedName;
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public Type typeOf<T>()
         {
             GetEngine().CheckReflection();
@@ -435,35 +435,35 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Gets the <see cref="System.Type"/> for the specified host type. This version is invoked
+        /// Gets the <c><see cref="System.Type"/></c> for the specified host type. This version is invoked
         /// if the specified object cannot be used as a type argument.
         /// </summary>
-        /// <param name="value">The host type for which to get the <see cref="System.Type"/>.</param>
-        /// <returns>The <see cref="System.Type"/> for the specified host type.</returns>
+        /// <param name="value">The host type for which to get the <c><see cref="System.Type"/></c>.</param>
+        /// <returns>The <c><see cref="System.Type"/></c> for the specified host type.</returns>
         /// <remarks>
         /// <para>
         /// This function is similar to C#'s
         /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/typeof">typeof</see></c>
-        /// operator. It is overloaded with <see cref="typeOf{T}"/> and selected at runtime if
+        /// operator. It is overloaded with <c><see cref="typeOf{T}"/></c> and selected at runtime if
         /// <paramref name="value"/> cannot be used as a type argument. Note that this applies to
         /// some host types; examples are static types and overloaded generic type groups.
         /// </para>
         /// <para>
         /// This function throws an exception if the script engine's
-        /// <see cref="ScriptEngine.AllowReflection"/> property is set to <c>false</c>.
+        /// <c><see cref="ScriptEngine.AllowReflection"/></c> property is set to <c>false</c>.
         /// </para>
         /// </remarks>
         /// <example>
         /// The following code retrieves the assembly-qualified name of a host type.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var ConsoleT = host.type("System.Console");
         /// var name = host.typeOf(ConsoleT).AssemblyQualifiedName;
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public Type typeOf(object value)
         {
             GetEngine().CheckReflection();
@@ -483,10 +483,10 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code defines a function that determines whether an object implements
-        /// <see cref="System.IComparable"/>.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// <c><see cref="System.IComparable"/></c>.
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// function isComparable(value)
         /// {
@@ -495,7 +495,7 @@ namespace Microsoft.ClearScript
         /// }
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public bool isType<T>(object value)
         {
             return value is T;
@@ -514,10 +514,10 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code defines a function that disposes an object if it implements
-        /// <see cref="System.IDisposable"/>.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// <c><see cref="System.IDisposable"/></c>.
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// function dispose(value)
         /// {
@@ -529,7 +529,7 @@ namespace Microsoft.ClearScript
         /// }
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object asType<T>(object value) where T : class
         {
             return HostItem.Wrap(GetEngine(), value as T, typeof(T));
@@ -546,15 +546,15 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code casts a floating-point value to a 32-bit integer.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var Int32T = host.type("System.Int32");
         /// var intValue = host.cast(Int32T, 12.5);
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object cast<T>(object value)
         {
             return HostItem.Wrap(GetEngine(), value.DynamicCast<T>(), typeof(T));
@@ -567,7 +567,7 @@ namespace Microsoft.ClearScript
         /// <param name="value">The object to test.</param>
         /// <returns><c>True</c> if <paramref name="value"/> is a host type, <c>false</c> otherwise.</returns>
         /// <remarks>
-        /// This function is overloaded with <see cref="isTypeObj{T}"/> and selected at runtime if
+        /// This function is overloaded with <c><see cref="isTypeObj{T}"/></c> and selected at runtime if
         /// <paramref name="value"/> cannot be used as a type argument. Note that this applies to
         /// some host types; examples are static types and overloaded generic type groups.
         /// </remarks>
@@ -585,7 +585,7 @@ namespace Microsoft.ClearScript
         /// <typeparam name="T">The host type (ignored).</typeparam>
         /// <returns><c>True</c>.</returns>
         /// <remarks>
-        /// This function is overloaded with <see cref="isTypeObj(object)"/> and selected at
+        /// This function is overloaded with <c><see cref="isTypeObj(object)"/></c> and selected at
         /// runtime if <typeparamref name="T"/> can be used as a type argument. Because type
         /// arguments are always host types, this method ignores its type argument and always
         /// returns <c>true</c>.
@@ -605,11 +605,11 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// Use this function to test field, property, and method return values when <c>null</c>
         /// result wrapping is in effect (see 
-        /// <see cref="ScriptMemberFlags.WrapNullResult"/> and
-        /// <see cref="ScriptEngine.EnableNullResultWrapping"/>).
+        /// <c><see cref="ScriptMemberFlags.WrapNullResult"/></c> and
+        /// <c><see cref="ScriptEngine.EnableNullResultWrapping"/></c>).
         /// </remarks>
-        /// <seealso cref="ScriptMemberFlags.WrapNullResult"/>
-        /// <seealso cref="ScriptEngine.EnableNullResultWrapping"/>
+        /// <c><seealso cref="ScriptMemberFlags.WrapNullResult"/></c>
+        /// <c><seealso cref="ScriptEngine.EnableNullResultWrapping"/></c>
         public bool isNull(object value)
         {
             return value == null;
@@ -626,9 +626,9 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code demonstrates using a strongly typed flag set.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import URI types
         /// var UriT = host.type("System.Uri", "System");
@@ -641,7 +641,7 @@ namespace Microsoft.ClearScript
         /// var result = uri.GetComponents(components, UriFormatT.Unescaped);
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, string, object[])"/></c>
         public T flags<T>(params T[] args)
         {
             var type = typeof(T);
@@ -661,22 +661,22 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.SByte"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.SByte"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.SByte"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.SByte"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.SByte"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.SByte"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.SByte"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.SByte"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.SByte"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.SByte"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.SByte");
@@ -687,29 +687,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toSByte(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toSByte(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToSByte(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.Byte"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.Byte"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.Byte"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.Byte"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.Byte"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.Byte"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.Byte"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.Byte"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.Byte"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.Byte"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.Byte");
@@ -720,29 +720,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toByte(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toByte(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToByte(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.Int16"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.Int16"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.Int16"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.Int16"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.Int16"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.Int16"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.Int16"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.Int16"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.Int16"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.Int16"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.Int16");
@@ -753,29 +753,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toInt16(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toInt16(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToInt16(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.UInt16"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.UInt16"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.UInt16"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.UInt16"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.UInt16"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.UInt16"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.UInt16"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.UInt16"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.UInt16"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.UInt16"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.UInt16");
@@ -786,29 +786,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toUInt16(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toUInt16(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToUInt16(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.Char"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.Char"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.Char"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.Char"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.Char"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.Char"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.Char"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.Char"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.Char"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.Char"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.Char");
@@ -819,29 +819,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toChar(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toChar(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToChar(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.Int32"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.Int32"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.Int32"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.Int32"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.Int32"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.Int32"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.Int32"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.Int32"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.Int32"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.Int32"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.Int32");
@@ -852,29 +852,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toInt32(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toInt32(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToInt32(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.UInt32"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.UInt32"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.UInt32"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.UInt32"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.UInt32"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.UInt32"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.UInt32"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.UInt32"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.UInt32"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.UInt32"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.UInt32");
@@ -885,29 +885,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toUInt32(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toUInt32(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToUInt32(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.Int64"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.Int64"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.Int64"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.Int64"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.Int64"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.Int64"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.Int64"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.Int64"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.Int64"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.Int64"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.Int64");
@@ -918,29 +918,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toInt64(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toInt64(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToInt64(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.UInt64"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.UInt64"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.UInt64"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.UInt64"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.UInt64"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.UInt64"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.UInt64"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.UInt64"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.UInt64"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.UInt64"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.UInt64");
@@ -951,29 +951,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toUInt64(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toUInt64(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToUInt64(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.Single"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.Single"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.Single"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.Single"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.Single"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.Single"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.Single"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.Single"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.Single"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.Single"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.Single");
@@ -984,29 +984,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toSingle(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toSingle(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToSingle(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.Double"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.Double"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.Double"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.Double"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.Double"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.Double"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.Double"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.Double"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.Double"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.Double"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.Double");
@@ -1017,29 +1017,29 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toDouble(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toDouble(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToDouble(value));
         }
 
         /// <summary>
-        /// Converts the specified value to a strongly typed <see cref="System.Decimal"/> instance.
+        /// Converts the specified value to a strongly typed <c><see cref="System.Decimal"/></c> instance.
         /// </summary>
         /// <param name="value">The value to convert.</param>
-        /// <returns>An object that can be passed to a parameter of type <see cref="System.Decimal"/>.</returns>
+        /// <returns>An object that can be passed to a parameter of type <c><see cref="System.Decimal"/></c>.</returns>
         /// <remarks>
-        /// This function converts <paramref name="value"/> to <see cref="System.Decimal"/> and
+        /// This function converts <paramref name="value"/> to <c><see cref="System.Decimal"/></c> and
         /// packages the result to retain its numeric type across the host-script boundary. It may
-        /// be useful for passing arguments to <see cref="System.Decimal"/> parameters if the script
+        /// be useful for passing arguments to <c><see cref="System.Decimal"/></c> parameters if the script
         /// engine does not support that type natively.
         /// </remarks>
         /// <example>
-        /// The following code adds an element of type <see cref="System.Decimal"/> to a strongly
+        /// The following code adds an element of type <c><see cref="System.Decimal"/></c> to a strongly
         /// typed list.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ElementT = host.type("System.Decimal");
@@ -1050,14 +1050,14 @@ namespace Microsoft.ClearScript
         /// list.Add(host.toDecimal(42));
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public object toDecimal(IConvertible value)
         {
             return HostObject.Wrap(Convert.ToDecimal(value));
         }
 
         /// <summary>
-        /// Gets the value of a property in a dynamic host object that implements <see cref="IPropertyBag"/>.
+        /// Gets the value of a property in a dynamic host object that implements <c><see cref="IPropertyBag"/></c>.
         /// </summary>
         /// <param name="target">The dynamic host object that contains the property to get.</param>
         /// <param name="name">The name of the property to get.</param>
@@ -1078,7 +1078,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Sets a property value in a dynamic host object that implements <see cref="IPropertyBag"/>.
+        /// Sets a property value in a dynamic host object that implements <c><see cref="IPropertyBag"/></c>.
         /// </summary>
         /// <param name="target">The dynamic host object that contains the property to set.</param>
         /// <param name="name">The name of the property to set.</param>
@@ -1094,7 +1094,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Removes a property from a dynamic host object that implements <see cref="IPropertyBag"/>.
+        /// Removes a property from a dynamic host object that implements <c><see cref="IPropertyBag"/></c>.
         /// </summary>
         /// <param name="target">The dynamic host object that contains the property to remove.</param>
         /// <param name="name">The name of the property to remove.</param>
@@ -1109,7 +1109,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Gets the value of a property in a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// Gets the value of a property in a dynamic host object that implements <c><see cref="IDynamicMetaObjectProvider"/></c>.
         /// </summary>
         /// <param name="target">The dynamic host object that contains the property to get.</param>
         /// <param name="name">The name of the property to get.</param>
@@ -1130,7 +1130,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Sets a property value in a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// Sets a property value in a dynamic host object that implements <c><see cref="IDynamicMetaObjectProvider"/></c>.
         /// </summary>
         /// <param name="target">The dynamic host object that contains the property to set.</param>
         /// <param name="name">The name of the property to set.</param>
@@ -1152,7 +1152,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Removes a property from a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// Removes a property from a dynamic host object that implements <c><see cref="IDynamicMetaObjectProvider"/></c>.
         /// </summary>
         /// <param name="target">The dynamic host object that contains the property to remove.</param>
         /// <param name="name">The name of the property to remove.</param>
@@ -1173,7 +1173,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Gets the value of an element in a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// Gets the value of an element in a dynamic host object that implements <c><see cref="IDynamicMetaObjectProvider"/></c>.
         /// </summary>
         /// <param name="target">The dynamic host object that contains the element to get.</param>
         /// <param name="indices">One or more indices that identify the element to get.</param>
@@ -1195,7 +1195,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Sets an element value in a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// Sets an element value in a dynamic host object that implements <c><see cref="IDynamicMetaObjectProvider"/></c>.
         /// </summary>
         /// <param name="target">The dynamic host object that contains the element to set.</param>
         /// <param name="value">The new value of the element.</param>
@@ -1217,7 +1217,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Removes an element from a dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/>.
+        /// Removes an element from a dynamic host object that implements <c><see cref="IDynamicMetaObjectProvider"/></c>.
         /// </summary>
         /// <param name="target">The dynamic host object that contains the element to remove.</param>
         /// <param name="indices">One or more indices that identify the element to remove.</param>
@@ -1243,7 +1243,7 @@ namespace Microsoft.ClearScript
         /// <param name="value">The object to cast to its static type.</param>
         /// <returns>The specified object in its static type form, stripped of its dynamic members.</returns>
         /// <remarks>
-        /// A dynamic host object that implements <see cref="IDynamicMetaObjectProvider"/> may have
+        /// A dynamic host object that implements <c><see cref="IDynamicMetaObjectProvider"/></c> may have
         /// dynamic members that override members of its static type. This function can be used to
         /// gain access to type members overridden in this manner.
         /// </remarks>
@@ -1269,9 +1269,9 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code demonstrates handling host exceptions in script code.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// // import types
         /// var ConsoleT = host.type("System.Console");
@@ -1296,8 +1296,8 @@ namespace Microsoft.ClearScript
         /// );
         /// </code>
         /// </example>
-        /// <seealso cref="ExtendedHostFunctions.type(string, string, object[])"/>
-        /// <seealso cref="ExtendedHostFunctions.type(string, object[])"/>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, string, object[])"/></c>
+        /// <c><seealso cref="ExtendedHostFunctions.type(string, object[])"/></c>
         public bool tryCatch(object tryFunc, object catchFunc, object finallyFunc = null)
         {
             MiscHelpers.VerifyNonNullArgument(tryFunc, nameof(tryFunc));
@@ -1382,7 +1382,7 @@ namespace Microsoft.ClearScript
         // ReSharper disable EmptyConstructor
 
         /// <summary>
-        /// Initializes a new <see cref="ExtendedHostFunctions"/> instance.
+        /// Initializes a new <c><see cref="ExtendedHostFunctions"/></c> instance.
         /// </summary>
         public ExtendedHostFunctions()
         {
@@ -1411,16 +1411,16 @@ namespace Microsoft.ClearScript
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see
-        /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// <c><see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see></c>.
         /// </para>
         /// </remarks>
         /// <example>
         /// The following code imports the
-        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2">Dictionary</see>
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2">Dictionary</see></c>
         /// generic type and uses it to create a string dictionary.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var DictT = host.type("System.Collections.Generic.Dictionary");
         /// var StringT = host.type("System.String");
@@ -1455,15 +1455,15 @@ namespace Microsoft.ClearScript
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see
-        /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// <c><see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see></c>.
         /// </para>
         /// </remarks>
         /// <example>
-        /// The following code imports <see cref="System.Linq.Enumerable"/> and uses it to create
+        /// The following code imports <c><see cref="System.Linq.Enumerable"/></c> and uses it to create
         /// an array of strings.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var EnumerableT = host.type("System.Linq.Enumerable", "System.Core");
         /// var Int32T = host.type("System.Int32");
@@ -1473,16 +1473,16 @@ namespace Microsoft.ClearScript
         /// var array = EnumerableT.Range(0, 5).Select(selector).ToArray();
         /// </code>
         /// </example>
-        /// <seealso cref="type(string, object[])"/>
+        /// <c><seealso cref="type(string, object[])"/></c>
         public object type(string name, string assemblyName, params object[] hostTypeArgs)
         {
             return TypeHelpers.ImportType(name, assemblyName, true, hostTypeArgs);
         }
 
         /// <summary>
-        /// Imports the host type for the specified <see cref="System.Type"/>.
+        /// Imports the host type for the specified <c><see cref="System.Type"/></c>.
         /// </summary>
-        /// <param name="type">The <see cref="System.Type"/> that specifies the host type to import.</param>
+        /// <param name="type">The <c><see cref="System.Type"/></c> that specifies the host type to import.</param>
         /// <returns>The imported host type.</returns>
         /// <remarks>
         /// <para>
@@ -1494,7 +1494,7 @@ namespace Microsoft.ClearScript
         /// <para>
         /// For more information about the mapping between host members and script-callable
         /// properties and methods, see
-        /// <see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see>.
+        /// <c><see cref="ScriptEngine.AddHostObject(string, HostItemFlags, object)">AddHostObject</see></c>.
         /// </para>
         /// </remarks>
         public object type(Type type)
@@ -1528,10 +1528,10 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code imports types from several core assemblies and uses
-        /// <see cref="System.Linq.Enumerable"/> to create an array of integers.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// <c><see cref="System.Linq.Enumerable"/></c> to create an array of integers.
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var clr = host.lib("mscorlib", "System", "System.Core");
         /// var array = clr.System.Linq.Enumerable.Range(0, 5).ToArray();
@@ -1558,10 +1558,10 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code imports types from several core assemblies and uses
-        /// <see cref="System.Linq.Enumerable"/> to create an array of integers.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// <c><see cref="System.Linq.Enumerable"/></c> to create an array of integers.
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var clr = host.lib("mscorlib");
         /// host.lib(clr, "System");
@@ -1588,11 +1588,11 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code imports the
-        /// <see href="https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/x4k5wbx4(v=vs.84)">Scripting.Dictionary</see>
+        /// <c><see href="https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/x4k5wbx4(v=vs.84)">Scripting.Dictionary</see></c>
         /// class and uses it to create and populate an instance.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var DictT = host.comType('Scripting.Dictionary');
         /// var dict = host.newObj(DictT);
@@ -1618,11 +1618,11 @@ namespace Microsoft.ClearScript
         /// </remarks>
         /// <example>
         /// The following code creates a 
-        /// <see href="https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/6kxy1a51(v=vs.84)">Scripting.FileSystemObject</see>
+        /// <c><see href="https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/windows-scripting/6kxy1a51(v=vs.84)">Scripting.FileSystemObject</see></c>
         /// instance and uses it to list the drives on the local machine.
-        /// It assumes that an instance of <see cref="ExtendedHostFunctions"/> is exposed under
+        /// It assumes that an instance of <c><see cref="ExtendedHostFunctions"/></c> is exposed under
         /// the name "host"
-        /// (see <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see>).
+        /// (see <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c>).
         /// <code lang="JavaScript">
         /// var fso = host.newComObj('Scripting.FileSystemObject');
         /// var ConsoleT = host.type('System.Console');

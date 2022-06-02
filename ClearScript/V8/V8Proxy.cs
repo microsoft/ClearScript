@@ -3,11 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8.ICUData;
 using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace Microsoft.ClearScript.V8
@@ -18,15 +20,36 @@ namespace Microsoft.ClearScript.V8
 
         private static IntPtr hNativeAssembly;
         private static ulong splitImplCount;
+        private static bool triedToLoadNativeAssembly;
+        private static bool loadedNativeAssembly;
 
         internal static bool OnEntityHolderCreated()
         {
             lock (dataLock)
             {
-                if (hNativeAssembly == IntPtr.Zero)
+                if (!triedToLoadNativeAssembly)
                 {
-                    hNativeAssembly = LoadNativeAssembly();
-                    InitializeICU();
+                    triedToLoadNativeAssembly = true;
+                    var initializedICU = false;
+
+                    try
+                    {
+                        hNativeAssembly = LoadNativeAssembly();
+                        loadedNativeAssembly = true;
+                    }
+                    catch (Exception)
+                    {
+                        initializedICU = MiscHelpers.Try(InitializeICU);
+                        if (!initializedICU)
+                        {
+                            throw;
+                        }
+                    }
+
+                    if (!initializedICU)
+                    {
+                        InitializeICU();
+                    }
                 }
 
                 ++splitImplCount;
@@ -38,10 +61,11 @@ namespace Microsoft.ClearScript.V8
         {
             lock (dataLock)
             {
-                if (--splitImplCount < 1)
+                if ((--splitImplCount < 1) && loadedNativeAssembly)
                 {
                     FreeLibrary(hNativeAssembly);
                     hNativeAssembly = IntPtr.Zero;
+                    loadedNativeAssembly = false;
                 }
             }
         }
@@ -99,14 +123,12 @@ namespace Microsoft.ClearScript.V8
         private static IntPtr LoadNativeLibrary(string baseName, string platform, string architecture, string extension)
         {
             var fileName = $"{baseName}.{platform}-{architecture}.{extension}";
-
-            IntPtr hLibrary;
             var messageBuilder = new StringBuilder();
 
-            var paths = GetDirPaths(platform, architecture).Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
+            var paths = GetDirPaths(platform, architecture).Select(dirPath => Path.Combine(dirPath, fileName)).Distinct();
             foreach (var path in paths)
             {
-                hLibrary = LoadLibrary(path);
+                var hLibrary = LoadLibrary(path);
                 if (hLibrary != IntPtr.Zero)
                 {
                     return hLibrary;
@@ -115,49 +137,25 @@ namespace Microsoft.ClearScript.V8
                 messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(GetLoadLibraryErrorMessage(), "Unknown error"));
             }
 
-            if (string.IsNullOrEmpty(deploymentDirName))
-            {
-                var systemPath = Path.Combine(Environment.SystemDirectory, fileName);
-                hLibrary = LoadLibrary(systemPath);
-                if (hLibrary != IntPtr.Zero)
-                {
-                    return hLibrary;
-                }
-
-                messageBuilder.AppendInvariant("\n{0}: {1}", systemPath, MiscHelpers.EnsureNonBlank(GetLoadLibraryErrorMessage(), "Unknown error"));
-            }
-
             var message = MiscHelpers.FormatInvariant("Cannot load ClearScript V8 library. Load failure information for {0}:{1}", fileName, messageBuilder);
             throw new TypeLoadException(message);
         }
 
-        private static void InitializeICU()
+        private static unsafe void InitializeICU()
         {
-            // ReSharper disable RedundantJumpStatement
-
-            const string fileName = "ClearScriptV8.ICU.dat";
-
-            var paths = GetDirPaths(null, null).Select(dirPath => Path.Combine(dirPath, deploymentDirName, fileName)).Distinct();
-            foreach (var path in paths)
+            using (var stream = typeof(V8ICUData).Assembly.GetManifestResourceStream(V8ICUData.ResourceName))
             {
-                if (File.Exists(path))
+                var bytes = new byte[stream.Length];
+
+                var length = stream.Read(bytes, 0, bytes.Length);
+                Debug.Assert(length == bytes.Length);
+
+                fixed (byte* pBytes = bytes)
                 {
-                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Environment_InitializeICU(path));
-                    return;
+                    var pICUData = (IntPtr)pBytes;
+                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Environment_InitializeICU(pICUData, Convert.ToUInt32(length)));
                 }
             }
-
-            if (string.IsNullOrEmpty(deploymentDirName))
-            {
-                var systemPath = Path.Combine(Environment.SystemDirectory, fileName);
-                if (File.Exists(systemPath))
-                {
-                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Environment_InitializeICU(systemPath));
-                    return;
-                }
-            }
-
-            // ReSharper restore RedundantJumpStatement
         }
 
         private static IEnumerable<string> GetDirPaths(string platform, string architecture)
@@ -201,25 +199,6 @@ namespace Microsoft.ClearScript.V8
         #region IDisposable implementation (abstract)
 
         public abstract void Dispose();
-
-        #endregion
-
-        #region unit test support
-
-        private static string deploymentDirName = string.Empty;
-
-        internal static void RunWithDeploymentDir(string name, Action action)
-        {
-            deploymentDirName = name;
-            try
-            {
-                action();
-            }
-            finally
-            {
-                deploymentDirName = string.Empty;
-            }
-        }
 
         #endregion
     }

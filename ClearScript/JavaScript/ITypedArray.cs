@@ -30,47 +30,47 @@ namespace Microsoft.ClearScript.JavaScript
     ///         <term>Interface(s)&#xA0;(C#)</term>
     ///     </listheader>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array">Uint8Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;byte&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray">Uint8ClampedArray</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray">Uint8ClampedArray</see></c></term>
     ///         <term><c>ITypedArray&#x3C;byte&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array">Int8Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array">Int8Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;sbyte&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array">Uint16Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array">Uint16Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;ushort&#x3E;</c> and <c>ITypedArray&#x3C;char&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array">Int16Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array">Int16Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;short&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array">Uint32Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array">Uint32Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;uint&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array">Int32Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array">Int32Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;int&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigUint64Array">BigUint64Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigUint64Array">BigUint64Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;ulong&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt64Array">BigInt64Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt64Array">BigInt64Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;long&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array">Float32Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array">Float32Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;float&#x3E;</c></term>
     ///     </item>
     ///     <item>
-    ///         <term><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array">Float64Array</see></term>
+    ///         <term><c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array">Float64Array</see></c></term>
     ///         <term><c>ITypedArray&#x3C;double&#x3E;</c></term>
     ///     </item>
     /// </list>

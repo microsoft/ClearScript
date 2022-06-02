@@ -23,7 +23,7 @@ namespace Microsoft.ClearScript
     /// "Acme.Gadgets.Button", the corresponding collection will have a property named "Acme" whose
     /// value is an object with a property named "Gadgets" whose value is an object with a property
     /// named "Button" whose value represents the <c>Acme.Gadgets.Button</c> host type. Use
-    /// <see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see> to expose a host
+    /// <c><see cref="ScriptEngine.AddHostObject(string, object)">AddHostObject</see></c> to expose a host
     /// type collection to script code.
     /// </remarks>
     public class HostTypeCollection : PropertyBag

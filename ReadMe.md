@@ -74,3 +74,4 @@ We'd like to thank:
 * [The Jekyll team](https://jekyllrb.com/team/).
 * [Kenneth Reitz](http://kennethreitz.org/) for generously providing the [`Httpbin`](http://httpbin.org/) service.
 * [Michael Rose](https://mademistakes.com/) for generously providing the [So Simple](https://mmistakes.github.io/so-simple-theme/) Jekyll theme.
+* [Toptal](https://www.toptal.com/) for generously providing the [Toptal JavaScript Minifier](https://www.toptal.com/developers/javascript-minifier).

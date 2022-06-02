@@ -132,16 +132,6 @@
     <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.Unix.cs" Link="V8ScriptEngineTest.Unix.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Condition="Exists('..\..\V8\build\v8\third_party\icu\common\icudtl.dat')" Include="..\..\V8\build\v8\third_party\icu\common\icudtl.dat" Link="ClearScriptV8.ICU.dat">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Visible>false</Visible>
-    </None>
-    <None Condition="!Exists('..\..\V8\build\v8\third_party\icu\common\icudtl.dat') And Exists('..\..\V8\ClearScriptV8.ICU.dat')" Include="..\..\V8\ClearScriptV8.ICU.dat" Link="ClearScriptV8.ICU.dat">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Visible>false</Visible>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-$(Platform).dll" Link="ClearScriptV8.win-$(Platform).dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>

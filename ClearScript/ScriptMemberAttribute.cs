@@ -16,14 +16,14 @@ namespace Microsoft.ClearScript
     public sealed class ScriptMemberAttribute : ScriptUsageAttribute
     {
         /// <summary>
-        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance.
+        /// Initializes a new <c><see cref="ScriptMemberAttribute"/></c> instance.
         /// </summary>
         public ScriptMemberAttribute()
         {
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name.
+        /// Initializes a new <c><see cref="ScriptMemberAttribute"/></c> instance with the specified name.
         /// </summary>
         /// <param name="name">The name that script code will use to access the target type member.</param>
         public ScriptMemberAttribute(string name)
@@ -32,7 +32,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified script access setting.
+        /// Initializes a new <c><see cref="ScriptMemberAttribute"/></c> instance with the specified script access setting.
         /// </summary>
         /// <param name="access">The script access setting for the target type member.</param>
         public ScriptMemberAttribute(ScriptAccess access)
@@ -41,7 +41,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name and script access setting.
+        /// Initializes a new <c><see cref="ScriptMemberAttribute"/></c> instance with the specified name and script access setting.
         /// </summary>
         /// <param name="name">The name that script code will use to access the target type member.</param>
         /// <param name="access">The script access setting for the target type member.</param>
@@ -52,7 +52,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified script options.
+        /// Initializes a new <c><see cref="ScriptMemberAttribute"/></c> instance with the specified script options.
         /// </summary>
         /// <param name="flags">The script options for the target type member.</param>
         public ScriptMemberAttribute(ScriptMemberFlags flags)
@@ -61,7 +61,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name and script options.
+        /// Initializes a new <c><see cref="ScriptMemberAttribute"/></c> instance with the specified name and script options.
         /// </summary>
         /// <param name="name">The name that script code will use to access the target type member.</param>
         /// <param name="flags">The script options for the target type member.</param>
@@ -72,7 +72,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified script access setting and script options.
+        /// Initializes a new <c><see cref="ScriptMemberAttribute"/></c> instance with the specified script access setting and script options.
         /// </summary>
         /// <param name="access">The script access setting for the target type member.</param>
         /// <param name="flags">The script options for the target type member.</param>
@@ -83,7 +83,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptMemberAttribute"/> instance with the specified name, script access setting, and script options.
+        /// Initializes a new <c><see cref="ScriptMemberAttribute"/></c> instance with the specified name, script access setting, and script options.
         /// </summary>
         /// <param name="name">The name that script code will use to access the target type member.</param>
         /// <param name="access">The script access setting for the target type member.</param>

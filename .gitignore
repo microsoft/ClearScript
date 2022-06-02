@@ -34,6 +34,7 @@ _ReSharper*/
 *.VC.db
 V8/build/
 V8/DepotTools.zip
+V8/icudtl.dat
 .vs/
 packages/
 NuGet/Private/

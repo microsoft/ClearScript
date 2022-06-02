@@ -116,10 +116,9 @@ NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTabl
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8Environment_InitializeICU(const StdChar* pDataPath) noexcept
+NATIVE_ENTRY_POINT(void) V8Environment_InitializeICU(const char* pICUData, uint32_t size) noexcept
 {
-    StdString dataPath(pDataPath);
-    ASSERT_EVAL(v8::V8::InitializeICU(dataPath.ToUTF8().c_str()));
+    ASSERT_EVAL(v8::V8::InitializeICU(pICUData, size));
 }
 
 //-----------------------------------------------------------------------------
@@ -722,7 +721,7 @@ NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8ContextHandle*) V8Isolate_CreateContext(const V8IsolateHandle& handle, const StdString& name, StdBool enableDebugging, StdBool enableRemoteDebugging, StdBool disableGlobalMembers, StdBool enableDateTimeConversion, StdBool enableDynamicModuleImports, int32_t debugPort) noexcept
+NATIVE_ENTRY_POINT(V8ContextHandle*) V8Isolate_CreateContext(const V8IsolateHandle& handle, const StdString& name, StdBool enableDebugging, StdBool enableRemoteDebugging, StdBool disableGlobalMembers, StdBool enableDateTimeConversion, StdBool enableDynamicModuleImports, StdBool hideHostExceptions, int32_t debugPort) noexcept
 {
     auto spIsolate = handle.GetEntity();
     if (!spIsolate.IsEmpty())
@@ -733,6 +732,7 @@ NATIVE_ENTRY_POINT(V8ContextHandle*) V8Isolate_CreateContext(const V8IsolateHand
         options.DisableGlobalMembers = disableGlobalMembers;
         options.EnableDateTimeConversion = enableDateTimeConversion;
         options.EnableDynamicModuleImports = enableDynamicModuleImports;
+        options.HideHostExceptions = hideHostExceptions;
         options.DebugPort = debugPort;
 
         try

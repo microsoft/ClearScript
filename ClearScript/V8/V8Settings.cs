@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
@@ -25,7 +25,7 @@ namespace Microsoft.ClearScript.V8
         /// </para>
         /// <para>
         /// To enable Top-Level Await, set this property to <c>true</c> before instantiating
-        /// <see cref="V8ScriptEngine"/> or <see cref="V8Runtime"/> for the first time. Subsequent
+        /// <c><see cref="V8ScriptEngine"/></c> or <c><see cref="V8Runtime"/></c> for the first time. Subsequent
         /// reassignment will have no effect.
         /// </para>
         /// </remarks>
@@ -37,7 +37,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <remarks>
         /// To override the default global options, set this property before instantiating
-        /// <see cref="V8ScriptEngine"/> or <see cref="V8Runtime"/> for the first time. Subsequent
+        /// <c><see cref="V8ScriptEngine"/></c> or <c><see cref="V8Runtime"/></c> for the first time. Subsequent
         /// reassignment will have no effect.
         /// </remarks>
         public static V8GlobalFlags GlobalFlags { get; set; }

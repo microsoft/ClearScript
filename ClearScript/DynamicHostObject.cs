@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
@@ -8,14 +8,14 @@ using System.Linq;
 namespace Microsoft.ClearScript
 {
     /// <summary>
-    /// Extends <see cref="DynamicObject"/> for enhanced behavior and performance in a scripting environment.
+    /// Extends <c><see cref="DynamicObject"/></c> for enhanced behavior and performance in a scripting environment.
     /// </summary>
     public abstract class DynamicHostObject : DynamicObject
     {
         // ReSharper disable EmptyConstructor
 
         /// <summary>
-        /// Initializes a new <see cref="DynamicHostObject"/> instance.
+        /// Initializes a new <c><see cref="DynamicHostObject"/></c> instance.
         /// </summary>
         protected DynamicHostObject()
         {

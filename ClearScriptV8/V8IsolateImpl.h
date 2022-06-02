@@ -227,6 +227,12 @@ public:
         return value.ToV8String(m_upIsolate.get(), type);
     }
 
+    template <int N>
+    v8::Local<v8::String> CreateString(const char (&value)[N], v8::NewStringType type = v8::NewStringType::kNormal)
+    {
+        return v8::String::NewFromUtf8Literal(m_upIsolate.get(), value, type);
+    }
+
     virtual StdString CreateStdString(v8::Local<v8::Value> hValue) override
     {
         return StdString(m_upIsolate.get(), hValue);

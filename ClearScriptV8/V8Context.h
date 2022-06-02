@@ -18,6 +18,7 @@ public:
         bool DisableGlobalMembers = true;
         bool EnableDateTimeConversion = false;
         bool EnableDynamicModuleImports = false;
+        bool HideHostExceptions = false;
         int DebugPort = 0;
     };
 

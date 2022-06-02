@@ -41,8 +41,7 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
 
-            obj = Activator.CreateInstance(type) as T;
-            return obj != null;
+            return Try(out obj, () => Activator.CreateInstance(type) as T) && (obj != null);
         }
 
         public static bool TryCreateCOMObject<T>(Guid clsid, string serverName, out T obj) where T : class
@@ -53,8 +52,7 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
 
-            obj = Activator.CreateInstance(type) as T;
-            return obj != null;
+            return Try(out obj, () => Activator.CreateInstance(type) as T) && (obj != null);
         }
 
         public static Type GetCOMType(string progID, string serverName)

@@ -14,7 +14,7 @@ namespace Microsoft.ClearScript
         // ReSharper disable EmptyConstructor
 
         /// <summary>
-        /// Initializes a new <see cref="Document"/> instance.
+        /// Initializes a new <c><see cref="Document"/></c> instance.
         /// </summary>
         protected Document()
         {

@@ -11,11 +11,11 @@ namespace Microsoft.ClearScript
     /// nonexistent, missing, unknown, or undefined data. The ClearScript library maps such values
     /// to an instance of this class.
     /// </remarks>
-    /// <seealso cref="ScriptEngine.UndefinedImportValue"/>
+    /// <c><seealso cref="ScriptEngine.UndefinedImportValue"/></c>
     public class Undefined
     {
         /// <summary>
-        /// The sole instance of the <see cref="Undefined"/> class.
+        /// The sole instance of the <c><see cref="Undefined"/></c> class.
         /// </summary>
         public static readonly Undefined Value = new Undefined();
 
@@ -30,7 +30,7 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <returns>A string that represents the current object.</returns>
         /// <remarks>
-        /// The <see cref="Undefined"/> version of this method returns "[undefined]".
+        /// The <c><see cref="Undefined"/></c> version of this method returns "[undefined]".
         /// </remarks>
         public override string ToString()
         {

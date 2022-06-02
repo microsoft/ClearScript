@@ -179,21 +179,21 @@ namespace Microsoft.ClearScript.V8
         /// </para>
         /// <para>
         /// A V8 runtime unconditionally terminates the process when it exceeds its resource
-        /// constraints (see <see cref="V8RuntimeConstraints"/>). This property enables external
+        /// constraints (see <c><see cref="V8RuntimeConstraints"/></c>). This property enables external
         /// heap size monitoring that can prevent termination in some scenarios. To be effective,
         /// it should be set to a value that is significantly lower than
-        /// <see cref="V8RuntimeConstraints.MaxOldSpaceSize"/>. Note that enabling heap size
+        /// <c><see cref="V8RuntimeConstraints.MaxOldSpaceSize"/></c>. Note that enabling heap size
         /// monitoring results in slower script execution.
         /// </para>
         /// <para>
         /// Exceeding this limit causes the V8 runtime to behave in accordance with
-        /// <see cref="HeapSizeViolationPolicy"/>.
+        /// <c><see cref="HeapSizeViolationPolicy"/></c>.
         /// </para>
         /// <para>
         /// Note that
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see>
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see></c>
         /// memory is allocated outside the runtime's heap and is therefore not tracked by heap
-        /// size monitoring. See <see cref="V8RuntimeConstraints.MaxArrayBufferAllocation"/> for
+        /// size monitoring. See <c><see cref="V8RuntimeConstraints.MaxArrayBufferAllocation"/></c> for
         /// additional information.
         /// </para>
         /// </remarks>
@@ -217,7 +217,7 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <remarks>
         /// This property is effective only when heap size monitoring is enabled (see
-        /// <see cref="MaxHeapSize"/>).
+        /// <c><see cref="MaxHeapSize"/></c>).
         /// </remarks>
         public TimeSpan HeapSizeSampleInterval
         {
@@ -277,8 +277,8 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         /// <remarks>
         /// By default, when nested script execution is interrupted via
-        /// <see cref="ScriptEngine.Interrupt"/>, an instance of
-        /// <see cref="ScriptInterruptedException"/>, if not handled by the host, is wrapped and
+        /// <c><see cref="ScriptEngine.Interrupt"/></c>, an instance of
+        /// <c><see cref="ScriptInterruptedException"/></c>, if not handled by the host, is wrapped and
         /// delivered to the parent script frame as a normal exception that JavaScript code can
         /// catch. Setting this property to <c>true</c> causes the V8 runtime to remain in the
         /// interrupted state until its outermost script frame has been processed.
@@ -488,7 +488,7 @@ namespace Microsoft.ClearScript.V8
         /// The generated cache data can be stored externally and is usable in other V8 runtimes
         /// and application processes.
         /// </remarks>
-        /// <seealso cref="Compile(string, V8CacheKind, byte[], out bool)"/>
+        /// <c><seealso cref="Compile(string, V8CacheKind, byte[], out bool)"/></c>
         public V8Script Compile(string code, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
             return Compile(null, code, cacheKind, out cacheBytes);
@@ -506,7 +506,7 @@ namespace Microsoft.ClearScript.V8
         /// The generated cache data can be stored externally and is usable in other V8 runtimes
         /// and application processes.
         /// </remarks>
-        /// <seealso cref="Compile(string, string, V8CacheKind, byte[], out bool)"/>
+        /// <c><seealso cref="Compile(string, string, V8CacheKind, byte[], out bool)"/></c>
         public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
             return Compile(new DocumentInfo(documentName), code, cacheKind, out cacheBytes);
@@ -524,7 +524,7 @@ namespace Microsoft.ClearScript.V8
         /// The generated cache data can be stored externally and is usable in other V8 runtimes
         /// and application processes.
         /// </remarks>
-        /// <seealso cref="Compile(DocumentInfo, string, V8CacheKind, byte[], out bool)"/>
+        /// <c><seealso cref="Compile(DocumentInfo, string, V8CacheKind, byte[], out bool)"/></c>
         public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
             VerifyNotDisposed();
@@ -543,7 +543,7 @@ namespace Microsoft.ClearScript.V8
         /// To be accepted, the cache data must have been generated for identical script code by
         /// the same V8 build.
         /// </remarks>
-        /// <seealso cref="Compile(string, V8CacheKind, out byte[])"/>
+        /// <c><seealso cref="Compile(string, V8CacheKind, out byte[])"/></c>
         public V8Script Compile(string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             return Compile(null, code, cacheKind, cacheBytes, out cacheAccepted);
@@ -562,7 +562,7 @@ namespace Microsoft.ClearScript.V8
         /// To be accepted, the cache data must have been generated for identical script code by
         /// the same V8 build.
         /// </remarks>
-        /// <seealso cref="Compile(string, string, V8CacheKind, out byte[])"/>
+        /// <c><seealso cref="Compile(string, string, V8CacheKind, out byte[])"/></c>
         public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             return Compile(new DocumentInfo(documentName), code, cacheKind, cacheBytes, out cacheAccepted);
@@ -581,7 +581,7 @@ namespace Microsoft.ClearScript.V8
         /// To be accepted, the cache data must have been generated for identical script code by
         /// the same V8 build.
         /// </remarks>
-        /// <seealso cref="Compile(DocumentInfo, string, V8CacheKind, out byte[])"/>
+        /// <c><seealso cref="Compile(DocumentInfo, string, V8CacheKind, out byte[])"/></c>
         public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             VerifyNotDisposed();
@@ -735,7 +735,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Returns memory usage information.
         /// </summary>
-        /// <returns>A <see cref="V8RuntimeHeapInfo"/> object containing memory usage information.</returns>
+        /// <returns>A <c><see cref="V8RuntimeHeapInfo"/></c> object containing memory usage information.</returns>
         public V8RuntimeHeapInfo GetHeapInfo()
         {
             VerifyNotDisposed();

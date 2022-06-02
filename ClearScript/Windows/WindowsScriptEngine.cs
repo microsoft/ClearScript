@@ -10,7 +10,7 @@ namespace Microsoft.ClearScript.Windows
     /// </summary>
     /// <remarks>
     /// Each Windows Script engine instance in a desktop environment has thread affinity and is
-    /// bound to a <see cref="System.Windows.Threading.Dispatcher"/> during instantiation.
+    /// bound to a <c><see cref="System.Windows.Threading.Dispatcher"/></c> during instantiation.
     /// Attempting to execute script code on a different thread results in an exception. Script
     /// delegates and event handlers are marshaled synchronously onto the correct thread.
     /// </remarks>
@@ -39,7 +39,7 @@ namespace Microsoft.ClearScript.Windows
         #region public members
 
         /// <summary>
-        /// Gets the <see cref="System.Windows.Threading.Dispatcher"/> associated with the current script engine.
+        /// Gets the <c><see cref="System.Windows.Threading.Dispatcher"/></c> associated with the current script engine.
         /// </summary>
         public Dispatcher Dispatcher
         {

@@ -26,7 +26,7 @@ namespace Microsoft.ClearScript
         /// categories. These are distinct from the caches used by document loaders.
         /// </para>
         /// </remarks>
-        /// <seealso cref="DocumentLoader.MaxCacheSize"/>
+        /// <c><seealso cref="DocumentLoader.MaxCacheSize"/></c>
         public uint MaxCacheSize { get; set; }
 
         /// <summary>

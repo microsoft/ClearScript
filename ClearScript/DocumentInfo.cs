@@ -21,7 +21,7 @@ namespace Microsoft.ClearScript
         private ulong uniqueId;
 
         /// <summary>
-        /// Initializes a new <see cref="DocumentInfo"/> structure with the specified document name.
+        /// Initializes a new <c><see cref="DocumentInfo"/></c> structure with the specified document name.
         /// </summary>
         /// <param name="name">The document name.</param>
         public DocumentInfo(string name)
@@ -32,7 +32,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="DocumentInfo"/> structure with the specified document URI.
+        /// Initializes a new <c><see cref="DocumentInfo"/></c> structure with the specified document URI.
         /// </summary>
         /// <param name="uri">The document URI.</param>
         public DocumentInfo(Uri uri)
@@ -94,8 +94,8 @@ namespace Microsoft.ClearScript
         /// <para>
         /// Use 
         /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import.meta">import.meta</see></c>
-        /// to access the context information of a <see cref="ModuleCategory.Standard"/> JavaScript
-        /// module. In a <see cref="ModuleCategory.CommonJS"/> module, use <c>module.meta</c>.
+        /// to access the context information of a <c><see cref="ModuleCategory.Standard"/></c> JavaScript
+        /// module. In a <c><see cref="ModuleCategory.CommonJS"/></c> module, use <c>module.meta</c>.
         /// </para>
         /// </remarks>
         public DocumentContextCallback ContextCallback { get; set; }

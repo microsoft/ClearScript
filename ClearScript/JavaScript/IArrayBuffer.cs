@@ -7,7 +7,7 @@ namespace Microsoft.ClearScript.JavaScript
 {
     /// <summary>
     /// Represents a JavaScript
-    /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see>.
+    /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see></c>.
     /// </summary>
     public interface IArrayBuffer
     {

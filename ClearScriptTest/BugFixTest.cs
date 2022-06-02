@@ -1576,6 +1576,15 @@ namespace Microsoft.ClearScript.Test
             engine.Execute("connection.disconnect()");
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_Exception_TargetSite_Reflection()
+        {
+            engine.AddHostType(typeof(SystemException));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("new SystemException().TargetSite"));
+            engine.AllowReflection = true;
+            Assert.IsNull(engine.Evaluate("new SystemException().TargetSite"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

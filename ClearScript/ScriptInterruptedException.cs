@@ -31,7 +31,7 @@ namespace Microsoft.ClearScript
         #region constructors
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptInterruptedException"/> instance.
+        /// Initializes a new <c><see cref="ScriptInterruptedException"/></c> instance.
         /// </summary>
         public ScriptInterruptedException()
             : base(defaultMessage)
@@ -40,7 +40,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptInterruptedException"/> with the specified error message.
+        /// Initializes a new <c><see cref="ScriptInterruptedException"/></c> with the specified error message.
         /// </summary>
         /// <param name="message">The error message.</param>
         public ScriptInterruptedException(string message)
@@ -50,7 +50,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptInterruptedException"/> with the specified error message and nested exception.
+        /// Initializes a new <c><see cref="ScriptInterruptedException"/></c> with the specified error message and nested exception.
         /// </summary>
         /// <param name="message">The error message.</param>
         /// <param name="innerException">The exception that caused the current exception to be thrown.</param>
@@ -61,7 +61,7 @@ namespace Microsoft.ClearScript
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ScriptInterruptedException"/> with serialized data.
+        /// Initializes a new <c><see cref="ScriptInterruptedException"/></c> with serialized data.
         /// </summary>
         /// <param name="info">The object that holds the serialized data.</param>
         /// <param name="context">The contextual information about the source or destination.</param>
@@ -94,7 +94,7 @@ namespace Microsoft.ClearScript
         #region IScriptEngineException implementation
 
         /// <summary>
-        /// Gets an <see href="http://en.wikipedia.org/wiki/HRESULT">HRESULT</see> error code if one is available, zero otherwise.
+        /// Gets an <c><see href="http://en.wikipedia.org/wiki/HRESULT">HRESULT</see></c> error code if one is available, zero otherwise.
         /// </summary>
         int IScriptEngineException.HResult => HResult;
 
@@ -149,10 +149,10 @@ namespace Microsoft.ClearScript
         #region OperationCanceledException overrides
 
         /// <summary>
-        /// Populates a <see cref="SerializationInfo"/> with the data needed to serialize the target object.
+        /// Populates a <c><see cref="SerializationInfo"/></c> with the data needed to serialize the target object.
         /// </summary>
-        /// <param name="info">The <see cref="SerializationInfo"/> to populate with data.</param>
-        /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this serialization.</param>
+        /// <param name="info">The <c><see cref="SerializationInfo"/></c> to populate with data.</param>
+        /// <param name="context">The destination (see <c><see cref="StreamingContext"/></c>) for this serialization.</param>
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);

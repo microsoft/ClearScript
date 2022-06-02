@@ -16,7 +16,7 @@ namespace Microsoft.ClearScript.Windows
     /// </summary>
     /// <remarks>
     /// Each Windows Script engine instance in a desktop environment has thread affinity and is
-    /// bound to a <see cref="System.Windows.Threading.Dispatcher"/> during instantiation.
+    /// bound to a <c><see cref="System.Windows.Threading.Dispatcher"/></c> during instantiation.
     /// Attempting to execute script code on a different thread results in an exception. Script
     /// delegates and event handlers are marshaled synchronously onto the correct thread.
     /// </remarks>
@@ -98,7 +98,7 @@ namespace Microsoft.ClearScript.Windows
         /// Gets the script engine's recommended file name extension for script files.
         /// </summary>
         /// <remarks>
-        /// <see cref="JScriptEngine"/> instances return "js" for this property.
+        /// <c><see cref="JScriptEngine"/></c> instances return "js" for this property.
         /// </remarks>
         public override string FileNameExtension => "js";
 
@@ -109,14 +109,14 @@ namespace Microsoft.ClearScript.Windows
         /// <returns>The command output.</returns>
         /// <remarks>
         /// <para>
-        /// This method is similar to <see cref="ScriptEngine.Evaluate(string)"/> but optimized for
+        /// This method is similar to <c><see cref="ScriptEngine.Evaluate(string)"/></c> but optimized for
         /// command consoles. The specified command must be limited to a single expression or
         /// statement. Script engines can override this method to customize command execution as
         /// well as the process of converting the result to a string for console output.
         /// </para>
         /// <para>
-        /// The <see cref="JScriptEngine"/> version of this method attempts to use
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/tostring">toString</see>
+        /// The <c><see cref="JScriptEngine"/></c> version of this method attempts to use
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/tostring">toString</see></c>
         /// to convert the return value.
         /// </para>
         /// </remarks>

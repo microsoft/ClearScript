@@ -230,6 +230,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
     m_Name(name),
     m_spIsolateImpl(std::move(spIsolateImpl)),
     m_DateTimeConversionEnabled(options.EnableDateTimeConversion),
+    m_HideHostExceptions(options.HideHostExceptions),
     m_pvV8ObjectCache(nullptr),
     m_AllowHostObjectConstructorCall(false)
 {
@@ -262,59 +263,67 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
 
         v8::Local<v8::FunctionTemplate> hGetIteratorFunction;
         v8::Local<v8::FunctionTemplate> hGetAsyncIteratorFunction;
+        v8::Local<v8::FunctionTemplate> hGetJsonFunction;
         v8::Local<v8::FunctionTemplate> hToFunctionFunction;
 
         BEGIN_CONTEXT_SCOPE
 
             m_hIsHostObjectKey = CreatePersistent(CreateSymbol());
-            FROM_MAYBE(m_hContext->Global()->Set(m_hContext, FROM_MAYBE(CreateString(StdString(SL("isHostObjectKey")))), m_hIsHostObjectKey));
+            FROM_MAYBE(m_hContext->Global()->Set(m_hContext, CreateString("isHostObjectKey"), m_hIsHostObjectKey));
 
-            m_hHostExceptionKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("hostException")))));
+            m_hHostExceptionKey = CreatePersistent(CreateString("hostException"));
             m_hCacheKey = CreatePersistent(CreatePrivate());
             m_hAccessTokenKey = CreatePersistent(CreatePrivate());
-            m_hInternalUseOnly = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("The invoked function is for ClearScript internal use only")))));
-            m_hStackKey = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("stack")))));
-            m_hObjectNotInvocable = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("The object does not support invocation")))));
-            m_hMethodOrPropertyNotFound = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("Method or property not found")))));
-            m_hPropertyValueNotInvocable = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("Property value does not support invocation")))));
-            m_hInvalidModuleRequest = CreatePersistent(FROM_MAYBE(CreateString(StdString(SL("Invalid module load request")))));
+            m_hInternalUseOnly = CreatePersistent(CreateString("The invoked function is for ClearScript internal use only"));
+            m_hStackKey = CreatePersistent(CreateString("stack"));
+            m_hObjectNotInvocable = CreatePersistent(CreateString("The object does not support invocation"));
+            m_hMethodOrPropertyNotFound = CreatePersistent(CreateString("Method or property not found"));
+            m_hPropertyValueNotInvocable = CreatePersistent(CreateString("Property value does not support invocation"));
+            m_hInvalidModuleRequest = CreatePersistent(CreateString("Invalid module load request"));
 
             hGetIteratorFunction = CreateFunctionTemplate(GetHostObjectIterator, hContextImpl);
             hGetAsyncIteratorFunction = CreateFunctionTemplate(GetHostObjectAsyncIterator, hContextImpl);
+            hGetJsonFunction = CreateFunctionTemplate(GetHostObjectJson, hContextImpl);
             hToFunctionFunction = CreateFunctionTemplate(CreateFunctionForHostDelegate, hContextImpl);
+
             m_hAccessToken = CreatePersistent(CreateObject());
             m_hFlushFunction = CreatePersistent(FROM_MAYBE(v8::Function::New(m_hContext, FlushCallback)));
-            m_hTerminationException = CreatePersistent(v8::Exception::Error(FROM_MAYBE(CreateString(StdString(SL("Script execution was interrupted"))))));
+            m_hTerminationException = CreatePersistent(v8::Exception::Error(CreateString("Script execution was interrupted")));
 
         END_CONTEXT_SCOPE
 
+        auto hToJSON = CreateString("toJSON");
+
         m_hHostObjectTemplate = CreatePersistent(CreateFunctionTemplate());
-        m_hHostObjectTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(SL("HostObject")))));
+        m_hHostObjectTemplate->SetClassName(CreateString("HostObject"));
         m_hHostObjectTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
         m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
         m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
+        m_hHostObjectTemplate->PrototypeTemplate()->Set(hToJSON, hGetJsonFunction);
 
         m_hHostInvocableTemplate = CreatePersistent(CreateFunctionTemplate());
-        m_hHostInvocableTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(SL("HostInvocable")))));
+        m_hHostInvocableTemplate->SetClassName(CreateString("HostInvocable"));
         m_hHostInvocableTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
         m_hHostInvocableTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
         m_hHostInvocableTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
         m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
         m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
+        m_hHostInvocableTemplate->PrototypeTemplate()->Set(hToJSON, hGetJsonFunction);
         m_hHostInvocableTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
 
         m_hHostDelegateTemplate = CreatePersistent(CreateFunctionTemplate());
-        m_hHostDelegateTemplate->SetClassName(FROM_MAYBE(CreateString(StdString(SL("HostDelegate")))));
+        m_hHostDelegateTemplate->SetClassName(CreateString("HostDelegate"));
         m_hHostDelegateTemplate->SetCallHandler(HostObjectConstructorCallHandler, hContextImpl);
         m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::NamedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyNames, hContextImpl, v8::PropertyHandlerFlags::kNone));
         m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
+        m_hHostDelegateTemplate->PrototypeTemplate()->Set(hToJSON, hGetJsonFunction);
         m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
         m_hHostDelegateTemplate->InstanceTemplate()->SetHostDelegate(); // instructs our patched V8 typeof implementation to return "function" 
-        m_hHostDelegateTemplate->PrototypeTemplate()->Set(FROM_MAYBE(CreateString(StdString(SL("toFunction")))), hToFunctionFunction);
+        m_hHostDelegateTemplate->PrototypeTemplate()->Set(CreateString("toFunction"), hToFunctionFunction);
 
         m_pvV8ObjectCache = HostObjectUtil::GetInstance().CreateV8ObjectCache();
         m_spIsolateImpl->AddContext(this, options);
@@ -1577,6 +1586,7 @@ void V8ContextImpl::Teardown()
         Dispose(it->second);
     }
 
+    Dispose(m_hToJsonFunction);
     Dispose(m_hToAsyncIteratorFunction);
     Dispose(m_hToIteratorFunction);
     Dispose(m_hHostDelegateTemplate);
@@ -2153,12 +2163,11 @@ void V8ContextImpl::GetHostObjectIterator(const v8::FunctionCallbackInfo<v8::Val
                 {
                     if (pContextImpl->m_hToIteratorFunction.IsEmpty())
                     {
-                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("EngineInternal")))))).As<v8::Object>();
-                        pContextImpl->m_hToIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("toIterator")))))).As<v8::Function>());
+                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("EngineInternal"))).As<v8::Object>();
+                        pContextImpl->m_hToIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toIterator"))).As<v8::Function>());
                     }
 
-                    v8::Local<v8::Value> args[1];
-                    args[0] = pContextImpl->ImportValue(HostObjectUtil::GetInstance().GetEnumerator(pvObject));
+                    v8::Local<v8::Value> args[] = { pContextImpl->ImportValue(HostObjectUtil::GetInstance().GetEnumerator(pvObject)) };
                     CALLBACK_RETURN(FROM_MAYBE(pContextImpl->m_hToIteratorFunction->Call(pContextImpl->m_hContext, pContextImpl->GetUndefined(), 1, args)));
                 }
                 catch (const HostException& exception)
@@ -2187,12 +2196,11 @@ void V8ContextImpl::GetHostObjectAsyncIterator(const v8::FunctionCallbackInfo<v8
                 {
                     if (pContextImpl->m_hToAsyncIteratorFunction.IsEmpty())
                     {
-                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("EngineInternal")))))).As<v8::Object>();
-                        pContextImpl->m_hToAsyncIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, FROM_MAYBE(pContextImpl->CreateString(StdString(SL("toAsyncIterator")))))).As<v8::Function>());
+                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("EngineInternal"))).As<v8::Object>();
+                        pContextImpl->m_hToAsyncIteratorFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toAsyncIterator"))).As<v8::Function>());
                     }
 
-                    v8::Local<v8::Value> args[1];
-                    args[0] = pContextImpl->ImportValue(HostObjectUtil::GetInstance().GetAsyncEnumerator(pvObject));
+                    v8::Local<v8::Value> args[] = { pContextImpl->ImportValue(HostObjectUtil::GetInstance().GetAsyncEnumerator(pvObject)) };
                     CALLBACK_RETURN(FROM_MAYBE(pContextImpl->m_hToAsyncIteratorFunction->Call(pContextImpl->m_hContext, pContextImpl->GetUndefined(), 1, args)));
                 }
                 catch (const HostException& exception)
@@ -2200,6 +2208,41 @@ void V8ContextImpl::GetHostObjectAsyncIterator(const v8::FunctionCallbackInfo<v8
                     pContextImpl->ThrowScriptException(exception);
                 }
             }
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::GetHostObjectJson(const v8::FunctionCallbackInfo<v8::Value>& info)
+{
+    FROM_MAYBE_TRY
+
+        auto pContextImpl = ::GetContextImplFromData(info);
+        if (pContextImpl != nullptr)
+        {
+            auto hObject = info.Holder();
+            if (pContextImpl->GetHostObject(hObject) != nullptr)
+            {
+                try
+                {
+                    if (pContextImpl->m_hToJsonFunction.IsEmpty())
+                    {
+                        auto hEngineInternal = FROM_MAYBE(pContextImpl->m_hContext->Global()->Get(pContextImpl->m_hContext, pContextImpl->CreateString("EngineInternal"))).As<v8::Object>();
+                        pContextImpl->m_hToJsonFunction = pContextImpl->CreatePersistent(FROM_MAYBE(hEngineInternal->Get(pContextImpl->m_hContext, pContextImpl->CreateString("toJson"))).As<v8::Function>());
+                    }
+
+                    v8::Local<v8::Value> args[] = { info[0], hObject };
+                    CALLBACK_RETURN(FROM_MAYBE(pContextImpl->m_hToJsonFunction->Call(pContextImpl->m_hContext, pContextImpl->GetUndefined(), 2, args)));
+                }
+                catch (const HostException& exception)
+                {
+                    pContextImpl->ThrowScriptException(exception);
+                }
+            }
+
+            CALLBACK_RETURN(hObject);
         }
 
     FROM_MAYBE_CATCH_CONSUME
@@ -3403,10 +3446,13 @@ void V8ContextImpl::ThrowScriptException(const HostException& exception)
             auto hException = v8::Exception::Error(FROM_MAYBE(CreateString(exception.GetMessage()))).As<v8::Object>();
             if (!hException.IsEmpty() && hException->IsObject())
             {
-                auto hHostException = ImportValue(exception.GetException());
-                if (!hHostException.IsEmpty() && hHostException->IsObject())
+                if (!m_HideHostExceptions)
                 {
-                    ASSERT_EVAL(FROM_MAYBE(hException->Set(m_hContext, m_hHostExceptionKey, hHostException)));
+                    auto hHostException = ImportValue(exception.GetException());
+                    if (!hHostException.IsEmpty() && hHostException->IsObject())
+                    {
+                        ASSERT_EVAL(FROM_MAYBE(hException->Set(m_hContext, m_hHostExceptionKey, hHostException)));
+                    }
                 }
 
                 ThrowException(hException);

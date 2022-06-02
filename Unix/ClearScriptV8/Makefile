@@ -47,7 +47,15 @@ else ifeq ($(ARCH), aarch64)
 else
     $(error unsupported machine architecture '$(ARCH)')
 endif
-    
+
+ifeq ($(HOSTCPU), x64)
+    OTHERCPU = arm64
+else ifeq ($(HOSTCPU), arm64)
+    OTHERCPU = x64
+else
+    $(error unsupported build machine architecture '$(ARCH)')
+endif
+
 ifndef CPU
     CPU = $(HOSTCPU)
 endif
@@ -107,6 +115,7 @@ JSONINCDIR = $(JSONDIR)/single_include
 OUTDIR = $(ROOTDIR)/bin/$(CONFIG)/Unix
 OBJDIR = $(OUTDIR)/obj/$(CPU)
 CLEARSCRIPTV8 = $(OUTDIR)/ClearScriptV8.$(OS)-$(CPU).$(EXTENSION)
+ICUDTL = $(V8ROOTDIR)/icudtl.dat
 
 CXX = clang++
 CXXFLAGS = --target=$(TARGET) -std=c++17 -fvisibility=default -fPIC -fno-rtti -Wno-ignored-attributes $(CXXCONFIGFLAGS) -I$(V8INCDIR) -I$(JSONINCDIR) $(CXXCROSSFLAGS)
@@ -131,7 +140,7 @@ OBJECTS = \
 
 .PHONY: all objdir clean buildv8 cleanv8 zapv8 buildallrelease buildalldebug buildall cleanall
 
-all: objdir $(CLEARSCRIPTV8)
+all: objdir $(CLEARSCRIPTV8) $(ICUDTL)
 
 objdir:
 	@mkdir -p $(OBJDIR)
@@ -142,7 +151,7 @@ $(CLEARSCRIPTV8): $(V8LIBDIR)/libv8_monolith.a $(OBJECTS) $(ENTITLEMENTS)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(V8LIBDIR)/libv8_monolith.a:
+$(V8LIBDIR)/libv8_monolith.a $(ICUDTL):
 	cd $(UNIXDIR); ./V8Update.sh -n -y $(CPU) $(CONFIG)
 
 clean:
@@ -158,21 +167,21 @@ zapv8:
 	rm -rf $(V8BUILDDIR)
 
 buildallrelease:
-	make CPU=x64
-	make CPU=arm64
+	make CPU=$(HOSTCPU)
+	make CPU=$(OTHERCPU)
 	$(MAKELINUX) CPU=arm
 
 buildalldebug:
-	make CPU=x64 DEBUG=1
-	make CPU=arm64 DEBUG=1
+	make CPU=$(HOSTCPU) DEBUG=1
+	make CPU=$(OTHERCPU) DEBUG=1
 	$(MAKELINUX) CPU=arm DEBUG=1
 
 buildall: buildallrelease buildalldebug
 
 cleanall:
-	make clean CPU=x64
-	make clean CPU=arm64
+	make clean CPU=$(HOSTCPU)
+	make clean CPU=$(OTHERCPU)
 	$(MAKELINUX) clean CPU=arm
-	make clean CPU=x64 DEBUG=1
-	make clean CPU=arm64 DEBUG=1
+	make clean CPU=$(HOSTCPU) DEBUG=1
+	make clean CPU=$(OTHERCPU) DEBUG=1
 	$(MAKELINUX) clean CPU=arm DEBUG=1

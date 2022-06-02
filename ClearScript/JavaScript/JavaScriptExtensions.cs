@@ -15,7 +15,7 @@ namespace Microsoft.ClearScript.JavaScript
     public static partial class JavaScriptExtensions
     {
         /// <summary>
-        /// Converts a <see cref="Task{T}"/> instance to a
+        /// Converts a <c><see cref="Task{T}"/></c> instance to a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
         /// for use with script code currently running on the calling thread.
         /// </summary>
@@ -28,7 +28,7 @@ namespace Microsoft.ClearScript.JavaScript
         }
 
         /// <summary>
-        /// Converts a <see cref="Task{T}"/> instance to a
+        /// Converts a <c><see cref="Task{T}"/></c> instance to a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
         /// for use with script code running in the specified script engine.
         /// </summary>
@@ -51,7 +51,7 @@ namespace Microsoft.ClearScript.JavaScript
         }
 
         /// <summary>
-        /// Converts a <see cref="Task"/> instance to a
+        /// Converts a <c><see cref="Task"/></c> instance to a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
         /// for use with script code currently running on the calling thread.
         /// </summary>
@@ -63,7 +63,7 @@ namespace Microsoft.ClearScript.JavaScript
         }
 
         /// <summary>
-        /// Converts a <see cref="Task"/> instance to a
+        /// Converts a <c><see cref="Task"/></c> instance to a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
         /// for use with script code running in the specified script engine.
         /// </summary>
@@ -87,7 +87,7 @@ namespace Microsoft.ClearScript.JavaScript
         /// <summary>
         /// Converts a
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
-        /// to a <see cref="Task{Object}"/> instance.
+        /// to a <c><see cref="Task{Object}"/></c> instance.
         /// </summary>
         /// <param name="promise">The promise to convert to a task.</param>
         /// <returns>A task that represents the promise's asynchronous operation.</returns>

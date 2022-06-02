@@ -105,7 +105,7 @@ namespace Microsoft.ClearScript
         /// Gets or sets the default script access setting for all members of exposed objects.
         /// </summary>
         /// <remarks>
-        /// Use <see cref="DefaultScriptUsageAttribute"/>, <see cref="ScriptUsageAttribute"/>, or
+        /// Use <c><see cref="DefaultScriptUsageAttribute"/></c>, <c><see cref="ScriptUsageAttribute"/></c>, or
         /// their subclasses to override this property for individual types and members. Note that
         /// this property has no effect on the method binding algorithm. If a script-based call is
         /// bound to a method that is blocked by this property, it will be rejected even if an
@@ -127,10 +127,10 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <remarks>
         /// Anonymous types are
-        /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/internal">internal</see>
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/internal">internal</see></c>
         /// and therefore accessible only within the same assembly, but ClearScript 5.5.3 and
         /// earlier permitted access to the public properties of an object even if its type was
-        /// internal. Newer versions strictly enforce <see cref="AccessContext"/>, but because
+        /// internal. Newer versions strictly enforce <c><see cref="AccessContext"/></c>, but because
         /// anonymous types are particularly useful for scripting, ClearScript by default continues
         /// to expose their properties to external contexts. To override this behavior and enable
         /// normal access restrictions for anonymous types, set this property to <c>true</c>.
@@ -202,10 +202,11 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// When this property is set to <c>true</c>, script code running in the current script
         /// engine is permitted to use reflection. This affects
-        /// <see cref="System.Object.GetType">Object.GetType()</see>,
-        /// <see cref="System.Exception.GetType">Exception.GetType()</see>,
-        /// <see cref="System.Delegate.Method">Delegate.Method</see>,
-        /// <see cref="HostFunctions.typeOf(object)"/> and <see cref="HostFunctions.typeOf{T}"/>.
+        /// <c><see cref="object.GetType">Object.GetType()</see></c>,
+        /// <c><see cref="Exception.GetType">Exception.GetType()</see></c>,
+        /// <c><see cref="Exception.TargetSite">Exception.TargetSite</see></c>,
+        /// <c><see cref="Delegate.Method">Delegate.Method</see></c>,
+        /// <c><see cref="HostFunctions.typeOf(object)"/></c> and <c><see cref="HostFunctions.typeOf{T}"/></c>.
         /// By default, any attempt to invoke these members from script code results in an
         /// exception.
         /// </remarks>
@@ -220,7 +221,7 @@ namespace Microsoft.ClearScript
         /// are restricted to their declared types. The default behavior is a general requirement
         /// for correct method binding, so setting this property to <c>true</c> is not recommended.
         /// </remarks>
-        /// <seealso cref="ScriptMemberFlags.ExposeRuntimeType"/>
+        /// <c><seealso cref="ScriptMemberFlags.ExposeRuntimeType"/></c>
         public bool DisableTypeRestriction { get; set; }
 
         /// <summary>
@@ -232,7 +233,7 @@ namespace Microsoft.ClearScript
         /// set this property to <c>true</c> to restore the exemption if you have older script code
         /// that depends on it.
         /// </remarks>
-        /// <seealso cref="DisableTypeRestriction"/>
+        /// <c><seealso cref="DisableTypeRestriction"/></c>
         public bool DisableListIndexTypeRestriction { get; set; }
 
         /// <summary>
@@ -245,11 +246,11 @@ namespace Microsoft.ClearScript
         /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null">null</see></c>,
         /// VBScript's
         /// <c><see href="https://docs.microsoft.com/en-us/previous-versions//f8tbc79x(v=vs.85)">Nothing</see></c>,
-        /// and other similar values. Instead, use <see cref="HostFunctions.isNull"/> or
-        /// <see cref="object.Equals(object, object)"/> to perform such a comparison.
+        /// and other similar values. Instead, use <c><see cref="HostFunctions.isNull"/></c> or
+        /// <c><see cref="object.Equals(object, object)"/></c> to perform such a comparison.
         /// </remarks>
-        /// <seealso cref="ScriptMemberFlags.WrapNullResult"/>
-        /// <seealso cref="HostFunctions.isNull"/>
+        /// <c><seealso cref="ScriptMemberFlags.WrapNullResult"/></c>
+        /// <c><seealso cref="HostFunctions.isNull"/></c>
         public bool EnableNullResultWrapping { get; set; }
 
         /// <summary>
@@ -282,7 +283,7 @@ namespace Microsoft.ClearScript
         /// arguments to script functions and delegates with host variables, allowing script code
         /// to simulate output arguments if the script language does not support them natively.
         /// </remarks>
-        /// <seealso cref="HostFunctions.newVar{T}(T)"/>
+        /// <c><seealso cref="HostFunctions.newVar{T}(T)"/></c>
         public bool EnableAutoHostVariables { get; set; }
 
         /// <summary>
@@ -292,7 +293,7 @@ namespace Microsoft.ClearScript
         /// Some script languages support one or more special non-<c>null</c> values that represent
         /// nonexistent, missing, unknown, or undefined data. When such a value is marshaled to the
         /// host, the script engine maps it to the value of this property. The default value is
-        /// <see cref="Undefined.Value"/>.
+        /// <c><see cref="Undefined.Value"/></c>.
         /// </remarks>
         public object UndefinedImportValue { get; set; } = Undefined.Value;
 
@@ -303,9 +304,9 @@ namespace Microsoft.ClearScript
         /// Some script languages expect every subroutine call to return a value. When script code
         /// written in such a language invokes a host method that explicitly returns no value (such
         /// as a C#
-        /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/void">void</see>
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/void">void</see></c>
         /// method), the script engine returns the value of this property as a dummy result. The
-        /// default value is <see cref="VoidResult.Value"/>.
+        /// default value is <c><see cref="VoidResult.Value"/></c>.
         /// </remarks>
         public object VoidResultValue { get; set; } = VoidResult.Value;
 
@@ -335,8 +336,8 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// The value of this property is an object that is bound to the script engine's root
         /// namespace. It allows you to access global script resources via the
-        /// <see cref="ScriptObject"/> class interface. Doing so is likely to perform better than
-        /// dynamic access via <see cref="Script"/>.
+        /// <c><see cref="ScriptObject"/></c> class interface. Doing so is likely to perform better than
+        /// dynamic access via <c><see cref="Script"/></c>.
         /// </remarks>
         public abstract ScriptObject Global { get; }
 
@@ -356,7 +357,7 @@ namespace Microsoft.ClearScript
         /// <param name="target">The object to expose.</param>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </remarks>
         public void AddHostObject(string itemName, object target)
         {
@@ -387,7 +388,7 @@ namespace Microsoft.ClearScript
         ///         <term>N/A</term>
         ///         <description>
         ///         To invoke a constructor from script code, call
-        ///         <see cref="HostFunctions.newObj{T}">HostFunctions.newObj(T)</see>.
+        ///         <c><see cref="HostFunctions.newObj{T}">HostFunctions.newObj(T)</see></c>.
         ///         </description>
         ///     </item>
         ///     <item>
@@ -428,13 +429,13 @@ namespace Microsoft.ClearScript
         ///         <term><b>Property</b></term>
         ///         <description>
         ///         Indexers appear as properties named "Item" that accept one or more index values
-        ///         as arguments. In addition, objects that implement <see cref="IList"/> expose
+        ///         as arguments. In addition, objects that implement <c><see cref="IList"/></c> expose
         ///         properties with numeric names that match their valid indices. This includes
         ///         one-dimensional host arrays and other collections. Multidimensional host arrays
         ///         do not expose functional indexers; you must use
-        ///         <see href="https://docs.microsoft.com/en-us/dotnet/api/system.array.getvalue">Array.GetValue</see>
+        ///         <c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.array.getvalue">Array.GetValue</see></c>
         ///         and
-        ///         <see href="https://docs.microsoft.com/en-us/dotnet/api/system.array.setvalue">Array.SetValue</see>
+        ///         <c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.array.setvalue">Array.SetValue</see></c>
         ///         instead.
         ///         </description>
         ///     </item>
@@ -442,7 +443,7 @@ namespace Microsoft.ClearScript
         ///         <term><b>Event</b></term>
         ///         <term><b>Property</b></term>
         ///         <description>
-        ///         Events are exposed as read-only properties of type <see cref="EventSource{T}"/>.
+        ///         Events are exposed as read-only properties of type <c><see cref="EventSource{T}"/></c>.
         ///         </description>
         ///     </item>
         /// </list>
@@ -467,7 +468,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddRestrictedHostObject<T>(string itemName, T target)
@@ -489,7 +490,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddRestrictedHostObject<T>(string itemName, HostItemFlags flags, T target)
@@ -510,7 +511,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddCOMObject(string itemName, string progID)
@@ -532,7 +533,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddCOMObject(string itemName, string progID, string serverName)
@@ -554,7 +555,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddCOMObject(string itemName, HostItemFlags flags, string progID)
@@ -577,7 +578,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddCOMObject(string itemName, HostItemFlags flags, string progID, string serverName)
@@ -593,7 +594,7 @@ namespace Microsoft.ClearScript
         /// <param name="clsid">The class identifier (CLSID) of the registered class to instantiate.</param>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </remarks>
         public void AddCOMObject(string itemName, Guid clsid)
         {
@@ -609,7 +610,7 @@ namespace Microsoft.ClearScript
         /// <param name="serverName">The name of the server on which to create the object.</param>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </remarks>
         public void AddCOMObject(string itemName, Guid clsid, string serverName)
         {
@@ -625,7 +626,7 @@ namespace Microsoft.ClearScript
         /// <param name="clsid">The class identifier (CLSID) of the registered class to instantiate.</param>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </remarks>
         public void AddCOMObject(string itemName, HostItemFlags flags, Guid clsid)
         {
@@ -642,7 +643,7 @@ namespace Microsoft.ClearScript
         /// <param name="serverName">The name of the server on which to create the object.</param>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </remarks>
         public void AddCOMObject(string itemName, HostItemFlags flags, Guid clsid, string serverName)
         {
@@ -666,7 +667,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
-        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// properties and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddHostType(Type type)
@@ -692,7 +693,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
-        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// properties and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddHostType(HostItemFlags flags, Type type)
@@ -714,7 +715,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
-        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// properties and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddHostType(string itemName, Type type)
@@ -737,7 +738,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
-        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// properties and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddHostType(string itemName, HostItemFlags flags, Type type)
@@ -761,7 +762,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
-        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// properties and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddHostType(string itemName, string typeName, params Type[] typeArgs)
@@ -785,7 +786,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
-        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// properties and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddHostType(string itemName, HostItemFlags flags, string typeName, params Type[] typeArgs)
@@ -809,7 +810,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
-        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// properties and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddHostType(string itemName, string typeName, string assemblyName, params Type[] typeArgs)
@@ -835,7 +836,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
-        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// properties and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddHostType(string itemName, HostItemFlags flags, string typeName, string assemblyName, params Type[] typeArgs)
@@ -860,7 +861,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For more information about the mapping between host members and script-callable
-        /// properties and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// properties and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddHostTypes(params Type[] types)
@@ -890,7 +891,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddCOMType(string itemName, string progID)
@@ -912,7 +913,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddCOMType(string itemName, string progID, string serverName)
@@ -934,7 +935,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddCOMType(string itemName, HostItemFlags flags, string progID)
@@ -957,7 +958,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </para>
         /// </remarks>
         public void AddCOMType(string itemName, HostItemFlags flags, string progID, string serverName)
@@ -973,7 +974,7 @@ namespace Microsoft.ClearScript
         /// <param name="clsid">The class identifier (CLSID) of the registered class to import.</param>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </remarks>
         public void AddCOMType(string itemName, Guid clsid)
         {
@@ -989,7 +990,7 @@ namespace Microsoft.ClearScript
         /// <param name="serverName">The name of the server from which to import the type.</param>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </remarks>
         public void AddCOMType(string itemName, Guid clsid, string serverName)
         {
@@ -1005,7 +1006,7 @@ namespace Microsoft.ClearScript
         /// <param name="clsid">The class identifier (CLSID) of the registered class to import.</param>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </remarks>
         public void AddCOMType(string itemName, HostItemFlags flags, Guid clsid)
         {
@@ -1022,7 +1023,7 @@ namespace Microsoft.ClearScript
         /// <param name="serverName">The name of the server from which to import the type.</param>
         /// <remarks>
         /// For information about the mapping between host members and script-callable properties
-        /// and methods, see <see cref="AddHostObject(string, HostItemFlags, object)"/>.
+        /// and methods, see <c><see cref="AddHostObject(string, HostItemFlags, object)"/></c>.
         /// </remarks>
         public void AddCOMType(string itemName, HostItemFlags flags, Guid clsid, string serverName)
         {
@@ -1163,7 +1164,7 @@ namespace Microsoft.ClearScript
         /// <param name="command">The script command to execute.</param>
         /// <returns>The command output.</returns>
         /// <remarks>
-        /// This method is similar to <see cref="Evaluate(string)"/> but optimized for command
+        /// This method is similar to <c><see cref="Evaluate(string)"/></c> but optimized for command
         /// consoles. The specified command must be limited to a single expression or statement.
         /// Script engines can override this method to customize command execution as well as the
         /// process of converting the result to a string for console output.
@@ -1192,7 +1193,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the types of result values that script code can return, see
-        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// <c><see cref="Evaluate(string, bool, string)"/></c>.
         /// </para>
         /// </remarks>
         public object Evaluate(string code)
@@ -1218,7 +1219,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the types of result values that script code can return, see
-        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// <c><see cref="Evaluate(string, bool, string)"/></c>.
         /// </para>
         /// </remarks>
         public object Evaluate(string documentName, string code)
@@ -1255,17 +1256,17 @@ namespace Microsoft.ClearScript
         ///     </listheader>
         ///     <item>
         ///         <term><b>String</b></term>
-        ///         <term><see href="https://docs.microsoft.com/en-us/dotnet/api/system.string">System.String</see></term>
+        ///         <term><c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.string">System.String</see></c></term>
         ///         <description>N/A</description>
         ///     </item>
         ///     <item>
         ///         <term><b>Boolean</b></term>
-        ///         <term><see href="https://docs.microsoft.com/en-us/dotnet/api/system.boolean">System.Boolean</see></term>
+        ///         <term><c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.boolean">System.Boolean</see></c></term>
         ///         <description>N/A</description>
         ///     </item>
         ///     <item>
         ///         <term><b>Number</b></term>
-        ///         <term><see href="https://docs.microsoft.com/en-us/dotnet/api/system.int32">System.Int32</see>&#xA0;or&#xA0;<see href="https://docs.microsoft.com/en-us/dotnet/api/system.double">System.Double</see></term>
+        ///         <term><c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.int32">System.Int32</see></c>&#xA0;or&#xA0;<c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.double">System.Double</see></c></term>
         ///         <description>
         ///         Other numeric types are possible. The exact conversions between script and .NET
         ///         numeric types are defined by the script engine.
@@ -1278,18 +1279,18 @@ namespace Microsoft.ClearScript
         ///     </item>
         ///     <item>
         ///         <term><b>Undefined</b></term>
-        ///         <term><see cref="Undefined"/></term>
+        ///         <term><c><see cref="Undefined"/></c></term>
         ///         <description>
         ///         This represents JavaScript's
-        ///         <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined">undefined</see>,
+        ///         <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined">undefined</see></c>,
         ///         VBScript's
-        ///         <see href="https://docs.microsoft.com/en-us/previous-versions//f8tbc79x(v=vs.85)">Empty</see>,
+        ///         <c><see href="https://docs.microsoft.com/en-us/previous-versions//f8tbc79x(v=vs.85)">Empty</see></c>,
         ///         etc.
         ///         </description>
         ///     </item>
         ///     <item>
         ///         <term><b>Void</b></term>
-        ///         <term><see cref="VoidResult"/></term>
+        ///         <term><c><see cref="VoidResult"/></c></term>
         ///         <description>
         ///         This is returned when script code forwards the result of a host method that returns no value.
         ///         </description>
@@ -1306,10 +1307,10 @@ namespace Microsoft.ClearScript
         ///     </item>
         ///     <item>
         ///         <term><b>Script&#xA0;Object</b></term>
-        ///         <term><see cref="ScriptObject"/></term>
+        ///         <term><c><see cref="ScriptObject"/></c></term>
         ///         <description>
         ///         This includes all native script objects that have no .NET representation. C#'s
-        ///         <see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/reference-types#the-dynamic-type">dynamic</see>
+        ///         <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/reference-types#the-dynamic-type">dynamic</see></c>
         ///         keyword provides a convenient way to access them.
         ///         </description>
         ///     </item>
@@ -1344,7 +1345,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the types of result values that script code can return, see
-        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// <c><see cref="Evaluate(string, bool, string)"/></c>.
         /// </para>
         /// </remarks>
         public object Evaluate(DocumentInfo documentInfo, string code)
@@ -1365,7 +1366,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the types of result values that script code can return, see
-        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// <c><see cref="Evaluate(string, bool, string)"/></c>.
         /// </para>
         /// </remarks>
         public object EvaluateDocument(string specifier)
@@ -1387,7 +1388,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the types of result values that script code can return, see
-        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// <c><see cref="Evaluate(string, bool, string)"/></c>.
         /// </para>
         /// </remarks>
         public object EvaluateDocument(string specifier, DocumentCategory category)
@@ -1410,7 +1411,7 @@ namespace Microsoft.ClearScript
         /// </para>
         /// <para>
         /// For information about the types of result values that script code can return, see
-        /// <see cref="Evaluate(string, bool, string)"/>.
+        /// <c><see cref="Evaluate(string, bool, string)"/></c>.
         /// </para>
         /// </remarks>
         public object EvaluateDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
@@ -2004,10 +2005,10 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <param name="disposing"><c>True</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         /// <remarks>
-        /// This method is called by the public <see cref="Dispose()"/> method and the
-        /// <see cref="Finalize">Finalize</see> method. <see cref="Dispose()"/> invokes the
+        /// This method is called by the public <c><see cref="Dispose()"/></c> method and the
+        /// <c><see cref="Finalize">Finalize</see></c> method. <c><see cref="Dispose()"/></c> invokes the
         /// protected <c>Dispose(Boolean)</c> method with the <paramref name="disposing"/>
-        /// parameter set to <c>true</c>. <see cref="Finalize">Finalize</see> invokes
+        /// parameter set to <c>true</c>. <c><see cref="Finalize">Finalize</see></c> invokes
         /// <c>Dispose(Boolean)</c> with <paramref name="disposing"/> set to <c>false</c>.
         /// </remarks>
         protected virtual void Dispose(bool disposing)
@@ -2022,10 +2023,10 @@ namespace Microsoft.ClearScript
         /// Releases unmanaged resources and performs other cleanup operations before the script engine is reclaimed by garbage collection.
         /// </summary>
         /// <remarks>
-        /// This method overrides <see cref="System.Object.Finalize"/>. Application code should not
+        /// This method overrides <c><see cref="System.Object.Finalize"/></c>. Application code should not
         /// call this method; an object's <c>Finalize()</c> method is automatically invoked during
         /// garbage collection, unless finalization by the garbage collector has been disabled by a
-        /// call to <see cref="System.GC.SuppressFinalize"/>.
+        /// call to <c><see cref="System.GC.SuppressFinalize"/></c>.
         /// </remarks>
         ~ScriptEngine()
         {

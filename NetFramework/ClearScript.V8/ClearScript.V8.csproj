@@ -77,6 +77,11 @@
         <Compile Include="..\..\ClearScript\V8\V8RuntimeHeapInfo.cs" Link="V8\V8RuntimeHeapInfo.cs" />
         <Compile Include="..\..\ClearScript\V8\V8Script.cs" Link="V8\V8Script.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.cs" Link="V8\V8ScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.InitScript.cs" Link="V8\V8ScriptEngine.InitScript.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>V8ScriptEngine.InitScript.tt</DependentUpon>
+        </Compile>
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngineFlags.cs" Link="V8\V8ScriptEngineFlags.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptItem.cs" Link="V8\V8ScriptItem.cs" />
         <Compile Include="..\..\ClearScript\V8\V8Settings.cs" Link="V8\V8Settings.cs" />
@@ -88,21 +93,16 @@
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>AssemblyInfo.V8.cs</LastGenOutput>
         </None>
+        <None Include="..\..\ClearScript\V8\V8ScriptEngine.InitScript.tt" Link="V8\V8ScriptEngine.InitScript.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>V8ScriptEngine.InitScript.cs</LastGenOutput>
+        </None>
+        <None Include="..\..\ClearScript\V8\V8ScriptEngine.InitScript.js" Link="V8\V8ScriptEngine.InitScript.js"/>
         <None Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.tt" Link="V8\SplitProxy\V8SplitProxyNative.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>V8SplitProxyNative.Generated.cs</LastGenOutput>
         </None>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Condition="Exists('..\..\V8\build\v8\third_party\icu\common\icudtl.dat')" Include="..\..\V8\build\v8\third_party\icu\common\icudtl.dat" Link="ClearScriptV8.ICU.dat">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
-        <None Condition="!Exists('..\..\V8\build\v8\third_party\icu\common\icudtl.dat') And Exists('..\..\V8\ClearScriptV8.ICU.dat')" Include="..\..\V8\ClearScriptV8.ICU.dat" Link="ClearScriptV8.ICU.dat">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
+        <None Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Common.tt" Link="V8\SplitProxy\V8SplitProxyNative.Common.tt"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'">
@@ -169,7 +169,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
+        <ProjectReference Include="..\..\NetStandard\ClearScript.V8.ICUData\ClearScript.V8.ICUData.csproj" />
     </ItemGroup>
 
     <ItemGroup>

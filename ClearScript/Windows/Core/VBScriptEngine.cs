@@ -12,7 +12,7 @@ namespace Microsoft.ClearScript.Windows.Core
     /// </summary>
     /// <remarks>
     /// This class can be used in non-desktop environments such as server applications. An
-    /// implementation of <see cref="ISyncInvoker"/> is required to enforce thread affinity.
+    /// implementation of <c><see cref="ISyncInvoker"/></c> is required to enforce thread affinity.
     /// </remarks>
     public class VBScriptEngine : WindowsScriptEngine, IVBScriptEngineTag
     {
@@ -129,7 +129,7 @@ namespace Microsoft.ClearScript.Windows.Core
                         else
                             dim valueTypeName
                             valueTypeName = TypeName(value)
-                            if (valueTypeName = ""Object"" or valueTypeName = ""Unknown"") then
+                            if valueTypeName = ""Object"" or valueTypeName = ""Unknown"" then
                                 set getCommandResult = value
                             else
                                 getCommandResult = ""[ScriptObject:"" & valueTypeName & ""]""
@@ -243,6 +243,9 @@ namespace Microsoft.ClearScript.Windows.Core
                 public function isPromise(value)
                     isPromise = false
                 end function
+                public function isHostObject(value)
+                    isHostObject = IsObject(value) and TypeName(value) = ""Object"" and VarType(value) = 9
+                end function
                 public function throwValue(value)
                     Err.Raise 445
                 end function
@@ -322,7 +325,7 @@ namespace Microsoft.ClearScript.Windows.Core
         /// Gets the script engine's recommended file name extension for script files.
         /// </summary>
         /// <remarks>
-        /// <see cref="VBScriptEngine"/> instances return "vbs" for this property.
+        /// <c><see cref="VBScriptEngine"/></c> instances return "vbs" for this property.
         /// </remarks>
         public override string FileNameExtension => "vbs";
 
@@ -333,16 +336,16 @@ namespace Microsoft.ClearScript.Windows.Core
         /// <returns>The command output.</returns>
         /// <remarks>
         /// <para>
-        /// This method is similar to <see cref="ScriptEngine.Evaluate(string)"/> but optimized for
+        /// This method is similar to <c><see cref="ScriptEngine.Evaluate(string)"/></c> but optimized for
         /// command consoles. The specified command must be limited to a single expression or
         /// statement. Script engines can override this method to customize command execution as
         /// well as the process of converting the result to a string for console output.
         /// </para>
         /// <para>
-        /// The <see cref="VBScriptEngine"/> version of this method supports both expressions and
+        /// The <c><see cref="VBScriptEngine"/></c> version of this method supports both expressions and
         /// statements. If the specified command begins with "eval " (not case-sensitive), the
         /// engine executes the remainder as an expression and attempts to use
-        /// <see href="https://docs.microsoft.com/en-us/previous-versions//0zk841e9(v=vs.85)">CStr</see>
+        /// <c><see href="https://docs.microsoft.com/en-us/previous-versions//0zk841e9(v=vs.85)">CStr</see></c>
         /// to convert the result value. Otherwise, it executes the command as a statement and does
         /// not return a value.
         /// </para>

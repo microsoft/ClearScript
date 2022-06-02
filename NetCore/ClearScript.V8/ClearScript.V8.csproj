@@ -70,6 +70,7 @@
         <Compile Include="..\..\ClearScript\V8\V8RuntimeHeapInfo.cs" Link="V8\V8RuntimeHeapInfo.cs" />
         <Compile Include="..\..\ClearScript\V8\V8Script.cs" Link="V8\V8Script.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.cs" Link="V8\V8ScriptEngine.cs" />
+        <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.InitScript.cs" Link="V8\V8ScriptEngine.InitScript.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.NetStandard.cs" Link="V8\V8ScriptEngine.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngineFlags.cs" Link="V8\V8ScriptEngineFlags.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptItem.cs" Link="V8\V8ScriptItem.cs" />
@@ -77,17 +78,6 @@
         <Compile Include="..\..\ClearScript\V8\V8TestProxy.cs" Link="V8\V8TestProxy.cs" />
     </ItemGroup>
     
-    <ItemGroup>
-        <None Condition="Exists('..\..\V8\build\v8\third_party\icu\common\icudtl.dat')" Include="..\..\V8\build\v8\third_party\icu\common\icudtl.dat" Link="ClearScriptV8.ICU.dat">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
-        <None Condition="!Exists('..\..\V8\build\v8\third_party\icu\common\icudtl.dat') And Exists('..\..\V8\ClearScriptV8.ICU.dat')" Include="..\..\V8\ClearScriptV8.ICU.dat" Link="ClearScriptV8.ICU.dat">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Visible>false</Visible>
-        </None>
-    </ItemGroup>
-
     <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'">
         <None Include="..\..\bin\$(Configuration)\ClearScriptV8.win-x86.dll" Link="ClearScriptV8.win-x86.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -148,7 +138,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
+        <ProjectReference Include="..\..\NetStandard\ClearScript.V8.ICUData\ClearScript.V8.ICUData.csproj" />
     </ItemGroup>
 
     <ItemGroup>

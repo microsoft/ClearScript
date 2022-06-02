@@ -92,6 +92,7 @@
     <Compile Include="..\..\ClearScript\V8\V8RuntimeHeapInfo.cs" Link="V8\V8RuntimeHeapInfo.cs" />
     <Compile Include="..\..\ClearScript\V8\V8Script.cs" Link="V8\V8Script.cs" />
     <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.cs" Link="V8\V8ScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.InitScript.cs" Link="V8\V8ScriptEngine.InitScript.cs" />
     <Compile Include="..\..\ClearScript\V8\V8ScriptEngineFlags.cs" Link="V8\V8ScriptEngineFlags.cs" />
     <Compile Include="..\..\ClearScript\V8\V8ScriptItem.cs" Link="V8\V8ScriptItem.cs" />
     <Compile Include="..\..\ClearScript\V8\V8Settings.cs" Link="V8\V8Settings.cs" />
@@ -105,10 +106,17 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.12</Version>
+      <Version>6.2.13</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.1</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\NetStandard\ClearScript.V8.ICUData\ClearScript.V8.ICUData.csproj">
+      <Project>{47fc5cb5-a6f2-4fee-99f8-a758d3a7373c}</Project>
+      <Name>ClearScript.V8.ICUData</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj">
       <Project>{d3391831-65ce-4c1e-a21b-01a283f3e193}</Project>
       <Name>ClearScript.Core</Name>
@@ -123,6 +131,9 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>V8SplitProxyNative.UWP.Generated.cs</LastGenOutput>
     </Content>
+    <None Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Common.tt">
+      <Link>V8\SplitProxy\V8SplitProxyNative.Common.tt</Link>
+    </None>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

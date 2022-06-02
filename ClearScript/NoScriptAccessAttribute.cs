@@ -18,7 +18,7 @@ namespace Microsoft.ClearScript
     public sealed class NoScriptAccessAttribute : ScriptUsageAttribute
     {
         /// <summary>
-        /// Initializes a new <see cref="NoScriptAccessAttribute"/> instance.
+        /// Initializes a new <c><see cref="NoScriptAccessAttribute"/></c> instance.
         /// </summary>
         public NoScriptAccessAttribute()
             : base(ScriptAccess.None)

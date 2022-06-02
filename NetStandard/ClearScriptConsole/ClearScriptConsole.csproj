@@ -37,7 +37,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="MSTest.TestFramework" Version="2.2.3" />
+        <PackageReference Include="MSTest.TestFramework" Version="2.2.10" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 

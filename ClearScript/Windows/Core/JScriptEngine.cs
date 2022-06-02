@@ -20,7 +20,7 @@ namespace Microsoft.ClearScript.Windows.Core
     /// </summary>
     /// <remarks>
     /// This class can be used in non-desktop environments such as server applications. An
-    /// implementation of <see cref="ISyncInvoker"/> is required to enforce thread affinity.
+    /// implementation of <c><see cref="ISyncInvoker"/></c> is required to enforce thread affinity.
     /// </remarks>
     public partial class JScriptEngine : WindowsScriptEngine, IJavaScriptEngine, IJScriptEngine
     {
@@ -95,70 +95,6 @@ namespace Microsoft.ClearScript.Windows.Core
             { 1016, "Unterminated comment" },
             { 1015, "Unterminated string constant" }
         };
-
-        internal const string InitScript = @"
-            EngineInternal = (function () {
-
-                function convertArgs(args) {
-                    var result = [];
-                    if (args.GetValue) {
-                        var count = args.Length;
-                        for (var i = 0; i < count; i++) {
-                            result.push(args[i]);
-                        }
-                    }
-                    else {
-                        args = new VBArray(args);
-                        var count = args.ubound(1) + 1;
-                        for (var i = 0; i < count; i++) {
-                            result.push(args.getItem(i));
-                        }
-                    }
-                    return result;
-                }
-
-                function construct(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15) {
-                    return new this(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
-                }
-
-                return {
-
-                    getCommandResult: function (value) {
-                        if (value != null) {
-                            if ((typeof(value) == 'object') || (typeof(value) == 'function')) {
-                                if (typeof(value.toString) == 'function') {
-                                    return value.toString();
-                                }
-                            }
-                        }
-                        return value;
-                    },
-
-                    invokeConstructor: function (constructor, args) {
-                        if (typeof(constructor) != 'function') {
-                            throw new Error('Function expected');
-                        }
-                        return construct.apply(constructor, convertArgs(args));
-                    },
-
-                    invokeMethod: function (target, method, args) {
-                        if (typeof(method) != 'function') {
-                            throw new Error('Function expected');
-                        }
-                        return method.apply(target, convertArgs(args));
-                    },
-
-                    isPromise: function (value) {
-                        return false;
-                    },
-
-                    throwValue: function (value) {
-                        throw value;
-                    }
-                };
-            })();
-        ";
-
 
         private CommonJSManager commonJSManager;
 
@@ -242,7 +178,7 @@ namespace Microsoft.ClearScript.Windows.Core
         /// Gets the script engine's recommended file name extension for script files.
         /// </summary>
         /// <remarks>
-        /// <see cref="JScriptEngine"/> instances return "js" for this property.
+        /// <c><see cref="JScriptEngine"/></c> instances return "js" for this property.
         /// </remarks>
         public override string FileNameExtension => "js";
 
@@ -253,14 +189,14 @@ namespace Microsoft.ClearScript.Windows.Core
         /// <returns>The command output.</returns>
         /// <remarks>
         /// <para>
-        /// This method is similar to <see cref="ScriptEngine.Evaluate(string)"/> but optimized for
+        /// This method is similar to <c><see cref="ScriptEngine.Evaluate(string)"/></c> but optimized for
         /// command consoles. The specified command must be limited to a single expression or
         /// statement. Script engines can override this method to customize command execution as
         /// well as the process of converting the result to a string for console output.
         /// </para>
         /// <para>
-        /// The <see cref="JScriptEngine"/> version of this method attempts to use
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/tostring">toString</see>
+        /// The <c><see cref="JScriptEngine"/></c> version of this method attempts to use
+        /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/tostring">toString</see></c>
         /// to convert the return value.
         /// </para>
         /// </remarks>

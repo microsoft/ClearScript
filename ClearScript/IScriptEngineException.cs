@@ -16,7 +16,7 @@ namespace Microsoft.ClearScript
         string Message { get; }
 
         /// <summary>
-        /// Gets an <see href="http://en.wikipedia.org/wiki/HRESULT">HRESULT</see> error code if one is available, zero otherwise.
+        /// Gets an <c><see href="http://en.wikipedia.org/wiki/HRESULT">HRESULT</see></c> error code if one is available, zero otherwise.
         /// </summary>
         int HResult { get; }
 

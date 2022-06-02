@@ -10,15 +10,15 @@ namespace Microsoft.ClearScript
     /// Some script languages expect every subroutine call to return a value. When script code
     /// written in such a language invokes a host method that explicitly returns no value (such
     /// as a C#
-    /// <see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/void">void</see>
+    /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/void">void</see></c>
     /// method), the ClearScript library provides an instance of this class as a dummy return
     /// value.
     /// </remarks>
-    /// <seealso cref="ScriptEngine.VoidResultValue"/>
+    /// <c><seealso cref="ScriptEngine.VoidResultValue"/></c>
     public class VoidResult
     {
         /// <summary>
-        /// The sole instance of the <see cref="VoidResult"/> class.
+        /// The sole instance of the <c><see cref="VoidResult"/></c> class.
         /// </summary>
         public static readonly VoidResult Value = new VoidResult();
 
@@ -33,7 +33,7 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <returns>A string that represents the current object.</returns>
         /// <remarks>
-        /// The <see cref="VoidResult"/> version of this method returns "[void]".
+        /// The <c><see cref="VoidResult"/></c> version of this method returns "[void]".
         /// </remarks>
         public override string ToString()
         {

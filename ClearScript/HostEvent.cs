@@ -38,7 +38,7 @@ namespace Microsoft.ClearScript
         /// Connects the host event source to the specified script handler function.
         /// </summary>
         /// <param name="scriptFunc">The script function that will handle the event.</param>
-        /// <returns>An <see cref="EventConnection"/> that represents the connection.</returns>
+        /// <returns>An <c><see cref="EventConnection"/></c> that represents the connection.</returns>
         public EventConnection connect(object scriptFunc)
         {
             MiscHelpers.VerifyNonNullArgument(scriptFunc, nameof(scriptFunc));
@@ -79,7 +79,7 @@ namespace Microsoft.ClearScript
         /// Connects the host event source to the specified script handler function.
         /// </summary>
         /// <param name="scriptFunc">The script function that will handle the event.</param>
-        /// <returns>An <see cref="EventConnection{T}"/> that represents the connection.</returns>
+        /// <returns>An <c><see cref="EventConnection{T}"/></c> that represents the connection.</returns>
         public new EventConnection<T> connect(object scriptFunc)
         {
             MiscHelpers.VerifyNonNullArgument(scriptFunc, nameof(scriptFunc));

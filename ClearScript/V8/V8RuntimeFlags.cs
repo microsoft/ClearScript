@@ -23,7 +23,7 @@ namespace Microsoft.ClearScript.V8
 
         /// <summary>
         /// Specifies that remote script debugging is to be enabled. This option is ignored if
-        /// <see cref="EnableDebugging"/> is not specified.
+        /// <c><see cref="EnableDebugging"/></c> is not specified.
         /// </summary>
         EnableRemoteDebugging = 0x00000002,
 
