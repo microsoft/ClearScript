@@ -586,6 +586,18 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
+        public static object GetObjectForVariant(IntPtr pVariant)
+        {
+            var result = Marshal.GetObjectForNativeVariant(pVariant);
+
+            if ((result == null) && (Marshal.ReadInt16(pVariant) == (short)VarEnum.VT_BSTR))
+            {
+                return string.Empty;
+            }
+
+            return result;
+        }
+
         #endregion
     }
 }

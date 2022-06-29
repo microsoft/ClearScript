@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
@@ -232,7 +231,7 @@ namespace Microsoft.ClearScript
                                 if (varDescScope.Value.varkind == VARKIND.VAR_CONST)
                                 {
                                     var name = typeInfo.GetMemberName(varDescScope.Value.memid);
-                                    node.SetPropertyNoCheck(name, Marshal.GetObjectForNativeVariant(varDescScope.Value.desc.lpvarValue));
+                                    node.SetPropertyNoCheck(name, MiscHelpers.GetObjectForVariant(varDescScope.Value.desc.lpvarValue));
                                 }
                             }
                         }

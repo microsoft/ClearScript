@@ -958,13 +958,15 @@ NATIVE_ENTRY_POINT(void) V8Isolate_SetDisableHeapSizeViolationInterrupt(const V8
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8Isolate_GetHeapStatistics(const V8IsolateHandle& handle, uint64_t& totalHeapSize, uint64_t& totalHeapSizeExecutable, uint64_t& totalPhysicalSize, uint64_t& usedHeapSize, uint64_t& heapSizeLimit) noexcept
+NATIVE_ENTRY_POINT(void) V8Isolate_GetHeapStatistics(const V8IsolateHandle& handle, uint64_t& totalHeapSize, uint64_t& totalHeapSizeExecutable, uint64_t& totalPhysicalSize, uint64_t& totalAvailableSize, uint64_t& usedHeapSize, uint64_t& heapSizeLimit, uint64_t& totalExternalSize) noexcept
 {
     totalHeapSize = 0UL;
     totalHeapSizeExecutable = 0UL;
     totalPhysicalSize = 0UL;
+    totalAvailableSize = 0UL;
     usedHeapSize = 0UL;
     heapSizeLimit = 0UL;
+    totalExternalSize = 0UL;
 
     auto spIsolate = handle.GetEntity();
     if (!spIsolate.IsEmpty())
@@ -975,8 +977,10 @@ NATIVE_ENTRY_POINT(void) V8Isolate_GetHeapStatistics(const V8IsolateHandle& hand
         totalHeapSize = statistics.total_heap_size();
         totalHeapSizeExecutable = statistics.total_heap_size_executable();
         totalPhysicalSize = statistics.total_physical_size();
+        totalAvailableSize = statistics.total_available_size();
         usedHeapSize = statistics.used_heap_size();
         heapSizeLimit = statistics.heap_size_limit();
+        totalExternalSize = statistics.external_memory();
     }
 }
 
@@ -1408,13 +1412,15 @@ NATIVE_ENTRY_POINT(void) V8Context_SetDisableIsolateHeapSizeViolationInterrupt(c
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8Context_GetIsolateHeapStatistics(const V8ContextHandle& handle, uint64_t& totalHeapSize, uint64_t& totalHeapSizeExecutable, uint64_t& totalPhysicalSize, uint64_t& usedHeapSize, uint64_t& heapSizeLimit) noexcept
+NATIVE_ENTRY_POINT(void) V8Context_GetIsolateHeapStatistics(const V8ContextHandle& handle, uint64_t& totalHeapSize, uint64_t& totalHeapSizeExecutable, uint64_t& totalPhysicalSize, uint64_t& totalAvailableSize, uint64_t& usedHeapSize, uint64_t& heapSizeLimit, uint64_t& totalExternalSize) noexcept
 {
     totalHeapSize = 0UL;
     totalHeapSizeExecutable = 0UL;
     totalPhysicalSize = 0UL;
+    totalAvailableSize = 0UL;
     usedHeapSize = 0UL;
     heapSizeLimit = 0UL;
+    totalExternalSize = 0UL;
 
     auto spContext = handle.GetEntity();
     if (!spContext.IsEmpty())
@@ -1425,8 +1431,10 @@ NATIVE_ENTRY_POINT(void) V8Context_GetIsolateHeapStatistics(const V8ContextHandl
         totalHeapSize = statistics.total_heap_size();
         totalHeapSizeExecutable = statistics.total_heap_size_executable();
         totalPhysicalSize = statistics.total_physical_size();
+        totalAvailableSize = statistics.total_available_size();
         usedHeapSize = statistics.used_heap_size();
         heapSizeLimit = statistics.heap_size_limit();
+        totalExternalSize = statistics.external_memory();
     }
 }
 

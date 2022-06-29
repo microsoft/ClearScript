@@ -42,7 +42,7 @@ namespace Microsoft.ClearScript.Util.COM
                 {
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
                     HResult.Check(dispatch.Invoke(dispid, ref iid, 0, DispatchFlags.PropertyGet, ref dispArgs, resultVariantBlock.Addr, out _, out _));
-                    return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+                    return MiscHelpers.GetObjectForVariant(resultVariantBlock.Addr);
                 }
             }
         }
@@ -92,7 +92,7 @@ namespace Microsoft.ClearScript.Util.COM
                 {
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
                     HResult.Check(dispatch.Invoke(SpecialDispIDs.Default, ref iid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out _, out _));
-                    return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+                    return MiscHelpers.GetObjectForVariant(resultVariantBlock.Addr);
                 }
             }
         }
@@ -111,7 +111,7 @@ namespace Microsoft.ClearScript.Util.COM
                 {
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
                     HResult.Check(dispatch.Invoke(dispid, iid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out _, out _));
-                    return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+                    return MiscHelpers.GetObjectForVariant(resultVariantBlock.Addr);
                 }
             }
         }
@@ -185,7 +185,7 @@ namespace Microsoft.ClearScript.Util.COM
                 {
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
                     HResult.Check(dispatchEx.InvokeEx(dispid, 0, DispatchFlags.PropertyGet, ref dispArgs, resultVariantBlock.Addr, out _));
-                    return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+                    return MiscHelpers.GetObjectForVariant(resultVariantBlock.Addr);
                 }
             }
         }
@@ -240,7 +240,7 @@ namespace Microsoft.ClearScript.Util.COM
                 {
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
                     HResult.Check(dispatchEx.InvokeEx(SpecialDispIDs.Default, 0, asConstructor ? DispatchFlags.Construct : DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out _));
-                    return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+                    return MiscHelpers.GetObjectForVariant(resultVariantBlock.Addr);
                 }
             }
         }
@@ -259,7 +259,7 @@ namespace Microsoft.ClearScript.Util.COM
                 {
                     var dispArgs = new DISPPARAMS { cArgs = args.Length, rgvarg = argVariantArrayBlock.Addr, cNamedArgs = 0, rgdispidNamedArgs = IntPtr.Zero };
                     HResult.Check(dispatchEx.InvokeEx(dispid, 0, DispatchFlags.Method, ref dispArgs, resultVariantBlock.Addr, out _));
-                    return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+                    return MiscHelpers.GetObjectForVariant(resultVariantBlock.Addr);
                 }
             }
         }

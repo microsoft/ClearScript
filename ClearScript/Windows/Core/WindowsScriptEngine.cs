@@ -300,7 +300,17 @@ namespace Microsoft.ClearScript.Windows.Core
                     return nullDispatch;
                 }
 
+                obj = NullExportValue;
+            }
+
+            if (obj == null)
+            {
                 return DBNull.Value;
+            }
+
+            if (obj is DBNull)
+            {
+                return obj;
             }
 
             if (obj is Undefined)
@@ -679,7 +689,7 @@ namespace Microsoft.ClearScript.Windows.Core
             {
                 const ScriptTextFlags flags = ScriptTextFlags.IsExpression;
                 Parse(documentInfo, code, flags, resultVariantBlock.Addr);
-                return Marshal.GetObjectForNativeVariant(resultVariantBlock.Addr);
+                return MiscHelpers.GetObjectForVariant(resultVariantBlock.Addr);
             }
         }
 

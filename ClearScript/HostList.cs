@@ -72,4 +72,29 @@ namespace Microsoft.ClearScript
 
         #endregion
     }
+
+    internal sealed class ReadOnlyHostList<T> : IHostList
+    {
+        private readonly ScriptEngine engine;
+        private readonly IReadOnlyList<T> list;
+
+        public ReadOnlyHostList(ScriptEngine engine, IReadOnlyList<T> list)
+        {
+            this.engine = engine;
+            this.list = list;
+        }
+
+        #region IHostList implementation
+
+        public int Count => list.Count;
+
+        public object this[int index]
+        {
+            get => engine.PrepareResult(list[index], ScriptMemberFlags.None, true);
+
+            set => throw new UnauthorizedAccessException("The object is read-only");
+        }
+
+        #endregion
+    }
 }

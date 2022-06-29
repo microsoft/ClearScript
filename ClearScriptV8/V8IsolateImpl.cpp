@@ -1756,7 +1756,7 @@ void V8IsolateImpl::ConnectDebugClient()
     {
         if (pIsolateImpl->m_upInspector && !pIsolateImpl->m_upInspectorSession)
         {
-            pIsolateImpl->m_upInspectorSession = pIsolateImpl->m_upInspector->connect(s_ContextGroupId, pIsolateImpl, v8_inspector::StringView());
+            pIsolateImpl->m_upInspectorSession = pIsolateImpl->m_upInspector->connect(s_ContextGroupId, pIsolateImpl, v8_inspector::StringView(), v8_inspector::V8Inspector::ClientTrustLevel::kFullyTrusted);
         }
     });
 }

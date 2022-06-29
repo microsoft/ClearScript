@@ -610,9 +610,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
             }
 
-            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -845,9 +845,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
-            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -1123,7 +1123,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
-				[In] uint size
+                [In] uint size
             );
 
             #endregion
@@ -1664,8 +1664,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
@@ -1887,8 +1889,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
@@ -2640,9 +2644,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
             }
 
-            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -2875,9 +2879,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
-            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -3153,7 +3157,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
-				[In] uint size
+                [In] uint size
             );
 
             #endregion
@@ -3694,8 +3698,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -3917,8 +3923,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -4670,9 +4678,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
             }
 
-            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -4905,9 +4913,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
-            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -5183,7 +5191,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
-				[In] uint size
+                [In] uint size
             );
 
             #endregion
@@ -5724,8 +5732,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -5947,8 +5957,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -6700,9 +6712,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
             }
 
-            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -6935,9 +6947,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
-            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -7213,7 +7225,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
-				[In] uint size
+                [In] uint size
             );
 
             #endregion
@@ -7754,8 +7766,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
@@ -7977,8 +7991,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
@@ -8730,9 +8746,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
             }
 
-            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -8965,9 +8981,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
-            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -9243,7 +9259,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
-				[In] uint size
+                [In] uint size
             );
 
             #endregion
@@ -9784,8 +9800,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
@@ -10007,8 +10025,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
@@ -10760,9 +10780,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
             }
 
-            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -10995,9 +11015,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
-            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -11273,7 +11293,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
-				[In] uint size
+                [In] uint size
             );
 
             #endregion
@@ -11814,8 +11834,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
@@ -12037,8 +12059,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
@@ -12790,9 +12814,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
             }
 
-            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -13025,9 +13049,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
-            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -13303,7 +13327,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
-				[In] uint size
+                [In] uint size
             );
 
             #endregion
@@ -13844,8 +13868,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
@@ -14067,8 +14093,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
@@ -14820,9 +14848,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_SetDisableHeapSizeViolationInterrupt(hIsolate, value);
             }
 
-            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Isolate_GetHeapStatistics(hIsolate, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -15055,9 +15083,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_SetDisableIsolateHeapSizeViolationInterrupt(hContext, value);
             }
 
-            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit)
+            void IV8SplitProxyNative.V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize)
             {
-                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit);
+                V8Context_GetIsolateHeapStatistics(hContext, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize);
             }
 
             void IV8SplitProxyNative.V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts)
@@ -15333,7 +15361,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
-				[In] uint size
+                [In] uint size
             );
 
             #endregion
@@ -15874,8 +15902,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
@@ -16097,8 +16127,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [Out] out ulong totalHeapSize,
                 [Out] out ulong totalHeapSizeExecutable,
                 [Out] out ulong totalPhysicalSize,
+                [Out] out ulong totalAvailableSize,
                 [Out] out ulong usedHeapSize,
-                [Out] out ulong heapSizeLimit
+                [Out] out ulong heapSizeLimit,
+                [Out] out ulong totalExternalSize
             );
 
             [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]

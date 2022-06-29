@@ -11,6 +11,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCopyright("(c) Microsoft Corporation")]
 
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("7.3.0")]
-[assembly: AssemblyFileVersion("7.3.0")]
-[assembly: AssemblyInformationalVersion("7.3.0")]
+[assembly: AssemblyVersion("7.3.1")]
+[assembly: AssemblyFileVersion("7.3.1")]
+[assembly: AssemblyInformationalVersion("7.3.1")]

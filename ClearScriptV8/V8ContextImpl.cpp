@@ -278,7 +278,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             m_hStackKey = CreatePersistent(CreateString("stack"));
             m_hObjectNotInvocable = CreatePersistent(CreateString("The object does not support invocation"));
             m_hMethodOrPropertyNotFound = CreatePersistent(CreateString("Method or property not found"));
-            m_hPropertyValueNotInvocable = CreatePersistent(CreateString("Property value does not support invocation"));
+            m_hPropertyValueNotInvocable = CreatePersistent(CreateString("The property value does not support invocation"));
             m_hInvalidModuleRequest = CreatePersistent(CreateString("Invalid module load request"));
 
             hGetIteratorFunction = CreateFunctionTemplate(GetHostObjectIterator, hContextImpl);
@@ -1234,7 +1234,7 @@ V8Value V8ContextImpl::InvokeV8ObjectMethod(void* pvObject, const StdString& nam
 
             FROM_MAYBE_CATCH
 
-                throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Property value does not support invocation")), EXECUTION_STARTED);
+                throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("The property value does not support invocation")), EXECUTION_STARTED);
 
             FROM_MAYBE_END
         }

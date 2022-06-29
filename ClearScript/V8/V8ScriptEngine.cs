@@ -1292,7 +1292,17 @@ namespace Microsoft.ClearScript.V8
 
             if (obj == null)
             {
+                obj = NullExportValue;
+            }
+
+            if (obj == null)
+            {
                 return DBNull.Value;
+            }
+
+            if (obj is DBNull)
+            {
+                return obj;
             }
 
             if (obj is Undefined)

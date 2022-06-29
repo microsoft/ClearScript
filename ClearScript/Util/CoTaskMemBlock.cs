@@ -200,7 +200,7 @@ namespace Microsoft.ClearScript.Util
                 for (var index = 0; index < args.Length; index++)
                 {
                     var pArg = GetAddrInternal(args.Length + index);
-                    args[index] = Marshal.GetObjectForNativeVariant(pArg);
+                    args[index] = MiscHelpers.GetObjectForVariant(pArg);
                     NativeMethods.VariantClear(pArg);
                 }
             }

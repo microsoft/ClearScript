@@ -1,8 +1,8 @@
 #!/bin/bash
 
-v8testedrev=10.2.154.5
+v8testedrev=10.3.174.17
 v8testedcommit=
-v8cherrypicks=6cf7330a611a5d97a772743d7e626e162b26828e
+v8cherrypicks=
 v8linuxbuildcommit=3d9590754d5d23e62d15472c5baf6777ca59df20
 
 if [[ $v8testedcommit == "" ]]; then

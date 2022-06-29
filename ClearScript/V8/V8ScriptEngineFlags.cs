@@ -47,7 +47,7 @@ namespace Microsoft.ClearScript.V8
         /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</see></c>
         /// objects. This conversion is bidirectional and lossy. A <c>DateTime</c> object
         /// constructed from a JavaScript <c>Date</c> object always represents a Coordinated
-        /// Universal Timestamp (UTC) and has its <c><see cref="DateTime.Kind"/></c> property set to
+        /// Universal Time (UTC) and has its <c><see cref="DateTime.Kind"/></c> property set to
         /// <c><see cref="DateTimeKind.Utc"/></c>.
         /// </summary>
         EnableDateTimeConversion = 0x00000010,
@@ -85,29 +85,17 @@ namespace Microsoft.ClearScript.V8
         /// </summary>
         EnableTaskPromiseConversion = 0x00000100,
 
-    #if NETFRAMEWORK || UWP
-
         /// <summary>
         /// Specifies that the script engine is to perform automatic conversion from
-        /// .NET <c>ValueTask</c> and <c>ValueTask&lt;TResult&gt;</c> structures to JavaScript
+        /// .NET
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.valuetask">ValueTask</see></c> and
+        /// <c><see href="https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.valuetask-1">ValueTask&lt;TResult&gt;</see></c>
+        /// structures to JavaScript
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promises</see>.
         /// This conversion is unidirectional and lossy. This option is ignored if
         /// <c><see cref="EnableTaskPromiseConversion"/></c> is not specified.
         /// </summary>
         EnableValueTaskPromiseConversion = 0x00000200,
-
-    #else
-
-        /// <summary>
-        /// Specifies that the script engine is to perform automatic conversion from
-        /// .NET <c><see cref="ValueTask"/></c> and <c><see cref="ValueTask{T}"/></c> structures to JavaScript
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promises</see>.
-        /// This conversion is unidirectional and lossy. This option is ignored if
-        /// <c><see cref="EnableTaskPromiseConversion"/></c> is not specified.
-        /// </summary>
-        EnableValueTaskPromiseConversion = 0x00000200,
-
-    #endif
 
         /// <summary>
         /// Specifies that access to host object and class members is to be case-insensitive. This

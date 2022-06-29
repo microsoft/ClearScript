@@ -3194,6 +3194,19 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_NullExportValue()
+        {
+            engine.Script.foo = new Func<object>(() => null);
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo() === null")));
+
+            engine.NullExportValue = Undefined.Value;
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo() === undefined")));
+
+            engine.NullExportValue = null;
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo() === null")));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_VoidResultValue()
         {
             engine.Script.foo = new Action(() => {});
@@ -3880,6 +3893,26 @@ namespace Microsoft.ClearScript.Test
 
             engine.Execute("hostObject.Add('jerry', scriptObject)");
             TestUtil.AssertException<InvalidOperationException>(() => engine.Evaluate("JSON.stringify(hostObject)"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_TotalExternalSize()
+        {
+            engine.Execute("arr = new Uint8Array(1234567)");
+            Assert.AreEqual(1234567UL, engine.GetRuntimeHeapInfo().TotalExternalSize);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Runtime_TotalExternalSize()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var tempEngine = runtime.CreateScriptEngine())
+                {
+                    tempEngine.Execute("arr = new Uint8Array(7654321)");
+                    Assert.AreEqual(7654321UL, runtime.GetHeapInfo().TotalExternalSize);
+                }
+            }
         }
 
         // ReSharper restore InconsistentNaming

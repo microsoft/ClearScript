@@ -104,6 +104,47 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("[HostObject:DayOfWeek]", engine.ExecuteCommand("list.Item(2)"));
         }
 
+        [TestMethod, TestCategory("ReadOnlyHostList")]
+        public void ReadOnlyHostList_List()
+        {
+            IReadOnlyList<IConvertible> list = new List<IConvertible> { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday };
+            engine.AddRestrictedHostObject("list", list);
+            Assert.AreEqual(3, engine.Evaluate("list.Count"));
+            Assert.AreEqual(DayOfWeek.Tuesday, engine.Evaluate("list[1]"));
+            Assert.AreEqual("[HostObject:IConvertible]", engine.ExecuteCommand("list[2]"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("list[1] = list[2]"));
+        }
+
+        [TestMethod, TestCategory("ReadOnlyHostList")]
+        public void ReadOnlyHostList_Custom()
+        {
+            var list = new BogusReadOnlyCustomList<IConvertible>(DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday);
+            engine.Script.list = list;
+            Assert.AreEqual(3, engine.Evaluate("list.Count"));
+            Assert.AreEqual(DayOfWeek.Tuesday, engine.Evaluate("list[1]"));
+            Assert.AreEqual("[HostObject:IConvertible]", engine.ExecuteCommand("list[2]"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("list[1] = list[2]"));
+        }
+
+        [TestMethod, TestCategory("ReadOnlyHostList")]
+        public void ReadOnlyHostList_TypeRestriction()
+        {
+            var list = new BogusReadOnlyCustomList<IConvertible>(DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday);
+            engine.Script.list = list;
+            Assert.AreEqual(3, engine.Evaluate("list.Count"));
+            Assert.AreEqual("[HostObject:IConvertible]", engine.ExecuteCommand("list[2]"));
+            Assert.AreEqual("[HostObject:IConvertible]", engine.ExecuteCommand("list.Item(2)"));
+            engine.DisableListIndexTypeRestriction = true;
+            Assert.AreEqual("[HostObject:DayOfWeek]", engine.ExecuteCommand("list[2]"));
+            Assert.AreEqual("[HostObject:IConvertible]", engine.ExecuteCommand("list.Item(2)"));
+            engine.DisableListIndexTypeRestriction = false;
+            Assert.AreEqual("[HostObject:IConvertible]", engine.ExecuteCommand("list[2]"));
+            Assert.AreEqual("[HostObject:IConvertible]", engine.ExecuteCommand("list.Item(2)"));
+            engine.DisableTypeRestriction = true;
+            Assert.AreEqual("[HostObject:DayOfWeek]", engine.ExecuteCommand("list[2]"));
+            Assert.AreEqual("[HostObject:DayOfWeek]", engine.ExecuteCommand("list.Item(2)"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -122,11 +163,19 @@ namespace Microsoft.ClearScript.Test
         {
         }
 
+        public interface IReadOnlyCustomList<out T> : IReadOnlyList<T>
+        {
+        }
+
         public interface IBogusCustomList : IBogus, ICustomList
         {
         }
 
         public interface IBogusCustomList<T> : IBogus, ICustomList<T>
+        {
+        }
+
+        public interface IBogusReadOnlyCustomList<out T> : IBogus, IReadOnlyCustomList<T>
         {
         }
 
@@ -207,7 +256,7 @@ namespace Microsoft.ClearScript.Test
 
             IEnumerator IEnumerable.GetEnumerator()
             {
-                return ((IEnumerable)list).GetEnumerator();
+                return GetEnumerator();
             }
 
             public void Add(T item)
@@ -261,12 +310,44 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        public class BogusReadOnlyCustomListBase<T> : IBogusReadOnlyCustomList<T>
+        {
+            private readonly IReadOnlyList<T> list;
+
+            public BogusReadOnlyCustomListBase(params T[] items)
+            {
+                list = new List<T>(items);
+            }
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                return list.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
+
+            public int Count => list.Count;
+
+            public T this[int index] => list[index];
+        }
+
         public class BogusCustomList : BogusCustomListBase
         {
         }
 
         public class BogusCustomList<T> : BogusCustomListBase<T>
         {
+        }
+
+        public class BogusReadOnlyCustomList<T> : BogusReadOnlyCustomListBase<T>
+        {
+            public BogusReadOnlyCustomList(params T[] items)
+                : base(items)
+            {
+            }
         }
 
         #endregion

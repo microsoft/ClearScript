@@ -18,7 +18,7 @@ namespace Microsoft.ClearScript.Util
 {
     internal static partial class TypeHelpers
     {
-        private static readonly string[] importBlackList =
+        private static readonly string[] importDenyList =
         {
             // ReSharper disable StringLiteralTypo
 
@@ -75,7 +75,7 @@ namespace Microsoft.ClearScript.Util
             if (!type.IsNested && !type.IsSpecialName && !type.IsCompilerGenerated())
             {
                 var locator = type.GetLocator();
-                return !importBlackList.Contains(locator) && IsValidLocator(locator);
+                return !importDenyList.Contains(locator) && IsValidLocator(locator);
             }
 
             return false;
@@ -785,7 +785,7 @@ namespace Microsoft.ClearScript.Util
                 return bindArg.GetType();
             }
 
-            throw new InvalidOperationException("Property index value must not be null");
+            throw new InvalidOperationException("The property index value must not be null");
         }
 
         private static PropertyInfo SelectProperty(PropertyInfo[] candidates, BindingFlags bindFlags, object[] bindArgs)

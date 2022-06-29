@@ -96,7 +96,6 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
             catch (exception) {
                 return exception.stack;
             }
-            return '';
         }),
 
         toIterator: bind(function* (enumerator) {

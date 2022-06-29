@@ -194,17 +194,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             var totalHeapSize = 0UL;
             var totalHeapSizeExecutable = 0UL;
             var totalPhysicalSize = 0UL;
+            var totalAvailableSize = 0UL;
             var usedHeapSize = 0UL;
             var heapSizeLimit = 0UL;
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_GetIsolateHeapStatistics(Handle, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out usedHeapSize, out heapSizeLimit));
+            var totalExternalSize = 0UL;
+            V8SplitProxyNative.Invoke(instance => instance.V8Context_GetIsolateHeapStatistics(Handle, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize));
 
             return new V8RuntimeHeapInfo
             {
                 TotalHeapSize = totalHeapSize,
                 TotalHeapSizeExecutable = totalHeapSizeExecutable,
                 TotalPhysicalSize = totalPhysicalSize,
+                TotalAvailableSize = totalAvailableSize,
                 UsedHeapSize = usedHeapSize,
-                HeapSizeLimit = heapSizeLimit
+                HeapSizeLimit = heapSizeLimit,
+                TotalExternalSize = totalExternalSize
             };
         }
 

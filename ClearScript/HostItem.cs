@@ -537,6 +537,12 @@ namespace Microsoft.ClearScript
                     return specialTarget != null;
                 }
 
+                if (Target.Type.IsAssignableToGenericType(typeof(IReadOnlyList<>), out typeArgs))
+                {
+                    specialTarget = typeof(ReadOnlyHostList<>).MakeGenericType(typeArgs).CreateInstance(Engine, Target.InvokeTarget) as T;
+                    return specialTarget != null;
+                }
+
                 specialTarget = null;
                 return false;
             }
@@ -1542,7 +1548,7 @@ namespace Microsoft.ClearScript
             var getMethod = property.GetMethod;
             if ((getMethod == null) || !getMethod.IsAccessible(AccessContext) || getMethod.IsBlockedFromScript(DefaultAccess, false))
             {
-                throw new UnauthorizedAccessException("Property get method is unavailable or inaccessible");
+                throw new UnauthorizedAccessException("The property get method is unavailable or inaccessible");
             }
 
             var result = property.GetValue(Target.InvokeTarget, invokeFlags, Type.DefaultBinder, args, culture);
@@ -1628,7 +1634,7 @@ namespace Microsoft.ClearScript
                 {
                     if (field.IsLiteral || field.IsInitOnly || field.IsReadOnlyForScript(DefaultAccess))
                     {
-                        throw new UnauthorizedAccessException("Field is read-only");
+                        throw new UnauthorizedAccessException("The field is read-only");
                     }
 
                     var value = args[0];
@@ -1651,13 +1657,13 @@ namespace Microsoft.ClearScript
         {
             if (property.IsReadOnlyForScript(DefaultAccess))
             {
-                throw new UnauthorizedAccessException("Property is read-only");
+                throw new UnauthorizedAccessException("The property is read-only");
             }
 
             var setMethod = property.SetMethod;
             if ((setMethod == null) || !setMethod.IsAccessible(AccessContext) || setMethod.IsBlockedFromScript(DefaultAccess, false))
             {
-                throw new UnauthorizedAccessException("Property set method is unavailable or inaccessible");
+                throw new UnauthorizedAccessException("The property set method is unavailable or inaccessible");
             }
 
             var value = args[args.Length - 1];

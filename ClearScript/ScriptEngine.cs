@@ -293,9 +293,30 @@ namespace Microsoft.ClearScript
         /// Some script languages support one or more special non-<c>null</c> values that represent
         /// nonexistent, missing, unknown, or undefined data. When such a value is marshaled to the
         /// host, the script engine maps it to the value of this property. The default value is
-        /// <c><see cref="Undefined.Value"/></c>.
+        /// <c><see cref="Undefined.Value">Undefined.Value</see></c>.
         /// </remarks>
         public object UndefinedImportValue { get; set; } = Undefined.Value;
+
+        /// <summary>
+        /// Gets or sets the engine's null export value.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// When a null object reference is marshaled to script code, the script engine maps it to
+        /// the value of this property. The default value is simply <c>null</c>, which corresponds
+        /// to <c>null</c> or its closest equivalent in the script language. Other useful
+        /// possibilities include
+        /// <c><see cref="Undefined.Value">Undefined.Value</see></c> and
+        /// <c><see href="https://microsoft.github.io/ClearScript/Reference/html/F_Microsoft_ClearScript_Windows_Nothing_Value.htm">Nothing.Value</see></c>.
+        /// </para>
+        /// <para>
+        /// Note that <see cref="ScriptMemberFlags.WrapNullResult"/>,
+        /// <see cref="EnableNullResultWrapping"/>, and
+        /// <see href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm">MarshalNullAsDispatch</see>
+        /// all take precedence over this property.
+        /// </para>
+        /// </remarks>
+        public object NullExportValue { get; set; }
 
         /// <summary>
         /// Gets or sets the engine's void result export value.
@@ -306,7 +327,7 @@ namespace Microsoft.ClearScript
         /// as a C#
         /// <c><see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/void">void</see></c>
         /// method), the script engine returns the value of this property as a dummy result. The
-        /// default value is <c><see cref="VoidResult.Value"/></c>.
+        /// default value is <c><see cref="VoidResult.Value">VoidResult.Value</see></c>.
         /// </remarks>
         public object VoidResultValue { get; set; } = VoidResult.Value;
 

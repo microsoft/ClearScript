@@ -2608,6 +2608,19 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_NullExportValue()
+        {
+            engine.Script.foo = new Func<object>(() => null);
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo() === null")));
+
+            engine.NullExportValue = Undefined.Value;
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo() === undefined")));
+
+            engine.NullExportValue = null;
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo() === null")));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_VoidResultValue()
         {
             engine.Script.foo = new Action(() => {});

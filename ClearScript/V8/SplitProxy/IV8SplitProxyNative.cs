@@ -144,7 +144,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         void V8Isolate_SetEnableInterruptPropagation(V8Isolate.Handle hIsolate, bool value);
         bool V8Isolate_GetDisableHeapSizeViolationInterrupt(V8Isolate.Handle hIsolate);
         void V8Isolate_SetDisableHeapSizeViolationInterrupt(V8Isolate.Handle hIsolate, bool value);
-        void V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit);
+        void V8Isolate_GetHeapStatistics(V8Isolate.Handle hIsolate, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize);
         void V8Isolate_GetStatistics(V8Isolate.Handle hIsolate, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts);
         void V8Isolate_CollectGarbage(V8Isolate.Handle hIsolate, bool exhaustive);
         bool V8Isolate_BeginCpuProfile(V8Isolate.Handle hIsolate, string name, bool recordSamples);
@@ -180,7 +180,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         void V8Context_SetEnableIsolateInterruptPropagation(V8Context.Handle hContext, bool value);
         bool V8Context_GetDisableIsolateHeapSizeViolationInterrupt(V8Context.Handle hContext);
         void V8Context_SetDisableIsolateHeapSizeViolationInterrupt(V8Context.Handle hContext, bool value);
-        void V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong usedHeapSize, out ulong heapSizeLimit);
+        void V8Context_GetIsolateHeapStatistics(V8Context.Handle hContext, out ulong totalHeapSize, out ulong totalHeapSizeExecutable, out ulong totalPhysicalSize, out ulong totalAvailableSize, out ulong usedHeapSize, out ulong heapSizeLimit, out ulong totalExternalSize);
         void V8Context_GetIsolateStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong scriptCacheSize, out ulong moduleCount, out ulong[] postedTaskCounts, out ulong[] invokedTaskCounts);
         void V8Context_GetStatistics(V8Context.Handle hContext, out ulong scriptCount, out ulong moduleCount, out ulong moduleCacheSize);
         void V8Context_CollectGarbage(V8Context.Handle hContext, bool exhaustive);

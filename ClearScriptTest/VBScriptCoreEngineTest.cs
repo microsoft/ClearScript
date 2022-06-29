@@ -2722,6 +2722,19 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptCoreEngine")]
+        public void VBScriptCoreEngine_NullExportValue()
+        {
+            engine.Script.foo = new Func<object>(() => null);
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("IsNull(foo())")));
+
+            engine.NullExportValue = Windows.Nothing.Value;
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("foo() is nothing")));
+
+            engine.NullExportValue = null;
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("IsNull(foo())")));
+        }
+
+        [TestMethod, TestCategory("VBScriptCoreEngine")]
         public void VBScriptCoreEngine_VoidResultValue()
         {
             engine.Script.foo = new Action(() => {});
