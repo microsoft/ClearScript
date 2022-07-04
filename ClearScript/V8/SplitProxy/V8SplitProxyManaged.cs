@@ -15,7 +15,59 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     // ReSharper disable once PartialTypeWithSinglePart
     internal static partial class V8SplitProxyManaged
     {
-        public static IntPtr MethodTable { get; } = CreateMethodTable();
+        private static readonly object dataLock = new object();
+        private static readonly List<GCHandle> gcHandles = new List<GCHandle>();
+        private static IntPtr methodTable = IntPtr.Zero;
+
+        public static IntPtr MethodTable
+        {
+            get
+            {
+                lock (dataLock)
+                {
+                    if (methodTable == IntPtr.Zero)
+                    {
+                        throw new ApplicationException("Method table not initialized");
+                    }
+
+                    return methodTable;
+                }
+            }
+        }
+
+        public static void Initialize()
+        {
+            lock (dataLock)
+            {
+                if (methodTable != IntPtr.Zero)
+                {
+                    throw new ApplicationException("Method table already initialized");
+                }
+                methodTable = CreateMethodTable();
+            }
+        }
+
+        public static void TearDown()
+        {
+            lock (dataLock)
+            {
+                if (methodTable == IntPtr.Zero)
+                {
+                    throw new ApplicationException("Method table not initialized");
+                }
+                for (var i = gcHandles.Count - 1; i >= 0; i--)
+                {
+                    var handle = gcHandles[i];
+                    if (handle.IsAllocated)
+                    {
+                        handle.Free();
+                    }
+                }
+                gcHandles.Clear();
+                Marshal.FreeCoTaskMem(methodTable);
+                methodTable = IntPtr.Zero;
+            }
+        }
 
         [ThreadStatic] public static Exception ScheduledException;
 
@@ -407,7 +459,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static IntPtr GetMethodPtr<T>(T del)
         {
-            GCHandle.Alloc(del);
+            var handle = GCHandle.Alloc(del);
+            gcHandles.Add(handle);
             return Marshal.GetFunctionPointerForDelegate((Delegate)(object)del);
         }
 

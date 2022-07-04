@@ -31,7 +31,7 @@ namespace Microsoft.ClearScript.V8
                 {
                     triedToLoadNativeAssembly = true;
                     var initializedICU = false;
-
+                    V8SplitProxyManaged.Initialize();
                     try
                     {
                         hNativeAssembly = LoadNativeAssembly();
@@ -66,6 +66,7 @@ namespace Microsoft.ClearScript.V8
                     FreeLibrary(hNativeAssembly);
                     hNativeAssembly = IntPtr.Zero;
                     loadedNativeAssembly = false;
+                    V8SplitProxyManaged.TearDown();
                 }
             }
         }
