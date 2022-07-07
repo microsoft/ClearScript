@@ -23,10 +23,15 @@ namespace Microsoft.ClearScript.V8
         private static bool triedToLoadNativeAssembly;
         private static bool loadedNativeAssembly;
 
-        internal static bool OnEntityHolderCreated()
+        internal static void OnEntityHolderCreated()
         {
             lock (dataLock)
             {
+                if (++splitImplCount == 1)
+                {
+                    V8SplitProxyManaged.Initialize();
+                }
+
                 if (!triedToLoadNativeAssembly)
                 {
                     triedToLoadNativeAssembly = true;
@@ -51,9 +56,6 @@ namespace Microsoft.ClearScript.V8
                         InitializeICU();
                     }
                 }
-
-                ++splitImplCount;
-                return true;
             }
         }
 
@@ -61,11 +63,16 @@ namespace Microsoft.ClearScript.V8
         {
             lock (dataLock)
             {
-                if ((--splitImplCount < 1) && loadedNativeAssembly)
+                if (--splitImplCount < 1)
                 {
-                    FreeLibrary(hNativeAssembly);
-                    hNativeAssembly = IntPtr.Zero;
-                    loadedNativeAssembly = false;
+                    V8SplitProxyManaged.Teardown();
+
+                    if (loadedNativeAssembly)
+                    {
+                        FreeLibrary(hNativeAssembly);
+                        hNativeAssembly = IntPtr.Zero;
+                        loadedNativeAssembly = false;
+                    }
                 }
             }
         }

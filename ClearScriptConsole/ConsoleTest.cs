@@ -84,8 +84,6 @@ namespace Microsoft.ClearScript.Test
             var domain1 = AppDomain.CreateDomain("domain1");
             var domain2 = AppDomain.CreateDomain("domain2");
 
-            #pragma warning restore SYSLIB0024 // Creating and unloading AppDomains is not supported and throws an exception
-
             var obj1 = (MultiAppDomainTest)domain1.CreateInstanceAndUnwrap(Assembly.GetEntryAssembly().FullName, typeof(MultiAppDomainTest).FullName);
             var obj2 = (MultiAppDomainTest)domain2.CreateInstanceAndUnwrap(Assembly.GetEntryAssembly().FullName, typeof(MultiAppDomainTest).FullName);
 
@@ -94,6 +92,11 @@ namespace Microsoft.ClearScript.Test
 
             obj1.DisposeEngine();
             obj2.DisposeEngine();
+
+            AppDomain.Unload(domain1);
+            AppDomain.Unload(domain2);
+
+            #pragma warning restore SYSLIB0024 // Creating and unloading AppDomains is not supported and throws an exception
         }
 
         public static void V8ScriptEngine_HeapExpansionMultiplier()

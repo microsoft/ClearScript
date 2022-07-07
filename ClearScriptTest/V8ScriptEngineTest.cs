@@ -487,7 +487,7 @@ namespace Microsoft.ClearScript.Test
                 }
                 catch (ScriptInterruptedException exception)
                 {
-                    Assert.IsNull(exception.ScriptException);
+                    Assert.IsNull(exception.ScriptExceptionAsObject);
                     throw;
                 }
             });
@@ -515,7 +515,7 @@ namespace Microsoft.ClearScript.Test
                 }
                 catch (ScriptInterruptedException exception)
                 {
-                    Assert.IsNull(exception.ScriptException);
+                    Assert.IsNull(exception.ScriptExceptionAsObject);
                     throw;
                 }
             });
@@ -1266,7 +1266,7 @@ namespace Microsoft.ClearScript.Test
                     }
 
                     TestUtil.AssertValidException(engine, exception);
-                    Assert.IsNotNull(exception.ScriptException);
+                    Assert.IsNotNull(exception.ScriptExceptionAsObject);
                     Assert.AreEqual("SyntaxError", exception.ScriptException.constructor.name);
                     Assert.IsNull(exception.InnerException);
                     Assert.IsTrue(exception.Message.Contains("SyntaxError"));
@@ -1293,7 +1293,7 @@ namespace Microsoft.ClearScript.Test
                     }
 
                     TestUtil.AssertValidException(engine, exception);
-                    Assert.AreEqual(123, exception.ScriptException);
+                    Assert.AreEqual(123, exception.ScriptExceptionAsObject);
                     Assert.IsNull(exception.InnerException);
                     Assert.IsTrue(exception.Message.StartsWith("123", StringComparison.Ordinal));
                     Assert.IsTrue(exception.ErrorDetails.Contains(" -> "));
@@ -1553,7 +1553,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
-                    Assert.IsNull(exception.ScriptException);
+                    Assert.IsNull(exception.ScriptExceptionAsObject);
                     throw;
                 }
             });
@@ -1568,7 +1568,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
-                    Assert.IsNull(exception.ScriptException);
+                    Assert.IsNull(exception.ScriptExceptionAsObject);
                     throw;
                 }
             });
@@ -1591,7 +1591,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
-                    Assert.IsNull(exception.ScriptException);
+                    Assert.IsNull(exception.ScriptExceptionAsObject);
                     throw;
                 }
             });
@@ -1622,7 +1622,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
-                    Assert.IsNull(exception.ScriptException);
+                    Assert.IsNull(exception.ScriptExceptionAsObject);
                     throw;
                 }
             });
@@ -1656,7 +1656,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
-                    Assert.IsNull(exception.ScriptException);
+                    Assert.IsNull(exception.ScriptExceptionAsObject);
                     throw;
                 }
             });
@@ -3705,7 +3705,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsTrue(exception.IsFatal);
-                    Assert.IsNull(exception.ScriptException);
+                    Assert.IsNull(exception.ScriptExceptionAsObject);
                     Assert.AreEqual("The V8 runtime has exceeded its memory limit", exception.Message);
                     throw;
                 }
@@ -3729,7 +3729,7 @@ namespace Microsoft.ClearScript.Test
                 catch (ScriptEngineException exception)
                 {
                     Assert.IsFalse(exception.IsFatal);
-                    Assert.IsNotNull(exception.ScriptException);
+                    Assert.IsNotNull(exception.ScriptExceptionAsObject);
                     Assert.AreEqual("Error: The V8 runtime has exceeded its memory limit", exception.Message);
                     throw;
                 }
@@ -3767,7 +3767,7 @@ namespace Microsoft.ClearScript.Test
                     catch (ScriptEngineException exception)
                     {
                         Assert.IsTrue(exception.IsFatal);
-                        Assert.IsNull(exception.ScriptException);
+                        Assert.IsNull(exception.ScriptExceptionAsObject);
                         Assert.AreEqual("The V8 runtime has exceeded its memory limit", exception.Message);
                         throw;
                     }
@@ -3796,7 +3796,7 @@ namespace Microsoft.ClearScript.Test
                     catch (ScriptEngineException exception)
                     {
                         Assert.IsFalse(exception.IsFatal);
-                        Assert.IsNotNull(exception.ScriptException);
+                        Assert.IsNotNull(exception.ScriptExceptionAsObject);
                         Assert.AreEqual("Error: The V8 runtime has exceeded its memory limit", exception.Message);
                         throw;
                     }

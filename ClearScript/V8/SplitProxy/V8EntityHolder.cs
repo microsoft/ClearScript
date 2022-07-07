@@ -16,7 +16,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public V8EntityHolder(string name, Func<V8Entity.Handle> acquireHandle)
         {
             this.name = name;
-            registered = V8Proxy.OnEntityHolderCreated();
+            V8Proxy.OnEntityHolderCreated();
+            registered = true;
             handle = acquireHandle();
         }
 

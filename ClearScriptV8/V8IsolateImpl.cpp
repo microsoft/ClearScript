@@ -92,7 +92,7 @@ void V8Platform::EnsureInitialized()
         if (!flagStrings.empty())
         {
             std::string flagsString(flagStrings[0]);
-            for (size_t index = 1; index < flagStrings.size(); ++index)
+            for (size_t index = 1; index < flagStrings.size(); index++)
             {
                 flagsString += " ";
                 flagsString += flagStrings[index];

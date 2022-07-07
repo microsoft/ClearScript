@@ -15,9 +15,23 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     // ReSharper disable once PartialTypeWithSinglePart
     internal static partial class V8SplitProxyManaged
     {
-        public static IntPtr MethodTable { get; } = CreateMethodTable();
+        public static IntPtr MethodTable => pFunctionPtrs;
+
+        private static IntPtr pDelegatePtrs;
+        private static IntPtr pFunctionPtrs;
+        private static int methodCount;
 
         [ThreadStatic] public static Exception ScheduledException;
+
+        public static void Initialize()
+        {
+            CreateMethodTable();
+        }
+
+        public static void Teardown()
+        {
+            DestroyMethodTable();
+        }
 
         private static void ScheduleHostException(IntPtr pObject, Exception exception)
         {
@@ -305,110 +319,138 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #endregion
 
-        #region method table construction
+        #region method table construction and teardown
 
-        private static IntPtr CreateMethodTable()
+        private static void CreateMethodTable()
         {
-            IntPtr[] methodPtrs =
+            Debug.Assert(methodCount == 0);
+
+            (IntPtr, IntPtr)[] methodPairs =
             {
                 //----------------------------------------------------------------------------
                 // IMPORTANT: maintain synchronization with V8_SPLIT_PROXY_MANAGED_METHOD_LIST
                 //----------------------------------------------------------------------------
 
-                GetMethodPtr<RawScheduleForwardingException>(ScheduleForwardingException),
-                GetMethodPtr<RawScheduleInvalidOperationException>(ScheduleInvalidOperationException),
-                GetMethodPtr<RawScheduleScriptEngineException>(ScheduleScriptEngineException),
-                GetMethodPtr<RawScheduleScriptInterruptedException>(ScheduleScriptInterruptedException),
+                GetMethodPair<RawScheduleForwardingException>(ScheduleForwardingException),
+                GetMethodPair<RawScheduleInvalidOperationException>(ScheduleInvalidOperationException),
+                GetMethodPair<RawScheduleScriptEngineException>(ScheduleScriptEngineException),
+                GetMethodPair<RawScheduleScriptInterruptedException>(ScheduleScriptInterruptedException),
 
             #if NET5_0_OR_GREATER
-                InvokeHostActionFastMethodPtr,
+                (IntPtr.Zero, InvokeHostActionFastMethodPtr),
             #else
-                GetMethodPtr<RawInvokeAction>(InvokeHostAction),
+                GetMethodPair<RawInvokeAction>(InvokeHostAction),
             #endif
 
-                GetMethodPtr<RawProcessArrayBufferOrViewData>(ProcessArrayBufferOrViewData),
-                GetMethodPtr<RawProcessCpuProfile>(ProcessCpuProfile),
-                GetMethodPtr<RawCreateV8ObjectCache>(CreateV8ObjectCache),
+                GetMethodPair<RawProcessArrayBufferOrViewData>(ProcessArrayBufferOrViewData),
+                GetMethodPair<RawProcessCpuProfile>(ProcessCpuProfile),
+                GetMethodPair<RawCreateV8ObjectCache>(CreateV8ObjectCache),
 
             #if NET5_0_OR_GREATER
-                CacheV8ObjectFastMethodPtr,
-                GetCachedV8ObjectFastMethodPtr,
+                (IntPtr.Zero, CacheV8ObjectFastMethodPtr),
+                (IntPtr.Zero, GetCachedV8ObjectFastMethodPtr),
             #else
-                GetMethodPtr<RawCacheV8Object>(CacheV8Object),
-                GetMethodPtr<RawGetCachedV8Object>(GetCachedV8Object),
+                GetMethodPair<RawCacheV8Object>(CacheV8Object),
+                GetMethodPair<RawGetCachedV8Object>(GetCachedV8Object),
             #endif
 
-                GetMethodPtr<RawGetAllCachedV8Objects>(GetAllCachedV8Objects),
-                GetMethodPtr<RawRemoveV8ObjectCacheEntry>(RemoveV8ObjectCacheEntry),
-                GetMethodPtr<RawCreateDebugAgent>(CreateDebugAgent),
-                GetMethodPtr<RawSendDebugMessage>(SendDebugMessage),
-                GetMethodPtr<RawDestroyDebugAgent>(DestroyDebugAgent),
-                GetMethodPtr<RawGetMaxScriptCacheSize>(GetMaxScriptCacheSize),
-                GetMethodPtr<RawGetMaxModuleCacheSize>(GetMaxModuleCacheSize),
+                GetMethodPair<RawGetAllCachedV8Objects>(GetAllCachedV8Objects),
+                GetMethodPair<RawRemoveV8ObjectCacheEntry>(RemoveV8ObjectCacheEntry),
+                GetMethodPair<RawCreateDebugAgent>(CreateDebugAgent),
+                GetMethodPair<RawSendDebugMessage>(SendDebugMessage),
+                GetMethodPair<RawDestroyDebugAgent>(DestroyDebugAgent),
+                GetMethodPair<RawGetMaxScriptCacheSize>(GetMaxScriptCacheSize),
+                GetMethodPair<RawGetMaxModuleCacheSize>(GetMaxModuleCacheSize),
 
             #if NET5_0_OR_GREATER
-                AddRefHostObjectFastMethodPtr,
-                ReleaseHostObjectFastMethodPtr,
-                GetHostObjectInvocabilityFastMethodPtr,
+                (IntPtr.Zero, AddRefHostObjectFastMethodPtr),
+                (IntPtr.Zero, ReleaseHostObjectFastMethodPtr),
+                (IntPtr.Zero, GetHostObjectInvocabilityFastMethodPtr),
             #else
-                GetMethodPtr<RawAddRefHostObject>(AddRefHostObject),
-                GetMethodPtr<RawReleaseHostObject>(ReleaseHostObject),
-                GetMethodPtr<RawGetHostObjectInvocability>(GetHostObjectInvocability),
+                GetMethodPair<RawAddRefHostObject>(AddRefHostObject),
+                GetMethodPair<RawReleaseHostObject>(ReleaseHostObject),
+                GetMethodPair<RawGetHostObjectInvocability>(GetHostObjectInvocability),
             #endif
 
             #if NET5_0_OR_GREATER
-                GetHostObjectNamedPropertyFastMethodPtr,
-                GetHostObjectNamedPropertyWithCacheabilityFastMethodPtr,
-                SetHostObjectNamedPropertyFastMethodPtr,
+                (IntPtr.Zero, GetHostObjectNamedPropertyFastMethodPtr),
+                (IntPtr.Zero, GetHostObjectNamedPropertyWithCacheabilityFastMethodPtr),
+                (IntPtr.Zero, SetHostObjectNamedPropertyFastMethodPtr),
             #else
-                GetMethodPtr<RawGetHostObjectNamedProperty>(GetHostObjectNamedProperty),
-                GetMethodPtr<RawGetHostObjectNamedPropertyWithCacheability>(GetHostObjectNamedPropertyWithCacheability),
-                GetMethodPtr<RawSetHostObjectNamedProperty>(SetHostObjectNamedProperty),
+                GetMethodPair<RawGetHostObjectNamedProperty>(GetHostObjectNamedProperty),
+                GetMethodPair<RawGetHostObjectNamedPropertyWithCacheability>(GetHostObjectNamedPropertyWithCacheability),
+                GetMethodPair<RawSetHostObjectNamedProperty>(SetHostObjectNamedProperty),
             #endif
 
-                GetMethodPtr<RawDeleteHostObjectNamedProperty>(DeleteHostObjectNamedProperty),
-                GetMethodPtr<RawGetHostObjectPropertyNames>(GetHostObjectPropertyNames),
+                GetMethodPair<RawDeleteHostObjectNamedProperty>(DeleteHostObjectNamedProperty),
+                GetMethodPair<RawGetHostObjectPropertyNames>(GetHostObjectPropertyNames),
 
             #if NET5_0_OR_GREATER
-                GetHostObjectIndexedPropertyFastMethodPtr,
-                SetHostObjectIndexedPropertyFastMethodPtr,
+                (IntPtr.Zero, GetHostObjectIndexedPropertyFastMethodPtr),
+                (IntPtr.Zero, SetHostObjectIndexedPropertyFastMethodPtr),
             #else
-                GetMethodPtr<RawGetHostObjectIndexedProperty>(GetHostObjectIndexedProperty),
-                GetMethodPtr<RawSetHostObjectIndexedProperty>(SetHostObjectIndexedProperty),
+                GetMethodPair<RawGetHostObjectIndexedProperty>(GetHostObjectIndexedProperty),
+                GetMethodPair<RawSetHostObjectIndexedProperty>(SetHostObjectIndexedProperty),
             #endif
 
-                GetMethodPtr<RawDeleteHostObjectIndexedProperty>(DeleteHostObjectIndexedProperty),
-                GetMethodPtr<RawGetHostObjectPropertyIndices>(GetHostObjectPropertyIndices),
+                GetMethodPair<RawDeleteHostObjectIndexedProperty>(DeleteHostObjectIndexedProperty),
+                GetMethodPair<RawGetHostObjectPropertyIndices>(GetHostObjectPropertyIndices),
 
             #if NET5_0_OR_GREATER
-                InvokeHostObjectFastMethodPtr,
-                InvokeHostObjectMethodFastMethodPtr,
+                (IntPtr.Zero, InvokeHostObjectFastMethodPtr),
+                (IntPtr.Zero, InvokeHostObjectMethodFastMethodPtr),
             #else
-                GetMethodPtr<RawInvokeHostObject>(InvokeHostObject),
-                GetMethodPtr<RawInvokeHostObjectMethod>(InvokeHostObjectMethod),
+                GetMethodPair<RawInvokeHostObject>(InvokeHostObject),
+                GetMethodPair<RawInvokeHostObjectMethod>(InvokeHostObjectMethod),
             #endif
 
-                GetMethodPtr<RawGetHostObjectEnumerator>(GetHostObjectEnumerator),
-                GetMethodPtr<RawGetHostObjectAsyncEnumerator>(GetHostObjectAsyncEnumerator),
-                GetMethodPtr<RawQueueNativeCallback>(QueueNativeCallback),
-                GetMethodPtr<RawCreateNativeCallbackTimer>(CreateNativeCallbackTimer),
-                GetMethodPtr<RawChangeNativeCallbackTimer>(ChangeNativeCallbackTimer),
-                GetMethodPtr<RawDestroyNativeCallbackTimer>(DestroyNativeCallbackTimer),
-                GetMethodPtr<RawLoadModule>(LoadModule),
-                GetMethodPtr<RawCreateModuleContext>(CreateModuleContext),
-                GetMethodPtr<RawWriteBytesToStream>(WriteBytesToStream),
-                GetMethodPtr<RawGetGlobalFlags>(GetGlobalFlags)
+                GetMethodPair<RawGetHostObjectEnumerator>(GetHostObjectEnumerator),
+                GetMethodPair<RawGetHostObjectAsyncEnumerator>(GetHostObjectAsyncEnumerator),
+                GetMethodPair<RawQueueNativeCallback>(QueueNativeCallback),
+                GetMethodPair<RawCreateNativeCallbackTimer>(CreateNativeCallbackTimer),
+                GetMethodPair<RawChangeNativeCallbackTimer>(ChangeNativeCallbackTimer),
+                GetMethodPair<RawDestroyNativeCallbackTimer>(DestroyNativeCallbackTimer),
+                GetMethodPair<RawLoadModule>(LoadModule),
+                GetMethodPair<RawCreateModuleContext>(CreateModuleContext),
+                GetMethodPair<RawWriteBytesToStream>(WriteBytesToStream),
+                GetMethodPair<RawGetGlobalFlags>(GetGlobalFlags)
             };
 
-            var pMethodTable = Marshal.AllocCoTaskMem(IntPtr.Size * methodPtrs.Length);
-            Marshal.Copy(methodPtrs, 0, pMethodTable, methodPtrs.Length);
-            return pMethodTable;
+            methodCount = methodPairs.Length;
+            pDelegatePtrs = Marshal.AllocCoTaskMem(methodCount * IntPtr.Size);
+            pFunctionPtrs = Marshal.AllocCoTaskMem(methodCount * IntPtr.Size);
+
+            for (var index = 0; index < methodCount; index++)
+            {
+                Marshal.WriteIntPtr(pDelegatePtrs, index * IntPtr.Size, methodPairs[index].Item1);
+                Marshal.WriteIntPtr(pFunctionPtrs, index * IntPtr.Size, methodPairs[index].Item2);
+            }
         }
 
-        private static IntPtr GetMethodPtr<T>(T del)
+        private static void DestroyMethodTable()
         {
-            GCHandle.Alloc(del);
-            return Marshal.GetFunctionPointerForDelegate((Delegate)(object)del);
+            Debug.Assert(methodCount > 0);
+
+            for (var index = 0; index < methodCount; index++)
+            {
+                var pDelegate = Marshal.ReadIntPtr(pDelegatePtrs, index * IntPtr.Size);
+                if (pDelegate != IntPtr.Zero)
+                {
+                    V8ProxyHelpers.ReleaseHostObject(pDelegate);
+                }
+            }
+
+            Marshal.FreeCoTaskMem(pDelegatePtrs);
+            Marshal.FreeCoTaskMem(pFunctionPtrs);
+
+            methodCount = 0;
+            pDelegatePtrs = IntPtr.Zero;
+            pFunctionPtrs = IntPtr.Zero;
+        }
+
+        private static (IntPtr, IntPtr) GetMethodPair<T>(T del)
+        {
+            return (V8ProxyHelpers.AddRefHostObject(del), Marshal.GetFunctionPointerForDelegate((Delegate)(object)del));
         }
 
         #endregion
@@ -422,11 +464,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             var exception = V8ProxyHelpers.MarshalExceptionToHost(V8Value.Get(pException));
             if (exception is ScriptEngineException scriptEngineException)
             {
-                ScheduledException = new ScriptEngineException(scriptEngineException.EngineName, scriptEngineException.Message, scriptEngineException.ErrorDetails, scriptEngineException.HResult, scriptEngineException.IsFatal, scriptEngineException.ExecutionStarted, scriptEngineException.ScriptException, scriptEngineException);
+                ScheduledException = new ScriptEngineException(scriptEngineException.EngineName, scriptEngineException.Message, scriptEngineException.ErrorDetails, scriptEngineException.HResult, scriptEngineException.IsFatal, scriptEngineException.ExecutionStarted, scriptEngineException.ScriptExceptionAsObject, scriptEngineException);
             }
             else if (exception is ScriptInterruptedException scriptInterruptedException)
             {
-                ScheduledException = new ScriptInterruptedException(scriptInterruptedException.EngineName, scriptInterruptedException.Message, scriptInterruptedException.ErrorDetails, scriptInterruptedException.HResult, scriptInterruptedException.IsFatal, scriptInterruptedException.ExecutionStarted, scriptInterruptedException.ScriptException, scriptInterruptedException);
+                ScheduledException = new ScriptInterruptedException(scriptInterruptedException.EngineName, scriptInterruptedException.Message, scriptInterruptedException.ErrorDetails, scriptInterruptedException.HResult, scriptInterruptedException.IsFatal, scriptInterruptedException.ExecutionStarted, scriptInterruptedException.ScriptExceptionAsObject, scriptInterruptedException);
             }
             else
             {
