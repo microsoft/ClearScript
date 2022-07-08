@@ -265,13 +265,31 @@ namespace Microsoft.ClearScript
         public bool DisableFloatNarrowing { get; set; }
 
         /// <summary>
+        /// Enables or disables dynamic method binding.
+        /// </summary>
+        /// <remarks>
+        /// When this property is set to <c>true</c>, the script engine bypasses the default method
+        /// binding algorithm and uses reflection-based method binding instead. This approach
+        /// abandons support for generic methods and other features, but it avoids engaging the
+        /// dynamic infrastructure.
+        /// </remarks>
+        /// <seealso cref="UseReflectionBindFallback"/>
+        public bool DisableDynamicBinding { get; set; }
+
+        /// <summary>
         /// Enables or disables the use of reflection-based method binding as a fallback.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// When this property is set to <c>true</c>, the script engine attempts to use
         /// reflection-based method binding when the default method binding algorithm fails. This
         /// approach reduces type safety, but it may be useful for running legacy scripts that rely
         /// on the specific behavior of reflection-based method binding.
+        /// </para>
+        /// <para>
+        /// This property has no effect when <see cref="DisableDynamicBinding"/> is set to
+        /// <c>true</c>.
+        /// </para>
         /// </remarks>
         public bool UseReflectionBindFallback { get; set; }
 

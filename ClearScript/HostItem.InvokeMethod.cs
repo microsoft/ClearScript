@@ -117,26 +117,35 @@ namespace Microsoft.ClearScript
             }
             else
             {
-                result = BindMethodInternal(signature, AccessContext, bindFlags, Target, name, typeArgs, args, bindArgs);
-                if (!result.IsPreferredMethod(this, name))
-                {
-                    if (result is MethodBindSuccess)
-                    {
-                        result = new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
-                    }
+                var forceReflection = Engine.DisableDynamicBinding;
 
-                    foreach (var altName in GetAltMethodNames(name, bindFlags))
+                if (forceReflection)
+                {
+                    result = new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+                }
+                else
+                {
+                    result = BindMethodInternal(signature, AccessContext, bindFlags, Target, name, typeArgs, args, bindArgs);
+                    if (!result.IsPreferredMethod(this, name))
                     {
-                        var altResult = BindMethodInternal(null, AccessContext, bindFlags, Target, altName, typeArgs, args, bindArgs);
-                        if (altResult.IsUnblockedMethod(this))
+                        if (result is MethodBindSuccess)
                         {
-                            result = altResult;
-                            break;
+                            result = new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+                        }
+
+                        foreach (var altName in GetAltMethodNames(name, bindFlags))
+                        {
+                            var altResult = BindMethodInternal(null, AccessContext, bindFlags, Target, altName, typeArgs, args, bindArgs);
+                            if (altResult.IsUnblockedMethod(this))
+                            {
+                                result = altResult;
+                                break;
+                            }
                         }
                     }
                 }
 
-                if ((result is MethodBindFailure) && Engine.UseReflectionBindFallback)
+                if ((result is MethodBindFailure) && (forceReflection || Engine.UseReflectionBindFallback))
                 {
                     var reflectionResult = BindMethodUsingReflection(bindFlags, Target, name, typeArgs, args);
                     if (reflectionResult is MethodBindSuccess)
