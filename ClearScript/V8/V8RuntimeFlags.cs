@@ -11,6 +11,8 @@ namespace Microsoft.ClearScript.V8
     [Flags]
     public enum V8RuntimeFlags
     {
+        // IMPORTANT: maintain bitwise equivalence with unmanaged enum V8Isolate::Flags
+
         /// <summary>
         /// Specifies that no options are selected.
         /// </summary>

@@ -652,11 +652,11 @@ namespace Microsoft.ClearScript
 
             try
             {
-                return args.Aggregate(0UL, (flags, arg) => flags | Convert.ToUInt64(arg, CultureInfo.InvariantCulture)).DynamicCast<T>();
+                return (T)Enum.ToObject(typeof(T), args.Aggregate(0UL, (flags, arg) => flags | Convert.ToUInt64(arg, CultureInfo.InvariantCulture)));
             }
             catch (OverflowException)
             {
-                return args.Aggregate(0L, (flags, arg) => flags | Convert.ToInt64(arg, CultureInfo.InvariantCulture)).DynamicCast<T>();
+                return (T)Enum.ToObject(typeof(T), args.Aggregate(0L, (flags, arg) => flags | Convert.ToInt64(arg, CultureInfo.InvariantCulture)));
             }
         }
 
@@ -1305,12 +1305,12 @@ namespace Microsoft.ClearScript
 
             try
             {
-                ((dynamic)tryFunc)();
+                ((ScriptObject)tryFunc).InvokeAsFunction();
                 return true;
             }
             catch (Exception exception)
             {
-                if (!((dynamic)catchFunc)(exception))
+                if (!Convert.ToBoolean(((ScriptObject)catchFunc).InvokeAsFunction(exception)))
                 {
                     throw;
                 }
@@ -1321,7 +1321,7 @@ namespace Microsoft.ClearScript
             {
                 if (finallyFunc != null)
                 {
-                    ((dynamic)finallyFunc)();
+                    ((ScriptObject)finallyFunc).InvokeAsFunction();
                 }
             }
         }

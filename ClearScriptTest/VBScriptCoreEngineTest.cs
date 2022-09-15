@@ -447,7 +447,7 @@ namespace Microsoft.ClearScript.Test
         public void VBScriptCoreEngine_Interrupt()
         {
             var checkpoint = new ManualResetEvent(false);
-            ThreadPool.QueueUserWorkItem(state =>
+            ThreadPool.QueueUserWorkItem(_ =>
             {
                 checkpoint.WaitOne();
                 engine.Interrupt();
@@ -719,7 +719,7 @@ namespace Microsoft.ClearScript.Test
                     Assert.IsNotNull(exception.InnerException);
 
                     var hostException = exception.InnerException;
-                    Assert.IsInstanceOfType(hostException, typeof(RuntimeBinderException));
+                    Assert.IsTrue((hostException is RuntimeBinderException) || (hostException is MissingMethodException));
                     TestUtil.AssertValidException(hostException);
                     Assert.IsNull(hostException.InnerException);
 
@@ -820,7 +820,7 @@ namespace Microsoft.ClearScript.Test
                         Assert.IsNotNull(nestedException.InnerException);
 
                         var nestedHostException = nestedException.InnerException;
-                        Assert.IsInstanceOfType(nestedHostException, typeof(RuntimeBinderException));
+                        Assert.IsTrue((nestedHostException is RuntimeBinderException) || (nestedHostException is MissingMethodException));
                         TestUtil.AssertValidException(nestedHostException);
                         Assert.IsNull(nestedHostException.InnerException);
 
@@ -2167,7 +2167,7 @@ namespace Microsoft.ClearScript.Test
 
             Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
             Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+            TestUtil.AssertException<RuntimeBinderException, AmbiguousMatchException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
 
             engine.EnableNullResultWrapping = true;
             Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
@@ -2177,7 +2177,7 @@ namespace Microsoft.ClearScript.Test
             engine.EnableNullResultWrapping = false;
             Assert.AreSame(testValue, engine.Evaluate("foo.Method(foo.Value)"));
             Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+            TestUtil.AssertException<RuntimeBinderException, AmbiguousMatchException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
         }
 
         [TestMethod, TestCategory("VBScriptCoreEngine")]
@@ -2196,7 +2196,7 @@ namespace Microsoft.ClearScript.Test
 
             Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
             Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+            TestUtil.AssertException<RuntimeBinderException, AmbiguousMatchException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
 
             engine.EnableNullResultWrapping = true;
             Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
@@ -2206,7 +2206,7 @@ namespace Microsoft.ClearScript.Test
             engine.EnableNullResultWrapping = false;
             Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
             Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+            TestUtil.AssertException<RuntimeBinderException, AmbiguousMatchException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
         }
 
         [TestMethod, TestCategory("VBScriptCoreEngine")]
@@ -2225,7 +2225,7 @@ namespace Microsoft.ClearScript.Test
 
             Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
             Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+            TestUtil.AssertException<RuntimeBinderException, AmbiguousMatchException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
 
             engine.EnableNullResultWrapping = true;
             Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
@@ -2235,7 +2235,7 @@ namespace Microsoft.ClearScript.Test
             engine.EnableNullResultWrapping = false;
             Assert.AreEqual(testValue, engine.Evaluate("foo.Method(foo.Value)"));
             Assert.IsNull(engine.Evaluate("foo.Method(foo.WrappedNullValue)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
+            TestUtil.AssertException<RuntimeBinderException, AmbiguousMatchException>(() => engine.Evaluate("foo.Method(foo.NullValue)"));
         }
 
         [TestMethod, TestCategory("VBScriptCoreEngine")]
@@ -2455,7 +2455,7 @@ namespace Microsoft.ClearScript.Test
 
             engine.Script.listDict = new ListDictionary { { "abc", 123 }, { "def", 456 }, { "ghi", 789 } };
             Assert.AreEqual(3, engine.Evaluate("listDict.Count"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Evaluate("listDict.Count()"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("listDict.Count()"));
         }
 
         [TestMethod, TestCategory("VBScriptCoreEngine")]
@@ -2554,7 +2554,7 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("baz", engine.Evaluate("foo(0)"));
 
             engine.Script.bar = new List<string>();
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("bar.Add(foo(0))"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("bar.Add(foo(0))"));
         }
 
         [TestMethod, TestCategory("VBScriptCoreEngine")]

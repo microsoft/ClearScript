@@ -1,5 +1,6 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/CodeInspection/CSharpLanguageProject/LanguageLevel/@EntryValue">CSharp73</s:String>
+	<s:Boolean x:Key="/Default/CodeInspection/ExcludedFiles/FileMasksToSkip/=_002A_002Ejs/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeInspection/Highlighting/CalculateUnusedTypeMembers/@EntryValue">False</s:Boolean>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ArrangeThisQualifier/@EntryIndexedValue">SUGGESTION</s:String>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=AssignNullToNotNullAttribute/@EntryIndexedValue">DO_NOT_SHOW</s:String>
@@ -48,6 +49,7 @@
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Addr/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=ADODB/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=BADPARAMCOUNT/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Bindable/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=blittable/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Bytecode/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Cacheable/@EntryIndexedValue">True</s:Boolean>

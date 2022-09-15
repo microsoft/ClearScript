@@ -31,7 +31,7 @@ namespace Microsoft.ClearScript.Test
         [ClassInitialize]
         public static void ClassInitialize(TestContext context)
         {
-            guids = Enumerable.Range(0, 16).Select(index => Guid.NewGuid()).ToArray();
+            guids = Enumerable.Range(0, 16).Select(_ => Guid.NewGuid()).ToArray();
         }
 
         [TestInitialize]

@@ -36,7 +36,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)());
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction());
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)());
+                    }
                 }
                 else
                 {
@@ -85,7 +92,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1));
+                    }
                 }
                 else
                 {
@@ -134,7 +148,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2));
+                    }
                 }
                 else
                 {
@@ -185,7 +206,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3));
+                    }
                 }
                 else
                 {
@@ -238,7 +266,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4));
+                    }
                 }
                 else
                 {
@@ -293,7 +328,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5));
+                    }
                 }
                 else
                 {
@@ -350,7 +392,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6));
+                    }
                 }
                 else
                 {
@@ -409,7 +458,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7));
+                    }
                 }
                 else
                 {
@@ -470,7 +526,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8));
+                    }
                 }
                 else
                 {
@@ -533,7 +596,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9));
+                    }
                 }
                 else
                 {
@@ -598,7 +668,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
+                    }
                 }
                 else
                 {
@@ -665,7 +742,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
+                    }
                 }
                 else
                 {
@@ -734,7 +818,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));
+                    }
                 }
                 else
                 {
@@ -805,7 +896,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));
+                    }
                 }
                 else
                 {
@@ -878,7 +976,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14));
+                    }
                 }
                 else
                 {
@@ -953,7 +1058,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15));
+                    }
                 }
                 else
                 {
@@ -1030,7 +1142,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16));
+                    }
                 }
                 else
                 {
@@ -1110,6 +1229,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction());
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)());
                 }
 
@@ -1157,6 +1281,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1));
                 }
 
@@ -1204,6 +1333,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2));
                 }
 
@@ -1253,6 +1387,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3));
                 }
 
@@ -1304,6 +1443,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4));
                 }
 
@@ -1357,6 +1501,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5));
                 }
 
@@ -1412,6 +1561,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6));
                 }
 
@@ -1469,6 +1623,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7));
                 }
 
@@ -1528,6 +1687,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8));
                 }
 
@@ -1589,6 +1753,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9));
                 }
 
@@ -1652,6 +1821,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10));
                 }
 
@@ -1717,6 +1891,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
                 }
 
@@ -1784,6 +1963,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12));
                 }
 
@@ -1853,6 +2037,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13));
                 }
 
@@ -1924,6 +2113,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14));
                 }
 
@@ -1997,6 +2191,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15));
                 }
 
@@ -2072,6 +2271,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16));
                 }
 

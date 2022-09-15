@@ -61,7 +61,7 @@ namespace Microsoft.ClearScript
 
             set
             {
-                if (!typeof(T).IsAssignableFrom(ref value))
+                if (!typeof(T).IsAssignableFromValue(ref value))
                 {
                     throw new InvalidOperationException("Assignment invalid due to type mismatch");
                 }

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -21,7 +20,7 @@ namespace Microsoft.ClearScript.Util
             {
                 return (x.Module == y.Module) && (x.MetadataToken == y.MetadataToken);
             }
-            catch (Exception)
+            catch
             {
                 return x == y;
             }

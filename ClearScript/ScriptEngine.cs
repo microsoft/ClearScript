@@ -270,8 +270,8 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// When this property is set to <c>true</c>, the script engine bypasses the default method
         /// binding algorithm and uses reflection-based method binding instead. This approach
-        /// abandons support for generic methods and other features, but it avoids engaging the
-        /// dynamic infrastructure.
+        /// abandons support for generic type inference and other features, but it avoids engaging
+        /// the dynamic infrastructure.
         /// </remarks>
         /// <seealso cref="UseReflectionBindFallback"/>
         public bool DisableDynamicBinding { get; set; }
@@ -1469,7 +1469,7 @@ namespace Microsoft.ClearScript
         public object Invoke(string funcName, params object[] args)
         {
             MiscHelpers.VerifyNonBlankArgument(funcName, nameof(funcName), "Invalid function name");
-            return ((IDynamic)Script).InvokeMethod(funcName, args ?? ArrayHelpers.GetEmptyArray<object>());
+            return Global.InvokeMethod(funcName, args ?? ArrayHelpers.GetEmptyArray<object>());
         }
 
         /// <summary>
@@ -1812,7 +1812,7 @@ namespace Microsoft.ClearScript
                 return GetOrCreateHostItemForHostObject(hostMethod, hostMethod, flags, createHostItem);
             }
 
-            if (target is HostVariableBase hostVariable)
+            if (target is HostVariable hostVariable)
             {
                 return GetOrCreateHostItemForHostObject(hostVariable, hostVariable, flags, createHostItem);
             }

@@ -179,7 +179,7 @@ namespace Microsoft.ClearScript.JavaScript
                 {
                     invoked = true;
                     var result = function.Invoke(false, module, exports, require);
-                    exports = ((dynamic)module).exports;
+                    exports = (module is CommonJSLegacyModule legacyModule) ? legacyModule.exports : ((ScriptObject)module).GetProperty("exports");
                     return result;
                 }
 

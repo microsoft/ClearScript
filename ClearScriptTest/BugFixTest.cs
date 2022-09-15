@@ -68,7 +68,7 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_NullArgBinding_Ambiguous()
         {
             engine.AddHostObject("lib", new HostTypeCollection("mscorlib"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("lib.System.Console.WriteLine(null)"));
+            TestUtil.AssertException<RuntimeBinderException, AmbiguousMatchException>(() => engine.Execute("lib.System.Console.WriteLine(null)"));
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -311,10 +311,11 @@ namespace Microsoft.ClearScript.Test
                     Assert.AreEqual('A', engine.Evaluate("host.toChar(65)"));
                     Assert.AreEqual(0.0F, engine.Evaluate("host.toSingle(0)"));
                     Assert.AreEqual(1.0F, engine.Evaluate("host.toSingle(1)"));
+                    Assert.AreEqual(123.0F, engine.Evaluate("host.toSingle(123)"));
                 }
             }
 
-            Assert.AreEqual(2L, HostItem.GetCoreBindCount());
+            Assert.AreEqual(3L, HostItem.GetCoreBindCount());
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -582,6 +583,38 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AmbiguousIndexer_ImplicitConversion()
+        {
+            IAmbiguousIndexer indexer = new AmbiguousIndexer();
+            engine.AddRestrictedHostObject("indexer", indexer);
+            engine.AddHostType("DayOfWeek", typeof(MyDayOfWeek));
+
+            engine.Execute("indexer.Item.set(123, 456)");
+            Assert.AreEqual(456, engine.Evaluate("indexer.Item(123)"));
+            Assert.IsNull(engine.Evaluate("indexer.Item(789)"));
+
+            engine.Execute("indexer.Item.set(DayOfWeek.Thursday, DayOfWeek.Sunday)");
+            Assert.AreEqual(MyDayOfWeek.Sunday, engine.Evaluate("indexer.Item(DayOfWeek.Thursday)"));
+            Assert.IsNull(engine.Evaluate("indexer.Item(DayOfWeek.Tuesday)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AmbiguousIndexer_ImplicitConversion_Nullable()
+        {
+            IAmbiguousIndexer2 indexer = new AmbiguousIndexer();
+            engine.AddRestrictedHostObject("indexer", indexer);
+            engine.AddHostType("DayOfWeek", typeof(MyDayOfWeek));
+
+            engine.Execute("indexer.Item.set(123, 456)");
+            Assert.AreEqual(456, engine.Evaluate("indexer.Item(123)"));
+            Assert.IsNull(engine.Evaluate("indexer.Item(789)"));
+
+            engine.Execute("indexer.Item.set(DayOfWeek.Thursday, DayOfWeek.Sunday)");
+            Assert.AreEqual(MyDayOfWeek.Sunday, engine.Evaluate("indexer.Item(DayOfWeek.Thursday)"));
+            Assert.IsNull(engine.Evaluate("indexer.Item(DayOfWeek.Tuesday)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
         public void BugFix_InaccessiblePropertyAccessors()
         {
             engine.Script.foo = new InaccessiblePropertyAccessors();
@@ -665,7 +698,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_FinalizerHang_V8ScriptItem()
         {
-            engine.Script.foo = new Action<object>(arg => {});
+            engine.Script.foo = new Action<object>(_ => {});
             engine.Script.bar = new Action(() =>
             {
                 GC.Collect();
@@ -789,13 +822,13 @@ namespace Microsoft.ClearScript.Test
             engine.Script.nullableDecimalFunc = new Func<decimal?, decimal?>(arg => arg);
 
             Assert.AreEqual(123, engine.Evaluate("sbyteFunc(123)"));
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("sbyteFunc(234)"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("sbyteFunc(234)"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("sbyteFunc(123.5)"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("sbyteFunc(Math.PI)"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("sbyteFunc(host.toDecimal(Math.PI))"));
 
             Assert.AreEqual(123, engine.Evaluate("nullableSByteFunc(123)"));
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("nullableSByteFunc(234)"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("nullableSByteFunc(234)"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("nullableSByteFunc(123.5)"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("nullableSByteFunc(Math.PI)"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("nullableSByteFunc(host.toDecimal(Math.PI))"));
@@ -842,13 +875,13 @@ namespace Microsoft.ClearScript.Test
             engine.Script.test = new NumericArgConversionTest();
 
             Assert.AreEqual(123, engine.Evaluate("test.SByteField = 123; test.SByteField"));
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.SByteField = 234"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteField = 234"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteField = 123.5"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteField = Math.PI"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteField = host.toDecimal(Math.PI)"));
 
             Assert.AreEqual(123, engine.Evaluate("test.NullableSByteField = 123; test.NullableSByteField"));
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.NullableSByteField = 234"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteField = 234"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteField = 123.5"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteField = Math.PI"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteField = host.toDecimal(Math.PI)"));
@@ -895,48 +928,48 @@ namespace Microsoft.ClearScript.Test
             engine.Script.test = new NumericArgConversionTest();
 
             Assert.AreEqual(123, engine.Evaluate("test.SByteMethod(123)"));
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.SByteMethod(234)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.SByteMethod(123.5)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.SByteMethod(Math.PI)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.SByteMethod(host.toDecimal(Math.PI))"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteMethod(234)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.SByteMethod(123.5)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.SByteMethod(Math.PI)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.SByteMethod(host.toDecimal(Math.PI))"));
 
             Assert.AreEqual(123, engine.Evaluate("test.NullableSByteMethod(123)"));
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.NullableSByteMethod(234)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableSByteMethod(123.5)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableSByteMethod(Math.PI)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableSByteMethod(host.toDecimal(Math.PI))"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteMethod(234)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.NullableSByteMethod(123.5)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.NullableSByteMethod(Math.PI)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.NullableSByteMethod(host.toDecimal(Math.PI))"));
             Assert.IsNull(engine.Evaluate("test.NullableSByteMethod(null)"));
 
             Assert.AreEqual(123, engine.Evaluate("test.FloatMethod(123)"));
             Assert.AreEqual(123.5f, engine.Evaluate("test.FloatMethod(123.5)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.FloatMethod(Math.PI)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.FloatMethod(host.toDecimal(Math.PI))"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.FloatMethod(Math.PI)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.FloatMethod(host.toDecimal(Math.PI))"));
 
             Assert.AreEqual(123, engine.Evaluate("test.NullableFloatMethod(123)"));
             Assert.AreEqual(123.5f, engine.Evaluate("test.NullableFloatMethod(123.5)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableFloatMethod(Math.PI)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableFloatMethod(host.toDecimal(Math.PI))"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.NullableFloatMethod(Math.PI)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.NullableFloatMethod(host.toDecimal(Math.PI))"));
             Assert.IsNull(engine.Evaluate("test.NullableFloatMethod(null)"));
 
             Assert.AreEqual(123, engine.Evaluate("test.DoubleMethod(123)"));
             Assert.AreEqual(123.5f, engine.Evaluate("test.DoubleMethod(123.5)"));
             Assert.AreEqual(Math.PI, engine.Evaluate("test.DoubleMethod(Math.PI)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.DoubleMethod(host.toDecimal(Math.PI))"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.DoubleMethod(host.toDecimal(Math.PI))"));
 
             Assert.AreEqual(123, engine.Evaluate("test.NullableDoubleMethod(123)"));
             Assert.AreEqual(123.5f, engine.Evaluate("test.NullableDoubleMethod(123.5)"));
             Assert.AreEqual(Math.PI, engine.Evaluate("test.NullableDoubleMethod(Math.PI)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableDoubleMethod(host.toDecimal(Math.PI))"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.NullableDoubleMethod(host.toDecimal(Math.PI))"));
             Assert.IsNull(engine.Evaluate("test.NullableDoubleMethod(null)"));
 
             Assert.AreEqual(123, engine.Evaluate("test.DecimalMethod(123)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.DecimalMethod(123.5)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.DecimalMethod(Math.PI)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.DecimalMethod(123.5)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.DecimalMethod(Math.PI)"));
             Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.DecimalMethod(host.toDecimal(Math.PI))"));
 
             Assert.AreEqual(123, engine.Evaluate("test.NullableDecimalMethod(123)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableDecimalMethod(123.5)"));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("test.NullableDecimalMethod(Math.PI)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.NullableDecimalMethod(123.5)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("test.NullableDecimalMethod(Math.PI)"));
             Assert.AreEqual((double)(decimal)Math.PI, engine.Evaluate("test.NullableDecimalMethod(host.toDecimal(Math.PI))"));
             Assert.IsNull(engine.Evaluate("test.NullableDecimalMethod(null)"));
         }
@@ -948,13 +981,13 @@ namespace Microsoft.ClearScript.Test
             engine.Script.test = new NumericArgConversionTest();
 
             Assert.AreEqual(123, engine.Evaluate("test.SByteProperty = 123; test.SByteProperty"));
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.SByteProperty = 234"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteProperty = 234"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteProperty = 123.5"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteProperty = Math.PI"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.SByteProperty = host.toDecimal(Math.PI)"));
 
             Assert.AreEqual(123, engine.Evaluate("test.NullableSByteProperty = 123; test.NullableSByteProperty"));
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("test.NullableSByteProperty = 234"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteProperty = 234"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteProperty = 123.5"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteProperty = Math.PI"));
             TestUtil.AssertException<ArgumentException>(() => engine.Execute("test.NullableSByteProperty = host.toDecimal(Math.PI)"));
@@ -1138,7 +1171,7 @@ namespace Microsoft.ClearScript.Test
             {
                 foo();
             }
-            catch (Exception)
+            catch
             {
             }
 
@@ -1349,6 +1382,29 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("<foo>bar</foo>", engine.Evaluate("doc.Root.Elements('foo').First().ToString()"));
             Assert.AreEqual(1, engine.Evaluate("doc.Root.Elements(new XmlName('foo')).Count()"));
             Assert.AreEqual("<foo>bar</foo>", engine.Evaluate("doc.Root.Elements(new XmlName('foo')).First().ToString()"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_ImplicitConversion_Constructor()
+        {
+            engine.AddHostType(typeof(ImplicitConversionTest));
+            engine.AddHostType(typeof(MyDayOfWeek));
+            engine.Execute("test = new ImplicitConversionTest(123)");
+            Assert.AreEqual(123, engine.Evaluate("test.Data"));
+            engine.Execute("test = new ImplicitConversionTest(MyDayOfWeek.Thursday)");
+            Assert.AreEqual(DayOfWeek.Thursday, engine.Evaluate("test.Data"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_ImplicitConversion_ReflectionBoundMethod()
+        {
+            engine.DisableDynamicBinding = true;
+            engine.Script.test = new ImplicitConversionTest(0);
+            engine.AddHostType(typeof(MyDayOfWeek));
+            engine.Execute("test.SetData(123)");
+            Assert.AreEqual(123, engine.Evaluate("test.Data"));
+            engine.Execute("test.SetData(MyDayOfWeek.Thursday)");
+            Assert.AreEqual(DayOfWeek.Thursday, engine.Evaluate("test.Data"));
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -1585,6 +1641,70 @@ namespace Microsoft.ClearScript.Test
             Assert.IsNull(engine.Evaluate("new SystemException().TargetSite"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_EnumBindings_ZeroFirst()
+        {
+            engine.Script.test = new BindingTestObject();
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(0)"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(1)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_EnumBindings_NonZeroFirst()
+        {
+            engine.Script.test = new BindingTestObject();
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(1)"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(0)"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_EnumBindings_ManyZeroes()
+        {
+            engine.Script.test = new BindingTestObject();
+            engine.Script.host = new HostFunctions();
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(0)"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toSByte(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toByte(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toInt16(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toUInt16(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toInt32(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toUInt32(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toInt64(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toUInt64(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toSingle(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toDouble(0))"));
+            Assert.AreEqual(DayOfWeek.Sunday, engine.Evaluate("test.GetDay(host.toDecimal(0))"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_EnumBindings_ManyNonZeroes()
+        {
+            engine.Script.test = new BindingTestObject();
+            engine.Script.host = new HostFunctions();
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(1)"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toSByte(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toByte(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toInt16(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toUInt16(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toInt32(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toUInt32(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toInt64(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toUInt64(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toSingle(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toDouble(1))"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("test.GetDay(host.toDecimal(1))"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_Binding_DefaultArgsAndParamArray()
+        {
+            engine.Script.test = new BindingTestObject();
+            Assert.AreEqual("123, 456, ", engine.Evaluate("test.Format(123)"));
+            Assert.AreEqual("123, 789, ", engine.Evaluate("test.Format(123, 789)"));
+            Assert.AreEqual("123, 789, 456", engine.Evaluate("test.Format(123, 789, 456)"));
+            Assert.AreEqual("123, 789, 456, 987", engine.Evaluate("test.Format(123, 789, 456, 987)"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1650,23 +1770,27 @@ namespace Microsoft.ClearScript.Test
             object this[DayOfWeek d] { get; set; }
         }
 
-        // ReSharper disable PossibleInterfaceMemberAmbiguity
+        public interface IAmbiguousIndexerBase3
+        {
+            object this[int i] { get; set; }
+            object this[char? c] { get; set; }
+        }
 
         public interface IAmbiguousIndexer : IAmbiguousIndexerBase1, IAmbiguousIndexerBase2
         {
-            #pragma warning disable 109 // The keyword 'new' is redundant because indexer 'this' hides nothing
-
             new object this[int i] { get; set; }
-
-            #pragma warning restore 109 // The keyword 'new' is redundant because indexer 'this' hides nothing
         }
 
-        // ReSharper restore PossibleInterfaceMemberAmbiguity
+        public interface IAmbiguousIndexer2 : IAmbiguousIndexerBase1, IAmbiguousIndexerBase3
+        {
+            new object this[int i] { get; set; }
+        }
 
-        public class AmbiguousIndexer : IAmbiguousIndexer
+        public class AmbiguousIndexer : IAmbiguousIndexer, IAmbiguousIndexer2
         {
             private readonly IDictionary byInteger = new ListDictionary();
             private readonly IDictionary byDayOfWeek = new ListDictionary();
+            private readonly IDictionary byNullableChar = new ListDictionary();
 
             public object this[int key]
             {
@@ -1678,6 +1802,61 @@ namespace Microsoft.ClearScript.Test
             {
                 get => byDayOfWeek[key];
                 set => byDayOfWeek[key] = value;
+            }
+
+            public object this[char? key]
+            {
+                get => byNullableChar[key];
+                set => byNullableChar[key] = value;
+            }
+        }
+
+        [ImmutableValue]
+        public struct MyDayOfWeek
+        {
+            private readonly DayOfWeek day;
+
+            public static MyDayOfWeek Sunday => DayOfWeek.Sunday;
+            public static MyDayOfWeek Monday => DayOfWeek.Monday;
+            public static MyDayOfWeek Tuesday => DayOfWeek.Tuesday;
+            public static MyDayOfWeek Wednesday => DayOfWeek.Wednesday;
+            public static MyDayOfWeek Thursday => DayOfWeek.Thursday;
+            public static MyDayOfWeek Friday => DayOfWeek.Friday;
+            public static MyDayOfWeek Saturday => DayOfWeek.Saturday;
+
+            private MyDayOfWeek(DayOfWeek day) => this.day = day;
+
+            public static implicit operator DayOfWeek(MyDayOfWeek self) => self.day;
+
+            public static implicit operator MyDayOfWeek(DayOfWeek day) => new MyDayOfWeek(day);
+
+            public static implicit operator char?(MyDayOfWeek self) => (self.day == DayOfWeek.Sunday) ? null : (char?)self.day;
+
+            public static implicit operator MyDayOfWeek(char? value) => new MyDayOfWeek((DayOfWeek)value.GetValueOrDefault());
+        }
+
+        public class ImplicitConversionTest
+        {
+            public object Data { get; private set; }
+
+            public ImplicitConversionTest(int data)
+            {
+                Data = data;
+            }
+
+            public ImplicitConversionTest(DayOfWeek data)
+            {
+                Data = data;
+            }
+
+            public void SetData(int data)
+            {
+                Data = data;
+            }
+
+            public void SetData(DayOfWeek data)
+            {
+                Data = data;
             }
         }
 
@@ -1969,11 +2148,23 @@ namespace Microsoft.ClearScript.Test
         {
             private delegate void TestEventHandler(int value);
 
+            // ReSharper disable once EventNeverSubscribedTo.Local
             private event TestEventHandler TestEvent;
 
             public void FireTestEvent(int value)
             {
                 TestEvent?.Invoke(value);
+            }
+        }
+
+        public class BindingTestObject
+        {
+            public DayOfWeek GetDay(DayOfWeek day) => day;
+
+            public string Format(int a, int b = 456, params int[] args)
+            {
+                var argsString = string.Join(", ", args);
+                return $"{a}, {b}, {argsString}";
             }
         }
 

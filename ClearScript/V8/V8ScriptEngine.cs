@@ -1126,13 +1126,15 @@ namespace Microsoft.ClearScript.V8
         private void CompletePromise<T>(Task<T> task, object resolve, object reject)
         {
             Func<T> getResult = () => task.Result;
-            Script.EngineInternal.completePromiseWithResult(getResult, resolve, reject);
+            var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
+            engineInternal.InvokeMethod("completePromiseWithResult", getResult, resolve, reject);
         }
 
         private void CompletePromise(Task task, object resolve, object reject)
         {
             Action wait = task.Wait;
-            Script.EngineInternal.completePromise(wait, resolve, reject);
+            var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
+            engineInternal.InvokeMethod("completePromise", wait, resolve, reject);
         }
 
         partial void TryConvertValueTaskToPromise(object obj, Action<object> setResult);
@@ -1206,7 +1208,9 @@ namespace Microsoft.ClearScript.V8
         {
             return ScriptInvoke(() =>
             {
-                Script.EngineInternal.commandHolder.command = command;
+                var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
+                var commandHolder = (ScriptObject)engineInternal.GetProperty("commandHolder");
+                commandHolder.SetProperty("command", command);
                 return base.ExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.commandHolder.command))");
             });
         }
@@ -1221,7 +1225,8 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public override string GetStackTrace()
         {
-            string stackTrace = Script.EngineInternal.getStackTrace();
+            var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
+            var stackTrace = (string)engineInternal.InvokeMethod("getStackTrace");
             var lines = stackTrace.Split('\n');
             return string.Join("\n", lines.Skip(2));
         }
@@ -1616,7 +1621,8 @@ namespace Microsoft.ClearScript.V8
             {
                 try
                 {
-                    Script.EngineInternal.throwValue(error);
+                    var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
+                    engineInternal.InvokeMethod("throwValue", error);
                 }
                 catch (Exception exception)
                 {
@@ -1682,9 +1688,10 @@ namespace Microsoft.ClearScript.V8
             private readonly HashSet<object> cycleDetectionSet = new HashSet<object>();
 
             /// <exclude/>
-            public JsonHelper(ScriptEngine engine)
+            public JsonHelper(V8ScriptEngine engine)
             {
-                stringify = engine.Script.JSON.stringify;
+                var json = (ScriptObject)engine.script.GetProperty("JSON");
+                stringify = (ScriptObject)json.GetProperty("stringify");
             }
 
             /// <exclude/>

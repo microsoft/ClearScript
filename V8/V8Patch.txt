@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 9ddff70ab9..10cbbd27e2 100644
+index 686fac5385..1193982dba 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -1021,7 +1021,7 @@ config("toolchain") {
+@@ -1057,7 +1057,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
@@ -11,8 +11,21 @@ index 9ddff70ab9..10cbbd27e2 100644
    ldflags = []
  
    if (v8_current_cpu == "arm") {
+diff --git a/include/cppgc/internal/write-barrier.h b/include/cppgc/internal/write-barrier.h
+index d68269dd4f..4d4fde6873 100644
+--- a/include/cppgc/internal/write-barrier.h
++++ b/include/cppgc/internal/write-barrier.h
+@@ -92,7 +92,7 @@ class V8_EXPORT WriteBarrier final {
+ #else  // !CPPGC_YOUNG_GENERATION
+   template <GenerationalBarrierType>
+   static V8_INLINE void GenerationalBarrier(const Params& params,
+-                                            const void* slot){};
++                                            const void* slot){}
+ #endif  // CPPGC_YOUNG_GENERATION
+ 
+ #if V8_ENABLE_CHECKS
 diff --git a/include/v8-initialization.h b/include/v8-initialization.h
-index 48c7fb6b48..31e1668098 100644
+index 66adf98c17..4f7f157372 100644
 --- a/include/v8-initialization.h
 +++ b/include/v8-initialization.h
 @@ -139,6 +139,7 @@ class V8_EXPORT V8 {
@@ -24,10 +37,10 @@ index 48c7fb6b48..31e1668098 100644
    /**
     * Initialize the ICU library bundled with V8. The embedder should only
 diff --git a/include/v8-template.h b/include/v8-template.h
-index 0afdccaafb..3d2893e43e 100644
+index 669012a981..b19ea9c824 100644
 --- a/include/v8-template.h
 +++ b/include/v8-template.h
-@@ -975,6 +975,9 @@ class V8_EXPORT ObjectTemplate : public Template {
+@@ -937,6 +937,9 @@ class V8_EXPORT ObjectTemplate : public Template {
     */
    void SetImmutableProto();
  
@@ -38,10 +51,10 @@ index 0afdccaafb..3d2893e43e 100644
     * Support for TC39 "dynamic code brand checks" proposal.
     *
 diff --git a/src/api/api-natives.cc b/src/api/api-natives.cc
-index 29b94d8dea..5d8a605958 100644
+index 562b7849b4..f585106ffd 100644
 --- a/src/api/api-natives.cc
 +++ b/src/api/api-natives.cc
-@@ -446,6 +446,9 @@ MaybeHandle<JSObject> InstantiateObject(Isolate* isolate,
+@@ -443,6 +443,9 @@ MaybeHandle<JSObject> InstantiateObject(Isolate* isolate,
    if (info->immutable_proto()) {
      JSObject::SetImmutableProto(object);
    }
@@ -52,10 +65,10 @@ index 29b94d8dea..5d8a605958 100644
      // Keep prototypes in slow-mode. Let them be lazily turned fast later on.
      // TODO(dcarney): is this necessary?
 diff --git a/src/api/api.cc b/src/api/api.cc
-index 8423f288ef..aabaef39d3 100644
+index bbab4c72ac..6aeaa320dd 100644
 --- a/src/api/api.cc
 +++ b/src/api/api.cc
-@@ -2000,6 +2000,17 @@ void ObjectTemplate::SetImmutableProto() {
+@@ -1964,6 +1964,17 @@ void ObjectTemplate::SetImmutableProto() {
    self->set_immutable_proto(true);
  }
  
@@ -73,7 +86,7 @@ index 8423f288ef..aabaef39d3 100644
  bool ObjectTemplate::IsCodeLike() const {
    return Utils::OpenHandle(this)->code_like();
  }
-@@ -6198,6 +6209,10 @@ bool v8::V8::InitializeICU(const char* icu_data_file) {
+@@ -6236,6 +6247,10 @@ bool v8::V8::InitializeICU(const char* icu_data_file) {
    return i::InitializeICU(icu_data_file);
  }
  
@@ -114,24 +127,24 @@ index ac010509bd..2da5a0ae61 100644
  #if V8_CC_MSVC && V8_HOST_ARCH_IA32
  // __readfsdword is supposed to be declared in intrin.h but it is missing from
 diff --git a/src/builtins/builtins-async-module.cc b/src/builtins/builtins-async-module.cc
-index 1d7b6fc766..a085edec59 100644
+index 417e6f1dfa..108dc20972 100644
 --- a/src/builtins/builtins-async-module.cc
 +++ b/src/builtins/builtins-async-module.cc
 @@ -15,7 +15,8 @@ BUILTIN(CallAsyncModuleFulfilled) {
        SourceTextModule::cast(isolate->context().get(
            SourceTextModule::ExecuteAsyncModuleContextSlots::kModule)),
        isolate);
--  SourceTextModule::AsyncModuleExecutionFulfilled(isolate, module);
+-  if (SourceTextModule::AsyncModuleExecutionFulfilled(isolate, module)
 +  Handle<Object> result(args.at(1));
-+  SourceTextModule::AsyncModuleExecutionFulfilled(isolate, module, result);
-   return ReadOnlyRoots(isolate).undefined_value();
- }
- 
++  if (SourceTextModule::AsyncModuleExecutionFulfilled(isolate, module, result)
+           .IsNothing()) {
+     // The evaluation of async module can not throwing a JavaScript observable
+     // exception.
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index 5df5842692..6da81107da 100644
+index a984d2ce73..be78caa6b1 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -1898,6 +1898,10 @@ TNode<Uint32T> CodeStubAssembler::LoadMapBitField3(TNode<Map> map) {
+@@ -1841,6 +1841,10 @@ TNode<Uint32T> CodeStubAssembler::LoadMapBitField3(TNode<Map> map) {
    return LoadObjectField<Uint32T>(map, Map::kBitField3Offset);
  }
  
@@ -142,7 +155,7 @@ index 5df5842692..6da81107da 100644
  TNode<Uint16T> CodeStubAssembler::LoadMapInstanceType(TNode<Map> map) {
    return LoadObjectField<Uint16T>(map, Map::kInstanceTypeOffset);
  }
-@@ -13644,6 +13648,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
+@@ -13638,6 +13642,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -155,10 +168,10 @@ index 5df5842692..6da81107da 100644
        Word32And(LoadMapBitField(map),
                  Int32Constant(Map::Bits1::IsCallableBit::kMask |
 diff --git a/src/codegen/code-stub-assembler.h b/src/codegen/code-stub-assembler.h
-index 30bbd9c732..ecfc83d732 100644
+index 9633ba5333..26dde448bb 100644
 --- a/src/codegen/code-stub-assembler.h
 +++ b/src/codegen/code-stub-assembler.h
-@@ -1404,6 +1404,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
+@@ -1388,6 +1388,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
    TNode<Int32T> LoadMapBitField2(TNode<Map> map);
    // Load bit field 3 of a map.
    TNode<Uint32T> LoadMapBitField3(TNode<Map> map);
@@ -167,8 +180,21 @@ index 30bbd9c732..ecfc83d732 100644
    // Load the instance type of a map.
    TNode<Uint16T> LoadMapInstanceType(TNode<Map> map);
    // Load the ElementsKind of a map.
+diff --git a/src/common/globals.h b/src/common/globals.h
+index b17792f6e0..957795294f 100644
+--- a/src/common/globals.h
++++ b/src/common/globals.h
+@@ -193,7 +193,7 @@ using CodeT = Code;
+ //
+ #if V8_HAS_PTHREAD_JIT_WRITE_PROTECT && \
+     !(defined(V8_COMPRESS_POINTERS) && !defined(V8_EXTERNAL_CODE_SPACE))
+-#define V8_HEAP_USE_PTHREAD_JIT_WRITE_PROTECT true
++#define V8_HEAP_USE_PTHREAD_JIT_WRITE_PROTECT false
+ #else
+ #define V8_HEAP_USE_PTHREAD_JIT_WRITE_PROTECT false
+ #endif
 diff --git a/src/diagnostics/unwinding-info-win64.cc b/src/diagnostics/unwinding-info-win64.cc
-index d50767421a..f3fa0f3a70 100644
+index 4a70a28478..420eff5a33 100644
 --- a/src/diagnostics/unwinding-info-win64.cc
 +++ b/src/diagnostics/unwinding-info-win64.cc
 @@ -463,6 +463,14 @@ void InitUnwindingRecord(Record* record, size_t code_size_in_bytes) {
@@ -247,10 +273,10 @@ index d50767421a..f3fa0f3a70 100644
        // Unprotect reserved page.
        DWORD old_protect;
 diff --git a/src/execution/isolate.h b/src/execution/isolate.h
-index f075555ba4..f48edc88a0 100644
+index 1b6e86c7c0..79dc89f0d6 100644
 --- a/src/execution/isolate.h
 +++ b/src/execution/isolate.h
-@@ -635,7 +635,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
+@@ -667,7 +667,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
    // Returns the isolate inside which the current thread is running.
    V8_INLINE static Isolate* Current() {
      Isolate* isolate = TryGetCurrent();
@@ -275,10 +301,10 @@ index 90e46ea793..cf38c2d7f4 100644
    set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
    real_climit_ = limit;
 diff --git a/src/heap/factory.cc b/src/heap/factory.cc
-index 32e5309881..8fcacabb42 100644
+index 3d7a767c0c..3012071ee7 100644
 --- a/src/heap/factory.cc
 +++ b/src/heap/factory.cc
-@@ -1874,6 +1874,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
+@@ -2056,6 +2056,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
        Map::Bits3::ConstructionCounterBits::encode(Map::kNoSlackTracking) |
        Map::Bits3::IsExtensibleBit::encode(true);
    map.set_bit_field3(bit_field3);
@@ -287,7 +313,7 @@ index 32e5309881..8fcacabb42 100644
    ReadOnlyRoots ro_roots(roots);
    HeapObject raw_null_value = ro_roots.null_value();
 diff --git a/src/heap/setup-heap-internal.cc b/src/heap/setup-heap-internal.cc
-index 2b005732e8..7fd32c09ee 100644
+index 0e86540d0a..2f6a1df2b1 100644
 --- a/src/heap/setup-heap-internal.cc
 +++ b/src/heap/setup-heap-internal.cc
 @@ -181,6 +181,7 @@ AllocationResult Heap::AllocatePartialMap(InstanceType instance_type,
@@ -351,10 +377,10 @@ index e127e75f10..b0e4bd2d68 100644
  // Like above, but using the default icudt[lb].dat location if icu_data_file is
  // not specified.
 diff --git a/src/init/v8.cc b/src/init/v8.cc
-index 87baefd277..50a27d3b4d 100644
+index e45a79c079..45c9bc445c 100644
 --- a/src/init/v8.cc
 +++ b/src/init/v8.cc
-@@ -89,7 +89,6 @@ V8_DECLARE_ONCE(init_snapshot_once);
+@@ -92,7 +92,6 @@ V8_DECLARE_ONCE(init_snapshot_once);
  
  void V8::InitializePlatform(v8::Platform* platform) {
    AdvanceStartupState(V8StartupState::kPlatformInitializing);
@@ -363,7 +389,7 @@ index 87baefd277..50a27d3b4d 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/objects/intl-objects.h b/src/objects/intl-objects.h
-index c136479388..2ce7e172f7 100644
+index 4fbfe349da..30c3df9db2 100644
 --- a/src/objects/intl-objects.h
 +++ b/src/objects/intl-objects.h
 @@ -285,7 +285,7 @@ class Intl {
@@ -376,7 +402,7 @@ index c136479388..2ce7e172f7 100644
        std::vector<std::string> all_locales;
        const char* loc;
 diff --git a/src/objects/js-date-time-format.cc b/src/objects/js-date-time-format.cc
-index 955370b7ba..f501148e16 100644
+index 2aeb62e668..61531327d6 100644
 --- a/src/objects/js-date-time-format.cc
 +++ b/src/objects/js-date-time-format.cc
 @@ -1583,8 +1583,12 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
@@ -394,10 +420,10 @@ index 955370b7ba..f501148e16 100644
    if (maybe_resolve_locale.IsNothing()) {
      THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError),
 diff --git a/src/objects/js-objects.cc b/src/objects/js-objects.cc
-index b606f87633..b4f4379ac6 100644
+index aa185c71c0..1196d88987 100644
 --- a/src/objects/js-objects.cc
 +++ b/src/objects/js-objects.cc
-@@ -5069,6 +5069,13 @@ void JSObject::SetImmutableProto(Handle<JSObject> object) {
+@@ -5095,6 +5095,13 @@ void JSObject::SetImmutableProto(Handle<JSObject> object) {
    object->set_map(*new_map, kReleaseStore);
  }
  
@@ -412,10 +438,10 @@ index b606f87633..b4f4379ac6 100644
                                          JavaScriptArguments* args,
                                          uint32_t arg_count,
 diff --git a/src/objects/js-objects.h b/src/objects/js-objects.h
-index 0a2773b127..79a2edada4 100644
+index 002c9d0500..1be07053b7 100644
 --- a/src/objects/js-objects.h
 +++ b/src/objects/js-objects.h
-@@ -730,6 +730,8 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
+@@ -732,6 +732,8 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
    // Never called from JavaScript
    static void SetImmutableProto(Handle<JSObject> object);
  
@@ -425,7 +451,7 @@ index 0a2773b127..79a2edada4 100644
    // the caller to initialize object header. Fill the pre-allocated fields with
    // undefined_value and the rest with filler_map.
 diff --git a/src/objects/map-inl.h b/src/objects/map-inl.h
-index 4e65b2f746..56063e17a0 100644
+index 7355e70533..1a999a1e8b 100644
 --- a/src/objects/map-inl.h
 +++ b/src/objects/map-inl.h
 @@ -114,6 +114,9 @@ BIT_FIELD_ACCESSORS(Map, bit_field3, may_have_interesting_symbols,
@@ -439,10 +465,10 @@ index 4e65b2f746..56063e17a0 100644
    DCHECK(has_named_interceptor());
    FunctionTemplateInfo info = GetFunctionTemplateInfo(cage_base);
 diff --git a/src/objects/map.cc b/src/objects/map.cc
-index f8bd209dcf..bb23f90e44 100644
+index 0db0b71104..7df72dafea 100644
 --- a/src/objects/map.cc
 +++ b/src/objects/map.cc
-@@ -1169,6 +1169,7 @@ Handle<Map> Map::RawCopy(Isolate* isolate, Handle<Map> src_handle,
+@@ -1173,6 +1173,7 @@ Handle<Map> Map::RawCopy(Isolate* isolate, Handle<Map> src_handle,
      }
      // Same as bit_field comment above.
      raw.set_bit_field3(new_bit_field3);
@@ -450,7 +476,7 @@ index f8bd209dcf..bb23f90e44 100644
      raw.clear_padding();
    }
    Handle<HeapObject> prototype(src_handle->prototype(), isolate);
-@@ -1293,6 +1294,12 @@ Handle<Map> Map::TransitionToImmutableProto(Isolate* isolate, Handle<Map> map) {
+@@ -1297,6 +1298,12 @@ Handle<Map> Map::TransitionToImmutableProto(Isolate* isolate, Handle<Map> map) {
    return new_map;
  }
  
@@ -464,11 +490,11 @@ index f8bd209dcf..bb23f90e44 100644
  void EnsureInitialMap(Isolate* isolate, Handle<Map> map) {
  #ifdef DEBUG
 diff --git a/src/objects/map.h b/src/objects/map.h
-index cc38d4e694..6fd89c8711 100644
+index 0fe14ffcec..9a306e515a 100644
 --- a/src/objects/map.h
 +++ b/src/objects/map.h
-@@ -313,6 +313,11 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
-   STATIC_ASSERT(kSlackTrackingCounterStart <=
+@@ -318,6 +318,11 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+   static_assert(kSlackTrackingCounterStart <=
                  Bits3::ConstructionCounterBits::kMax);
  
 +  // Bit positions for |host_bits|.
@@ -479,7 +505,7 @@ index cc38d4e694..6fd89c8711 100644
    // Inobject slack tracking is the way to reclaim unused inobject space.
    //
    // The instance size is initially determined by adding some slack to
-@@ -646,6 +651,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -650,6 +655,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
  
    DECL_BOOLEAN_ACCESSORS(is_immutable_proto)
  
@@ -488,7 +514,7 @@ index cc38d4e694..6fd89c8711 100644
    // This counter is used for in-object slack tracking.
    // The in-object slack tracking is considered enabled when the counter is
    // non zero. The counter only has a valid count for initial maps. For
-@@ -814,6 +821,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -818,6 +825,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
    static Handle<Map> TransitionToImmutableProto(Isolate* isolate,
                                                  Handle<Map> map);
  
@@ -496,7 +522,7 @@ index cc38d4e694..6fd89c8711 100644
 +
    static const int kMaxPreAllocatedPropertyFields = 255;
  
-   STATIC_ASSERT(kInstanceTypeOffset == Internals::kMapInstanceTypeOffset);
+   static_assert(kInstanceTypeOffset == Internals::kMapInstanceTypeOffset);
 diff --git a/src/objects/map.tq b/src/objects/map.tq
 index a8b367ff82..98637087ee 100644
 --- a/src/objects/map.tq
@@ -524,10 +550,10 @@ index a8b367ff82..98637087ee 100644
    prototype: JSReceiver|Null;
    constructor_or_back_pointer_or_native_context: Object;
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index b3404cadfc..dd201f7ee9 100644
+index 02889457f9..3a68c6ca23 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
-@@ -882,6 +882,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -886,6 +886,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();
@@ -541,7 +567,7 @@ index b3404cadfc..dd201f7ee9 100644
    return isolate->factory()->object_string();
  }
 diff --git a/src/objects/source-text-module.cc b/src/objects/source-text-module.cc
-index 532fbab4b9..c2ee45cd4a 100644
+index eac227b7a5..b04523843b 100644
 --- a/src/objects/source-text-module.cc
 +++ b/src/objects/source-text-module.cc
 @@ -737,7 +737,7 @@ MaybeHandle<Object> SourceTextModule::Evaluate(
@@ -556,13 +582,13 @@ index 532fbab4b9..c2ee45cd4a 100644
 @@ -750,7 +750,7 @@ MaybeHandle<Object> SourceTextModule::Evaluate(
  }
  
- void SourceTextModule::AsyncModuleExecutionFulfilled(
+ Maybe<bool> SourceTextModule::AsyncModuleExecutionFulfilled(
 -    Isolate* isolate, Handle<SourceTextModule> module) {
 +    Isolate* isolate, Handle<SourceTextModule> module, Handle<Object> result) {
    // 1. If module.[[Status]] is evaluated, then
    if (module->status() == kErrored) {
      // a. Assert: module.[[EvaluationError]] is not empty.
-@@ -774,7 +774,7 @@ void SourceTextModule::AsyncModuleExecutionFulfilled(
+@@ -774,7 +774,7 @@ Maybe<bool> SourceTextModule::AsyncModuleExecutionFulfilled(
      //                     «undefined»).
      Handle<JSPromise> capability(
          JSPromise::cast(module->top_level_capability()), isolate);
@@ -571,7 +597,7 @@ index 532fbab4b9..c2ee45cd4a 100644
          .ToHandleChecked();
    }
  
-@@ -838,7 +838,7 @@ void SourceTextModule::AsyncModuleExecutionFulfilled(
+@@ -840,7 +840,7 @@ Maybe<bool> SourceTextModule::AsyncModuleExecutionFulfilled(
            //                     undefined, «undefined»).
            Handle<JSPromise> capability(
                JSPromise::cast(m->top_level_capability()), isolate);
@@ -581,16 +607,15 @@ index 532fbab4b9..c2ee45cd4a 100644
          }
        }
 diff --git a/src/objects/source-text-module.h b/src/objects/source-text-module.h
-index c91accba0c..987d1e2a4e 100644
+index e9e79152ae..6ca03eca97 100644
 --- a/src/objects/source-text-module.h
 +++ b/src/objects/source-text-module.h
-@@ -57,7 +57,8 @@ class SourceTextModule
-   // Used by builtins to fulfill or reject the promise associated
-   // with async SourceTextModules.
-   static void AsyncModuleExecutionFulfilled(Isolate* isolate,
--                                            Handle<SourceTextModule> module);
-+                                            Handle<SourceTextModule> module,
-+                                            Handle<Object> result);
+@@ -58,7 +58,7 @@ class SourceTextModule
+   // with async SourceTextModules. Return Nothing if the execution is
+   // terminated.
+   static Maybe<bool> AsyncModuleExecutionFulfilled(
+-      Isolate* isolate, Handle<SourceTextModule> module);
++      Isolate* isolate, Handle<SourceTextModule> module, Handle<Object> result);
    static void AsyncModuleExecutionRejected(Isolate* isolate,
                                             Handle<SourceTextModule> module,
                                             Handle<Object> exception);

@@ -23,9 +23,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 constraints?.MaxOldSpaceSize ?? -1,
                 constraints?.HeapExpansionMultiplier ?? 0,
                 constraints?.MaxArrayBufferAllocation ?? ulong.MaxValue,
-                flags.HasFlag(V8RuntimeFlags.EnableDebugging),
-                flags.HasFlag(V8RuntimeFlags.EnableRemoteDebugging),
-                flags.HasFlag(V8RuntimeFlags.EnableDynamicModuleImports),
+                flags,
                 debugPort
             )));
         }
@@ -35,12 +33,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return V8SplitProxyNative.Invoke(instance => instance.V8Isolate_CreateContext(
                 Handle,
                 name,
-                flags.HasFlag(V8ScriptEngineFlags.EnableDebugging),
-                flags.HasFlag(V8ScriptEngineFlags.EnableRemoteDebugging),
-                flags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers),
-                flags.HasFlag(V8ScriptEngineFlags.EnableDateTimeConversion),
-                flags.HasFlag(V8ScriptEngineFlags.EnableDynamicModuleImports),
-                flags.HasFlag(V8ScriptEngineFlags.HideHostExceptions),
+                flags,
                 debugPort
             ));
         }

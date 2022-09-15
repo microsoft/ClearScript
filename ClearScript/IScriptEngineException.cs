@@ -46,12 +46,8 @@ namespace Microsoft.ClearScript
         dynamic ScriptException { get; }
 
         /// <summary>
-        /// Gets the script exception object that caused the current exception to be thrown, or <c>null</c> if one was not specified.
+        /// Gets the script exception that caused the current exception to be thrown, or <c>null</c> if one was not specified, without engaging the dynamic infrastructure.
         /// </summary>
-        /// <remarks>
-        /// This property returns the same object or value as <see cref="ScriptException"/>, but
-        /// accessing it does not trigger the construction of a dynamic call site.
-        /// </remarks>
         object ScriptExceptionAsObject { get; }
 
         /// <summary>

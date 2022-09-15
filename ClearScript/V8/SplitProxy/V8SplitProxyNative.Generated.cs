@@ -484,19 +484,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, V8RuntimeFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, flags, debugPort);
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, V8ScriptEngineFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, flags, debugPort);
                 }
             }
 
@@ -1534,9 +1534,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int maxOldSpaceSize,
                 [In] double heapExpansionMultiplier,
                 [In] ulong maxArrayBufferAllocation,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] V8RuntimeFlags flags,
                 [In] int debugPort
             );
 
@@ -1544,12 +1542,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
-                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
+                [In] V8ScriptEngineFlags flags,
                 [In] int debugPort
             );
 
@@ -2518,19 +2511,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, V8RuntimeFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, flags, debugPort);
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, V8ScriptEngineFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, flags, debugPort);
                 }
             }
 
@@ -3568,9 +3561,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int maxOldSpaceSize,
                 [In] double heapExpansionMultiplier,
                 [In] ulong maxArrayBufferAllocation,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] V8RuntimeFlags flags,
                 [In] int debugPort
             );
 
@@ -3578,12 +3569,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
-                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
+                [In] V8ScriptEngineFlags flags,
                 [In] int debugPort
             );
 
@@ -4552,19 +4538,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, V8RuntimeFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, flags, debugPort);
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, V8ScriptEngineFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, flags, debugPort);
                 }
             }
 
@@ -5602,9 +5588,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int maxOldSpaceSize,
                 [In] double heapExpansionMultiplier,
                 [In] ulong maxArrayBufferAllocation,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] V8RuntimeFlags flags,
                 [In] int debugPort
             );
 
@@ -5612,12 +5596,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
-                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
+                [In] V8ScriptEngineFlags flags,
                 [In] int debugPort
             );
 
@@ -6586,19 +6565,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, V8RuntimeFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, flags, debugPort);
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, V8ScriptEngineFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, flags, debugPort);
                 }
             }
 
@@ -7636,9 +7615,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int maxOldSpaceSize,
                 [In] double heapExpansionMultiplier,
                 [In] ulong maxArrayBufferAllocation,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] V8RuntimeFlags flags,
                 [In] int debugPort
             );
 
@@ -7646,12 +7623,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
-                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
+                [In] V8ScriptEngineFlags flags,
                 [In] int debugPort
             );
 
@@ -8620,19 +8592,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, V8RuntimeFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, flags, debugPort);
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, V8ScriptEngineFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, flags, debugPort);
                 }
             }
 
@@ -9670,9 +9642,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int maxOldSpaceSize,
                 [In] double heapExpansionMultiplier,
                 [In] ulong maxArrayBufferAllocation,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] V8RuntimeFlags flags,
                 [In] int debugPort
             );
 
@@ -9680,12 +9650,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
-                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
+                [In] V8ScriptEngineFlags flags,
                 [In] int debugPort
             );
 
@@ -10654,19 +10619,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, V8RuntimeFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, flags, debugPort);
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, V8ScriptEngineFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, flags, debugPort);
                 }
             }
 
@@ -11704,9 +11669,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int maxOldSpaceSize,
                 [In] double heapExpansionMultiplier,
                 [In] ulong maxArrayBufferAllocation,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] V8RuntimeFlags flags,
                 [In] int debugPort
             );
 
@@ -11714,12 +11677,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
-                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
+                [In] V8ScriptEngineFlags flags,
                 [In] int debugPort
             );
 
@@ -12688,19 +12646,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, V8RuntimeFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, flags, debugPort);
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, V8ScriptEngineFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, flags, debugPort);
                 }
             }
 
@@ -13738,9 +13696,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int maxOldSpaceSize,
                 [In] double heapExpansionMultiplier,
                 [In] ulong maxArrayBufferAllocation,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] V8RuntimeFlags flags,
                 [In] int debugPort
             );
 
@@ -13748,12 +13704,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
-                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
+                [In] V8ScriptEngineFlags flags,
                 [In] int debugPort
             );
 
@@ -14722,19 +14673,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #region V8 isolate methods
 
-            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, bool enableDebugging, bool enableRemoteDebugging, bool enableDynamicModuleImports, int debugPort)
+            V8Isolate.Handle IV8SplitProxyNative.V8Isolate_Create(string name, int maxNewSpaceSize, int maxOldSpaceSize, double heapExpansionMultiplier, ulong maxArrayBufferAllocation, V8RuntimeFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, enableDebugging, enableRemoteDebugging, enableDynamicModuleImports, debugPort);
+                    return V8Isolate_Create(nameScope.Value, maxNewSpaceSize, maxOldSpaceSize, heapExpansionMultiplier, maxArrayBufferAllocation, flags, debugPort);
                 }
             }
 
-            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, bool enableDebugging, bool enableRemoteDebugging, bool disableGlobalMembers, bool enableDateTimeConversion, bool enableDynamicModuleImports, bool hideHostExceptions, int debugPort)
+            V8Context.Handle IV8SplitProxyNative.V8Isolate_CreateContext(V8Isolate.Handle hIsolate, string name, V8ScriptEngineFlags flags, int debugPort)
             {
                 using (var nameScope = StdString.CreateScope(name))
                 {
-                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, enableDebugging, enableRemoteDebugging, disableGlobalMembers, enableDateTimeConversion, enableDynamicModuleImports, hideHostExceptions, debugPort);
+                    return V8Isolate_CreateContext(hIsolate, nameScope.Value, flags, debugPort);
                 }
             }
 
@@ -15772,9 +15723,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] int maxOldSpaceSize,
                 [In] double heapExpansionMultiplier,
                 [In] ulong maxArrayBufferAllocation,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
+                [In] V8RuntimeFlags flags,
                 [In] int debugPort
             );
 
@@ -15782,12 +15731,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern V8Context.Handle V8Isolate_CreateContext(
                 [In] V8Isolate.Handle hIsolate,
                 [In] StdString.Ptr pName,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableRemoteDebugging,
-                [In] [MarshalAs(UnmanagedType.I1)] bool disableGlobalMembers,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDateTimeConversion,
-                [In] [MarshalAs(UnmanagedType.I1)] bool enableDynamicModuleImports,
-                [In] [MarshalAs(UnmanagedType.I1)] bool hideHostExceptions,
+                [In] V8ScriptEngineFlags flags,
                 [In] int debugPort
             );
 

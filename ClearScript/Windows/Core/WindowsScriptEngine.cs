@@ -364,7 +364,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
             if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalArraysByValue))
             {
-                if ((obj is Array array) && ((hostTarget == null) || (typeof(Array).IsAssignableFrom(hostTarget.Type))))
+                if ((obj is Array array) && ((hostTarget == null) || hostTarget.Type.IsArray))
                 {
                     bool alreadyMarshaled;
                     if (marshaledArraySet != null)
@@ -628,7 +628,7 @@ namespace Microsoft.ClearScript.Windows.Core
                 {
                     activeScript.AddNamedItem(itemName, nativeFlags);
                 }
-                catch (Exception)
+                catch
                 {
                     if (oldItem != null)
                     {

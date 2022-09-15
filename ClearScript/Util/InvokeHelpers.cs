@@ -26,7 +26,7 @@ namespace Microsoft.ClearScript.Util
                     if ((index != (args.Length - 1)) || !param.ParameterType.IsInstanceOfType(args[index]))
                     {
                         var tailArgType = param.ParameterType.GetElementType();
-                        var tailArgs = Array.CreateInstance(tailArgType, args.Length - index);
+                        var tailArgs = Array.CreateInstance(tailArgType, Math.Max(args.Length - index, 0));
                         for (var innerIndex = index; innerIndex < args.Length; innerIndex++)
                         {
                             var byRefArg = args[innerIndex] as IByRefArg;
@@ -178,7 +178,7 @@ namespace Microsoft.ClearScript.Util
 
         private static object GetCompatibleArg(string paramName, Type type, object value)
         {
-            if (!type.IsAssignableFrom(ref value))
+            if (!type.IsAssignableFromValue(ref value))
             {
                 throw new ArgumentException(MiscHelpers.FormatInvariant("Invalid argument specified for parameter '{0}'", paramName));
             }

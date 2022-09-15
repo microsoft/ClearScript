@@ -2,7 +2,9 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Diagnostics;
 using System.Reflection;
+using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
@@ -205,6 +207,7 @@ namespace Microsoft.ClearScript
         private enum ArgKind
         {
             Null,
+            Zero,
             ByValue,
             Out,
             Ref
@@ -269,14 +272,22 @@ namespace Microsoft.ClearScript
                     return;
                 }
 
-                if (arg is HostTarget hostTarget)
+                if (arg is HostObject hostObject)
                 {
-                    kind = ArgKind.ByValue;
-                    type = hostTarget.Type;
+                    kind = hostObject.Target.IsZero() ? ArgKind.Zero : ArgKind.ByValue;
+                    type = hostObject.Type;
                     return;
                 }
 
-                kind = ArgKind.ByValue;
+                if (arg is HostVariable hostVariable)
+                {
+                    kind = hostVariable.Target.IsZero() ? ArgKind.Zero : ArgKind.ByValue;
+                    type = hostVariable.Type;
+                    return;
+                }
+
+                Debug.Assert(!(arg is HostTarget));
+                kind = arg.IsZero() ? ArgKind.Zero : ArgKind.ByValue;
                 type = arg.GetType();
             }
 

@@ -89,7 +89,7 @@ namespace Microsoft.ClearScript.Test
             var value = Enumerable.Range(1, 5).ToArray();
             CastVerifier<IList>.VerifySymmetric(host, value);
             CastVerifier<Array>.VerifySymmetric(host, value);
-            CastVerifier<Object>.VerifySymmetric(host, value);
+            CastVerifier<object>.VerifySymmetric(host, value);
         }
 
         [TestMethod, TestCategory("HostFunctions")]
@@ -106,7 +106,7 @@ namespace Microsoft.ClearScript.Test
             const double value = 123.75;
             CastVerifier<IComparable>.VerifySymmetric(host, value);
             CastVerifier<ValueType>.VerifySymmetric(host, value);
-            CastVerifier<Object>.VerifySymmetric(host, value);
+            CastVerifier<object>.VerifySymmetric(host, value);
             CastVerifier<int>.VerifyAsymmetric(host, value);
         }
 
@@ -125,7 +125,7 @@ namespace Microsoft.ClearScript.Test
             CastVerifier<IComparable>.VerifySymmetric(host, value);
             CastVerifier<Enum>.VerifySymmetric(host, value);
             CastVerifier<ValueType>.VerifySymmetric(host, value);
-            CastVerifier<Object>.VerifySymmetric(host, value);
+            CastVerifier<object>.VerifySymmetric(host, value);
             CastVerifier<int>.VerifySymmetric(host, value);
         }
 
@@ -143,7 +143,7 @@ namespace Microsoft.ClearScript.Test
             var value = new DateTime(2007, 5, 22, 6, 15, 43);
             CastVerifier<IComparable>.VerifySymmetric(host, value);
             CastVerifier<ValueType>.VerifySymmetric(host, value);
-            CastVerifier<Object>.VerifySymmetric(host, value);
+            CastVerifier<object>.VerifySymmetric(host, value);
         }
 
         [TestMethod, TestCategory("HostFunctions")]
@@ -589,7 +589,7 @@ namespace Microsoft.ClearScript.Test
         {
             engine.AddHostType("UnsignedFlags", HostItemFlags.PrivateAccess, typeof(UnsignedFlags));
             engine.AddHostType("SignedFlags", HostItemFlags.PrivateAccess, typeof(SignedFlags));
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("host.flags(SignedFlags.Second, SignedFlags.Fourth, UnsignedFlags.Sixth, UnsignedFlags.Eighth)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("host.flags(SignedFlags.Second, SignedFlags.Fourth, UnsignedFlags.Sixth, UnsignedFlags.Eighth)"));
         }
 
         [TestMethod, TestCategory("HostFunctions")]
@@ -797,7 +797,7 @@ namespace Microsoft.ClearScript.Test
         {
             var value = (Array)host.newArr<T>(lengths);
             Assert.IsInstanceOfType(value, typeof(T).MakeArrayType(lengths.Length));
-            lengths.ForEach((length, index) => Assert.AreEqual(lengths[index], value.GetLength(index)));
+            lengths.ForEach((_, index) => Assert.AreEqual(lengths[index], value.GetLength(index)));
         }
 
         private void VerifyNewArr(params int[] lengths)

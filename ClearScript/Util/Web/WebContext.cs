@@ -129,7 +129,7 @@ namespace Microsoft.ClearScript.Util.Web
 
                 return new WebContext(socket, uri, headers);
             }
-            catch (Exception)
+            catch
             {
                 Abort(socket, 400);
                 throw;

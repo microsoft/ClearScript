@@ -49,7 +49,7 @@ namespace Microsoft.ClearScript.Test
 
         #region miscellaneous
 
-        private static readonly Predicate<Type> defaultFilter = type => true;
+        private static readonly Predicate<Type> defaultFilter = _ => true;
 
         private static bool ReflectionFilter(Type type)
         {

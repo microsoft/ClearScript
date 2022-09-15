@@ -271,7 +271,8 @@ namespace Microsoft.ClearScript.V8
                 return engine.MarshalToHost(engine.ScriptInvoke(() => target.Invoke(asConstructor, engine.MarshalToScript(args))), false);
             }
 
-            return engine.Script.EngineInternal.invokeMethod(holder, this, args);
+            var engineInternal = (ScriptObject)engine.Global.GetProperty("EngineInternal");
+            return engineInternal.InvokeMethod("invokeMethod", holder, this, args);
         }
 
         public override object InvokeMethod(string name, params object[] args)

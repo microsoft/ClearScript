@@ -14,6 +14,59 @@ namespace Microsoft.ClearScript.Util
 {
     internal static partial class ObjectHelpers
     {
+        private static readonly object[] zeroes =
+        {
+            (sbyte)0,
+            (byte)0,
+            (short)0,
+            (ushort)0,
+            0,
+            0U,
+            0L,
+            0UL,
+            IntPtr.Zero,
+            UIntPtr.Zero,
+            0.0f,
+            0.0d,
+            0.0m
+        };
+
+        public static bool IsZero(this object value) => Array.IndexOf(zeroes, value) >= 0;
+
+        public static bool IsWholeNumber(this object value)
+        {
+            // ReSharper disable CompareOfFloatsByEqualityOperator
+
+            if (value == null)
+            {
+                return false;
+            }
+
+            if (value.GetType().IsIntegral())
+            {
+                return true;
+            }
+
+            if (value is float floatValue)
+            {
+                return Math.Round(floatValue) == floatValue;
+            }
+
+            if (value is double doubleValue)
+            {
+                return Math.Round(doubleValue) == doubleValue;
+            }
+
+            if (value is decimal decimalValue)
+            {
+                return Math.Round(decimalValue) == decimalValue;
+            }
+
+            return false;
+
+            // ReSharper restore CompareOfFloatsByEqualityOperator
+        }
+
         public static Type GetTypeOrTypeInfo(this object value)
         {
             if (!MiscHelpers.PlatformIsWindows())
@@ -128,7 +181,7 @@ namespace Microsoft.ClearScript.Util
 
                 return typeInfo.GetManagedType();
             }
-            catch (Exception)
+            catch
             {
             }
 
@@ -156,7 +209,7 @@ namespace Microsoft.ClearScript.Util
                     }
                 }
             }
-            catch (Exception)
+            catch
             {
             }
 
@@ -207,12 +260,7 @@ namespace Microsoft.ClearScript.Util
 
         public static T DynamicCast<T>(this object value)
         {
-            // ReSharper disable RedundantCast
-
-            // the cast to dynamic is not redundant; removing it breaks tests
-            return (T)(dynamic)value;
-
-            // ReSharper restore RedundantCast
+            return DynamicCaster<T>.Cast(value);
         }
 
         public static object ToDynamicResult(this object result, ScriptEngine engine)
@@ -247,6 +295,62 @@ namespace Microsoft.ClearScript.Util
             int GetClassInfo(
                 [Out] [MarshalAs(UnmanagedType.Interface)] out ITypeInfo typeInfo
             );
+        }
+
+        #endregion
+
+        #region Nested type: DynamicCaster<T>
+
+        private static class DynamicCaster<T>
+        {
+            public static T Cast(object value)
+            {
+                // ReSharper disable EmptyGeneralCatchClause
+
+                try
+                {
+                    if (!typeof(T).IsValueType)
+                    {
+                        return (T)value;
+                    }
+
+                    if (typeof(T).IsEnum)
+                    {
+                        return (T)Enum.ToObject(typeof(T), value);
+                    }
+
+                    if (typeof(T).IsNullable())
+                    {
+                        return (T)CastToNullable(value);
+                    }
+
+                    if (value is IConvertible)
+                    {
+                        return (T)Convert.ChangeType(value, typeof(T));
+                    }
+
+                    return (T)value;
+                }
+                catch
+                {
+                }
+
+                return (T)(dynamic)value;
+
+                // ReSharper restore EmptyGeneralCatchClause
+            }
+
+            private static object CastToNullable(object value)
+            {
+                if (value != null)
+                {
+                    var valueCastType = typeof(DynamicCaster<>).MakeGenericType(Nullable.GetUnderlyingType(typeof(T)));
+                    value = valueCastType.InvokeMember("Cast", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] { value });
+                    return typeof(T).CreateInstance(value);
+                }
+
+                return null;
+            }
         }
 
         #endregion

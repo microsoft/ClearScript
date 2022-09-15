@@ -42,7 +42,7 @@ namespace Microsoft.ClearScript.V8
                         hNativeAssembly = LoadNativeAssembly();
                         loadedNativeAssembly = true;
                     }
-                    catch (Exception)
+                    catch
                     {
                         initializedICU = MiscHelpers.Try(InitializeICU);
                         if (!initializedICU)

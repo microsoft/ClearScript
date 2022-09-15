@@ -16,13 +16,15 @@ namespace Microsoft.ClearScript.V8
         private void CompletePromise<T>(ValueTask<T> valueTask, object resolve, object reject)
         {
             Func<T> getResult = () => valueTask.Result;
-            Script.EngineInternal.completePromiseWithResult(getResult, resolve, reject);
+            var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
+            engineInternal.InvokeMethod("completePromiseWithResult", getResult, resolve, reject);
         }
 
         private void CompletePromise(ValueTask valueTask, object resolve, object reject)
         {
             Action wait = () => WaitForValueTask(valueTask);
-            Script.EngineInternal.completePromise(wait, resolve, reject);
+            var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
+            engineInternal.InvokeMethod("completePromise", wait, resolve, reject);
         }
 
         private static void WaitForValueTask(ValueTask valueTask)

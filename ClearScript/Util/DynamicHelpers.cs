@@ -174,6 +174,11 @@ namespace Microsoft.ClearScript.Util
             return TryDynamicOperation(() => target.DeleteIndex(indices), out result);
         }
 
+        public static bool TryConvert(this DynamicMetaObject target, Type type, bool @explicit, out object result)
+        {
+            return TryDynamicOperation(() => target.Convert(type, @explicit), out result);
+        }
+
         #endregion
 
         #region internal members
@@ -274,7 +279,7 @@ namespace Microsoft.ClearScript.Util
             {
                 throw;
             }
-            catch (Exception)
+            catch
             {
                 result = null;
                 return false;
@@ -303,7 +308,7 @@ namespace Microsoft.ClearScript.Util
             {
                 throw;
             }
-            catch (Exception)
+            catch
             {
                 result = null;
                 return false;
@@ -466,6 +471,13 @@ namespace Microsoft.ClearScript.Util
 
                 throw;
             }
+        }
+
+        private static object Convert(this DynamicMetaObject target, Type type, bool @explicit)
+        {
+            var bindResult = target.BindConvert(new DynamicConvertBinder(type, @explicit));
+            var block = Expression.Block(Expression.Label(CallSiteBinder.UpdateLabel), bindResult.Expression);
+            return Invoke(block);
         }
 
         private static DynamicMetaObject CreateDynamicTarget(object target)
@@ -832,6 +844,30 @@ namespace Microsoft.ClearScript.Util
 
                 // construct an algorithm for dealing with unsuccessful dynamic index deletion
                 return new DynamicMetaObject(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic index deletion"), BindingRestrictions.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: DynamicConvertBinder
+
+        private sealed class DynamicConvertBinder : ConvertBinder
+        {
+            public DynamicConvertBinder(Type type, bool @explicit)
+                : base(type, @explicit)
+            {
+            }
+
+            public override DynamicMetaObject FallbackConvert(DynamicMetaObject target, DynamicMetaObject errorSuggestion)
+            {
+                if (errorSuggestion != null)
+                {
+                    return errorSuggestion;
+                }
+
+                // Construct an algorithm for dealing with unsuccessful dynamic conversion.
+                // The block must return an expression of the target type.
+                return new DynamicMetaObject(Expression.Block(CreateThrowExpr<InvalidDynamicOperationException>("Invalid dynamic conversion"), Expression.Default(Type)), BindingRestrictions.Empty);
             }
         }
 

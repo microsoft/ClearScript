@@ -121,7 +121,7 @@ namespace Microsoft.ClearScript
 
                 if (forceReflection)
                 {
-                    result = new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+                    result = new MethodBindFailure(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
                 }
                 else
                 {
@@ -130,7 +130,7 @@ namespace Microsoft.ClearScript
                     {
                         if (result is MethodBindSuccess)
                         {
-                            result = new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+                            result = new MethodBindFailure(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
                         }
 
                         foreach (var altName in GetAltMethodNames(name, bindFlags))
@@ -147,8 +147,8 @@ namespace Microsoft.ClearScript
 
                 if ((result is MethodBindFailure) && (forceReflection || Engine.UseReflectionBindFallback))
                 {
-                    var reflectionResult = BindMethodUsingReflection(bindFlags, Target, name, typeArgs, args);
-                    if (reflectionResult is MethodBindSuccess)
+                    var reflectionResult = BindMethodUsingReflection(bindFlags, Target, name, typeArgs, args, bindArgs);
+                    if ((reflectionResult is MethodBindSuccess) || forceReflection)
                     {
                         result = reflectionResult;
                     }
@@ -235,7 +235,7 @@ namespace Microsoft.ClearScript
 
             if (expr == null)
             {
-                return new Func<Exception>(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}'", binder.Name)));
+                return new Func<Exception>(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}'", binder.Name)));
             }
 
             // ReSharper restore HeuristicUnreachableCode
@@ -252,7 +252,7 @@ namespace Microsoft.ClearScript
                 try
                 {
                     var method = target.Type.GetMethod(binder.Name, bindFlags);
-                    return (object)method ?? new Func<Exception>(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}'", binder.Name)));
+                    return (object)method ?? new Func<Exception>(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}'", binder.Name)));
                 }
                 catch (AmbiguousMatchException exception)
                 {
@@ -303,7 +303,21 @@ namespace Microsoft.ClearScript
             if (arg != null)
             {
                 flags |= CSharpArgumentInfoFlags.UseCompileTimeType;
-                if (arg is int)
+                if (arg is HostObject hostObject)
+                {
+                    if ((hostObject.Type == typeof(int)) || (hostObject.Type.IsValueType && hostObject.Target.IsZero()))
+                    {
+                        flags |= CSharpArgumentInfoFlags.Constant;
+                    }
+                }
+                else if (arg is HostVariable hostVariable)
+                {
+                    if ((hostVariable.Type == typeof(int)) || (hostVariable.Type.IsValueType && hostVariable.Target.IsZero()))
+                    {
+                        flags |= CSharpArgumentInfoFlags.Constant;
+                    }
+                }
+                else if (arg is int || arg.IsZero())
                 {
                     flags |= CSharpArgumentInfoFlags.Constant;
                 }
@@ -325,27 +339,26 @@ namespace Microsoft.ClearScript
             return CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.IsStaticType, null);
         }
 
-        private MethodBindResult BindMethodUsingReflection(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs, object[] args)
+        private MethodBindResult BindMethodUsingReflection(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
             var candidates = GetReflectionCandidates(bindFlags, hostTarget, name, typeArgs).Distinct().ToArray();
             if (candidates.Length > 0)
             {
                 try
                 {
-                    // ReSharper disable once CoVariantArrayConversion
-                    var rawResult = Type.DefaultBinder.BindToMethod(bindFlags, candidates, ref args, null, null, null, out _);
-
-                    return MethodBindResult.Create(name, bindFlags, rawResult, hostTarget, args);
-                }
-                catch (MissingMethodException)
-                {
+                    var rawResult = TypeHelpers.BindToMember(candidates, bindFlags, args, bindArgs);
+                    if (rawResult != null)
+                    {
+                        return MethodBindResult.Create(name, bindFlags, rawResult, hostTarget, args);
+                    }
                 }
                 catch (AmbiguousMatchException)
                 {
+                    return new MethodBindFailure(() => new AmbiguousMatchException(MiscHelpers.FormatInvariant("The object has multiple methods named '{0}' that match the specified arguments", name)));
                 }
             }
 
-            return new MethodBindFailure(() => new MissingMemberException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+            return new MethodBindFailure(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
         }
 
         private IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs)

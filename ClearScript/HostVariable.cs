@@ -14,7 +14,7 @@ namespace Microsoft.ClearScript
         object Value { get; set; }
     }
 
-    internal abstract class HostVariableBase : HostTarget
+    internal abstract class HostVariable : HostTarget
     {
         private static readonly string[] auxPropertyNames = { "out", "ref", "value" };
 
@@ -24,7 +24,7 @@ namespace Microsoft.ClearScript
         }
     }
 
-    internal sealed class HostVariable<T> : HostVariableBase, IHostVariable
+    internal sealed class HostVariable<T> : HostVariable, IHostVariable
     {
         public HostVariable(T initValue)
         {
@@ -162,7 +162,7 @@ namespace Microsoft.ClearScript
 
             set
             {
-                if (!typeof(T).IsAssignableFrom(ref value))
+                if (!typeof(T).IsAssignableFromValue(ref value))
                 {
                     throw new InvalidOperationException("Assignment invalid due to type mismatch");
                 }

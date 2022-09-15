@@ -11,14 +11,28 @@ class V8Context: public WeakRefTarget<V8Context>, public IV8Entity
 {
 public:
 
+    enum class Flags : int32_t
+    {
+        // IMPORTANT: maintain bitwise equivalence with managed enum V8.V8ScriptEngineFlags
+        None = 0,
+        EnableDebugging = 0x00000001,
+        DisableGlobalMembers = 0x00000002,
+        EnableRemoteDebugging = 0x00000004,
+        AwaitDebuggerAndPauseOnStart = 0x00000008,
+        EnableDateTimeConversion = 0x00000010,
+        EnableDynamicModuleImports = 0x00000020,
+        MarshalUnsafeLongAsBigInt = 0x00000040,
+        MarshalAllLongAsBigInt = 0x00000080,
+        EnableTaskPromiseConversion = 0x00000100,
+        EnableValueTaskPromiseConversion = 0x00000200,
+        UseCaseInsensitiveMemberBinding = 0x00000400,
+        EnableStringifyEnhancements = 0x00000800,
+        HideHostExceptions = 0x00001000
+    };
+
     struct Options final
     {
-        bool EnableDebugging = false;
-        bool EnableRemoteDebugging = false;
-        bool DisableGlobalMembers = true;
-        bool EnableDateTimeConversion = false;
-        bool EnableDynamicModuleImports = false;
-        bool HideHostExceptions = false;
+        Flags Flags = Flags::None;
         int DebugPort = 0;
     };
 

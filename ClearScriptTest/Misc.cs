@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
+using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
@@ -162,6 +163,48 @@ namespace Microsoft.ClearScript.Test
             }
 
             Assert.IsTrue(gotExpectedException, message);
+        }
+
+        public static void AssertException<T1, T2>(Action action, bool checkScriptStackTrace = true) where T1 : Exception where T2 : Exception
+        {
+            Exception caughtException = null;
+            var gotExpectedException = false;
+
+            try
+            {
+                action();
+            }
+            catch (T1 exception)
+            {
+                caughtException = exception;
+                gotExpectedException = true;
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
+            }
+            catch (T2 exception)
+            {
+                caughtException = exception;
+                gotExpectedException = true;
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
+            }
+            catch (Exception exception)
+            {
+                caughtException = exception;
+                gotExpectedException = (exception.GetBaseException() is T1) || (exception.GetBaseException() is T2);
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
+            }
+
+            var message = "Expected " + typeof(T1).Name + " or " + typeof(T2).Name + " was not thrown.";
+            if (caughtException != null)
+            {
+                message += " " + caughtException.GetType().Name + " was thrown instead.";
+            }
+
+            Assert.IsTrue(gotExpectedException, message);
+        }
+
+        public static void AssertMethodBindException(Action action, bool checkScriptStackTrace = true)
+        {
+            AssertException<RuntimeBinderException, MissingMethodException>(action, checkScriptStackTrace);
         }
 
         public static void AssertValidException(Exception exception)

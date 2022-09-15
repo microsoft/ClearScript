@@ -22,13 +22,20 @@ public:
         Count
     };
 
+    enum class Flags : int32_t
+    {
+        // IMPORTANT: maintain bitwise equivalence with managed enum V8.V8RuntimeFlags
+        None = 0,
+        EnableDebugging = 0x00000001,
+        EnableRemoteDebugging = 0x00000002,
+        EnableDynamicModuleImports = 0x00000004
+    };
+
     struct Options final
     {
         double HeapExpansionMultiplier = 0;
         size_t MaxArrayBufferAllocation = SIZE_MAX;
-        bool EnableDebugging = false;
-        bool EnableRemoteDebugging = false;
-        bool EnableDynamicModuleImports = false;
+        Flags Flags = Flags::None;
         int DebugPort = 0;
     };
 

@@ -24,7 +24,6 @@ namespace Microsoft.ClearScript
 
         // ReSharper restore EmptyConstructor
 
-
         /// <summary>
         /// Loads custom attributes of the specified type for the given resource.
         /// </summary>

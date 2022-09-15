@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util;
@@ -40,20 +41,31 @@ namespace Microsoft.ClearScript
 
         private object CreateAsyncEnumerator()
         {
-            if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IAsyncEnumerable<>), out _))
+            if ((Target is HostObject) || (Target is IHostVariable) || (Target is IByRefArg))
             {
-                var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
-                if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IAsyncEnumerable<>), out var typeArgs))
                 {
-                    return enumerator;
+                    var enumerableHelpersHostItem = Wrap(Engine, typeof(EnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
+                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                    {
+                        return enumerator;
+                    }
                 }
-            }
-            else if (BindSpecialTarget(out IEnumerable _))
-            {
-                var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
-                if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                else if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IEnumerable<>), out typeArgs))
                 {
-                    return enumerator;
+                    var enumerableHelpersHostItem = Wrap(Engine, typeof(EnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
+                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                    {
+                        return enumerator;
+                    }
+                }
+                else if (BindSpecialTarget(out IEnumerable _))
+                {
+                    var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
+                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                    {
+                        return enumerator;
+                    }
                 }
             }
 

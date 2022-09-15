@@ -16,7 +16,6 @@ namespace Microsoft.ClearScript.Util
     {
     }
 
-    // ReSharper disable once PartialTypeWithSinglePart
     internal static partial class EnumerableHelpers
     {
         public static readonly HostType HostType = HostType.Wrap(typeof(EnumerableHelpers));
@@ -91,6 +90,16 @@ namespace Microsoft.ClearScript.Util
         public static IDisposableEnumerator GetEnumerator(IEnumerable source)
         {
             return new DisposableEnumeratorOnEnumerator(source.GetEnumerator());
+        }
+    }
+
+    internal static partial class EnumerableHelpers<T>
+    {
+        public static readonly HostType HostType = HostType.Wrap(typeof(EnumerableHelpers<T>));
+
+        public static IEnumerator<T> GetEnumerator(IEnumerable<T> source)
+        {
+            return source.GetEnumerator();
         }
     }
 

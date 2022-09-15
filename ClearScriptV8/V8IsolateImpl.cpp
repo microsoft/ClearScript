@@ -55,7 +55,6 @@ void V8Platform::EnsureInitialized()
     m_InitializationFlag.CallOnce([this]
     {
         v8::V8::InitializePlatform(&ms_Instance);
-        ASSERT_EVAL(v8::V8::Initialize());
 
         m_GlobalFlags = V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(V8GlobalFlags, GetGlobalFlags);
         std::vector<std::string> flagStrings;
@@ -68,17 +67,22 @@ void V8Platform::EnsureInitialized()
         }
 
     #endif // CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
-    
+
     #if defined(__APPLE__) && defined(__arm64__)
 
         // WORKAROUND: On Apple M1 only, our lone WebAssembly test crashes consistently unless this
         // option is disabled. The crash is indicative of corruption within the SplitProxyManaged
         // pointer table or of its address in thread-local storage.
 
+        // UPDATE: The crash is probably not due to method table corruption but V8's use of
+        // pthread_jit_write_protect_np in its WebAssembly code. If the thread's JIT protection
+        // state is writable (vs. executable) when V8 calls the embedder, any attempt to invoke
+        // managed code will trigger a bus error.
+
         flagStrings.push_back("--no_wasm_async_compilation");
 
     #endif // defined(__APPLE__) && defined(__arm64__)
-        
+
         if (HasFlag(m_GlobalFlags, V8GlobalFlags::DisableJITCompilation))
         {
             flagStrings.push_back("--jitless");
@@ -100,6 +104,8 @@ void V8Platform::EnsureInitialized()
 
             v8::V8::SetFlagsFromString(flagsString.c_str(), flagsString.length());
         }
+
+        ASSERT_EVAL(v8::V8::Initialize());
     });
 }
 
@@ -507,13 +513,13 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
 
             m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
 
-            if (options.EnableDebugging)
+            if (HasFlag(options.Flags, Flags::EnableDebugging))
             {
-                EnableDebugging(options.DebugPort, options.EnableRemoteDebugging);
+                EnableDebugging(options.DebugPort, HasFlag(options.Flags, Flags::EnableRemoteDebugging));
             }
 
             m_upIsolate->SetHostInitializeImportMetaObjectCallback(ImportMetaInitializeCallback);
-            if (options.EnableDynamicModuleImports)
+            if (HasFlag(options.Flags, Flags::EnableDynamicModuleImports))
             {
                 m_upIsolate->SetHostImportModuleDynamicallyCallback(ModuleImportCallback);
             }
@@ -546,17 +552,17 @@ void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, const V8Context::Opt
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    if (!options.EnableDebugging)
+    if (!HasFlag(options.Flags, V8Context::Flags::EnableDebugging))
     {
         m_ContextEntries.emplace_back(pContextImpl);
     }
     else
     {
         m_ContextEntries.emplace_front(pContextImpl);
-        EnableDebugging(options.DebugPort, options.EnableRemoteDebugging);
+        EnableDebugging(options.DebugPort, HasFlag(options.Flags, V8Context::Flags::EnableRemoteDebugging));
     }
 
-    if (options.EnableDynamicModuleImports)
+    if (HasFlag(options.Flags, V8Context::Flags::EnableDynamicModuleImports))
     {
         m_upIsolate->SetHostImportModuleDynamicallyCallback(ModuleImportCallback);
     }

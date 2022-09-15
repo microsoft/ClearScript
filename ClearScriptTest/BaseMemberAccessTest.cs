@@ -4,7 +4,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -77,7 +76,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_Field_Scalar_Overflow()
         {
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("testObject.BaseScalarField = 54321"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.BaseScalarField = 54321"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -157,7 +156,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_Property_Scalar_Overflow()
         {
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("testObject.BaseScalarProperty = 54321"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("testObject.BaseScalarProperty = 54321"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -235,7 +234,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_Method_NoMatchingOverload()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.BaseMethod('foo', TestEnum.Second)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("testObject.BaseMethod('foo', TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -247,7 +246,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_Method_Generic_TypeArgConstraintFailure()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.BaseMethod('foo', 4, testObject)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("testObject.BaseMethod('foo', 4, testObject)"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -259,7 +258,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_Method_GenericRedundant_MismatchedTypeArg()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.BaseMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("testObject.BaseMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -271,7 +270,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_Method_GenericExplicit_MissingTypeArg()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.BaseMethod(4)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("testObject.BaseMethod(4)"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -299,7 +298,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_ExtensionMethod_NoMatchingOverload()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.BaseExtensionMethod('foo', TestEnum.Second)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("testObject.BaseExtensionMethod('foo', TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -311,7 +310,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_ExtensionMethod_Generic_TypeArgConstraintFailure()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.BaseExtensionMethod('foo', 4, testObject)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("testObject.BaseExtensionMethod('foo', 4, testObject)"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -323,7 +322,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_ExtensionMethod_GenericRedundant_MismatchedTypeArg()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.BaseExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("testObject.BaseExtensionMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]
@@ -335,7 +334,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BaseMemberAccess")]
         public void BaseMemberAccess_ExtensionMethod_GenericExplicit_MissingTypeArg()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("testObject.BaseExtensionMethod(4)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("testObject.BaseExtensionMethod(4)"));
         }
 
         [TestMethod, TestCategory("BaseMemberAccess")]

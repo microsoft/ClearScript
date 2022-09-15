@@ -329,7 +329,7 @@ namespace Microsoft.ClearScript.Util
                 action();
                 return true;
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
@@ -342,7 +342,7 @@ namespace Microsoft.ClearScript.Util
                 result = func();
                 return true;
             }
-            catch (Exception)
+            catch
             {
                 result = default;
                 return false;
@@ -356,7 +356,7 @@ namespace Microsoft.ClearScript.Util
                 await task.ConfigureAwait(false);
                 return true;
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
@@ -369,7 +369,7 @@ namespace Microsoft.ClearScript.Util
                 holder.Value = await task.ConfigureAwait(false);
                 return true;
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }

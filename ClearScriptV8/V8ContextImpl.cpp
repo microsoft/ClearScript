@@ -229,8 +229,8 @@ V8ContextImpl::V8ContextImpl(V8IsolateImpl* pIsolateImpl, const StdString& name)
 V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const StdString& name, const Options& options):
     m_Name(name),
     m_spIsolateImpl(std::move(spIsolateImpl)),
-    m_DateTimeConversionEnabled(options.EnableDateTimeConversion),
-    m_HideHostExceptions(options.HideHostExceptions),
+    m_DateTimeConversionEnabled(HasFlag(options.Flags, Flags::EnableDateTimeConversion)),
+    m_HideHostExceptions(HasFlag(options.Flags, Flags::HideHostExceptions)),
     m_pvV8ObjectCache(nullptr),
     m_AllowHostObjectConstructorCall(false)
 {
@@ -239,7 +239,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
     BEGIN_ISOLATE_SCOPE
     FROM_MAYBE_TRY
 
-        if (options.DisableGlobalMembers)
+        if (HasFlag(options.Flags, Flags::DisableGlobalMembers))
         {
             m_hContext = CreatePersistent(CreateContext());
         }

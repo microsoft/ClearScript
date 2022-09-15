@@ -47,6 +47,19 @@ namespace Microsoft.ClearScript.Util
         }
     }
 
+    internal static partial class EnumerableHelpers<T>
+    {
+        public static IAsyncEnumeratorPromise<T> GetAsyncEnumerator(IAsyncEnumerable<T> source, ScriptEngine engine)
+        {
+            return new AsyncEnumeratorPromiseOnAsyncEnumerator<T>(engine, source.GetAsyncEnumerator());
+        }
+
+        public static IAsyncEnumeratorPromise<T> GetAsyncEnumerator(IEnumerable<T> source, ScriptEngine engine)
+        {
+            return source.GetEnumerator().ToAsyncEnumerator(engine);
+        }
+    }
+
     internal abstract class AsyncEnumeratorPromise<T> : IAsyncEnumeratorPromise<T>
     {
         private readonly ScriptEngine engine;

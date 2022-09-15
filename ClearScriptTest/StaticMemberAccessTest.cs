@@ -4,7 +4,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -74,7 +73,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("StaticMemberAccess")]
         public void StaticMemberAccess_Field_Scalar_Overflow()
         {
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("StaticTestClass.StaticScalarField = 54321"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticScalarField = 54321"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -154,7 +153,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("StaticMemberAccess")]
         public void StaticMemberAccess_Property_Scalar_Overflow()
         {
-            TestUtil.AssertException<OverflowException>(() => engine.Execute("StaticTestClass.StaticScalarProperty = 54321"));
+            TestUtil.AssertException<ArgumentException>(() => engine.Execute("StaticTestClass.StaticScalarProperty = 54321"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -232,7 +231,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("StaticMemberAccess")]
         public void StaticMemberAccess_Method_NoMatchingOverload()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("StaticTestClass.StaticMethod('foo', TestEnum.Second)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("StaticTestClass.StaticMethod('foo', TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -244,7 +243,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("StaticMemberAccess")]
         public void StaticMemberAccess_Method_Generic_TypeArgConstraintFailure()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("StaticTestClass.StaticMethod('foo', 4, StaticTestClass)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("StaticTestClass.StaticMethod('foo', 4, StaticTestClass)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -256,7 +255,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("StaticMemberAccess")]
         public void StaticMemberAccess_Method_GenericRedundant_MismatchedTypeArg()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("StaticTestClass.StaticMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("StaticTestClass.StaticMethod(System.Int32, 'foo', 4, TestEnum.Second)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]
@@ -268,7 +267,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("StaticMemberAccess")]
         public void StaticMemberAccess_Method_GenericExplicit_MissingTypeArg()
         {
-            TestUtil.AssertException<RuntimeBinderException>(() => engine.Execute("StaticTestClass.StaticMethod(4)"));
+            TestUtil.AssertMethodBindException(() => engine.Execute("StaticTestClass.StaticMethod(4)"));
         }
 
         [TestMethod, TestCategory("StaticMemberAccess")]

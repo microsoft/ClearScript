@@ -115,5 +115,15 @@ namespace Microsoft.ClearScript
         /// <param name="args">Optional arguments for method invocation.</param>
         /// <returns>The invocation result value.</returns>
         public abstract object InvokeMethod(string name, params object[] args);
+
+        /// <summary>
+        /// Invokes the script object as a function.
+        /// </summary>
+        /// <param name="args">Optional arguments for object invocation.</param>
+        /// <returns>The invocation result value.</returns>
+        public object InvokeAsFunction(params object[] args)
+        {
+            return Invoke(false, args);
+        }
     }
 }

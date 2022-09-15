@@ -684,7 +684,7 @@ NATIVE_ENTRY_POINT(const v8::CpuProfileNode*) V8CpuProfileNode_GetChildNode(cons
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int32_t maxNewSpaceSize, int32_t maxOldSpaceSize, double heapExpansionMultiplier, uint64_t maxArrayBufferAllocation, StdBool enableDebugging, StdBool enableRemoteDebugging, StdBool enableDynamicModuleImports, int32_t debugPort) noexcept
+NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int32_t maxNewSpaceSize, int32_t maxOldSpaceSize, double heapExpansionMultiplier, uint64_t maxArrayBufferAllocation, V8Isolate::Flags flags, int32_t debugPort) noexcept
 {
     v8::ResourceConstraints* pConstraints = nullptr;
 
@@ -698,9 +698,7 @@ NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int
 
     V8Isolate::Options options;
     options.HeapExpansionMultiplier = heapExpansionMultiplier;
-    options.EnableDebugging = enableDebugging;
-    options.EnableRemoteDebugging = enableRemoteDebugging;
-    options.EnableDynamicModuleImports = enableDynamicModuleImports;
+    options.Flags = flags;
     options.DebugPort = debugPort;
 
     if (maxArrayBufferAllocation < SIZE_MAX)
@@ -721,18 +719,13 @@ NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8ContextHandle*) V8Isolate_CreateContext(const V8IsolateHandle& handle, const StdString& name, StdBool enableDebugging, StdBool enableRemoteDebugging, StdBool disableGlobalMembers, StdBool enableDateTimeConversion, StdBool enableDynamicModuleImports, StdBool hideHostExceptions, int32_t debugPort) noexcept
+NATIVE_ENTRY_POINT(V8ContextHandle*) V8Isolate_CreateContext(const V8IsolateHandle& handle, const StdString& name, V8Context::Flags flags, int32_t debugPort) noexcept
 {
     auto spIsolate = handle.GetEntity();
     if (!spIsolate.IsEmpty())
     {
         V8Context::Options options;
-        options.EnableDebugging = enableDebugging;
-        options.EnableRemoteDebugging = enableRemoteDebugging;
-        options.DisableGlobalMembers = disableGlobalMembers;
-        options.EnableDateTimeConversion = enableDateTimeConversion;
-        options.EnableDynamicModuleImports = enableDynamicModuleImports;
-        options.HideHostExceptions = hideHostExceptions;
+        options.Flags = flags;
         options.DebugPort = debugPort;
 
         try

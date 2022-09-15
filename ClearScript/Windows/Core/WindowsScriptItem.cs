@@ -249,12 +249,14 @@ namespace Microsoft.ClearScript.Windows.Core
         {
             VerifyNotDisposed();
 
+            var engineInternal = (ScriptObject)engine.Global.GetProperty("EngineInternal");
+
             if (asConstructor)
             {
-                return engine.Script.EngineInternal.invokeConstructor(this, args);
+                return engineInternal.InvokeMethod("invokeConstructor", this, args);
             }
 
-            return engine.Script.EngineInternal.invokeMethod(holder, this, args);
+            return engineInternal.InvokeMethod("invokeMethod", holder, this, args);
         }
 
         public override object InvokeMethod(string name, params object[] args)

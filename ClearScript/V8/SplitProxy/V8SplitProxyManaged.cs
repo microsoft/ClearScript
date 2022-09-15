@@ -422,8 +422,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             for (var index = 0; index < methodCount; index++)
             {
-                Marshal.WriteIntPtr(pDelegatePtrs, index * IntPtr.Size, methodPairs[index].Item1);
-                Marshal.WriteIntPtr(pFunctionPtrs, index * IntPtr.Size, methodPairs[index].Item2);
+                var (pDelegate, pFunction) = methodPairs[index];
+                Marshal.WriteIntPtr(pDelegatePtrs, index * IntPtr.Size, pDelegate);
+                Marshal.WriteIntPtr(pFunctionPtrs, index * IntPtr.Size, pFunction);
             }
         }
 

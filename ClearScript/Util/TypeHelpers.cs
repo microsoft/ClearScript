@@ -32,23 +32,30 @@ namespace Microsoft.ClearScript.Util
             // ReSharper restore StringLiteralTypo
         };
 
-        private static readonly HashSet<Type> nullableNumericTypes = new HashSet<Type>
-        {
-            typeof(char?),
-            typeof(sbyte?),
-            typeof(byte?),
-            typeof(short?),
-            typeof(ushort?),
-            typeof(int?),
-            typeof(uint?),
-            typeof(long?),
-            typeof(ulong?),
-            typeof(float?),
-            typeof(double?),
-            typeof(decimal?)
-        };
-
         private static readonly ConcurrentDictionary<Tuple<Type, BindingFlags, Type, ScriptAccess, bool>, Invocability> invocabilityMap = new ConcurrentDictionary<Tuple<Type, BindingFlags, Type, ScriptAccess, bool>, Invocability>();
+
+        private static readonly NumericTypes[] numericConversions =
+        {
+            // https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/numeric-conversions
+
+            // IMPORTANT: maintain NumericType order
+
+            /* None */      NumericTypes.None,
+            /* Char */      NumericTypes.UInt16 | NumericTypes.Int32 | NumericTypes.UInt32 | NumericTypes.Int64 | NumericTypes.UInt64 | NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal | NumericTypes.IntPtr | NumericTypes.UIntPtr,
+            /* SByte */     NumericTypes.Int16 | NumericTypes.Int32 | NumericTypes.Int64 | NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal | NumericTypes.IntPtr,
+            /* Byte */      NumericTypes.Int16 | NumericTypes.UInt16 | NumericTypes.Int32 | NumericTypes.UInt32 | NumericTypes.Int64 | NumericTypes.UInt64 | NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal | NumericTypes.IntPtr | NumericTypes.UIntPtr,
+            /* Int16 */     NumericTypes.Int32 | NumericTypes.Int64 | NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal | NumericTypes.IntPtr,
+            /* UInt16 */    NumericTypes.Int32 | NumericTypes.UInt32 | NumericTypes.Int64 | NumericTypes.UInt64 | NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal | NumericTypes.IntPtr | NumericTypes.UIntPtr,
+            /* Int32 */     NumericTypes.Int64 | NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal | NumericTypes.IntPtr,
+            /* UInt32 */    NumericTypes.Int64 | NumericTypes.UInt64 | NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal | NumericTypes.UIntPtr,
+            /* Int64 */     NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal,
+            /* UInt64 */    NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal,
+            /* IntPtr */    NumericTypes.Int64 | NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal,
+            /* UIntPtr */   NumericTypes.UInt64 | NumericTypes.Single | NumericTypes.Double | NumericTypes.Decimal,
+            /* Single */    NumericTypes.Double,
+            /* Double */    NumericTypes.None,
+            /* Decimal */   NumericTypes.None
+        };
 
         public static bool IsStatic(this Type type)
         {
@@ -116,31 +123,30 @@ namespace Microsoft.ClearScript.Util
         public static bool IsIntegral(this Type type)
         {
             return
+                (type == typeof(char)) ||
                 (type == typeof(sbyte)) ||
                 (type == typeof(byte)) ||
                 (type == typeof(short)) ||
                 (type == typeof(ushort)) ||
-                (type == typeof(char)) ||
                 (type == typeof(int)) ||
                 (type == typeof(uint)) ||
                 (type == typeof(long)) ||
-                (type == typeof(ulong));
+                (type == typeof(ulong)) ||
+                (type == typeof(IntPtr)) ||
+                (type == typeof(UIntPtr));
         }
 
         public static bool IsFloatingPoint(this Type type)
         {
             return
                 (type == typeof(float)) ||
-                (type == typeof(double));
+                (type == typeof(double)) ||
+                (type == typeof(decimal));
         }
 
         public static bool IsNumeric(this Type type, out bool isIntegral)
         {
-            isIntegral = type.IsIntegral();
-            return
-                isIntegral ||
-                type.IsFloatingPoint() ||
-                type == typeof(decimal);
+            return (isIntegral = type.IsIntegral()) || type.IsFloatingPoint();
         }
 
         public static bool IsNumeric(this Type type)
@@ -155,7 +161,21 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsNullableNumeric(this Type type)
         {
-            return nullableNumericTypes.Contains(type);
+            return
+                (type == typeof(char?)) ||
+                (type == typeof(sbyte?)) ||
+                (type == typeof(byte?)) ||
+                (type == typeof(short?)) ||
+                (type == typeof(ushort?)) ||
+                (type == typeof(int?)) ||
+                (type == typeof(uint?)) ||
+                (type == typeof(long?)) ||
+                (type == typeof(ulong?)) ||
+                (type == typeof(IntPtr?)) ||
+                (type == typeof(UIntPtr?)) ||
+                (type == typeof(float?)) ||
+                (type == typeof(double?)) ||
+                (type == typeof(decimal?));
         }
 
         public static bool IsUnknownCOMObject(this Type type)
@@ -163,92 +183,9 @@ namespace Microsoft.ClearScript.Util
             return type.IsCOMObject && (type.GetInterfaces().Length < 1);
         }
 
-        public static bool IsAssignableFrom(this Type type, ref object value)
+        public static bool IsAssignableFromValue(this Type type, ref object value)
         {
-            if (type.IsByRef)
-            {
-                type = type.GetElementType();
-            }
-
-            if (type.IsNullable())
-            {
-                return (value == null) || (Nullable.GetUnderlyingType(type).IsAssignableFrom(ref value));
-            }
-
-            if (value == null)
-            {
-                return !type.IsValueType;
-            }
-
-            var valueType = value.GetType();
-            if ((valueType == type) || type.IsAssignableFrom(valueType))
-            {
-                return true;
-            }
-
-            if (type.IsImplicitlyConvertibleFrom(valueType, ref value))
-            {
-                return true;
-            }
-
-            if (!type.IsValueType)
-            {
-                if (type.IsInterface && type.IsImport && valueType.IsCOMObject)
-                {
-                    var result = false;
-                    var pUnknown = Marshal.GetIUnknownForObject(value);
-
-                    var iid = type.GUID;
-                    if (iid != Guid.Empty)
-                    {
-                        if (HResult.Succeeded(Marshal.QueryInterface(pUnknown, ref iid, out var pInterface)))
-                        {
-                            Marshal.Release(pInterface);
-                            result = true;
-                        }
-                    }
-
-                    Marshal.Release(pUnknown);
-                    return result;
-                }
-
-                return false;
-            }
-
-            if (!valueType.IsValueType)
-            {
-                return false;
-            }
-
-            if (type.IsEnum)
-            {
-                return Enum.GetUnderlyingType(type).IsAssignableFrom(ref value) && (value.DynamicCast<int>() == 0);
-            }
-
-            if (valueType.IsEnum)
-            {
-                return false;
-            }
-
-            if (type.IsNumeric(out var typeIsIntegral))
-            {
-                if (typeIsIntegral)
-                {
-                    if (!valueType.IsIntegral())
-                    {
-                        return false;
-                    }
-                }
-                else if (!valueType.IsNumeric())
-                {
-                    return false;
-                }
-
-                value = Convert.ChangeType(value, type);
-                return true;
-            }
-
-            return false;
+            return type.IsAssignableFromValueInternal(ref value, null, null);
         }
 
         public static bool IsAssignableToGenericType(this Type type, Type genericTypeDefinition, out Type[] typeArgs)
@@ -273,6 +210,16 @@ namespace Microsoft.ClearScript.Util
 
             typeArgs = null;
             return false;
+        }
+
+        public static bool IsImplicitlyConvertibleFromValue(this Type type, Type sourceType, ref object value)
+        {
+            return IsImplicitlyConvertibleFromValueInternal(type, sourceType, type, ref value) || IsImplicitlyConvertibleFromValueInternal(sourceType, sourceType, type, ref value);
+        }
+
+        public static bool IsNumericallyConvertibleFrom(this Type type, Type valueType)
+        {
+            return numericConversions[(int)valueType.GetNumericType()].HasFlag(GetNumericTypes(type.GetNumericType()));
         }
 
         public static bool HasExtensionMethods(this Type type)
@@ -491,7 +438,7 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
-        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
+        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] args, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
         {
             if (bindArgs.Length < 1)
             {
@@ -509,13 +456,13 @@ namespace Microsoft.ClearScript.Util
             }
 
             var candidates = type.GetScriptableProperties(name, bindFlags, accessContext, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
-            return SelectProperty(candidates, bindFlags, bindArgs);
+            return BindToMember(candidates, bindFlags, args, bindArgs);
         }
 
-        public static PropertyInfo GetScriptableDefaultProperty(this Type type, BindingFlags bindFlags, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
+        public static PropertyInfo GetScriptableDefaultProperty(this Type type, BindingFlags bindFlags, object[] args, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
         {
             var candidates = type.GetScriptableDefaultProperties(bindFlags, accessContext, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
-            return SelectProperty(candidates, bindFlags, bindArgs);
+            return BindToMember(candidates, bindFlags, args, bindArgs);
         }
 
         public static IEnumerable<Type> GetScriptableNestedTypes(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
@@ -535,10 +482,10 @@ namespace Microsoft.ClearScript.Util
 
         public static object CreateInstance(this Type type, BindingFlags flags, params object[] args)
         {
-            return type.InvokeMember(null, BindingFlags.CreateInstance | BindingFlags.Instance | (flags & ~BindingFlags.Static), null, null, args, CultureInfo.InvariantCulture);
+            return type.InvokeMember(string.Empty, BindingFlags.CreateInstance | BindingFlags.Instance | (flags & ~BindingFlags.Static), null, null, args, CultureInfo.InvariantCulture);
         }
 
-        public static object CreateInstance(this Type type, Type accessContext, ScriptAccess defaultAccess, params object[] args)
+        public static object CreateInstance(this Type type, Type accessContext, ScriptAccess defaultAccess, object[] args, object[] bindArgs)
         {
             if (type.IsCOMObject || (type.IsValueType && (args.Length < 1)))
             {
@@ -552,20 +499,22 @@ namespace Microsoft.ClearScript.Util
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
             }
 
-            ConstructorInfo constructor = null;
-
-            try
-            {
-                // ReSharper disable once CoVariantArrayConversion
-                constructor = Type.DefaultBinder.BindToMethod(flags, candidates, ref args, null, null, null, out _) as ConstructorInfo;
-            }
-            catch (MissingMethodException)
-            {
-            }
+            ConstructorInfo constructor = BindToMember(candidates, flags, args, bindArgs);
 
             if (constructor == null)
             {
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
+            }
+
+            if (args.Length > 0)
+            {
+                args = (object[])args.Clone();
+                var indexParams = constructor.GetParameters();
+                var length = Math.Min(args.Length, indexParams.Length);
+                for (var index = 0; index < length; index++)
+                {
+                    indexParams[index].ParameterType.IsAssignableFromValue(ref args[index]);
+                }
             }
 
             return constructor.Invoke(args);
@@ -602,9 +551,43 @@ namespace Microsoft.ClearScript.Util
             return type;
         }
 
-        public static bool IsValidLocator(string name)
+        public static T BindToMember<T>(T[] candidates, BindingFlags bindFlags, object[] args, object[] bindArgs) where T : MethodBase
         {
-            return !string.IsNullOrWhiteSpace(name) && name.All(IsValidLocatorChar);
+            T result = null;
+
+            if (candidates.Length > 0)
+            {
+                var bindCandidates = GetBindCandidates(candidates, args, bindArgs.Select(GetBindArgType).ToArray()).ToArray();
+                result = SelectBindCandidate(bindCandidates);
+            }
+
+            return result;
+        }
+
+        public static PropertyInfo BindToMember(PropertyInfo[] candidates, BindingFlags bindFlags, object[] args, object[] bindArgs)
+        {
+            PropertyInfo result = null;
+
+            if (candidates.Length > 0)
+            {
+                var bindCandidates = GetBindCandidates(candidates, args, bindArgs.Select(GetBindArgType).ToArray()).ToArray();
+                result = SelectBindCandidate(bindCandidates);
+
+                if (result == null)
+                {
+                    // the default binder fails to bind to some COM properties because of by-ref parameter types
+                    if (candidates.Length == 1)
+                    {
+                        var parameters = candidates[0].GetIndexParameters();
+                        if ((bindArgs.Length == parameters.Length) || ((bindArgs.Length > 0) && (parameters.Length >= bindArgs.Length)))
+                        {
+                            result = candidates[0];
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
 
         public static HostType ImportType(string typeName, string assemblyName, bool useAssemblyName, object[] hostTypeArgs)
@@ -743,22 +726,29 @@ namespace Microsoft.ClearScript.Util
 
         private static Invocability GetInvocabilityInternal(Tuple<Type, BindingFlags, Type, ScriptAccess, bool> args)
         {
-            if (typeof(Delegate).IsAssignableFrom(args.Item1))
+            var (type, bindFlags, accessContext, defaultAccess, ignoreDynamic) = args;
+
+            if (typeof(Delegate).IsAssignableFrom(type))
             {
                 return Invocability.Delegate;
             }
 
-            if (!args.Item5 && typeof(IDynamicMetaObjectProvider).IsAssignableFrom(args.Item1))
+            if (!ignoreDynamic && typeof(IDynamicMetaObjectProvider).IsAssignableFrom(type))
             {
                 return Invocability.Dynamic;
             }
 
-            if (args.Item1.GetScriptableDefaultProperties(args.Item2, args.Item3, args.Item4).Any())
+            if (type.GetScriptableDefaultProperties(bindFlags, accessContext, defaultAccess).Any())
             {
                 return Invocability.DefaultProperty;
             }
 
             return Invocability.None;
+        }
+
+        private static bool IsValidLocator(string name)
+        {
+            return !string.IsNullOrWhiteSpace(name) && name.All(IsValidLocatorChar);
         }
 
         private static bool IsValidLocatorChar(char ch)
@@ -773,53 +763,187 @@ namespace Microsoft.ClearScript.Util
             return (index >= 0) ? name.Substring(0, index) : name;
         }
 
-        private static Type GetPropertyIndexType(object bindArg)
+        private static bool IsBindableFromArg(this Type type, object value, Type valueType, out BindArgCost cost)
         {
-            if (bindArg is HostTarget hostTarget)
-            {
-                return hostTarget.Type;
-            }
-
-            if (bindArg != null)
-            {
-                return bindArg.GetType();
-            }
-
-            throw new InvalidOperationException("The property index value must not be null");
+            cost = new BindArgCost();
+            return type.IsAssignableFromValueInternal(ref value, valueType, cost);
         }
 
-        private static PropertyInfo SelectProperty(PropertyInfo[] candidates, BindingFlags bindFlags, object[] bindArgs)
+        private static bool IsAssignableFromValueInternal(this Type type, ref object value, Type valueType, BindArgCost cost)
         {
-            if (candidates.Length < 1)
+            var typeIsByRef = type.IsByRef;
+            if (typeIsByRef)
             {
-                return null;
+                type = type.GetElementType();
             }
 
-            var result = Type.DefaultBinder.SelectProperty(bindFlags, candidates, null, bindArgs.Select(GetPropertyIndexType).ToArray(), null);
-            if (result != null)
+            var valueIsByRef = (valueType != null) && valueType.IsByRef;
+            if (valueIsByRef)
             {
-                return result;
+                valueType = valueType.GetElementType();
             }
 
-            // the default binder fails to bind to some COM properties because of by-ref parameter types
-            if (candidates.Length == 1)
+            if ((cost != null) && (typeIsByRef != valueIsByRef))
             {
-                var parameters = candidates[0].GetIndexParameters();
-                if ((bindArgs.Length == parameters.Length) || ((bindArgs.Length > 0) && (parameters.Length >= bindArgs.Length)))
+                cost.Flags |= BindArgFlags.ByRefMismatch;
+            }
+
+            if ((value == null) && (valueType == null))
+            {
+                if (type.IsNullable())
                 {
-                    return candidates[0];
+                    if (cost != null)
+                    {
+                        cost.NumericType = Nullable.GetUnderlyingType(type).GetNumericType();
+                    }
+
+                    return true;
+                }
+
+                return !type.IsValueType;
+            }
+
+            if (valueType == null)
+            {
+                valueType = value.GetType();
+            }
+
+            if (valueType == type)
+            {
+                return true;
+            }
+
+            if (type.IsAssignableFrom(valueType))
+            {
+                if (cost != null)
+                {
+                    if (type.IsNullable())
+                    {
+                        cost.Flags |= BindArgFlags.NullableTransition;
+                        cost.NumericType = Nullable.GetUnderlyingType(type).GetNumericType();
+                    }
+                    else if (TypeNode.TryGetUpcastCount(valueType, type, out var count))
+                    {
+                        cost.UpcastCount = count;
+                    }
+                }
+
+                return true;
+            }
+
+            if (type.IsImplicitlyConvertibleFromValue(valueType, ref value))
+            {
+                if (cost != null)
+                {
+                    cost.Flags |= BindArgFlags.ImplicitConversion;
+                }
+
+                return true;
+            }
+
+            if (value == null)
+            {
+                return false;
+            }
+
+            if (type.IsNullable())
+            {
+                var underlyingType = Nullable.GetUnderlyingType(type);
+                if (underlyingType.IsAssignableFromValueInternal(ref value, valueType, cost))
+                {
+                    if (cost != null)
+                    {
+                        cost.Flags |= BindArgFlags.NullableTransition;
+                        cost.NumericType = underlyingType.GetNumericType();
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (!type.IsValueType)
+            {
+                if (type.IsInterface && type.IsImport && valueType.IsCOMObject)
+                {
+                    var result = false;
+                    var pUnknown = Marshal.GetIUnknownForObject(value);
+
+                    var iid = type.GUID;
+                    if (iid != Guid.Empty)
+                    {
+                        if (HResult.Succeeded(Marshal.QueryInterface(pUnknown, ref iid, out var pInterface)))
+                        {
+                            Marshal.Release(pInterface);
+                            result = true;
+                        }
+                    }
+
+                    Marshal.Release(pUnknown);
+                    return result;
+                }
+
+                return false;
+            }
+
+            if (!valueType.IsValueType)
+            {
+                return false;
+            }
+
+            if (type.IsEnum)
+            {
+                return Enum.GetUnderlyingType(type).IsAssignableFromValueInternal(ref value, valueType, cost) && value.IsZero();
+            }
+
+            if (valueType.IsEnum)
+            {
+                return false;
+            }
+
+            if (type.IsNumeric(out var typeIsIntegral))
+            {
+                if (typeIsIntegral)
+                {
+                    if (!valueType.IsIntegral() && !value.IsWholeNumber())
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!valueType.IsNumeric(out var valueTypeIsIntegral))
+                    {
+                        return false;
+                    }
+
+                    // special case for method binding only
+
+                    if ((cost != null) && !valueTypeIsIntegral && !type.IsNumericallyConvertibleFrom(valueType))
+                    {
+                        return false;
+                    }
+                }
+
+                var tempValue = value;
+                if (MiscHelpers.Try(out var tempResult, () => Convert.ChangeType(tempValue, type)))
+                {
+                    if (cost != null)
+                    {
+                        cost.Flags |= BindArgFlags.NumericConversion;
+                        cost.NumericType = type.GetNumericType();
+                    }
+
+                    value = tempResult;
+                    return true;
                 }
             }
 
-            return null;
+            return false;
         }
 
-        private static bool IsImplicitlyConvertibleFrom(this Type type, Type sourceType, ref object value)
-        {
-            return IsImplicitlyConvertibleInternal(type, sourceType, type, ref value) || IsImplicitlyConvertibleInternal(sourceType, sourceType, type, ref value);
-        }
-
-        private static bool IsImplicitlyConvertibleInternal(Type definingType, Type sourceType, Type targetType, ref object value)
+        private static bool IsImplicitlyConvertibleFromValueInternal(Type definingType, Type sourceType, Type targetType, ref object value)
         {
             foreach (var converter in definingType.GetMethods(BindingFlags.Public | BindingFlags.Static).Where(method => method.Name == "op_Implicit"))
             {
@@ -837,6 +961,222 @@ namespace Microsoft.ClearScript.Util
 
             return false;
         }
+
+        private static NumericType GetNumericType(this Type type)
+        {
+            if (type == typeof(char)) return NumericType.Char;
+            if (type == typeof(sbyte)) return NumericType.SByte;
+            if (type == typeof(byte)) return NumericType.Byte;
+            if (type == typeof(short)) return NumericType.Int16;
+            if (type == typeof(ushort)) return NumericType.UInt16;
+            if (type == typeof(int)) return NumericType.Int32;
+            if (type == typeof(uint)) return NumericType.UInt32;
+            if (type == typeof(long)) return NumericType.Int64;
+            if (type == typeof(ulong)) return NumericType.UInt64;
+            if (type == typeof(IntPtr)) return NumericType.IntPtr;
+            if (type == typeof(UIntPtr)) return NumericType.UIntPtr;
+            if (type == typeof(float)) return NumericType.Single;
+            if (type == typeof(double)) return NumericType.Double;
+            if (type == typeof(decimal)) return NumericType.Decimal;
+            return NumericType.None;
+        }
+
+        private static NumericTypes GetNumericTypes(NumericType numericType)
+        {
+            return (numericType == NumericType.None) ? NumericTypes.None : (NumericTypes)(1 << (int)numericType);
+        }
+
+        private static Type GetBindArgType(object bindArg)
+        {
+            if (bindArg is HostTarget hostTarget)
+            {
+                return hostTarget.Type;
+            }
+
+            if (bindArg != null)
+            {
+                return bindArg.GetType();
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<BindCandidate<T>> GetBindCandidates<T>(T[] candidates, object[] args, Type[] argTypes) where T : MethodBase
+        {
+            return GetBindCandidates(candidates, candidate => candidate.GetParameters(), args, argTypes);
+        }
+
+        private static IEnumerable<BindCandidate<PropertyInfo>> GetBindCandidates(PropertyInfo[] candidates, object[] args, Type[] argTypes)
+        {
+            return GetBindCandidates(candidates, candidate => candidate.GetIndexParameters(), args, argTypes);
+        }
+
+        private static IEnumerable<BindCandidate<T>> GetBindCandidates<T>(T[] candidates, Func<T, ParameterInfo[]> getParameters, object[] args, Type[] argTypes) where T : MemberInfo
+        {
+            foreach (var candidate in candidates)
+            {
+                if (MiscHelpers.Try(out var bindCandidate, () => new BindCandidate<T>(candidate, getParameters(candidate), args, argTypes)))
+                {
+                    yield return bindCandidate;
+                }
+            }
+        }
+
+        private static T SelectBindCandidate<T>(BindCandidate<T>[] bindCandidates) where T : MemberInfo
+        {
+            if (bindCandidates.Length < 1)
+            {
+                return null;
+            }
+
+            if (bindCandidates.Length < 2)
+            {
+                return bindCandidates[0].Candidate;
+            }
+
+            Array.Sort(bindCandidates, Comparer<BindCandidate<T>>.Default);
+
+            if (bindCandidates[0].CompareTo(bindCandidates[1]) == 0)
+            {
+                throw new AmbiguousMatchException("Ambiguous match found for the specified arguments");
+            }
+
+            return bindCandidates[0].Candidate;
+        }
+
+        #region Nested type: NumericType
+
+        private enum NumericType
+        {
+            // IMPORTANT: maintain order and numeric mapping
+
+            None,
+            Char,
+            SByte,
+            Byte,
+            Int16,
+            UInt16,
+            Int32,
+            UInt32,
+            Int64,
+            UInt64,
+            IntPtr,
+            UIntPtr,
+            Single,
+            Double,
+            Decimal
+        }
+
+        #endregion
+
+        #region Nested type: NumericTypes
+
+        [Flags]
+        private enum NumericTypes
+        {
+            // ReSharper disable UnusedMember.Local
+
+            None = 0,
+            Char = 1 << NumericType.Char,
+            SByte = 1 << NumericType.SByte,
+            Byte = 1 << NumericType.Byte,
+            Int16 = 1 << NumericType.Int16,
+            UInt16 = 1 << NumericType.UInt16,
+            Int32 = 1 << NumericType.Int32,
+            UInt32 = 1 << NumericType.UInt32,
+            Int64 = 1 << NumericType.Int64,
+            UInt64 = 1 << NumericType.UInt64,
+            IntPtr = 1 << NumericType.IntPtr,
+            UIntPtr = 1 << NumericType.UIntPtr,
+            Single = 1 << NumericType.Single,
+            Double = 1 << NumericType.Double,
+            Decimal = 1 << NumericType.Decimal
+
+            // ReSharper restore UnusedMember.Local
+        }
+
+        #endregion
+
+        #region Nested type: TypeNode
+
+        private sealed class TypeNode
+        {
+            private static readonly ConcurrentDictionary<Type, TypeNode> typeNodeMap = new ConcurrentDictionary<Type, TypeNode>();
+
+            private readonly Type type;
+
+            private readonly TypeNode baseNode;
+
+            private readonly IReadOnlyCollection<TypeNode> interfaceNodes;
+
+            public static bool TryGetUpcastCount(Type sourceType, Type targetType, out uint count)
+            {
+                count = uint.MaxValue;
+
+                if (targetType != typeof(object))
+                {
+                    GetOrCreate(sourceType).GetUpcastCountInternal(targetType, 0U, ref count);
+                    return count < uint.MaxValue;
+                }
+
+                return true;
+            }
+
+            private TypeNode(Type type, TypeNode baseNode, IReadOnlyCollection<TypeNode> interfaceNodes)
+            {
+                this.type = type;
+                this.baseNode = baseNode;
+                this.interfaceNodes = interfaceNodes;
+            }
+
+            private static TypeNode GetOrCreate(Type type) => typeNodeMap.GetOrAdd(type, Create);
+
+            private static TypeNode Create(Type type)
+            {
+                TypeNode baseNode = null;
+                var redundantInterfaces = new List<Type>();
+
+                var baseType = type.BaseType;
+                if (baseType != null)
+                {
+                    redundantInterfaces.AddRange(baseType.GetInterfaces());
+                    baseNode = GetOrCreate(baseType);
+                }
+
+                var allInterfaces = type.GetInterfaces();
+                foreach (var interfaceType in allInterfaces)
+                {
+                    redundantInterfaces.AddRange(interfaceType.GetInterfaces());
+                }
+
+                var interfaces = allInterfaces.Except(redundantInterfaces.Distinct());
+                return new TypeNode(type, baseNode, interfaces.Select(GetOrCreate).ToArray());
+            }
+
+            private void GetUpcastCountInternal(Type targetType, uint count, ref uint lowestCount)
+            {
+                if (type == targetType)
+                {
+                    if (count < lowestCount)
+                    {
+                        lowestCount = count;
+                    }
+                }
+                else
+                {
+                    baseNode?.GetUpcastCountInternal(targetType, count + 1, ref lowestCount);
+                    if (targetType.IsInterface)
+                    {
+                        foreach (var interfaceNode in interfaceNodes)
+                        {
+                            interfaceNode.GetUpcastCountInternal(targetType, count + 1, ref lowestCount);
+                        }
+                    }
+                }
+            }
+        }
+
+        #endregion
 
         #region Nested type: PropertySignatureComparer
 
@@ -867,6 +1207,184 @@ namespace Microsoft.ClearScript.Util
             }
 
             #endregion
+        }
+
+        #endregion
+
+        #region Nested Type: BindArgFlag
+
+        private enum BindArgFlag
+        {
+            // IMPORTANT: ascending cost order 
+
+            IsParamArrayArg,
+            NullableTransition,
+            NumericConversion,
+            ImplicitConversion,
+            ByRefMismatch
+        }
+
+        #endregion
+
+        #region Nested type: BindArgFlags
+
+        [Flags]
+        private enum BindArgFlags : uint
+        {
+            IsParamArrayArg = 1 << BindArgFlag.IsParamArrayArg,
+            NullableTransition = 1 << BindArgFlag.NullableTransition,
+            NumericConversion = 1 << BindArgFlag.NumericConversion,
+            ImplicitConversion = 1 << BindArgFlag.ImplicitConversion,
+            ByRefMismatch = 1 << BindArgFlag.ByRefMismatch
+        }
+
+        #endregion
+
+        #region Nested type: BindArgCost
+
+        private sealed class BindArgCost : IComparable<BindArgCost>
+        {
+            public BindArgFlags Flags;
+            public NumericType NumericType;
+            public uint UpcastCount;
+
+            public int CompareTo(BindArgCost other)
+            {
+                var result = Flags.CompareTo(other.Flags);
+                if (result != 0)
+                {
+                    return result;
+                }
+
+                if ((NumericType != NumericType.None) && (other.NumericType != NumericType.None))
+                {
+                    result = NumericType.CompareTo(other.NumericType);
+                    if (result != 0)
+                    {
+                        return result;
+                    }
+                }
+
+                return UpcastCount.CompareTo(other.UpcastCount);
+            }
+        }
+
+        #endregion
+
+        #region Nested type: BindCandidate
+
+        private sealed class BindCandidate<T> : IComparable<BindCandidate<T>> where T : MemberInfo
+        {
+            private bool paramArray;
+            private readonly List<BindArgCost> argCosts = new List<BindArgCost>();
+
+            public T Candidate { get; }
+
+            public BindCandidate(T candidate, ParameterInfo[] parameters, object[] args, Type[] argTypes)
+            {
+                Candidate = candidate;
+                Initialize(parameters, args, argTypes);
+            }
+
+            public int CompareTo(BindCandidate<T> other)
+            {
+                Debug.Assert(argCosts.Count == other.argCosts.Count);
+                int result;
+
+                for (var index = 0; index < argCosts.Count; index++)
+                {
+                    result = argCosts[index].CompareTo(other.argCosts[index]);
+                    if (result != 0)
+                    {
+                        return result;
+                    }
+                }
+
+                result = paramArray.CompareTo(other.paramArray);
+                if (result != 0)
+                {
+                    return result;
+                }
+
+                var declType = Candidate.DeclaringType;
+                var otherDeclType = other.Candidate.DeclaringType;
+
+                if (otherDeclType == declType)
+                {
+                    return 0;
+                }
+
+                return TypeNode.TryGetUpcastCount(Candidate.DeclaringType, other.Candidate.DeclaringType, out _) ? -1 : 1;
+            }
+
+            private void Initialize(ParameterInfo[] parameters, object[] args, Type[] argTypes)
+            {
+                var paramIndex = 0;
+                var argIndex = 0;
+
+                Type paramType = null;
+                BindArgCost cost;
+
+                for (; paramIndex < parameters.Length; paramIndex++)
+                {
+                    var param = parameters[paramIndex];
+                    paramType = param.ParameterType;
+
+                    if ((paramIndex == (parameters.Length - 1)) && paramType.IsArray && CustomAttributes.Has<ParamArrayAttribute>(param, false))
+                    {
+                        paramArray = true;
+                        break;
+                    }
+
+                    if (argIndex >= args.Length)
+                    {
+                        if (!param.IsOptional && !param.HasDefaultValue)
+                        {
+                            throw new OperationCanceledException();
+                        }
+
+                        continue;
+                    }
+
+                    if (!paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
+                    {
+                        throw new OperationCanceledException();
+                    }
+
+                    argCosts.Add(cost);
+                    ++argIndex;
+                }
+
+                if (paramArray)
+                {
+                    if (argIndex >= args.Length)
+                    {
+                        return;
+                    }
+
+                    if ((argIndex == (args.Length - 1)) && paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
+                    {
+                        argCosts.Add(cost);
+                        return;
+                    }
+
+                    paramType = paramType.GetElementType();
+                    for (; argIndex < args.Length; argIndex++)
+                    {
+                        if (!paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
+                        {
+                            throw new OperationCanceledException();
+                        }
+
+                        cost.Flags |= BindArgFlags.IsParamArrayArg;
+                        argCosts.Add(cost);
+                    }
+                }
+                else if (argIndex < args.Length)
+                {
+                    throw new OperationCanceledException();
+                }
+            }
         }
 
         #endregion

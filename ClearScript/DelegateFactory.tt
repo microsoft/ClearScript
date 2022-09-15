@@ -52,7 +52,14 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
-                    Invoke(() => ((dynamic)target)(<#= argList #>));
+                    if (target is ScriptObject scriptObject)
+                    {
+                        Invoke(() => scriptObject.InvokeAsFunction(<#= argList #>));
+                    }
+                    else
+                    {
+                        Invoke(() => ((dynamic)target)(<#= argList #>));
+                    }
                 }
                 else
                 {
@@ -116,6 +123,11 @@ namespace Microsoft.ClearScript
             {
                 if (allByValue || Engine.EnableAutoHostVariables)
                 {
+                    if (target is ScriptObject scriptObject)
+                    {
+                        return Invoke(() => (TResult)scriptObject.InvokeAsFunction(<#= argList #>));
+                    }
+
                     return Invoke(() => (TResult)((dynamic)target)(<#= argList #>));
                 }
 

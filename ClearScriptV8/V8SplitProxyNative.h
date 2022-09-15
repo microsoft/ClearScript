@@ -229,8 +229,8 @@ NATIVE_ENTRY_POINT(void) V8CpuProfileNode_GetInfo(const v8::CpuProfileNode& node
 NATIVE_ENTRY_POINT(StdBool) V8CpuProfileNode_GetHitLines(const v8::CpuProfileNode& node, std::vector<int32_t>& lineNumbers, std::vector<uint32_t>& hitCounts) noexcept;
 NATIVE_ENTRY_POINT(const v8::CpuProfileNode*) V8CpuProfileNode_GetChildNode(const v8::CpuProfileNode& node, int32_t index) noexcept;
 
-NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int32_t maxNewSpaceSize, int32_t maxOldSpaceSize, double heapExpansionMultiplier, uint64_t maxArrayBufferAllocation, StdBool enableDebugging, StdBool enableRemoteDebugging, StdBool enableDynamicModuleImports, int32_t debugPort) noexcept;
-NATIVE_ENTRY_POINT(V8ContextHandle*) V8Isolate_CreateContext(const V8IsolateHandle& handle, const StdString& name, StdBool enableDebugging, StdBool enableRemoteDebugging, StdBool disableGlobalMembers, StdBool enableDateTimeConversion, StdBool enableDynamicModuleImports, StdBool hideHostExceptions, int32_t debugPort) noexcept;
+NATIVE_ENTRY_POINT(V8IsolateHandle*) V8Isolate_Create(const StdString& name, int32_t maxNewSpaceSize, int32_t maxOldSpaceSize, double heapExpansionMultiplier, uint64_t maxArrayBufferAllocation, V8Isolate::Flags flags, int32_t debugPort) noexcept;
+NATIVE_ENTRY_POINT(V8ContextHandle*) V8Isolate_CreateContext(const V8IsolateHandle& handle, const StdString& name, V8Context::Flags flags, int32_t debugPort) noexcept;
 NATIVE_ENTRY_POINT(size_t) V8Isolate_GetMaxHeapSize(const V8IsolateHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8Isolate_SetMaxHeapSize(const V8IsolateHandle& handle, size_t size) noexcept;
 NATIVE_ENTRY_POINT(double) V8Isolate_GetHeapSizeSampleInterval(const V8IsolateHandle& handle) noexcept;

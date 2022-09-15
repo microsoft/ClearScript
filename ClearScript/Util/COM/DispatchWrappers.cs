@@ -51,7 +51,7 @@ namespace Microsoft.ClearScript.Util.COM
                 var result = dispatch.GetProperty(name, args);
                 return result;
             }
-            catch (Exception)
+            catch
             {
                 if (args.Length < 1)
                 {
@@ -160,7 +160,7 @@ namespace Microsoft.ClearScript.Util.COM
                 var result = dispatchEx.GetProperty(name, false, args);
                 return result;
             }
-            catch (Exception)
+            catch
             {
                 if (args.Length < 1)
                 {

@@ -982,7 +982,7 @@ namespace Microsoft.ClearScript
                     {
                         return TargetDynamic.Invoke(false, args);
                     }
-                    catch (Exception)
+                    catch
                     {
                         if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
                         {
@@ -997,7 +997,7 @@ namespace Microsoft.ClearScript
                 {
                     return TargetDynamic.InvokeMethod(name, args);
                 }
-                catch (Exception)
+                catch
                 {
                     if (invokeFlags.HasFlag(BindingFlags.GetField))
                     {
@@ -1222,6 +1222,7 @@ namespace Microsoft.ClearScript
                                 if (hostType != null)
                                 {
                                     args = args.Skip(typeArgs.Length).ToArray();
+                                    bindArgs = bindArgs.Skip(typeArgs.Length).ToArray();
 
                                     var specificType = hostType.GetSpecificType();
                                     if (typeof(Delegate).IsAssignableFrom(specificType))
@@ -1234,7 +1235,7 @@ namespace Microsoft.ClearScript
                                         return DelegateFactory.CreateDelegate(Engine, args[0], specificType);
                                     }
 
-                                    return specificType.CreateInstance(AccessContext, DefaultAccess, args);
+                                    return specificType.CreateInstance(AccessContext, DefaultAccess, args, bindArgs);
                                 }
                             }
 
@@ -1254,7 +1255,7 @@ namespace Microsoft.ClearScript
                             return DelegateFactory.CreateDelegate(Engine, args[0], type);
                         }
 
-                        return type.CreateInstance(AccessContext, DefaultAccess, args);
+                        return type.CreateInstance(AccessContext, DefaultAccess, args, bindArgs);
                     }
 
                     if (TargetDynamicMetaObject != null)
@@ -1334,7 +1335,7 @@ namespace Microsoft.ClearScript
                     {
                         throw;
                     }
-                    catch (Exception)
+                    catch
                     {
                         // ReSharper disable EmptyGeneralCatchClause
 
@@ -1350,7 +1351,7 @@ namespace Microsoft.ClearScript
                         {
                             throw;
                         }
-                        catch (Exception)
+                        catch
                         {
                         }
                         
@@ -1365,7 +1366,7 @@ namespace Microsoft.ClearScript
                     return GetHostProperty(name, invokeFlags, args, bindArgs, culture, true, out isCacheable);
                 }
 
-                throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no suitable method named '{0}'", name));
+                throw new MissingMethodException(MiscHelpers.FormatInvariant("The object has no suitable method named '{0}'", name));
             }
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
@@ -1387,7 +1388,7 @@ namespace Microsoft.ClearScript
 
             if (name == SpecialMemberNames.Default)
             {
-                var defaultProperty = Target.Type.GetScriptableDefaultProperty(invokeFlags, bindArgs, AccessContext, DefaultAccess);
+                var defaultProperty = Target.Type.GetScriptableDefaultProperty(invokeFlags, args, bindArgs, AccessContext, DefaultAccess);
                 if (defaultProperty != null)
                 {
                     return GetHostProperty(defaultProperty, invokeFlags, args, culture);
@@ -1472,7 +1473,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            var property = Target.Type.GetScriptableProperty(name, invokeFlags, bindArgs, AccessContext, DefaultAccess);
+            var property = Target.Type.GetScriptableProperty(name, invokeFlags, args, bindArgs, AccessContext, DefaultAccess);
             if (property != null)
             {
                 return GetHostProperty(property, invokeFlags, args, culture);
@@ -1551,6 +1552,17 @@ namespace Microsoft.ClearScript
                 throw new UnauthorizedAccessException("The property get method is unavailable or inaccessible");
             }
 
+            if (args.Length > 0)
+            {
+                args = (object[])args.Clone();
+                var indexParams = property.GetIndexParameters();
+                var length = Math.Min(args.Length, indexParams.Length);
+                for (var index = 0; index < length; index++)
+                {
+                    indexParams[index].ParameterType.IsAssignableFromValue(ref args[index]);
+                }
+            }
+
             var result = property.GetValue(Target.InvokeTarget, invokeFlags, Type.DefaultBinder, args, culture);
             return Engine.PrepareResult(result, property.PropertyType, property.GetScriptMemberFlags(), false);
         }
@@ -1566,7 +1578,7 @@ namespace Microsoft.ClearScript
 
                 object result;
 
-                var defaultProperty = Target.Type.GetScriptableDefaultProperty(invokeFlags, bindArgs.Take(bindArgs.Length - 1).ToArray(), AccessContext, DefaultAccess);
+                var defaultProperty = Target.Type.GetScriptableDefaultProperty(invokeFlags, args.Take(args.Length - 1).ToArray(), bindArgs.Take(bindArgs.Length - 1).ToArray(), AccessContext, DefaultAccess);
                 if (defaultProperty != null)
                 {
                     return SetHostProperty(defaultProperty, invokeFlags, args, bindArgs, culture);
@@ -1621,7 +1633,7 @@ namespace Microsoft.ClearScript
                 throw new InvalidOperationException("Invalid argument count");
             }
 
-            var property = Target.Type.GetScriptableProperty(name, invokeFlags, bindArgs.Take(bindArgs.Length - 1).ToArray(), AccessContext, DefaultAccess);
+            var property = Target.Type.GetScriptableProperty(name, invokeFlags, args.Take(args.Length - 1).ToArray(), bindArgs.Take(bindArgs.Length - 1).ToArray(), AccessContext, DefaultAccess);
             if (property != null)
             {
                 return SetHostProperty(property, invokeFlags, args, bindArgs, culture);
@@ -1638,7 +1650,7 @@ namespace Microsoft.ClearScript
                     }
 
                     var value = args[0];
-                    if (field.FieldType.IsAssignableFrom(ref value))
+                    if (field.FieldType.IsAssignableFromValue(ref value))
                     {
                         field.SetValue(Target.InvokeTarget, value);
                         return value;
@@ -1664,6 +1676,17 @@ namespace Microsoft.ClearScript
             if ((setMethod == null) || !setMethod.IsAccessible(AccessContext) || setMethod.IsBlockedFromScript(DefaultAccess, false))
             {
                 throw new UnauthorizedAccessException("The property set method is unavailable or inaccessible");
+            }
+
+            if (args.Length > 1)
+            {
+                args = (object[])args.Clone();
+                var indexParams = property.GetIndexParameters();
+                var length = Math.Min(args.Length - 1, indexParams.Length);
+                for (var index = 0; index < length; index++)
+                {
+                    indexParams[index].ParameterType.IsAssignableFromValue(ref args[index]);
+                }
             }
 
             var value = args[args.Length - 1];
@@ -1693,7 +1716,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            if (property.PropertyType.IsAssignableFrom(ref value))
+            if (property.PropertyType.IsAssignableFromValue(ref value))
             {
                 property.SetValue(Target.InvokeTarget, value, invokeFlags, Type.DefaultBinder, args.Take(args.Length - 1).ToArray(), culture);
                 return value;
@@ -1702,8 +1725,8 @@ namespace Microsoft.ClearScript
             // Some COM properties have setters where the final parameter type doesn't match
             // the property type. The latter has failed, so let's try the former.
 
-            var parameters = setMethod.GetParameters();
-            if ((parameters.Length == args.Length) && (parameters[args.Length - 1].ParameterType.IsAssignableFrom(ref value)))
+            var setParams = setMethod.GetParameters();
+            if ((setParams.Length == args.Length) && (setParams[args.Length - 1].ParameterType.IsAssignableFromValue(ref value)))
             {
                 property.SetValue(Target.InvokeTarget, value, invokeFlags, Type.DefaultBinder, args.Take(args.Length - 1).ToArray(), culture);
                 return value;
@@ -1721,7 +1744,15 @@ namespace Microsoft.ClearScript
         {
             if ((Target is HostObject) || (Target is IHostVariable) || (Target is IByRefArg))
             {
-                if (BindSpecialTarget(out IEnumerable _))
+                if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IEnumerable<>), out var typeArgs))
+                {
+                    var enumerableHelpersHostItem = Wrap(Engine, typeof(EnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
+                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this)))
+                    {
+                        return enumerator;
+                    }
+                }
+                else if (BindSpecialTarget(out IEnumerable _))
                 {
                     var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
                     if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this)))

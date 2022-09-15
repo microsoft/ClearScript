@@ -52,7 +52,7 @@ namespace Microsoft.ClearScript.Util.COM
                         return name.Trim();
                     }
                 }
-                catch (Exception)
+                catch
                 {
                 }
 
