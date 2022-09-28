@@ -15,20 +15,34 @@ public:
     void EnsureInitialized();
     V8GlobalFlags GetGlobalFlags() const;
 
+    virtual v8::PageAllocator* GetPageAllocator() override;
     virtual int NumberOfWorkerThreads() override;
     virtual std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner(v8::Isolate* pIsolate) override;
     virtual void CallOnWorkerThread(std::unique_ptr<v8::Task> upTask) override;
     virtual void CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> upTask, double delayInSeconds) override;
-    virtual std::unique_ptr<v8::JobHandle> PostJob(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask) override;
+    virtual std::unique_ptr<v8::JobHandle> CreateJob(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask) override;
     virtual double MonotonicallyIncreasingTime() override;
     virtual double CurrentClockTimeMillis() override;
     virtual v8::TracingController* GetTracingController() override;
+
+#if defined(__APPLE__) && defined(__arm64__)
+
+    // WORKAROUND: V8 on Apple Silicon crashes frequently without this override; it's unclear
+    // whether it retains correct behavior.
+
+    virtual std::unique_ptr<v8::JobHandle> PostJob(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask) override
+    {
+        return CreateJob(priority, std::move(upJobTask));
+    }
+
+#endif // defined(__APPLE__) && defined(__arm64__)
 
 private:
 
     V8Platform();
 
     static V8Platform ms_Instance;
+    std::unique_ptr<v8::Platform> m_upDefaultPlatform;
     OnceFlag m_InitializationFlag;
     V8GlobalFlags m_GlobalFlags;
     v8::TracingController m_TracingController;
@@ -111,6 +125,13 @@ void V8Platform::EnsureInitialized()
 
 //-----------------------------------------------------------------------------
 
+v8::PageAllocator* V8Platform::GetPageAllocator()
+{
+    return m_upDefaultPlatform->GetPageAllocator();
+}
+
+//-----------------------------------------------------------------------------
+
 int V8Platform::NumberOfWorkerThreads()
 {
     return static_cast<int>(HighResolutionClock::GetHardwareConcurrency());
@@ -151,7 +172,7 @@ void V8Platform::CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> upTask, dou
 
 //-----------------------------------------------------------------------------
 
-std::unique_ptr<v8::JobHandle> V8Platform::PostJob(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask)
+std::unique_ptr<v8::JobHandle> V8Platform::CreateJob(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask)
 {
     return v8::platform::NewDefaultJobHandle(this, priority, std::move(upJobTask), NumberOfWorkerThreads());
 }
@@ -180,6 +201,7 @@ v8::TracingController* V8Platform::GetTracingController()
 //-----------------------------------------------------------------------------
 
 V8Platform::V8Platform():
+    m_upDefaultPlatform(v8::platform::NewDefaultPlatform()),
     m_GlobalFlags(V8GlobalFlags::None)
 {
 }

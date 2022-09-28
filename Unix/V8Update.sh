@@ -1,9 +1,10 @@
 #!/bin/bash
 
-v8testedrev=10.5.218.8
+v8testedrev=10.6.194.14
 v8testedcommit=
 v8cherrypicks=
 v8linuxbuildcommit=3d9590754d5d23e62d15472c5baf6777ca59df20
+v8linuxclangcommit=184bc29dd86c3994a02b4f3feca125ffe785319c
 
 if [[ $v8testedcommit == "" ]]; then
     v8testedcommit=$v8testedrev
@@ -178,17 +179,22 @@ if [[ $download == true ]]; then
     if [[ $linux == true ]]; then
         cd build || abort
         if [[ $v8linuxbuildcommit != "" ]]; then
-            git reset --hard $v8linuxbuildcommit >reset.log || fail
+            git reset --hard $v8linuxbuildcommit >resetBuild.log || fail
         fi
         cp ../../../sysroots.json linux/sysroot_scripts || fail
         cd ..
+        cd tools/clang || abort
+        if [[ $v8linuxclangcommit != "" ]]; then
+            git reset --hard $v8linuxclangcommit >resetClang.log || fail
+        fi
+        cd ../..
     fi
     cd ..
     
     echo "Downloading additional libraries ..."
     git clone -n https://github.com/nlohmann/json.git 2>clone-json.log || fail
     cd json || abort
-    git checkout $jsontag 2>checkout.log || fail
+    git reset --hard $jsontag >resetJson.log || fail
     cd ..
 
     cd ..

@@ -25,7 +25,7 @@ namespace Microsoft.ClearScript
                 return new HostItem(engine, target, flags);
             }
 
-            return TargetSupportsExpandoMembers(target, flags) ? new DispatchExHostItem(engine, target, flags) : new HostItem(engine, target, flags);
+            return (TargetSupportsExpandoMembers(target, flags) && (engine is IWindowsScriptEngineTag)) ? new DispatchExHostItem(engine, target, flags) : new HostItem(engine, target, flags);
         }
 
         #endregion

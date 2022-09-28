@@ -63,6 +63,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return V8SplitProxyManaged_SetMethodTable(pMethodTable);
             }
 
+            string IV8SplitProxyNative.V8SplitProxyNative_GetVersion()
+            {
+                return Marshal.PtrToStringUni(V8SplitProxyNative_GetVersion());
+            }
+
             void IV8SplitProxyNative.V8Environment_InitializeICU(IntPtr pICUData, uint size)
             {
                 V8Environment_InitializeICU(pICUData, size);
@@ -1075,6 +1080,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern IntPtr V8SplitProxyManaged_SetMethodTable(
                 [In] IntPtr pMethodTable
             );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern IntPtr V8SplitProxyNative_GetVersion();
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
@@ -2090,6 +2098,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return V8SplitProxyManaged_SetMethodTable(pMethodTable);
             }
 
+            string IV8SplitProxyNative.V8SplitProxyNative_GetVersion()
+            {
+                return Marshal.PtrToStringUni(V8SplitProxyNative_GetVersion());
+            }
+
             void IV8SplitProxyNative.V8Environment_InitializeICU(IntPtr pICUData, uint size)
             {
                 V8Environment_InitializeICU(pICUData, size);
@@ -3102,6 +3115,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern IntPtr V8SplitProxyManaged_SetMethodTable(
                 [In] IntPtr pMethodTable
             );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern IntPtr V8SplitProxyNative_GetVersion();
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(
@@ -4117,6 +4133,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return V8SplitProxyManaged_SetMethodTable(pMethodTable);
             }
 
+            string IV8SplitProxyNative.V8SplitProxyNative_GetVersion()
+            {
+                return Marshal.PtrToStringUni(V8SplitProxyNative_GetVersion());
+            }
+
             void IV8SplitProxyNative.V8Environment_InitializeICU(IntPtr pICUData, uint size)
             {
                 V8Environment_InitializeICU(pICUData, size);
@@ -5129,6 +5150,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern IntPtr V8SplitProxyManaged_SetMethodTable(
                 [In] IntPtr pMethodTable
             );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern IntPtr V8SplitProxyNative_GetVersion();
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Environment_InitializeICU(

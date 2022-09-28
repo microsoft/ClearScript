@@ -1,13 +1,13 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 686fac5385..1193982dba 100644
+index 83082271b8..778c555275 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -1057,7 +1057,7 @@ config("toolchain") {
+@@ -1100,7 +1100,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
 -  cflags = []
-+  cflags = [ "-Wno-invalid-offsetof", "-Wno-unused-result", "-Wno-deprecated-copy-with-user-provided-copy" ]
++  cflags = [ "-Wno-invalid-offsetof", "-Wno-unused-result", "-Wno-deprecated-copy-with-user-provided-copy", "-Wno-extra-semi", "-Wno-c++98-compat-extra-semi" ]
    ldflags = []
  
    if (v8_current_cpu == "arm") {
@@ -25,7 +25,7 @@ index d68269dd4f..4d4fde6873 100644
  
  #if V8_ENABLE_CHECKS
 diff --git a/include/v8-initialization.h b/include/v8-initialization.h
-index 66adf98c17..4f7f157372 100644
+index 224ae0dc6b..ec17656b4b 100644
 --- a/include/v8-initialization.h
 +++ b/include/v8-initialization.h
 @@ -139,6 +139,7 @@ class V8_EXPORT V8 {
@@ -65,10 +65,10 @@ index 562b7849b4..f585106ffd 100644
      // Keep prototypes in slow-mode. Let them be lazily turned fast later on.
      // TODO(dcarney): is this necessary?
 diff --git a/src/api/api.cc b/src/api/api.cc
-index bbab4c72ac..6aeaa320dd 100644
+index 353fa739d8..61974a4129 100644
 --- a/src/api/api.cc
 +++ b/src/api/api.cc
-@@ -1964,6 +1964,17 @@ void ObjectTemplate::SetImmutableProto() {
+@@ -1940,6 +1940,17 @@ void ObjectTemplate::SetImmutableProto() {
    self->set_immutable_proto(true);
  }
  
@@ -86,7 +86,7 @@ index bbab4c72ac..6aeaa320dd 100644
  bool ObjectTemplate::IsCodeLike() const {
    return Utils::OpenHandle(this)->code_like();
  }
-@@ -6236,6 +6247,10 @@ bool v8::V8::InitializeICU(const char* icu_data_file) {
+@@ -6215,6 +6226,10 @@ bool v8::V8::InitializeICU(const char* icu_data_file) {
    return i::InitializeICU(icu_data_file);
  }
  
@@ -114,10 +114,10 @@ index 97db02225f..d413a93530 100644
           MatchLiteralCompareTypeof(right_, op(), left_, expr, literal);
  }
 diff --git a/src/base/platform/platform.h b/src/base/platform/platform.h
-index ac010509bd..2da5a0ae61 100644
+index 45ecfb3e3e..ab28df6210 100644
 --- a/src/base/platform/platform.h
 +++ b/src/base/platform/platform.h
-@@ -47,6 +47,8 @@
+@@ -51,6 +51,8 @@
  #include <sanitizer/asan_interface.h>
  #endif  // V8_USE_ADDRESS_SANITIZER
  
@@ -141,10 +141,10 @@ index 417e6f1dfa..108dc20972 100644
      // The evaluation of async module can not throwing a JavaScript observable
      // exception.
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index a984d2ce73..be78caa6b1 100644
+index 9a12cfdd9d..a1388f5590 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -1841,6 +1841,10 @@ TNode<Uint32T> CodeStubAssembler::LoadMapBitField3(TNode<Map> map) {
+@@ -1843,6 +1843,10 @@ TNode<Uint32T> CodeStubAssembler::LoadMapBitField3(TNode<Map> map) {
    return LoadObjectField<Uint32T>(map, Map::kBitField3Offset);
  }
  
@@ -168,10 +168,10 @@ index a984d2ce73..be78caa6b1 100644
        Word32And(LoadMapBitField(map),
                  Int32Constant(Map::Bits1::IsCallableBit::kMask |
 diff --git a/src/codegen/code-stub-assembler.h b/src/codegen/code-stub-assembler.h
-index 9633ba5333..26dde448bb 100644
+index 5c89a2ac9d..23aebfdd17 100644
 --- a/src/codegen/code-stub-assembler.h
 +++ b/src/codegen/code-stub-assembler.h
-@@ -1388,6 +1388,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
+@@ -1406,6 +1406,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
    TNode<Int32T> LoadMapBitField2(TNode<Map> map);
    // Load bit field 3 of a map.
    TNode<Uint32T> LoadMapBitField3(TNode<Map> map);
@@ -181,10 +181,10 @@ index 9633ba5333..26dde448bb 100644
    TNode<Uint16T> LoadMapInstanceType(TNode<Map> map);
    // Load the ElementsKind of a map.
 diff --git a/src/common/globals.h b/src/common/globals.h
-index b17792f6e0..957795294f 100644
+index ab9d3bb1ca..f1b94ac92e 100644
 --- a/src/common/globals.h
 +++ b/src/common/globals.h
-@@ -193,7 +193,7 @@ using CodeT = Code;
+@@ -196,7 +196,7 @@ using CodeT = Code;
  //
  #if V8_HAS_PTHREAD_JIT_WRITE_PROTECT && \
      !(defined(V8_COMPRESS_POINTERS) && !defined(V8_EXTERNAL_CODE_SPACE))
@@ -273,10 +273,10 @@ index 4a70a28478..420eff5a33 100644
        // Unprotect reserved page.
        DWORD old_protect;
 diff --git a/src/execution/isolate.h b/src/execution/isolate.h
-index 1b6e86c7c0..79dc89f0d6 100644
+index 66735c9283..e12f0ad996 100644
 --- a/src/execution/isolate.h
 +++ b/src/execution/isolate.h
-@@ -667,7 +667,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
+@@ -661,7 +661,6 @@ class V8_EXPORT_PRIVATE Isolate final : private HiddenFactory {
    // Returns the isolate inside which the current thread is running.
    V8_INLINE static Isolate* Current() {
      Isolate* isolate = TryGetCurrent();
@@ -285,7 +285,7 @@ index 1b6e86c7c0..79dc89f0d6 100644
    }
  
 diff --git a/src/execution/stack-guard.cc b/src/execution/stack-guard.cc
-index 90e46ea793..cf38c2d7f4 100644
+index 31d9b52c82..141b9aceb5 100644
 --- a/src/execution/stack-guard.cc
 +++ b/src/execution/stack-guard.cc
 @@ -218,8 +218,10 @@ void StackGuard::FreeThreadResources() {
@@ -301,10 +301,10 @@ index 90e46ea793..cf38c2d7f4 100644
    set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
    real_climit_ = limit;
 diff --git a/src/heap/factory.cc b/src/heap/factory.cc
-index 3d7a767c0c..3012071ee7 100644
+index 292ee8b116..723ce323a1 100644
 --- a/src/heap/factory.cc
 +++ b/src/heap/factory.cc
-@@ -2056,6 +2056,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
+@@ -2039,6 +2039,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
        Map::Bits3::ConstructionCounterBits::encode(Map::kNoSlackTracking) |
        Map::Bits3::IsExtensibleBit::encode(true);
    map.set_bit_field3(bit_field3);
@@ -313,10 +313,10 @@ index 3d7a767c0c..3012071ee7 100644
    ReadOnlyRoots ro_roots(roots);
    HeapObject raw_null_value = ro_roots.null_value();
 diff --git a/src/heap/setup-heap-internal.cc b/src/heap/setup-heap-internal.cc
-index 0e86540d0a..2f6a1df2b1 100644
+index 5666c5834e..851dddb224 100644
 --- a/src/heap/setup-heap-internal.cc
 +++ b/src/heap/setup-heap-internal.cc
-@@ -181,6 +181,7 @@ AllocationResult Heap::AllocatePartialMap(InstanceType instance_type,
+@@ -188,6 +188,7 @@ AllocationResult Heap::AllocatePartialMap(InstanceType instance_type,
        Map::Bits3::OwnsDescriptorsBit::encode(true) |
        Map::Bits3::ConstructionCounterBits::encode(Map::kNoSlackTracking);
    map.set_bit_field3(bit_field3);
@@ -377,10 +377,10 @@ index e127e75f10..b0e4bd2d68 100644
  // Like above, but using the default icudt[lb].dat location if icu_data_file is
  // not specified.
 diff --git a/src/init/v8.cc b/src/init/v8.cc
-index e45a79c079..45c9bc445c 100644
+index 18fab17246..2519dd93d3 100644
 --- a/src/init/v8.cc
 +++ b/src/init/v8.cc
-@@ -92,7 +92,6 @@ V8_DECLARE_ONCE(init_snapshot_once);
+@@ -93,7 +93,6 @@ V8_DECLARE_ONCE(init_snapshot_once);
  
  void V8::InitializePlatform(v8::Platform* platform) {
    AdvanceStartupState(V8StartupState::kPlatformInitializing);
@@ -389,7 +389,7 @@ index e45a79c079..45c9bc445c 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/objects/intl-objects.h b/src/objects/intl-objects.h
-index 4fbfe349da..30c3df9db2 100644
+index 7f4b66b0fa..210ef61a0f 100644
 --- a/src/objects/intl-objects.h
 +++ b/src/objects/intl-objects.h
 @@ -285,7 +285,7 @@ class Intl {
@@ -402,10 +402,10 @@ index 4fbfe349da..30c3df9db2 100644
        std::vector<std::string> all_locales;
        const char* loc;
 diff --git a/src/objects/js-date-time-format.cc b/src/objects/js-date-time-format.cc
-index 2aeb62e668..61531327d6 100644
+index 82d6d067e2..1b73ce8e2e 100644
 --- a/src/objects/js-date-time-format.cc
 +++ b/src/objects/js-date-time-format.cc
-@@ -1583,8 +1583,12 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
+@@ -2250,8 +2250,12 @@ MaybeHandle<JSDateTimeFormat> JSDateTimeFormat::New(
    //     requestedLocales, opt, %DateTimeFormat%.[[RelevantExtensionKeys]],
    //     localeData).
    //
@@ -420,10 +420,10 @@ index 2aeb62e668..61531327d6 100644
    if (maybe_resolve_locale.IsNothing()) {
      THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError),
 diff --git a/src/objects/js-objects.cc b/src/objects/js-objects.cc
-index aa185c71c0..1196d88987 100644
+index 0a031a741c..19e610515c 100644
 --- a/src/objects/js-objects.cc
 +++ b/src/objects/js-objects.cc
-@@ -5095,6 +5095,13 @@ void JSObject::SetImmutableProto(Handle<JSObject> object) {
+@@ -5132,6 +5132,13 @@ void JSObject::SetImmutableProto(Handle<JSObject> object) {
    object->set_map(*new_map, kReleaseStore);
  }
  
@@ -438,10 +438,10 @@ index aa185c71c0..1196d88987 100644
                                          JavaScriptArguments* args,
                                          uint32_t arg_count,
 diff --git a/src/objects/js-objects.h b/src/objects/js-objects.h
-index 002c9d0500..1be07053b7 100644
+index 06489c2b7b..927d68d926 100644
 --- a/src/objects/js-objects.h
 +++ b/src/objects/js-objects.h
-@@ -732,6 +732,8 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
+@@ -740,6 +740,8 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
    // Never called from JavaScript
    static void SetImmutableProto(Handle<JSObject> object);
  
@@ -451,7 +451,7 @@ index 002c9d0500..1be07053b7 100644
    // the caller to initialize object header. Fill the pre-allocated fields with
    // undefined_value and the rest with filler_map.
 diff --git a/src/objects/map-inl.h b/src/objects/map-inl.h
-index 7355e70533..1a999a1e8b 100644
+index 7105676b31..a28255acd0 100644
 --- a/src/objects/map-inl.h
 +++ b/src/objects/map-inl.h
 @@ -114,6 +114,9 @@ BIT_FIELD_ACCESSORS(Map, bit_field3, may_have_interesting_symbols,
@@ -465,10 +465,10 @@ index 7355e70533..1a999a1e8b 100644
    DCHECK(has_named_interceptor());
    FunctionTemplateInfo info = GetFunctionTemplateInfo(cage_base);
 diff --git a/src/objects/map.cc b/src/objects/map.cc
-index 0db0b71104..7df72dafea 100644
+index d92b84bb68..496d699999 100644
 --- a/src/objects/map.cc
 +++ b/src/objects/map.cc
-@@ -1173,6 +1173,7 @@ Handle<Map> Map::RawCopy(Isolate* isolate, Handle<Map> src_handle,
+@@ -1177,6 +1177,7 @@ Handle<Map> Map::RawCopy(Isolate* isolate, Handle<Map> src_handle,
      }
      // Same as bit_field comment above.
      raw.set_bit_field3(new_bit_field3);
@@ -476,7 +476,7 @@ index 0db0b71104..7df72dafea 100644
      raw.clear_padding();
    }
    Handle<HeapObject> prototype(src_handle->prototype(), isolate);
-@@ -1297,6 +1298,12 @@ Handle<Map> Map::TransitionToImmutableProto(Isolate* isolate, Handle<Map> map) {
+@@ -1303,6 +1304,12 @@ Handle<Map> Map::TransitionToImmutableProto(Isolate* isolate, Handle<Map> map) {
    return new_map;
  }
  
@@ -490,10 +490,10 @@ index 0db0b71104..7df72dafea 100644
  void EnsureInitialMap(Isolate* isolate, Handle<Map> map) {
  #ifdef DEBUG
 diff --git a/src/objects/map.h b/src/objects/map.h
-index 0fe14ffcec..9a306e515a 100644
+index 6f4d67f2fe..c7200d4745 100644
 --- a/src/objects/map.h
 +++ b/src/objects/map.h
-@@ -318,6 +318,11 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -319,6 +319,11 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
    static_assert(kSlackTrackingCounterStart <=
                  Bits3::ConstructionCounterBits::kMax);
  
@@ -505,7 +505,7 @@ index 0fe14ffcec..9a306e515a 100644
    // Inobject slack tracking is the way to reclaim unused inobject space.
    //
    // The instance size is initially determined by adding some slack to
-@@ -650,6 +655,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -657,6 +662,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
  
    DECL_BOOLEAN_ACCESSORS(is_immutable_proto)
  
@@ -514,7 +514,7 @@ index 0fe14ffcec..9a306e515a 100644
    // This counter is used for in-object slack tracking.
    // The in-object slack tracking is considered enabled when the counter is
    // non zero. The counter only has a valid count for initial maps. For
-@@ -818,6 +825,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -825,6 +832,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
    static Handle<Map> TransitionToImmutableProto(Isolate* isolate,
                                                  Handle<Map> map);
  
@@ -550,10 +550,10 @@ index a8b367ff82..98637087ee 100644
    prototype: JSReceiver|Null;
    constructor_or_back_pointer_or_native_context: Object;
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index 02889457f9..3a68c6ca23 100644
+index 559160358c..2ed52afab3 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
-@@ -886,6 +886,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -889,6 +889,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();

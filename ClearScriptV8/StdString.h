@@ -235,7 +235,8 @@ private:
 // string and character literal support
 //-----------------------------------------------------------------------------
 
-#define SL(LITERAL) (u ## LITERAL)
+#define UTF8_LITERAL(LITERAL) (u ## LITERAL)
+#define SL(LITERAL) UTF8_LITERAL(LITERAL)
 
 //-----------------------------------------------------------------------------
 // StdString implementation

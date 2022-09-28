@@ -157,6 +157,7 @@ DEFINE_V8_ENTITY_HANDLE(NativeCallbackHandle, IHostObjectUtil::NativeCallback, S
 //-----------------------------------------------------------------------------
 
 NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTable) noexcept;
+NATIVE_ENTRY_POINT(const StdChar*) V8SplitProxyNative_GetVersion() noexcept;
 NATIVE_ENTRY_POINT(void) V8Environment_InitializeICU(const char* pICUData, uint32_t size) noexcept;
 
 NATIVE_ENTRY_POINT(StdString*) StdString_New(const StdChar* pValue, int32_t length) noexcept;

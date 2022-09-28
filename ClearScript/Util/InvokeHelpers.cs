@@ -11,117 +11,19 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class InvokeHelpers
     {
-        public static object InvokeMethod(IHostInvokeContext context, object target, MethodInfo method, object[] args)
+        public static object InvokeMethod(IHostInvokeContext context, MethodInfo method, object target, object[] args, ScriptMemberFlags flags)
         {
-            var argList = new List<object>();
-            var byRefArgInfo = new List<ByRefArgItem>();
-            object tailArgsArg = null;
+            return InvokeMethodInternal(context, method, target, args, (invokeMethod, invokeTarget, invokeArgs) => invokeMethod.Invoke(invokeTarget, invokeArgs), method.ReturnType, flags);
+        }
 
-            var parameters = method.GetParameters();
-            for (var index = 0; index < parameters.Length; index++)
-            {
-                var param = parameters[index];
-                if (CustomAttributes.Has<ParamArrayAttribute>(param, false))
-                {
-                    if ((index != (args.Length - 1)) || !param.ParameterType.IsInstanceOfType(args[index]))
-                    {
-                        var tailArgType = param.ParameterType.GetElementType();
-                        var tailArgs = Array.CreateInstance(tailArgType, Math.Max(args.Length - index, 0));
-                        for (var innerIndex = index; innerIndex < args.Length; innerIndex++)
-                        {
-                            var byRefArg = args[innerIndex] as IByRefArg;
-                            if (byRefArg == null)
-                            {
-                                tailArgs.SetValue(GetCompatibleArg(param.Name, tailArgType, args[innerIndex]), innerIndex - index);
-                            }
-                            else
-                            {
-                                tailArgs.SetValue(GetCompatibleArg(param.Name, tailArgType, byRefArg.Value), innerIndex - index);
-                                byRefArgInfo.Add(new ByRefArgItem(byRefArg, tailArgs, innerIndex - index));
-                            }
-                        }
-
-                        argList.Add(tailArgs);
-                        tailArgsArg = tailArgs;
-                        break;
-                    }
-                }
-
-                if (index < args.Length)
-                {
-                    var byRefArg = args[index] as IByRefArg;
-                    if (byRefArg == null)
-                    {
-                        argList.Add(GetCompatibleArg(param, args[index]));
-                    }
-                    else
-                    {
-                        argList.Add(GetCompatibleArg(param, byRefArg.Value));
-                        byRefArgInfo.Add(new ByRefArgItem(byRefArg, null, index));
-                    }
-                }
-                else if (param.IsOptional)
-                {
-                    if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
-                    {
-                        try
-                        {
-                            argList.Add(param.DefaultValue);
-                        }
-                        catch (FormatException)
-                        {
-                            // undocumented but observed when calling HostFunctions.newVar()
-                            argList.Add(null);
-                        }
-                    }
-                    else
-                    {
-                        argList.Add(Missing.Value);
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            var finalArgs = argList.ToArray();
-            var result = method.Invoke(target, finalArgs);
-
-            foreach (var item in byRefArgInfo)
-            {
-                var array = item.Array ?? finalArgs;
-                item.ByRefArg.Value = array.GetValue(item.Index);
-            }
-
-            for (var index = 0; index < finalArgs.Length; index++)
-            {
-                if (index >= args.Length)
-                {
-                    break;
-                }
-
-                var finalArg = finalArgs[index];
-                if (ReferenceEquals(finalArg, tailArgsArg))
-                {
-                    break;
-                }
-
-                args[index] = finalArg;
-            }
-
-            var type = method.ReturnType;
-            if (type == typeof(void))
-            {
-                return context.Engine.VoidResultValue;
-            }
-
-            return context.Engine.PrepareResult(result, type, method.GetScriptMemberFlags(), false);
+        public static object InvokeConstructor(IHostInvokeContext context, ConstructorInfo constructor, object[] args)
+        {
+            return InvokeMethodInternal(context, constructor, null, args, (invokeConstructor, invokeTarget, invokeArgs) => invokeConstructor.Invoke(invokeArgs), constructor.DeclaringType, ScriptMemberFlags.None);
         }
 
         public static object InvokeDelegate(IHostInvokeContext context, Delegate del, object[] args)
         {
-            return InvokeMethod(context, del, del.GetType().GetMethod("Invoke"), args);
+            return InvokeMethod(context, del.GetType().GetMethod("Invoke"), del, args, ScriptMemberFlags.None);
         }
 
         public static bool TryInvokeObject(IHostInvokeContext context, object target, BindingFlags invokeFlags, object[] args, object[] bindArgs, bool tryDynamic, out object result)
@@ -169,6 +71,113 @@ namespace Microsoft.ClearScript.Util
 
             result = null;
             return false;
+        }
+
+        private static object InvokeMethodInternal<T>(IHostInvokeContext context, T method, object target, object[] args, Func<T, object, object[], object> invoker, Type returnType, ScriptMemberFlags flags) where T : MethodBase
+        {
+            var argList = new List<object>();
+            var byRefArgInfo = new List<ByRefArgItem>();
+            object tailArgsArg = null;
+
+            var parameters = method.GetParameters();
+            for (var index = 0; index < parameters.Length; index++)
+            {
+                var param = parameters[index];
+                if (CustomAttributes.Has<ParamArrayAttribute>(param, false))
+                {
+                    if ((index != (args.Length - 1)) || !param.ParameterType.IsInstanceOfType(args[index]))
+                    {
+                        var tailArgType = param.ParameterType.GetElementType();
+                        var tailArgs = Array.CreateInstance(tailArgType, Math.Max(args.Length - index, 0));
+                        for (var innerIndex = index; innerIndex < args.Length; innerIndex++)
+                        {
+                            var byRefArg = args[innerIndex] as IByRefArg;
+                            if (byRefArg == null)
+                            {
+                                tailArgs.SetValue(GetCompatibleArg(param.Name, tailArgType, args[innerIndex]), innerIndex - index);
+                            }
+                            else
+                            {
+                                tailArgs.SetValue(GetCompatibleArg(param.Name, tailArgType, byRefArg.Value), innerIndex - index);
+                                byRefArgInfo.Add(new ByRefArgItem(byRefArg, tailArgs, innerIndex - index));
+                            }
+                        }
+
+                        argList.Add(tailArgs);
+                        tailArgsArg = tailArgs;
+                        break;
+                    }
+                }
+
+                if ((index < args.Length) && !(args[index] is Missing))
+                {
+                    var byRefArg = args[index] as IByRefArg;
+                    if (byRefArg == null)
+                    {
+                        argList.Add(GetCompatibleArg(param, args[index]));
+                    }
+                    else
+                    {
+                        argList.Add(GetCompatibleArg(param, byRefArg.Value));
+                        byRefArgInfo.Add(new ByRefArgItem(byRefArg, null, index));
+                    }
+                }
+                else if (param.IsOptional)
+                {
+                    if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
+                    {
+                        try
+                        {
+                            argList.Add(param.DefaultValue);
+                        }
+                        catch (FormatException)
+                        {
+                            // undocumented but observed when calling HostFunctions.newVar()
+                            argList.Add(null);
+                        }
+                    }
+                    else
+                    {
+                        argList.Add(Missing.Value);
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            var finalArgs = argList.ToArray();
+            var result = invoker(method, target, finalArgs);
+
+            foreach (var item in byRefArgInfo)
+            {
+                var array = item.Array ?? finalArgs;
+                item.ByRefArg.Value = array.GetValue(item.Index);
+            }
+
+            for (var index = 0; index < finalArgs.Length; index++)
+            {
+                if (index >= args.Length)
+                {
+                    break;
+                }
+
+                var finalArg = finalArgs[index];
+                if (ReferenceEquals(finalArg, tailArgsArg))
+                {
+                    break;
+                }
+
+                args[index] = finalArg;
+            }
+
+            if (returnType == typeof(void))
+            {
+                return context.Engine.VoidResultValue;
+            }
+
+            return context.Engine.PrepareResult(result, returnType, flags, false);
         }
 
         private static object GetCompatibleArg(ParameterInfo param, object value)

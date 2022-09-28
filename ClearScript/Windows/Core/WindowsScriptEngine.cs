@@ -20,7 +20,7 @@ namespace Microsoft.ClearScript.Windows.Core
     /// This class can be used in non-desktop environments such as server applications. An
     /// implementation of <c><see cref="ISyncInvoker"/></c> is required to enforce thread affinity.
     /// </remarks>
-    public abstract partial class WindowsScriptEngine : ScriptEngine
+    public abstract partial class WindowsScriptEngine : ScriptEngine, IWindowsScriptEngineTag
     {
         #region data
 

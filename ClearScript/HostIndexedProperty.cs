@@ -55,13 +55,13 @@ namespace Microsoft.ClearScript
             {
                 if (string.Equals(memberName, "get", invokeFlags.GetMemberNameComparison()))
                 {
-                    result = target.InvokeMember(name, BindingFlags.GetProperty, args, bindArgs, null, true);
+                    result = target.InvokeMember(name, BindingFlags.GetProperty | BindingFlags.SuppressChangeType, args, bindArgs, null, true);
                     return true;
                 }
 
                 if (string.Equals(memberName, "set", invokeFlags.GetMemberNameComparison()))
                 {
-                    result = target.InvokeMember(name, BindingFlags.SetProperty, args, bindArgs, null, true);
+                    result = target.InvokeMember(name, BindingFlags.SetProperty | BindingFlags.SuppressChangeType, args, bindArgs, null, true);
                     return true;
                 }
             }
@@ -72,7 +72,7 @@ namespace Microsoft.ClearScript
 
         public override bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            result = target.InvokeMember(name, invokeFlags.HasFlag(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty, args, bindArgs, null, true);
+            result = target.InvokeMember(name, (invokeFlags.HasFlag(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty) | BindingFlags.SuppressChangeType, args, bindArgs, null, true);
             return true;
         }
 

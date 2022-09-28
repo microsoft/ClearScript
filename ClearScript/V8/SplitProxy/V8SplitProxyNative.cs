@@ -10,6 +10,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         private static readonly IV8SplitProxyNative instance = CreateInstance();
 
+        public static string GetVersion()
+        {
+            try
+            {
+                return instance.V8SplitProxyNative_GetVersion();
+            }
+            catch (EntryPointNotFoundException)
+            {
+                return "[unknown]";
+            }
+        }
+
         public static void Invoke(Action<IV8SplitProxyNative> action)
         {
             var previousScheduledException = MiscHelpers.Exchange(ref V8SplitProxyManaged.ScheduledException, null);

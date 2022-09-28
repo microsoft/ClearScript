@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "ClearScriptV8Native.h"
+#include "../ClearScript/Exports/VersionSymbols.h"
 
 //-----------------------------------------------------------------------------
 // local helper functions
@@ -112,6 +113,13 @@ void V8EntityHandleBase::ScheduleInvalidOperationException(const StdString& mess
 NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTable) noexcept
 {
     return V8SplitProxyManaged::SetMethodTable(pMethodTable);
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(const StdChar*) V8SplitProxyNative_GetVersion() noexcept
+{
+    return SL(CLEARSCRIPT_VERSION_STRING_INFORMATIONAL);
 }
 
 //-----------------------------------------------------------------------------

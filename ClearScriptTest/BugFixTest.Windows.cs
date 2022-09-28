@@ -1290,6 +1290,64 @@ namespace Microsoft.ClearScript.Test
             TestUtil.InvokeConsoleTest("BugFix_V8ArrayBufferLeak");
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DefaultArgs_Indexer_JScript()
+        {
+            engine.Dispose();
+            engine = new JScriptEngine();
+            engine.Script.test = new DefaultArgsTestObject();
+
+            engine.Execute("test.Item.set(Math.PI)");
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.Item()"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.Item.get()"));
+            engine.Execute("test.Item.set(456, Math.E)");
+            Assert.AreEqual(Math.E, engine.Evaluate("test.Item(456)"));
+            Assert.AreEqual(Math.E, engine.Evaluate("test.Item.get(456)"));
+            engine.Execute("test.Item.set(789, 'bar', Math.PI * Math.E)");
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("test.Item(789, 'bar')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("test.Item.get(789, 'bar')"));
+
+            engine.Execute("test.Item = Math.sqrt(Math.PI)");
+            Assert.AreEqual(Math.Sqrt(Math.PI), engine.Evaluate("test.Item()"));
+            Assert.AreEqual(Math.Sqrt(Math.PI), engine.Evaluate("test.Item.get()"));
+            engine.Execute("test.Item(456) = Math.sqrt(Math.E)");
+            Assert.AreEqual(Math.Sqrt(Math.E), engine.Evaluate("test.Item(456)"));
+            Assert.AreEqual(Math.Sqrt(Math.E), engine.Evaluate("test.Item.get(456)"));
+            engine.Execute("test.Item(789, 'bar') = Math.sqrt(Math.PI * Math.E)");
+            Assert.AreEqual(Math.Sqrt(Math.PI * Math.E), engine.Evaluate("test.Item(789, 'bar')"));
+            Assert.AreEqual(Math.Sqrt(Math.PI * Math.E), engine.Evaluate("test.Item.get(789, 'bar')"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DefaultArgs_Indexer_VBScript()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+            engine.Script.test = new DefaultArgsTestObject();
+            engine.Script.pi = Math.PI;
+            engine.Script.e = Math.E;
+
+            engine.Execute("test.Item.set pi");
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.Item()"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.Item.get()"));
+            engine.Execute("test.Item.set 456, e");
+            Assert.AreEqual(Math.E, engine.Evaluate("test.Item(456)"));
+            Assert.AreEqual(Math.E, engine.Evaluate("test.Item.get(456)"));
+            engine.Execute("test.Item.set 789, \"bar\", pi * e");
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("test.Item(789, \"bar\")"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("test.Item.get(789, \"bar\")"));
+
+            engine.Execute("test.Item = sqr(pi)");
+            Assert.AreEqual(Math.Sqrt(Math.PI), engine.Evaluate("test.Item()"));
+            Assert.AreEqual(Math.Sqrt(Math.PI), engine.Evaluate("test.Item.get()"));
+            engine.Execute("test.Item(456) = sqr(e)");
+            Assert.AreEqual(Math.Sqrt(Math.E), engine.Evaluate("test.Item(456)"));
+            Assert.AreEqual(Math.Sqrt(Math.E), engine.Evaluate("test.Item.get(456)"));
+            engine.Execute("test.Item(789, \"bar\") = sqr(pi * e)");
+            Assert.AreEqual(Math.Sqrt(Math.PI * Math.E), engine.Evaluate("test.Item(789, \"bar\")"));
+            Assert.AreEqual(Math.Sqrt(Math.PI * Math.E), engine.Evaluate("test.Item.get(789, \"bar\")"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

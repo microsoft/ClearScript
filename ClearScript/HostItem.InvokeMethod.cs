@@ -509,7 +509,7 @@ namespace Microsoft.ClearScript
                     hostItem.Engine.CheckReflection();
                 }
 
-                return InvokeHelpers.InvokeMethod(hostItem, hostTarget.InvokeTarget, method, args);
+                return InvokeHelpers.InvokeMethod(hostItem, method, hostTarget.InvokeTarget, args, method.GetScriptMemberFlags());
             }
 
             #endregion

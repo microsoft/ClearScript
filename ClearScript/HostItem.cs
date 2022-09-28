@@ -184,7 +184,7 @@ namespace Microsoft.ClearScript
 
                 if ((args.Length > testLength) && (name != SpecialMemberNames.Default))
                 {
-                    var value = GetHostProperty(name, GetCommonBindFlags(), ArrayHelpers.GetEmptyArray<object>(), ArrayHelpers.GetEmptyArray<object>(), culture, false, out _);
+                    var value = GetHostProperty(name, GetCommonBindFlags(), ArrayHelpers.GetEmptyArray<object>(), ArrayHelpers.GetEmptyArray<object>(), false, out _);
                     if (!(value is Nonexistent))
                     {
                         if (Engine.MarshalToScript(value) is HostItem hostItem)
@@ -195,7 +195,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            return InvokeHostMember(name, invokeFlags, args, bindArgs, culture, out isCacheable);
+            return InvokeHostMember(name, invokeFlags, args, bindArgs, out isCacheable);
         }
 
         #endregion
@@ -1200,7 +1200,7 @@ namespace Microsoft.ClearScript
             throw new InvalidOperationException("Invalid member invocation mode");
         }
 
-        private object InvokeHostMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture, out bool isCacheable)
+        private object InvokeHostMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out bool isCacheable)
         {
             isCacheable = false;
             object result;
@@ -1235,7 +1235,7 @@ namespace Microsoft.ClearScript
                                         return DelegateFactory.CreateDelegate(Engine, args[0], specificType);
                                     }
 
-                                    return specificType.CreateInstance(AccessContext, DefaultAccess, args, bindArgs);
+                                    return specificType.CreateInstance(this, AccessContext, DefaultAccess, args, bindArgs);
                                 }
                             }
 
@@ -1255,7 +1255,7 @@ namespace Microsoft.ClearScript
                             return DelegateFactory.CreateDelegate(Engine, args[0], type);
                         }
 
-                        return type.CreateInstance(AccessContext, DefaultAccess, args, bindArgs);
+                        return type.CreateInstance(this, AccessContext, DefaultAccess, args, bindArgs);
                     }
 
                     if (TargetDynamicMetaObject != null)
@@ -1281,7 +1281,7 @@ namespace Microsoft.ClearScript
 
                     if (invokeFlags.HasFlag(BindingFlags.GetField))
                     {
-                        result = GetHostProperty(name, invokeFlags, args, bindArgs, culture, true, out isCacheable);
+                        result = GetHostProperty(name, invokeFlags, args, bindArgs, true, out isCacheable);
                         if (!(result is Nonexistent))
                         {
                             return result;
@@ -1343,7 +1343,7 @@ namespace Microsoft.ClearScript
                         {
                             if (invokeFlags.HasFlag(BindingFlags.GetField))
                             {
-                                return GetHostProperty(name, invokeFlags, args, bindArgs, culture, true, out isCacheable);
+                                return GetHostProperty(name, invokeFlags, args, bindArgs, true, out isCacheable);
                             }
 
                         }
@@ -1363,7 +1363,7 @@ namespace Microsoft.ClearScript
 
                 if (invokeFlags.HasFlag(BindingFlags.GetField))
                 {
-                    return GetHostProperty(name, invokeFlags, args, bindArgs, culture, true, out isCacheable);
+                    return GetHostProperty(name, invokeFlags, args, bindArgs, true, out isCacheable);
                 }
 
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("The object has no suitable method named '{0}'", name));
@@ -1371,18 +1371,18 @@ namespace Microsoft.ClearScript
 
             if (invokeFlags.HasFlag(BindingFlags.GetField))
             {
-                return GetHostProperty(name, invokeFlags, args, bindArgs, culture, true, out isCacheable);
+                return GetHostProperty(name, invokeFlags, args, bindArgs, true, out isCacheable);
             }
 
             if (invokeFlags.HasFlag(BindingFlags.SetField))
             {
-                return SetHostProperty(name, invokeFlags, args, bindArgs, culture);
+                return SetHostProperty(name, invokeFlags, args, bindArgs);
             }
 
             throw new InvalidOperationException("Invalid member invocation mode");
         }
 
-        private object GetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture, bool includeBoundMembers, out bool isCacheable)
+        private object GetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, bool includeBoundMembers, out bool isCacheable)
         {
             isCacheable = false;
 
@@ -1391,7 +1391,7 @@ namespace Microsoft.ClearScript
                 var defaultProperty = Target.Type.GetScriptableDefaultProperty(invokeFlags, args, bindArgs, AccessContext, DefaultAccess);
                 if (defaultProperty != null)
                 {
-                    return GetHostProperty(defaultProperty, invokeFlags, args, culture);
+                    return GetHostProperty(defaultProperty, invokeFlags, args);
                 }
 
                 if (TargetDynamicMetaObject != null)
@@ -1476,7 +1476,7 @@ namespace Microsoft.ClearScript
             var property = Target.Type.GetScriptableProperty(name, invokeFlags, args, bindArgs, AccessContext, DefaultAccess);
             if (property != null)
             {
-                return GetHostProperty(property, invokeFlags, args, culture);
+                return GetHostProperty(property, invokeFlags, args);
             }
 
             if (args.Length > 0)
@@ -1539,11 +1539,28 @@ namespace Microsoft.ClearScript
             return Nonexistent.Value;
         }
 
-        private object GetHostProperty(PropertyInfo property, BindingFlags invokeFlags, object[] args, CultureInfo culture)
+        private object GetHostProperty(PropertyInfo property, BindingFlags invokeFlags, object[] args)
         {
             if (reflectionProperties.Contains(property, MemberComparer<PropertyInfo>.Instance))
             {
                 Engine.CheckReflection();
+            }
+
+            if ((property.GetIndexParameters().Length > 0) && (args.Length < 1) && !invokeFlags.HasFlag(BindingFlags.SuppressChangeType))
+            {
+                if (HostIndexedPropertyMap == null)
+                {
+                    HostIndexedPropertyMap = new Dictionary<string, HostIndexedProperty>();
+                }
+
+                var name = property.Name;
+                if (!HostIndexedPropertyMap.TryGetValue(name, out var hostIndexedProperty))
+                {
+                    hostIndexedProperty = new HostIndexedProperty(this, name);
+                    HostIndexedPropertyMap.Add(name, hostIndexedProperty);
+                }
+
+                return hostIndexedProperty;
             }
 
             var getMethod = property.GetMethod;
@@ -1552,22 +1569,10 @@ namespace Microsoft.ClearScript
                 throw new UnauthorizedAccessException("The property get method is unavailable or inaccessible");
             }
 
-            if (args.Length > 0)
-            {
-                args = (object[])args.Clone();
-                var indexParams = property.GetIndexParameters();
-                var length = Math.Min(args.Length, indexParams.Length);
-                for (var index = 0; index < length; index++)
-                {
-                    indexParams[index].ParameterType.IsAssignableFromValue(ref args[index]);
-                }
-            }
-
-            var result = property.GetValue(Target.InvokeTarget, invokeFlags, Type.DefaultBinder, args, culture);
-            return Engine.PrepareResult(result, property.PropertyType, property.GetScriptMemberFlags(), false);
+            return InvokeHelpers.InvokeMethod(this, getMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags());
         }
 
-        private object SetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture)
+        private object SetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs)
         {
             if (name == SpecialMemberNames.Default)
             {
@@ -1581,7 +1586,7 @@ namespace Microsoft.ClearScript
                 var defaultProperty = Target.Type.GetScriptableDefaultProperty(invokeFlags, args.Take(args.Length - 1).ToArray(), bindArgs.Take(bindArgs.Length - 1).ToArray(), AccessContext, DefaultAccess);
                 if (defaultProperty != null)
                 {
-                    return SetHostProperty(defaultProperty, invokeFlags, args, bindArgs, culture);
+                    return SetHostProperty(defaultProperty, args, bindArgs);
                 }
 
                 if (args.Length < 2)
@@ -1636,7 +1641,7 @@ namespace Microsoft.ClearScript
             var property = Target.Type.GetScriptableProperty(name, invokeFlags, args.Take(args.Length - 1).ToArray(), bindArgs.Take(bindArgs.Length - 1).ToArray(), AccessContext, DefaultAccess);
             if (property != null)
             {
-                return SetHostProperty(property, invokeFlags, args, bindArgs, culture);
+                return SetHostProperty(property, args, bindArgs);
             }
 
             var field = Target.Type.GetScriptableField(name, invokeFlags, AccessContext, DefaultAccess);
@@ -1665,7 +1670,7 @@ namespace Microsoft.ClearScript
             throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no suitable property or field named '{0}'", name));
         }
 
-        private object SetHostProperty(PropertyInfo property, BindingFlags invokeFlags, object[] args, object[] bindArgs, CultureInfo culture)
+        private object SetHostProperty(PropertyInfo property, object[] args, object[] bindArgs)
         {
             if (property.IsReadOnlyForScript(DefaultAccess))
             {
@@ -1678,18 +1683,16 @@ namespace Microsoft.ClearScript
                 throw new UnauthorizedAccessException("The property set method is unavailable or inaccessible");
             }
 
-            if (args.Length > 1)
-            {
-                args = (object[])args.Clone();
-                var indexParams = property.GetIndexParameters();
-                var length = Math.Min(args.Length - 1, indexParams.Length);
-                for (var index = 0; index < length; index++)
-                {
-                    indexParams[index].ParameterType.IsAssignableFromValue(ref args[index]);
-                }
-            }
-
             var value = args[args.Length - 1];
+
+            var argCount = args.Length - 1;
+            var paramCount = property.GetIndexParameters().Length;
+            if (argCount < paramCount)
+            {
+                var missingArgs = Enumerable.Repeat(Missing.Value, paramCount - argCount).ToArray();
+                args = args.Take(argCount).Concat(missingArgs).Concat(value.ToEnumerable()).ToArray();
+                bindArgs = bindArgs.Take(argCount).Concat(missingArgs).Concat(bindArgs[bindArgs.Length - 1].ToEnumerable()).ToArray();
+            }
 
             // ReSharper disable once SuspiciousTypeConversion.Global
             if ((value != null) && (Engine is IVBScriptEngineTag))
@@ -1718,7 +1721,8 @@ namespace Microsoft.ClearScript
 
             if (property.PropertyType.IsAssignableFromValue(ref value))
             {
-                property.SetValue(Target.InvokeTarget, value, invokeFlags, Type.DefaultBinder, args.Take(args.Length - 1).ToArray(), culture);
+                args[args.Length - 1] = value;
+                InvokeHelpers.InvokeMethod(this, setMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags());
                 return value;
             }
 
@@ -1726,9 +1730,10 @@ namespace Microsoft.ClearScript
             // the property type. The latter has failed, so let's try the former.
 
             var setParams = setMethod.GetParameters();
-            if ((setParams.Length == args.Length) && (setParams[args.Length - 1].ParameterType.IsAssignableFromValue(ref value)))
+            if ((setParams.Length >= args.Length) && (setParams[args.Length - 1].ParameterType.IsAssignableFromValue(ref value)))
             {
-                property.SetValue(Target.InvokeTarget, value, invokeFlags, Type.DefaultBinder, args.Take(args.Length - 1).ToArray(), culture);
+                args[args.Length - 1] = value;
+                InvokeHelpers.InvokeMethod(this, setMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags());
                 return value;
             }
 

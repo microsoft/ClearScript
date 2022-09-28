@@ -485,7 +485,7 @@ namespace Microsoft.ClearScript.Util
             return type.InvokeMember(string.Empty, BindingFlags.CreateInstance | BindingFlags.Instance | (flags & ~BindingFlags.Static), null, null, args, CultureInfo.InvariantCulture);
         }
 
-        public static object CreateInstance(this Type type, Type accessContext, ScriptAccess defaultAccess, object[] args, object[] bindArgs)
+        public static object CreateInstance(this Type type, IHostInvokeContext invokeContext, Type accessContext, ScriptAccess defaultAccess, object[] args, object[] bindArgs)
         {
             if (type.IsCOMObject || (type.IsValueType && (args.Length < 1)))
             {
@@ -506,18 +506,7 @@ namespace Microsoft.ClearScript.Util
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
             }
 
-            if (args.Length > 0)
-            {
-                args = (object[])args.Clone();
-                var indexParams = constructor.GetParameters();
-                var length = Math.Min(args.Length, indexParams.Length);
-                for (var index = 0; index < length; index++)
-                {
-                    indexParams[index].ParameterType.IsAssignableFromValue(ref args[index]);
-                }
-            }
-
-            return constructor.Invoke(args);
+            return InvokeHelpers.InvokeConstructor(invokeContext, constructor, args);
         }
 
         public static Type MakeSpecificType(this Type template, params Type[] typeArgs)

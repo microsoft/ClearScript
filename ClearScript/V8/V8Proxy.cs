@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.ClearScript.Properties;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8.ICUData;
 using Microsoft.ClearScript.V8.SplitProxy;
@@ -35,7 +36,9 @@ namespace Microsoft.ClearScript.V8
                 if (!triedToLoadNativeAssembly)
                 {
                     triedToLoadNativeAssembly = true;
-                    var initializedICU = false;
+
+                    var nativeVersion = string.Empty;
+                    var gotNativeVersion = false;
 
                     try
                     {
@@ -44,17 +47,24 @@ namespace Microsoft.ClearScript.V8
                     }
                     catch
                     {
-                        initializedICU = MiscHelpers.Try(InitializeICU);
-                        if (!initializedICU)
+                        gotNativeVersion = MiscHelpers.Try(out nativeVersion, V8SplitProxyNative.GetVersion);
+                        if (!gotNativeVersion)
                         {
                             throw;
                         }
                     }
 
-                    if (!initializedICU)
+                    if (!gotNativeVersion)
                     {
-                        InitializeICU();
+                        nativeVersion = V8SplitProxyNative.GetVersion();
                     }
+
+                    if (nativeVersion != ClearScriptVersion.Informational)
+                    {
+                        throw new InvalidOperationException($"V8 native assembly: loaded version {nativeVersion} does not match required version {ClearScriptVersion.Informational}");
+                    }
+
+                    InitializeICU();
                 }
             }
         }

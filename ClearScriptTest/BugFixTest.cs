@@ -1705,6 +1705,38 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual("123, 789, 456, 987", engine.Evaluate("test.Format(123, 789, 456, 987)"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DefaultArgs_Constructor()
+        {
+            engine.AddHostType(typeof(DefaultArgsTestObject));
+            Assert.AreEqual("123 foo", engine.Evaluate("new DefaultArgsTestObject().Value"));
+            Assert.AreEqual("456 foo", engine.Evaluate("new DefaultArgsTestObject(456).Value"));
+            Assert.AreEqual("789 bar", engine.Evaluate("new DefaultArgsTestObject(789, 'bar').Value"));
+            TestUtil.AssertMethodBindException(() => engine.Evaluate("new DefaultArgsTestObject(789, 'bar', true).Value"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_DefaultArgs_Indexer()
+        {
+            engine.Script.test = new DefaultArgsTestObject();
+            engine.Execute("test.Item.set(Math.PI)");
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.Item()"));
+            Assert.AreEqual(Math.PI, engine.Evaluate("test.Item.get()"));
+            engine.Execute("test.Item.set(456, Math.E)");
+            Assert.AreEqual(Math.E, engine.Evaluate("test.Item(456)"));
+            Assert.AreEqual(Math.E, engine.Evaluate("test.Item.get(456)"));
+            engine.Execute("test.Item.set(789, 'bar', Math.PI * Math.E)");
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("test.Item(789, 'bar')"));
+            Assert.AreEqual(Math.PI * Math.E, engine.Evaluate("test.Item.get(789, 'bar')"));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_BadV8DebugPort()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging, 70000);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2166,6 +2198,24 @@ namespace Microsoft.ClearScript.Test
                 var argsString = string.Join(", ", args);
                 return $"{a}, {b}, {argsString}";
             }
+        }
+
+        public class DefaultArgsTestObject
+        {
+            private readonly Dictionary<string, object> map = new Dictionary<string, object>();
+
+            public DefaultArgsTestObject(int arg1 = 123, string arg2 = "foo")
+            {
+                Value = MiscHelpers.FormatInvariant("{0} {1}", arg1, arg2);
+            }
+
+            public object this[int arg1 = 123, string arg2 = "foo"]
+            {
+                get => map[MiscHelpers.FormatInvariant("{0} {1}", arg1, arg2)];
+                set => map[MiscHelpers.FormatInvariant("{0} {1}", arg1, arg2)] = value;
+            }
+
+            public string Value { get; }
         }
 
         #endregion

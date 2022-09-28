@@ -40,6 +40,7 @@
         <Compile Include="..\..\ClearScript\CustomAttributeLoader.cs" Link="CustomAttributeLoader.cs" />
         <Compile Include="..\..\ClearScript\CustomAttributes.cs" Link="CustomAttributes.cs" />
         <Compile Include="..\..\ClearScript\CustomAttributes.NetFramework.cs" Link="CustomAttributes.NetFramework.cs" />
+        <Compile Include="..\..\ClearScript\DefaultDocumentLoader.cs" Link="DefaultDocumentLoader.cs" />
         <Compile Include="..\..\ClearScript\DefaultScriptUsageAttribute.cs" Link="DefaultScriptUsageAttribute.cs" />
         <Compile Include="..\..\ClearScript\DelegateFactory.cs" Link="DelegateFactory.cs" />
         <Compile Include="..\..\ClearScript\DelegateFactory.Generated.cs">

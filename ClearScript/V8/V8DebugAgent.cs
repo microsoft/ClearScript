@@ -290,7 +290,11 @@ namespace Microsoft.ClearScript.V8
         {
             if (disposedFlag.Set())
             {
-                MiscHelpers.Try(tcpListener.Stop);
+                if (tcpListener != null)
+                {
+                    MiscHelpers.Try(tcpListener.Stop);
+                }
+
                 DisconnectClient(WebSocket.ErrorCode.EndpointUnavailable, "The V8 runtime has been destroyed");
                 listener.Dispose();
             }

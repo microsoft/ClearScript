@@ -10,7 +10,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #region initialization
 
         IntPtr V8SplitProxyManaged_SetMethodTable(IntPtr pMethodTable);
-
+        string V8SplitProxyNative_GetVersion();
         void V8Environment_InitializeICU(IntPtr pICUData, uint size);
 
         #endregion

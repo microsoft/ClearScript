@@ -4,6 +4,10 @@
     {
     }
 
+    internal interface IWindowsScriptEngineTag
+    {
+    }
+
     internal interface IVBScriptEngineTag
     {
     }

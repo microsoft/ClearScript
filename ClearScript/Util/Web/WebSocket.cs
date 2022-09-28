@@ -201,7 +201,9 @@ namespace Microsoft.ClearScript.Util.Web
                 throw new Exception(ErrorCode.MessageTooBig, "Incoming WebSocket frame payload is too large");
             }
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             Debug.Assert(length < long.MaxValue);
+
             var payload = new byte[length];
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
@@ -222,7 +224,9 @@ namespace Microsoft.ClearScript.Util.Web
                     length -= segmentLength;
                 }
 
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 Debug.Assert(length < int.MaxValue);
+
                 var remainingLength = Convert.ToInt32(length);
 
                 if (remainingLength > 0)
@@ -314,7 +318,9 @@ namespace Microsoft.ClearScript.Util.Web
                     length -= segmentLength;
                 }
 
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 Debug.Assert(length < int.MaxValue);
+
                 var remainingLength = Convert.ToInt32(length);
 
                 if (remainingLength > 0)
