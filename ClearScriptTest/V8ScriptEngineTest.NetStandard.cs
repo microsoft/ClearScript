@@ -8,6 +8,7 @@ using System.Threading;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
+using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -90,7 +91,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_NativeEnumerator_Disposal_AsyncSource()
+        public void V8ScriptEngine_Iteration_Disposal_AsyncSource()
         {
             var source = TestEnumerable.CreateAsync("foo", "bar", "baz");
 
@@ -109,6 +110,33 @@ namespace Microsoft.ClearScript.Test
 
             Assert.AreEqual("foobarbaz", engine.Script.result);
             Assert.AreEqual(1, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_Disposal_AsyncSource_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var source = TestEnumerable.CreateAsync("foo", "bar", "baz");
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.AddRestrictedHostObject("source", source);
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (let item of source) {
+                            result += item;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                Assert.AreEqual("foobarbaz", engine.Script.result);
+                Assert.AreEqual(1, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -139,6 +167,41 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(7, result.Length);
             Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
             Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                static async IAsyncEnumerable<object> GetItems()
+                {
+                    await Task.Delay(10);
+                    yield return 123;
+                    await Task.Delay(10);
+                    yield return "blah";
+                }
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Script.enumerable = GetItems();
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (var item of enumerable) {
+                            result += item;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                var result = (string)engine.Script.result;
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -180,6 +243,52 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
             Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
             Assert.AreEqual(errorMessage, engine.Script.errorMessage);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable_Exception_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                const string errorMessage = "Well, this is bogus!";
+                static async IAsyncEnumerable<object> GetItems()
+                {
+                    await Task.Delay(10);
+                    yield return 123;
+                    await Task.Delay(10);
+                    yield return "blah";
+                    throw new InvalidOperationException(errorMessage);
+                }
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Script.enumerable = GetItems();
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        try {
+                            for await (var item of enumerable) {
+                                result += item;
+                            }
+                        }
+                        catch (error) {
+                            errorMessage = error.message;
+                            throw error;
+                        }
+                        finally {
+                            done.set();
+                        }
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                var result = (string)engine.Script.result;
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+                Assert.AreEqual(errorMessage, engine.Script.errorMessage);
+            }
         }
 
         // ReSharper restore InconsistentNaming

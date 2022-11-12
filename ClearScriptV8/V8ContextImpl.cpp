@@ -3166,7 +3166,7 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
                 }
             }
 
-            return V8Value(new V8ObjectHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hObject)), spSharedObjectInfo), subtype, flags);
+            return V8Value(new V8ObjectHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hObject)), hObject->GetIdentityHash(), spSharedObjectInfo), subtype, flags);
         }
 
     FROM_MAYBE_CATCH_CONSUME

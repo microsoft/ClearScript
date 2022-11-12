@@ -932,6 +932,17 @@ namespace Microsoft.ClearScript.V8
             });
         }
 
+        internal bool Equals(V8ScriptItem left, V8ScriptItem right)
+        {
+            if ((left.Engine is V8ScriptEngine leftEngine) && (right.Engine is V8ScriptEngine rightEngine) && (leftEngine.runtime == rightEngine.runtime) && (left.GetHashCode() == right.GetHashCode()))
+            {
+                var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
+                return (bool)engineInternal.InvokeMethod("strictEquals", left, right);
+            }
+
+            return false;
+        }
+
         private CommonJSManager CommonJSManager => commonJSManager ?? (commonJSManager = new CommonJSManager(this));
 
         private object GetRootItem()

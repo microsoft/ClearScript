@@ -101,6 +101,7 @@ MAKEDIR = $(dir $(abspath $(MAKEFILE)))
 ROOTDIR = $(abspath $(MAKEDIR)/../..)
 SRCDIR = $(ROOTDIR)/ClearScriptV8
 UNIXDIR = $(ROOTDIR)/Unix
+EXPORTSDIR = $(ROOTDIR)/ClearScript/Exports
 
 V8ROOTDIR = $(ROOTDIR)/V8
 V8BUILDDIR = $(V8ROOTDIR)/build
@@ -120,7 +121,7 @@ ICUDTL = $(V8ROOTDIR)/icudtl.dat
 CXX = clang++
 CXXFLAGS = --target=$(TARGET) -std=c++17 -fvisibility=default -fPIC -fno-rtti -Wno-ignored-attributes $(CXXCONFIGFLAGS) -I$(V8INCDIR) -I$(JSONINCDIR) $(CXXCROSSFLAGS)
 
-HEADERS = $(wildcard $(SRCDIR)/*.h)
+HEADERS = $(wildcard $(SRCDIR)/*.h) $(wildcard $(EXPORTSDIR)/*.h)
 OBJECTS = \
     $(OBJDIR)/HighResolutionClock.Unix.o \
     $(OBJDIR)/HostObjectHolderImpl.o \

@@ -67,7 +67,7 @@ namespace Microsoft.ClearScript.Test
             set => dict[string.Join(":", i1, i2, i3, i4)] = value;
         }
 
-        #region Implementation of ITestInterface
+        #region ITestInterface implementation
 
         public int[] InterfaceProperty { get; set; }
         public short InterfaceScalarProperty { get; set; }
@@ -104,7 +104,7 @@ namespace Microsoft.ClearScript.Test
 
         #endregion
 
-        #region Implementation of IExplicitTestInterface
+        #region IExplicitTestInterface implementation
 
         int[] IExplicitTestInterface.ExplicitInterfaceProperty { get; set; }
         short IExplicitTestInterface.ExplicitInterfaceScalarProperty { get; set; }

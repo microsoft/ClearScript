@@ -4,6 +4,7 @@
         <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.Windows</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

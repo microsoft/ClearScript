@@ -11,11 +11,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public V8Object.Handle Handle => (V8Object.Handle)holder.Handle;
 
-        public V8ObjectImpl(V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags)
+        public V8ObjectImpl(V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags, int identityHash)
         {
             holder = new V8EntityHolder("V8 object", () => hObject);
             Subtype = subtype;
             Flags = flags;
+            IdentityHash = identityHash;
         }
 
         public V8Value.Subtype Subtype { get; }
@@ -23,6 +24,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public V8Value.Flags Flags { get; }
 
         #region IV8Object implementation
+
+        public int IdentityHash { get; }
 
         public object GetProperty(string name)
         {

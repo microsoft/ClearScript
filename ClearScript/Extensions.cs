@@ -62,5 +62,46 @@ namespace Microsoft.ClearScript
             MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
             return HostItem.Wrap(engine, target, typeof(T));
         }
+
+        /// <summary>
+        /// Converts an object to a host object with a type restriction specified as a
+        /// <see cref="Type"/> instance, for use with script code currently running on the calling
+        /// thread.
+        /// </summary>
+        /// <param name="target">The object to convert to a host object for use with script code.</param>
+        /// <param name="type">The type whose members are to be made accessible from script code.</param>
+        /// <returns>A host object with the specified type restriction.</returns>
+        public static object ToRestrictedHostObject(this object target, Type type)
+        {
+            return target.ToRestrictedHostObject(type, ScriptEngine.Current);
+        }
+
+        /// <summary>
+        /// Converts an object to a host object with a type restriction specified as a
+        /// <see cref="Type"/> instance, for use with script code running in the specified script
+        /// engine.
+        /// </summary>
+        /// <param name="target">The object to convert to a host object for use with script code.</param>
+        /// <param name="type">The type whose members are to be made accessible from script code.</param>
+        /// <param name="engine">The script engine in which the host object will be used.</param>
+        /// <returns>A host object with the specified type restriction.</returns>
+        public static object ToRestrictedHostObject(this object target, Type type, ScriptEngine engine)
+        {
+            MiscHelpers.VerifyNonNullArgument(target, nameof(target));
+            MiscHelpers.VerifyNonNullArgument(type, nameof(type));
+            MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
+
+            if (!MiscHelpers.Try(out var holder, () => typeof(Holder<>).MakeGenericType(type).CreateInstance()))
+            {
+                throw new ArgumentException("The specified type is invalid", nameof(type));
+            }
+
+            if (!MiscHelpers.Try(() => ((IHolder)holder).Value = target))
+            {
+                throw new ArgumentException("The target object is incompatible with the specified type", nameof(target));
+            }
+
+            return HostItem.Wrap(engine, target, type);
+        }
     }
 }

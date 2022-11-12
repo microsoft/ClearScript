@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Threading;
+using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.Windows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -41,7 +42,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMObject_FileSystemObject_ForOf()
+        public void V8ScriptEngine_COMObject_FileSystemObject_Iteration()
         {
             var list = new ArrayList();
 
@@ -58,6 +59,31 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_COMObject_FileSystemObject_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var list = new ArrayList();
+
+                engine.Script.host = new ExtendedHostFunctions();
+                engine.Script.list = list;
+                engine.Execute(@"
+                    fso = host.newComObj('Scripting.FileSystemObject');
+                    drives = fso.drives;
+                    for (drive of drives) {
+                        list.add(drive.path);
+                    }
+                ");
+
+                var drives = DriveInfo.GetDrives();
+                Assert.AreEqual(drives.Length, list.Count);
+                Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -167,7 +193,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_COMType_FileSystemObject_ForOf()
+        public void V8ScriptEngine_COMType_FileSystemObject_Iteration()
         {
             var list = new ArrayList();
 
@@ -185,6 +211,32 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_COMType_FileSystemObject_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var list = new ArrayList();
+
+                engine.Script.host = new ExtendedHostFunctions();
+                engine.Script.list = list;
+                engine.Execute(@"
+                    FSO = host.comType('Scripting.FileSystemObject');
+                    fso = host.newObj(FSO);
+                    drives = fso.drives;
+                    for (drive of drives) {
+                        list.add(drive.path);
+                    }
+                ");
+
+                var drives = DriveInfo.GetDrives();
+                Assert.AreEqual(drives.Length, list.Count);
+                Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -294,7 +346,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMObject_FileSystemObject_ForOf()
+        public void V8ScriptEngine_AddCOMObject_FileSystemObject_Iteration()
         {
             var list = new ArrayList();
 
@@ -310,6 +362,30 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AddCOMObject_FileSystemObject_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var list = new ArrayList();
+
+                engine.Script.list = list;
+                engine.AddCOMObject("fso", "Scripting.FileSystemObject");
+                engine.Execute(@"
+                    drives = fso.drives;
+                    for (drive of drives) {
+                        list.add(drive.path);
+                    }
+                ");
+
+                var drives = DriveInfo.GetDrives();
+                Assert.AreEqual(drives.Length, list.Count);
+                Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -417,7 +493,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_AddCOMType_FileSystemObject_ForOf()
+        public void V8ScriptEngine_AddCOMType_FileSystemObject_Iteration()
         {
             var list = new ArrayList();
 
@@ -434,6 +510,31 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AddCOMType_FileSystemObject_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var list = new ArrayList();
+
+                engine.Script.list = list;
+                engine.AddCOMType("FSO", "Scripting.FileSystemObject");
+                engine.Execute(@"
+                    fso = new FSO();
+                    drives = fso.drives;
+                    for (drive of drives) {
+                        list.add(drive.path);
+                    }
+                ");
+
+                var drives = DriveInfo.GetDrives();
+                Assert.AreEqual(drives.Length, list.Count);
+                Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]

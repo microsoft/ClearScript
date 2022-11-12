@@ -1004,7 +1004,7 @@ namespace Microsoft.ClearScript.Util
         {
             foreach (var candidate in candidates)
             {
-                if (MiscHelpers.Try(out var bindCandidate, () => new BindCandidate<T>(candidate, getParameters(candidate), args, argTypes)))
+                if (MiscHelpers.Try(out var bindCandidate, () => BindCandidate<T>.TryCreateInstance(candidate, getParameters(candidate), args, argTypes)) && (bindCandidate != null))
                 {
                     yield return bindCandidate;
                 }
@@ -1264,15 +1264,16 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class BindCandidate<T> : IComparable<BindCandidate<T>> where T : MemberInfo
         {
-            private bool paramArray;
-            private readonly List<BindArgCost> argCosts = new List<BindArgCost>();
+            private readonly bool paramArray;
+            private readonly List<BindArgCost> argCosts;
 
             public T Candidate { get; }
 
-            public BindCandidate(T candidate, ParameterInfo[] parameters, object[] args, Type[] argTypes)
+            private BindCandidate(T candidate, bool paramArray, List<BindArgCost> argCosts)
             {
                 Candidate = candidate;
-                Initialize(parameters, args, argTypes);
+                this.paramArray = paramArray;
+                this.argCosts = argCosts;
             }
 
             public int CompareTo(BindCandidate<T> other)
@@ -1306,8 +1307,11 @@ namespace Microsoft.ClearScript.Util
                 return TypeNode.TryGetUpcastCount(Candidate.DeclaringType, other.Candidate.DeclaringType, out _) ? -1 : 1;
             }
 
-            private void Initialize(ParameterInfo[] parameters, object[] args, Type[] argTypes)
+            public static BindCandidate<T> TryCreateInstance(T candidate, ParameterInfo[] parameters, object[] args, Type[] argTypes)
             {
+                var paramArray = false;
+                var argCosts = new List<BindArgCost>();
+
                 var paramIndex = 0;
                 var argIndex = 0;
 
@@ -1329,7 +1333,7 @@ namespace Microsoft.ClearScript.Util
                     {
                         if (!param.IsOptional && !param.HasDefaultValue)
                         {
-                            throw new OperationCanceledException();
+                            return null;
                         }
 
                         continue;
@@ -1337,7 +1341,7 @@ namespace Microsoft.ClearScript.Util
 
                     if (!paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
                     {
-                        throw new OperationCanceledException();
+                        return null;
                     }
 
                     argCosts.Add(cost);
@@ -1348,13 +1352,13 @@ namespace Microsoft.ClearScript.Util
                 {
                     if (argIndex >= args.Length)
                     {
-                        return;
+                        return new BindCandidate<T>(candidate, true, argCosts);
                     }
 
                     if ((argIndex == (args.Length - 1)) && paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
                     {
                         argCosts.Add(cost);
-                        return;
+                        return new BindCandidate<T>(candidate, true, argCosts);
                     }
 
                     paramType = paramType.GetElementType();
@@ -1362,7 +1366,7 @@ namespace Microsoft.ClearScript.Util
                     {
                         if (!paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
                         {
-                            throw new OperationCanceledException();
+                            return null;
                         }
 
                         cost.Flags |= BindArgFlags.IsParamArrayArg;
@@ -1371,8 +1375,10 @@ namespace Microsoft.ClearScript.Util
                 }
                 else if (argIndex < args.Length)
                 {
-                    throw new OperationCanceledException();
+                    return null;
                 }
+
+                return new BindCandidate<T>(candidate, paramArray, argCosts);
             }
         }
 

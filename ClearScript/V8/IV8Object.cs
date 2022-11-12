@@ -7,6 +7,8 @@ namespace Microsoft.ClearScript.V8
 {
     internal interface IV8Object : IDisposable
     {
+        int IdentityHash { get; }
+
         object GetProperty(string name);
         void SetProperty(string name, object value);
         bool DeleteProperty(string name);

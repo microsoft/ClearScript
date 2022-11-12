@@ -42,6 +42,8 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
             return value.toString();
         }),
 
+        strictEquals: bind((left, right) => left === right),
+
         invokeConstructor: bind((constructor, args) => {
             if (typeof(constructor) !== 'function') {
                 throw new Error('Function expected');
@@ -100,23 +102,23 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
 
         toIterator: bind(function* (enumerator) {
             try {
-                while (enumerator.MoveNext()) {
-                    yield enumerator.Current;
+                while (enumerator.ScriptableMoveNext()) {
+                    yield enumerator.ScriptableCurrent;
                 }
             }
             finally {
-                enumerator.Dispose();
+                enumerator.ScriptableDispose();
             }
         }),
 
         toAsyncIterator: bind(async function* (asyncEnumerator) {
             try {
-                while (await asyncEnumerator.MoveNextPromise()) {
-                    yield asyncEnumerator.Current;
+                while (await asyncEnumerator.ScriptableMoveNextAsync()) {
+                    yield asyncEnumerator.ScriptableCurrent;
                 }
             }
             finally {
-                await asyncEnumerator.DisposePromise();
+                await asyncEnumerator.ScriptableDisposeAsync();
             }
         }),
 

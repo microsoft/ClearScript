@@ -1347,7 +1347,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
-        public void JScriptCoreEngine_COMObject_FileSystemObject_NativeEnumerator()
+        public void JScriptCoreEngine_COMObject_FileSystemObject_Iteration()
         {
             var list = new ArrayList();
 
@@ -1364,6 +1364,33 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_COMObject_FileSystemObject_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var list = new ArrayList();
+
+                engine.Script.host = new ExtendedHostFunctions();
+                engine.Script.list = list;
+
+                var drivesName = IsNetFramework ? "drives" : "Drives";
+                engine.Execute($@"
+                    fso = host.newComObj('Scripting.FileSystemObject');
+                    drives = fso.{drivesName};
+                    for (e = new Enumerator(drives); !e.atEnd(); e.moveNext()) {{
+                        list.add(e.item().path);
+                    }}
+                ");
+
+                var drives = DriveInfo.GetDrives();
+                Assert.AreEqual(drives.Length, list.Count);
+                Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+            }
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
@@ -1499,7 +1526,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
-        public void JScriptCoreEngine_COMType_FileSystemObject_NativeEnumerator()
+        public void JScriptCoreEngine_COMType_FileSystemObject_Iteration()
         {
             var list = new ArrayList();
 
@@ -1517,6 +1544,34 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_COMType_FileSystemObject_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var list = new ArrayList();
+
+                engine.Script.host = new ExtendedHostFunctions();
+                engine.Script.list = list;
+
+                var drivesName = IsNetFramework ? "drives" : "Drives";
+                engine.Execute($@"
+                    FSO = host.comType('Scripting.FileSystemObject');
+                    fso = host.newObj(FSO);
+                    drives = fso.{drivesName};
+                    for (e = new Enumerator(drives); !e.atEnd(); e.moveNext()) {{
+                        list.add(e.item().path);
+                    }}
+                ");
+
+                var drives = DriveInfo.GetDrives();
+                Assert.AreEqual(drives.Length, list.Count);
+                Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+            }
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
@@ -1654,7 +1709,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
-        public void JScriptCoreEngine_AddCOMObject_FileSystemObject_NativeEnumerator()
+        public void JScriptCoreEngine_AddCOMObject_FileSystemObject_Iteration()
         {
             var list = new ArrayList();
 
@@ -1670,6 +1725,32 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_AddCOMObject_FileSystemObject_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var list = new ArrayList();
+
+                engine.Script.list = list;
+                engine.AddCOMObject("fso", "Scripting.FileSystemObject");
+
+                var drivesName = IsNetFramework ? "drives" : "Drives";
+                engine.Execute($@"
+                    drives = fso.{drivesName};
+                    for (e = new Enumerator(drives); !e.atEnd(); e.moveNext()) {{
+                        list.add(e.item().path);
+                    }}
+                ");
+
+                var drives = DriveInfo.GetDrives();
+                Assert.AreEqual(drives.Length, list.Count);
+                Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+            }
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
@@ -1824,7 +1905,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
-        public void JScriptCoreEngine_AddCOMType_FileSystemObject_NativeEnumerator()
+        public void JScriptCoreEngine_AddCOMType_FileSystemObject_Iteration()
         {
             var list = new ArrayList();
 
@@ -1841,6 +1922,33 @@ namespace Microsoft.ClearScript.Test
             var drives = DriveInfo.GetDrives();
             Assert.AreEqual(drives.Length, list.Count);
             Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_AddCOMType_FileSystemObject_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var list = new ArrayList();
+
+                engine.Script.list = list;
+                engine.AddCOMType("FSO", "Scripting.FileSystemObject");
+
+                var drivesName = IsNetFramework ? "drives" : "Drives";
+                engine.Execute($@"
+                    fso = new FSO();
+                    drives = fso.{drivesName};
+                    for (e = new Enumerator(drives); !e.atEnd(); e.moveNext()) {{
+                        list.add(e.item().path);
+                    }}
+                ");
+
+                var drives = DriveInfo.GetDrives();
+                Assert.AreEqual(drives.Length, list.Count);
+                Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+            }
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
@@ -2307,7 +2415,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
-        public void JScriptCoreEngine_NativeEnumerator()
+        public void JScriptCoreEngine_Iteration()
         {
             var array = Enumerable.Range(0, 10).ToArray();
             engine.Execute(@"
@@ -2323,7 +2431,28 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
-        public void JScriptCoreEngine_NativeEnumerator_Generic()
+        public void JScriptCoreEngine_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var array = Enumerable.Range(0, 10).ToArray();
+                engine.Execute(@"
+                    function sum(array) {
+                        var result = 0;
+                        for (var e = new Enumerator(array); !e.atEnd(); e.moveNext()) {
+                            result += e.item();
+                        }
+                        return result;
+                    }
+                ");
+                Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(array));
+            }
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_Iteration_Generic()
         {
             var array = Enumerable.Range(0, 10).Select(value => (IConvertible)value).ToArray();
             engine.Script.culture = CultureInfo.InvariantCulture;
@@ -2340,7 +2469,29 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
-        public void JScriptCoreEngine_NativeEnumerator_NonGeneric()
+        public void JScriptCoreEngine_Iteration_Generic_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var array = Enumerable.Range(0, 10).Select(value => (IConvertible)value).ToArray();
+                engine.Script.culture = CultureInfo.InvariantCulture;
+                engine.Execute(@"
+                    function sum(array) {
+                        var result = 0;
+                        for (var e = new Enumerator(array); !e.atEnd(); e.moveNext()) {
+                            result += e.item().toInt32(culture);
+                        }
+                        return result;
+                    }
+                ");
+                Assert.AreEqual(array.Aggregate((current, next) => Convert.ToInt32(current) + Convert.ToInt32(next)), engine.Script.sum(array));
+            }
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_Iteration_NonGeneric()
         {
             var array = Enumerable.Range(0, 10).ToArray();
             engine.Execute(@"
@@ -2356,7 +2507,28 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
-        public void JScriptCoreEngine_NativeEnumerator_NonEnumerable()
+        public void JScriptCoreEngine_Iteration_NonGeneric_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var array = Enumerable.Range(0, 10).ToArray();
+                engine.Execute(@"
+                    function sum(array) {
+                        var result = 0;
+                        for (var e = new Enumerator(array); !e.atEnd(); e.moveNext()) {
+                            result += e.item();
+                        }
+                        return result;
+                    }
+                ");
+                Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(HostObject.Wrap(array, typeof(IEnumerable))));
+            }
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_Iteration_NonEnumerable()
         {
             engine.Execute(@"
                 function sum(array) {
@@ -2368,6 +2540,26 @@ namespace Microsoft.ClearScript.Test
                 }
             ");
             TestUtil.AssertException<ScriptEngineException>(() => engine.Script.sum(DayOfWeek.Monday));
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_Iteration_NonEnumerable_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                engine.Execute(@"
+                    function sum(array) {
+                        var result = 0;
+                        for (var e = new Enumerator(array); !e.atEnd(); e.moveNext()) {
+                            result += e.item();
+                        }
+                        return result;
+                    }
+                ");
+                TestUtil.AssertException<ScriptEngineException>(() => engine.Script.sum(DayOfWeek.Monday));
+            }
         }
 
         [TestMethod, TestCategory("JScriptCoreEngine")]
@@ -2688,6 +2880,35 @@ namespace Microsoft.ClearScript.Test
                 HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
                 TestCamelCaseMemberBinding();
             }
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_ScriptObjectIdentity()
+        {
+            var list = new List<object>();
+            engine.Script.list = list;
+
+            engine.Execute(@"
+                obj = {};
+                list.Add(obj);
+                func = function () {};
+                list.Add(func);
+            ");
+
+            Assert.AreEqual(2, list.Count);
+            Assert.AreEqual(engine.Script.obj, list[0]);
+            Assert.AreEqual(engine.Script.func, list[1]);
+
+            Assert.AreEqual(true, engine.Evaluate("list.Remove(obj)"));
+            Assert.AreEqual(false, engine.Evaluate("list.Remove(obj)"));
+
+            Assert.AreEqual(1, list.Count);
+            Assert.AreEqual(engine.Script.func, list[0]);
+
+            Assert.AreEqual(true, engine.Evaluate("list.Remove(func)"));
+            Assert.AreEqual(false, engine.Evaluate("list.Remove(func)"));
+
+            Assert.AreEqual(0, list.Count);
         }
 
         // ReSharper restore InconsistentNaming

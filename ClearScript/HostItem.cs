@@ -1053,7 +1053,7 @@ namespace Microsoft.ClearScript
 
                 if (name == SpecialMemberNames.NewEnum)
                 {
-                    return CreateEnumerator(TargetPropertyBag);
+                    return CreateScriptableEnumerator(TargetPropertyBag);
                 }
 
                 if (name == SpecialMemberNames.NewAsyncEnum)
@@ -1106,7 +1106,7 @@ namespace Microsoft.ClearScript
 
                 if (name == SpecialMemberNames.NewEnum)
                 {
-                    return CreateEnumerator(TargetPropertyBag);
+                    return CreateScriptableEnumerator(TargetPropertyBag);
                 }
 
                 if (name == SpecialMemberNames.NewAsyncEnum)
@@ -1305,7 +1305,7 @@ namespace Microsoft.ClearScript
 
                 if (name == SpecialMemberNames.NewEnum)
                 {
-                    return CreateEnumerator();
+                    return CreateScriptableEnumerator();
                 }
 
                 if (name == SpecialMemberNames.NewAsyncEnum)
@@ -1407,7 +1407,7 @@ namespace Microsoft.ClearScript
 
             if (name == SpecialMemberNames.NewEnum)
             {
-                return CreateEnumerator();
+                return CreateScriptableEnumerator();
             }
 
             if (name == SpecialMemberNames.NewAsyncEnum)
@@ -1564,7 +1564,7 @@ namespace Microsoft.ClearScript
             }
 
             var getMethod = property.GetMethod;
-            if ((getMethod == null) || !getMethod.IsAccessible(AccessContext) || getMethod.IsBlockedFromScript(DefaultAccess, false))
+            if ((getMethod == null) || !getMethod.IsAccessible(AccessContext) || getMethod.IsBlockedFromScript(property.GetScriptAccess(DefaultAccess), false))
             {
                 throw new UnauthorizedAccessException("The property get method is unavailable or inaccessible");
             }
@@ -1672,13 +1672,14 @@ namespace Microsoft.ClearScript
 
         private object SetHostProperty(PropertyInfo property, object[] args, object[] bindArgs)
         {
-            if (property.IsReadOnlyForScript(DefaultAccess))
+            var scriptAccess = property.GetScriptAccess(DefaultAccess);
+            if (scriptAccess == ScriptAccess.ReadOnly)
             {
                 throw new UnauthorizedAccessException("The property is read-only");
             }
 
             var setMethod = property.SetMethod;
-            if ((setMethod == null) || !setMethod.IsAccessible(AccessContext) || setMethod.IsBlockedFromScript(DefaultAccess, false))
+            if ((setMethod == null) || !setMethod.IsAccessible(AccessContext) || setMethod.IsBlockedFromScript(scriptAccess, false))
             {
                 throw new UnauthorizedAccessException("The property set method is unavailable or inaccessible");
             }
@@ -1740,27 +1741,27 @@ namespace Microsoft.ClearScript
             throw new ArgumentException("Invalid property assignment");
         }
 
-        private static object CreateEnumerator<T>(IEnumerable<T> enumerable)
+        private static object CreateScriptableEnumerator<T>(IEnumerable<T> enumerable)
         {
-            return HostObject.Wrap(enumerable.GetEnumerator(), typeof(IEnumerator<T>));
+            return HostObject.Wrap(new ScriptableEnumeratorOnEnumerator<T>(enumerable.GetEnumerator()), typeof(IScriptableEnumerator<T>));
         }
 
-        private object CreateEnumerator()
+        private object CreateScriptableEnumerator()
         {
             if ((Target is HostObject) || (Target is IHostVariable) || (Target is IByRefArg))
             {
                 if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IEnumerable<>), out var typeArgs))
                 {
-                    var enumerableHelpersHostItem = Wrap(Engine, typeof(EnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
-                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this)))
+                    var helpersHostItem = Wrap(Engine, typeof(ScriptableEnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
+                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)helpersHostItem).InvokeMethod("GetScriptableEnumerator", this)))
                     {
                         return enumerator;
                     }
                 }
                 else if (BindSpecialTarget(out IEnumerable _))
                 {
-                    var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
-                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetEnumerator", this)))
+                    var helpersHostItem = Wrap(Engine, ScriptableEnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
+                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)helpersHostItem).InvokeMethod("GetScriptableEnumerator", this)))
                     {
                         return enumerator;
                     }
@@ -2145,9 +2146,13 @@ namespace Microsoft.ClearScript
                 if (elements != null)
                 {
                     var maxCount = Math.Min(count, elements.Length);
-                    while ((index < maxCount) && TargetEnumerator.MoveNext())
+                    if (index < maxCount)
                     {
-                        elements[index++] = ThisDynamic.GetProperty("Current");
+                        var currentName = (TargetEnumerator is IScriptableEnumerator) ? "ScriptableCurrent" : "Current";
+                        while ((index < maxCount) && TargetEnumerator.MoveNext())
+                        {
+                            elements[index++] = ThisDynamic.GetProperty(currentName);
+                        }
                     }
                 }
 

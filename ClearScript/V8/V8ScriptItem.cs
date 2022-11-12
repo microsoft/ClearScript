@@ -293,6 +293,14 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region Object overrides
+
+        public override bool Equals(object obj) => (obj is V8ScriptItem that) && engine.Equals(this, that);
+
+        public override int GetHashCode() => target.IdentityHash;
+
+        #endregion
+
         #region IDisposable implementation
 
         public void Dispose()

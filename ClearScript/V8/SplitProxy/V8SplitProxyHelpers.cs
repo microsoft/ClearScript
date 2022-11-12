@@ -932,7 +932,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     return TryGetBigInteger(intValue, (int)uintValue, ptrOrHandle, out var result) ? (object)result : null;
 
                 case Type.V8Object:
-                    return new V8ObjectImpl((V8Object.Handle)ptrOrHandle, (Subtype)uintValue, (Flags)intValue);
+                    return new V8ObjectImpl((V8Object.Handle)ptrOrHandle, (Subtype)(uintValue & 0xFFFFU), (Flags)(uintValue >> 16), intValue);
 
                 case Type.HostObject:
                     return V8ProxyHelpers.GetHostObject(ptrOrHandle);

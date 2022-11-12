@@ -12,14 +12,29 @@ using Microsoft.ClearScript.Util.COM;
 namespace Microsoft.ClearScript.Util
 {
     /// <exclude/>
-    public interface IDisposableEnumerator : IEnumerator, IDisposable
+    [BypassCustomAttributeLoader]
+    public interface IScriptableEnumerator : IEnumerator, IDisposable
     {
+        /// <exclude/>
+        object ScriptableCurrent { get; }
+
+        /// <exclude/>
+        bool ScriptableMoveNext();
+
+        /// <exclude/>
+        void ScriptableDispose();
+    }
+
+    /// <exclude/>
+    [BypassCustomAttributeLoader]
+    public interface IScriptableEnumerator<out T> : IScriptableEnumerator, IEnumerator<T>
+    {
+        /// <exclude/>
+        new T ScriptableCurrent { get; }
     }
 
     internal static partial class EnumerableHelpers
     {
-        public static readonly HostType HostType = HostType.Wrap(typeof(EnumerableHelpers));
-
         public static IList<T> ToIList<T>(this IEnumerable<T> source)
         {
             return (source as IList<T>) ?? source.ToList();
@@ -81,36 +96,56 @@ namespace Microsoft.ClearScript.Util
                 }
             }
         }
-
-        public static IEnumerator<T> GetEnumerator<T>(IEnumerable<T> source)
-        {
-            return source.GetEnumerator();
-        }
-
-        public static IDisposableEnumerator GetEnumerator(IEnumerable source)
-        {
-            return new DisposableEnumeratorOnEnumerator(source.GetEnumerator());
-        }
     }
 
-    internal static partial class EnumerableHelpers<T>
+    [BypassCustomAttributeLoader]
+    internal static partial class ScriptableEnumerableHelpers
     {
-        public static readonly HostType HostType = HostType.Wrap(typeof(EnumerableHelpers<T>));
+        public static readonly HostType HostType = HostType.Wrap(typeof(ScriptableEnumerableHelpers));
 
-        public static IEnumerator<T> GetEnumerator(IEnumerable<T> source)
+        public static IScriptableEnumerator GetScriptableEnumerator(IEnumerable source)
         {
-            return source.GetEnumerator();
+            return new ScriptableEnumeratorOnEnumerator(source.GetEnumerator());
         }
     }
 
-    internal sealed class DisposableEnumeratorOnEnumerator : IDisposableEnumerator
+    [BypassCustomAttributeLoader]
+    internal static partial class ScriptableEnumerableHelpers<T>
+    {
+        public static readonly HostType HostType = HostType.Wrap(typeof(ScriptableEnumerableHelpers<T>));
+
+        public static IScriptableEnumerator<T> GetScriptableEnumerator(IEnumerable<T> source)
+        {
+            return new ScriptableEnumeratorOnEnumerator<T>(source.GetEnumerator());
+        }
+    }
+
+    internal sealed class ScriptableEnumeratorOnEnumerator : IScriptableEnumerator
     {
         private readonly IEnumerator enumerator;
 
-        public DisposableEnumeratorOnEnumerator(IEnumerator enumerator)
+        public ScriptableEnumeratorOnEnumerator(IEnumerator enumerator)
         {
             this.enumerator = enumerator;
         }
+
+        #region IScriptableEnumerator implementation
+
+        public object ScriptableCurrent => Current;
+
+        public bool ScriptableMoveNext()
+        {
+            return MoveNext();
+        }
+
+        public void ScriptableDispose()
+        {
+            Dispose();
+        }
+
+        #endregion
+
+        #region IEnumerator implementation
 
         public object Current => enumerator.Current;
 
@@ -124,20 +159,109 @@ namespace Microsoft.ClearScript.Util
             enumerator.Reset();
         }
 
+        #endregion
+
+        #region IDisposable implementation
+
         public void Dispose()
         {
             (enumerator as IDisposable)?.Dispose();
         }
+
+        #endregion
     }
 
-    internal sealed class DisposableEnumeratorOnEnumVariant : IDisposableEnumerator
+    internal sealed class ScriptableEnumeratorOnEnumerator<T> : IScriptableEnumerator<T>
+    {
+        private readonly IEnumerator<T> enumerator;
+
+        public ScriptableEnumeratorOnEnumerator(IEnumerator<T> enumerator)
+        {
+            this.enumerator = enumerator;
+        }
+
+        #region IScriptableEnumerator<T> implementation
+
+        public T ScriptableCurrent => Current;
+
+        #endregion
+
+        #region IScriptableEnumerator implementation
+
+        object IScriptableEnumerator.ScriptableCurrent => ScriptableCurrent;
+
+        public bool ScriptableMoveNext()
+        {
+            return MoveNext();
+        }
+
+        public void ScriptableDispose()
+        {
+            Dispose();
+        }
+
+        #endregion
+
+        #region IEnumerator<T> implementation
+
+        public T Current => enumerator.Current;
+
+        #endregion
+
+        #region IEnumerator implementation
+
+        object IEnumerator.Current => Current;
+
+        public bool MoveNext()
+        {
+            return enumerator.MoveNext();
+        }
+
+        public void Reset()
+        {
+            enumerator.Reset();
+        }
+
+        #endregion
+
+        #region IDisposable implementation
+
+        public void Dispose()
+        {
+            enumerator.Dispose();
+        }
+
+        #endregion
+    }
+
+    internal sealed class ScriptableEnumeratorOnEnumVariant : IScriptableEnumerator
     {
         private readonly IEnumVARIANT enumVariant;
 
-        public DisposableEnumeratorOnEnumVariant(IEnumVARIANT enumVariant)
+        public ScriptableEnumeratorOnEnumVariant(IEnumVARIANT enumVariant)
         {
             this.enumVariant = enumVariant;
         }
+
+        #region IScriptableEnumerator implementation
+
+        public object ScriptableCurrent => Current;
+
+        public bool ScriptableMoveNext()
+        {
+            return MoveNext();
+        }
+
+        public void ScriptableDispose()
+        {
+            Dispose();
+        }
+
+        #endregion
+
+        #region IEnumerator implementation
+
+        public object Current { get; private set; }
 
         public bool MoveNext()
         {
@@ -156,10 +280,14 @@ namespace Microsoft.ClearScript.Util
             enumVariant.Reset();
         }
 
-        public object Current { get; private set; }
+        #endregion
+
+        #region IDisposable implementation
 
         public void Dispose()
         {
         }
+
+        #endregion
     }
 }

@@ -5,6 +5,7 @@
         <UseWPF>true</UseWPF>
         <RootNamespace>Microsoft.ClearScript.Windows</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

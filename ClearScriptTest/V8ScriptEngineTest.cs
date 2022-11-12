@@ -2444,7 +2444,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_NativeEnumerator()
+        public void V8ScriptEngine_Iteration()
         {
             var array = Enumerable.Range(0, 10).ToArray();
             engine.Execute(@"
@@ -2465,7 +2465,33 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_NativeEnumerator_Generic()
+        public void V8ScriptEngine_Iteration_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var array = Enumerable.Range(0, 10).ToArray();
+                engine.Execute(@"
+                    function sum(array) {
+                        var result = 0;
+                        for (var item of array) {
+                            result += item;
+                        }
+                        return result;
+                    }
+                ");
+
+                // run test several times to verify workaround for V8 optimizer bug
+                for (var i = 0; i < 64; i++)
+                {
+                    Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(array));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_Generic()
         {
             var array = Enumerable.Range(0, 10).Select(value => (IConvertible)value).ToArray();
             engine.Script.culture = CultureInfo.InvariantCulture;
@@ -2487,7 +2513,34 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_NativeEnumerator_NonGeneric()
+        public void V8ScriptEngine_Iteration_Generic_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var array = Enumerable.Range(0, 10).Select(value => (IConvertible)value).ToArray();
+                engine.Script.culture = CultureInfo.InvariantCulture;
+                engine.Execute(@"
+                    function sum(array) {
+                        var result = 0;
+                        for (var item of array) {
+                            result += item.toInt32(culture);
+                        }
+                        return result;
+                    }
+                ");
+
+                // run test several times to verify workaround for V8 optimizer bug
+                for (var i = 0; i < 64; i++)
+                {
+                    Assert.AreEqual(array.Aggregate((current, next) => Convert.ToInt32(current) + Convert.ToInt32(next)), engine.Script.sum(array));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_NonGeneric()
         {
             var array = Enumerable.Range(0, 10).ToArray();
             engine.Execute(@"
@@ -2508,7 +2561,33 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_NativeEnumerator_NonEnumerable()
+        public void V8ScriptEngine_Iteration_NonGeneric_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var array = Enumerable.Range(0, 10).ToArray();
+                engine.Execute(@"
+                    function sum(array) {
+                        var result = 0;
+                        for (var item of array) {
+                            result += item;
+                        }
+                        return result;
+                    }
+                ");
+
+                // run test several times to verify workaround for V8 optimizer bug
+                for (var i = 0; i < 64; i++)
+                {
+                    Assert.AreEqual(array.Aggregate((current, next) => current + next), engine.Script.sum(HostObject.Wrap(array, typeof(IEnumerable))));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_NonEnumerable()
         {
             engine.Execute(@"
                 function sum(array) {
@@ -2528,7 +2607,32 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_NativeEnumerator_Disposal()
+        public void V8ScriptEngine_Iteration_NonEnumerable_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                engine.Execute(@"
+                    function sum(array) {
+                        var result = 0;
+                        for (var item of array) {
+                            result += item;
+                        }
+                        return result;
+                    }
+                ");
+
+                // run test several times to verify workaround for V8 optimizer bug
+                for (var i = 0; i < 64; i++)
+                {
+                    TestUtil.AssertException<NotSupportedException>(() => engine.Script.sum(DayOfWeek.Monday));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_Disposal()
         {
             var source = TestEnumerable.Create("foo", "bar", "baz");
 
@@ -2560,7 +2664,44 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_NativeEnumerator_Disposal_GenericSource()
+        public void V8ScriptEngine_Iteration_Disposal_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var source = TestEnumerable.Create("foo", "bar", "baz");
+
+                engine.AddRestrictedHostObject("source", source);
+                engine.Execute(@"
+                    result = '';
+                    for (let item of source) {
+                        result += item;
+                    }
+                ");
+
+                Assert.AreEqual("foobarbaz", engine.Script.result);
+                Assert.AreEqual(1, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (let item of source) {
+                            result += item;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                Assert.AreEqual("foobarbaz", engine.Script.result);
+                Assert.AreEqual(2, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_Disposal_GenericSource()
         {
             var source = TestEnumerable.CreateGeneric("foo", "bar", "baz");
 
@@ -2592,6 +2733,43 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_Disposal_GenericSource_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var source = TestEnumerable.CreateGeneric("foo", "bar", "baz");
+
+                engine.AddRestrictedHostObject("source", source);
+                engine.Execute(@"
+                    result = '';
+                    for (let item of source) {
+                        result += item;
+                    }
+                ");
+
+                Assert.AreEqual("foobarbaz", engine.Script.result);
+                Assert.AreEqual(1, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (let item of source) {
+                            result += item;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                Assert.AreEqual("foobarbaz", engine.Script.result);
+                Assert.AreEqual(2, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_AsyncIteration_PropertyBag()
         {
             engine.Script.done = new ManualResetEventSlim();
@@ -2611,6 +2789,33 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(7, result.Length);
             Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
             Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_PropertyBag_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Script.enumerable = new PropertyBag { ["foo"] = 123, ["bar"] = "blah" };
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (var item of enumerable) {
+                            result += item.value;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                var result = (string)engine.Script.result;
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -2636,6 +2841,33 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_List_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Script.enumerable = new List<object> { 123, "blah" };
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (var item of enumerable) {
+                            result += item;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                var result = (string)engine.Script.result;
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_AsyncIteration_ArrayList()
         {
             engine.Script.done = new ManualResetEventSlim();
@@ -2658,6 +2890,33 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_ArrayList_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Script.enumerable = new ArrayList { 123, "blah" };
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (var item of enumerable) {
+                            result += item;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                var result = (string)engine.Script.result;
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_AsyncIteration_Array()
         {
             engine.Script.done = new ManualResetEventSlim();
@@ -2677,6 +2936,33 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(7, result.Length);
             Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
             Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_Array_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Script.enumerable = new object[] { 123, "blah" };
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (var item of enumerable) {
+                            result += item;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                var result = (string)engine.Script.result;
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            }
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -3913,6 +4199,35 @@ namespace Microsoft.ClearScript.Test
                     Assert.AreEqual(7654321UL, runtime.GetHeapInfo().TotalExternalSize);
                 }
             }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ScriptObjectIdentity()
+        {
+            var list = new List<object>();
+            engine.Script.list = list;
+
+            engine.Execute(@"
+                obj = {};
+                list.Add(obj);
+                func = () => {};
+                list.Add(func);
+            ");
+
+            Assert.AreEqual(2, list.Count);
+            Assert.AreEqual(engine.Script.obj, list[0]);
+            Assert.AreEqual(engine.Script.func, list[1]);
+
+            Assert.AreEqual(true, engine.Evaluate("list.Remove(obj)"));
+            Assert.AreEqual(false, engine.Evaluate("list.Remove(obj)"));
+
+            Assert.AreEqual(1, list.Count);
+            Assert.AreEqual(engine.Script.func, list[0]);
+
+            Assert.AreEqual(true, engine.Evaluate("list.Remove(func)"));
+            Assert.AreEqual(false, engine.Evaluate("list.Remove(func)"));
+
+            Assert.AreEqual(0, list.Count);
         }
 
         // ReSharper restore InconsistentNaming

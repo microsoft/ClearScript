@@ -26,7 +26,7 @@ namespace Microsoft.ClearScript
 
         private object CreateAsyncEnumerator<T>(IEnumerable<T> enumerable)
         {
-            return HostObject.Wrap(enumerable.GetEnumerator().ToAsyncEnumerator(Engine), typeof(IAsyncEnumeratorPromise<T>));
+            return HostObject.Wrap(enumerable.GetEnumerator().ToScriptableAsyncEnumerator(Engine), typeof(IScriptableAsyncEnumerator<T>));
         }
 
         private object CreateAsyncEnumerator()
@@ -35,16 +35,16 @@ namespace Microsoft.ClearScript
             {
                 if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IEnumerable<>), out var typeArgs))
                 {
-                    var enumerableHelpersHostItem = Wrap(Engine, typeof(EnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
-                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                    var helpersHostItem = Wrap(Engine, typeof(ScriptableEnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
+                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)helpersHostItem).InvokeMethod("GetScriptableAsyncEnumerator", this, Engine)))
                     {
                         return enumerator;
                     }
                 }
                 else if (BindSpecialTarget(out IEnumerable _))
                 {
-                    var enumerableHelpersHostItem = Wrap(Engine, EnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
-                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)enumerableHelpersHostItem).InvokeMethod("GetAsyncEnumerator", this, Engine)))
+                    var helpersHostItem = Wrap(Engine, ScriptableEnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
+                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)helpersHostItem).InvokeMethod("GetScriptableAsyncEnumerator", this, Engine)))
                     {
                         return enumerator;
                     }

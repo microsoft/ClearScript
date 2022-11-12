@@ -46,7 +46,7 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(new Guid("c0f52143-a775-4b71-b206-a759285a35a5"), this, typeof(T), arg);
         }
 
-        #region Implementation of IBaseTestInterface
+        #region IBaseTestInterface implementation
 
         public int[] BaseInterfaceProperty { get; set; }
         public short BaseInterfaceScalarProperty { get; set; }
@@ -83,7 +83,7 @@ namespace Microsoft.ClearScript.Test
 
         #endregion
 
-        #region Implementation of IExplicitBaseTestInterface
+        #region IExplicitBaseTestInterface implementation
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation for testing purposes.")]
         int[] IExplicitBaseTestInterface.ExplicitBaseInterfaceProperty { get; set; }

@@ -185,7 +185,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_PropertyBag_NativeEnumerator_JScript()
+        public void BugFix_PropertyBag_Iteration_JScript()
         {
             engine.Dispose();
             engine = new JScriptEngine();
@@ -204,6 +204,33 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(7, result.Length);
             Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
             Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_PropertyBag_Iteration_JScript_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                engine.Dispose();
+                engine = new JScriptEngine();
+
+                var x = new PropertyBag { ["foo"] = 123, ["bar"] = "blah" };
+                engine.Script.x = x;
+
+                var result = (string)engine.Evaluate(@"
+                    var result = '';
+                    for (var e = new Enumerator(x); !e.atEnd(); e.moveNext()) {
+                        result += e.item().value;
+                    }
+                    result
+                ");
+
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            }
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -787,7 +814,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_PropertyBag_NativeEnumerator_VBScript()
+        public void BugFix_PropertyBag_Iteration_VBScript()
         {
             engine.Dispose();
             engine = new VBScriptEngine();
@@ -811,6 +838,38 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(7, result.Length);
             Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
             Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_PropertyBag_Iteration_VBScript_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                engine.Dispose();
+                engine = new VBScriptEngine();
+
+                var x = new PropertyBag { ["foo"] = 123, ["bar"] = "blah" };
+                engine.Script.x = x;
+
+                engine.Execute(@"
+                    function getResult(arg)
+                        dim result
+                        result = """"
+                        for each item in arg
+                            result = result & item.value
+                        next
+                        getResult = result
+                    end function
+                ");
+
+                var result = (string)engine.Evaluate("getResult(x)");
+
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            }
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -1360,6 +1419,20 @@ namespace Microsoft.ClearScript.Test
             {
                 engine.AddHostObject("x", x);
                 engine.Evaluate("x");
+            }
+        }
+
+        private sealed class CamelCaseAttributeLoader : CustomAttributeLoader
+        {
+            public override T[] LoadCustomAttributes<T>(ICustomAttributeProvider resource, bool inherit)
+            {
+                if (typeof(T) == typeof(ScriptMemberAttribute) && (resource is MemberInfo member))
+                {
+                    var name = char.ToLowerInvariant(member.Name[0]) + member.Name.Substring(1);
+                    return new[] { new ScriptMemberAttribute(name) } as T[];
+                }
+
+                return base.LoadCustomAttributes<T>(resource, inherit);
             }
         }
 

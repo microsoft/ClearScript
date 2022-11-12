@@ -1344,10 +1344,16 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_PropertyAccessorScriptability()
         {
             engine.Script.testObject = new PropertyAccessorScriptability();
+
             engine.Execute("testObject.Foo = 123");
             Assert.AreEqual(123, engine.Evaluate("testObject.Foo"));
-
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.Bar = 123"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("testObject.Bar"));
+
+            engine.DefaultAccess = ScriptAccess.None;
+            engine.Execute("testObject.Foo = 456");
+            Assert.AreEqual(456, engine.Evaluate("testObject.Foo"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("testObject.Bar = 456"));
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("testObject.Bar"));
         }
 
@@ -1355,10 +1361,16 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_PropertyAccessorScriptability_Static()
         {
             engine.AddHostType("TestObject", typeof(PropertyAccessorScriptabilityStatic));
+
             engine.Execute("TestObject.Foo = 123");
             Assert.AreEqual(123, engine.Evaluate("TestObject.Foo"));
-
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("TestObject.Bar = 123"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("TestObject.Bar"));
+
+            engine.DefaultAccess = ScriptAccess.None;
+            engine.Execute("TestObject.Foo = 456");
+            Assert.AreEqual(456, engine.Evaluate("TestObject.Foo"));
+            TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Execute("TestObject.Bar = 456"));
             TestUtil.AssertException<UnauthorizedAccessException>(() => engine.Evaluate("TestObject.Bar"));
         }
 
@@ -1563,7 +1575,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("BugFix")]
-        public void BugFix_V8_DisableGlobalMembers_IterationProtocol()
+        public void BugFix_V8_DisableGlobalMembers_Iteration()
         {
             engine.Script.test = new[] { "one", "two", "three" };
             Assert.AreEqual(3, ((dynamic)engine.Evaluate("Array.from(test)")).length);

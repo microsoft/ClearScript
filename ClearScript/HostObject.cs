@@ -32,8 +32,8 @@ namespace Microsoft.ClearScript
             {
                 if (target is IEnumVARIANT enumVariant)
                 {
-                    target = new DisposableEnumeratorOnEnumVariant(enumVariant);
-                    type = typeof(IDisposableEnumerator);
+                    target = new ScriptableEnumeratorOnEnumVariant(enumVariant);
+                    type = typeof(IScriptableEnumerator);
                 }
             }
 

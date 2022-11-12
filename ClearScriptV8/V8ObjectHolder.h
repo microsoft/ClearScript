@@ -64,6 +64,7 @@ public:
     virtual V8ObjectHolder* Clone() const = 0;
     virtual bool IsSameIsolate(const SharedPtr<V8IsolateImpl>& spThat) const = 0;
     virtual void* GetObject() const = 0;
+    virtual int32_t GetIdentityHash() const = 0;
     virtual const SharedPtr<V8SharedObjectInfo>& GetSharedObjectInfo() const = 0;
 
     virtual ~V8ObjectHolder() {}

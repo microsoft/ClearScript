@@ -66,6 +66,19 @@ static void ProcessCpuProfile(const v8::CpuProfile& profile, void* pvAction)
 }
 
 //-----------------------------------------------------------------------------
+
+static uint32_t PackV8ObjectInfo(V8Value::Subtype subtype, V8Value::Flags flags)
+{
+    static_assert(sizeof(subtype) == 2);
+    uint32_t subtypeBits = static_cast<std::underlying_type_t<V8Value::Subtype>>(subtype);
+
+    static_assert(sizeof(flags) == 2);
+    uint32_t flagsBits = static_cast<std::underlying_type_t<V8Value::Flags>>(flags);
+
+    return subtypeBits | (flagsBits << 16);
+}
+
+//-----------------------------------------------------------------------------
 // V8Exception implementation
 //-----------------------------------------------------------------------------
 
@@ -590,8 +603,8 @@ NATIVE_ENTRY_POINT(V8Value::Type) V8Value_Decode(const V8Value& value, int32_t& 
         if (value.AsV8Object(pHolder, subtype, flags))
         {
             pvData = new V8ObjectHandle(pHolder->Clone());
-            uintValue = static_cast<std::underlying_type_t<V8Value::Subtype>>(subtype);
-            intValue = static_cast<std::underlying_type_t<V8Value::Flags>>(flags);
+            uintValue = PackV8ObjectInfo(subtype, flags);
+            intValue = pHolder->GetIdentityHash();
             return V8Value::Type::V8Object;
         }
     }

@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -36,5 +37,7 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(0UL, statistics.ContextCount, "Not all V8 contexts were destroyed.");
             Assert.AreEqual(0UL, statistics.IsolateCount, "Not all V8 isolates were destroyed.");
         }
+
+        protected bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework", StringComparison.Ordinal);
     }
 }

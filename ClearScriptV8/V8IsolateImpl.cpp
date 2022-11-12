@@ -42,7 +42,7 @@ private:
     V8Platform();
 
     static V8Platform ms_Instance;
-    std::unique_ptr<v8::Platform> m_upDefaultPlatform;
+    std::unique_ptr<v8::PageAllocator> m_upPageAllocator;
     OnceFlag m_InitializationFlag;
     V8GlobalFlags m_GlobalFlags;
     v8::TracingController m_TracingController;
@@ -127,7 +127,7 @@ void V8Platform::EnsureInitialized()
 
 v8::PageAllocator* V8Platform::GetPageAllocator()
 {
-    return m_upDefaultPlatform->GetPageAllocator();
+    return m_upPageAllocator.get();
 }
 
 //-----------------------------------------------------------------------------
@@ -201,7 +201,7 @@ v8::TracingController* V8Platform::GetTracingController()
 //-----------------------------------------------------------------------------
 
 V8Platform::V8Platform():
-    m_upDefaultPlatform(v8::platform::NewDefaultPlatform()),
+    m_upPageAllocator(v8::platform::NewDefaultPageAllocator()),
     m_GlobalFlags(V8GlobalFlags::None)
 {
 }

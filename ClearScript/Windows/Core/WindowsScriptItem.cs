@@ -280,6 +280,14 @@ namespace Microsoft.ClearScript.Windows.Core
 
         #endregion
 
+        #region Object overrides
+
+        public override bool Equals(object obj) => (obj is WindowsScriptItem that) && (engine == that.engine) && target.Equals(that.target);
+
+        public override int GetHashCode() => target.GetHashCode();
+
+        #endregion
+
         #region IScriptMarshalWrapper implementation
 
         public override ScriptEngine Engine => engine;

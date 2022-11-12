@@ -6,6 +6,7 @@
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <AssemblyName>ClearScriptConsole</AssemblyName>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(VisualStudioVersion)'&lt;'17.0'">
@@ -14,6 +15,7 @@
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <AssemblyName>ClearScriptConsole</AssemblyName>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <CheckEolTargetFramework>false</CheckEolTargetFramework>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
