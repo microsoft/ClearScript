@@ -44,7 +44,7 @@ namespace Microsoft.ClearScript.V8
 
         private const int continuationInterval = 2000;
         private bool inContinuationTimerScope;
-        private bool awaitDebuggerAndPause;
+        private bool? awaitDebuggerAndPause;
 
         private List<string> documentNames;
         private bool suppressInstanceMethodEnumeration;
@@ -969,7 +969,7 @@ namespace Microsoft.ClearScript.V8
             {
                 if (inContinuationTimerScope || (ContinuationCallback == null))
                 {
-                    if (MiscHelpers.Exchange(ref awaitDebuggerAndPause, false))
+                    if (ShouldAwaitDebuggerAndPause(script.DocumentInfo))
                     {
                         proxy.AwaitDebuggerAndPause();
                     }
@@ -978,14 +978,14 @@ namespace Microsoft.ClearScript.V8
                 }
 
                 var state = new Timer[] { null };
-                using (state[0] = new Timer(unused => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
+                using (state[0] = new Timer(_ => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
                 {
                     inContinuationTimerScope = true;
                     try
                     {
                         state[0].Change(continuationInterval, Timeout.Infinite);
 
-                        if (MiscHelpers.Exchange(ref awaitDebuggerAndPause, false))
+                        if (ShouldAwaitDebuggerAndPause(script.DocumentInfo))
                         {
                             proxy.AwaitDebuggerAndPause();
                         }
@@ -1107,6 +1107,28 @@ namespace Microsoft.ClearScript.V8
         }
 
         // ReSharper restore ParameterHidesMember
+
+        private bool ShouldAwaitDebuggerAndPause(DocumentInfo documentInfo)
+        {
+            if (!awaitDebuggerAndPause.HasValue)
+            {
+                if (documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.AwaitDebuggerAndPause))
+                {
+                    awaitDebuggerAndPause = false;
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (awaitDebuggerAndPause.Value)
+            {
+                awaitDebuggerAndPause = false;
+                return true;
+            }
+
+            return false;
+        }
 
         private void OnContinuationTimer(Timer timer)
         {
@@ -1485,7 +1507,7 @@ namespace Microsoft.ClearScript.V8
 
                 if (inContinuationTimerScope || (ContinuationCallback == null))
                 {
-                    if (MiscHelpers.Exchange(ref awaitDebuggerAndPause, false))
+                    if (ShouldAwaitDebuggerAndPause(documentInfo.Info))
                     {
                         proxy.AwaitDebuggerAndPause();
                     }
@@ -1494,14 +1516,14 @@ namespace Microsoft.ClearScript.V8
                 }
 
                 var state = new Timer[] { null };
-                using (state[0] = new Timer(unused => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
+                using (state[0] = new Timer(_ => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
                 {
                     inContinuationTimerScope = true;
                     try
                     {
                         state[0].Change(continuationInterval, Timeout.Infinite);
 
-                        if (MiscHelpers.Exchange(ref awaitDebuggerAndPause, false))
+                        if (ShouldAwaitDebuggerAndPause(documentInfo.Info))
                         {
                             proxy.AwaitDebuggerAndPause();
                         }

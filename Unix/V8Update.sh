@@ -1,6 +1,6 @@
 #!/bin/bash
 
-v8testedrev=10.7.193.22
+v8testedrev=10.8.168.24
 v8testedcommit=
 v8cherrypicks=
 v8linuxbuildcommit=3d9590754d5d23e62d15472c5baf6777ca59df20

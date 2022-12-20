@@ -738,22 +738,19 @@ void V8IsolateImpl::AwaitDebuggerAndPause()
 {
     BEGIN_ISOLATE_SCOPE
 
-        if (m_DebuggingEnabled)
+        if (m_DebuggingEnabled && !m_upInspectorSession)
         {
-            if (!m_upInspectorSession)
+            auto exitReason = RunMessageLoop(RunMessageLoopReason::AwaitingDebugger);
+            switch (exitReason)
             {
-                auto exitReason = RunMessageLoop(RunMessageLoopReason::AwaitingDebugger);
-                switch (exitReason)
-                {
-                    case ExitMessageLoopReason::TerminatedExecution:
-                        throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(SL("Script execution interrupted by host while awaiting debugger connection")), false);
+                case ExitMessageLoopReason::TerminatedExecution:
+                    throw V8Exception(V8Exception::Type::Interrupt, m_Name, StdString(SL("Script execution interrupted by host while awaiting debugger connection")), false);
 
-                    case ExitMessageLoopReason::CanceledAwaitDebugger:
-                        return;
+                case ExitMessageLoopReason::CanceledAwaitDebugger:
+                    return;
 
-                    default:
-                        _ASSERTE(exitReason == ExitMessageLoopReason::ResumedExecution);
-                }
+                default:
+                    _ASSERTE(exitReason == ExitMessageLoopReason::ResumedExecution);
             }
 
             _ASSERTE(m_upInspectorSession);

@@ -24,7 +24,7 @@ namespace Microsoft.ClearScript.Test
             return Math.PI;
         }
 
-        public string SomeMethod(string unused, params object[] args)
+        public string SomeMethod(string _, params object[] args)
         {
             return string.Join("+", args);
         }

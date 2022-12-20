@@ -11,7 +11,7 @@ namespace Microsoft.ClearScript
     /// <remarks>
     /// This attribute is applicable to events, fields, methods, properties, and nested types.
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Interface | AttributeTargets.Struct)]
+    [AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Interface | AttributeTargets.Struct)]
     public class ScriptUsageAttribute : Attribute
     {
         /// <summary>

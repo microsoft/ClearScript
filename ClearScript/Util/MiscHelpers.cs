@@ -459,7 +459,7 @@ namespace Microsoft.ClearScript.Util
 
         public static void QueueNativeCallback(INativeCallback callback)
         {
-            ThreadPool.QueueUserWorkItem(state =>
+            ThreadPool.QueueUserWorkItem(_ =>
             {
                 using (callback)
                 {

@@ -14,7 +14,7 @@ namespace Microsoft.ClearScript
     /// method that is blocked by this attribute, it will be rejected even if an overload exists
     /// that could receive the call.
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Interface | AttributeTargets.Struct)]
+    [AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Event | AttributeTargets.Field | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Interface | AttributeTargets.Struct)]
     public sealed class NoScriptAccessAttribute : ScriptUsageAttribute
     {
         /// <summary>

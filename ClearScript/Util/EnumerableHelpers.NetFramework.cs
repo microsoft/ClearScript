@@ -38,17 +38,17 @@ namespace Microsoft.ClearScript.Util
 
     internal static partial class ScriptableEnumerableHelpers
     {
-        public static IScriptableAsyncEnumerator<object> GetScriptableAsyncEnumerator(IEnumerable source, ScriptEngine engine)
+        public static object GetScriptableAsyncEnumerator(IEnumerable source, ScriptEngine engine)
         {
-            return source.GetEnumerator().ToScriptableAsyncEnumerator(engine);
+            return HostItem.Wrap(engine, source.GetEnumerator().ToScriptableAsyncEnumerator(engine), typeof(IScriptableAsyncEnumerator<object>));
         }
     }
 
     internal static partial class ScriptableEnumerableHelpers<T>
     {
-        public static IScriptableAsyncEnumerator<T> GetScriptableAsyncEnumerator(IEnumerable<T> source, ScriptEngine engine)
+        public static object GetScriptableAsyncEnumerator(IEnumerable<T> source, ScriptEngine engine)
         {
-            return source.GetEnumerator().ToScriptableAsyncEnumerator(engine);
+            return HostItem.Wrap(engine, source.GetEnumerator().ToScriptableAsyncEnumerator(engine), typeof(IScriptableAsyncEnumerator<T>));
         }
     }
 

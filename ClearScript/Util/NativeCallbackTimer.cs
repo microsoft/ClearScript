@@ -36,7 +36,7 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        private void OnTimer(object state)
+        private void OnTimer(object _)
         {
             if (!disposedFlag.IsSet)
             {

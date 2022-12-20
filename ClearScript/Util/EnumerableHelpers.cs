@@ -103,9 +103,9 @@ namespace Microsoft.ClearScript.Util
     {
         public static readonly HostType HostType = HostType.Wrap(typeof(ScriptableEnumerableHelpers));
 
-        public static IScriptableEnumerator GetScriptableEnumerator(IEnumerable source)
+        public static object GetScriptableEnumerator(IEnumerable source)
         {
-            return new ScriptableEnumeratorOnEnumerator(source.GetEnumerator());
+            return HostObject.Wrap(new ScriptableEnumeratorOnEnumerator(source.GetEnumerator()), typeof(IScriptableEnumerator));
         }
     }
 
@@ -114,9 +114,9 @@ namespace Microsoft.ClearScript.Util
     {
         public static readonly HostType HostType = HostType.Wrap(typeof(ScriptableEnumerableHelpers<T>));
 
-        public static IScriptableEnumerator<T> GetScriptableEnumerator(IEnumerable<T> source)
+        public static object GetScriptableEnumerator(IEnumerable<T> source)
         {
-            return new ScriptableEnumeratorOnEnumerator<T>(source.GetEnumerator());
+            return HostObject.Wrap(new ScriptableEnumeratorOnEnumerator<T>(source.GetEnumerator()), typeof(IScriptableEnumerator<T>));
         }
     }
 

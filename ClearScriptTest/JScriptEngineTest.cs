@@ -425,7 +425,7 @@ namespace Microsoft.ClearScript.Test
         public void JScriptEngine_Interrupt()
         {
             var checkpoint = new ManualResetEvent(false);
-            ThreadPool.QueueUserWorkItem(state =>
+            ThreadPool.QueueUserWorkItem(_ =>
             {
                 checkpoint.WaitOne();
                 engine.Interrupt();

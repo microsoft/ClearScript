@@ -87,6 +87,28 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_COMObject_FileSystemObject_Iteration_DisableTypeRestriction()
+        {
+            engine.DisableTypeRestriction = true;
+
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                fso = host.newComObj('Scripting.FileSystemObject');
+                drives = fso.Drives;
+                for (drive of drives) {
+                    list.Add(drive.Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_COMObject_FileSystemObject_TypeLibEnums()
         {
             engine.Script.host = new ExtendedHostFunctions();
@@ -240,6 +262,29 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_COMType_FileSystemObject_Iteration_DisableTypeRestriction()
+        {
+            engine.DisableTypeRestriction = true;
+
+            var list = new ArrayList();
+
+            engine.Script.host = new ExtendedHostFunctions();
+            engine.Script.list = list;
+            engine.Execute(@"
+                FSO = host.comType('Scripting.FileSystemObject');
+                fso = host.newObj(FSO);
+                drives = fso.Drives;
+                for (drive of drives) {
+                    list.Add(drive.Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_COMType_FileSystemObject_TypeLibEnums()
         {
             engine.Script.host = new ExtendedHostFunctions();
@@ -389,6 +434,27 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AddCOMObject_FileSystemObject_Iteration_DisableTypeRestriction()
+        {
+            engine.DisableTypeRestriction = true;
+
+            var list = new ArrayList();
+
+            engine.Script.list = list;
+            engine.AddCOMObject("fso", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                drives = fso.Drives;
+                for (drive of drives) {
+                    list.Add(drive.Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_AddCOMObject_FileSystemObject_TypeLibEnums()
         {
             engine.Script.host = new ExtendedHostFunctions();
@@ -535,6 +601,28 @@ namespace Microsoft.ClearScript.Test
                 Assert.AreEqual(drives.Length, list.Count);
                 Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
             }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AddCOMType_FileSystemObject_Iteration_DisableTypeRestriction()
+        {
+            engine.DisableTypeRestriction = true;
+
+            var list = new ArrayList();
+
+            engine.Script.list = list;
+            engine.AddCOMType("FSO", "Scripting.FileSystemObject");
+            engine.Execute(@"
+                fso = new FSO();
+                drives = fso.Drives;
+                for (drive of drives) {
+                    list.Add(drive.Path);
+                }
+            ");
+
+            var drives = DriveInfo.GetDrives();
+            Assert.AreEqual(drives.Length, list.Count);
+            Assert.IsTrue(drives.Select(drive => drive.Name.Substring(0, 2)).SequenceEqual(list.ToArray()));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
