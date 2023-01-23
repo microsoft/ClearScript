@@ -9,7 +9,7 @@ namespace Microsoft.ClearScript.JavaScript
     /// Represents a JavaScript
     /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see></c>.
     /// </summary>
-    public interface IArrayBuffer
+    public interface IArrayBuffer : IJavaScriptObject
     {
         /// <summary>
         /// Gets the size of the <c>ArrayBuffer</c> in bytes.

@@ -6,7 +6,7 @@ namespace Microsoft.ClearScript.Windows
     /// <summary>
     /// Represents a Windows Script object.
     /// </summary>
-    public interface IWindowsScriptObject
+    public interface IWindowsScriptObject : IScriptObject
     {
         /// <summary>
         /// Provides access to the underlying unmanaged COM object.

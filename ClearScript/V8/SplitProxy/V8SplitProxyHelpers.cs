@@ -1064,6 +1064,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Subtype
             None,
+            Function,
+            Iterator,
             Promise,
             Array,
             ArrayBuffer,
@@ -1090,7 +1092,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Flags
             None = 0,
-            Shared = 0x0001
+            Shared = 0x0001,
+            Async = 0x0002,
+            Generator = 0x0004
         }
 
         #endregion

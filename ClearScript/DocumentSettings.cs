@@ -155,36 +155,12 @@ namespace Microsoft.ClearScript
 
         internal Document LoadDocument(DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
-            var document = FindSystemDocument(specifier, category);
-            if (document != null)
-            {
-                return document;
-            }
-
-            document = Loader.LoadDocument(this, sourceInfo, specifier, category, contextCallback);
-            if (document.Info.Category != (category ?? DocumentCategory.Script))
-            {
-                throw new FileLoadException("Loaded document category mismatch", "specifier");
-            }
-
-            return document;
+            return FindSystemDocument(specifier, category) ?? Loader.LoadDocument(this, sourceInfo, specifier, category, contextCallback);
         }
 
         internal async Task<Document> LoadDocumentAsync(DocumentInfo? sourceInfo, string specifier, DocumentCategory category, DocumentContextCallback contextCallback)
         {
-            var document = FindSystemDocument(specifier, category);
-            if (document != null)
-            {
-                return document;
-            }
-
-            document = await Loader.LoadDocumentAsync(this, sourceInfo, specifier, category, contextCallback).ConfigureAwait(false);
-            if (document.Info.Category != (category ?? DocumentCategory.Script))
-            {
-                throw new FileLoadException("Loaded document category mismatch", "specifier");
-            }
-
-            return document;
+            return FindSystemDocument(specifier, category) ?? await Loader.LoadDocumentAsync(this, sourceInfo, specifier, category, contextCallback).ConfigureAwait(false);
         }
 
         private Document FindSystemDocument(string identifier, DocumentCategory category)

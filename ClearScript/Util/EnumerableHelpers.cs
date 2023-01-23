@@ -13,6 +13,7 @@ namespace Microsoft.ClearScript.Util
 {
     /// <exclude/>
     [BypassCustomAttributeLoader]
+    [DefaultScriptUsage(ScriptAccess.Full)]
     public interface IScriptableEnumerator : IEnumerator, IDisposable
     {
         /// <exclude/>
@@ -27,6 +28,7 @@ namespace Microsoft.ClearScript.Util
 
     /// <exclude/>
     [BypassCustomAttributeLoader]
+    [DefaultScriptUsage(ScriptAccess.Full)]
     public interface IScriptableEnumerator<out T> : IScriptableEnumerator, IEnumerator<T>
     {
         /// <exclude/>
@@ -99,6 +101,7 @@ namespace Microsoft.ClearScript.Util
     }
 
     [BypassCustomAttributeLoader]
+    [DefaultScriptUsage(ScriptAccess.Full)]
     internal static partial class ScriptableEnumerableHelpers
     {
         public static readonly HostType HostType = HostType.Wrap(typeof(ScriptableEnumerableHelpers));
@@ -110,6 +113,7 @@ namespace Microsoft.ClearScript.Util
     }
 
     [BypassCustomAttributeLoader]
+    [DefaultScriptUsage(ScriptAccess.Full)]
     internal static partial class ScriptableEnumerableHelpers<T>
     {
         public static readonly HostType HostType = HostType.Wrap(typeof(ScriptableEnumerableHelpers<T>));

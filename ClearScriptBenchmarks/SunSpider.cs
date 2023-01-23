@@ -6,14 +6,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 
 namespace Microsoft.ClearScript.Test
 {
     internal static class SunSpider
     {
         private const string version = "sunspider-1.0.2";
-        private const string baseUrl = "https://webkit.org/perf/" + version + "/" + version + "/";
+        private const string baseUrl = "https://raw.githubusercontent.com/WebKit/WebKit/main/Websites/webkit.org/perf/" + version + "/" + version + "/";
 
         private const int repeatCount = 10;
         private const string scriptBegin = "<script>";
@@ -67,20 +66,26 @@ namespace Microsoft.ClearScript.Test
 
             // run main test
             var results = repeatIndices.Select(index => new Dictionary<string, int>()).ToArray();
+            var timeSpans = new long[repeatCount];
             repeatIndices.ForEach(repeatIndex =>
             {
                 if (!quiet) Console.Write("Running iteration {0}... ", repeatIndex + 1);
+                var stopWatch = Stopwatch.StartNew();
                 testIndices.ForEach(testIndex =>
                 {
                     var name = (string)engine.Script.tests[testIndex];
                     results[repeatIndex][name] = RunTest(engine, mockDOM, testIndex);
                 });
+                timeSpans[repeatIndex] = stopWatch.ElapsedMilliseconds;
                 if (!quiet) Console.WriteLine("Done");
             });
 
             // show results
             if (!quiet)
             {
+
+            #if USE_RESULTS_PAGE
+
                 var resultString = new StringBuilder("{\"v\":\"" + version + "\",");
                 results[0].Keys.ToList().ForEach(name =>
                 {
@@ -90,7 +95,14 @@ namespace Microsoft.ClearScript.Test
                 });
                 resultString.Length -= 1;
                 resultString.Append("}");
-                Process.Start(new ProcessStartInfo((new Uri(baseUrl + "results.html?" + resultString)).AbsoluteUri) {UseShellExecute = true});
+                Process.Start(new ProcessStartInfo((new Uri(baseUrl + "results.html?" + resultString)).AbsoluteUri) { UseShellExecute = true });
+
+            #else // !USE_RESULTS_PAGE
+
+                Console.WriteLine("\n--\nAverage iteration time: {0} ms\n--", timeSpans.Average());
+
+            #endif // !USE_RESULTS_PAGE
+
             }
         }
 

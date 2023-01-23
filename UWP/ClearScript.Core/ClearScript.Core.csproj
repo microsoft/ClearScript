@@ -104,15 +104,20 @@
     <Compile Include="..\..\ClearScript\ImmutableValueAttribute.cs" Link="ImmutableValueAttribute.cs" />
     <Compile Include="..\..\ClearScript\Invocability.cs" Link="Invocability.cs" />
     <Compile Include="..\..\ClearScript\IScriptableObject.cs" Link="IScriptableObject.cs" />
+    <Compile Include="..\..\ClearScript\IScriptEngine.cs" Link="IScriptEngine.cs" />
     <Compile Include="..\..\ClearScript\IScriptEngineException.cs" Link="IScriptEngineException.cs" />
+    <Compile Include="..\..\ClearScript\IScriptObject.cs" Link="IScriptObject.cs" />
     <Compile Include="..\..\ClearScript\JavaScript\CommonJSLegacyModule.cs" Link="JavaScript\CommonJSLegacyModule.cs" />
     <Compile Include="..\..\ClearScript\JavaScript\CommonJSManager.cs" Link="JavaScript\CommonJSManager.cs" />
     <Compile Include="..\..\ClearScript\JavaScript\IArrayBuffer.cs" Link="JavaScript\IArrayBuffer.cs" />
     <Compile Include="..\..\ClearScript\JavaScript\IArrayBufferView.cs" Link="JavaScript\IArrayBufferView.cs" />
     <Compile Include="..\..\ClearScript\JavaScript\IDataView.cs" Link="JavaScript\IDataView.cs" />
     <Compile Include="..\..\ClearScript\JavaScript\IJavaScriptEngine.cs" Link="JavaScript\IJavaScriptEngine.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\IJavaScriptObject.cs" Link="JavaScript\IJavaScriptObject.cs" />
     <Compile Include="..\..\ClearScript\JavaScript\ITypedArray.cs" Link="JavaScript\ITypedArray.cs" />
     <Compile Include="..\..\ClearScript\JavaScript\JavaScriptExtensions.cs" Link="JavaScript\JavaScriptExtensions.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\JavaScriptObjectFlags.cs" Link="JavaScript\JavaScriptObjectFlags.cs" />
+    <Compile Include="..\..\ClearScript\JavaScript\JavaScriptObjectKind.cs" Link="JavaScript\JavaScriptObjectKind.cs" />
     <Compile Include="..\..\ClearScript\JavaScript\ModuleCategory.cs" Link="JavaScript\ModuleCategory.cs" />
     <Compile Include="..\..\ClearScript\NoDefaultScriptAccessAttribute.cs" Link="NoDefaultScriptAccessAttribute.cs" />
     <Compile Include="..\..\ClearScript\NoScriptAccessAttribute.cs" Link="NoScriptAccessAttribute.cs" />
@@ -198,7 +203,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.13</Version>
+      <Version>6.2.14</Version>
     </PackageReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

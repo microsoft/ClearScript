@@ -213,7 +213,7 @@ namespace Microsoft.ClearScript.V8
             }
         }
 
-        #region IDisposable implementation (abstract)
+        #region IDisposable implementation
 
         public abstract void Dispose();
 

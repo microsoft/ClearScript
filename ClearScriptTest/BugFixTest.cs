@@ -488,16 +488,9 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_Resurrection_V8ScriptItem()
         {
-            for (var index = 0; index < 256; index++)
-            {
-                // ReSharper disable UnusedVariable
-
-                var tempEngine = new V8ScriptEngine();
-                var wrapper = new ResurrectionTestWrapper(tempEngine.Script.Math);
-                GC.Collect();
-
-                // ReSharper restore UnusedVariable
-            }
+            TestV8ScriptItemResurrection();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -1749,6 +1742,14 @@ namespace Microsoft.ClearScript.Test
             engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging, 70000);
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_EnumerationWithNoDefaultScriptAccess()
+        {
+            engine.DefaultAccess = ScriptAccess.None;
+            engine.AddHostObject("test", new DefaultScriptAccessOverrideTestObject());
+            engine.Execute("Array.from(test.Values)");
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2228,6 +2229,26 @@ namespace Microsoft.ClearScript.Test
             }
 
             public string Value { get; }
+        }
+
+        [DefaultScriptUsage(ScriptAccess.Full)]
+        public class DefaultScriptAccessOverrideTestObject
+        {
+            public List<int> Values { get; set; } = new List<int> { 123, 456, 789 };
+        }
+
+        private void TestV8ScriptItemResurrection()
+        {
+            for (var index = 0; index < 256; index++)
+            {
+                // ReSharper disable UnusedVariable
+
+                var tempEngine = new V8ScriptEngine();
+                var wrapper = new ResurrectionTestWrapper(tempEngine.Script.Math);
+                GC.Collect();
+
+                // ReSharper restore UnusedVariable
+            }
         }
 
         #endregion

@@ -268,6 +268,8 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
 
         BEGIN_CONTEXT_SCOPE
 
+            m_hContext->SetAlignedPointerInEmbedderData(1, this);
+
             m_hIsHostObjectKey = CreatePersistent(CreateSymbol());
             FROM_MAYBE(m_hContext->Global()->Set(m_hContext, CreateString("isHostObjectKey"), m_hIsHostObjectKey));
 
@@ -280,6 +282,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             m_hMethodOrPropertyNotFound = CreatePersistent(CreateString("Method or property not found"));
             m_hPropertyValueNotInvocable = CreatePersistent(CreateString("The property value does not support invocation"));
             m_hInvalidModuleRequest = CreatePersistent(CreateString("Invalid module load request"));
+            m_hConstructorKey = CreatePersistent(CreateString("constructor"));
 
             hGetIteratorFunction = CreateFunctionTemplate(GetHostObjectIterator, hContextImpl);
             hGetAsyncIteratorFunction = CreateFunctionTemplate(GetHostObjectAsyncIterator, hContextImpl);
@@ -1506,7 +1509,8 @@ v8::MaybeLocal<v8::Module> V8ContextImpl::ResolveModule(v8::Local<v8::String> hS
                 try
                 {
                     V8DocumentInfo documentInfo;
-                    auto code = HostObjectUtil::GetInstance().LoadModule(*pSourceDocumentInfo, CreateStdString(hSpecifier), documentInfo);
+                    V8Value exportsValue(V8Value::Undefined);
+                    auto code = HostObjectUtil::GetInstance().LoadModule(*pSourceDocumentInfo, CreateStdString(hSpecifier), documentInfo, exportsValue);
 
                     auto codeDigest = code.GetDigest();
                     auto hModule = GetCachedModule(documentInfo.GetUniqueId(), codeDigest);
@@ -1515,18 +1519,53 @@ v8::MaybeLocal<v8::Module> V8ContextImpl::ResolveModule(v8::Local<v8::String> hS
                         return hModule;
                     }
 
-                    BEGIN_DOCUMENT_SCOPE(documentInfo)
+                    if (!documentInfo.IsModule())
+                    {
+                        std::vector<v8::Local<v8::String>> names;
+                        std::vector<SyntheticModuleExport> exports;
 
-                        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo));
-                        hModule = FROM_MAYBE(CompileModule(&source));
-                        if (!hModule.IsEmpty())
+                        auto hExports = ::ValueAsObject(ImportValue(exportsValue));
+                        if (!hExports.IsEmpty())
                         {
-                            CacheModule(documentInfo, codeDigest, hModule);
+                            auto hOwnPropertyNames = FROM_MAYBE(hExports->GetOwnPropertyNames(m_hContext, v8::SKIP_SYMBOLS, v8::KeyConversionMode::kNoNumbers));
+                            if (!hOwnPropertyNames.IsEmpty())
+                            {
+                                auto length = hOwnPropertyNames->Length();
+
+                                names.reserve(length);
+                                exports.reserve(length);
+
+                                for (uint32_t index = 0; index < length; index++)
+                                {
+                                    auto hName = ::ValueAsString(FROM_MAYBE(hOwnPropertyNames->Get(m_hContext, index)));
+                                    if (!hName.IsEmpty())
+                                    {
+                                        names.push_back(hName);
+                                        exports.push_back({ CreatePersistent(hName), CreatePersistent(FROM_MAYBE(hExports->Get(m_hContext, hName))) });
+                                    }
+                                }
+                            }
                         }
 
-                        return hModule;
+                        hModule = CreateSyntheticModule(FROM_MAYBE(CreateString(documentInfo.GetResourceName())), names, PopulateSyntheticModule);
+                        m_SyntheticModuleData.push_back({ CreatePersistent(hModule), std::move(exports) });
+                    }
+                    else
+                    {
+                        BEGIN_DOCUMENT_SCOPE(documentInfo)
 
-                    END_DOCUMENT_SCOPE
+                            v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo));
+                            hModule = FROM_MAYBE(CompileModule(&source));
+
+                        END_DOCUMENT_SCOPE
+                    }
+
+                    if (!hModule.IsEmpty())
+                    {
+                        CacheModule(documentInfo, codeDigest, hModule);
+                    }
+
+                    return hModule;
                 }
                 catch (const HostException& exception)
                 {
@@ -1547,6 +1586,57 @@ v8::MaybeLocal<v8::Module> V8ContextImpl::ResolveModule(v8::Local<v8::String> hS
         return v8::MaybeLocal<v8::Module>();
 
     END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+v8::MaybeLocal<v8::Value> V8ContextImpl::PopulateSyntheticModule(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule)
+{
+    if (hContext->GetNumberOfEmbedderDataFields() > 1)
+    {
+        auto pContextImpl = reinterpret_cast<V8ContextImpl*>(hContext->GetAlignedPointerFromEmbedderData(1));
+        if (pContextImpl != nullptr)
+        {
+            return pContextImpl->PopulateSyntheticModule(hModule);
+        }
+    }
+
+    return v8::MaybeLocal<v8::Value>();
+}
+
+//-----------------------------------------------------------------------------
+
+v8::MaybeLocal<v8::Value> V8ContextImpl::PopulateSyntheticModule(v8::Local<v8::Module> hModule)
+{
+    FROM_MAYBE_TRY
+
+        auto hResolver = FROM_MAYBE(v8::Promise::Resolver::New(m_hContext));
+        ASSERT_EVAL(FROM_MAYBE(hResolver->Resolve(m_hContext, GetUndefined())));
+
+        for (auto itModule = m_SyntheticModuleData.begin(); itModule != m_SyntheticModuleData.end(); itModule++)
+        {
+            if (itModule->hModule == hModule)
+            {
+                Dispose(itModule->hModule);
+                for (auto itExport = itModule->Exports.begin(); itExport != itModule->Exports.end(); itExport++)
+                {
+                    FROM_MAYBE(SetSyntheticModuleExport(hModule, itExport->hName, itExport->hValue));
+                    Dispose(itExport->hName);
+                    Dispose(itExport->hValue);
+                }
+
+                m_SyntheticModuleData.erase(itModule);
+                break;
+            }
+        }
+
+        return hResolver->GetPromise();
+
+    FROM_MAYBE_CATCH
+
+        return v8::MaybeLocal<v8::Value>();
+
+    FROM_MAYBE_END
 }
 
 //-----------------------------------------------------------------------------
@@ -1579,6 +1669,16 @@ void V8ContextImpl::Teardown()
         m_pvV8ObjectCache = nullptr;
     }
 
+    for (auto itModule = m_SyntheticModuleData.rbegin(); itModule != m_SyntheticModuleData.rend(); itModule++)
+    {
+        Dispose(itModule->hModule);
+        for (auto itExport = itModule->Exports.begin(); itExport != itModule->Exports.end(); itExport++)
+        {
+            Dispose(itExport->hName);
+            Dispose(itExport->hValue);
+        }
+    }
+
     ClearModuleCache();
 
     for (auto it = m_GlobalMembersStack.rbegin(); it != m_GlobalMembersStack.rend(); it++)
@@ -1586,6 +1686,7 @@ void V8ContextImpl::Teardown()
         Dispose(it->second);
     }
 
+    Dispose(m_hAsyncGeneratorConstructor);
     Dispose(m_hToJsonFunction);
     Dispose(m_hToAsyncIteratorFunction);
     Dispose(m_hToIteratorFunction);
@@ -1594,6 +1695,7 @@ void V8ContextImpl::Teardown()
     Dispose(m_hHostObjectTemplate);
     Dispose(m_hTerminationException);
     Dispose(m_hFlushFunction);
+    Dispose(m_hConstructorKey);
     Dispose(m_hInvalidModuleRequest);
     Dispose(m_hPropertyValueNotInvocable);
     Dispose(m_hMethodOrPropertyNotFound);
@@ -1613,6 +1715,11 @@ void V8ContextImpl::Teardown()
     if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
     {
         hGlobal->SetAlignedPointerInInternalField(0, nullptr);
+    }
+
+    if (m_hContext->GetNumberOfEmbedderDataFields() > 1)
+    {
+        m_hContext->SetAlignedPointerInEmbedderData(1, nullptr);
     }
 
     Dispose(m_hContext);
@@ -3070,7 +3177,40 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
             auto flags = V8Value::Flags::None;
             SharedPtr<V8SharedObjectInfo> spSharedObjectInfo;
 
-            if (hObject->IsPromise())
+            if (hObject->IsFunction())
+            {
+                subtype = V8Value::Subtype::Function;
+
+                if (hObject->IsAsyncFunction())
+                {
+                    flags = CombineFlags(flags, V8Value::Flags::Async);
+                }
+
+                if (hObject->IsGeneratorFunction())
+                {
+                    flags = CombineFlags(flags, V8Value::Flags::Generator);
+                }
+            }
+            else if (hObject->IsGeneratorObject())
+            {
+                subtype = V8Value::Subtype::Iterator;
+
+                if (m_hAsyncGeneratorConstructor.IsEmpty())
+                {
+                    auto hEngineInternal = FROM_MAYBE(m_hContext->Global()->Get(m_hContext, CreateString("EngineInternal"))).As<v8::Object>();
+                    m_hAsyncGeneratorConstructor = CreatePersistent(FROM_MAYBE(hEngineInternal->Get(m_hContext, CreateString("asyncGenerator"))));
+                }
+
+                if (FROM_MAYBE(hObject->Get(m_hContext, m_hConstructorKey))->StrictEquals(m_hAsyncGeneratorConstructor))
+                {
+                    flags = CombineFlags(flags, V8Value::Flags::Async);
+                }
+            }
+            else if (hObject->IsMapIterator() || hObject->IsSetIterator())
+            {
+                subtype = V8Value::Subtype::Iterator;
+            }
+            else if (hObject->IsPromise())
             {
                 subtype = V8Value::Subtype::Promise;
             }

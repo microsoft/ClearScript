@@ -36,6 +36,11 @@ namespace Microsoft.ClearScript
         /// considered a relative path. By default, any path that is not explicitly a top-level
         /// or root path is eligible.
         /// </summary>
-        EnforceRelativePrefix = 0x00000004
+        EnforceRelativePrefix = 0x00000004,
+
+        /// <summary>
+        /// Relaxes the requirement that a loaded document must be of the requested category. 
+        /// </summary>
+        AllowCategoryMismatch = 0x00000008
     }
 }

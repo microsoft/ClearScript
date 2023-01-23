@@ -6,6 +6,8 @@ using System;
 namespace Microsoft.ClearScript.JavaScript
 {
     /// <exclude/>
+    [BypassCustomAttributeLoader]
+    [DefaultScriptUsage(ScriptAccess.Full)]
     public sealed class CommonJSLegacyModule
     {
         private readonly ScriptObject context;

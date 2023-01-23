@@ -1826,7 +1826,7 @@ V8IsolateImpl::ExecutionScope* V8IsolateImpl::EnterExecutionScope(ExecutionScope
         if (maxHeapSize > 0)
         {
             // yes; perform initial check and set up heap watch timer
-            CheckHeapSize(maxHeapSize);
+            CheckHeapSize(maxHeapSize, false /*timerTriggered*/);
 
             // enter outermost heap size monitoring scope
             m_HeapWatchLevel = 1;
@@ -1961,7 +1961,7 @@ void V8IsolateImpl::SetUpHeapWatchTimer()
                 if (!spTimer.IsEmpty())
                 {
                     // yes; check heap size
-                    pIsolateImpl->CheckHeapSize(std::nullopt);
+                    pIsolateImpl->CheckHeapSize(std::nullopt, true /*timerTriggered*/);
                 }
             });
         }
@@ -1973,7 +1973,7 @@ void V8IsolateImpl::SetUpHeapWatchTimer()
 
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize)
+void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, bool timerTriggered)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
@@ -2010,8 +2010,12 @@ void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize)
             }
         }
 
-        // the isolate is not out of memory; restart heap watch timer
-        SetUpHeapWatchTimer();
+        // the isolate is not out of memory; is heap size monitoring in progress?
+        if (!timerTriggered || (m_HeapWatchLevel > 0))
+        {
+            // yes; restart heap watch timer
+            SetUpHeapWatchTimer();
+        }
     }
 }
 

@@ -2631,7 +2631,7 @@ namespace Microsoft.ClearScript.Test
 
             Assert.AreEqual("JScriptTypeInfo", TestUtil.GetCOMObjectTypeName(underlyingObject));
 
-            ((IDisposable)bar).Dispose();
+            bar.Dispose();
             Assert.AreEqual(0, Marshal.ReleaseComObject(underlyingObject));
         }
 
@@ -2909,6 +2909,20 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(false, engine.Evaluate("list.Remove(func)"));
 
             Assert.AreEqual(0, list.Count);
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_JavaScriptObjectKindAndFlags()
+        {
+            (JavaScriptObjectKind, JavaScriptObjectFlags) Inspect(string expression)
+            {
+                var obj = (IJavaScriptObject)engine.Evaluate($"({expression}).valueOf()");
+                return (obj.Kind, obj.Flags);
+            }
+
+            Assert.AreEqual((JavaScriptObjectKind.Unknown, JavaScriptObjectFlags.None), Inspect("{}"));
+            Assert.AreEqual((JavaScriptObjectKind.Unknown, JavaScriptObjectFlags.None), Inspect("function () {}"));
+            Assert.AreEqual((JavaScriptObjectKind.Unknown, JavaScriptObjectFlags.None), Inspect("[]"));
         }
 
         // ReSharper restore InconsistentNaming

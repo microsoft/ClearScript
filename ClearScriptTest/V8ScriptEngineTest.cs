@@ -4485,6 +4485,62 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(0, list.Count);
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_JavaScriptObjectKindAndFlags()
+        {
+            (JavaScriptObjectKind, JavaScriptObjectFlags) Inspect(string expression)
+            {
+                var obj = (IJavaScriptObject)engine.Evaluate($"({expression})");
+                return (obj.Kind, obj.Flags);
+            }
+
+            Assert.AreEqual((JavaScriptObjectKind.Unknown, JavaScriptObjectFlags.None), Inspect("{}"));
+            Assert.AreEqual((JavaScriptObjectKind.Promise, JavaScriptObjectFlags.None), Inspect("(async function () {})()"));
+            Assert.AreEqual((JavaScriptObjectKind.Array, JavaScriptObjectFlags.None), Inspect("[]"));
+
+            Assert.AreEqual((JavaScriptObjectKind.Function, JavaScriptObjectFlags.None), Inspect("function () {}"));
+            Assert.AreEqual((JavaScriptObjectKind.Function, JavaScriptObjectFlags.Async), Inspect("async function () {}"));
+            Assert.AreEqual((JavaScriptObjectKind.Function, JavaScriptObjectFlags.Generator), Inspect("function* () {}"));
+            Assert.AreEqual((JavaScriptObjectKind.Function, JavaScriptObjectFlags.Async | JavaScriptObjectFlags.Generator), Inspect("async function* () {}"));
+
+            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.None), Inspect("(function* () {})()"));
+            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.Async), Inspect("(async function* () {})()"));
+
+            engine.Script.list = new List<int>();
+            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.None), Inspect("(list[Symbol.iterator])()"));
+            Assert.AreEqual((JavaScriptObjectKind.Iterator, JavaScriptObjectFlags.Async), Inspect("(list[Symbol.asyncIterator])()"));
+
+            Assert.AreEqual((JavaScriptObjectKind.ArrayBuffer, JavaScriptObjectFlags.None), Inspect("new ArrayBuffer(256)"));
+            Assert.AreEqual((JavaScriptObjectKind.ArrayBuffer, JavaScriptObjectFlags.Shared), Inspect("new SharedArrayBuffer(256)"));
+
+            Assert.AreEqual((JavaScriptObjectKind.DataView, JavaScriptObjectFlags.None), Inspect("new DataView(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.DataView, JavaScriptObjectFlags.Shared), Inspect("new DataView(new SharedArrayBuffer(256))"));
+
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Uint8Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Uint8ClampedArray(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Int8Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Uint16Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Int16Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Uint32Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Int32Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new BigUint64Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new BigInt64Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Float32Array(new ArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.None), Inspect("new Float64Array(new ArrayBuffer(256))"));
+
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Uint8Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Uint8ClampedArray(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Int8Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Uint16Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Int16Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Uint32Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Int32Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new BigUint64Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new BigInt64Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Float32Array(new SharedArrayBuffer(256))"));
+            Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Float64Array(new SharedArrayBuffer(256))"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

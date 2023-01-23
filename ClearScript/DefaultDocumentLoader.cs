@@ -292,7 +292,13 @@ namespace Microsoft.ClearScript
             var callback = settings.LoadCallback;
             callback?.Invoke(ref documentInfo);
 
-            return CacheDocument(new StringDocument(documentInfo, contents), false);
+            var document = CacheDocument(new StringDocument(documentInfo, contents), false);
+            if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.AllowCategoryMismatch) && (documentInfo.Category != (category ?? DocumentCategory.Script)))
+            {
+                throw new FileLoadException("Document category mismatch", uri.IsFile ? uri.LocalPath : uri.AbsoluteUri);
+            }
+
+            return document;
         }
 
         #region DocumentLoader overrides

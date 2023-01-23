@@ -2856,7 +2856,7 @@ namespace Microsoft.ClearScript.Test
 
             Assert.AreEqual("Foo", TestUtil.GetCOMObjectTypeName(underlyingObject));
 
-            ((IDisposable)bar).Dispose();
+            bar.Dispose();
             Assert.AreEqual(0, Marshal.ReleaseComObject(underlyingObject));
         }
 

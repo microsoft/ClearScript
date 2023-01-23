@@ -295,7 +295,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [Out] out ulong uniqueId,
             [Out] [MarshalAs(UnmanagedType.I1)] out bool isModule,
             [In] StdString.Ptr pCode,
-            [Out] out IntPtr pDocumentInfo
+            [Out] out IntPtr pDocumentInfo,
+            [In] V8Value.Ptr pExports
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -798,14 +799,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8ProxyHelpers.ReleaseHostObject(pTimer);
         }
 
-        private static void LoadModule(IntPtr pSourceDocumentInfo, StdString.Ptr pSpecifier, StdString.Ptr pResourceName, StdString.Ptr pSourceMapUrl, out ulong uniqueId, out bool isModule, StdString.Ptr pCode, out IntPtr pDocumentInfo)
+        private static void LoadModule(IntPtr pSourceDocumentInfo, StdString.Ptr pSpecifier, StdString.Ptr pResourceName, StdString.Ptr pSourceMapUrl, out ulong uniqueId, out bool isModule, StdString.Ptr pCode, out IntPtr pDocumentInfo, V8Value.Ptr pExports)
         {
             string code;
             UniqueDocumentInfo documentInfo;
+            object exports;
 
             try
             {
-                code = V8ProxyHelpers.LoadModule(pSourceDocumentInfo, StdString.GetValue(pSpecifier), ModuleCategory.Standard, out documentInfo);
+                code = V8ProxyHelpers.LoadModule(pSourceDocumentInfo, StdString.GetValue(pSpecifier), out documentInfo, out exports);
             }
             catch (Exception exception)
             {
@@ -822,6 +824,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             isModule = documentInfo.Category == ModuleCategory.Standard;
             StdString.SetValue(pCode, code);
             pDocumentInfo = V8ProxyHelpers.AddRefHostObject(documentInfo);
+            V8Value.Set(pExports, exports);
         }
 
         private static void CreateModuleContext(IntPtr pDocumentInfo, StdStringArray.Ptr pNames, StdV8ValueArray.Ptr pValues)

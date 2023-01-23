@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using Microsoft.ClearScript.JavaScript;
 
 namespace Microsoft.ClearScript.V8.SplitProxy
 {
@@ -24,6 +25,74 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public V8Value.Flags Flags { get; }
 
         #region IV8Object implementation
+
+        public JavaScriptObjectKind ObjectKind
+        {
+            get
+            {
+                switch (Subtype)
+                {
+                    case V8Value.Subtype.Function:
+                        return JavaScriptObjectKind.Function;
+
+                    case V8Value.Subtype.Iterator:
+                        return JavaScriptObjectKind.Iterator;
+
+                    case V8Value.Subtype.Promise:
+                        return JavaScriptObjectKind.Promise;
+
+                    case V8Value.Subtype.Array:
+                        return JavaScriptObjectKind.Array;
+
+                    case V8Value.Subtype.ArrayBuffer:
+                        return JavaScriptObjectKind.ArrayBuffer;
+
+                    case V8Value.Subtype.DataView:
+                        return JavaScriptObjectKind.DataView;
+
+                    case V8Value.Subtype.Uint8Array:
+                    case V8Value.Subtype.Uint8ClampedArray:
+                    case V8Value.Subtype.Int8Array:
+                    case V8Value.Subtype.Uint16Array:
+                    case V8Value.Subtype.Int16Array:
+                    case V8Value.Subtype.Uint32Array:
+                    case V8Value.Subtype.Int32Array:
+                    case V8Value.Subtype.BigUint64Array:
+                    case V8Value.Subtype.BigInt64Array:
+                    case V8Value.Subtype.Float32Array:
+                    case V8Value.Subtype.Float64Array:
+                        return JavaScriptObjectKind.TypedArray;
+
+                    default:
+                        return JavaScriptObjectKind.Unknown;
+                }
+            }
+        }
+
+        public JavaScriptObjectFlags ObjectFlags
+        {
+            get
+            {
+                var flags = JavaScriptObjectFlags.None;
+
+                if (Flags.HasFlag(V8Value.Flags.Shared))
+                {
+                    flags |= JavaScriptObjectFlags.Shared;
+                }
+
+                if (Flags.HasFlag(V8Value.Flags.Async))
+                {
+                    flags |= JavaScriptObjectFlags.Async;
+                }
+
+                if (Flags.HasFlag(V8Value.Flags.Generator))
+                {
+                    flags |= JavaScriptObjectFlags.Generator;
+                }
+
+                return flags;
+            }
+        }
 
         public int IdentityHash { get; }
 
@@ -110,43 +179,60 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        public V8ArrayBufferOrViewKind GetArrayBufferOrViewKind()
+        public V8ArrayBufferOrViewKind ArrayBufferOrViewKind
         {
-            var kind = V8ArrayBufferOrViewKind.None;
+            get
+            {
+                switch (Subtype)
+                {
+                    case V8Value.Subtype.ArrayBuffer:
+                        return V8ArrayBufferOrViewKind.ArrayBuffer;
 
-            if (Subtype == V8Value.Subtype.ArrayBuffer)
-                kind = V8ArrayBufferOrViewKind.ArrayBuffer;
-            else if (Subtype == V8Value.Subtype.DataView)
-                kind = V8ArrayBufferOrViewKind.DataView;
-            else if (Subtype == V8Value.Subtype.Uint8Array)
-                kind = V8ArrayBufferOrViewKind.Uint8Array;
-            else if (Subtype == V8Value.Subtype.Uint8ClampedArray)
-                kind = V8ArrayBufferOrViewKind.Uint8ClampedArray;
-            else if (Subtype == V8Value.Subtype.Int8Array)
-                kind = V8ArrayBufferOrViewKind.Int8Array;
-            else if (Subtype == V8Value.Subtype.Uint16Array)
-                kind = V8ArrayBufferOrViewKind.Uint16Array;
-            else if (Subtype == V8Value.Subtype.Int16Array)
-                kind = V8ArrayBufferOrViewKind.Int16Array;
-            else if (Subtype == V8Value.Subtype.Uint32Array)
-                kind = V8ArrayBufferOrViewKind.Uint32Array;
-            else if (Subtype == V8Value.Subtype.Int32Array)
-                kind = V8ArrayBufferOrViewKind.Int32Array;
-            else if (Subtype == V8Value.Subtype.BigUint64Array)
-                kind = V8ArrayBufferOrViewKind.BigUint64Array;
-            else if (Subtype == V8Value.Subtype.BigInt64Array)
-                kind = V8ArrayBufferOrViewKind.BigInt64Array;
-            else if (Subtype == V8Value.Subtype.Float32Array)
-                kind = V8ArrayBufferOrViewKind.Float32Array;
-            else if (Subtype == V8Value.Subtype.Float64Array)
-                kind = V8ArrayBufferOrViewKind.Float64Array;
+                    case V8Value.Subtype.DataView:
+                        return V8ArrayBufferOrViewKind.DataView;
 
-            return kind;
+                    case V8Value.Subtype.Uint8Array:
+                        return V8ArrayBufferOrViewKind.Uint8Array;
+
+                    case V8Value.Subtype.Uint8ClampedArray:
+                        return V8ArrayBufferOrViewKind.Uint8ClampedArray;
+
+                    case V8Value.Subtype.Int8Array:
+                        return V8ArrayBufferOrViewKind.Int8Array;
+
+                    case V8Value.Subtype.Uint16Array:
+                        return V8ArrayBufferOrViewKind.Uint16Array;
+
+                    case V8Value.Subtype.Int16Array:
+                        return V8ArrayBufferOrViewKind.Int16Array;
+
+                    case V8Value.Subtype.Uint32Array:
+                        return V8ArrayBufferOrViewKind.Uint32Array;
+
+                    case V8Value.Subtype.Int32Array:
+                        return V8ArrayBufferOrViewKind.Int32Array;
+
+                    case V8Value.Subtype.BigUint64Array:
+                        return V8ArrayBufferOrViewKind.BigUint64Array;
+
+                    case V8Value.Subtype.BigInt64Array:
+                        return V8ArrayBufferOrViewKind.BigInt64Array;
+
+                    case V8Value.Subtype.Float32Array:
+                        return V8ArrayBufferOrViewKind.Float32Array;
+
+                    case V8Value.Subtype.Float64Array:
+                        return V8ArrayBufferOrViewKind.Float64Array;
+
+                    default:
+                        return V8ArrayBufferOrViewKind.None;
+                }
+            }
         }
 
         public V8ArrayBufferOrViewInfo GetArrayBufferOrViewInfo()
         {
-            var kind = GetArrayBufferOrViewKind();
+            var kind = ArrayBufferOrViewKind;
             if (kind != V8ArrayBufferOrViewKind.None)
             {
                 IV8Object arrayBuffer = null;

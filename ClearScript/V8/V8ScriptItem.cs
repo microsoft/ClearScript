@@ -11,7 +11,7 @@ using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.V8
 {
-    internal class V8ScriptItem : ScriptItem, IDisposable
+    internal class V8ScriptItem : ScriptItem, IJavaScriptObject
     {
         private readonly V8ScriptEngine engine;
         private readonly IV8Object target;
@@ -45,33 +45,45 @@ namespace Microsoft.ClearScript.V8
                     return new V8ScriptItem(engine, target);
                 }
 
-                switch (target.GetArrayBufferOrViewKind())
+                switch (target.ArrayBufferOrViewKind)
                 {
                     case V8ArrayBufferOrViewKind.ArrayBuffer:
                         return new V8ArrayBuffer(engine, target);
+
                     case V8ArrayBufferOrViewKind.DataView:
                         return new V8DataView(engine, target);
+
                     case V8ArrayBufferOrViewKind.Uint8Array:
                     case V8ArrayBufferOrViewKind.Uint8ClampedArray:
                         return new V8TypedArray<byte>(engine, target);
+
                     case V8ArrayBufferOrViewKind.Int8Array:
                         return new V8TypedArray<sbyte>(engine, target);
+
                     case V8ArrayBufferOrViewKind.Uint16Array:
                         return new V8UInt16Array(engine, target);
+
                     case V8ArrayBufferOrViewKind.Int16Array:
                         return new V8TypedArray<short>(engine, target);
+
                     case V8ArrayBufferOrViewKind.Uint32Array:
                         return new V8TypedArray<uint>(engine, target);
+
                     case V8ArrayBufferOrViewKind.Int32Array:
                         return new V8TypedArray<int>(engine, target);
+
                     case V8ArrayBufferOrViewKind.BigUint64Array:
                         return new V8TypedArray<ulong>(engine, target);
+
                     case V8ArrayBufferOrViewKind.BigInt64Array:
                         return new V8TypedArray<long>(engine, target);
+
                     case V8ArrayBufferOrViewKind.Float32Array:
                         return new V8TypedArray<float>(engine, target);
+
                     case V8ArrayBufferOrViewKind.Float64Array:
                         return new V8TypedArray<double>(engine, target);
+
                     default:
                         return new V8ScriptItem(engine, target);
                 }
@@ -301,9 +313,17 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region IJavaScriptObject implementation
+
+        public JavaScriptObjectKind Kind => target.ObjectKind;
+
+        public JavaScriptObjectFlags Flags => target.ObjectFlags;
+
+        #endregion
+
         #region IDisposable implementation
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (disposedFlag.Set())
             {

@@ -129,7 +129,9 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
             }
         }),
 
-        toJson: bind((key, value) => toJson ? JSON.parse(toJson(key, value)) : value)
+        toJson: bind((key, value) => toJson ? JSON.parse(toJson(key, value)) : value),
+
+        asyncGenerator: (async function* () {})().constructor
 
     });
 })(this) });

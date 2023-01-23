@@ -70,7 +70,7 @@ struct IHostObjectUtil
     virtual bool ChangeNativeCallbackTimer(void* pvTimer, int32_t dueTime, int32_t period) = 0;
     virtual void DestroyNativeCallbackTimer(void* pvTimer) = 0;
 
-    virtual StdString LoadModule(const V8DocumentInfo& sourceDocumentInfo, const StdString& specifier, V8DocumentInfo& documentInfo) = 0;
+    virtual StdString LoadModule(const V8DocumentInfo& sourceDocumentInfo, const StdString& specifier, V8DocumentInfo& documentInfo, V8Value& exports) = 0;
     virtual std::vector<std::pair<StdString, V8Value>> CreateModuleContext(const V8DocumentInfo& documentInfo) = 0;
 
     virtual size_t GetMaxScriptCacheSize() = 0;

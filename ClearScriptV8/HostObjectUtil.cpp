@@ -175,7 +175,7 @@ public:
         V8_SPLIT_PROXY_MANAGED_INVOKE_VOID_NOTHROW(DestroyNativeCallbackTimer, pvTimer);
     }
 
-    virtual StdString LoadModule(const V8DocumentInfo& sourceDocumentInfo, const StdString& specifier, V8DocumentInfo& documentInfo) override
+    virtual StdString LoadModule(const V8DocumentInfo& sourceDocumentInfo, const StdString& specifier, V8DocumentInfo& documentInfo, V8Value& exports) override
     {
         StdString resourceName;
         StdString sourceMapUrl;
@@ -183,7 +183,7 @@ public:
         StdBool isModule;
         StdString code;
         void* pvDocumentInfo;
-        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(LoadModule, sourceDocumentInfo.GetDocumentInfo(), specifier, resourceName, sourceMapUrl, uniqueId, isModule, code, pvDocumentInfo);
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(LoadModule, sourceDocumentInfo.GetDocumentInfo(), specifier, resourceName, sourceMapUrl, uniqueId, isModule, code, pvDocumentInfo, exports);
 
         documentInfo = V8DocumentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo);
         return code;

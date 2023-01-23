@@ -168,7 +168,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
         #region internal members
 
-        private CommonJSManager CommonJSManager => commonJSManager ?? (commonJSManager = new CommonJSManager(this));
+        internal CommonJSManager CommonJSManager => commonJSManager ?? (commonJSManager = new CommonJSManager(this));
 
         #endregion
 
@@ -237,6 +237,8 @@ namespace Microsoft.ClearScript.Windows.Core
         #region IJavaScriptEngine implementation
 
         uint IJavaScriptEngine.BaseLanguageVersion => 3;
+
+        CommonJSManager IJavaScriptEngine.CommonJSManager => CommonJSManager;
 
         object IJavaScriptEngine.CreatePromiseForTask<T>(Task<T> task)
         {

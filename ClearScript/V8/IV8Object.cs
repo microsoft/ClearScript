@@ -2,11 +2,15 @@
 // Licensed under the MIT license.
 
 using System;
+using Microsoft.ClearScript.JavaScript;
 
 namespace Microsoft.ClearScript.V8
 {
     internal interface IV8Object : IDisposable
     {
+        JavaScriptObjectKind ObjectKind { get; }
+        JavaScriptObjectFlags ObjectFlags { get; }
+
         int IdentityHash { get; }
 
         object GetProperty(string name);
@@ -27,7 +31,7 @@ namespace Microsoft.ClearScript.V8
         bool IsShared { get; }
 
         bool IsArrayBufferOrView { get; }
-        V8ArrayBufferOrViewKind GetArrayBufferOrViewKind();
+        V8ArrayBufferOrViewKind ArrayBufferOrViewKind { get; }
         V8ArrayBufferOrViewInfo GetArrayBufferOrViewInfo();
         void InvokeWithArrayBufferOrViewData(Action<IntPtr> action);
     }

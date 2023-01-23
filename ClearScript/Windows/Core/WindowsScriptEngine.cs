@@ -512,14 +512,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
         #region ScriptEngine overrides (public members)
 
-        /// <summary>
-        /// Allows the host to access script resources dynamically.
-        /// </summary>
-        /// <remarks>
-        /// The value of this property is an object that is bound to the script engine's root
-        /// namespace. It dynamically supports properties and methods that correspond to global
-        /// script objects and functions.
-        /// </remarks>
+        /// <inheritdoc/>
         public override dynamic Script
         {
             get
@@ -529,15 +522,7 @@ namespace Microsoft.ClearScript.Windows.Core
             }
         }
 
-        /// <summary>
-        /// Allows the host to access script resources.
-        /// </summary>
-        /// <remarks>
-        /// The value of this property is an object that is bound to the script engine's root
-        /// namespace. It allows you to access global script resources via the
-        /// <c><see cref="ScriptObject"/></c> class interface. Doing so is likely to perform better than
-        /// dynamic access via <c><see cref="Script"/></c>.
-        /// </remarks>
+        /// <inheritdoc/>
         public override ScriptObject Global
         {
             get
@@ -567,12 +552,7 @@ namespace Microsoft.ClearScript.Windows.Core
             return (processDebugManager != null) ? ScriptInvoke(GetStackTraceInternal) : string.Empty;
         }
 
-        /// <summary>
-        /// Interrupts script execution and causes the script engine to throw an exception.
-        /// </summary>
-        /// <remarks>
-        /// This method can be called safely from any thread.
-        /// </remarks>
+        /// <inheritdoc/>
         public override void Interrupt()
         {
             VerifyNotDisposed();
@@ -581,10 +561,7 @@ namespace Microsoft.ClearScript.Windows.Core
             activeScript.InterruptScriptThread(ScriptThreadID.Base, ref excepInfo, ScriptInterruptFlags.None);
         }
 
-        /// <summary>
-        /// Performs garbage collection.
-        /// </summary>
-        /// <param name="exhaustive"><c>True</c> to perform exhaustive garbage collection, <c>false</c> to favor speed over completeness.</param>
+        /// <inheritdoc/>
         public override void CollectGarbage(bool exhaustive)
         {
             VerifyNotDisposed();

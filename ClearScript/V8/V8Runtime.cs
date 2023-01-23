@@ -923,15 +923,7 @@ namespace Microsoft.ClearScript.V8
 
         #region IDisposable implementation
 
-        /// <summary>
-        /// Releases all resources used by the V8 runtime.
-        /// </summary>
-        /// <remarks>
-        /// Call <c>Dispose()</c> when you are finished using the V8 runtime. <c>Dispose()</c>
-        /// leaves the V8 runtime in an unusable state. After calling <c>Dispose()</c>, you must
-        /// release all references to the V8 runtime so the garbage collector can reclaim the
-        /// memory that the V8 runtime was occupying.
-        /// </remarks>
+        /// <inheritdoc/>
         public void Dispose()
         {
             if (disposedFlag.Set())

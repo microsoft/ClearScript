@@ -11,6 +11,7 @@ namespace Microsoft.ClearScript.Util
 {
     /// <exclude/>
     [BypassCustomAttributeLoader]
+    [DefaultScriptUsage(ScriptAccess.Full)]
     public interface IScriptableAsyncEnumerator<out T>
     {
         /// <exclude/>

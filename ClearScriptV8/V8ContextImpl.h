@@ -119,6 +119,18 @@ private:
         Persistent<v8::Module> hModule;
     };
 
+    struct SyntheticModuleExport final
+    {
+        Persistent<v8::String> hName;
+        Persistent<v8::Value> hValue;
+    };
+
+    struct SyntheticModuleEntry final
+    {
+        Persistent<v8::Module> hModule;
+        std::vector<SyntheticModuleExport> Exports;
+    };
+
     const Persistent<v8::Private>& GetHostObjectHolderKey() const
     {
         return m_spIsolateImpl->GetHostObjectHolderKey();
@@ -157,6 +169,11 @@ private:
     v8::Local<v8::Symbol> GetAsyncIteratorSymbol()
     {
         return m_spIsolateImpl->GetAsyncIteratorSymbol();
+    }
+
+    v8::Local<v8::Symbol> GetToStringTagSymbol()
+    {
+        return m_spIsolateImpl->GetToStringTagSymbol();
     }
 
     v8::Local<v8::Object> CreateObject()
@@ -277,6 +294,16 @@ private:
         }
 
         return result;
+    }
+
+    v8::Local<v8::Module> CreateSyntheticModule(v8::Local<v8::String> moduleName, const std::vector<v8::Local<v8::String>>& exportNames, v8::Module::SyntheticModuleEvaluationSteps evaluationSteps)
+    {
+        return m_spIsolateImpl->CreateSyntheticModule(moduleName, exportNames, evaluationSteps);
+    }
+
+    v8::Maybe<bool> SetSyntheticModuleExport(v8::Local<v8::Module> hModule, v8::Local<v8::String> hName, v8::Local<v8::Value> hValue)
+    {
+        return m_spIsolateImpl->SetSyntheticModuleExport(hModule, hName, hValue);
     }
 
     v8::ScriptOrigin CreateScriptOrigin(v8::Local<v8::Value> hResourceName, int lineOffset = 0, int columnOffset = 0, bool isSharedCrossOrigin = false, int scriptId = -1, v8::Local<v8::Value> hSourceMapUrl = v8::Local<v8::Value>(), bool isOpaque = false, bool isWasm = false, bool isModule = false, v8::Local<v8::PrimitiveArray> hHostDefinedOptions = v8::Local<v8::PrimitiveArray>())
@@ -429,6 +456,8 @@ private:
 
     v8::MaybeLocal<v8::Promise> ImportModule(const V8DocumentInfo* pSourceDocumentInfo, v8::Local<v8::String> hSpecifier);
     v8::MaybeLocal<v8::Module> ResolveModule(v8::Local<v8::String> hSpecifier, const V8DocumentInfo* pSourceDocumentInfo);
+    static v8::MaybeLocal<v8::Value> PopulateSyntheticModule(v8::Local<v8::Context> hContext, v8::Local<v8::Module> hModule);
+    v8::MaybeLocal<v8::Value> PopulateSyntheticModule(v8::Local<v8::Module> hModule);
 
     static void DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, HostObjectHolder* pHolder, void* pvV8ObjectCache);
 
@@ -468,6 +497,7 @@ private:
     Persistent<v8::String> m_hMethodOrPropertyNotFound;
     Persistent<v8::String> m_hPropertyValueNotInvocable;
     Persistent<v8::String> m_hInvalidModuleRequest;
+    Persistent<v8::String> m_hConstructorKey;
     Persistent<v8::FunctionTemplate> m_hHostObjectTemplate;
     Persistent<v8::FunctionTemplate> m_hHostInvocableTemplate;
     Persistent<v8::FunctionTemplate> m_hHostDelegateTemplate;
@@ -475,9 +505,11 @@ private:
     Persistent<v8::Function> m_hToAsyncIteratorFunction;
     Persistent<v8::Function> m_hToJsonFunction;
     Persistent<v8::Function> m_hFlushFunction;
+    Persistent<v8::Value> m_hAsyncGeneratorConstructor;
     Persistent<v8::Value> m_hTerminationException;
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     std::list<ModuleCacheEntry> m_ModuleCache;
+    std::list<SyntheticModuleEntry> m_SyntheticModuleData;
     void* m_pvV8ObjectCache;
     bool m_AllowHostObjectConstructorCall;
     Statistics m_Statistics;

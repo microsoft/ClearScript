@@ -32,7 +32,7 @@ namespace Microsoft.ClearScript.V8
 
         internal UIntPtr CodeDigest { get; }
 
-        #region IDisposable implementation (abstract)
+        #region IDisposable implementation
 
         /// <summary>
         /// Releases all resources used by the compiled script.

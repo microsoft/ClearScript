@@ -943,7 +943,7 @@ namespace Microsoft.ClearScript.V8
             return false;
         }
 
-        private CommonJSManager CommonJSManager => commonJSManager ?? (commonJSManager = new CommonJSManager(this));
+        internal CommonJSManager CommonJSManager => commonJSManager ?? (commonJSManager = new CommonJSManager(this));
 
         private object GetRootItem()
         {
@@ -1184,14 +1184,7 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public override string FileNameExtension => "js";
 
-        /// <summary>
-        /// Allows the host to access script resources dynamically.
-        /// </summary>
-        /// <remarks>
-        /// The value of this property is an object that is bound to the script engine's root
-        /// namespace. It dynamically supports properties and methods that correspond to global
-        /// script objects and functions.
-        /// </remarks>
+        /// <inheritdoc/>
         public override dynamic Script
         {
             get
@@ -1201,15 +1194,7 @@ namespace Microsoft.ClearScript.V8
             }
         }
 
-        /// <summary>
-        /// Allows the host to access script resources.
-        /// </summary>
-        /// <remarks>
-        /// The value of this property is an object that is bound to the script engine's root
-        /// namespace. It allows you to access global script resources via the
-        /// <c><see cref="ScriptObject"/></c> class interface. Doing so is likely to perform better than
-        /// dynamic access via <c><see cref="Script"/></c>.
-        /// </remarks>
+        /// <inheritdoc/>
         public override ScriptObject Global
         {
             get
@@ -1248,14 +1233,7 @@ namespace Microsoft.ClearScript.V8
             });
         }
 
-        /// <summary>
-        /// Gets a string representation of the script call stack.
-        /// </summary>
-        /// <returns>The script call stack formatted as a string.</returns>
-        /// <remarks>
-        /// This method returns an empty string if the script engine is not executing script code.
-        /// The stack trace text format is defined by the script engine.
-        /// </remarks>
+        /// <inheritdoc/>
         public override string GetStackTrace()
         {
             var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
@@ -1277,10 +1255,7 @@ namespace Microsoft.ClearScript.V8
             proxy.Interrupt();
         }
 
-        /// <summary>
-        /// Performs garbage collection.
-        /// </summary>
-        /// <param name="exhaustive"><c>True</c> to perform exhaustive garbage collection, <c>false</c> to favor speed over completeness.</param>
+        /// <inheritdoc/>
         public override void CollectGarbage(bool exhaustive)
         {
             VerifyNotDisposed();
@@ -1619,6 +1594,8 @@ namespace Microsoft.ClearScript.V8
         #region IJavaScriptEngine implementation
 
         uint IJavaScriptEngine.BaseLanguageVersion => 8;
+
+        CommonJSManager IJavaScriptEngine.CommonJSManager => CommonJSManager;
 
         object IJavaScriptEngine.CreatePromiseForTask<T>(Task<T> task)
         {

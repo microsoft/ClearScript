@@ -10,7 +10,7 @@ namespace Microsoft.ClearScript.JavaScript
     /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer">ArrayBuffer</see></c>
     /// views.
     /// </summary>
-    public interface IArrayBufferView
+    public interface IArrayBufferView : IJavaScriptObject
     {
         /// <summary>
         /// Gets view's underlying <c>ArrayBuffer</c>.

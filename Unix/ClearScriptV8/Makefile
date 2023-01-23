@@ -3,7 +3,7 @@ ifdef DEBUG
     CXXCONFIGFLAGS = -O0 -g
 else
     CONFIG = Release
-    CXXCONFIGFLAGS = -O3
+    CXXCONFIGFLAGS = -O3 -DNDEBUG
 endif
 
 KERNEL = $(shell uname -s)

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -713,6 +714,49 @@ namespace Microsoft.ClearScript.Test
                 import * as Geometry from 'JavaScript/StandardModuleWithCycles/Geometry/GeometryWithDynamicImport.js';
                 new Geometry.Square(25).Area;
             "));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_Standard_ImportCommonJS()
+        {
+            void DocumentLoadCallback(ref DocumentInfo info)
+            {
+                var uri = info.Uri;
+                if (uri.IsFile)
+                {
+                    var path = Path.GetDirectoryName(uri.AbsolutePath);
+                    if (path.Split(Path.DirectorySeparatorChar).Contains("CommonJS"))
+                    {
+                        info.Category = ModuleCategory.CommonJS;
+                    }
+                }
+            }
+
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch;
+            engine.DocumentSettings.LoadCallback = DocumentLoadCallback;
+
+            Assert.AreEqual(12, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                import { Rectangle } from 'JavaScript/CommonJS/Geometry/Geometry';
+                globalThis.Rectangle1 = Rectangle;
+                new Rectangle(3, 4).Area;
+            "));
+
+            Assert.AreEqual(30, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                import { Rectangle } from 'JavaScript/CommonJS/Geometry/Geometry';
+                globalThis.Rectangle2 = Rectangle;
+                new Rectangle(5, 6).Area;
+            "));
+
+            Assert.AreEqual(56, engine.Evaluate(@"
+                (async function() {
+                    let Rectangle = (await import('JavaScript/CommonJS/Geometry/Geometry')).Rectangle;
+                    Rectangle3 = Rectangle;
+                    return new Rectangle(7, 8).Area;
+                })()
+            ").ToTask().Result);
+
+            Assert.AreEqual(engine.Script.Rectangle1, engine.Script.Rectangle2);
+            Assert.AreEqual(engine.Script.Rectangle2, engine.Script.Rectangle3);
         }
 
         [TestMethod, TestCategory("V8Module")]

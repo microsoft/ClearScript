@@ -354,14 +354,14 @@ namespace Microsoft.ClearScript
 
         #endregion
 
-        #region IDynamic implementation (abstract)
+        #region IDynamic implementation
 
         public abstract string[] GetPropertyNames();
         public abstract int[] GetPropertyIndices();
 
         #endregion
 
-        #region IScriptMarshalWrapper implementation (abstract)
+        #region IScriptMarshalWrapper implementation
 
         public abstract object Unwrap();
 

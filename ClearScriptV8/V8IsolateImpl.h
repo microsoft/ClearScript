@@ -192,6 +192,11 @@ public:
         return v8::Symbol::GetAsyncIterator(m_upIsolate.get());
     }
 
+    v8::Local<v8::Symbol> GetToStringTagSymbol()
+    {
+        return v8::Symbol::GetToStringTag(m_upIsolate.get());
+    }
+
     v8::Local<v8::Object> CreateObject()
     {
         return v8::Object::New(m_upIsolate.get());
@@ -310,6 +315,16 @@ public:
         }
 
         return result;
+    }
+
+    v8::Local<v8::Module> CreateSyntheticModule(v8::Local<v8::String> moduleName, const std::vector<v8::Local<v8::String>>& exportNames, v8::Module::SyntheticModuleEvaluationSteps evaluationSteps)
+    {
+        return v8::Module::CreateSyntheticModule(m_upIsolate.get(), moduleName, exportNames, evaluationSteps);
+    }
+
+    v8::Maybe<bool> SetSyntheticModuleExport(v8::Local<v8::Module> hModule, v8::Local<v8::String> hName, v8::Local<v8::Value> hValue)
+    {
+        return hModule->SetSyntheticModuleExport(m_upIsolate.get(), hName, hValue);
     }
 
     v8::ScriptOrigin CreateScriptOrigin(v8::Local<v8::Value> hResourceName, int lineOffset = 0, int columnOffset = 0, bool isSharedCrossOrigin = false, int scriptId = -1, v8::Local<v8::Value> hSourceMapUrl = v8::Local<v8::Value>(), bool isOpaque = false, bool isWasm = false, bool isModule = false, v8::Local<v8::PrimitiveArray> hHostDefinedOptions = v8::Local<v8::PrimitiveArray>())
@@ -603,7 +618,7 @@ private:
     void ExitExecutionScope(ExecutionScope* pPreviousExecutionScope);
 
     void SetUpHeapWatchTimer();
-    void CheckHeapSize(const std::optional<size_t>& optMaxHeapSize);
+    void CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, bool timerTriggered);
 
     static void OnBeforeCallEntered(v8::Isolate* pIsolate);
     void OnBeforeCallEntered();

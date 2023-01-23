@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 namespace Microsoft.ClearScript.JavaScript
 {
     // ReSharper disable once PartialTypeWithSinglePart
-    internal partial interface IJavaScriptEngine
+    internal partial interface IJavaScriptEngine : IScriptEngine
     {
         uint BaseLanguageVersion { get; }
+
+        CommonJSManager CommonJSManager { get; }
 
         object CreatePromiseForTask<T>(Task<T> task);
         object CreatePromiseForTask(Task task);

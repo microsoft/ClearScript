@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8
@@ -215,28 +216,42 @@ namespace Microsoft.ClearScript.V8
 
         #region module support
 
-        public static string LoadModule(IntPtr pSourceDocumentInfo, string specifier, DocumentCategory category, out UniqueDocumentInfo documentInfo)
+        public static string LoadModule(IntPtr pSourceDocumentInfo, string specifier, out UniqueDocumentInfo documentInfo, out object exports)
         {
             var engine = ScriptEngine.Current;
-            if (engine == null)
+            if (!(engine is IJavaScriptEngine javaScriptEngine))
             {
-                throw new InvalidOperationException("Module loading requires a script engine");
+                throw new InvalidOperationException("Module loading requires a JavaScript engine");
             }
 
-            var settings = engine.DocumentSettings;
-            var document = settings.LoadDocument(((UniqueDocumentInfo)GetHostObject(pSourceDocumentInfo)).Info, specifier, category, null);
+            var document = engine.DocumentSettings.LoadDocument(((UniqueDocumentInfo)GetHostObject(pSourceDocumentInfo)).Info, specifier, ModuleCategory.Standard, null);
             var code = document.GetTextContents();
 
             documentInfo = document.Info.MakeUnique(engine);
+
+            var category = document.Info.Category;
+            if (category == ModuleCategory.CommonJS)
+            {
+                javaScriptEngine.CommonJSManager.GetOrCreateModule(documentInfo, code).Process(out exports);
+            }
+            else if (category == ModuleCategory.Standard)
+            {
+                exports = null;
+            }
+            else
+            {
+                throw new InvalidOperationException("Unsupported document category");
+            }
+
             return code;
         }
 
         public static IDictionary<string, object> CreateModuleContext(IntPtr pDocumentInfo)
         {
             var engine = ScriptEngine.Current;
-            if (engine == null)
+            if (!(engine is IJavaScriptEngine))
             {
-                throw new InvalidOperationException("Module context construction requires a script engine");
+                throw new InvalidOperationException("Module context construction requires a JavaScript engine");
             }
 
             var documentInfo = (UniqueDocumentInfo)GetHostObject(pDocumentInfo);

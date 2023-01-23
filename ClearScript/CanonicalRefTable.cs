@@ -70,7 +70,7 @@ namespace Microsoft.ClearScript
             protected const int CompactionThreshold = 256 * 1024;
             protected static readonly TimeSpan CompactionInterval = TimeSpan.FromMinutes(2);
 
-            #region ICanonicalRefMap implementation (abstract)
+            #region ICanonicalRefMap implementation
 
             public abstract object GetRef(object obj);
 

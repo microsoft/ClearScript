@@ -11,6 +11,7 @@ namespace Microsoft.ClearScript.Util
 {
     /// <exclude/>
     [BypassCustomAttributeLoader]
+    [DefaultScriptUsage(ScriptAccess.Full)]
     public interface IScriptableAsyncEnumerator<out T> : IAsyncEnumerator<T>
     {
         /// <exclude/>
@@ -87,7 +88,7 @@ namespace Microsoft.ClearScript.Util
 
         #endregion
 
-        #region IAsyncEnumerable<T> implementation (abstract)
+        #region IAsyncEnumerable<T> implementation
 
         public abstract T Current { get; }
 
@@ -95,7 +96,7 @@ namespace Microsoft.ClearScript.Util
 
         #endregion
 
-        #region IAsyncDisposable implementation (abstract)
+        #region IAsyncDisposable implementation
 
         public abstract ValueTask DisposeAsync();
 

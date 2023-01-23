@@ -116,6 +116,8 @@ public:
     {
         // IMPORTANT: maintain bitwise equivalence with managed enum V8.SplitProxy.V8Value.Subtype
         None,
+        Function,
+        Iterator,
         Promise,
         Array,
         ArrayBuffer,
@@ -137,7 +139,9 @@ public:
     {
         // IMPORTANT: maintain bitwise equivalence with managed enum V8.SplitProxy.V8Value.Flags
         None = 0,
-        Shared = 1
+        Shared = 0x0001,
+        Async = 0x0002,
+        Generator = 0x0004
     };
 
     explicit V8Value(NonexistentInitializer):

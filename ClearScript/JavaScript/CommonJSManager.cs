@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.ClearScript.Util;
 
@@ -158,7 +159,9 @@ namespace Microsoft.ClearScript.JavaScript
                 return codePrefix + code + codeSuffix;
             }
 
-            public object Process()
+            public object Process() => Process(out _);
+
+            public object Process(out object marshaledExports)
             {
                 if (module == null)
                 {
@@ -175,15 +178,20 @@ namespace Microsoft.ClearScript.JavaScript
                     function = (ScriptObject)engine.MarshalToHost(engine.ScriptInvoke(() => Evaluator()), false);
                 }
 
-                if (!invoked)
+                object result;
+                if (invoked)
+                {
+                    result = Undefined.Value;
+                }
+                else
                 {
                     invoked = true;
-                    var result = function.Invoke(false, module, exports, require);
+                    result = function.Invoke(false, module, exports, require);
                     exports = (module is CommonJSLegacyModule legacyModule) ? legacyModule.exports : ((ScriptObject)module).GetProperty("exports");
-                    return result;
                 }
 
-                return Undefined.Value;
+                marshaledExports = engine.MarshalToScript(exports);
+                return result;
             }
 
             private void Initialize(object scriptExports, object scriptRequire)
@@ -194,8 +202,12 @@ namespace Microsoft.ClearScript.JavaScript
 
             private object Require(string specifier)
             {
-                var settings = engine.DocumentSettings;
-                var document = settings.LoadDocument(DocumentInfo.Info, specifier, ModuleCategory.CommonJS, null);
+                var document = engine.DocumentSettings.LoadDocument(DocumentInfo.Info, specifier, ModuleCategory.CommonJS, null);
+                if (document.Info.Category != ModuleCategory.CommonJS)
+                {
+                    var uri = document.Info.Uri;
+                    throw new FileLoadException("Document category mismatch", uri.IsFile ? uri.LocalPath : uri.AbsoluteUri);
+                }
 
                 var code = document.GetTextContents();
                 if (engine.FormatCode)

@@ -8,12 +8,13 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Windows.Core
 {
-    internal sealed class WindowsScriptItem : ScriptItem, IWindowsScriptObject, IDisposable, IWindowsScriptItemTag
+    internal class WindowsScriptItem : ScriptItem, IWindowsScriptObject, IWindowsScriptItemTag
     {
         private readonly WindowsScriptEngine engine;
         private readonly IDispatchEx target;
@@ -37,7 +38,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
             if ((obj is IDispatchEx target) && (obj.GetType().IsCOMObject))
             {
-                return new WindowsScriptItem(engine, target);
+                return (engine is IJavaScriptEngine) ? new WindowsJavaScriptObject(engine, target) : new WindowsScriptItem(engine, target);
             }
 
             return obj;
@@ -313,12 +314,28 @@ namespace Microsoft.ClearScript.Windows.Core
 
         #region IDisposable implementation
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (disposedFlag.Set())
             {
                 Marshal.ReleaseComObject(target);
             }
+        }
+
+        #endregion
+
+        #region Nested type: WindowsJavaScriptObject
+
+        private sealed class WindowsJavaScriptObject : WindowsScriptItem, IJavaScriptObject
+        {
+            public WindowsJavaScriptObject(WindowsScriptEngine engine, IDispatchEx target)
+                : base(engine, target)
+            {
+            }
+
+            public JavaScriptObjectKind Kind => JavaScriptObjectKind.Unknown;
+
+            public JavaScriptObjectFlags Flags => JavaScriptObjectFlags.None;
         }
 
         #endregion
