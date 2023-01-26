@@ -1,6 +1,6 @@
 [![Banner](https://github.com/microsoft/ClearScript/blob/master/docs/ClearScript7-ReadMe.png)](https://microsoft.github.io/ClearScript/)
 
-[![Follow](https://img.shields.io/twitter/follow/ClearScriptLib?style=social&label=Follow)](https://twitter.com/ClearScriptLib)
+[![Twitter Follow](https://img.shields.io/badge/Follow-%40ClearScriptLib-white?logo=twitter&style=social)](https://twitter.com/ClearScriptLib)
 
 # Description
 ClearScript is a library that makes it easy to add scripting to your .NET applications. It currently supports JavaScript (via [V8](https://developers.google.com/v8/) and [JScript](https://docs.microsoft.com/en-us/previous-versions//hbxc2t98(v=vs.85))) and [VBScript](https://docs.microsoft.com/en-us/previous-versions//t0aew7h6(v=vs.85)).
