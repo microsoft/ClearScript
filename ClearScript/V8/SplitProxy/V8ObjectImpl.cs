@@ -101,6 +101,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(Handle, name));
         }
 
+        public bool TryGetProperty(string name, out object value)
+        {
+            object tempValue = null;
+            var result = V8SplitProxyNative.Invoke(instance => instance.V8Object_TryGetNamedProperty(Handle, name, out tempValue));
+            value = tempValue;
+            return result;
+        }
+
         public void SetProperty(string name, object value)
         {
             V8SplitProxyNative.Invoke(instance => instance.V8Object_SetNamedProperty(Handle, name, value));
@@ -111,9 +119,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return V8SplitProxyNative.Invoke(instance => instance.V8Object_DeleteNamedProperty(Handle, name));
         }
 
-        public string[] GetPropertyNames()
+        public string[] GetPropertyNames(bool includeIndices)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetPropertyNames(Handle));
+            return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetPropertyNames(Handle, includeIndices));
         }
 
         public object GetProperty(int index)

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFrameworks>net45;net471</TargetFrameworks>
@@ -11,6 +11,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.Core.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -19,6 +20,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.Core.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -33,6 +35,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="..\..\ClearScript\AsyncDocumentLoadCallback.cs" Link="AsyncDocumentLoadCallback.cs" />
         <Compile Include="..\..\ClearScript\BindSignature.cs" Link="BindSignature.cs" />
         <Compile Include="..\..\ClearScript\ByRefArg.cs" Link="ByRefArg.cs" />
         <Compile Include="..\..\ClearScript\CanonicalRefTable.cs" Link="CanonicalRefTable.cs" />
@@ -59,6 +62,7 @@
         <Compile Include="..\..\ClearScript\DocumentSettings.cs" Link="DocumentSettings.cs" />
         <Compile Include="..\..\ClearScript\DynamicHostMetaObject.cs" Link="DynamicHostMetaObject.cs" />
         <Compile Include="..\..\ClearScript\DynamicHostObject.cs" Link="DynamicHostObject.cs" />
+        <Compile Include="..\..\ClearScript\ExtendedHostFunctions.cs" Link="ExtendedHostFunctions.cs" />
         <Compile Include="..\..\ClearScript\ExtensionMethods.cs" Link="ExtensionMethods.cs" />
         <Compile Include="..\..\ClearScript\Extensions.cs" Link="Extensions.cs" />
         <Compile Include="..\..\ClearScript\HostEvent.cs" Link="HostEvent.cs" />
@@ -118,6 +122,7 @@
         <Compile Include="..\..\ClearScript\StringDocument.cs" Link="StringDocument.cs" />
         <Compile Include="..\..\ClearScript\Undefined.cs" Link="Undefined.cs" />
         <Compile Include="..\..\ClearScript\UniqueDocumentInfo.cs" Link="UniqueDocumentInfo.cs" />
+        <Compile Include="..\..\ClearScript\ValueRef.cs" Link="ValueRef.cs" />
         <Compile Include="..\..\ClearScript\Util\ArrayHelpers.cs" Link="Util\ArrayHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.cs" Link="Util\AssemblyHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.NetFramework.cs" Link="Util\AssemblyHelpers.NetFramework.cs" />
@@ -196,6 +201,7 @@
         </None>
     </ItemGroup>
 
+    <!-- ReSharper disable once UnknownProperty -->
     <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
         <PackageReference Include="System.ValueTuple" Version="4.5.0" />

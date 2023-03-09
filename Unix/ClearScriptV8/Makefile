@@ -116,7 +116,6 @@ JSONINCDIR = $(JSONDIR)/single_include
 OUTDIR = $(ROOTDIR)/bin/$(CONFIG)/Unix
 OBJDIR = $(OUTDIR)/obj/$(CPU)
 CLEARSCRIPTV8 = $(OUTDIR)/ClearScriptV8.$(OS)-$(CPU).$(EXTENSION)
-ICUDTL = $(V8ROOTDIR)/icudtl.dat
 
 CXX = clang++
 CXXFLAGS = --target=$(TARGET) -std=c++17 -fvisibility=default -fPIC -fno-rtti -Wno-ignored-attributes $(CXXCONFIGFLAGS) -I$(V8INCDIR) -I$(JSONINCDIR) $(CXXCROSSFLAGS)
@@ -139,21 +138,18 @@ OBJECTS = \
     $(OBJDIR)/V8SplitProxyManaged.o \
     $(OBJDIR)/V8SplitProxyNative.o
 
-.PHONY: all objdir clean buildv8 cleanv8 zapv8 buildallrelease buildalldebug buildall cleanall
+.PHONY: all objdir clean buildv8 cleanv8 zapv8 buildallrelease buildalldebug buildall cleanallrelease cleanalldebug cleanall
 
-all: objdir $(CLEARSCRIPTV8) $(ICUDTL)
+all: objdir buildv8 $(CLEARSCRIPTV8)
 
 objdir:
 	@mkdir -p $(OBJDIR)
 
-$(CLEARSCRIPTV8): $(V8LIBDIR)/libv8_monolith.a $(OBJECTS) $(ENTITLEMENTS)
+$(CLEARSCRIPTV8): $(OBJECTS) $(V8LIBDIR)/libv8_monolith.a $(ENTITLEMENTS)
 	$(CXX) $(CXXFLAGS) $(CXXLINKFLAGS) --shared -L$(V8LIBDIR) $(OBJECTS) -o $@ -pthread -lv8_monolith && $(STRIP) $@ && $(CODESIGN) $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(V8LIBDIR)/libv8_monolith.a $(ICUDTL):
-	cd $(UNIXDIR); ./V8Update.sh -n -y $(CPU) $(CONFIG)
 
 clean:
 	rm -rf $(CLEARSCRIPTV8) $(OBJDIR)
@@ -179,10 +175,14 @@ buildalldebug:
 
 buildall: buildallrelease buildalldebug
 
-cleanall:
+cleanallrelease:
 	make clean CPU=$(HOSTCPU)
 	make clean CPU=$(OTHERCPU)
 	$(MAKELINUX) clean CPU=arm
+
+cleanalldebug:
 	make clean CPU=$(HOSTCPU) DEBUG=1
 	make clean CPU=$(OTHERCPU) DEBUG=1
 	$(MAKELINUX) clean CPU=arm DEBUG=1
+
+cleanall: cleanallrelease cleanalldebug

@@ -65,6 +65,13 @@ V8Value V8ObjectHolderImpl::GetProperty(const StdString& name) const
 
 //-----------------------------------------------------------------------------
 
+bool V8ObjectHolderImpl::TryGetProperty(const StdString& name, V8Value& value) const
+{
+    return m_spBinding->GetContextImpl()->TryGetV8ObjectProperty(m_pvObject, name, value);
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ObjectHolderImpl::SetProperty(const StdString& name, const V8Value& value) const
 {
     m_spBinding->GetContextImpl()->SetV8ObjectProperty(m_pvObject, name, value);
@@ -79,9 +86,9 @@ bool V8ObjectHolderImpl::DeleteProperty(const StdString& name) const
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHolderImpl::GetPropertyNames(std::vector<StdString>& names) const
+void V8ObjectHolderImpl::GetPropertyNames(bool includeIndices, std::vector<StdString>& names) const
 {
-    m_spBinding->GetContextImpl()->GetV8ObjectPropertyNames(m_pvObject, names);
+    m_spBinding->GetContextImpl()->GetV8ObjectPropertyNames(m_pvObject, includeIndices, names);
 }
 
 //-----------------------------------------------------------------------------

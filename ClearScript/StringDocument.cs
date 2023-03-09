@@ -19,9 +19,14 @@ namespace Microsoft.ClearScript
         /// <param name="info">A structure containing meta-information for the document.</param>
         /// <param name="contents">A string containing the document's contents.</param>
         public StringDocument(DocumentInfo info, string contents)
+            : this(info, Encoding.UTF8.GetBytes(contents))
+        {
+        }
+
+        internal StringDocument(DocumentInfo info, byte[] contents)
         {
             Info = info;
-            this.contents = Encoding.UTF8.GetBytes(contents);
+            this.contents = contents;
         }
 
         #region Document overrides

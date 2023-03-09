@@ -63,6 +63,11 @@ namespace Microsoft.ClearScript
         public DocumentLoadCallback LoadCallback { get; set; }
 
         /// <summary>
+        /// Gets or set an optional method to be called asynchronously when a document is loaded.
+        /// </summary>
+        public AsyncDocumentLoadCallback AsyncLoadCallback { get; set; }
+
+        /// <summary>
         /// Gets or sets an optional document context callback.
         /// </summary>
         /// <remarks>
@@ -168,6 +173,17 @@ namespace Microsoft.ClearScript
             if (systemDocumentMap.TryGetValue(Tuple.Create(identifier, category ?? DocumentCategory.Script), out var document))
             {
                 return document;
+            }
+
+            if (AccessFlags.HasFlag(DocumentAccessFlags.AllowCategoryMismatch))
+            {
+                foreach (var pair in systemDocumentMap)
+                {
+                    if (pair.Key.Item1 == identifier)
+                    {
+                        return pair.Value;
+                    }
+                }
             }
 
             return null;

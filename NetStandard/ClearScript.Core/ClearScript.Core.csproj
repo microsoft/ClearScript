@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.1</TargetFrameworks>
@@ -12,6 +12,7 @@
         <NoWarn>CA1416;CS0618</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.Core.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -21,6 +22,7 @@
         <NoWarn>CA1416;CS0618</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.Core.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -35,6 +37,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="..\..\ClearScript\AsyncDocumentLoadCallback.cs" Link="AsyncDocumentLoadCallback.cs" />
         <Compile Include="..\..\ClearScript\BindSignature.cs" Link="BindSignature.cs" />
         <Compile Include="..\..\ClearScript\ByRefArg.cs" Link="ByRefArg.cs" />
         <Compile Include="..\..\ClearScript\CanonicalRefTable.cs" Link="CanonicalRefTable.cs" />
@@ -57,6 +60,7 @@
         <Compile Include="..\..\ClearScript\DocumentSettings.cs" Link="DocumentSettings.cs" />
         <Compile Include="..\..\ClearScript\DynamicHostMetaObject.cs" Link="DynamicHostMetaObject.cs" />
         <Compile Include="..\..\ClearScript\DynamicHostObject.cs" Link="DynamicHostObject.cs" />
+        <Compile Include="..\..\ClearScript\ExtendedHostFunctions.cs" Link="ExtendedHostFunctions.cs" />
         <Compile Include="..\..\ClearScript\ExtensionMethods.cs" Link="ExtensionMethods.cs" />
         <Compile Include="..\..\ClearScript\Extensions.cs" Link="Extensions.cs" />
         <Compile Include="..\..\ClearScript\HostEvent.cs" Link="HostEvent.cs" />
@@ -114,6 +118,7 @@
         <Compile Include="..\..\ClearScript\StringDocument.cs" Link="StringDocument.cs" />
         <Compile Include="..\..\ClearScript\Undefined.cs" Link="Undefined.cs" />
         <Compile Include="..\..\ClearScript\UniqueDocumentInfo.cs" Link="UniqueDocumentInfo.cs" />
+        <Compile Include="..\..\ClearScript\ValueRef.cs" Link="ValueRef.cs" />
         <Compile Include="..\..\ClearScript\Util\ArrayHelpers.cs" Link="Util\ArrayHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.cs" Link="Util\AssemblyHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.NetStandard.cs" Link="Util\AssemblyHelpers.NetStandard.cs" />

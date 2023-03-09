@@ -1,5 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
+    <!-- ReSharper disable once UnknownProperty -->
     <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
         <OutputType>Exe</OutputType>
         <TargetFrameworks>netcoreapp3.1;net5.0-windows;net6.0-windows;net7.0-windows</TargetFrameworks>
@@ -8,6 +9,7 @@
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
     </PropertyGroup>
 
+    <!-- ReSharper disable once UnknownProperty -->
     <PropertyGroup Condition="'$(VisualStudioVersion)'&lt;'17.0'">
         <OutputType>Exe</OutputType>
         <TargetFrameworks>netcoreapp3.1;net5.0-windows</TargetFrameworks>

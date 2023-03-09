@@ -74,9 +74,10 @@ public:
     virtual void Destroy() override;
 
     V8Value GetV8ObjectProperty(void* pvObject, const StdString& name);
+    bool TryGetV8ObjectProperty(void* pvObject, const StdString& name, V8Value& value);
     void SetV8ObjectProperty(void* pvObject, const StdString& name, const V8Value& value);
     bool DeleteV8ObjectProperty(void* pvObject, const StdString& name);
-    void GetV8ObjectPropertyNames(void* pvObject, std::vector<StdString>& names);
+    void GetV8ObjectPropertyNames(void* pvObject, bool includeIndices, std::vector<StdString>& names);
 
     V8Value GetV8ObjectProperty(void* pvObject, int index);
     void SetV8ObjectProperty(void* pvObject, int index, const V8Value& value);
@@ -417,7 +418,7 @@ private:
     static bool CheckContextImplForGlobalObjectCallback(V8ContextImpl* pContextImpl);
     static bool CheckContextImplForHostObjectCallback(V8ContextImpl* pContextImpl);
 
-    void GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std::vector<StdString>& names, v8::PropertyFilter filter);
+    void GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std::vector<StdString>& names, v8::PropertyFilter filter, v8::IndexFilter indexFilter);
     void GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, std::vector<int>& indices, v8::PropertyFilter filter);
 
     static void GetGlobalProperty(v8::Local<v8::Name> hKey, const v8::PropertyCallbackInfo<v8::Value>& info);

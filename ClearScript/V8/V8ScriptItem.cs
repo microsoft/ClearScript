@@ -3,15 +3,17 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
+using System.Linq;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.V8
 {
-    internal class V8ScriptItem : ScriptItem, IJavaScriptObject
+    internal abstract class V8ScriptItem : ScriptItem, IJavaScriptObject
     {
         private readonly V8ScriptEngine engine;
         private readonly IV8Object target;
@@ -42,7 +44,7 @@ namespace Microsoft.ClearScript.V8
 
                 if (!target.IsArrayBufferOrView)
                 {
-                    return new V8ScriptItem(engine, target);
+                    return new V8ScriptObject(engine, target);
                 }
 
                 switch (target.ArrayBufferOrViewKind)
@@ -85,7 +87,7 @@ namespace Microsoft.ClearScript.V8
                         return new V8TypedArray<double>(engine, target);
 
                     default:
-                        return new V8ScriptItem(engine, target);
+                        return new V8ScriptObject(engine, target);
                 }
             }
 
@@ -208,7 +210,7 @@ namespace Microsoft.ClearScript.V8
         public override string[] GetPropertyNames()
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetPropertyNames());
+            return engine.ScriptInvoke(() => target.GetPropertyNames(false /*includeIndices*/));
         }
 
         public override int[] GetPropertyIndices()
@@ -333,23 +335,206 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region Nested type: V8ScriptObject
+
+        private sealed class V8ScriptObject : V8ScriptItem, IDictionary<string, object>
+        {
+            public V8ScriptObject(V8ScriptEngine engine, IV8Object target)
+                : base(engine, target)
+            {
+            }
+
+            private bool TryGetProperty(string name, out object value)
+            {
+                VerifyNotDisposed();
+
+                object tempResult = null;
+                if (engine.ScriptInvoke(() => target.TryGetProperty(name, out tempResult)))
+                {
+                    var result = engine.MarshalToHost(tempResult, false);
+                    if ((result is V8ScriptItem resultScriptItem) && (resultScriptItem.engine == engine))
+                    {
+                        resultScriptItem.holder = this;
+                    }
+
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+
+            #region IDictionary<string, object> implementation
+
+            private IDictionary<string, object> ThisDictionary => this;
+
+            private IEnumerable<string> PropertyKeys => GetPropertyKeys();
+
+            private IEnumerable<KeyValuePair<string, object>> KeyValuePairs => PropertyKeys.Select(name => new KeyValuePair<string, object>(name, GetProperty(name)));
+
+            private string[] GetPropertyKeys()
+            {
+                VerifyNotDisposed();
+                return engine.ScriptInvoke(() => target.GetPropertyNames(true /*includeIndices*/));
+            }
+
+            IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator()
+            {
+                return KeyValuePairs.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return ThisDictionary.GetEnumerator();
+            }
+
+            void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
+            {
+                SetProperty(item.Key, item.Value);
+            }
+
+            void ICollection<KeyValuePair<string, object>>.Clear()
+            {
+                PropertyKeys.ForEach(name => DeleteProperty(name));
+            }
+
+            bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
+            {
+                return TryGetProperty(item.Key, out var value) && Equals(value, item.Value);
+            }
+
+            void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
+            {
+                var source = KeyValuePairs.ToArray();
+                Array.Copy(source, 0, array, arrayIndex, source.Length);
+            }
+
+            bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
+            {
+                return ThisDictionary.Contains(item) && DeleteProperty(item.Key);
+            }
+
+            int ICollection<KeyValuePair<string, object>>.Count => PropertyKeys.Count();
+
+            bool ICollection<KeyValuePair<string, object>>.IsReadOnly => false;
+
+            void IDictionary<string, object>.Add(string key, object value)
+            {
+                SetProperty(key, value);
+            }
+
+            bool IDictionary<string, object>.ContainsKey(string key)
+            {
+                return PropertyKeys.Contains(key);
+            }
+
+            bool IDictionary<string, object>.Remove(string key)
+            {
+                return DeleteProperty(key);
+            }
+
+            bool IDictionary<string, object>.TryGetValue(string key, out object value)
+            {
+                return TryGetProperty(key, out value);
+            }
+
+            object IDictionary<string, object>.this[string key]
+            {
+                get => TryGetProperty(key, out var value) ? value : throw new KeyNotFoundException();
+                set => SetProperty(key, value);
+            }
+
+            ICollection<string> IDictionary<string, object>.Keys => PropertyKeys.ToList();
+
+            ICollection<object> IDictionary<string, object>.Values => PropertyKeys.Select(name => GetProperty(name)).ToList();
+
+            #endregion
+        }
+
+        #endregion
+
         #region Nested type: V8Array
 
-        private sealed class V8Array : V8ScriptItem, IList
+        private sealed class V8Array : V8ScriptItem, IList<object>, IList
         {
             public V8Array(V8ScriptEngine engine, IV8Object target)
                 : base(engine, target)
             {
             }
 
-            #region IList implementation
+            #region IList<T> implementation
 
-            public IEnumerator GetEnumerator()
+            private IList<object> ThisGenericList => this;
+
+            IEnumerator<object> IEnumerable<object>.GetEnumerator()
             {
                 return new Enumerator(this);
             }
 
-            public void CopyTo(Array array, int index)
+            bool ICollection<object>.Remove(object item)
+            {
+                var index = ThisList.IndexOf(item);
+                if (index >= 0)
+                {
+                    ThisList.RemoveAt(index);
+                    return true;
+                }
+
+                return false;
+            }
+
+            int ICollection<object>.Count => ThisList.Count;
+
+            bool ICollection<object>.IsReadOnly => ThisList.IsReadOnly;
+
+            void ICollection<object>.Clear()
+            {
+                ThisList.Clear();
+            }
+
+            bool ICollection<object>.Contains(object item)
+            {
+                return ThisList.Contains(item);
+            }
+
+            void ICollection<object>.CopyTo(object[] array, int arrayIndex)
+            {
+                ThisList.CopyTo(array, arrayIndex);
+            }
+
+            void ICollection<object>.Add(object item)
+            {
+                ThisList.Add(item);
+            }
+
+            void IList<object>.Insert(int index, object item)
+            {
+                ThisList.Insert(index, item);
+            }
+
+            void IList<object>.RemoveAt(int index)
+            {
+                ThisList.RemoveAt(index);
+            }
+
+            int IList<object>.IndexOf(object item)
+            {
+                return ThisList.IndexOf(item);
+            }
+
+            #endregion
+
+            #region IList implementation
+
+            private IList ThisList => this;
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return ThisGenericList.GetEnumerator();
+            }
+
+            void ICollection.CopyTo(Array array, int index)
             {
                 MiscHelpers.VerifyNonNullArgument(array, nameof(array));
 
@@ -363,7 +548,7 @@ namespace Microsoft.ClearScript.V8
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                var length = Count;
+                var length = ThisList.Count;
                 if ((index + length) > array.Length)
                 {
                     throw new ArgumentException("Insufficient space in target array", nameof(array));
@@ -375,58 +560,54 @@ namespace Microsoft.ClearScript.V8
                 }
             }
 
-            public int Count => Convert.ToInt32(GetProperty("length"));
+            int ICollection.Count => Convert.ToInt32(GetProperty("length"));
 
-            public object SyncRoot => this;
+            object ICollection.SyncRoot => this;
 
-            public bool IsSynchronized => false;
+            bool ICollection.IsSynchronized => false;
 
-            public int Add(object value)
+            int IList.Add(object value)
             {
                 return Convert.ToInt32(InvokeMethod("push", value)) - 1;
             }
 
-            public bool Contains(object value)
+            bool IList.Contains(object value)
             {
-                return IndexOf(value) >= 0;
+                return ThisList.IndexOf(value) >= 0;
             }
 
-            public void Clear()
+            void IList.Clear()
             {
-                InvokeMethod("splice", 0, Count);
+                InvokeMethod("splice", 0, ThisList.Count);
             }
 
-            public int IndexOf(object value)
+            int IList.IndexOf(object value)
             {
                 return Convert.ToInt32(InvokeMethod("indexOf", value));
             }
 
-            public void Insert(int index, object value)
+            void IList.Insert(int index, object value)
             {
                 InvokeMethod("splice", index, 0, value);
             }
 
-            public void Remove(object value)
+            void IList.Remove(object value)
             {
-                var index = IndexOf(value);
-                if (index >= 0)
-                {
-                    RemoveAt(index);
-                }
+                ThisGenericList.Remove(value);
             }
 
-            public void RemoveAt(int index)
+            void IList.RemoveAt(int index)
             {
                 InvokeMethod("splice", index, 1);
             }
 
-            public bool IsReadOnly => false;
+            bool IList.IsReadOnly => false;
 
-            public bool IsFixedSize => false;
+            bool IList.IsFixedSize => false;
 
             #region Nested type: Enumerator
 
-            private class Enumerator : IEnumerator
+            private class Enumerator : IEnumerator<object>
             {
                 private readonly V8Array array;
                 private readonly int count;
@@ -435,7 +616,7 @@ namespace Microsoft.ClearScript.V8
                 public Enumerator(V8Array array)
                 {
                     this.array = array;
-                    count = array.Count;
+                    count = array.ThisList.Count;
                 }
 
                 public bool MoveNext()
@@ -455,6 +636,10 @@ namespace Microsoft.ClearScript.V8
                 }
 
                 public object Current => array[index];
+
+                public void Dispose()
+                {
+                }
             }
 
             #endregion

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFrameworks>net45;net471</TargetFrameworks>
@@ -11,6 +11,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.V8.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -19,6 +20,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.V8.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -164,6 +166,7 @@
         </None>
     </ItemGroup>
 
+    <!-- ReSharper disable once UnknownProperty -->
     <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
         <PackageReference Include="System.ValueTuple" Version="4.5.0" />

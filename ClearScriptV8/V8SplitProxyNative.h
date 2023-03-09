@@ -292,9 +292,10 @@ NATIVE_ENTRY_POINT(void) V8Context_SetCpuProfileSampleInterval(const V8ContextHa
 NATIVE_ENTRY_POINT(void) V8Context_WriteIsolateHeapSnapshot(const V8ContextHandle& handle, void* pvStream) noexcept;
 
 NATIVE_ENTRY_POINT(void) V8Object_GetNamedProperty(const V8ObjectHandle& handle, const StdString& name, V8Value& value) noexcept;
+NATIVE_ENTRY_POINT(StdBool) V8Object_TryGetNamedProperty(const V8ObjectHandle& handle, const StdString& name, V8Value& value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Object_SetNamedProperty(const V8ObjectHandle& handle, const StdString& name, const V8Value& value) noexcept;
 NATIVE_ENTRY_POINT(StdBool) V8Object_DeleteNamedProperty(const V8ObjectHandle& handle, const StdString& name) noexcept;
-NATIVE_ENTRY_POINT(void) V8Object_GetPropertyNames(const V8ObjectHandle& handle, std::vector<StdString>& names) noexcept;
+NATIVE_ENTRY_POINT(void) V8Object_GetPropertyNames(const V8ObjectHandle& handle, StdBool includeIndices, std::vector<StdString>& names) noexcept;
 NATIVE_ENTRY_POINT(void) V8Object_GetIndexedProperty(const V8ObjectHandle& handle, int32_t index, V8Value& value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Object_SetIndexedProperty(const V8ObjectHandle& handle, int32_t index, const V8Value& value) noexcept;
 NATIVE_ENTRY_POINT(StdBool) V8Object_DeleteIndexedProperty(const V8ObjectHandle& handle, int32_t index) noexcept;

@@ -891,6 +891,24 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            bool IV8SplitProxyNative.V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    using (var valueScope = V8Value.CreateScope())
+                    {
+                        if (V8Object_TryGetNamedProperty(hObject, nameScope.Value, valueScope.Value))
+                        {
+                            value = V8Value.Get(valueScope.Value);
+                            return true;
+                        }
+
+                        value = null;
+                        return false;
+                    }
+                }
+            }
+
             void IV8SplitProxyNative.V8Object_SetNamedProperty(V8Object.Handle hObject, string name, object value)
             {
                 using (var nameScope = StdString.CreateScope(name))
@@ -910,11 +928,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            string[] IV8SplitProxyNative.V8Object_GetPropertyNames(V8Object.Handle hObject)
+            string[] IV8SplitProxyNative.V8Object_GetPropertyNames(V8Object.Handle hObject, bool includeIndices)
             {
                 using (var namesScope = StdStringArray.CreateScope())
                 {
-                    V8Object_GetPropertyNames(hObject, namesScope.Value);
+                    V8Object_GetPropertyNames(hObject, includeIndices, namesScope.Value);
                     return StdStringArray.ToArray(namesScope.Value);
                 }
             }
@@ -1930,6 +1948,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            [return: MarshalAs(UnmanagedType.I1)]
+            private static extern bool V8Object_TryGetNamedProperty(
+                [In] V8Object.Handle hObject,
+                [In] StdString.Ptr pName,
+                [In] V8Value.Ptr pValue
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_SetNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
@@ -1946,6 +1972,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetPropertyNames(
                 [In] V8Object.Handle hObject,
+                [In] [MarshalAs(UnmanagedType.I1)] bool includeIndices,
                 [In] StdStringArray.Ptr pNames
             );
 
@@ -2926,6 +2953,24 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            bool IV8SplitProxyNative.V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    using (var valueScope = V8Value.CreateScope())
+                    {
+                        if (V8Object_TryGetNamedProperty(hObject, nameScope.Value, valueScope.Value))
+                        {
+                            value = V8Value.Get(valueScope.Value);
+                            return true;
+                        }
+
+                        value = null;
+                        return false;
+                    }
+                }
+            }
+
             void IV8SplitProxyNative.V8Object_SetNamedProperty(V8Object.Handle hObject, string name, object value)
             {
                 using (var nameScope = StdString.CreateScope(name))
@@ -2945,11 +2990,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            string[] IV8SplitProxyNative.V8Object_GetPropertyNames(V8Object.Handle hObject)
+            string[] IV8SplitProxyNative.V8Object_GetPropertyNames(V8Object.Handle hObject, bool includeIndices)
             {
                 using (var namesScope = StdStringArray.CreateScope())
                 {
-                    V8Object_GetPropertyNames(hObject, namesScope.Value);
+                    V8Object_GetPropertyNames(hObject, includeIndices, namesScope.Value);
                     return StdStringArray.ToArray(namesScope.Value);
                 }
             }
@@ -3965,6 +4010,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            [return: MarshalAs(UnmanagedType.I1)]
+            private static extern bool V8Object_TryGetNamedProperty(
+                [In] V8Object.Handle hObject,
+                [In] StdString.Ptr pName,
+                [In] V8Value.Ptr pValue
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_SetNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
@@ -3981,6 +4034,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetPropertyNames(
                 [In] V8Object.Handle hObject,
+                [In] [MarshalAs(UnmanagedType.I1)] bool includeIndices,
                 [In] StdStringArray.Ptr pNames
             );
 
@@ -4961,6 +5015,24 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            bool IV8SplitProxyNative.V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    using (var valueScope = V8Value.CreateScope())
+                    {
+                        if (V8Object_TryGetNamedProperty(hObject, nameScope.Value, valueScope.Value))
+                        {
+                            value = V8Value.Get(valueScope.Value);
+                            return true;
+                        }
+
+                        value = null;
+                        return false;
+                    }
+                }
+            }
+
             void IV8SplitProxyNative.V8Object_SetNamedProperty(V8Object.Handle hObject, string name, object value)
             {
                 using (var nameScope = StdString.CreateScope(name))
@@ -4980,11 +5052,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            string[] IV8SplitProxyNative.V8Object_GetPropertyNames(V8Object.Handle hObject)
+            string[] IV8SplitProxyNative.V8Object_GetPropertyNames(V8Object.Handle hObject, bool includeIndices)
             {
                 using (var namesScope = StdStringArray.CreateScope())
                 {
-                    V8Object_GetPropertyNames(hObject, namesScope.Value);
+                    V8Object_GetPropertyNames(hObject, includeIndices, namesScope.Value);
                     return StdStringArray.ToArray(namesScope.Value);
                 }
             }
@@ -6000,6 +6072,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            [return: MarshalAs(UnmanagedType.I1)]
+            private static extern bool V8Object_TryGetNamedProperty(
+                [In] V8Object.Handle hObject,
+                [In] StdString.Ptr pName,
+                [In] V8Value.Ptr pValue
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_SetNamedProperty(
                 [In] V8Object.Handle hObject,
                 [In] StdString.Ptr pName,
@@ -6016,6 +6096,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Object_GetPropertyNames(
                 [In] V8Object.Handle hObject,
+                [In] [MarshalAs(UnmanagedType.I1)] bool includeIndices,
                 [In] StdStringArray.Ptr pNames
             );
 

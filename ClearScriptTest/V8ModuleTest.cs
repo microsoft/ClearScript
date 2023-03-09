@@ -719,7 +719,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8Module")]
         public void V8Module_Standard_ImportCommonJS()
         {
-            void DocumentLoadCallback(ref DocumentInfo info)
+            void OnDocumentLoad(ref DocumentInfo info)
             {
                 var uri = info.Uri;
                 if (uri.IsFile)
@@ -733,7 +733,7 @@ namespace Microsoft.ClearScript.Test
             }
 
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch;
-            engine.DocumentSettings.LoadCallback = DocumentLoadCallback;
+            engine.DocumentSettings.LoadCallback = OnDocumentLoad;
 
             Assert.AreEqual(12, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import { Rectangle } from 'JavaScript/CommonJS/Geometry/Geometry';
@@ -750,6 +750,91 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(56, engine.Evaluate(@"
                 (async function() {
                     let Rectangle = (await import('JavaScript/CommonJS/Geometry/Geometry')).Rectangle;
+                    Rectangle3 = Rectangle;
+                    return new Rectangle(7, 8).Area;
+                })()
+            ").ToTask().Result);
+
+            Assert.AreEqual(engine.Script.Rectangle1, engine.Script.Rectangle2);
+            Assert.AreEqual(engine.Script.Rectangle2, engine.Script.Rectangle3);
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_Standard_ImportCommonJS_AsyncLoadCallback()
+        {
+            async Task OnDocumentLoadAsync(ValueRef<DocumentInfo> info, Stream contents)
+            {
+                await Task.Delay(100).ConfigureAwait(false);
+
+                var uri = info.Value.Uri;
+                if (uri.IsFile)
+                {
+                    var path = Path.GetDirectoryName(uri.AbsolutePath);
+                    if (path.Split(Path.DirectorySeparatorChar).Contains("CommonJS"))
+                    {
+                        info.Value.Category = ModuleCategory.CommonJS;
+                    }
+                }
+            }
+
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch | DocumentAccessFlags.UseAsyncLoadCallback;
+            engine.DocumentSettings.AsyncLoadCallback = OnDocumentLoadAsync;
+
+            Assert.AreEqual(12, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                import { Rectangle } from 'JavaScript/CommonJS/Geometry/Geometry';
+                globalThis.Rectangle1 = Rectangle;
+                new Rectangle(3, 4).Area;
+            "));
+
+            Assert.AreEqual(30, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                import { Rectangle } from 'JavaScript/CommonJS/Geometry/Geometry';
+                globalThis.Rectangle2 = Rectangle;
+                new Rectangle(5, 6).Area;
+            "));
+
+            Assert.AreEqual(56, engine.Evaluate(@"
+                (async function() {
+                    let Rectangle = (await import('JavaScript/CommonJS/Geometry/Geometry')).Rectangle;
+                    Rectangle3 = Rectangle;
+                    return new Rectangle(7, 8).Area;
+                })()
+            ").ToTask().Result);
+
+            Assert.AreEqual(engine.Script.Rectangle1, engine.Script.Rectangle2);
+            Assert.AreEqual(engine.Script.Rectangle2, engine.Script.Rectangle3);
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_Standard_ImportCommonJS_SystemDocument()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch;
+            engine.DocumentSettings.AddSystemDocument("Geometry", ModuleCategory.CommonJS, @"
+                exports.Rectangle = class {
+                    constructor(width, height) {
+                        this.width = width;
+                        this.height = height;
+                    }
+                    get Area() {
+                        return this.width * this.height;
+                    }
+                }
+            ");
+
+            Assert.AreEqual(12, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                import { Rectangle } from 'Geometry';
+                globalThis.Rectangle1 = Rectangle;
+                new Rectangle(3, 4).Area;
+            "));
+
+            Assert.AreEqual(30, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                import { Rectangle } from 'Geometry';
+                globalThis.Rectangle2 = Rectangle;
+                new Rectangle(5, 6).Area;
+            "));
+
+            Assert.AreEqual(56, engine.Evaluate(@"
+                (async function() {
+                    let Rectangle = (await import('Geometry')).Rectangle;
                     Rectangle3 = Rectangle;
                     return new Rectangle(7, 8).Area;
                 })()

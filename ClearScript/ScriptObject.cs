@@ -3,8 +3,6 @@
 
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
-using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript
 {
@@ -35,11 +33,7 @@ namespace Microsoft.ClearScript
         public abstract IEnumerable<string> PropertyNames { get; }
 
         /// <inheritdoc/>
-        public object this[string name, params object[] args]
-        {
-            get => GetProperty(name, args);
-            set => SetProperty(name, args.Concat(value.ToEnumerable()).ToArray());
-        }
+        public abstract object this[string name, params object[] args] { get; set; }
 
         /// <inheritdoc/>
         public abstract object GetProperty(int index);
@@ -54,11 +48,7 @@ namespace Microsoft.ClearScript
         public abstract IEnumerable<int> PropertyIndices { get; }
 
         /// <inheritdoc/>
-        public object this[int index]
-        {
-            get => GetProperty(index);
-            set => SetProperty(index, value);
-        }
+        public abstract object this[int index] { get; set; }
 
         /// <inheritdoc/>
         public abstract object Invoke(bool asConstructor, params object[] args);

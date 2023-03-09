@@ -1,6 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- ReSharper disable UnknownProperty -->
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <!-- ReSharper restore UnknownProperty -->
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -59,6 +61,7 @@
     <DelaySign>true</DelaySign>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\ClearScript\AsyncDocumentLoadCallback.cs" Link="AsyncDocumentLoadCallback.cs" />
     <Compile Include="..\..\ClearScript\BindSignature.cs" Link="BindSignature.cs" />
     <Compile Include="..\..\ClearScript\ByRefArg.cs" Link="ByRefArg.cs" />
     <Compile Include="..\..\ClearScript\CanonicalRefTable.cs" Link="CanonicalRefTable.cs" />
@@ -81,6 +84,7 @@
     <Compile Include="..\..\ClearScript\DocumentSettings.cs" Link="DocumentSettings.cs" />
     <Compile Include="..\..\ClearScript\DynamicHostMetaObject.cs" Link="DynamicHostMetaObject.cs" />
     <Compile Include="..\..\ClearScript\DynamicHostObject.cs" Link="DynamicHostObject.cs" />
+    <Compile Include="..\..\ClearScript\ExtendedHostFunctions.cs" Link="ExtendedHostFunctions.cs" />
     <Compile Include="..\..\ClearScript\ExtensionMethods.cs" Link="ExtensionMethods.cs" />
     <Compile Include="..\..\ClearScript\Extensions.cs" Link="Extensions.cs" />
     <Compile Include="..\..\ClearScript\HostEvent.cs" Link="HostEvent.cs" />
@@ -136,6 +140,7 @@
     <Compile Include="..\..\ClearScript\StringDocument.cs" Link="StringDocument.cs" />
     <Compile Include="..\..\ClearScript\Undefined.cs" Link="Undefined.cs" />
     <Compile Include="..\..\ClearScript\UniqueDocumentInfo.cs" Link="UniqueDocumentInfo.cs" />
+    <Compile Include="..\..\ClearScript\ValueRef.cs" Link="ValueRef.cs" />
     <Compile Include="..\..\ClearScript\Util\ArrayHelpers.cs" Link="Util\ArrayHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.cs" Link="Util\AssemblyHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.NetFramework.cs" Link="Util\AssemblyHelpers.NetFramework.cs" />
@@ -210,11 +215,4 @@
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

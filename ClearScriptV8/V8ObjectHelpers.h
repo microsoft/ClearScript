@@ -10,9 +10,10 @@
 struct V8ObjectHelpers final: StaticBase
 {
     static V8Value GetProperty(const SharedPtr<V8ObjectHolder>& spHolder, const StdString& name);
+    static bool TryGetProperty(const SharedPtr<V8ObjectHolder>& spHolder, const StdString& name, V8Value& value);
     static void SetProperty(const SharedPtr<V8ObjectHolder>& spHolder, const StdString& name, const V8Value& value);
     static bool DeleteProperty(const SharedPtr<V8ObjectHolder>& spHolder, const StdString& name);
-    static void GetPropertyNames(const SharedPtr<V8ObjectHolder>& spHolder, std::vector<StdString>& names);
+    static void GetPropertyNames(const SharedPtr<V8ObjectHolder>& spHolder, bool includeIndices, std::vector<StdString>& names);
 
     static V8Value GetProperty(const SharedPtr<V8ObjectHolder>& spHolder, int index);
     static void SetProperty(const SharedPtr<V8ObjectHolder>& spHolder, int index, const V8Value& value);

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.1</TargetFrameworks>
@@ -12,6 +12,7 @@
         <NoWarn>CS0618;CA1416</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.Windows.Core.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -21,6 +22,7 @@
         <NoWarn>CS0618;CA1416</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.Windows.Core.xml</DocumentationFile>
     </PropertyGroup>
 

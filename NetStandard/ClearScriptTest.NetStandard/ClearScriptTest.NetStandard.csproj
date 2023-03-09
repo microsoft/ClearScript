@@ -1,5 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
+    <!-- ReSharper disable once UnknownProperty -->
     <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
         <TargetFrameworks>netcoreapp3.1;net5.0-windows;net6.0-windows;net7.0-windows</TargetFrameworks>
         <UseWPF>true</UseWPF>
@@ -9,6 +10,7 @@
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
     </PropertyGroup>
 
+    <!-- ReSharper disable once UnknownProperty -->
     <PropertyGroup Condition="'$(VisualStudioVersion)'&lt;'17.0'">
         <TargetFrameworks>netcoreapp3.1;net5.0-windows</TargetFrameworks>
         <UseWPF>true</UseWPF>
@@ -60,6 +62,7 @@
         <Compile Include="..\..\ClearScriptTest\ExplicitInterfaceMemberAccessTest.cs" Link="ExplicitInterfaceMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\ExtendedHostFunctionsTest.cs" Link="ExtendedHostFunctionsTest.cs" />
         <Compile Include="..\..\ClearScriptTest\ExtensionsTest.cs" Link="ExtensionsTest.cs" />
+        <Compile Include="..\..\ClearScriptTest\ExtensionsTest.NetStandard.cs" Link="ExtensionsTest.NetStandard.cs" />
         <Compile Include="..\..\ClearScriptTest\GeneralTestObject.cs" Link="GeneralTestObject.cs" />
         <Compile Include="..\..\ClearScriptTest\HostFunctionsTest.cs" Link="HostFunctionsTest.cs" />
         <Compile Include="..\..\ClearScriptTest\HostListTest.cs" Link="HostListTest.cs" />

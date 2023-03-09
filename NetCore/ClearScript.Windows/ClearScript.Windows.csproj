@@ -14,6 +14,7 @@
         <NoWarn>CS0618;CA1416</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.Windows.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -23,6 +24,7 @@
         <NoWarn>CS0618;CA1416</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.Windows.xml</DocumentationFile>
     </PropertyGroup>
 

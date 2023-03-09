@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -288,11 +289,26 @@ namespace Microsoft.ClearScript
             }
 
             var documentInfo = new DocumentInfo(uri) { Category = category, ContextCallback = contextCallback };
+            byte[] bytes = null;
 
-            var callback = settings.LoadCallback;
-            callback?.Invoke(ref documentInfo);
+            if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.UseAsyncLoadCallback))
+            {
+                var callback = settings.LoadCallback;
+                callback?.Invoke(ref documentInfo);
+            }
+            else
+            {
+                var callback = settings.AsyncLoadCallback;
+                if (callback != null)
+                {
+                    bytes = Encoding.UTF8.GetBytes(contents);
+                    var documentInfoRef = ValueRef.Create(documentInfo);
+                    await callback(documentInfoRef, new MemoryStream(bytes, false)).ConfigureAwait(false);
+                    documentInfo = documentInfoRef.Value;
+                }
+            }
 
-            var document = CacheDocument(new StringDocument(documentInfo, contents), false);
+            var document = CacheDocument((bytes != null) ? new StringDocument(documentInfo, bytes) : new StringDocument(documentInfo, contents), false);
             if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.AllowCategoryMismatch) && (documentInfo.Category != (category ?? DocumentCategory.Script)))
             {
                 throw new FileLoadException("Document category mismatch", uri.IsFile ? uri.LocalPath : uri.AbsoluteUri);

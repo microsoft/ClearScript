@@ -12,6 +12,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.V8.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -20,6 +21,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
+        <!-- ReSharper disable once UnknownProperty -->
         <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.V8.xml</DocumentationFile>
     </PropertyGroup>
 
@@ -47,6 +49,7 @@
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ScriptImpl.cs" Link="V8\SplitProxy\V8ScriptImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyHelpers.cs" Link="V8\SplitProxy\V8SplitProxyHelpers.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyManaged.cs" Link="V8\SplitProxy\V8SplitProxyManaged.cs" />
+        <!-- ReSharper disable once UnknownProperty -->
         <Compile Condition="'$(TargetFramework)'=='net5.0'" Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyManaged.Net5.cs" Link="V8\SplitProxy\V8SplitProxyManaged.Net5.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.cs" Link="V8\SplitProxy\V8SplitProxyNative.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Generated.cs" Link="V8\SplitProxy\V8SplitProxyNative.Generated.cs" />

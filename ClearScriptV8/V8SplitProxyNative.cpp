@@ -1601,6 +1601,26 @@ NATIVE_ENTRY_POINT(void) V8Object_GetNamedProperty(const V8ObjectHandle& handle,
 
 //-----------------------------------------------------------------------------
 
+NATIVE_ENTRY_POINT(StdBool) V8Object_TryGetNamedProperty(const V8ObjectHandle& handle, const StdString& name, V8Value& value) noexcept
+{
+    auto spV8ObjectHolder = handle.GetEntity();
+    if (!spV8ObjectHolder.IsEmpty())
+    {
+        try
+        {
+            return V8ObjectHelpers::TryGetProperty(spV8ObjectHolder, name, value);
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ScheduleScriptEngineException();
+        }
+    }
+
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
 NATIVE_ENTRY_POINT(void) V8Object_SetNamedProperty(const V8ObjectHandle& handle, const StdString& name, const V8Value& value) noexcept
 {
     auto spV8ObjectHolder = handle.GetEntity();
@@ -1639,14 +1659,14 @@ NATIVE_ENTRY_POINT(StdBool) V8Object_DeleteNamedProperty(const V8ObjectHandle& h
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8Object_GetPropertyNames(const V8ObjectHandle& handle, std::vector<StdString>& names) noexcept
+NATIVE_ENTRY_POINT(void) V8Object_GetPropertyNames(const V8ObjectHandle& handle, StdBool includeIndices, std::vector<StdString>& names) noexcept
 {
     auto spV8ObjectHolder = handle.GetEntity();
     if (!spV8ObjectHolder.IsEmpty())
     {
         try
         {
-            V8ObjectHelpers::GetPropertyNames(spV8ObjectHolder, names);
+            V8ObjectHelpers::GetPropertyNames(spV8ObjectHolder, includeIndices, names);
         }
         catch (const V8Exception& exception)
         {

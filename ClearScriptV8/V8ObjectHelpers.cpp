@@ -14,6 +14,13 @@ V8Value V8ObjectHelpers::GetProperty(const SharedPtr<V8ObjectHolder>& spHolder, 
 
 //-----------------------------------------------------------------------------
 
+bool V8ObjectHelpers::TryGetProperty(const SharedPtr<V8ObjectHolder>& spHolder, const StdString& name, V8Value& value)
+{
+    return spHolder.DerefAs<V8ObjectHolderImpl>().TryGetProperty(name, value);
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ObjectHelpers::SetProperty(const SharedPtr<V8ObjectHolder>& spHolder, const StdString& name, const V8Value& value)
 {
     spHolder.DerefAs<V8ObjectHolderImpl>().SetProperty(name, value);
@@ -28,9 +35,9 @@ bool V8ObjectHelpers::DeleteProperty(const SharedPtr<V8ObjectHolder>& spHolder, 
 
 //-----------------------------------------------------------------------------
 
-void V8ObjectHelpers::GetPropertyNames(const SharedPtr<V8ObjectHolder>& spHolder, std::vector<StdString>& names)
+void V8ObjectHelpers::GetPropertyNames(const SharedPtr<V8ObjectHolder>& spHolder, bool includeIndices, std::vector<StdString>& names)
 {
-    spHolder.DerefAs<V8ObjectHolderImpl>().GetPropertyNames(names);
+    spHolder.DerefAs<V8ObjectHolderImpl>().GetPropertyNames(includeIndices, names);
 }
 
 //-----------------------------------------------------------------------------

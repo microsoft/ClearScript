@@ -1,8 +1,8 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 78fd8cd2d3..46ac33e6e9 100644
+index 316bcb4d3c..65833d40b6 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -1062,7 +1062,7 @@ config("toolchain") {
+@@ -1119,7 +1119,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
@@ -37,10 +37,10 @@ index d3e35d6ec5..2d2fb458fe 100644
    /**
     * Initialize the ICU library bundled with V8. The embedder should only
 diff --git a/include/v8-template.h b/include/v8-template.h
-index 669012a981..b19ea9c824 100644
+index 11296cd488..0f090446dc 100644
 --- a/include/v8-template.h
 +++ b/include/v8-template.h
-@@ -937,6 +937,9 @@ class V8_EXPORT ObjectTemplate : public Template {
+@@ -939,6 +939,9 @@ class V8_EXPORT ObjectTemplate : public Template {
     */
    void SetImmutableProto();
  
@@ -50,8 +50,21 @@ index 669012a981..b19ea9c824 100644
    /**
     * Support for TC39 "dynamic code brand checks" proposal.
     *
+diff --git a/include/v8config.h b/include/v8config.h
+index b44995e7cd..cb7928b515 100644
+--- a/include/v8config.h
++++ b/include/v8config.h
+@@ -524,7 +524,7 @@ path. Add it with -I<path> to the command line
+ // Use like:
+ //   V8_NOINLINE V8_PRESERVE_MOST void UnlikelyMethod();
+ #if V8_HAS_ATTRIBUTE_PRESERVE_MOST
+-# define V8_PRESERVE_MOST __attribute__((preserve_most))
++# define V8_PRESERVE_MOST /* DISABLED */
+ #else
+ # define V8_PRESERVE_MOST /* NOT SUPPORTED */
+ #endif
 diff --git a/src/api/api-natives.cc b/src/api/api-natives.cc
-index d0b2987234..c0837ee625 100644
+index 05a883f2d5..3ea0b8ce62 100644
 --- a/src/api/api-natives.cc
 +++ b/src/api/api-natives.cc
 @@ -447,6 +447,9 @@ MaybeHandle<JSObject> InstantiateObject(Isolate* isolate,
@@ -65,10 +78,10 @@ index d0b2987234..c0837ee625 100644
      // Keep prototypes in slow-mode. Let them be lazily turned fast later on.
      // TODO(dcarney): is this necessary?
 diff --git a/src/api/api.cc b/src/api/api.cc
-index da75db119b..3ea9ddf936 100644
+index 81c7d1e3f9..da9e93fa17 100644
 --- a/src/api/api.cc
 +++ b/src/api/api.cc
-@@ -1926,6 +1926,17 @@ void ObjectTemplate::SetImmutableProto() {
+@@ -2043,6 +2043,17 @@ void ObjectTemplate::SetImmutableProto() {
    self->set_immutable_proto(true);
  }
  
@@ -86,7 +99,7 @@ index da75db119b..3ea9ddf936 100644
  bool ObjectTemplate::IsCodeLike() const {
    return Utils::OpenHandle(this)->code_like();
  }
-@@ -6312,6 +6323,10 @@ bool v8::V8::InitializeICU(const char* icu_data_file) {
+@@ -6466,6 +6477,10 @@ bool v8::V8::InitializeICU(const char* icu_data_file) {
    return i::InitializeICU(icu_data_file);
  }
  
@@ -126,21 +139,6 @@ index 88d35540b1..20863d6f5b 100644
  #ifndef V8_NO_FAST_TLS
  #if V8_CC_MSVC && V8_HOST_ARCH_IA32
  // __readfsdword is supposed to be declared in intrin.h but it is missing from
-diff --git a/src/base/vector.h b/src/base/vector.h
-index 1f5e103d4c..6d4975d1f6 100644
---- a/src/base/vector.h
-+++ b/src/base/vector.h
-@@ -142,8 +142,8 @@ class Vector {
-   static Vector<T> cast(Vector<S> input) {
-     // Casting is potentially dangerous, so be really restrictive here. This
-     // might be lifted once we have use cases for that.
--    static_assert(std::is_pod<S>::value);
--    static_assert(std::is_pod<T>::value);
-+    static_assert(std::is_standard_layout<S>::value && std::is_trivial<S>::value);
-+    static_assert(std::is_standard_layout<T>::value && std::is_trivial<T>::value);
-     DCHECK_EQ(0, (input.size() * sizeof(S)) % sizeof(T));
-     DCHECK_EQ(0, reinterpret_cast<uintptr_t>(input.begin()) % alignof(T));
-     return Vector<T>(reinterpret_cast<T*>(input.begin()),
 diff --git a/src/builtins/builtins-async-module.cc b/src/builtins/builtins-async-module.cc
 index 417e6f1dfa..108dc20972 100644
 --- a/src/builtins/builtins-async-module.cc
@@ -156,10 +154,10 @@ index 417e6f1dfa..108dc20972 100644
      // The evaluation of async module can not throwing a JavaScript observable
      // exception.
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index b90f235acc..6a7bce3719 100644
+index 7d47afa2c9..cc95781cbc 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -1890,6 +1890,10 @@ TNode<Uint32T> CodeStubAssembler::LoadMapBitField3(TNode<Map> map) {
+@@ -2006,6 +2006,10 @@ TNode<Uint32T> CodeStubAssembler::LoadMapBitField3(TNode<Map> map) {
    return LoadObjectField<Uint32T>(map, Map::kBitField3Offset);
  }
  
@@ -170,7 +168,7 @@ index b90f235acc..6a7bce3719 100644
  TNode<Uint16T> CodeStubAssembler::LoadMapInstanceType(TNode<Map> map) {
    return LoadObjectField<Uint16T>(map, Map::kInstanceTypeOffset);
  }
-@@ -13854,6 +13858,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
+@@ -14308,6 +14312,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -183,10 +181,10 @@ index b90f235acc..6a7bce3719 100644
        Word32And(LoadMapBitField(map),
                  Int32Constant(Map::Bits1::IsCallableBit::kMask |
 diff --git a/src/codegen/code-stub-assembler.h b/src/codegen/code-stub-assembler.h
-index 559deafa85..f8f740061e 100644
+index fdd6da6017..c4eb41496c 100644
 --- a/src/codegen/code-stub-assembler.h
 +++ b/src/codegen/code-stub-assembler.h
-@@ -1439,6 +1439,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
+@@ -1409,6 +1409,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
    TNode<Int32T> LoadMapBitField2(TNode<Map> map);
    // Load bit field 3 of a map.
    TNode<Uint32T> LoadMapBitField3(TNode<Map> map);
@@ -196,10 +194,10 @@ index 559deafa85..f8f740061e 100644
    TNode<Uint16T> LoadMapInstanceType(TNode<Map> map);
    // Load the ElementsKind of a map.
 diff --git a/src/common/globals.h b/src/common/globals.h
-index 9288e13c5d..53949c434a 100644
+index d379cbfc61..d11438763b 100644
 --- a/src/common/globals.h
 +++ b/src/common/globals.h
-@@ -270,7 +270,7 @@ using CodeT = Code;
+@@ -270,7 +270,7 @@ const size_t kShortBuiltinCallsOldSpaceSizeThreshold = size_t{2} * GB;
  //
  #if V8_HAS_PTHREAD_JIT_WRITE_PROTECT && \
      !(defined(V8_COMPRESS_POINTERS) && !defined(V8_EXTERNAL_CODE_SPACE))
@@ -316,22 +314,36 @@ index 2b4af70bc0..2607f22922 100644
    set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
    real_climit_ = limit;
 diff --git a/src/heap/factory.cc b/src/heap/factory.cc
-index a50ec11ccc..a94293b16b 100644
+index caab258158..398cd2bf6c 100644
 --- a/src/heap/factory.cc
 +++ b/src/heap/factory.cc
-@@ -2072,6 +2072,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
+@@ -2063,6 +2063,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
        Map::Bits3::ConstructionCounterBits::encode(Map::kNoSlackTracking) |
        Map::Bits3::IsExtensibleBit::encode(true);
    map.set_bit_field3(bit_field3);
 +  map.set_host_bit_field(0);
    map.set_instance_type(type);
    ReadOnlyRoots ro_roots(roots);
-   HeapObject raw_null_value = ro_roots.null_value();
+   map.init_prototype_and_constructor_or_back_pointer(ro_roots);
+diff --git a/src/heap/memory-chunk-layout.h b/src/heap/memory-chunk-layout.h
+index 67e3a7b9dd..ff68856972 100644
+--- a/src/heap/memory-chunk-layout.h
++++ b/src/heap/memory-chunk-layout.h
+@@ -73,6 +73,9 @@ class V8_EXPORT_PRIVATE MemoryChunkLayout {
+     FIELD(FreeListCategory**, Categories),
+     FIELD(CodeObjectRegistry*, CodeObjectRegistry),
+     FIELD(PossiblyEmptyBuckets, PossiblyEmptyBuckets),
++#if defined(V8_TARGET_OS_WIN) && defined(V8_TARGET_ARCH_IA32)
++    FIELD(int32_t, WinIa32Padding),
++#endif  // V8_TARGET_OS_WIN && V8_TARGET_ARCH_IA32
+     FIELD(ActiveSystemPages, ActiveSystemPages),
+ #ifdef V8_ENABLE_INNER_POINTER_RESOLUTION_OSB
+     FIELD(ObjectStartBitmap, ObjectStartBitmap),
 diff --git a/src/heap/setup-heap-internal.cc b/src/heap/setup-heap-internal.cc
-index 48081db0a4..bb37baba83 100644
+index 60ef0cc4b0..245ea249de 100644
 --- a/src/heap/setup-heap-internal.cc
 +++ b/src/heap/setup-heap-internal.cc
-@@ -188,6 +188,7 @@ AllocationResult Heap::AllocatePartialMap(InstanceType instance_type,
+@@ -240,6 +240,7 @@ AllocationResult Heap::AllocatePartialMap(InstanceType instance_type,
        Map::Bits3::OwnsDescriptorsBit::encode(true) |
        Map::Bits3::ConstructionCounterBits::encode(Map::kNoSlackTracking);
    map.set_bit_field3(bit_field3);
@@ -419,10 +431,10 @@ index 2bbbb7e1f4..5cbd5e8c43 100644
      IdleTaskSupport idle_task_support,
      InProcessStackDumping in_process_stack_dumping,
 diff --git a/src/objects/js-objects.cc b/src/objects/js-objects.cc
-index 15356b6c58..5f249b3313 100644
+index 682e77ec24..3b9ec4525b 100644
 --- a/src/objects/js-objects.cc
 +++ b/src/objects/js-objects.cc
-@@ -5183,6 +5183,13 @@ void JSObject::SetImmutableProto(Handle<JSObject> object) {
+@@ -5203,6 +5203,13 @@ void JSObject::SetImmutableProto(Handle<JSObject> object) {
    object->set_map(*new_map, kReleaseStore);
  }
  
@@ -450,10 +462,10 @@ index 06489c2b7b..927d68d926 100644
    // the caller to initialize object header. Fill the pre-allocated fields with
    // undefined_value and the rest with filler_map.
 diff --git a/src/objects/map-inl.h b/src/objects/map-inl.h
-index 04cdb99e10..e481f07e4f 100644
+index bc25dd1117..661972f6c0 100644
 --- a/src/objects/map-inl.h
 +++ b/src/objects/map-inl.h
-@@ -115,6 +115,9 @@ BIT_FIELD_ACCESSORS(Map, bit_field3, may_have_interesting_symbols,
+@@ -124,6 +124,9 @@ BIT_FIELD_ACCESSORS(Map, bit_field3, may_have_interesting_symbols,
  BIT_FIELD_ACCESSORS(Map, relaxed_bit_field3, construction_counter,
                      Map::Bits3::ConstructionCounterBits)
  
@@ -464,7 +476,7 @@ index 04cdb99e10..e481f07e4f 100644
    DCHECK(has_named_interceptor());
    FunctionTemplateInfo info = GetFunctionTemplateInfo(cage_base);
 diff --git a/src/objects/map.cc b/src/objects/map.cc
-index c065533248..c160854bec 100644
+index b29db773e4..92cb13f012 100644
 --- a/src/objects/map.cc
 +++ b/src/objects/map.cc
 @@ -1179,6 +1179,7 @@ Handle<Map> Map::RawCopy(Isolate* isolate, Handle<Map> src_handle,
@@ -489,7 +501,7 @@ index c065533248..c160854bec 100644
  void EnsureInitialMap(Isolate* isolate, Handle<Map> map) {
  #ifdef DEBUG
 diff --git a/src/objects/map.h b/src/objects/map.h
-index 6914a51150..b16a0a7cc9 100644
+index 4f2462c715..cd6cec6b2c 100644
 --- a/src/objects/map.h
 +++ b/src/objects/map.h
 @@ -319,6 +319,11 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
@@ -504,7 +516,7 @@ index 6914a51150..b16a0a7cc9 100644
    // Inobject slack tracking is the way to reclaim unused inobject space.
    //
    // The instance size is initially determined by adding some slack to
-@@ -657,6 +662,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -662,6 +667,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
  
    DECL_BOOLEAN_ACCESSORS(is_immutable_proto)
  
@@ -513,7 +525,7 @@ index 6914a51150..b16a0a7cc9 100644
    // This counter is used for in-object slack tracking.
    // The in-object slack tracking is considered enabled when the counter is
    // non zero. The counter only has a valid count for initial maps. For
-@@ -825,6 +832,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -830,6 +837,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
    static Handle<Map> TransitionToImmutableProto(Isolate* isolate,
                                                  Handle<Map> map);
  
@@ -549,10 +561,10 @@ index a8b367ff82..98637087ee 100644
    prototype: JSReceiver|Null;
    constructor_or_back_pointer_or_native_context: Object;
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index 05a8c6f600..ccd12f4578 100644
+index b5f0260f4b..4d41e4f62f 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
-@@ -889,6 +889,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -882,6 +882,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();

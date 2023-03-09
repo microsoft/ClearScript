@@ -2,6 +2,8 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.Util;
 
@@ -89,6 +91,73 @@ namespace Microsoft.ClearScript.JavaScript
             }
 
             return javaScriptEngine.CreatePromiseForValueTask(valueTask);
+        }
+
+        /// <summary>
+        /// Supports managed asynchronous iteration over an
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols">async-iterable</see>
+        /// script object.
+        /// </summary>
+        /// <param name="asyncIterable">An async-iterable script object (see remarks).</param>
+        /// <returns>An <c><see cref="IAsyncEnumerable{Object}">IAsyncEnumerator&lt;Object&gt;</see></c> implementation that supports managed asynchronous iteration over <paramref name="asyncIterable"/>.</returns>
+        /// <remarks>
+        /// If the argument implements <c><see cref="IAsyncEnumerable{Object}">IAsyncEnumerator&lt;Object&gt;</see></c>, this method returns it as is.
+        /// </remarks>
+        public static IAsyncEnumerable<object> ToAsyncEnumerable(this object asyncIterable)
+        {
+            MiscHelpers.VerifyNonNullArgument(asyncIterable, nameof(asyncIterable));
+            return asyncIterable as IAsyncEnumerable<object> ?? asyncIterable.ToAsyncEnumerableInternal();
+        }
+
+        private static async IAsyncEnumerable<object> ToAsyncEnumerableInternal(this object asyncIterable)
+        {
+            if (asyncIterable is IEnumerable<object> objectEnumerable)
+            {
+                foreach (var item in objectEnumerable)
+                {
+                    yield return item;
+                }
+            }
+            else if (asyncIterable is ScriptObject scriptObject)
+            {
+                if (scriptObject.Engine is IJavaScriptEngine javaScriptEngine && (javaScriptEngine.BaseLanguageVersion >= 6))
+                {
+                    var engineInternal = (ScriptObject)javaScriptEngine.Global["EngineInternal"];
+                    if (engineInternal.InvokeMethod("getAsyncIterator", scriptObject) is ScriptObject asyncIterator)
+                    {
+                        while (await asyncIterator.InvokeMethod("next").ToTask().ConfigureAwait(false) is ScriptObject result && !Equals(result["done"], true))
+                        {
+                            yield return result["value"];
+                        }
+                    }
+                    else if (engineInternal.InvokeMethod("getIterator", scriptObject) is ScriptObject iterator)
+                    {
+                        while (iterator.InvokeMethod("next") is ScriptObject result && !Equals(result["done"], true))
+                        {
+                            yield return result["value"];
+                        }
+                    }
+                    else
+                    {
+                        throw new ArgumentException("The object is not async-iterable", nameof(asyncIterable));
+                    }
+                }
+                else
+                {
+                    throw new NotSupportedException("The script engine does not support async iteration");
+                }
+            }
+            else if (asyncIterable is IEnumerable enumerable)
+            {
+                foreach (var item in enumerable)
+                {
+                    yield return item;
+                }
+            }
+            else
+            {
+                throw new ArgumentException("The object is not async-iterable", nameof(asyncIterable));
+            }
         }
     }
 }

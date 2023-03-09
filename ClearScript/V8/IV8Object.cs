@@ -14,9 +14,10 @@ namespace Microsoft.ClearScript.V8
         int IdentityHash { get; }
 
         object GetProperty(string name);
+        bool TryGetProperty(string name, out object value);
         void SetProperty(string name, object value);
         bool DeleteProperty(string name);
-        string[] GetPropertyNames();
+        string[] GetPropertyNames(bool includeIndices);
 
         object GetProperty(int index);
         void SetProperty(int index, object value);

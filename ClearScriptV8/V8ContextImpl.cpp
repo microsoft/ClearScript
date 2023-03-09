@@ -1056,6 +1056,34 @@ V8Value V8ContextImpl::GetV8ObjectProperty(void* pvObject, const StdString& name
 
 //-----------------------------------------------------------------------------
 
+bool V8ContextImpl::TryGetV8ObjectProperty(void* pvObject, const StdString& name, V8Value& value)
+{
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
+
+        auto hObject = ::HandleFromPtr<v8::Object>(pvObject);
+        auto hName = FROM_MAYBE(CreateString(name));
+
+        if (FROM_MAYBE(hObject->Has(m_hContext, hName)))
+        {
+            value = ExportValue(FROM_MAYBE(::HandleFromPtr<v8::Object>(pvObject)->Get(m_hContext, hName)));
+            return true;
+        }
+
+        return false;
+
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("The V8 runtime cannot perform the requested operation because a script exception is pending")), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
+    END_EXECUTION_SCOPE
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ContextImpl::SetV8ObjectProperty(void* pvObject, const StdString& name, const V8Value& value)
 {
     BEGIN_CONTEXT_SCOPE
@@ -1092,11 +1120,11 @@ bool V8ContextImpl::DeleteV8ObjectProperty(void* pvObject, const StdString& name
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::GetV8ObjectPropertyNames(void* pvObject, std::vector<StdString>& names)
+void V8ContextImpl::GetV8ObjectPropertyNames(void* pvObject, bool includeIndices, std::vector<StdString>& names)
 {
     BEGIN_CONTEXT_SCOPE
 
-        GetV8ObjectPropertyNames(::HandleFromPtr<v8::Object>(pvObject), names, v8::ONLY_ENUMERABLE);
+        GetV8ObjectPropertyNames(::HandleFromPtr<v8::Object>(pvObject), names, v8::ONLY_ENUMERABLE, includeIndices ? v8::IndexFilter::kIncludeIndices : v8::IndexFilter::kSkipIndices);
 
     END_CONTEXT_SCOPE
 }
@@ -1825,13 +1853,13 @@ bool V8ContextImpl::CheckContextImplForHostObjectCallback(V8ContextImpl* pContex
 
 //-----------------------------------------------------------------------------
 
-void V8ContextImpl::GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std::vector<StdString>& names, v8::PropertyFilter filter)
+void V8ContextImpl::GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std::vector<StdString>& names, v8::PropertyFilter filter, v8::IndexFilter indexFilter)
 {
     names.clear();
 
     FROM_MAYBE_TRY
 
-        auto hNames = FROM_MAYBE(hObject->GetPropertyNames(m_hContext, v8::KeyCollectionMode::kIncludePrototypes, static_cast<v8::PropertyFilter>(filter | v8::SKIP_SYMBOLS), v8::IndexFilter::kSkipIndices, v8::KeyConversionMode::kConvertToString));
+        auto hNames = FROM_MAYBE(hObject->GetPropertyNames(m_hContext, v8::KeyCollectionMode::kIncludePrototypes, static_cast<v8::PropertyFilter>(filter | v8::SKIP_SYMBOLS), indexFilter, v8::KeyConversionMode::kConvertToString));
         auto nameCount = static_cast<int>(hNames->Length());
 
         names.reserve(nameCount);
@@ -2055,7 +2083,7 @@ void V8ContextImpl::GetGlobalPropertyNames(const v8::PropertyCallbackInfo<v8::Ar
                         }
                         else
                         {
-                            pContextImpl->GetV8ObjectPropertyNames(it->second, tempNames, v8::ONLY_ENUMERABLE);
+                            pContextImpl->GetV8ObjectPropertyNames(it->second, tempNames, v8::ONLY_ENUMERABLE, v8::IndexFilter::kSkipIndices);
                         }
 
                         names.insert(names.end(), tempNames.begin(), tempNames.end());

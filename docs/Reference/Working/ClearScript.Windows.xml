@@ -1,0 +1,194 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ClearScript.Windows</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.ClearScript.Windows.WindowsScriptEngine">
+            <summary>
+            Provides the base implementation for all Windows Script engines in a desktop environment.
+            </summary>
+            <remarks>
+            Each Windows Script engine instance in a desktop environment has thread affinity and is
+            bound to a <c><see cref="T:System.Windows.Threading.Dispatcher"/></c> during instantiation.
+            Attempting to execute script code on a different thread results in an exception. Script
+            delegates and event handlers are marshaled synchronously onto the correct thread.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.WindowsScriptEngine.#ctor(System.String,System.String,System.String,Microsoft.ClearScript.Windows.WindowsScriptEngineFlags)">
+            <summary>
+            Initializes a new Windows Script engine instance with the specified list of supported file name extensions.
+            </summary>
+            <param name="progID">The programmatic identifier (ProgID) of the Windows Script engine class.</param>
+            <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+            <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
+            <param name="flags">A value that selects options for the operation.</param>
+            <remarks>
+            The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+            GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
+            </remarks>
+        </member>
+        <member name="P:Microsoft.ClearScript.Windows.WindowsScriptEngine.Dispatcher">
+            <summary>
+            Gets the <c><see cref="T:System.Windows.Threading.Dispatcher"/></c> associated with the current script engine.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ClearScript.Windows.JScriptEngine">
+            <summary>
+            Represents an instance of the JScript engine in a desktop environment.
+            </summary>
+            <remarks>
+            Each Windows Script engine instance in a desktop environment has thread affinity and is
+            bound to a <c><see cref="T:System.Windows.Threading.Dispatcher"/></c> during instantiation.
+            Attempting to execute script code on a different thread results in an exception. Script
+            delegates and event handlers are marshaled synchronously onto the correct thread.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.JScriptEngine.#ctor">
+            <summary>
+            Initializes a new JScript engine instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.JScriptEngine.#ctor(System.String)">
+            <summary>
+            Initializes a new JScript engine instance with the specified name.
+            </summary>
+            <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.JScriptEngine.#ctor(Microsoft.ClearScript.Windows.WindowsScriptEngineFlags)">
+            <summary>
+            Initializes a new JScript engine instance with the specified options.
+            </summary>
+            <param name="flags">A value that selects options for the operation.</param>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.JScriptEngine.#ctor(System.String,Microsoft.ClearScript.Windows.WindowsScriptEngineFlags)">
+            <summary>
+            Initializes a new JScript engine instance with the specified name and options.
+            </summary>
+            <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+            <param name="flags">A value that selects options for the operation.</param>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.JScriptEngine.#ctor(System.String,System.String,System.String,Microsoft.ClearScript.Windows.WindowsScriptEngineFlags)">
+            <summary>
+            Initializes a new JScript engine instance with the specified programmatic
+            identifier, name, list of supported file name extensions, and options.
+            </summary>
+            <param name="progID">The programmatic identifier (ProgID) of the JScript engine class.</param>
+            <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+            <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
+            <param name="flags">A value that selects options for the operation.</param>
+            <remarks>
+            The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+            GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
+            </remarks>
+        </member>
+        <member name="P:Microsoft.ClearScript.Windows.JScriptEngine.FileNameExtension">
+            <summary>
+            Gets the script engine's recommended file name extension for script files.
+            </summary>
+            <remarks>
+            <c><see cref="T:Microsoft.ClearScript.Windows.JScriptEngine"/></c> instances return "js" for this property.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.JScriptEngine.ExecuteCommand(System.String)">
+            <summary>
+            Executes script code as a command.
+            </summary>
+            <param name="command">The script command to execute.</param>
+            <returns>The command output.</returns>
+            <remarks>
+            <para>
+            This method is similar to <c><see cref="M:Microsoft.ClearScript.ScriptEngine.Evaluate(System.String)"/></c> but optimized for
+            command consoles. The specified command must be limited to a single expression or
+            statement. Script engines can override this method to customize command execution as
+            well as the process of converting the result to a string for console output.
+            </para>
+            <para>
+            The <c><see cref="T:Microsoft.ClearScript.Windows.JScriptEngine"/></c> version of this method attempts to use
+            <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/tostring">toString</see></c>
+            to convert the return value.
+            </para>
+            </remarks>
+        </member>
+        <member name="T:Microsoft.ClearScript.Windows.VBScriptEngine">
+            <summary>
+            Represents an instance of the VBScript engine in a desktop environment.
+            </summary>
+            <remarks>
+            Each Windows Script engine instance in a desktop environment has thread affinity and is
+            bound to a <c><see cref="T:System.Windows.Threading.Dispatcher"/></c> during instantiation.
+            Attempting to execute script code on a different thread results in an exception. Script
+            delegates and event handlers are marshaled synchronously onto the correct thread.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.VBScriptEngine.#ctor">
+            <summary>
+            Initializes a new VBScript engine instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.VBScriptEngine.#ctor(System.String)">
+            <summary>
+            Initializes a new VBScript engine instance with the specified name.
+            </summary>
+            <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.VBScriptEngine.#ctor(Microsoft.ClearScript.Windows.WindowsScriptEngineFlags)">
+            <summary>
+            Initializes a new VBScript engine instance with the specified options.
+            </summary>
+            <param name="flags">A value that selects options for the operation.</param>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.VBScriptEngine.#ctor(System.String,Microsoft.ClearScript.Windows.WindowsScriptEngineFlags)">
+            <summary>
+            Initializes a new VBScript engine instance with the specified name and options.
+            </summary>
+            <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+            <param name="flags">A value that selects options for the operation.</param>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.VBScriptEngine.#ctor(System.String,System.String,System.String,Microsoft.ClearScript.Windows.WindowsScriptEngineFlags)">
+            <summary>
+            Initializes a new VBScript engine instance with the specified programmatic
+            identifier, name, list of supported file name extensions, and options.
+            </summary>
+            <param name="progID">The programmatic identifier (ProgID) of the VBScript engine class.</param>
+            <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+            <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
+            <param name="flags">A value that selects options for the operation.</param>
+            <remarks>
+            The <paramref name="progID"/> argument can be a class identifier (CLSID) in standard
+            GUID format with braces (e.g., "{F414C260-6AC0-11CF-B6D1-00AA00BBBB58}").
+            </remarks>
+        </member>
+        <member name="P:Microsoft.ClearScript.Windows.VBScriptEngine.FileNameExtension">
+            <summary>
+            Gets the script engine's recommended file name extension for script files.
+            </summary>
+            <remarks>
+            <c><see cref="T:Microsoft.ClearScript.Windows.VBScriptEngine"/></c> instances return "vbs" for this property.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.ClearScript.Windows.VBScriptEngine.ExecuteCommand(System.String)">
+            <summary>
+            Executes script code as a command.
+            </summary>
+            <param name="command">The script command to execute.</param>
+            <returns>The command output.</returns>
+            <remarks>
+            <para>
+            This method is similar to <c><see cref="M:Microsoft.ClearScript.ScriptEngine.Evaluate(System.String)"/></c> but optimized for
+            command consoles. The specified command must be limited to a single expression or
+            statement. Script engines can override this method to customize command execution as
+            well as the process of converting the result to a string for console output.
+            </para>
+            <para>
+            The <c><see cref="T:Microsoft.ClearScript.Windows.VBScriptEngine"/></c> version of this method supports both expressions and
+            statements. If the specified command begins with "eval " (not case-sensitive), the
+            engine executes the remainder as an expression and attempts to use
+            <c><see href="https://docs.microsoft.com/en-us/previous-versions//0zk841e9(v=vs.85)">CStr</see></c>
+            to convert the result value. Otherwise, it executes the command as a statement and does
+            not return a value.
+            </para>
+            </remarks>
+        </member>
+    </members>
+</doc>

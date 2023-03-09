@@ -2622,6 +2622,78 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_ScriptObject_IDictionary()
+        {
+            var pairs = new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>("123", 987),
+                new KeyValuePair<string, object>("456", 654.321),
+                new KeyValuePair<string, object>("abc", 123),
+                new KeyValuePair<string, object>("def", 456.789),
+                new KeyValuePair<string, object>("ghi", "foo"),
+                new KeyValuePair<string, object>("jkl", engine.Evaluate("({ bar: 'baz' })"))
+            };
+
+            var dict = (IDictionary<string, object>)engine.Evaluate("dict = {}");
+
+            pairs.ForEach(pair => dict.Add(pair));
+            Assert.IsTrue(dict.SequenceEqual(pairs));
+
+            var index = 0;
+            foreach (var pair in dict)
+            {
+                Assert.AreEqual(pairs[index++], pair);
+            }
+
+            index = 0;
+            foreach (var pair in (IEnumerable)dict)
+            {
+                Assert.AreEqual(pairs[index++], pair);
+            }
+
+            dict.Clear();
+            Assert.AreEqual(0, dict.Count);
+
+            pairs.ForEach(pair => dict.Add(pair.Key, pair.Value));
+            Assert.IsTrue(dict.SequenceEqual(pairs));
+
+            Assert.IsTrue(pairs.All(pair => dict.Contains(pair)));
+            Assert.IsTrue(pairs.All(pair => dict.ContainsKey(pair.Key)));
+
+            var testPairs = new KeyValuePair<string, object>[pairs.Count + 3];
+            dict.CopyTo(testPairs, 3);
+            Assert.IsTrue(testPairs.Skip(3).SequenceEqual(pairs));
+
+            Assert.IsTrue(pairs.All(pair => dict.Remove(pair)));
+            Assert.AreEqual(0, dict.Count);
+
+            pairs.ForEach(pair => dict.Add(pair.Key, pair.Value));
+            Assert.IsTrue(dict.SequenceEqual(pairs));
+
+            Assert.IsTrue(pairs.All(pair => dict.Remove(pair.Key)));
+            Assert.AreEqual(0, dict.Count);
+
+            pairs.ForEach(pair => dict.Add(pair.Key, pair.Value));
+            Assert.IsTrue(dict.SequenceEqual(pairs));
+
+            Assert.IsTrue(pairs.All(pair => dict.TryGetValue(pair.Key, out var value) && Equals(value, pair.Value)));
+            Assert.IsTrue(pairs.All(pair => Equals(dict[pair.Key], pair.Value)));
+
+            Assert.IsTrue(pairs.Select(pair => pair.Key).SequenceEqual(dict.Keys));
+            Assert.IsTrue(pairs.Select(pair => pair.Value).SequenceEqual(dict.Values));
+
+            Assert.IsFalse(dict.TryGetValue("qux", out _));
+            TestUtil.AssertException<KeyNotFoundException>(() => Assert.IsTrue(dict["qux"] is Undefined));
+
+            engine.Execute("dict[789] = Math.PI");
+            Assert.IsTrue(dict.TryGetValue("789", out var pi) && Equals(pi, Math.PI));
+            Assert.IsFalse(pairs.SequenceEqual(dict));
+
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("delete dict[789]")));
+            Assert.IsTrue(pairs.SequenceEqual(dict));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_ArrayInvocability()
         {
             engine.Script.foo = Enumerable.Range(123, 5).ToArray();

@@ -47,7 +47,7 @@ UNIXDIR = $(ROOTDIR)/Unix
 NETCOREDIR = $(ROOTDIR)/NetCore
 NETSTANDARDDIR = $(ROOTDIR)/NetStandard
 
-.PHONY: all test clean buildv8 cleanv8 zapv8 buildallrelease buildalldebug buildall cleanall
+.PHONY: all test clean buildv8 cleanv8 zapv8 buildallrelease buildalldebug buildall cleanallrelease cleanalldebug cleanall
 
 all:
 	make -f $(UNIXDIR)/ClearScriptV8/Makefile
@@ -88,10 +88,14 @@ buildalldebug:
 
 buildall: buildallrelease buildalldebug
 
-cleanall:
+cleanallrelease:
 	make clean CPU=$(HOSTCPU)
 	make clean CPU=$(OTHERCPU)
 	$(MAKELINUX) clean CPU=arm
+
+cleanalldebug:
 	make clean CPU=$(HOSTCPU) DEBUG=1
 	make clean CPU=$(OTHERCPU) DEBUG=1
 	$(MAKELINUX) clean CPU=arm DEBUG=1
+
+cleanall: cleanallrelease cleanalldebug

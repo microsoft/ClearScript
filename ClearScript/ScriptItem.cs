@@ -148,13 +148,13 @@ namespace Microsoft.ClearScript
 
         public override IEnumerable<int> PropertyIndices => GetPropertyIndices();
 
-        public new object this[string name, params object[] args]
+        public override object this[string name, params object[] args]
         {
             get => GetProperty(name, args).ToDynamicResult(Engine);
             set => SetProperty(name, args.Concat(value.ToEnumerable()).ToArray());
         }
 
-        public new object this[int index]
+        public override object this[int index]
         {
             get => GetProperty(index).ToDynamicResult(Engine);
             set => SetProperty(index, value);

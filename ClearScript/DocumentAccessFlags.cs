@@ -41,6 +41,11 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Relaxes the requirement that a loaded document must be of the requested category. 
         /// </summary>
-        AllowCategoryMismatch = 0x00000008
+        AllowCategoryMismatch = 0x00000008,
+
+        /// <summary>
+        /// Enables the use of <c><see cref="DocumentSettings.AsyncLoadCallback"/></c> instead of <c><see cref="DocumentSettings.LoadCallback"/></c>.
+        /// </summary>
+        UseAsyncLoadCallback = 0x00000010
     }
 }

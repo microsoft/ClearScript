@@ -2114,7 +2114,23 @@ size_t V8IsolateImpl::HeapExpansionCallback(void* pvData, size_t currentLimit, s
         auto multiplier = static_cast<const V8IsolateImpl*>(pvData)->m_HeapExpansionMultiplier;
         if (multiplier > 1.0)
         {
-            return static_cast<size_t>(multiplier * currentLimit);
+            multiplier = std::max(multiplier, 1.001);
+            const size_t minBump = 1024 * 1024;
+
+            auto newLimit = static_cast<double>(currentLimit);
+            while ((static_cast<size_t>(newLimit) - currentLimit) < minBump)
+            {
+                auto tempLimit = multiplier * newLimit;
+                if (tempLimit > newLimit)
+                {
+                    newLimit = tempLimit;
+                    continue;
+                }
+
+                break;
+            }
+
+            return std::max(static_cast<size_t>(newLimit), currentLimit);
         }
     }
 

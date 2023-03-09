@@ -1,7 +1,9 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,9 +13,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.ClearScript.Test
 {
+    // ReSharper disable once PartialTypeWithSinglePart
+
     [TestClass]
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Test classes use TestCleanupAttribute for deterministic teardown.")]
-    public class ExtensionsTest : ClearScriptTest
+    public partial class ExtensionsTest : ClearScriptTest
     {
         #region setup / teardown
 
@@ -149,14 +153,84 @@ namespace Microsoft.ClearScript.Test
         public void Extensions_JavaScript_ToTask()
         {
             engine.AddHostType(typeof(Task));
-            Assert.AreEqual(Math.PI, EvaluateAsync(@"(async function () { await Task.Delay(100).ToPromise(); return Math.PI; })()").Result);
+            Assert.AreEqual(Math.PI, EvaluateAsync("(async function () { await Task.Delay(100).ToPromise(); return Math.PI; })()").Result);
         }
 
         [TestMethod, TestCategory("Extensions")]
         public void Extensions_JavaScript_ToTask_Fail()
         {
             engine.AddHostType(typeof(Task));
-            TestUtil.AssertException<ScriptEngineException>(() => EvaluateAsync(@"(async function () { await Task.Delay(100).ToPromise(); throw new Error('Unauthorized'); })()").Wait());
+            TestUtil.AssertException<ScriptEngineException>(() => EvaluateAsync("(async function () { await Task.Delay(100).ToPromise(); throw new Error('Unauthorized'); })()").Wait());
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extension_JavaScript_ToEnumerable_Generator()
+        {
+            engine.Execute("foo = (function* () { yield 'This'; yield 'is'; yield 'not'; yield 'a'; yield 'drill!'; })()");
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["foo"].ToEnumerable()));
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extension_JavaScript_ToEnumerable_GenericObject()
+        {
+            engine.Execute("foo = { 'This': 1, 'is': 2, 'not': 3, 'a': 4, 'drill!': 5 }");
+            TestUtil.AssertException<ArgumentException>(() => string.Join(" ", engine.Global["foo"].ToEnumerable()));
+
+            engine.Execute("foo[Symbol.iterator] = function* () { for (const item of Object.keys(foo)) yield item; }");
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["foo"].ToEnumerable()));
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extension_JavaScript_ToEnumerable_Array()
+        {
+            engine.Execute("foo = [ 'This', 'is', 'not', 'a', 'drill!' ]");
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["foo"].ToEnumerable()));
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extension_JavaScript_ToEnumerable_Managed_Object()
+        {
+            engine.Global["bar"] = new PropertyBag { { "This", 1 }, { "is", 2 }, { "not", 3 }, { "a", 4 }, { "drill!", 5 } };
+            TestUtil.AssertException<ArgumentException>(() => string.Join(" ", engine.Global["bar"].ToEnumerable()));
+
+            engine.Execute("foo = (function* () { for (const item of Object.keys(bar)) yield item; })()");
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["foo"].ToEnumerable()));
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extension_JavaScript_ToEnumerable_Managed_Array()
+        {
+            engine.Global["bar"] = new[] { "This", "is", "not", "a", "drill!" };
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["bar"].ToEnumerable()));
+
+            engine.Global["bar"] = new object[] { "This", "is", "not", "a", "drill!" };
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["bar"].ToEnumerable()));
+
+            engine.Execute("foo = (function* () { for (const item of bar) yield item; })()");
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["foo"].ToEnumerable()));
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extension_JavaScript_ToEnumerable_Managed_List()
+        {
+            engine.Global["bar"] = new List<string> { "This", "is", "not", "a", "drill!" };
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["bar"].ToEnumerable()));
+
+            engine.Global["bar"] = new List<object> { "This", "is", "not", "a", "drill!" };
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["bar"].ToEnumerable()));
+
+            engine.Execute("foo = (function* () { for (const item of bar) yield item; })()");
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["foo"].ToEnumerable()));
+        }
+
+        [TestMethod, TestCategory("Extensions")]
+        public void Extension_JavaScript_ToEnumerable_Managed_ArrayList()
+        {
+            engine.Global["bar"] = new ArrayList { "This", "is", "not", "a", "drill!" };
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["bar"].ToEnumerable()));
+
+            engine.Execute("foo = (function* () { for (const item of bar) yield item; })()");
+            Assert.AreEqual("This is not a drill!", string.Join(" ", engine.Global["foo"].ToEnumerable()));
         }
 
         // ReSharper restore InconsistentNaming

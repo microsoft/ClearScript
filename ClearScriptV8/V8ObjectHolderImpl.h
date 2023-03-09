@@ -22,9 +22,10 @@ public:
     virtual const SharedPtr<V8SharedObjectInfo>& GetSharedObjectInfo() const override;
 
     V8Value GetProperty(const StdString& name) const;
+    bool TryGetProperty(const StdString& name, V8Value& value) const;
     void SetProperty(const StdString& name, const V8Value& value) const;
     bool DeleteProperty(const StdString& name) const;
-    void GetPropertyNames(std::vector<StdString>& names) const;
+    void GetPropertyNames(bool includeIndices, std::vector<StdString>& names) const;
 
     V8Value GetProperty(int index) const;
     void SetProperty(int index, const V8Value& value) const;

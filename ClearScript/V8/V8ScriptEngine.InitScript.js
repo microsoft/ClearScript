@@ -122,6 +122,10 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
             }
         }),
 
+        getIterator: bind(obj => obj?.[Symbol.iterator]?.()),
+
+        getAsyncIterator: bind(obj => obj?.[Symbol.asyncIterator]?.()),
+
         checkpoint: bind(() => {
             const value = globalObject[checkpointSymbol];
             if (value) {
