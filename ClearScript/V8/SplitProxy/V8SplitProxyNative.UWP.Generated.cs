@@ -376,9 +376,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetHostObject(pV8Value, pObject);
             }
 
-            V8Value.Type IV8SplitProxyNative.V8Value_Decode(V8Value.Ptr pV8Value, out int intValue, out uint uintValue, out double doubleValue, out IntPtr ptrOrHandle)
+            void IV8SplitProxyNative.V8Value_Decode(V8Value.Ptr pV8Value, out V8Value.Decoded decoded)
             {
-                return V8Value_Decode(pV8Value, out intValue, out uintValue, out doubleValue, out ptrOrHandle);
+                V8Value_Decode(pV8Value, out decoded);
             }
 
             void IV8SplitProxyNative.V8Value_Delete(V8Value.Ptr pV8Value)
@@ -1438,12 +1438,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
-            private static extern V8Value.Type V8Value_Decode(
+            private static extern void V8Value_Decode(
                 [In] V8Value.Ptr pV8Value,
-                [Out] out int intValue,
-                [Out] out uint uintValue,
-                [Out] out double doubleValue,
-                [Out] out IntPtr ptrOrHandle
+                [Out] out V8Value.Decoded decoded
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
@@ -2438,9 +2435,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetHostObject(pV8Value, pObject);
             }
 
-            V8Value.Type IV8SplitProxyNative.V8Value_Decode(V8Value.Ptr pV8Value, out int intValue, out uint uintValue, out double doubleValue, out IntPtr ptrOrHandle)
+            void IV8SplitProxyNative.V8Value_Decode(V8Value.Ptr pV8Value, out V8Value.Decoded decoded)
             {
-                return V8Value_Decode(pV8Value, out intValue, out uintValue, out doubleValue, out ptrOrHandle);
+                V8Value_Decode(pV8Value, out decoded);
             }
 
             void IV8SplitProxyNative.V8Value_Delete(V8Value.Ptr pV8Value)
@@ -3500,12 +3497,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
-            private static extern V8Value.Type V8Value_Decode(
+            private static extern void V8Value_Decode(
                 [In] V8Value.Ptr pV8Value,
-                [Out] out int intValue,
-                [Out] out uint uintValue,
-                [Out] out double doubleValue,
-                [Out] out IntPtr ptrOrHandle
+                [Out] out V8Value.Decoded decoded
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -4500,9 +4494,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetHostObject(pV8Value, pObject);
             }
 
-            V8Value.Type IV8SplitProxyNative.V8Value_Decode(V8Value.Ptr pV8Value, out int intValue, out uint uintValue, out double doubleValue, out IntPtr ptrOrHandle)
+            void IV8SplitProxyNative.V8Value_Decode(V8Value.Ptr pV8Value, out V8Value.Decoded decoded)
             {
-                return V8Value_Decode(pV8Value, out intValue, out uintValue, out doubleValue, out ptrOrHandle);
+                V8Value_Decode(pV8Value, out decoded);
             }
 
             void IV8SplitProxyNative.V8Value_Delete(V8Value.Ptr pV8Value)
@@ -5562,12 +5556,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
-            private static extern V8Value.Type V8Value_Decode(
+            private static extern void V8Value_Decode(
                 [In] V8Value.Ptr pV8Value,
-                [Out] out int intValue,
-                [Out] out uint uintValue,
-                [Out] out double doubleValue,
-                [Out] out IntPtr ptrOrHandle
+                [Out] out V8Value.Decoded decoded
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]

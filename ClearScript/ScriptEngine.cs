@@ -143,7 +143,7 @@ namespace Microsoft.ClearScript
                         if (newExtensionMethodTable != extensionMethodTable)
                         {
                             extensionMethodTable = newExtensionMethodTable;
-                            bindCache.Clear();
+                            ClearMethodBindCache();
                             OnAccessSettingsChanged();
                         }
                     });
@@ -626,6 +626,8 @@ namespace Microsoft.ClearScript
 
         internal virtual void OnAccessSettingsChanged()
         {
+            ClearConstructorBindCache();
+            ClearPropertyBindCache();
         }
 
         #endregion
@@ -760,7 +762,7 @@ namespace Microsoft.ClearScript
             {
                 if (extensionMethodTable.ProcessType(type, AccessContext, DefaultAccess))
                 {
-                    bindCache.Clear();
+                    ClearMethodBindCache();
                 }
             }
         }
@@ -777,18 +779,77 @@ namespace Microsoft.ClearScript
 
         #endregion
 
-        #region bind cache
+        #region constructor bind cache
 
-        private readonly Dictionary<BindSignature, object> bindCache = new Dictionary<BindSignature, object>();
+        private readonly Dictionary<BindSignature, ConstructorInfo> constructorBindCache = new Dictionary<BindSignature, ConstructorInfo>();
 
-        internal void CacheBindResult(BindSignature signature, object result)
+        internal void CacheConstructorBindResult(BindSignature signature, ConstructorInfo result)
         {
-            bindCache.Add(signature, result);
+            constructorBindCache.Add(signature, result);
         }
 
-        internal bool TryGetCachedBindResult(BindSignature signature, out object result)
+        internal bool TryGetCachedConstructorBindResult(BindSignature signature, out ConstructorInfo result)
         {
-            return bindCache.TryGetValue(signature, out result);
+            return constructorBindCache.TryGetValue(signature, out result);
+        }
+
+        private void ClearConstructorBindCache()
+        {
+            constructorBindCache.Clear();
+        }
+
+        #endregion
+
+        #region method bind cache
+
+        private readonly Dictionary<BindSignature, object> methodBindCache = new Dictionary<BindSignature, object>();
+
+        internal void CacheMethodBindResult(BindSignature signature, object result)
+        {
+            methodBindCache.Add(signature, result);
+        }
+
+        internal bool TryGetCachedMethodBindResult(BindSignature signature, out object result)
+        {
+            return methodBindCache.TryGetValue(signature, out result);
+        }
+
+        private void ClearMethodBindCache()
+        {
+            methodBindCache.Clear();
+        }
+
+        #endregion
+
+        #region property bind cache
+
+        private readonly Dictionary<BindSignature, MemberInfo> propertyGetBindCache = new Dictionary<BindSignature, MemberInfo>();
+        private readonly Dictionary<BindSignature, MemberInfo> propertySetBindCache = new Dictionary<BindSignature, MemberInfo>();
+
+        internal void CachePropertyGetBindResult(BindSignature signature, MemberInfo property)
+        {
+            propertyGetBindCache.Add(signature, property);
+        }
+
+        internal bool TryGetCachedPropertyGetBindResult(BindSignature signature, out MemberInfo property)
+        {
+            return propertyGetBindCache.TryGetValue(signature, out property);
+        }
+
+        internal void CachePropertySetBindResult(BindSignature signature, MemberInfo property)
+        {
+            propertySetBindCache.Add(signature, property);
+        }
+
+        internal bool TryGetCachedPropertySetBindResult(BindSignature signature, out MemberInfo property)
+        {
+            return propertySetBindCache.TryGetValue(signature, out property);
+        }
+
+        private void ClearPropertyBindCache()
+        {
+            propertyGetBindCache.Clear();
+            propertySetBindCache.Clear();
         }
 
         #endregion

@@ -41,17 +41,17 @@
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectNamedProperty, void* pvObject, const StdString& name, V8Value& value) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectNamedPropertyWithCacheability, void* pvObject, const StdString& name, V8Value& value, StdBool& isCacheable) \
-    V8_SPLIT_PROXY_MANAGED_METHOD(void, SetHostObjectNamedProperty, void* pvObject, const StdString& name, const V8Value& value) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, SetHostObjectNamedProperty, void* pvObject, const StdString& name, const V8Value::Decoded& value) \
     V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, DeleteHostObjectNamedProperty, void* pvObject, const StdString& name) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectPropertyNames, void* pvObject, std::vector<StdString>& names) \
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectIndexedProperty, void* pvObject, int32_t index, V8Value& value) \
-    V8_SPLIT_PROXY_MANAGED_METHOD(void, SetHostObjectIndexedProperty, void* pvObject, int32_t index, const V8Value& value) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, SetHostObjectIndexedProperty, void* pvObject, int32_t index, const V8Value::Decoded& value) \
     V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, DeleteHostObjectIndexedProperty, void* pvObject, int32_t index) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectPropertyIndices, void* pvObject, std::vector<int32_t>& indices) \
     \
-    V8_SPLIT_PROXY_MANAGED_METHOD(void, InvokeHostObject, void* pvObject, StdBool asConstructor, const std::vector<V8Value>& args, V8Value& result) \
-    V8_SPLIT_PROXY_MANAGED_METHOD(void, InvokeHostObjectMethod, void* pvObject, const StdString& name, const std::vector<V8Value>& args, V8Value& result) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, InvokeHostObject, void* pvObject, StdBool asConstructor, int32_t argCount, const V8Value::Decoded* pArgs, V8Value& result) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, InvokeHostObjectMethod, void* pvObject, const StdString& name, int32_t argCount, const V8Value::Decoded* pArgs, V8Value& result) \
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectEnumerator, void* pvObject, V8Value& result) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectAsyncEnumerator, void* pvObject, V8Value& result) \

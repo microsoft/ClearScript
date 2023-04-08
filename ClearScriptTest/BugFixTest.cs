@@ -299,7 +299,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_CoreBindCache()
         {
-            HostItem.ResetCoreBindCache();
+            HostItem.ClearCoreBindCache();
 
             engine.Dispose();
             for (var i = 0; i < 10; i++)

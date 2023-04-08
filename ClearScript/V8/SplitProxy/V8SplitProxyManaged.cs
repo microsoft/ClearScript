@@ -190,7 +190,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         private delegate void RawSetHostObjectNamedProperty(
             [In] IntPtr pObject,
             [In] StdString.Ptr pName,
-            [In] V8Value.Ptr pValue
+            [In] V8Value.Decoded.Ptr pValue
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -217,7 +217,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         private delegate void RawSetHostObjectIndexedProperty(
             [In] IntPtr pObject,
             [In] int index,
-            [In] V8Value.Ptr pValue
+            V8Value.Decoded.Ptr pValue
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -237,7 +237,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         private delegate void RawInvokeHostObject(
             [In] IntPtr pObject,
             [In] [MarshalAs(UnmanagedType.I1)] bool asConstructor,
-            [In] StdV8ValueArray.Ptr pArgs,
+            [In] int argCount,
+            [In] V8Value.Decoded.Ptr pArgs,
             [In] V8Value.Ptr pResult
         );
 
@@ -245,7 +246,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         private delegate void RawInvokeHostObjectMethod(
             [In] IntPtr pObject,
             [In] StdString.Ptr pName,
-            [In] StdV8ValueArray.Ptr pArgs,
+            [In] int argCount,
+            [In] V8Value.Decoded.Ptr pArgs,
             [In] V8Value.Ptr pResult
         );
 
@@ -636,11 +638,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        private static void SetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue)
+        private static void SetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Decoded.Ptr pValue)
         {
             try
             {
-                V8ProxyHelpers.SetHostObjectProperty(pObject, StdString.GetValue(pName), V8Value.Get(pValue));
+                V8ProxyHelpers.SetHostObjectProperty(pObject, StdString.GetValue(pName), V8Value.Decoded.Get(pValue, 0));
             }
             catch (Exception exception)
             {
@@ -689,11 +691,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        private static void SetHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.Ptr pValue)
+        private static void SetHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.Decoded.Ptr pValue)
         {
             try
             {
-                V8ProxyHelpers.SetHostObjectProperty(pObject, index, V8Value.Get(pValue));
+                V8ProxyHelpers.SetHostObjectProperty(pObject, index, V8Value.Decoded.Get(pValue, 0));
             }
             catch (Exception exception)
             {
@@ -730,11 +732,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             StdInt32Array.CopyFromArray(pIndices, indices);
         }
 
-        private static void InvokeHostObject(IntPtr pObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+        private static void InvokeHostObject(IntPtr pObject, bool asConstructor, int argCount, V8Value.Decoded.Ptr pArgs, V8Value.Ptr pResult)
         {
             try
             {
-                V8Value.Set(pResult, V8ProxyHelpers.InvokeHostObject(pObject, asConstructor, StdV8ValueArray.ToArray(pArgs)));
+                V8Value.Set(pResult, V8ProxyHelpers.InvokeHostObject(pObject, asConstructor, V8Value.Decoded.ToArray(argCount, pArgs)));
             }
             catch (Exception exception)
             {
@@ -742,11 +744,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        private static void InvokeHostObjectMethod(IntPtr pObject, StdString.Ptr pName, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+        private static void InvokeHostObjectMethod(IntPtr pObject, StdString.Ptr pName, int argCount, V8Value.Decoded.Ptr pArgs, V8Value.Ptr pResult)
         {
             try
             {
-                V8Value.Set(pResult, V8ProxyHelpers.InvokeHostObjectMethod(pObject, StdString.GetValue(pName), StdV8ValueArray.ToArray(pArgs)));
+                V8Value.Set(pResult, V8ProxyHelpers.InvokeHostObjectMethod(pObject, StdString.GetValue(pName), V8Value.Decoded.ToArray(argCount, pArgs)));
             }
             catch (Exception exception)
             {

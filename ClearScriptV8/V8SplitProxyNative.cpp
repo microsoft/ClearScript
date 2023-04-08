@@ -66,19 +66,6 @@ static void ProcessCpuProfile(const v8::CpuProfile& profile, void* pvAction)
 }
 
 //-----------------------------------------------------------------------------
-
-static uint32_t PackV8ObjectInfo(V8Value::Subtype subtype, V8Value::Flags flags)
-{
-    static_assert(sizeof(subtype) == 2);
-    uint32_t subtypeBits = static_cast<std::underlying_type_t<V8Value::Subtype>>(subtype);
-
-    static_assert(sizeof(flags) == 2);
-    uint32_t flagsBits = static_cast<std::underlying_type_t<V8Value::Flags>>(flags);
-
-    return subtypeBits | (flagsBits << 16);
-}
-
-//-----------------------------------------------------------------------------
 // V8Exception implementation
 //-----------------------------------------------------------------------------
 
@@ -117,6 +104,57 @@ StdString V8EntityHandleBase::GetEntityReleasedMessage(const StdChar* pName) noe
 void V8EntityHandleBase::ScheduleInvalidOperationException(const StdString& message) noexcept
 {
     V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(ScheduleInvalidOperationException, message);
+}
+
+//-----------------------------------------------------------------------------
+// V8Value (implementation)
+//-----------------------------------------------------------------------------
+
+void V8Value::Decode(Decoded& decoded) const
+{
+    decoded.Type = m_Type;
+    if (m_Type == Type::Boolean)
+    {
+        decoded.Int32Value = m_Data.BooleanValue;
+    }
+    else if (m_Type == Type::Number)
+    {
+        decoded.DoubleValue = m_Data.DoubleValue;
+    }
+    else if (m_Type == Type::Int32)
+    {
+        decoded.Int32Value = m_Data.Int32Value;
+    }
+    else if (m_Type == Type::UInt32)
+    {
+        decoded.UInt32Value = m_Data.UInt32Value;
+    }
+    else if (m_Type == Type::String)
+    {
+        decoded.pvData = m_Data.pString->ToCString();
+        decoded.Length = static_cast<int32_t>(m_Data.pString->GetLength());
+    }
+    else if (m_Type == Type::DateTime)
+    {
+        decoded.DoubleValue = m_Data.DoubleValue;
+    }
+    else if (m_Type == Type::BigInt)
+    {
+        decoded.pvData = m_Data.pBigInt->GetWords().data();
+        decoded.Length = static_cast<int32_t>(m_Data.pBigInt->GetWords().size());
+        decoded.SignBit = static_cast<int16_t>(m_Data.pBigInt->GetSignBit());
+    }
+    else if (m_Type == Type::V8Object)
+    {
+        decoded.pvData = new V8ObjectHandle(m_Data.pV8ObjectHolder->Clone());
+        decoded.Subtype = m_Subtype;
+        decoded.Flags = m_Flags;
+        decoded.IdentityHash = m_Data.pV8ObjectHolder->GetIdentityHash();
+    }
+    else if (m_Type == Type::HostObject)
+    {
+        decoded.pvData = m_Data.pHostObjectHolder->GetObject();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -528,97 +566,9 @@ NATIVE_ENTRY_POINT(void) V8Value_SetHostObject(V8Value* pV8Value, void* pvObject
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8Value::Type) V8Value_Decode(const V8Value& value, int32_t& intValue, uint32_t& uintValue, double& doubleValue, const void*& pvData) noexcept
+NATIVE_ENTRY_POINT(void) V8Value_Decode(const V8Value& value, V8Value::Decoded& decoded) noexcept
 {
-    {
-        bool result;
-        if (value.AsBoolean(result))
-        {
-            intValue = result;
-            return V8Value::Type::Boolean;
-        }
-    }
-
-    {
-        double result;
-        if (value.AsNumber(result))
-        {
-            doubleValue = result;
-            return V8Value::Type::Number;
-        }
-    }
-
-    {
-        int32_t result;
-        if (value.AsInt32(result))
-        {
-            intValue = result;
-            return V8Value::Type::Int32;
-        }
-    }
-
-    {
-        uint32_t result;
-        if (value.AsUInt32(result))
-        {
-            uintValue = result;
-            return V8Value::Type::UInt32;
-        }
-    }
-
-    {
-        const StdString* pString;
-        if (value.AsString(pString))
-        {
-            pvData = pString->ToCString();
-            intValue = pString->GetLength();
-            return V8Value::Type::String;
-        }
-    }
-
-    {
-        double result;
-        if (value.AsDateTime(result))
-        {
-            doubleValue = result;
-            return V8Value::Type::DateTime;
-        }
-    }
-
-    {
-        const V8BigInt* pBigInt;
-        if (value.AsBigInt(pBigInt))
-        {
-            intValue = pBigInt->GetSignBit();
-            pvData = pBigInt->GetWords().data();
-            uintValue = static_cast<uint32_t>(pBigInt->GetWords().size());
-            return V8Value::Type::BigInt;
-        }
-    }
-
-    {
-        V8ObjectHolder* pHolder;
-        V8Value::Subtype subtype;
-        V8Value::Flags flags;
-        if (value.AsV8Object(pHolder, subtype, flags))
-        {
-            pvData = new V8ObjectHandle(pHolder->Clone());
-            uintValue = PackV8ObjectInfo(subtype, flags);
-            intValue = pHolder->GetIdentityHash();
-            return V8Value::Type::V8Object;
-        }
-    }
-
-    {
-        HostObjectHolder* pHolder;
-        if (value.AsHostObject(pHolder))
-        {
-            pvData = pHolder->GetObject();
-            return V8Value::Type::HostObject;
-        }
-    }
-
-    return value.GetType();
+    value.Decode(decoded);
 }
 
 //-----------------------------------------------------------------------------

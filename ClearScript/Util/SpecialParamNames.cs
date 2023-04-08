@@ -5,6 +5,6 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class SpecialParamNames
     {
-        public static string This = MiscHelpers.GetDispIDName(SpecialDispIDs.This);
+        public static readonly string This = MiscHelpers.GetDispIDName(SpecialDispIDs.This);
     }
 }

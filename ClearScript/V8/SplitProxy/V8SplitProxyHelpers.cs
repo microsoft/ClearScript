@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
@@ -897,49 +897,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public static object Get(Ptr pV8Value)
         {
-            var intValue = 0;
-            var uintValue = 0U;
-            var doubleValue = 0D;
-            var ptrOrHandle = IntPtr.Zero;
-
-            switch (V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_Decode(pV8Value, out intValue, out uintValue, out doubleValue, out ptrOrHandle)))
-            {
-                case Type.Nonexistent:
-                    return Nonexistent.Value;
-
-                case Type.Null:
-                    return DBNull.Value;
-
-                case Type.Boolean:
-                    return intValue != 0;
-
-                case Type.Number:
-                    return doubleValue;
-
-                case Type.Int32:
-                    return intValue;
-
-                case Type.UInt32:
-                    return uintValue;
-
-                case Type.String:
-                    return Marshal.PtrToStringUni(ptrOrHandle, intValue);
-
-                case Type.DateTime:
-                    return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) + TimeSpan.FromMilliseconds(doubleValue);
-
-                case Type.BigInt:
-                    return TryGetBigInteger(intValue, (int)uintValue, ptrOrHandle, out var result) ? (object)result : null;
-
-                case Type.V8Object:
-                    return new V8ObjectImpl((V8Object.Handle)ptrOrHandle, (Subtype)(uintValue & 0xFFFFU), (Flags)(uintValue >> 16), intValue);
-
-                case Type.HostObject:
-                    return V8ProxyHelpers.GetHostObject(ptrOrHandle);
-
-                default:
-                    return null;
-            }
+            var decoded = default(Decoded);
+            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_Decode(pV8Value, out decoded));
+            return decoded.Get();
         }
 
         private static bool TryGetBigInteger(int signBit, int wordCount, IntPtr pWords, out BigInteger result)
@@ -1039,7 +999,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Type
 
-        public enum Type : ushort
+        public enum Type : byte
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Type
             Nonexistent,
@@ -1060,7 +1020,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Subtype
 
-        public enum Subtype : ushort
+        public enum Subtype : byte
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Subtype
             None,
@@ -1101,7 +1061,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Ptr
 
-        internal readonly struct Ptr
+        public readonly struct Ptr
         {
             private readonly IntPtr bits;
 
@@ -1124,8 +1084,113 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         }
 
         #endregion
-    }
 
+        #region Nested type: Decoded
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct Decoded
+        {
+            // IMPORTANT: maintain bitwise equivalence with native struct V8Value::Decoded
+            [FieldOffset(0)] public Type Type;
+            [FieldOffset(1)] public Subtype Subtype;
+            [FieldOffset(2)] public Flags Flags;
+            [FieldOffset(2)] public short SignBit;
+            [FieldOffset(4)] public int Length;
+            [FieldOffset(4)] public int IdentityHash;
+            [FieldOffset(8)] public int Int32Value;
+            [FieldOffset(8)] public uint UInt32Value;
+            [FieldOffset(8)] public double DoubleValue;
+            [FieldOffset(8)] public IntPtr PtrOrHandle;
+
+            public object Get()
+            {
+                switch (Type)
+                {
+                    case Type.Nonexistent:
+                        return Nonexistent.Value;
+
+                    case Type.Null:
+                        return DBNull.Value;
+
+                    case Type.Boolean:
+                        return Int32Value != 0;
+
+                    case Type.Number:
+                        return DoubleValue;
+
+                    case Type.Int32:
+                        return Int32Value;
+
+                    case Type.UInt32:
+                        return UInt32Value;
+
+                    case Type.String:
+                        return Marshal.PtrToStringUni(PtrOrHandle, Length);
+
+                    case Type.DateTime:
+                        return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) + TimeSpan.FromMilliseconds(DoubleValue);
+
+                    case Type.BigInt:
+                        return TryGetBigInteger(SignBit, Length, PtrOrHandle, out var result) ? (object)result : null;
+
+                    case Type.V8Object:
+                        return new V8ObjectImpl((V8Object.Handle)PtrOrHandle, Subtype, Flags, IdentityHash);
+
+                    case Type.HostObject:
+                        return V8ProxyHelpers.GetHostObject(PtrOrHandle);
+
+                    default:
+                        return null;
+                }
+            }
+
+            public static unsafe object Get(Ptr pValues, int index)
+            {
+                return ((Decoded*)(IntPtr)pValues + index)->Get();
+            }
+
+            public static object[] ToArray(int count, Ptr pValues)
+            {
+                var array = new object[count];
+
+                for (var index = 0; index < count; index++)
+                {
+                    array[index] = Get(pValues, index);
+                }
+
+                return array;
+            }
+
+            #region Nested type: Ptr
+
+            // ReSharper disable once MemberHidesStaticFromOuterClass
+            public readonly struct Ptr
+            {
+                private readonly IntPtr bits;
+
+                private Ptr(IntPtr bits) => this.bits = bits;
+
+                public static readonly Ptr Null = new Ptr(IntPtr.Zero);
+
+                public static bool operator ==(Ptr left, Ptr right) => left.bits == right.bits;
+                public static bool operator !=(Ptr left, Ptr right) => left.bits != right.bits;
+
+                public static explicit operator IntPtr(Ptr ptr) => ptr.bits;
+                public static explicit operator Ptr(IntPtr bits) => new Ptr(bits);
+
+                #region Object overrides
+
+                public override bool Equals(object obj) => (obj is Ptr ptr) && (this == ptr);
+                public override int GetHashCode() => bits.GetHashCode();
+
+                #endregion
+            }
+
+            #endregion
+        }
+
+        #endregion
+    }
     internal static class V8CpuProfile
     {
         public static void ProcessProfile(V8Entity.Handle hEntity, Ptr pProfile, V8.V8CpuProfile profile)

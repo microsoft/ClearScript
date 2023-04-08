@@ -110,7 +110,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         void V8Value_SetBigInt(V8Value.Ptr pV8Value, int signBit, byte[] bytes);
         void V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags);
         void V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject);
-        V8Value.Type V8Value_Decode(V8Value.Ptr pV8Value, out int intValue, out uint uintValue, out double doubleValue, out IntPtr ptrOrHandle);
+        void V8Value_Decode(V8Value.Ptr pV8Value, out V8Value.Decoded decoded);
         void V8Value_Delete(V8Value.Ptr pV8Value);
 
         #endregion

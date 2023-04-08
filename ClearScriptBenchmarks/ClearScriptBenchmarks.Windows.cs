@@ -23,7 +23,7 @@ namespace Microsoft.ClearScript.Test
             var burn = (args.Length == 2) && (args[0] == "-b") && uint.TryParse(args[1], out choice) && (choice >= 1) && (choice <= 3);
 
             Console.Clear();
-            if (!burn) Console.WriteLine("ClearScript Benchmarks ({0}, {1}, {2} {3})\n", RuntimeInformation.FrameworkDescription, RuntimeInformation.OSDescription, RuntimeInformation.ProcessArchitecture, flavor);
+            if (!burn) Console.WriteLine("ClearScript Benchmarks ({0}, {1}, {2} {3})\n", RuntimeInformation.FrameworkDescription.Trim(), RuntimeInformation.OSDescription.Trim(), RuntimeInformation.ProcessArchitecture, flavor);
 
             var count = 0UL;
 

@@ -2109,28 +2109,15 @@ void V8IsolateImpl::FlushContext(V8ContextImpl& contextImpl)
 
 size_t V8IsolateImpl::HeapExpansionCallback(void* pvData, size_t currentLimit, size_t /*initialLimit*/)
 {
+    const size_t minBump = 1024 * 1024;
+
     if (pvData)
     {
         auto multiplier = static_cast<const V8IsolateImpl*>(pvData)->m_HeapExpansionMultiplier;
         if (multiplier > 1.0)
         {
-            multiplier = std::max(multiplier, 1.001);
-            const size_t minBump = 1024 * 1024;
-
-            auto newLimit = static_cast<double>(currentLimit);
-            while ((static_cast<size_t>(newLimit) - currentLimit) < minBump)
-            {
-                auto tempLimit = multiplier * newLimit;
-                if (tempLimit > newLimit)
-                {
-                    newLimit = tempLimit;
-                    continue;
-                }
-
-                break;
-            }
-
-            return std::max(static_cast<size_t>(newLimit), currentLimit);
+            auto newLimit = static_cast<size_t>(static_cast<double>(currentLimit) * multiplier);
+            return std::max(newLimit, currentLimit + minBump);
         }
     }
 

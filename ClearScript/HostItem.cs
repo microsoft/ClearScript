@@ -1235,7 +1235,7 @@ namespace Microsoft.ClearScript
                                         return DelegateFactory.CreateDelegate(Engine, args[0], specificType);
                                     }
 
-                                    return specificType.CreateInstance(this, AccessContext, DefaultAccess, args, bindArgs);
+                                    return specificType.CreateInstance(this, Target, args, bindArgs);
                                 }
                             }
 
@@ -1255,7 +1255,7 @@ namespace Microsoft.ClearScript
                             return DelegateFactory.CreateDelegate(Engine, args[0], type);
                         }
 
-                        return type.CreateInstance(this, AccessContext, DefaultAccess, args, bindArgs);
+                        return type.CreateInstance(this, Target, args, bindArgs);
                     }
 
                     if (TargetDynamicMetaObject != null)
@@ -1386,12 +1386,26 @@ namespace Microsoft.ClearScript
         {
             isCacheable = false;
 
+            var signature = new BindSignature(AccessContext, invokeFlags, Target, name, ArrayHelpers.GetEmptyArray<Type>(), bindArgs);
+            if (Engine.TryGetCachedPropertyGetBindResult(signature, out var boundMember))
+            {
+                if (boundMember is PropertyInfo boundProperty)
+                {
+                    return GetHostPropertyWorker(boundProperty, boundProperty.GetMethod, args);
+                }
+
+                if (boundMember is FieldInfo boundField)
+                {
+                    return GetHostFieldWorker(boundField, out isCacheable);
+                }
+            }
+
             if (name == SpecialMemberNames.Default)
             {
                 var defaultProperty = Target.Type.GetScriptableDefaultProperty(invokeFlags, args, bindArgs, AccessContext, DefaultAccess);
                 if (defaultProperty != null)
                 {
-                    return GetHostProperty(defaultProperty, invokeFlags, args);
+                    return GetHostProperty(signature, defaultProperty, invokeFlags, args);
                 }
 
                 if (TargetDynamicMetaObject != null)
@@ -1476,7 +1490,7 @@ namespace Microsoft.ClearScript
             var property = Target.Type.GetScriptableProperty(name, invokeFlags, args, bindArgs, AccessContext, DefaultAccess);
             if (property != null)
             {
-                return GetHostProperty(property, invokeFlags, args);
+                return GetHostProperty(signature, property, invokeFlags, args);
             }
 
             if (args.Length > 0)
@@ -1494,9 +1508,7 @@ namespace Microsoft.ClearScript
             var field = Target.Type.GetScriptableField(name, invokeFlags, AccessContext, DefaultAccess);
             if (field != null)
             {
-                var result = field.GetValue(Target.InvokeTarget);
-                isCacheable = (TargetDynamicMetaObject == null) && (field.IsLiteral || field.IsInitOnly);
-                return Engine.PrepareResult(result, field.FieldType, field.GetScriptMemberFlags(), false);
+                return GetHostField(signature, field, out isCacheable);
             }
 
             if (includeBoundMembers)
@@ -1539,7 +1551,7 @@ namespace Microsoft.ClearScript
             return Nonexistent.Value;
         }
 
-        private object GetHostProperty(PropertyInfo property, BindingFlags invokeFlags, object[] args)
+        private object GetHostProperty(BindSignature signature, PropertyInfo property, BindingFlags invokeFlags, object[] args)
         {
             if (reflectionProperties.Contains(property, MemberComparer<PropertyInfo>.Instance))
             {
@@ -1569,11 +1581,46 @@ namespace Microsoft.ClearScript
                 throw new UnauthorizedAccessException("The property get method is unavailable or inaccessible");
             }
 
+            var result = GetHostPropertyWorker(property, getMethod, args);
+            Engine.CachePropertyGetBindResult(signature, property);
+            return result;
+        }
+
+        private object GetHostPropertyWorker(PropertyInfo property, MethodInfo getMethod, object[] args)
+        {
             return InvokeHelpers.InvokeMethod(this, getMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags());
+        }
+
+        private object GetHostField(BindSignature signature, FieldInfo field, out bool isCacheable)
+        {
+            var result = GetHostFieldWorker(field, out isCacheable);
+            Engine.CachePropertyGetBindResult(signature, field);
+            return result;
+        }
+
+        private object GetHostFieldWorker(FieldInfo field, out bool isCacheable)
+        {
+            var result = field.GetValue(Target.InvokeTarget);
+            isCacheable = (TargetDynamicMetaObject == null) && (field.IsLiteral || field.IsInitOnly);
+            return Engine.PrepareResult(result, field.FieldType, field.GetScriptMemberFlags(), false);
         }
 
         private object SetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs)
         {
+            var signature = new BindSignature(AccessContext, invokeFlags, Target, name, ArrayHelpers.GetEmptyArray<Type>(), bindArgs);
+            if (Engine.TryGetCachedPropertySetBindResult(signature, out var boundMember))
+            {
+                if (boundMember is PropertyInfo boundProperty)
+                {
+                    return SetHostPropertyWorker(boundProperty, boundProperty.SetMethod, args, bindArgs);
+                }
+
+                if (boundMember is FieldInfo boundField)
+                {
+                    return SetHostFieldWorker(boundField, args);
+                }
+            }
+
             if (name == SpecialMemberNames.Default)
             {
                 if (args.Length < 1)
@@ -1586,7 +1633,7 @@ namespace Microsoft.ClearScript
                 var defaultProperty = Target.Type.GetScriptableDefaultProperty(invokeFlags, args.Take(args.Length - 1).ToArray(), bindArgs.Take(bindArgs.Length - 1).ToArray(), AccessContext, DefaultAccess);
                 if (defaultProperty != null)
                 {
-                    return SetHostProperty(defaultProperty, args, bindArgs);
+                    return SetHostProperty(signature, defaultProperty, args, bindArgs);
                 }
 
                 if (args.Length < 2)
@@ -1641,36 +1688,19 @@ namespace Microsoft.ClearScript
             var property = Target.Type.GetScriptableProperty(name, invokeFlags, args.Take(args.Length - 1).ToArray(), bindArgs.Take(bindArgs.Length - 1).ToArray(), AccessContext, DefaultAccess);
             if (property != null)
             {
-                return SetHostProperty(property, args, bindArgs);
+                return SetHostProperty(signature, property, args, bindArgs);
             }
 
             var field = Target.Type.GetScriptableField(name, invokeFlags, AccessContext, DefaultAccess);
             if (field != null)
             {
-                if (args.Length == 1)
-                {
-                    if (field.IsLiteral || field.IsInitOnly || field.IsReadOnlyForScript(DefaultAccess))
-                    {
-                        throw new UnauthorizedAccessException("The field is read-only");
-                    }
-
-                    var value = args[0];
-                    if (field.FieldType.IsAssignableFromValue(ref value))
-                    {
-                        field.SetValue(Target.InvokeTarget, value);
-                        return value;
-                    }
-
-                    throw new ArgumentException("Invalid field assignment");
-                }
-
-                throw new InvalidOperationException("Invalid argument count");
+                return SetHostField(signature, field, args);
             }
 
             throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no suitable property or field named '{0}'", name));
         }
 
-        private object SetHostProperty(PropertyInfo property, object[] args, object[] bindArgs)
+        private object SetHostProperty(BindSignature signature, PropertyInfo property, object[] args, object[] bindArgs)
         {
             var scriptAccess = property.GetScriptAccess(DefaultAccess);
             if (scriptAccess == ScriptAccess.ReadOnly)
@@ -1684,6 +1714,13 @@ namespace Microsoft.ClearScript
                 throw new UnauthorizedAccessException("The property set method is unavailable or inaccessible");
             }
 
+            var result = SetHostPropertyWorker(property, setMethod, args, bindArgs);
+            Engine.CachePropertySetBindResult(signature, property);
+            return result;
+        }
+
+        private object SetHostPropertyWorker(PropertyInfo property, MethodInfo setMethod, object[] args, object[] bindArgs)
+        {
             var value = args[args.Length - 1];
 
             var argCount = args.Length - 1;
@@ -1739,6 +1776,35 @@ namespace Microsoft.ClearScript
             }
 
             throw new ArgumentException("Invalid property assignment");
+        }
+
+        private object SetHostField(BindSignature signature, FieldInfo field, object[] args)
+        {
+            if (args.Length != 1)
+            {
+                throw new InvalidOperationException("Invalid argument count");
+            }
+
+            if (field.IsLiteral || field.IsInitOnly || field.IsReadOnlyForScript(DefaultAccess))
+            {
+                throw new UnauthorizedAccessException("The field is read-only");
+            }
+
+            var result = SetHostFieldWorker(field, args);
+            Engine.CachePropertySetBindResult(signature, field);
+            return result;
+        }
+
+        private object SetHostFieldWorker(FieldInfo field, object[] args)
+        {
+            var value = args[0];
+            if (field.FieldType.IsAssignableFromValue(ref value))
+            {
+                field.SetValue(Target.InvokeTarget, value);
+                return value;
+            }
+
+            throw new ArgumentException("Invalid field assignment");
         }
 
         private static object CreateScriptableEnumerator<T>(IEnumerable<T> enumerable)

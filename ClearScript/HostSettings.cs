@@ -51,6 +51,6 @@ namespace Microsoft.ClearScript
             }
         }
 
-        internal static CustomAttributeLoader DefaultCustomAttributeLoader { get; } = new CustomAttributeLoader();
+        internal static readonly CustomAttributeLoader DefaultCustomAttributeLoader = new CustomAttributeLoader();
     }
 }

@@ -95,7 +95,7 @@ public:
         DateTime
     };
 
-    enum class Type: uint16_t
+    enum class Type: uint8_t
     {
         // IMPORTANT: maintain bitwise equivalence with managed enum V8.SplitProxy.V8Value.Type
         Nonexistent,
@@ -112,7 +112,7 @@ public:
         HostObject
     };
 
-    enum class Subtype: uint16_t
+    enum class Subtype: uint8_t
     {
         // IMPORTANT: maintain bitwise equivalence with managed enum V8.SplitProxy.V8Value.Subtype
         None,
@@ -143,6 +143,42 @@ public:
         Async = 0x0002,
         Generator = 0x0004
     };
+
+    struct Decoded
+    {
+        // IMPORTANT: maintain bitwise equivalence with managed struct V8.SplitProxy.V8Value.Decoded
+        Type Type;
+        Subtype Subtype;
+        union
+        {
+            Flags Flags;
+            int16_t SignBit;
+        };
+        union
+        {
+            int32_t Length;
+            int32_t IdentityHash;
+        };
+        union
+        {
+            int32_t Int32Value;
+            uint32_t UInt32Value;
+            double DoubleValue;
+            const void* pvData;
+        };
+    };
+
+    static_assert(sizeof(Decoded) == 16, "The managed SplitProxy code assumes that sizeof(Decoded) is 16 on all platforms.");
+    static_assert(offsetof(Decoded, Type) == 0, "The managed SplitProxy code assumes that offsetof(Decoded, Type) is 0 on all platforms.");
+    static_assert(offsetof(Decoded, Subtype) == 1, "The managed SplitProxy code assumes that offsetof(Decoded, Subtype) is 1 on all platforms.");
+    static_assert(offsetof(Decoded, Flags) == 2, "The managed SplitProxy code assumes that offsetof(Decoded, Flags) is 2 on all platforms.");
+    static_assert(offsetof(Decoded, SignBit) == 2, "The managed SplitProxy code assumes that offsetof(Decoded, SignBit) is 2 on all platforms.");
+    static_assert(offsetof(Decoded, Length) == 4, "The managed SplitProxy code assumes that offsetof(Decoded, Length) is 4 on all platforms.");
+    static_assert(offsetof(Decoded, IdentityHash) == 4, "The managed SplitProxy code assumes that offsetof(Decoded, IdentityHash) is 4 on all platforms.");
+    static_assert(offsetof(Decoded, Int32Value) == 8, "The managed SplitProxy code assumes that offsetof(Decoded, Int32Value) is 8 on all platforms.");
+    static_assert(offsetof(Decoded, UInt32Value) == 8, "The managed SplitProxy code assumes that offsetof(Decoded, UInt32Value) is 8 on all platforms.");
+    static_assert(offsetof(Decoded, DoubleValue) == 8, "The managed SplitProxy code assumes that offsetof(Decoded, DoubleValue) is 8 on all platforms.");
+    static_assert(offsetof(Decoded, pvData) == 8, "The managed SplitProxy code assumes that offsetof(Decoded, pvData) is 8 on all platforms.");
 
     explicit V8Value(NonexistentInitializer):
         m_Type(Type::Nonexistent)
@@ -360,6 +396,8 @@ public:
         return m_Type;
     }
 
+    void Decode(Decoded& decoded) const;
+
     ~V8Value()
     {
         Dispose();
@@ -455,7 +493,7 @@ private:
     Type m_Type;
     Subtype m_Subtype;
     Flags m_Flags;
-    int16_t m_Padding;
+    int32_t m_Padding;
     Data m_Data;
 };
 

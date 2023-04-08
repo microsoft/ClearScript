@@ -4613,6 +4613,39 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual((JavaScriptObjectKind.TypedArray, JavaScriptObjectFlags.Shared), Inspect("new Float64Array(new SharedArrayBuffer(256))"));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ConstructorBinding()
+        {
+            engine.AddHostType("Foo", typeof(ConstructorBindingTest));
+            dynamic test = engine.Evaluate(@"(function(length) {
+                const a = new Array(length);
+                for (let i = 0; i < length; ++i)
+                    a[i] = new Foo(123);
+                const b = new Array(length);
+                for (let i = 0; i < length; ++i)
+                    b[i] = new Foo('qux');
+                const c = new Array(length);
+                for (let i = 0; i < length; ++i)
+                    c[i] = new Foo(456.789);
+                return { a, b, c };
+            })");
+
+            const int length = 1000;
+            var result = (IDictionary<string, object>)test(length);
+
+            var a = (IList<object>)result["a"];
+            var b = (IList<object>)result["b"];
+            var c = (IList<object>)result["c"];
+
+            Assert.AreEqual(length, a.Count);
+            Assert.AreEqual(length, b.Count);
+            Assert.AreEqual(length, c.Count);
+
+            Assert.IsTrue(a.All(value => ((ConstructorBindingTest)value).A == 123));
+            Assert.IsTrue(b.All(value => ((ConstructorBindingTest)value).A == 456));
+            Assert.IsTrue(c.All(value => ((ConstructorBindingTest)value).A == 789));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -4957,6 +4990,28 @@ namespace Microsoft.ClearScript.Test
         public delegate object VarArgDelegate(object pre, params object[] args);
 
         // ReSharper restore UnusedMember.Local
+
+        public class ConstructorBindingTest
+        {
+            public int A;
+            public string B;
+            public double C;
+
+            public ConstructorBindingTest(int a, string b = "foo", double c = 456.789)
+            {
+                A = a; B = b; C = c;
+            }
+
+            public ConstructorBindingTest(string b, int a = 456, double c = 789.987)
+            {
+                A = a; B = b; C = c;
+            }
+
+            public ConstructorBindingTest(double c, int a = 789, string b = "bar")
+            {
+                A = a; B = b; C = c;
+            }
+        }
 
         #endregion
     }

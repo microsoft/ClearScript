@@ -149,7 +149,7 @@ namespace Microsoft.ClearScript
 
         private static class NullWrapper<T>
         {
-            public static HostObject Value { get; } = new HostObject(null, typeof(T));
+            public static readonly HostObject Value = new HostObject(null, typeof(T));
         }
 
         // ReSharper restore UnusedMember.Local

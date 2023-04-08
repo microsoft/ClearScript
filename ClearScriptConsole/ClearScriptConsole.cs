@@ -6,12 +6,19 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Microsoft.ClearScript.V8;
 
 namespace Microsoft.ClearScript.Test
 {
     internal static class ClearScriptConsole
     {
+    #if DEBUG
+        private const string flavor = "Debug";
+    #else
+        private const string flavor = "Release";
+    #endif
+
         public static void Main(string[] args)
         {
             if ((args.Length == 2) && (args[0] == "-t"))
@@ -19,6 +26,8 @@ namespace Microsoft.ClearScript.Test
                 RunTest(args[1]);
                 return;
             }
+
+            Console.WriteLine("ClearScript Console ({0}, {1}, {2} {3})", RuntimeInformation.FrameworkDescription.Trim(), RuntimeInformation.OSDescription.Trim(), RuntimeInformation.ProcessArchitecture, flavor);
 
             using (var engine = new V8ScriptEngine(nameof(ClearScriptConsole), V8ScriptEngineFlags.EnableDebugging))
             {

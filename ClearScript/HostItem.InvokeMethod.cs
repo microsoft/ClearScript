@@ -111,7 +111,7 @@ namespace Microsoft.ClearScript
             var signature = new BindSignature(AccessContext, bindFlags, Target, name, typeArgs, bindArgs);
             MethodBindResult result;
 
-            if (Engine.TryGetCachedBindResult(signature, out var rawResult))
+            if (Engine.TryGetCachedMethodBindResult(signature, out var rawResult))
             {
                 result = MethodBindResult.Create(name, bindFlags, rawResult, Target, args);
             }
@@ -154,7 +154,7 @@ namespace Microsoft.ClearScript
                     }
                 }
 
-                Engine.CacheBindResult(signature, result.RawResult);
+                Engine.CacheMethodBindResult(signature, result.RawResult);
             }
 
             return result;
@@ -422,7 +422,7 @@ namespace Microsoft.ClearScript
 
         #region unit test support
 
-        internal static void ResetCoreBindCache()
+        internal static void ClearCoreBindCache()
         {
             coreBindCache.Clear();
             Interlocked.Exchange(ref coreBindCount, 0);

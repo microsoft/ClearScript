@@ -1,4 +1,4 @@
-[![Banner](https://github.com/microsoft/ClearScript/blob/master/docs/ClearScript7-ReadMe.png)](https://microsoft.github.io/ClearScript/)
+[![Banner](https://raw.githubusercontent.com/microsoft/ClearScript/master/docs/ClearScript7-ReadMe.png)](https://microsoft.github.io/ClearScript/)
 
 [![Twitter Follow](https://img.shields.io/badge/Follow-%40ClearScriptLib-white?logo=twitter&style=social)](https://twitter.com/ClearScriptLib)
 

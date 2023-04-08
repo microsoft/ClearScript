@@ -847,9 +847,9 @@ namespace Microsoft.ClearScript.V8
 
         #region internal members
 
-        internal IUniqueNameManager DocumentNameManager { get; } = new UniqueFileNameManager();
+        internal readonly UniqueFileNameManager DocumentNameManager = new UniqueFileNameManager();
 
-        internal HostItemCollateral HostItemCollateral { get; } = new HostItemCollateral();
+        internal readonly HostItemCollateral HostItemCollateral = new HostItemCollateral();
 
         internal V8IsolateProxy IsolateProxy
         {

@@ -221,7 +221,7 @@ NATIVE_ENTRY_POINT(void) V8Value_SetDateTime(V8Value* pV8Value, double value) no
 NATIVE_ENTRY_POINT(void) V8Value_SetBigInt(V8Value* pV8Value, int32_t signBit, const uint8_t* pBytes, int32_t length) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetV8Object(V8Value* pV8Value, const V8ObjectHandle& handle, V8Value::Subtype subtype, V8Value::Flags flags) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetHostObject(V8Value* pV8Value, void* pvObject) noexcept;
-NATIVE_ENTRY_POINT(V8Value::Type) V8Value_Decode(const V8Value& value, int32_t& intValue, uint32_t& uintValue, double& doubleValue, const void*& pvData) noexcept;
+NATIVE_ENTRY_POINT(void) V8Value_Decode(const V8Value& value, V8Value::Decoded& decoded) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_Delete(V8Value* pV8Value) noexcept;
 
 NATIVE_ENTRY_POINT(void) V8CpuProfile_GetInfo(const v8::CpuProfile& profile, const V8EntityHandleBase& entityHandle, StdString& name, uint64_t& startTimestamp, uint64_t& endTimestamp, int32_t& sampleCount, const v8::CpuProfileNode*& pRootNode) noexcept;

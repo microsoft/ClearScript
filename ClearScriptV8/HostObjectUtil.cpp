@@ -47,7 +47,9 @@ public:
 
     virtual void SetProperty(void* pvObject, const StdString& name, const V8Value& value) override
     {
-        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(SetHostObjectNamedProperty, pvObject, name, value);
+        V8Value::Decoded decodedValue;
+        value.Decode(decodedValue);
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(SetHostObjectNamedProperty, pvObject, name, decodedValue);
     }
 
     virtual bool DeleteProperty(void* pvObject, const StdString& name) override
@@ -69,7 +71,9 @@ public:
 
     virtual void SetProperty(void* pvObject, int32_t index, const V8Value& value) override
     {
-        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(SetHostObjectIndexedProperty, pvObject, index, value);
+        V8Value::Decoded decodedValue;
+        value.Decode(decodedValue);
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(SetHostObjectIndexedProperty, pvObject, index, decodedValue);
     }
 
     virtual bool DeleteProperty(void* pvObject, int32_t index) override
@@ -85,14 +89,54 @@ public:
     virtual V8Value Invoke(void* pvObject, bool asConstructor, const std::vector<V8Value>& args) override
     {
         V8Value result(V8Value::Nonexistent);
-        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(InvokeHostObject, pvObject, asConstructor, args, result);
+
+        auto argCount = args.size();
+        if (argCount < 1)
+        {
+            V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(InvokeHostObject, pvObject, asConstructor, 0, nullptr, result);
+        }
+        else
+        {
+            auto pArgs = args.data();
+
+            auto upDecodedArgs = std::make_unique<V8Value::Decoded[]>(argCount);
+            auto pDecodedArgs = upDecodedArgs.get();
+
+            for (size_t index = 0; index < argCount; index++)
+            {
+                pArgs[index].Decode(pDecodedArgs[index]);
+            }
+
+            V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(InvokeHostObject, pvObject, asConstructor, static_cast<int32_t>(argCount), pDecodedArgs, result);
+        }
+
         return result;
     }
 
     virtual V8Value InvokeMethod(void* pvObject, const StdString& name, const std::vector<V8Value>& args) override
     {
         V8Value result(V8Value::Nonexistent);
-        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(InvokeHostObjectMethod, pvObject, name, args, result);
+
+        auto argCount = args.size();
+        if (argCount < 1)
+        {
+            V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(InvokeHostObjectMethod, pvObject, name, 0, nullptr, result);
+        }
+        else
+        {
+            auto pArgs = args.data();
+
+            auto upDecodedArgs = std::make_unique<V8Value::Decoded[]>(argCount);
+            auto pDecodedArgs = upDecodedArgs.get();
+
+            for (size_t index = 0; index < argCount; index++)
+            {
+                pArgs[index].Decode(pDecodedArgs[index]);
+            }
+
+            V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(InvokeHostObjectMethod, pvObject, name, static_cast<int32_t>(argCount), pDecodedArgs, result);
+        }
+
         return result;
     }
 

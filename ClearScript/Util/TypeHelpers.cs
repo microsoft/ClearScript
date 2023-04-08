@@ -485,7 +485,7 @@ namespace Microsoft.ClearScript.Util
             return type.InvokeMember(string.Empty, BindingFlags.CreateInstance | BindingFlags.Instance | (flags & ~BindingFlags.Static), null, null, args, CultureInfo.InvariantCulture);
         }
 
-        public static object CreateInstance(this Type type, IHostInvokeContext invokeContext, Type accessContext, ScriptAccess defaultAccess, object[] args, object[] bindArgs)
+        public static object CreateInstance(this Type type, IHostInvokeContext invokeContext, HostTarget target, object[] args, object[] bindArgs)
         {
             if (type.IsCOMObject || (type.IsValueType && (args.Length < 1)))
             {
@@ -493,19 +493,26 @@ namespace Microsoft.ClearScript.Util
             }
 
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-            var candidates = type.GetConstructors(flags).Where(testConstructor => testConstructor.IsAccessible(accessContext) && !testConstructor.IsBlockedFromScript(defaultAccess)).ToArray();
+
+            var signature = new BindSignature(invokeContext.AccessContext, flags, target, type.TypeHandle.Value.ToString(), ArrayHelpers.GetEmptyArray<Type>(), bindArgs);
+            if (invokeContext.Engine.TryGetCachedConstructorBindResult(signature, out var boundConstructor))
+            {
+                return InvokeHelpers.InvokeConstructor(invokeContext, boundConstructor, args);
+            }
+
+            var candidates = type.GetConstructors(flags).Where(testConstructor => testConstructor.IsAccessible(invokeContext.AccessContext) && !testConstructor.IsBlockedFromScript(invokeContext.DefaultAccess)).ToArray();
             if (candidates.Length < 1)
             {
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
             }
 
-            ConstructorInfo constructor = BindToMember(candidates, flags, args, bindArgs);
-
+            var constructor = BindToMember(candidates, flags, args, bindArgs);
             if (constructor == null)
             {
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
             }
 
+            invokeContext.Engine.CacheConstructorBindResult(signature, constructor);
             return InvokeHelpers.InvokeConstructor(invokeContext, constructor, args);
         }
 
@@ -1171,7 +1178,7 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class PropertySignatureComparer : IEqualityComparer<PropertyInfo>
         {
-            public static PropertySignatureComparer Instance { get; } = new PropertySignatureComparer();
+            public static readonly PropertySignatureComparer Instance = new PropertySignatureComparer();
 
             #region IEqualityComparer<PropertyInfo> implementation
 

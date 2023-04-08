@@ -5,8 +5,8 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class SpecialMemberNames
     {
-        public static string Default = MiscHelpers.GetDispIDName(SpecialDispIDs.Default);
-        public static string NewEnum = MiscHelpers.GetDispIDName(SpecialDispIDs.NewEnum);
-        public static string NewAsyncEnum = MiscHelpers.GetDispIDName(SpecialDispIDs.NewAsyncEnum);
+        public static readonly string Default = MiscHelpers.GetDispIDName(SpecialDispIDs.Default);
+        public static readonly string NewEnum = MiscHelpers.GetDispIDName(SpecialDispIDs.NewEnum);
+        public static readonly string NewAsyncEnum = MiscHelpers.GetDispIDName(SpecialDispIDs.NewAsyncEnum);
     }
 }
