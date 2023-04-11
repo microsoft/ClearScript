@@ -461,6 +461,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region method table implementation
 
+        [MonoPInvokeCallback]
         private static void ScheduleForwardingException(V8Value.Ptr pException)
         {
             Debug.Assert(ScheduledException == null);
@@ -480,12 +481,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void ScheduleInvalidOperationException(StdString.Ptr pMessage)
         {
             Debug.Assert(ScheduledException == null);
             ScheduledException = new InvalidOperationException(StdString.GetValue(pMessage));
         }
 
+        [MonoPInvokeCallback]
         private static void ScheduleScriptEngineException(StdString.Ptr pEngineName, StdString.Ptr pMessage, StdString.Ptr pStackTrace, bool isFatal, bool executionStarted, V8Value.Ptr pScriptException, V8Value.Ptr pInnerException)
         {
             Debug.Assert(ScheduledException == null);
@@ -494,6 +497,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             ScheduledException = new ScriptEngineException(StdString.GetValue(pEngineName), StdString.GetValue(pMessage), StdString.GetValue(pStackTrace), 0, isFatal, executionStarted, scriptException, innerException);
         }
 
+        [MonoPInvokeCallback]
         private static void ScheduleScriptInterruptedException(StdString.Ptr pEngineName, StdString.Ptr pMessage, StdString.Ptr pStackTrace, bool isFatal, bool executionStarted, V8Value.Ptr pScriptException, V8Value.Ptr pInnerException)
         {
             Debug.Assert(ScheduledException == null);
@@ -502,6 +506,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             ScheduledException = new ScriptInterruptedException(StdString.GetValue(pEngineName), StdString.GetValue(pMessage), StdString.GetValue(pStackTrace), 0, isFatal, executionStarted, scriptException, innerException);
         }
 
+        [MonoPInvokeCallback]
         private static void InvokeHostAction(IntPtr pAction)
         {
             try
@@ -514,6 +519,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void ProcessArrayBufferOrViewData(IntPtr pData, IntPtr pAction)
         {
             try
@@ -526,6 +532,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void ProcessCpuProfile(V8CpuProfile.Ptr pProfile, IntPtr pAction)
         {
             try
@@ -538,68 +545,82 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static IntPtr CreateV8ObjectCache()
         {
             return V8ProxyHelpers.AddRefHostObject(new Dictionary<object, IntPtr>());
         }
 
+        [MonoPInvokeCallback]
         private static void CacheV8Object(IntPtr pCache, IntPtr pObject, IntPtr pV8Object)
         {
             V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache).Add(V8ProxyHelpers.GetHostObject(pObject), pV8Object);
         }
 
+        [MonoPInvokeCallback]
         private static IntPtr GetCachedV8Object(IntPtr pCache, IntPtr pObject)
         {
             return V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache).TryGetValue(V8ProxyHelpers.GetHostObject(pObject), out IntPtr pV8Object) ? pV8Object : IntPtr.Zero;
         }
 
+        [MonoPInvokeCallback]
         private static void GetAllCachedV8Objects(IntPtr pCache, StdPtrArray.Ptr pV8ObjectPtrs)
         {
             var cache = V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache);
             StdPtrArray.CopyFromArray(pV8ObjectPtrs, cache.Values.ToArray());
         }
 
+        [MonoPInvokeCallback]
         private static bool RemoveV8ObjectCacheEntry(IntPtr pCache, IntPtr pObject)
         {
             return V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache).Remove(V8ProxyHelpers.GetHostObject(pObject));
         }
 
+        [MonoPInvokeCallback]
         private static IntPtr CreateDebugAgent(StdString.Ptr pName, StdString.Ptr pVersion, int port, bool remote, V8DebugCallback.Handle hCallback)
         {
             return V8ProxyHelpers.AddRefHostObject(new V8DebugAgent(StdString.GetValue(pName), StdString.GetValue(pVersion), port, remote, new V8DebugListenerImpl(hCallback)));
         }
 
+        [MonoPInvokeCallback]
         private static void SendDebugMessage(IntPtr pAgent, StdString.Ptr pContent)
         {
             V8ProxyHelpers.GetHostObject<V8DebugAgent>(pAgent).SendMessage(StdString.GetValue(pContent));
         }
 
+        [MonoPInvokeCallback]
         private static void DestroyDebugAgent(IntPtr pAgent)
         {
             V8ProxyHelpers.GetHostObject<V8DebugAgent>(pAgent).Dispose();
             V8ProxyHelpers.ReleaseHostObject(pAgent);
         }
 
+        [MonoPInvokeCallback]
         private static uint GetMaxScriptCacheSize()
         {
             return GetMaxCacheSizeForCategory(DocumentCategory.Script);
         }
 
+        [MonoPInvokeCallback]
         private static uint GetMaxModuleCacheSize()
         {
             return GetMaxCacheSizeForCategory(ModuleCategory.Standard);
         }
 
+        [MonoPInvokeCallback]
         private static IntPtr AddRefHostObject(IntPtr pObject)
         {
             return V8ProxyHelpers.AddRefHostObject(pObject);
         }
 
+        [MonoPInvokeCallback]
         private static void ReleaseHostObject(IntPtr pObject)
         {
             V8ProxyHelpers.ReleaseHostObject(pObject);
         }
 
+        
+        [MonoPInvokeCallback]
         private static Invocability GetHostObjectInvocability(IntPtr pObject)
         {
             try
@@ -613,6 +634,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void GetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue)
         {
             try
@@ -625,6 +647,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void GetHostObjectNamedPropertyWithCacheability(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue, out bool isCacheable)
         {
             try
@@ -638,6 +661,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void SetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Decoded.Ptr pValue)
         {
             try
@@ -650,6 +674,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static bool DeleteHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName)
         {
             try
@@ -663,6 +688,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void GetHostObjectPropertyNames(IntPtr pObject, StdStringArray.Ptr pNames)
         {
             string[] names;
@@ -679,6 +705,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             StdStringArray.CopyFromArray(pNames, names);
         }
 
+        [MonoPInvokeCallback]
         private static void GetHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.Ptr pValue)
         {
             try
@@ -691,6 +718,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void SetHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.Decoded.Ptr pValue)
         {
             try
@@ -703,6 +731,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static bool DeleteHostObjectIndexedProperty(IntPtr pObject, int index)
         {
             try
@@ -716,6 +745,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void GetHostObjectPropertyIndices(IntPtr pObject, StdInt32Array.Ptr pIndices)
         {
             int[] indices;
@@ -732,6 +762,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             StdInt32Array.CopyFromArray(pIndices, indices);
         }
 
+        [MonoPInvokeCallback]
         private static void InvokeHostObject(IntPtr pObject, bool asConstructor, int argCount, V8Value.Decoded.Ptr pArgs, V8Value.Ptr pResult)
         {
             try
@@ -744,6 +775,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void InvokeHostObjectMethod(IntPtr pObject, StdString.Ptr pName, int argCount, V8Value.Decoded.Ptr pArgs, V8Value.Ptr pResult)
         {
             try
@@ -756,6 +788,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void GetHostObjectEnumerator(IntPtr pObject, V8Value.Ptr pResult)
         {
             try
@@ -768,6 +801,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void GetHostObjectAsyncEnumerator(IntPtr pObject, V8Value.Ptr pResult)
         {
             try
@@ -780,27 +814,32 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void QueueNativeCallback(NativeCallback.Handle hCallback)
         {
             MiscHelpers.QueueNativeCallback(new NativeCallbackImpl(hCallback));
         }
 
+        [MonoPInvokeCallback]
         private static IntPtr CreateNativeCallbackTimer(int dueTime, int period, NativeCallback.Handle hCallback)
         {
             return V8ProxyHelpers.AddRefHostObject(new NativeCallbackTimer(dueTime, period, new NativeCallbackImpl(hCallback)));
         }
 
+        [MonoPInvokeCallback]
         private static bool ChangeNativeCallbackTimer(IntPtr pTimer, int dueTime, int period)
         {
             return V8ProxyHelpers.GetHostObject<NativeCallbackTimer>(pTimer).Change(dueTime, period);
         }
 
+        [MonoPInvokeCallback]
         private static void DestroyNativeCallbackTimer(IntPtr pTimer)
         {
             V8ProxyHelpers.GetHostObject<NativeCallbackTimer>(pTimer).Dispose();
             V8ProxyHelpers.ReleaseHostObject(pTimer);
         }
 
+        [MonoPInvokeCallback]
         private static void LoadModule(IntPtr pSourceDocumentInfo, StdString.Ptr pSpecifier, StdString.Ptr pResourceName, StdString.Ptr pSourceMapUrl, out ulong uniqueId, out bool isModule, StdString.Ptr pCode, out IntPtr pDocumentInfo, V8Value.Ptr pExports)
         {
             string code;
@@ -829,6 +868,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8Value.Set(pExports, exports);
         }
 
+        [MonoPInvokeCallback]
         private static void CreateModuleContext(IntPtr pDocumentInfo, StdStringArray.Ptr pNames, StdV8ValueArray.Ptr pValues)
         {
             IDictionary<string, object> context;
@@ -854,6 +894,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static void WriteBytesToStream(IntPtr pStream, IntPtr pBytes, int count)
         {
             try
@@ -868,6 +909,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [MonoPInvokeCallback]
         private static V8GlobalFlags GetGlobalFlags()
         {
             return V8Settings.GlobalFlags;
