@@ -337,11 +337,16 @@ namespace Microsoft.ClearScript.Util
 
         public static EventInfo GetScriptableEvent(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
+            var eventKey = TypesCache.GetMemberKey(type, name, bindFlags, accessContext, defaultAccess);
+            if (TypesCache.TryGetEvent(in eventKey, out var eventCachedResult))
+                return eventCachedResult.EventInfo;
+
             try
             {
                 var eventInfo = type.GetScriptableEventInternal(name, bindFlags, accessContext, defaultAccess);
                 if (eventInfo != null)
                 {
+                    TypesCache.SetEventValue(in eventKey, eventInfo);
                     return eventInfo;
                 }
             }
@@ -349,7 +354,9 @@ namespace Microsoft.ClearScript.Util
             {
             }
 
-            return type.GetScriptableEvents(bindFlags, accessContext, defaultAccess).FirstOrDefault(eventInfo => string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            var result = type.GetScriptableEvents(bindFlags, accessContext, defaultAccess).FirstOrDefault(eventInfo => string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            TypesCache.SetEventValue(in eventKey, result);
+            return result;
         }
 
         public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
@@ -419,6 +426,7 @@ namespace Microsoft.ClearScript.Util
             return type.GetScriptableProperties(bindFlags, accessContext, defaultAccess).Where(property => string.Equals(property.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
         }
 
+        // This path is cached
         public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
         {
             var candidates = type.GetProperty(name, bindFlags)?.ToEnumerable() ?? Enumerable.Empty<PropertyInfo>();
@@ -438,8 +446,13 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
+        // TODO Optimize
         public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] args, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
         {
+            var propertyKey = TypesCache.GetMemberKey(type, name, bindFlags, accessContext, defaultAccess);
+            if (TypesCache.TryGetProperty(in propertyKey, out var propertyCachedResult))
+                return propertyCachedResult.PropertyInfo;
+            
             if (bindArgs.Length < 1)
             {
                 try
@@ -447,6 +460,7 @@ namespace Microsoft.ClearScript.Util
                     var property = type.GetScriptableProperty(name, bindFlags, accessContext, defaultAccess);
                     if (property != null)
                     {
+                        TypesCache.SetPropertyValue(in propertyKey, property);
                         return property;
                     }
                 }
@@ -455,8 +469,11 @@ namespace Microsoft.ClearScript.Util
                 }
             }
 
+            // TODO Distinct + Array
             var candidates = type.GetScriptableProperties(name, bindFlags, accessContext, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
-            return BindToMember(candidates, bindFlags, args, bindArgs);
+            var result = BindToMember(candidates, bindFlags, args, bindArgs);
+            TypesCache.SetPropertyValue(in propertyKey, result);
+            return result;
         }
 
         public static PropertyInfo GetScriptableDefaultProperty(this Type type, BindingFlags bindFlags, object[] args, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)

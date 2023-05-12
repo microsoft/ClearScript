@@ -1200,6 +1200,7 @@ namespace Microsoft.ClearScript
             throw new InvalidOperationException("Invalid member invocation mode");
         }
 
+        // TODO the starting point for optimization
         private object InvokeHostMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out bool isCacheable)
         {
             isCacheable = false;
@@ -1270,6 +1271,7 @@ namespace Microsoft.ClearScript
                 throw new InvalidOperationException("Invalid constructor invocation");
             }
 
+            // TODO Optimization Start Point
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
                 if (name == SpecialMemberNames.Default)
@@ -1382,6 +1384,7 @@ namespace Microsoft.ClearScript
             throw new InvalidOperationException("Invalid member invocation mode");
         }
 
+        // TODO optimize 
         private object GetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, bool includeBoundMembers, out bool isCacheable)
         {
             isCacheable = false;
@@ -1816,6 +1819,9 @@ namespace Microsoft.ClearScript
         {
             if ((Target is HostObject) || (Target is IHostVariable) || (Target is IByRefArg))
             {
+                if (Target.InvokeTarget is IScriptableEnumerator scriptableEnumerator)
+                    return scriptableEnumerator;
+                
                 if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IEnumerable<>), out var typeArgs))
                 {
                     var helpersHostItem = Wrap(Engine, typeof(ScriptableEnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);

@@ -4,6 +4,7 @@
         <TargetFrameworks>netstandard2.1</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <LangVersion>10</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -118,6 +119,9 @@
         <Compile Include="..\..\ClearScript\StringDocument.cs" Link="StringDocument.cs" />
         <Compile Include="..\..\ClearScript\Undefined.cs" Link="Undefined.cs" />
         <Compile Include="..\..\ClearScript\UniqueDocumentInfo.cs" Link="UniqueDocumentInfo.cs" />
+        <Compile Include="..\..\ClearScript\Util\TypesCache.cs">
+          <Link>Util\TypesCache.cs</Link>
+        </Compile>
         <Compile Include="..\..\ClearScript\ValueRef.cs" Link="ValueRef.cs" />
         <Compile Include="..\..\ClearScript\Util\ArrayHelpers.cs" Link="Util\ArrayHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.cs" Link="Util\AssemblyHelpers.cs" />
