@@ -414,6 +414,44 @@ template <typename T>
 using Persistent = V8FastPersistent<T>;
 
 //-----------------------------------------------------------------------------
+// V8 host scope
+//-----------------------------------------------------------------------------
+
+class V8RwxHostScope final
+{
+    PROHIBIT_COPY(V8RwxHostScope)
+    PROHIBIT_HEAP(V8RwxHostScope)
+
+public:
+
+    V8RwxHostScope():
+        m_CodeSpaceWriteNestingLevel(v8::V8::EnterRwxHostScope())
+    {
+    }
+
+    ~V8RwxHostScope()
+    {
+        v8::V8::ExitRwxHostScope(m_CodeSpaceWriteNestingLevel);
+    }
+
+private:
+
+    int m_CodeSpaceWriteNestingLevel;
+};
+
+//-----------------------------------------------------------------------------
+
+#define BEGIN_V8_RWX_HOST_SCOPE \
+    { \
+        DISABLE_WARNING(4456) /* declaration hides previous local declaration */ \
+        V8RwxHostScope t_HostScope; \
+        DEFAULT_WARNING(4456)
+
+#define END_V8_RWX_HOST_SCOPE \
+        IGNORE_UNUSED(t_HostScope); \
+    }
+
+//-----------------------------------------------------------------------------
 // helper functions
 //-----------------------------------------------------------------------------
 

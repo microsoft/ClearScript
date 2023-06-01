@@ -201,17 +201,23 @@ public:
 
     virtual void QueueNativeCallback(NativeCallback&& callback) override
     {
+        BEGIN_V8_RWX_HOST_SCOPE
         V8_SPLIT_PROXY_MANAGED_INVOKE_VOID_NOTHROW(QueueNativeCallback, new NativeCallbackHandle(new NativeCallback(std::move(callback))));
+        END_V8_RWX_HOST_SCOPE
     }
 
     virtual void* CreateNativeCallbackTimer(int32_t dueTime, int32_t period, NativeCallback&& callback) override
     {
+        BEGIN_V8_RWX_HOST_SCOPE
         return V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(void*, CreateNativeCallbackTimer, dueTime, period, new NativeCallbackHandle(new NativeCallback(std::move(callback))));
+        END_V8_RWX_HOST_SCOPE
     }
 
     virtual bool ChangeNativeCallbackTimer(void* pvTimer, int32_t dueTime, int32_t period) override
     {
+        BEGIN_V8_RWX_HOST_SCOPE
         return V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(StdBool, ChangeNativeCallbackTimer, pvTimer, dueTime, period);
+        END_V8_RWX_HOST_SCOPE
     }
 
     virtual void DestroyNativeCallbackTimer(void* pvTimer) override

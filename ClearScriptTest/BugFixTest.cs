@@ -1178,8 +1178,11 @@ namespace Microsoft.ClearScript.Test
         {
             using (var runtime = new V8Runtime())
             {
-                using (runtime.CreateScriptEngine())
+                for (var i = 0; i < 5; i++)
                 {
+                    using (runtime.CreateScriptEngine())
+                    {
+                    }
                 }
 
                 runtime.CollectGarbage(true);
@@ -1750,6 +1753,50 @@ namespace Microsoft.ClearScript.Test
             engine.Execute("Array.from(test.Values)");
         }
 
+    #if NET6_0_OR_GREATER
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_StructConstructors()
+        {
+            engine.AddHostType(typeof(StructConstructorTest));
+            Assert.AreEqual(123, engine.Evaluate("new StructConstructorTest().Value"));
+            Assert.AreEqual(789, engine.Evaluate("new StructConstructorTest(789).Value"));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
+            engine.AddHostType(typeof(StructConstructorTest));
+
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new StructConstructorTestCustomAttributeLoader();
+                Assert.AreEqual(456, engine.Evaluate("new StructConstructorTest().Value"));
+                Assert.AreEqual(789, engine.Evaluate("new StructConstructorTest(789).Value"));
+            }
+        }
+
+    #else // !NET6_0_OR_GREATER
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_StructConstructors()
+        {
+            engine.AddHostType(typeof(StructConstructorTest));
+            Assert.AreEqual(0, engine.Evaluate("new StructConstructorTest().Value"));
+            Assert.AreEqual(789, engine.Evaluate("new StructConstructorTest(789).Value"));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging);
+            engine.AddHostType(typeof(StructConstructorTest));
+
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new StructConstructorTestCustomAttributeLoader();
+                Assert.AreEqual(0, engine.Evaluate("new StructConstructorTest().Value"));
+                Assert.AreEqual(789, engine.Evaluate("new StructConstructorTest(789).Value"));
+            }
+        }
+
+    #endif // !NET6_0_OR_GREATER
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -1918,8 +1965,8 @@ namespace Microsoft.ClearScript.Test
 
             public int PrivateGetter
             {
-                private get { return dummy; }
-                set { dummy = value; }
+                private get => dummy;
+                set => dummy = value;
             }
 
             public int NoSetter => dummy;
@@ -1946,8 +1993,8 @@ namespace Microsoft.ClearScript.Test
 
             public static int PrivateGetter
             {
-                private get { return dummy; }
-                set { dummy = value; }
+                private get => dummy;
+                set => dummy = value;
             }
 
             public static int NoSetter => dummy;
@@ -2248,6 +2295,50 @@ namespace Microsoft.ClearScript.Test
                 GC.Collect();
 
                 // ReSharper restore UnusedVariable
+            }
+        }
+
+    #if NET6_0_OR_GREATER
+
+        public struct StructConstructorTest
+        {
+            public int Value { get; }
+
+            public StructConstructorTest()
+            {
+                Value = 123;
+            }
+
+            public StructConstructorTest(int value = 456)
+            {
+                Value = value;
+            }
+        }
+
+    #else // !NET6_0_OR_GREATER
+
+        public struct StructConstructorTest
+        {
+            public int Value { get; }
+
+            public StructConstructorTest(int value = 456)
+            {
+                Value = value;
+            }
+        }
+
+    #endif // !NET6_0_OR_GREATER
+
+        private class StructConstructorTestCustomAttributeLoader : CustomAttributeLoader
+        {
+            public override T[] LoadCustomAttributes<T>(ICustomAttributeProvider resource, bool inherit)
+            {
+                if ((resource is ConstructorInfo constructor) && (constructor.DeclaringType == typeof(StructConstructorTest)) && (constructor.GetParameters().Length < 1) && (typeof(T) == typeof(ScriptUsageAttribute)))
+                {
+                    return new[] { new ScriptUsageAttribute(ScriptAccess.None) } as T[];
+                }
+
+                return base.LoadCustomAttributes<T>(resource, inherit);
             }
         }
 

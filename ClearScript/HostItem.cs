@@ -1408,6 +1408,30 @@ namespace Microsoft.ClearScript
                     return GetHostProperty(signature, defaultProperty, invokeFlags, args);
                 }
 
+                if (Target.Type.IsArray && (Target.Type.GetArrayRank() == args.Length))
+                {
+                    // special case to enable VBScript "x(a, b, ...)" syntax when x is a multidimensional array
+
+                    var indices = new long[args.Length];
+                    var failed = false;
+
+                    for (var position = 0; position < args.Length; position++)
+                    {
+                        if (!MiscHelpers.TryGetNumericIndex(args[position], out long index))
+                        {
+                            failed = true;
+                            break;
+                        }
+
+                        indices[position] = index;
+                    }
+
+                    if (!failed)
+                    {
+                        return ((Array)Target.InvokeTarget).GetValue(indices);
+                    }
+                }
+
                 if (TargetDynamicMetaObject != null)
                 {
                     if (TargetDynamicMetaObject.TryGetIndex(args, out var result))
@@ -1639,6 +1663,32 @@ namespace Microsoft.ClearScript
                 if (args.Length < 2)
                 {
                     throw new InvalidOperationException("Invalid argument count");
+                }
+
+                if (Target.Type.IsArray && (Target.Type.GetArrayRank() == (args.Length - 1)))
+                {
+                    // special case to enable VBScript "x(a, b, ...) = value" syntax when x is a multidimensional array
+
+                    var indices = new long[args.Length - 1];
+                    var failed = false;
+
+                    for (var position = 0; position < (args.Length - 1); position++)
+                    {
+                        if (!MiscHelpers.TryGetNumericIndex(args[position], out long index))
+                        {
+                            failed = true;
+                            break;
+                        }
+
+                        indices[position] = index;
+                    }
+
+                    if (!failed)
+                    {
+                        var value = args[args.Length - 1];
+                        ((Array)Target.InvokeTarget).SetValue(value, indices);
+                        return value;
+                    }
                 }
 
                 if (TargetDynamicMetaObject != null)

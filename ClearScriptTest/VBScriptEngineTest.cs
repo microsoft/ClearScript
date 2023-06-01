@@ -2258,6 +2258,9 @@ namespace Microsoft.ClearScript.Test
             var status = 0;
             string data = null;
 
+            var checkpoint = new ManualResetEventSlim();
+            Dispatcher dispatcher = null;
+
             var thread = new Thread(() =>
             {
                 using (var testEngine = new VBScriptEngine(WindowsScriptEngineFlags.EnableDebugging))
@@ -2265,6 +2268,9 @@ namespace Microsoft.ClearScript.Test
                     using (var helperEngine = new JScriptEngine(WindowsScriptEngineFlags.EnableStandardsMode))
                     {
                         // ReSharper disable AccessToDisposedClosure
+
+                        dispatcher = Dispatcher.CurrentDispatcher;
+                        checkpoint.Set();
 
                         testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
                         {
@@ -2277,18 +2283,18 @@ namespace Microsoft.ClearScript.Test
                             helperEngine.Script.JSON.parse(responseText).data
                         );
 
-                        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                        dispatcher.BeginInvoke(new Action(() =>
                         {
                             testEngine.AddCOMType("XMLHttpRequest", "MSXML2.XMLHTTP");
                             testEngine.Script.host = new HostFunctions();
-                            testEngine.Execute(@"
+                            testEngine.Execute($@"
                                 sub onreadystatechange
                                     if xhr.readyState = 4 then
                                         call onComplete(xhr.status, getData(xhr.responseText))
                                     end if
                                 end sub
                                 xhr = host.newObj(XMLHttpRequest)
-                                call xhr.open(""POST"", ""http://httpbin.org/post"", true)
+                                call xhr.open(""POST"", ""{HttpBinUrl}/post"", true)
                                 xhr.onreadystatechange = GetRef(""onreadystatechange"")
                                 call xhr.send(""Hello, world!"")
                             ");
@@ -2303,9 +2309,12 @@ namespace Microsoft.ClearScript.Test
 
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
+            checkpoint.Wait();
 
-            if (!thread.Join(TimeSpan.FromSeconds(5)))
+            if (!thread.Join(TimeSpan.FromSeconds(10)))
             {
+                dispatcher.Invoke(Dispatcher.ExitAllFrames);
+                thread.Join();
                 Assert.Inconclusive("The Httpbin service request timed out");
             }
 

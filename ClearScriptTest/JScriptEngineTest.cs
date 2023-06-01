@@ -2067,10 +2067,16 @@ namespace Microsoft.ClearScript.Test
             var status = 0;
             string data = null;
 
+            var checkpoint = new ManualResetEventSlim();
+            Dispatcher dispatcher = null;
+
             var thread = new Thread(() =>
             {
                 using (var testEngine = new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging | WindowsScriptEngineFlags.EnableStandardsMode))
                 {
+                    dispatcher = Dispatcher.CurrentDispatcher;
+                    checkpoint.Set();
+
                     testEngine.Script.onComplete = new Action<int, string>((xhrStatus, xhrData) =>
                     {
                         status = xhrStatus;
@@ -2078,19 +2084,19 @@ namespace Microsoft.ClearScript.Test
                         Dispatcher.ExitAllFrames();
                     });
 
-                    Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                    dispatcher.BeginInvoke(new Action(() =>
                     {
                         // ReSharper disable AccessToDisposedClosure
 
                         testEngine.AddCOMType("XMLHttpRequest", "MSXML2.XMLHTTP");
-                        testEngine.Execute(@"
+                        testEngine.Execute($@"
                             xhr = new XMLHttpRequest();
-                            xhr.open('POST', 'http://httpbin.org/post', true);
-                            xhr.onreadystatechange = function () {
-                                if (xhr.readyState == 4) {
+                            xhr.open('POST', '{HttpBinUrl}/post', true);
+                            xhr.onreadystatechange = function () {{
+                                if (xhr.readyState == 4) {{
                                     onComplete(xhr.status, JSON.parse(xhr.responseText).data);
-                                }
-                            };
+                                }}
+                            }};
                             xhr.send('Hello, world!');
                         ");
 
@@ -2103,9 +2109,12 @@ namespace Microsoft.ClearScript.Test
 
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
+            checkpoint.Wait();
 
-            if (!thread.Join(TimeSpan.FromSeconds(5)))
+            if (!thread.Join(TimeSpan.FromSeconds(10)))
             {
+                dispatcher.Invoke(Dispatcher.ExitAllFrames);
+                thread.Join();
                 Assert.Inconclusive("The Httpbin service request timed out");
             }
 
