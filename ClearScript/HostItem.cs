@@ -122,7 +122,7 @@ namespace Microsoft.ClearScript
             {
                 if (TargetInvocability == null)
                 {
-                    TargetInvocability = Target.GetInvocability(GetCommonBindFlags(), AccessContext, DefaultAccess, Flags.HasFlag(HostItemFlags.HideDynamicMembers));
+                    TargetInvocability = Target.GetInvocability(GetCommonBindFlags(), AccessContext, DefaultAccess, Flags.HasFlagNonAlloc(HostItemFlags.HideDynamicMembers));
                 }
 
                 return TargetInvocability.GetValueOrDefault();
@@ -173,13 +173,13 @@ namespace Microsoft.ClearScript
             if (!bypassTunneling)
             {
                 int testLength;
-                if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+                if (invokeFlags.HasFlagNonAlloc(BindingFlags.InvokeMethod))
                 {
-                    testLength = invokeFlags.HasFlag(BindingFlags.GetField) ? 0 : -1;
+                    testLength = invokeFlags.HasFlagNonAlloc(BindingFlags.GetField) ? 0 : -1;
                 }
                 else
                 {
-                    testLength = invokeFlags.HasFlag(BindingFlags.SetField) ? 1 : 0;
+                    testLength = invokeFlags.HasFlagNonAlloc(BindingFlags.SetField) ? 1 : 0;
                 }
 
                 if ((args.Length > testLength) && (name != SpecialMemberNames.Default))
@@ -362,7 +362,7 @@ namespace Microsoft.ClearScript
             set => targetMemberData.TargetInvocability = value;
         }
 
-        private Type CurrentAccessContext => (Flags.HasFlag(HostItemFlags.PrivateAccess) || (Target.Type.IsAnonymous() && !Engine.EnforceAnonymousTypeAccess)) ? Target.Type : Engine.AccessContext;
+        private Type CurrentAccessContext => (Flags.HasFlagNonAlloc(HostItemFlags.PrivateAccess) || (Target.Type.IsAnonymous() && !Engine.EnforceAnonymousTypeAccess)) ? Target.Type : Engine.AccessContext;
 
         private ScriptAccess CurrentDefaultAccess => Engine.DefaultAccess;
 
@@ -424,7 +424,7 @@ namespace Microsoft.ClearScript
                 return true;
             }
 
-            if (!flags.HasFlag(HostItemFlags.HideDynamicMembers) && typeof(IDynamicMetaObjectProvider).IsAssignableFrom(target.Type))
+            if (!flags.HasFlagNonAlloc(HostItemFlags.HideDynamicMembers) && typeof(IDynamicMetaObjectProvider).IsAssignableFrom(target.Type))
             {
                 return true;
             }
@@ -444,7 +444,7 @@ namespace Microsoft.ClearScript
 
         private static object BindOrCreate(ScriptEngine engine, HostTarget target, HostItemFlags flags)
         {
-            return engine.GetOrCreateHostItem(target, flags, Create);
+            return engine.GetOrCreateHostItem(target, flags, createCached);
         }
 
         private void BindSpecialTarget()
@@ -464,7 +464,7 @@ namespace Microsoft.ClearScript
                 }
                 else
                 {
-                    if (!Flags.HasFlag(HostItemFlags.HideDynamicMembers) && BindSpecialTarget(out IDynamicMetaObjectProvider dynamicMetaObjectProvider))
+                    if (!Flags.HasFlagNonAlloc(HostItemFlags.HideDynamicMembers) && BindSpecialTarget(out IDynamicMetaObjectProvider dynamicMetaObjectProvider))
                     {
                         var dynamicMetaObject = dynamicMetaObjectProvider.GetMetaObject(Expression.Constant(Target.InvokeTarget));
                         TargetDynamicMetaObject = new DynamicHostMetaObject(dynamicMetaObjectProvider, dynamicMetaObject);
@@ -671,7 +671,7 @@ namespace Microsoft.ClearScript
             if ((TargetDynamic == null) && (TargetPropertyBag == null))
             {
                 names = names.Concat(GetLocalMethodNames());
-                if (TargetFlags.HasFlag(HostTargetFlags.AllowExtensionMethods))
+                if (TargetFlags.HasFlagNonAlloc(HostTargetFlags.AllowExtensionMethods))
                 {
                     var extensionMethodSummary = Engine.ExtensionMethodSummary;
                     ExtensionMethodSummary = extensionMethodSummary;
@@ -749,7 +749,7 @@ namespace Microsoft.ClearScript
         private void UpdateMethodNames(out bool updated)
         {
             if ((AllMethodNames == null) ||
-                (TargetFlags.HasFlag(HostTargetFlags.AllowExtensionMethods) && (ExtensionMethodSummary != Engine.ExtensionMethodSummary)))
+                (TargetFlags.HasFlagNonAlloc(HostTargetFlags.AllowExtensionMethods) && (ExtensionMethodSummary != Engine.ExtensionMethodSummary)))
             {
                 AllMethodNames = GetAllMethodNames(out var ownMethodNames);
                 OwnMethodNames = ownMethodNames;
@@ -827,12 +827,12 @@ namespace Microsoft.ClearScript
         {
             var bindFlags = BindingFlags.Public | BindingFlags.NonPublic;
 
-            if (TargetFlags.HasFlag(HostTargetFlags.AllowStaticMembers))
+            if (TargetFlags.HasFlagNonAlloc(HostTargetFlags.AllowStaticMembers))
             {
                 bindFlags |= BindingFlags.Static | BindingFlags.FlattenHierarchy;
             }
 
-            if (TargetFlags.HasFlag(HostTargetFlags.AllowInstanceMembers))
+            if (TargetFlags.HasFlagNonAlloc(HostTargetFlags.AllowInstanceMembers))
             {
                 bindFlags |= BindingFlags.Instance;
             }
@@ -874,7 +874,7 @@ namespace Microsoft.ClearScript
             invokeFlags |= onFlags;
             invokeFlags &= ~offFlags;
 
-            if (TargetFlags.HasFlag(HostTargetFlags.AllowStaticMembers))
+            if (TargetFlags.HasFlagNonAlloc(HostTargetFlags.AllowStaticMembers))
             {
                 invokeFlags |= BindingFlags.Static | BindingFlags.FlattenHierarchy;
             }
@@ -883,7 +883,7 @@ namespace Microsoft.ClearScript
                 invokeFlags &= ~BindingFlags.Static;
             }
 
-            if (TargetFlags.HasFlag(HostTargetFlags.AllowInstanceMembers))
+            if (TargetFlags.HasFlagNonAlloc(HostTargetFlags.AllowInstanceMembers))
             {
                 invokeFlags |= BindingFlags.Instance;
             }
@@ -901,7 +901,7 @@ namespace Microsoft.ClearScript
                 invokeFlags &= ~BindingFlags.IgnoreCase;
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.GetProperty))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetProperty))
             {
                 invokeFlags |= BindingFlags.GetField;
             }
@@ -932,7 +932,7 @@ namespace Microsoft.ClearScript
                 }
 
                 var bindArgs = args;
-                if ((args.Length > 0) && (invokeFlags.HasFlag(BindingFlags.InvokeMethod) || invokeFlags.HasFlag(BindingFlags.CreateInstance)))
+                if ((args.Length > 0) && (invokeFlags.HasFlagNonAlloc(BindingFlags.InvokeMethod) || invokeFlags.HasFlagNonAlloc(BindingFlags.CreateInstance)))
                 {
                     bindArgs = Engine.MarshalToHost(wrappedArgs, true);
                     if (argOffset > 0)
@@ -964,7 +964,7 @@ namespace Microsoft.ClearScript
 
         private object InvokeDynamicMember(string name, BindingFlags invokeFlags, object[] args)
         {
-            if (invokeFlags.HasFlag(BindingFlags.CreateInstance))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.CreateInstance))
             {
                 if (name == SpecialMemberNames.Default)
                 {
@@ -974,7 +974,7 @@ namespace Microsoft.ClearScript
                 throw new InvalidOperationException("Invalid constructor invocation");
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.InvokeMethod))
             {
                 if (name == SpecialMemberNames.Default)
                 {
@@ -984,7 +984,7 @@ namespace Microsoft.ClearScript
                     }
                     catch
                     {
-                        if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
+                        if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField) && (args.Length < 1))
                         {
                             return Target;
                         }
@@ -999,7 +999,7 @@ namespace Microsoft.ClearScript
                 }
                 catch
                 {
-                    if (invokeFlags.HasFlag(BindingFlags.GetField))
+                    if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
                     {
                         return TargetDynamic.GetProperty(name, args);
                     }
@@ -1008,12 +1008,12 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.GetField))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
             {
                 return TargetDynamic.GetProperty(name, args);
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.SetField))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.SetField))
             {
                 if (args.Length > 0)
                 {
@@ -1029,13 +1029,13 @@ namespace Microsoft.ClearScript
 
         private object InvokePropertyBagMember(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs)
         {
-            if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.InvokeMethod))
             {
                 object value;
 
                 if (name == SpecialMemberNames.Default)
                 {
-                    if (invokeFlags.HasFlag(BindingFlags.GetField))
+                    if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
                     {
                         if (args.Length < 1)
                         {
@@ -1071,7 +1071,7 @@ namespace Microsoft.ClearScript
                     return result;
                 }
 
-                if (invokeFlags.HasFlag(BindingFlags.GetField))
+                if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
                 {
                     if (args.Length < 1)
                     {
@@ -1092,7 +1092,7 @@ namespace Microsoft.ClearScript
                 throw new NotSupportedException("The object does not support the requested invocation operation");
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.GetField))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
             {
                 if (name == SpecialMemberNames.Default)
                 {
@@ -1122,7 +1122,7 @@ namespace Microsoft.ClearScript
                 throw new InvalidOperationException("Invalid argument count");
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.SetField))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.SetField))
             {
                 if (name == SpecialMemberNames.Default)
                 {
@@ -1162,14 +1162,14 @@ namespace Microsoft.ClearScript
 
         private object InvokeListElement(int index, BindingFlags invokeFlags, object[] args, object[] bindArgs)
         {
-            if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.InvokeMethod))
             {
                 if (InvokeHelpers.TryInvokeObject(this, TargetList[index], invokeFlags, args, bindArgs, true, out var result))
                 {
                     return result;
                 }
 
-                if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
+                if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField) && (args.Length < 1))
                 {
                     return TargetList[index];
                 }
@@ -1177,7 +1177,7 @@ namespace Microsoft.ClearScript
                 throw new NotSupportedException("The object does not support the requested invocation operation");
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.GetField))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
             {
                 if (args.Length < 1)
                 {
@@ -1187,7 +1187,7 @@ namespace Microsoft.ClearScript
                 throw new InvalidOperationException("Invalid argument count");
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.SetField))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.SetField))
             {
                 if (args.Length == 1)
                 {
@@ -1206,7 +1206,7 @@ namespace Microsoft.ClearScript
             isCacheable = false;
             object result;
 
-            if (invokeFlags.HasFlag(BindingFlags.CreateInstance))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.CreateInstance))
             {
                 if (name == SpecialMemberNames.Default)
                 {
@@ -1272,7 +1272,7 @@ namespace Microsoft.ClearScript
             }
 
             // TODO Optimization Start Point
-            if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.InvokeMethod))
             {
                 if (name == SpecialMemberNames.Default)
                 {
@@ -1281,7 +1281,7 @@ namespace Microsoft.ClearScript
                         return result;
                     }
 
-                    if (invokeFlags.HasFlag(BindingFlags.GetField))
+                    if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
                     {
                         result = GetHostProperty(name, invokeFlags, args, bindArgs, true, out isCacheable);
                         if (!(result is Nonexistent))
@@ -1315,7 +1315,7 @@ namespace Microsoft.ClearScript
                     return CreateAsyncEnumerator();
                 }
 
-                if ((TargetDynamicMetaObject != null) && TargetDynamicMetaObject.HasMember(name, invokeFlags.HasFlag(BindingFlags.IgnoreCase)))
+                if ((TargetDynamicMetaObject != null) && TargetDynamicMetaObject.HasMember(name, invokeFlags.HasFlagNonAlloc(BindingFlags.IgnoreCase)))
                 {
                     if (TargetDynamicMetaObject.TryInvokeMember(this, name, invokeFlags, args, out result))
                     {
@@ -1323,8 +1323,10 @@ namespace Microsoft.ClearScript
                     }
                 }
 
-                if (ThisReflect.GetMethods(GetMethodBindFlags()).Any(method => string.Equals(method.Name, name, MemberNameComparison)))
+                // TODO Optimize allocations in GetMethods
+                foreach (var method in ThisReflect.GetMethods(GetMethodBindFlags()))
                 {
+                    if (!string.Equals(method.Name, name, MemberNameComparison)) continue;
                     // The target appears to have a method with the right name, but it could be an
                     // extension method that fails to bind. If that happens, we should attempt the
                     // fallback but throw the original exception if the fallback fails as well.
@@ -1343,11 +1345,10 @@ namespace Microsoft.ClearScript
 
                         try
                         {
-                            if (invokeFlags.HasFlag(BindingFlags.GetField))
+                            if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
                             {
                                 return GetHostProperty(name, invokeFlags, args, bindArgs, true, out isCacheable);
                             }
-
                         }
                         catch (TargetInvocationException)
                         {
@@ -1356,14 +1357,14 @@ namespace Microsoft.ClearScript
                         catch
                         {
                         }
-                        
+
                         throw;
 
                         // ReSharper restore EmptyGeneralCatchClause
                     }
                 }
 
-                if (invokeFlags.HasFlag(BindingFlags.GetField))
+                if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
                 {
                     return GetHostProperty(name, invokeFlags, args, bindArgs, true, out isCacheable);
                 }
@@ -1371,12 +1372,12 @@ namespace Microsoft.ClearScript
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("The object has no suitable method named '{0}'", name));
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.GetField))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.GetField))
             {
                 return GetHostProperty(name, invokeFlags, args, bindArgs, true, out isCacheable);
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.SetField))
+            if (invokeFlags.HasFlagNonAlloc(BindingFlags.SetField))
             {
                 return SetHostProperty(name, invokeFlags, args, bindArgs);
             }
@@ -1437,7 +1438,7 @@ namespace Microsoft.ClearScript
                 int index;
                 object result;
 
-                if (TargetDynamicMetaObject.HasMember(name, invokeFlags.HasFlag(BindingFlags.IgnoreCase)))
+                if (TargetDynamicMetaObject.HasMember(name, invokeFlags.HasFlagNonAlloc(BindingFlags.IgnoreCase)))
                 {
                     if (TargetDynamicMetaObject.TryGetMember(name, out result))
                     {
@@ -1561,7 +1562,7 @@ namespace Microsoft.ClearScript
                 Engine.CheckReflection();
             }
 
-            if ((property.GetIndexParameters().Length > 0) && (args.Length < 1) && !invokeFlags.HasFlag(BindingFlags.SuppressChangeType))
+            if ((property.GetIndexParameters().Length > 0) && (args.Length < 1) && !invokeFlags.HasFlagNonAlloc(BindingFlags.SuppressChangeType))
             {
                 if (HostIndexedPropertyMap == null)
                 {
