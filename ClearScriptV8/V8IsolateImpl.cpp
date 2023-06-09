@@ -25,18 +25,6 @@ public:
     virtual double CurrentClockTimeMillis() override;
     virtual v8::TracingController* GetTracingController() override;
 
-#if defined(__APPLE__) && defined(__arm64__)
-
-    // WORKAROUND: V8 on Apple Silicon crashes frequently without this override; it's unclear
-    // whether it retains correct behavior.
-
-    virtual std::unique_ptr<v8::JobHandle> PostJob(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask) override
-    {
-        return CreateJob(priority, std::move(upJobTask));
-    }
-
-#endif // defined(__APPLE__) && defined(__arm64__)
-
 private:
 
     V8Platform();
@@ -72,6 +60,7 @@ void V8Platform::EnsureInitialized()
 
         m_GlobalFlags = V8_SPLIT_PROXY_MANAGED_INVOKE_NOTHROW(V8GlobalFlags, GetGlobalFlags);
         std::vector<std::string> flagStrings;
+        flagStrings.push_back("--expose_gc");
 
     #ifdef CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
 
@@ -81,21 +70,6 @@ void V8Platform::EnsureInitialized()
         }
 
     #endif // CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
-
-    #if defined(__APPLE__) && defined(__arm64__)
-
-        // WORKAROUND: On Apple M1 only, our lone WebAssembly test crashes consistently unless this
-        // option is disabled. The crash is indicative of corruption within the SplitProxyManaged
-        // pointer table or of its address in thread-local storage.
-
-        // UPDATE: The crash is probably not due to method table corruption but V8's use of
-        // pthread_jit_write_protect_np in its WebAssembly code. If the thread's JIT protection
-        // state is writable (vs. executable) when V8 calls the embedder, any attempt to invoke
-        // managed code will trigger a bus error.
-
-        flagStrings.push_back("--no_wasm_async_compilation");
-
-    #endif // defined(__APPLE__) && defined(__arm64__)
 
         if (HasFlag(m_GlobalFlags, V8GlobalFlags::DisableJITCompilation))
         {
@@ -876,11 +850,12 @@ void V8IsolateImpl::CollectGarbage(bool exhaustive)
         if (exhaustive)
         {
             ClearScriptCache();
-            LowMemoryNotification();
+            ClearCachesForTesting();
+            RequestGarbageCollectionForTesting(v8::Isolate::kFullGarbageCollection);
         }
         else
         {
-            while (!IdleNotificationDeadline(V8Platform::GetInstance().MonotonicallyIncreasingTime() + 0.1));
+            RequestGarbageCollectionForTesting(v8::Isolate::kMinorGarbageCollection);
         }
 
     END_ISOLATE_SCOPE
@@ -1987,7 +1962,8 @@ void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, b
         if (heapStatistics.total_heap_size() > maxHeapSize)
         {
             // yes; collect garbage
-            LowMemoryNotification();
+            ClearCachesForTesting();
+            RequestGarbageCollectionForTesting(v8::Isolate::kFullGarbageCollection);
 
             // is the total heap size still over the limit?
             GetHeapStatistics(heapStatistics);

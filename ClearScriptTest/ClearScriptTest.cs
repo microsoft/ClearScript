@@ -39,5 +39,7 @@ namespace Microsoft.ClearScript.Test
         }
 
         protected bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework", StringComparison.Ordinal);
+
+        protected string HttpBinUrl => "http://localhost:9339";
     }
 }
