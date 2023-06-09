@@ -1,8 +1,16 @@
 diff --git a/BUILD.gn b/BUILD.gn
-index 277f47717d..9589c54e60 100644
+index 5cda664fdd..dcb2cb8c7b 100644
 --- a/BUILD.gn
 +++ b/BUILD.gn
-@@ -1121,7 +1121,7 @@ config("toolchain") {
+@@ -8,7 +8,6 @@ import("//build/config/coverage/coverage.gni")
+ import("//build/config/dcheck_always_on.gni")
+ import("//build/config/host_byteorder.gni")
+ import("//build/config/mips.gni")
+-import("//build/config/riscv.gni")
+ import("//build/config/sanitizers/sanitizers.gni")
+ import("//build_overrides/build.gni")
+ 
+@@ -1167,7 +1166,7 @@ config("toolchain") {
    visibility = [ "./*" ]
  
    defines = []
@@ -25,7 +33,7 @@ index 9ec60c04f9..a5c268db93 100644
   * The same as NewDefaultPlatform but disables the worker thread pool.
   * It must be used with the --single-threaded V8 flag.
 diff --git a/include/v8-initialization.h b/include/v8-initialization.h
-index d3e35d6ec5..2d2fb458fe 100644
+index d3e35d6ec5..56b3faaa79 100644
 --- a/include/v8-initialization.h
 +++ b/include/v8-initialization.h
 @@ -136,6 +136,7 @@ class V8_EXPORT V8 {
@@ -36,11 +44,21 @@ index d3e35d6ec5..2d2fb458fe 100644
  
    /**
     * Initialize the ICU library bundled with V8. The embedder should only
+@@ -264,6 +265,9 @@ class V8_EXPORT V8 {
+    */
+   static void GetSharedMemoryStatistics(SharedMemoryStatistics* statistics);
+ 
++  static int EnterRwxHostScope();
++  static void ExitRwxHostScope(int code_space_write_nesting_level);
++
+  private:
+   V8();
+ 
 diff --git a/include/v8-platform.h b/include/v8-platform.h
-index 750131d4c9..c390d801ed 100644
+index e34a8db6d8..1c1b2aa9a6 100644
 --- a/include/v8-platform.h
 +++ b/include/v8-platform.h
-@@ -1089,7 +1089,7 @@ class Platform {
+@@ -1168,7 +1168,7 @@ class Platform {
     * required.
     */
    virtual int64_t CurrentClockTimeMilliseconds() {
@@ -64,7 +82,7 @@ index 11296cd488..0f090446dc 100644
     * Support for TC39 "dynamic code brand checks" proposal.
     *
 diff --git a/include/v8config.h b/include/v8config.h
-index 9410eb4135..b9bdc7a6a0 100644
+index bee208ffa9..c14f5ed440 100644
 --- a/include/v8config.h
 +++ b/include/v8config.h
 @@ -531,7 +531,7 @@ path. Add it with -I<path> to the command line
@@ -77,7 +95,7 @@ index 9410eb4135..b9bdc7a6a0 100644
  # define V8_PRESERVE_MOST /* NOT SUPPORTED */
  #endif
 diff --git a/src/api/api-natives.cc b/src/api/api-natives.cc
-index 05a883f2d5..3ea0b8ce62 100644
+index 905f29bf25..eff0e7d219 100644
 --- a/src/api/api-natives.cc
 +++ b/src/api/api-natives.cc
 @@ -447,6 +447,9 @@ MaybeHandle<JSObject> InstantiateObject(Isolate* isolate,
@@ -91,10 +109,10 @@ index 05a883f2d5..3ea0b8ce62 100644
      // Keep prototypes in slow-mode. Let them be lazily turned fast later on.
      // TODO(dcarney): is this necessary?
 diff --git a/src/api/api.cc b/src/api/api.cc
-index fac24bae12..0c558589ea 100644
+index 94b44c14c3..eed3a6be5f 100644
 --- a/src/api/api.cc
 +++ b/src/api/api.cc
-@@ -2057,6 +2057,17 @@ void ObjectTemplate::SetImmutableProto() {
+@@ -2095,6 +2095,17 @@ void ObjectTemplate::SetImmutableProto() {
    self->set_immutable_proto(true);
  }
  
@@ -112,7 +130,7 @@ index fac24bae12..0c558589ea 100644
  bool ObjectTemplate::IsCodeLike() const {
    return Utils::OpenHandle(this)->code_like();
  }
-@@ -6445,6 +6456,10 @@ bool v8::V8::InitializeICU(const char* icu_data_file) {
+@@ -6556,6 +6567,10 @@ bool v8::V8::InitializeICU(const char* icu_data_file) {
    return i::InitializeICU(icu_data_file);
  }
  
@@ -140,7 +158,7 @@ index 34a26d9c26..f995a2fc64 100644
           MatchLiteralCompareTypeof(right_, op(), left_, expr, literal);
  }
 diff --git a/src/base/platform/platform.h b/src/base/platform/platform.h
-index b9b734dac8..b577e3e01a 100644
+index 27369a7a8d..fc58ac3d1d 100644
 --- a/src/base/platform/platform.h
 +++ b/src/base/platform/platform.h
 @@ -52,6 +52,8 @@
@@ -153,7 +171,7 @@ index b9b734dac8..b577e3e01a 100644
  #if V8_CC_MSVC && V8_HOST_ARCH_IA32
  // __readfsdword is supposed to be declared in intrin.h but it is missing from
 diff --git a/src/builtins/builtins-async-module.cc b/src/builtins/builtins-async-module.cc
-index 417e6f1dfa..108dc20972 100644
+index e1a2a71c42..9152368a0e 100644
 --- a/src/builtins/builtins-async-module.cc
 +++ b/src/builtins/builtins-async-module.cc
 @@ -15,7 +15,8 @@ BUILTIN(CallAsyncModuleFulfilled) {
@@ -167,10 +185,10 @@ index 417e6f1dfa..108dc20972 100644
      // The evaluation of async module can not throwing a JavaScript observable
      // exception.
 diff --git a/src/codegen/code-stub-assembler.cc b/src/codegen/code-stub-assembler.cc
-index 1091943889..dbc699384c 100644
+index df4ba98d66..8993a77e8b 100644
 --- a/src/codegen/code-stub-assembler.cc
 +++ b/src/codegen/code-stub-assembler.cc
-@@ -2027,6 +2027,10 @@ TNode<Uint32T> CodeStubAssembler::LoadMapBitField3(TNode<Map> map) {
+@@ -2035,6 +2035,10 @@ TNode<Uint32T> CodeStubAssembler::LoadMapBitField3(TNode<Map> map) {
    return LoadObjectField<Uint32T>(map, Map::kBitField3Offset);
  }
  
@@ -181,7 +199,7 @@ index 1091943889..dbc699384c 100644
  TNode<Uint16T> CodeStubAssembler::LoadMapInstanceType(TNode<Map> map) {
    return LoadObjectField<Uint16T>(map, Map::kInstanceTypeOffset);
  }
-@@ -14364,6 +14368,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
+@@ -14395,6 +14399,11 @@ TNode<String> CodeStubAssembler::Typeof(TNode<Object> value) {
  
    GotoIf(InstanceTypeEqual(instance_type, ODDBALL_TYPE), &if_oddball);
  
@@ -194,10 +212,10 @@ index 1091943889..dbc699384c 100644
        Word32And(LoadMapBitField(map),
                  Int32Constant(Map::Bits1::IsCallableBit::kMask |
 diff --git a/src/codegen/code-stub-assembler.h b/src/codegen/code-stub-assembler.h
-index d4d6e12bae..890a6cf249 100644
+index 0e43179204..82db618ff7 100644
 --- a/src/codegen/code-stub-assembler.h
 +++ b/src/codegen/code-stub-assembler.h
-@@ -1409,6 +1409,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
+@@ -1399,6 +1399,8 @@ class V8_EXPORT_PRIVATE CodeStubAssembler
    TNode<Int32T> LoadMapBitField2(TNode<Map> map);
    // Load bit field 3 of a map.
    TNode<Uint32T> LoadMapBitField3(TNode<Map> map);
@@ -206,19 +224,210 @@ index d4d6e12bae..890a6cf249 100644
    // Load the instance type of a map.
    TNode<Uint16T> LoadMapInstanceType(TNode<Map> map);
    // Load the ElementsKind of a map.
-diff --git a/src/common/globals.h b/src/common/globals.h
-index 34d0c01cb6..bda045dece 100644
---- a/src/common/globals.h
-+++ b/src/common/globals.h
-@@ -270,7 +270,7 @@ const size_t kShortBuiltinCallsOldSpaceSizeThreshold = size_t{2} * GB;
- //
- #if V8_HAS_PTHREAD_JIT_WRITE_PROTECT && \
-     !(defined(V8_COMPRESS_POINTERS) && !defined(V8_EXTERNAL_CODE_SPACE))
--#define V8_HEAP_USE_PTHREAD_JIT_WRITE_PROTECT true
-+#define V8_HEAP_USE_PTHREAD_JIT_WRITE_PROTECT false
- #else
- #define V8_HEAP_USE_PTHREAD_JIT_WRITE_PROTECT false
- #endif
+diff --git a/src/common/code-memory-access-inl.h b/src/common/code-memory-access-inl.h
+index 2b504b86f3..3721dc2920 100644
+--- a/src/common/code-memory-access-inl.h
++++ b/src/common/code-memory-access-inl.h
+@@ -30,28 +30,89 @@ RwxMemoryWriteScope::~RwxMemoryWriteScope() {
+   }
+ }
+ 
+-#if V8_HAS_PTHREAD_JIT_WRITE_PROTECT
++#if V8_HAS_PTHREAD_JIT_WRITE_PROTECT || V8_HAS_PKU_JIT_WRITE_PROTECT
+ 
+ // static
+-bool RwxMemoryWriteScope::IsSupported() { return true; }
++int RwxMemoryWriteScope::EnterHostScope() {
++  if (v8_flags.jitless || !IsSupported()) return 0;
++  int code_space_write_nesting_level = code_space_write_nesting_level_;
++  DCHECK_GE(code_space_write_nesting_level, 0);
++  DCHECK_GE(code_space_host_nesting_level_, 0);
++  if (code_space_host_nesting_level_ == 0 && code_space_write_nesting_level > 0) {
++    code_space_write_nesting_level_ = 0;
++    SetExecutableInternal();
++  }
++  code_space_host_nesting_level_++;
++  return code_space_write_nesting_level;
++}
++
++// static
++void RwxMemoryWriteScope::ExitHostScope(int code_space_write_nesting_level) {
++  if (v8_flags.jitless || !IsSupported()) return;
++  DCHECK_GE(code_space_write_nesting_level, 0);
++  DCHECK_GT(code_space_host_nesting_level_, 0);
++  code_space_host_nesting_level_--;
++  if (code_space_host_nesting_level_ == 0 && code_space_write_nesting_level > 0) {
++    code_space_write_nesting_level_ = code_space_write_nesting_level;
++    SetWritableInternal();
++  }
++}
+ 
+ // static
+ void RwxMemoryWriteScope::SetWritable() {
++  if (!IsSupported()) return;
++  DCHECK_GE(code_space_write_nesting_level_, 0);
++  DCHECK_EQ(code_space_host_nesting_level_, 0);
+   if (code_space_write_nesting_level_ == 0) {
+-    base::SetJitWriteProtected(0);
++    SetWritableInternal();
+   }
+   code_space_write_nesting_level_++;
+ }
+ 
+ // static
+ void RwxMemoryWriteScope::SetExecutable() {
++  if (!IsSupported()) return;
++  DCHECK_GT(code_space_write_nesting_level_, 0);
++  DCHECK_EQ(code_space_host_nesting_level_, 0);
+   code_space_write_nesting_level_--;
+   if (code_space_write_nesting_level_ == 0) {
+-    base::SetJitWriteProtected(1);
++    SetExecutableInternal();
+   }
+ }
+ 
++#else  // !V8_HAS_PTHREAD_JIT_WRITE_PROTECT && !V8_TRY_USE_PKU_JIT_WRITE_PROTECT
++
++// static
++int RwxMemoryWriteScope::EnterHostScope() { return 0; }
++
++// static
++void RwxMemoryWriteScope::ExitHostScope(int /*code_space_write_nesting_level*/) {}
++
++// static
++void RwxMemoryWriteScope::SetWritable() {}
++
++// static
++void RwxMemoryWriteScope::SetExecutable() {}
++
++#endif  // V8_HAS_PTHREAD_JIT_WRITE_PROTECT || V8_HAS_PKU_JIT_WRITE_PROTECT
++
++#if V8_HAS_PTHREAD_JIT_WRITE_PROTECT
++
++// static
++bool RwxMemoryWriteScope::IsSupported() { return true; }
++
++// static
++void RwxMemoryWriteScope::SetWritableInternal() {
++  base::SetJitWriteProtected(0);
++}
++
++// static
++void RwxMemoryWriteScope::SetExecutableInternal() {
++  base::SetJitWriteProtected(1);
++}
++
+ #elif V8_HAS_PKU_JIT_WRITE_PROTECT
++
+ // static
+ bool RwxMemoryWriteScope::IsSupported() {
+   static_assert(base::MemoryProtectionKey::kNoMemoryProtectionKey == -1);
+@@ -60,31 +121,23 @@ bool RwxMemoryWriteScope::IsSupported() {
+ }
+ 
+ // static
+-void RwxMemoryWriteScope::SetWritable() {
++void RwxMemoryWriteScope::SetWritableInternal() {
+   DCHECK(pkey_initialized);
+-  if (!IsSupported()) return;
+-  if (code_space_write_nesting_level_ == 0) {
+     DCHECK_NE(
+         base::MemoryProtectionKey::GetKeyPermission(memory_protection_key_),
+         base::MemoryProtectionKey::kNoRestrictions);
+     base::MemoryProtectionKey::SetPermissionsForKey(
+         memory_protection_key_, base::MemoryProtectionKey::kNoRestrictions);
+-  }
+-  code_space_write_nesting_level_++;
+ }
+ 
+ // static
+-void RwxMemoryWriteScope::SetExecutable() {
++void RwxMemoryWriteScope::SetExecutableInternal() {
+   DCHECK(pkey_initialized);
+-  if (!IsSupported()) return;
+-  code_space_write_nesting_level_--;
+-  if (code_space_write_nesting_level_ == 0) {
+     DCHECK_EQ(
+         base::MemoryProtectionKey::GetKeyPermission(memory_protection_key_),
+         base::MemoryProtectionKey::kNoRestrictions);
+     base::MemoryProtectionKey::SetPermissionsForKey(
+         memory_protection_key_, base::MemoryProtectionKey::kDisableWrite);
+-  }
+ }
+ 
+ #else  // !V8_HAS_PTHREAD_JIT_WRITE_PROTECT && !V8_TRY_USE_PKU_JIT_WRITE_PROTECT
+@@ -93,10 +146,10 @@ void RwxMemoryWriteScope::SetExecutable() {
+ bool RwxMemoryWriteScope::IsSupported() { return false; }
+ 
+ // static
+-void RwxMemoryWriteScope::SetWritable() {}
++void RwxMemoryWriteScope::SetWritableInternal() {}
+ 
+ // static
+-void RwxMemoryWriteScope::SetExecutable() {}
++void RwxMemoryWriteScope::SetExecutableInternal() {}
+ 
+ #endif  // V8_HAS_PTHREAD_JIT_WRITE_PROTECT
+ 
+diff --git a/src/common/code-memory-access.cc b/src/common/code-memory-access.cc
+index aaad4e000c..ec920ed48f 100644
+--- a/src/common/code-memory-access.cc
++++ b/src/common/code-memory-access.cc
+@@ -2,13 +2,26 @@
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+ 
++#include "include/v8-initialization.h"
+ #include "src/common/code-memory-access-inl.h"
+ 
+ namespace v8 {
++
++// static
++int V8::EnterRwxHostScope() {
++  return i::RwxMemoryWriteScope::EnterHostScope();
++}
++
++// static
++void V8::ExitRwxHostScope(int code_space_write_nesting_level) {
++  i::RwxMemoryWriteScope::ExitHostScope(code_space_write_nesting_level);
++}
++
+ namespace internal {
+ 
+ #if V8_HAS_PTHREAD_JIT_WRITE_PROTECT || V8_HAS_PKU_JIT_WRITE_PROTECT
+ thread_local int RwxMemoryWriteScope::code_space_write_nesting_level_ = 0;
++thread_local int RwxMemoryWriteScope::code_space_host_nesting_level_ = 0;
+ #endif  // V8_HAS_PTHREAD_JIT_WRITE_PROTECT || V8_HAS_PKU_JIT_WRITE_PROTECT
+ 
+ #if V8_HAS_PKU_JIT_WRITE_PROTECT
+diff --git a/src/common/code-memory-access.h b/src/common/code-memory-access.h
+index 253cb720fe..fd878a9764 100644
+--- a/src/common/code-memory-access.h
++++ b/src/common/code-memory-access.h
+@@ -78,6 +78,9 @@ class V8_NODISCARD RwxMemoryWriteScope {
+   static void SetDefaultPermissionsForSignalHandler();
+ #endif  // V8_HAS_PKU_JIT_WRITE_PROTECT
+ 
++  V8_INLINE static int EnterHostScope();
++  V8_INLINE static void ExitHostScope(int code_space_write_nesting_level);
++
+  private:
+   friend class CodePageCollectionMemoryModificationScope;
+   friend class CodePageMemoryModificationScope;
+@@ -91,9 +94,13 @@ class V8_NODISCARD RwxMemoryWriteScope {
+   V8_INLINE static void SetWritable();
+   V8_INLINE static void SetExecutable();
+ 
++  V8_INLINE static void SetWritableInternal();
++  V8_INLINE static void SetExecutableInternal();
++
+ #if V8_HAS_PTHREAD_JIT_WRITE_PROTECT || V8_HAS_PKU_JIT_WRITE_PROTECT
+   // This counter is used for supporting scope reentrance.
+   static thread_local int code_space_write_nesting_level_;
++  static thread_local int code_space_host_nesting_level_;
+ #endif  // V8_HAS_PTHREAD_JIT_WRITE_PROTECT || V8_HAS_PKU_JIT_WRITE_PROTECT
+ 
+ #if V8_HAS_PKU_JIT_WRITE_PROTECT
 diff --git a/src/diagnostics/unwinding-info-win64.cc b/src/diagnostics/unwinding-info-win64.cc
 index a71b866135..4f1d26676c 100644
 --- a/src/diagnostics/unwinding-info-win64.cc
@@ -327,10 +536,10 @@ index ff64beb8b2..b26b3fe323 100644
    set_jslimit(SimulatorStack::JsLimitFromCLimit(isolate, limit));
    real_climit_ = limit;
 diff --git a/src/heap/factory.cc b/src/heap/factory.cc
-index 4c868825d7..a84535f103 100644
+index a884f2ff16..f564c4c76b 100644
 --- a/src/heap/factory.cc
 +++ b/src/heap/factory.cc
-@@ -2079,6 +2079,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
+@@ -2080,6 +2080,7 @@ Map Factory::InitializeMap(Map map, InstanceType type, int instance_size,
        Map::Bits3::ConstructionCounterBits::encode(Map::kNoSlackTracking) |
        Map::Bits3::IsExtensibleBit::encode(true);
    map.set_bit_field3(bit_field3);
@@ -338,11 +547,36 @@ index 4c868825d7..a84535f103 100644
    map.set_instance_type(type);
    ReadOnlyRoots ro_roots(roots);
    map.init_prototype_and_constructor_or_back_pointer(ro_roots);
+diff --git a/src/heap/new-spaces.cc b/src/heap/new-spaces.cc
+index 00e12e912d..1d323a2732 100644
+--- a/src/heap/new-spaces.cc
++++ b/src/heap/new-spaces.cc
+@@ -1096,6 +1096,9 @@ bool PagedSpaceForNewSpace::IsPromotionCandidate(
+ }
+ 
+ #ifdef VERIFY_HEAP
++static size_t PagedSpaceForNewSpace_Verify_accumulate_op(size_t sum, const Page* page) {
++  return sum + page->AllocatedLabSize();
++}
+ void PagedSpaceForNewSpace::Verify(Isolate* isolate,
+                                    SpaceVerificationVisitor* visitor) const {
+   PagedSpaceBase::Verify(isolate, visitor);
+@@ -1104,9 +1107,7 @@ void PagedSpaceForNewSpace::Verify(Isolate* isolate,
+ 
+   DCHECK_EQ(
+       AllocatedSinceLastGC() + limit() - top(),
+-      std::accumulate(begin(), end(), 0, [](size_t sum, const Page* page) {
+-        return sum + page->AllocatedLabSize();
+-      }));
++      std::accumulate(begin(), end(), 0, PagedSpaceForNewSpace_Verify_accumulate_op));
+ }
+ #endif  // VERIFY_HEAP
+ 
 diff --git a/src/heap/setup-heap-internal.cc b/src/heap/setup-heap-internal.cc
-index 5f352d1349..10020d538c 100644
+index dec53bf526..63bfe0e055 100644
 --- a/src/heap/setup-heap-internal.cc
 +++ b/src/heap/setup-heap-internal.cc
-@@ -241,6 +241,7 @@ AllocationResult Heap::AllocatePartialMap(InstanceType instance_type,
+@@ -283,6 +283,7 @@ AllocationResult Heap::AllocatePartialMap(InstanceType instance_type,
        Map::Bits3::OwnsDescriptorsBit::encode(true) |
        Map::Bits3::ConstructionCounterBits::encode(Map::kNoSlackTracking);
    map.set_bit_field3(bit_field3);
@@ -403,11 +637,11 @@ index e127e75f10..b0e4bd2d68 100644
  // Like above, but using the default icudt[lb].dat location if icu_data_file is
  // not specified.
 diff --git a/src/init/v8.cc b/src/init/v8.cc
-index 4a4267f17b..d6653c4851 100644
+index 9dad3911a4..0366aafbfe 100644
 --- a/src/init/v8.cc
 +++ b/src/init/v8.cc
-@@ -94,7 +94,6 @@ V8_DECLARE_ONCE(init_snapshot_once);
- 
+@@ -95,7 +95,6 @@ V8_DECLARE_ONCE(init_snapshot_once);
+ // static
  void V8::InitializePlatform(v8::Platform* platform) {
    AdvanceStartupState(V8StartupState::kPlatformInitializing);
 -  CHECK(!platform_);
@@ -415,7 +649,7 @@ index 4a4267f17b..d6653c4851 100644
    platform_ = platform;
    v8::base::SetPrintStackTrace(platform_->GetStackTracePrinter());
 diff --git a/src/libplatform/default-platform.cc b/src/libplatform/default-platform.cc
-index 2bbbb7e1f4..5cbd5e8c43 100644
+index 0b42d5fb8b..1f72acbc06 100644
 --- a/src/libplatform/default-platform.cc
 +++ b/src/libplatform/default-platform.cc
 @@ -55,6 +55,10 @@ std::unique_ptr<v8::Platform> NewDefaultPlatform(
@@ -430,10 +664,10 @@ index 2bbbb7e1f4..5cbd5e8c43 100644
      IdleTaskSupport idle_task_support,
      InProcessStackDumping in_process_stack_dumping,
 diff --git a/src/objects/js-objects.cc b/src/objects/js-objects.cc
-index 7bb2558cec..65b547b0fd 100644
+index f3a45f1a12..0aea18f6d0 100644
 --- a/src/objects/js-objects.cc
 +++ b/src/objects/js-objects.cc
-@@ -5246,6 +5246,13 @@ void JSObject::SetImmutableProto(Handle<JSObject> object) {
+@@ -5269,6 +5269,13 @@ void JSObject::SetImmutableProto(Handle<JSObject> object) {
    object->set_map(*new_map, kReleaseStore);
  }
  
@@ -448,10 +682,10 @@ index 7bb2558cec..65b547b0fd 100644
                                          JavaScriptArguments* args,
                                          uint32_t arg_count,
 diff --git a/src/objects/js-objects.h b/src/objects/js-objects.h
-index f83083cdbc..f9f274eadb 100644
+index 870eb81553..2a42ca09d5 100644
 --- a/src/objects/js-objects.h
 +++ b/src/objects/js-objects.h
-@@ -745,6 +745,8 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
+@@ -748,6 +748,8 @@ class JSObject : public TorqueGeneratedJSObject<JSObject, JSReceiver> {
    // Never called from JavaScript
    static void SetImmutableProto(Handle<JSObject> object);
  
@@ -461,10 +695,10 @@ index f83083cdbc..f9f274eadb 100644
    // the caller to initialize object header. Fill the pre-allocated fields with
    // undefined_value and the rest with filler_map.
 diff --git a/src/objects/map-inl.h b/src/objects/map-inl.h
-index 2c42cf2ee6..5fc4e46ba9 100644
+index 8bcce73086..c354dd6730 100644
 --- a/src/objects/map-inl.h
 +++ b/src/objects/map-inl.h
-@@ -125,6 +125,9 @@ BIT_FIELD_ACCESSORS(Map, bit_field3, may_have_interesting_symbols,
+@@ -126,6 +126,9 @@ BIT_FIELD_ACCESSORS(Map, bit_field3, may_have_interesting_symbols,
  BIT_FIELD_ACCESSORS(Map, relaxed_bit_field3, construction_counter,
                      Map::Bits3::ConstructionCounterBits)
  
@@ -475,10 +709,10 @@ index 2c42cf2ee6..5fc4e46ba9 100644
    DCHECK(has_named_interceptor());
    FunctionTemplateInfo info = GetFunctionTemplateInfo(cage_base);
 diff --git a/src/objects/map.cc b/src/objects/map.cc
-index ea57d93925..34763a37ef 100644
+index db9ec690e4..0f70b3731d 100644
 --- a/src/objects/map.cc
 +++ b/src/objects/map.cc
-@@ -1185,6 +1185,7 @@ Handle<Map> Map::RawCopy(Isolate* isolate, Handle<Map> src_handle,
+@@ -1174,6 +1174,7 @@ Handle<Map> Map::RawCopy(Isolate* isolate, Handle<Map> src_handle,
      }
      // Same as bit_field comment above.
      raw.set_bit_field3(new_bit_field3);
@@ -486,7 +720,7 @@ index ea57d93925..34763a37ef 100644
      raw.clear_padding();
    }
    Handle<HeapObject> prototype(src_handle->prototype(), isolate);
-@@ -1311,6 +1312,12 @@ Handle<Map> Map::TransitionToImmutableProto(Isolate* isolate, Handle<Map> map) {
+@@ -1300,6 +1301,12 @@ Handle<Map> Map::TransitionToImmutableProto(Isolate* isolate, Handle<Map> map) {
    return new_map;
  }
  
@@ -500,10 +734,10 @@ index ea57d93925..34763a37ef 100644
  void EnsureInitialMap(Isolate* isolate, Handle<Map> map) {
  #ifdef DEBUG
 diff --git a/src/objects/map.h b/src/objects/map.h
-index bdc10ee2ba..838f81cd5d 100644
+index ba1d379f8b..aef98f16c2 100644
 --- a/src/objects/map.h
 +++ b/src/objects/map.h
-@@ -321,6 +321,11 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -323,6 +323,11 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
    static_assert(kSlackTrackingCounterStart <=
                  Bits3::ConstructionCounterBits::kMax);
  
@@ -515,7 +749,7 @@ index bdc10ee2ba..838f81cd5d 100644
    // Inobject slack tracking is the way to reclaim unused inobject space.
    //
    // The instance size is initially determined by adding some slack to
-@@ -666,6 +671,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -670,6 +675,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
  
    DECL_BOOLEAN_ACCESSORS(is_immutable_proto)
  
@@ -524,7 +758,7 @@ index bdc10ee2ba..838f81cd5d 100644
    // This counter is used for in-object slack tracking.
    // The in-object slack tracking is considered enabled when the counter is
    // non zero. The counter only has a valid count for initial maps. For
-@@ -834,6 +841,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+@@ -852,6 +859,8 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
    static Handle<Map> TransitionToImmutableProto(Isolate* isolate,
                                                  Handle<Map> map);
  
@@ -560,10 +794,10 @@ index a8b367ff82..98637087ee 100644
    prototype: JSReceiver|Null;
    constructor_or_back_pointer_or_native_context: Object;
 diff --git a/src/objects/objects.cc b/src/objects/objects.cc
-index 26a8d59b34..108b20ee8b 100644
+index 16e7f9cdb3..c856c02589 100644
 --- a/src/objects/objects.cc
 +++ b/src/objects/objects.cc
-@@ -886,6 +886,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
+@@ -887,6 +887,12 @@ Handle<String> Object::TypeOf(Isolate* isolate, Handle<Object> object) {
    if (object->IsString()) return isolate->factory()->string_string();
    if (object->IsSymbol()) return isolate->factory()->symbol_string();
    if (object->IsBigInt()) return isolate->factory()->bigint_string();
@@ -577,7 +811,7 @@ index 26a8d59b34..108b20ee8b 100644
    return isolate->factory()->object_string();
  }
 diff --git a/src/objects/source-text-module.cc b/src/objects/source-text-module.cc
-index 070788138b..2ac555d1c6 100644
+index 7baf362b30..7cd7d0c5da 100644
 --- a/src/objects/source-text-module.cc
 +++ b/src/objects/source-text-module.cc
 @@ -746,7 +746,7 @@ MaybeHandle<Object> SourceTextModule::Evaluate(

@@ -1407,6 +1407,40 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(Math.Sqrt(Math.PI * Math.E), engine.Evaluate("test.Item.get(789, \"bar\")"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_MultidimensionalArray_VBScript()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+            engine.AddHostObject("host", new HostFunctions());
+
+            engine.Script.x = new int[2];
+            engine.Script.y = new int[3, 4];
+
+            Assert.AreEqual(0, engine.Evaluate("x(1)"));
+            engine.Execute("x(1) = 123");
+            Assert.AreEqual(123, engine.Evaluate("x(1)"));
+
+            Assert.AreEqual(0, engine.Evaluate("y(2, 3)"));
+            engine.Execute("y(2, 3) = 456");
+            Assert.AreEqual(456, engine.Evaluate("y(2, 3)"));
+
+            engine.Execute(@"
+                x = host.newVar(x)
+                x(1) = 0
+                y = host.newVar(y)
+                y(2, 3) = 0
+            ");
+
+            Assert.AreEqual(0, engine.Evaluate("x(1)"));
+            engine.Execute("x(1) = 123");
+            Assert.AreEqual(123, engine.Evaluate("x(1)"));
+
+            Assert.AreEqual(0, engine.Evaluate("y(2, 3)"));
+            engine.Execute("y(2, 3) = 456");
+            Assert.AreEqual(456, engine.Evaluate("y(2, 3)"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

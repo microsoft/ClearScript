@@ -504,7 +504,7 @@ namespace Microsoft.ClearScript.Util
 
         public static object CreateInstance(this Type type, IHostInvokeContext invokeContext, HostTarget target, object[] args, object[] bindArgs)
         {
-            if (type.IsCOMObject || (type.IsValueType && (args.Length < 1)))
+            if (type.IsCOMObject)
             {
                 return type.CreateInstance(args);
             }
@@ -517,7 +517,13 @@ namespace Microsoft.ClearScript.Util
                 return InvokeHelpers.InvokeConstructor(invokeContext, boundConstructor, args);
             }
 
-            var candidates = type.GetConstructors(flags).Where(testConstructor => testConstructor.IsAccessible(invokeContext.AccessContext) && !testConstructor.IsBlockedFromScript(invokeContext.DefaultAccess)).ToArray();
+            var constructors = type.GetConstructors(flags);
+            if (type.IsValueType && (args.Length < 1) && !constructors.Any(testConstructor => testConstructor.GetParameters().Length < 1))
+            {
+                return type.CreateInstance();
+            }
+
+            var candidates = constructors.Where(testConstructor => testConstructor.IsAccessible(invokeContext.AccessContext) && !testConstructor.IsBlockedFromScript(invokeContext.DefaultAccess)).ToArray();
             if (candidates.Length < 1)
             {
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
@@ -1288,14 +1294,16 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class BindCandidate<T> : IComparable<BindCandidate<T>> where T : MemberInfo
         {
+            private readonly int defaultArgCount;
             private readonly bool paramArray;
             private readonly List<BindArgCost> argCosts;
 
             public T Candidate { get; }
 
-            private BindCandidate(T candidate, bool paramArray, List<BindArgCost> argCosts)
+            private BindCandidate(T candidate, int defaultArgCount, bool paramArray, List<BindArgCost> argCosts)
             {
                 Candidate = candidate;
+                this.defaultArgCount = defaultArgCount;
                 this.paramArray = paramArray;
                 this.argCosts = argCosts;
             }
@@ -1312,6 +1320,12 @@ namespace Microsoft.ClearScript.Util
                     {
                         return result;
                     }
+                }
+
+                result = defaultArgCount.CompareTo(other.defaultArgCount);
+                if (result != 0)
+                {
+                    return result;
                 }
 
                 result = paramArray.CompareTo(other.paramArray);
@@ -1333,6 +1347,7 @@ namespace Microsoft.ClearScript.Util
 
             public static BindCandidate<T> TryCreateInstance(T candidate, ParameterInfo[] parameters, object[] args, Type[] argTypes)
             {
+                var defaultArgCount = 0;
                 var paramArray = false;
                 var argCosts = new List<BindArgCost>();
 
@@ -1360,6 +1375,7 @@ namespace Microsoft.ClearScript.Util
                             return null;
                         }
 
+                        defaultArgCount += 1;
                         continue;
                     }
 
@@ -1376,13 +1392,13 @@ namespace Microsoft.ClearScript.Util
                 {
                     if (argIndex >= args.Length)
                     {
-                        return new BindCandidate<T>(candidate, true, argCosts);
+                        return new BindCandidate<T>(candidate, defaultArgCount, true, argCosts);
                     }
 
                     if ((argIndex == (args.Length - 1)) && paramType.IsBindableFromArg(args[argIndex], argTypes[argIndex], out cost))
                     {
                         argCosts.Add(cost);
-                        return new BindCandidate<T>(candidate, true, argCosts);
+                        return new BindCandidate<T>(candidate, defaultArgCount, true, argCosts);
                     }
 
                     paramType = paramType.GetElementType();
@@ -1402,7 +1418,7 @@ namespace Microsoft.ClearScript.Util
                     return null;
                 }
 
-                return new BindCandidate<T>(candidate, paramArray, argCosts);
+                return new BindCandidate<T>(candidate, defaultArgCount, paramArray, argCosts);
             }
         }
 

@@ -379,14 +379,14 @@ private:
         return m_spIsolateImpl->ContextDisposedNotification();
     }
 
-    bool IdleNotificationDeadline(double deadlineInSeconds)
+    void RequestGarbageCollectionForTesting(v8::Isolate::GarbageCollectionType type)
     {
-        return m_spIsolateImpl->IdleNotificationDeadline(deadlineInSeconds);
+        m_spIsolateImpl->RequestGarbageCollectionForTesting(type);
     }
 
-    void LowMemoryNotification()
+    void ClearCachesForTesting()
     {
-        m_spIsolateImpl->LowMemoryNotification();
+        m_spIsolateImpl->ClearCachesForTesting();
     }
 
     v8::Local<v8::StackFrame> GetStackFrame(v8::Local<v8::StackTrace> hStackTrace, uint32_t index)

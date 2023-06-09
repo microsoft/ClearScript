@@ -4511,8 +4511,9 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_TotalExternalSize()
         {
+            var size = engine.GetRuntimeHeapInfo().TotalExternalSize;
             engine.Execute("arr = new Uint8Array(1234567)");
-            Assert.AreEqual(1234567UL, engine.GetRuntimeHeapInfo().TotalExternalSize);
+            Assert.AreEqual(size + 1234567UL, engine.GetRuntimeHeapInfo().TotalExternalSize);
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -4522,8 +4523,9 @@ namespace Microsoft.ClearScript.Test
             {
                 using (var tempEngine = runtime.CreateScriptEngine())
                 {
+                    var size = runtime.GetHeapInfo().TotalExternalSize;
                     tempEngine.Execute("arr = new Uint8Array(7654321)");
-                    Assert.AreEqual(7654321UL, runtime.GetHeapInfo().TotalExternalSize);
+                    Assert.AreEqual(size + 7654321UL, runtime.GetHeapInfo().TotalExternalSize);
                 }
             }
         }
