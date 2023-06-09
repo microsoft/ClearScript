@@ -444,7 +444,7 @@ namespace Microsoft.ClearScript
 
         private static object BindOrCreate(ScriptEngine engine, HostTarget target, HostItemFlags flags)
         {
-            return engine.GetOrCreateHostItem(target, flags, createCached);
+            return engine.GetOrCreateHostItem(target, flags, Create);
         }
 
         private void BindSpecialTarget()
