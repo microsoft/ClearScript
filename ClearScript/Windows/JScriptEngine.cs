@@ -25,6 +25,7 @@ namespace Microsoft.ClearScript.Windows
         #region data
 
         private CommonJSManager commonJSManager;
+        private JsonModuleManager jsonDocumentManager;
 
         #endregion
 
@@ -89,6 +90,8 @@ namespace Microsoft.ClearScript.Windows
         #region internal members
 
         internal CommonJSManager CommonJSManager => commonJSManager ?? (commonJSManager = new CommonJSManager(this));
+
+        internal JsonModuleManager JsonModuleManager => jsonDocumentManager ?? (jsonDocumentManager = new JsonModuleManager(this));
 
         #endregion
 
@@ -159,6 +162,8 @@ namespace Microsoft.ClearScript.Windows
         uint IJavaScriptEngine.BaseLanguageVersion => 3;
 
         CommonJSManager IJavaScriptEngine.CommonJSManager => CommonJSManager;
+
+        JsonModuleManager IJavaScriptEngine.JsonModuleManager => JsonModuleManager;
 
         object IJavaScriptEngine.CreatePromiseForTask<T>(Task<T> task)
         {

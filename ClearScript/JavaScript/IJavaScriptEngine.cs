@@ -11,6 +11,7 @@ namespace Microsoft.ClearScript.JavaScript
         uint BaseLanguageVersion { get; }
 
         CommonJSManager CommonJSManager { get; }
+        JsonModuleManager JsonModuleManager { get; }
 
         object CreatePromiseForTask<T>(Task<T> task);
         object CreatePromiseForTask(Task task);

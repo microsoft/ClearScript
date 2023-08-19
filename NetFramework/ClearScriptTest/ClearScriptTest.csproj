@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
     <PropertyGroup>
         <TargetFramework>net471</TargetFramework>
@@ -167,6 +167,15 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\JavaScript\General.js" Link="JavaScript\General.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\Object.json" Link="JavaScript\Object.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\Array.json" Link="JavaScript\Array.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\Malformed.json" Link="JavaScript\Malformed.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js" Link="JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js">

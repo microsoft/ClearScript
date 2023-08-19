@@ -3,8 +3,6 @@
 
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8.SplitProxy
@@ -76,7 +74,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
                 MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
                 documentInfo.UniqueId,
-                documentInfo.Category == ModuleCategory.Standard,
+                documentInfo.Category.Kind,
                 V8ProxyHelpers.AddRefHostObject(documentInfo),
                 code,
                 evaluate
@@ -90,7 +88,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
                 MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
                 documentInfo.UniqueId,
-                documentInfo.Category == ModuleCategory.Standard,
+                documentInfo.Category.Kind,
                 V8ProxyHelpers.AddRefHostObject(documentInfo),
                 code
             )));
@@ -110,7 +108,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
                 MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
                 documentInfo.UniqueId,
-                documentInfo.Category == ModuleCategory.Standard,
+                documentInfo.Category.Kind,
                 V8ProxyHelpers.AddRefHostObject(documentInfo),
                 code,
                 cacheKind,
@@ -129,28 +127,68 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return Compile(documentInfo, code);
             }
 
-            var cacheSize = cacheBytes.Length;
-            using (var cacheBlock = new CoTaskMemBlock(cacheSize))
+            var tempCacheAccepted = false;
+            var script = new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(instance => instance.V8Context_CompileConsumingCache(
+                Handle,
+                MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
+                MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
+                documentInfo.UniqueId,
+                documentInfo.Category.Kind,
+                V8ProxyHelpers.AddRefHostObject(documentInfo),
+                code,
+                cacheKind,
+                cacheBytes,
+                out tempCacheAccepted
+            )));
+
+            cacheAccepted = tempCacheAccepted;
+            return script;
+        }
+
+        public override V8.V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+        {
+            if (cacheKind == V8CacheKind.None)
             {
-                Marshal.Copy(cacheBytes, 0, cacheBlock.Addr, cacheSize);
+                cacheResult = V8CacheResult.Disabled;
+                return Compile(documentInfo, code);
+            }
 
-                var tempCacheAccepted = false;
-                var script = new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(instance => instance.V8Context_CompileConsumingCache(
-                    Handle,
-                    MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
-                    MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
-                    documentInfo.UniqueId,
-                    documentInfo.Category == ModuleCategory.Standard,
-                    V8ProxyHelpers.AddRefHostObject(documentInfo),
-                    code,
-                    cacheKind,
-                    cacheBytes,
-                    out tempCacheAccepted
-                )));
+            V8.V8Script script;
+            var tempCacheBytes = cacheBytes;
 
-                cacheAccepted = tempCacheAccepted;
+            if ((cacheBytes == null) || (cacheBytes.Length < 1))
+            {
+                script = Compile(documentInfo, code, cacheKind, out tempCacheBytes);
+                cacheResult = (tempCacheBytes != null) && (tempCacheBytes.Length > 0) ? V8CacheResult.Updated : V8CacheResult.UpdateFailed;
+                if (cacheResult == V8CacheResult.Updated)
+                {
+                    cacheBytes = tempCacheBytes;
+                }
+
                 return script;
             }
+
+            var tempCacheResult = V8CacheResult.Disabled;
+            script = new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(instance => instance.V8Context_CompileUpdatingCache(
+                Handle,
+                MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
+                MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
+                documentInfo.UniqueId,
+                documentInfo.Category.Kind,
+                V8ProxyHelpers.AddRefHostObject(documentInfo),
+                code,
+                cacheKind,
+                ref tempCacheBytes,
+                out tempCacheResult
+            )));
+
+            cacheResult = tempCacheResult;
+            if (cacheResult == V8CacheResult.Updated)
+            {
+                cacheBytes = tempCacheBytes;
+            }
+
+            return script;
         }
 
         public override object Execute(V8.V8Script script, bool evaluate)

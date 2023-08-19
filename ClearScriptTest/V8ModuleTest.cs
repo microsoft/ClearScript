@@ -845,6 +845,68 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8Module")]
+        public void V8Module_Standard_Json_Object()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch;
+            engine.DocumentSettings.LoadCallback = (ref DocumentInfo info) =>
+            {
+                if (Path.GetExtension(info.Uri.AbsolutePath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    info.Category = DocumentCategory.Json;
+                }
+            };
+
+            engine.Execute(new DocumentInfo { Category = ModuleCategory.Standard }, "import result from 'JavaScript/Object.json'; globalThis.result = result;");
+            var result = (ScriptObject)engine.Global.GetProperty("result");
+            Assert.AreEqual(2, result.PropertyNames.Count());
+            Assert.AreEqual(123, result.GetProperty("foo"));
+            Assert.AreEqual("baz", result.GetProperty("bar"));
+
+            engine.DocumentSettings.AddSystemDocument("ObjectWithFunction.json", DocumentCategory.Json, "{ \"foo\": 123, \"bar\": \"baz\", \"qux\": function(){} }");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute(new DocumentInfo { Category = ModuleCategory.Standard }, "import result from 'ObjectWithFunction.json'; globalThis.result = result;"));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_Standard_Json_Array()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch;
+            engine.DocumentSettings.LoadCallback = (ref DocumentInfo info) =>
+            {
+                if (Path.GetExtension(info.Uri.AbsolutePath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    info.Category = DocumentCategory.Json;
+                }
+            };
+
+            engine.Execute(new DocumentInfo { Category = ModuleCategory.Standard }, "import result from 'JavaScript/Array.json'; globalThis.result = result;");
+            var result = (ScriptObject)engine.Global.GetProperty("result");
+            Assert.AreEqual(4, result.PropertyIndices.Count());
+            Assert.AreEqual(123, result.GetProperty(0));
+            Assert.AreEqual("foo", result.GetProperty(1));
+            Assert.AreEqual(4.56, result.GetProperty(2));
+            Assert.AreEqual("bar", result.GetProperty(3));
+
+            engine.DocumentSettings.AddSystemDocument("ArrayWithFunction.json", DocumentCategory.Json, "[ 123, \"foo\", 4.56, \"bar\", function(){} ]");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute(new DocumentInfo { Category = ModuleCategory.Standard }, "import result from 'ArrayWithFunction.json'; globalThis.result = result;"));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_Standard_Json_Malformed()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch;
+            engine.DocumentSettings.LoadCallback = (ref DocumentInfo info) =>
+            {
+                if (Path.GetExtension(info.Uri.AbsolutePath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    info.Category = DocumentCategory.Json;
+                }
+            };
+
+            // ReSharper disable once AccessToDisposedClosure
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute(new DocumentInfo { Category = ModuleCategory.Standard }, "import result from 'JavaScript/Malformed.json'; globalThis.result = result;"));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
         public void V8Module_CommonJS_File()
         {
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
@@ -1289,6 +1351,67 @@ namespace Microsoft.ClearScript.Test
                 let Geometry = require('JavaScript/CommonJSWithCycles/Geometry/Geometry');
                 return new Geometry.Square(25).Area;
             "));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_CommonJS_Json_Object()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch;
+            engine.DocumentSettings.LoadCallback = (ref DocumentInfo info) =>
+            {
+                if (Path.GetExtension(info.Uri.AbsolutePath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    info.Category = DocumentCategory.Json;
+                }
+            };
+
+            var result = (ScriptObject)engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, "return require('JavaScript/Object.json')");
+            Assert.AreEqual(2, result.PropertyNames.Count());
+            Assert.AreEqual(123, result.GetProperty("foo"));
+            Assert.AreEqual("baz", result.GetProperty("bar"));
+
+            engine.DocumentSettings.AddSystemDocument("ObjectWithFunction.json", DocumentCategory.Json, "{ \"foo\": 123, \"bar\": \"baz\", \"qux\": function(){} }");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, "return require('ObjectWithFunction.json')"));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_CommonJS_Json_Array()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch;
+            engine.DocumentSettings.LoadCallback = (ref DocumentInfo info) =>
+            {
+                if (Path.GetExtension(info.Uri.AbsolutePath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    info.Category = DocumentCategory.Json;
+                }
+            };
+
+            var result = (ScriptObject)engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, "return require('JavaScript/Array.json')");
+            Assert.AreEqual(4, result.PropertyIndices.Count());
+            Assert.AreEqual(123, result.GetProperty(0));
+            Assert.AreEqual("foo", result.GetProperty(1));
+            Assert.AreEqual(4.56, result.GetProperty(2));
+            Assert.AreEqual("bar", result.GetProperty(3));
+
+            engine.DocumentSettings.AddSystemDocument("ArrayWithFunction.json", DocumentCategory.Json, "[ 123, \"foo\", 4.56, \"bar\", function(){} ]");
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, "return require('ArrayWithFunction.json')"));
+        }
+
+
+        [TestMethod, TestCategory("V8Module")]
+        public void V8Module_CommonJS_Json_Malformed()
+        {
+            engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading | DocumentAccessFlags.AllowCategoryMismatch;
+            engine.DocumentSettings.LoadCallback = (ref DocumentInfo info) =>
+            {
+                if (Path.GetExtension(info.Uri.AbsolutePath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    info.Category = DocumentCategory.Json;
+                }
+            };
+
+            // ReSharper disable once AccessToDisposedClosure
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, "return require('JavaScript/Malformed.json')"));
         }
 
         #endregion

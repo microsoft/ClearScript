@@ -270,7 +270,7 @@ namespace Microsoft.ClearScript
 
         private IEnumerable<string> GetAltMethodNamesInternal(string name, BindingFlags bindFlags)
         {
-            foreach (var method in Target.Type.GetScriptableMethods(name, bindFlags, AccessContext, DefaultAccess))
+            foreach (var method in Target.Type.GetScriptableMethods(this, name, bindFlags))
             {
                 var methodName = method.GetShortName();
                 if (methodName != name)
@@ -387,7 +387,7 @@ namespace Microsoft.ClearScript
 
         private IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, Type type, string name, Type[] typeArgs)
         {
-            foreach (var method in type.GetScriptableMethods(name, bindFlags, AccessContext, DefaultAccess))
+            foreach (var method in type.GetScriptableMethods(this, name, bindFlags))
             {
                 MethodInfo tempMethod = null;
 

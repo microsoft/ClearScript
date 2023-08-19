@@ -295,7 +295,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] StdString.Ptr pResourceName,
             [In] StdString.Ptr pSourceMapUrl,
             [Out] out ulong uniqueId,
-            [Out] [MarshalAs(UnmanagedType.I1)] out bool isModule,
+            [Out] out DocumentKind documentKind,
             [In] StdString.Ptr pCode,
             [Out] out IntPtr pDocumentInfo,
             [In] V8Value.Ptr pExports
@@ -801,7 +801,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8ProxyHelpers.ReleaseHostObject(pTimer);
         }
 
-        private static void LoadModule(IntPtr pSourceDocumentInfo, StdString.Ptr pSpecifier, StdString.Ptr pResourceName, StdString.Ptr pSourceMapUrl, out ulong uniqueId, out bool isModule, StdString.Ptr pCode, out IntPtr pDocumentInfo, V8Value.Ptr pExports)
+        private static void LoadModule(IntPtr pSourceDocumentInfo, StdString.Ptr pSpecifier, StdString.Ptr pResourceName, StdString.Ptr pSourceMapUrl, out ulong uniqueId, out DocumentKind documentKind, StdString.Ptr pCode, out IntPtr pDocumentInfo, V8Value.Ptr pExports)
         {
             string code;
             UniqueDocumentInfo documentInfo;
@@ -815,7 +815,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 ScheduleHostException(exception);
                 uniqueId = default;
-                isModule = default;
+                documentKind = default;
                 pDocumentInfo = default;
                 return;
             }
@@ -823,7 +823,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             StdString.SetValue(pResourceName, MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName));
             StdString.SetValue(pSourceMapUrl, MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty));
             uniqueId = documentInfo.UniqueId;
-            isModule = documentInfo.Category == ModuleCategory.Standard;
+            documentKind = documentInfo.Category.Kind;
             StdString.SetValue(pCode, code);
             pDocumentInfo = V8ProxyHelpers.AddRefHostObject(documentInfo);
             V8Value.Set(pExports, exports);

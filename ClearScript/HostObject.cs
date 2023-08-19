@@ -125,7 +125,7 @@ namespace Microsoft.ClearScript
 
         public override object DynamicInvokeTarget => target;
 
-        public override HostTargetFlags GetFlags(IHostInvokeContext context)
+        public override HostTargetFlags GetFlags(IHostContext context)
         {
             var flags = HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods;
             if (context.Engine.ExposeHostObjectStaticMembers)
@@ -136,9 +136,9 @@ namespace Microsoft.ClearScript
             return flags;
         }
 
-        public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public override Invocability GetInvocability(IHostContext context, BindingFlags bindFlags, bool ignoreDynamic)
         {
-            return type.GetInvocability(bindFlags, accessContext, defaultAccess, ignoreDynamic);
+            return type.GetInvocability(context, bindFlags, ignoreDynamic);
         }
 
         #endregion

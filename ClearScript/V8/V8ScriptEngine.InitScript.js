@@ -14,6 +14,7 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
     const isHostObject = value => !!value && (value[isHostObjectKey] === true);
 
     const savedPromise = Promise;
+    const savedJSON = JSON;
     const checkpointSymbol = Symbol();
 
     const toJson = globalObject.toJson;
@@ -133,7 +134,9 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
             }
         }),
 
-        toJson: bind((key, value) => toJson ? JSON.parse(toJson(key, value)) : value),
+        toJson: bind((key, value) => toJson ? savedJSON.parse(toJson(key, value)) : value),
+
+        parseJson: bind(json => savedJSON.parse(json)),
 
         asyncGenerator: (async function* () {})().constructor
 

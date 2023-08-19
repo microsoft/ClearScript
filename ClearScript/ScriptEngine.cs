@@ -13,7 +13,7 @@ namespace Microsoft.ClearScript
     /// <summary>
     /// Provides the base implementation for all script engines.
     /// </summary>
-    public abstract class ScriptEngine : IScriptEngine
+    public abstract class ScriptEngine : IScriptEngine, IHostContext
     {
         #region data
 
@@ -80,7 +80,7 @@ namespace Microsoft.ClearScript
         /// <inheritdoc/>
         public abstract string FileNameExtension { get; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc cref="ScriptEngine" />
         public Type AccessContext
         {
             get => accessContext;
@@ -92,7 +92,7 @@ namespace Microsoft.ClearScript
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc cref="ScriptEngine" />
         public ScriptAccess DefaultAccess
         {
             get => defaultAccess;
@@ -760,7 +760,7 @@ namespace Microsoft.ClearScript
         {
             if (extensionMethodTable != emptyExtensionMethodTable)
             {
-                if (extensionMethodTable.ProcessType(type, AccessContext, DefaultAccess))
+                if (extensionMethodTable.ProcessType(type, this))
                 {
                     ClearMethodBindCache();
                 }
@@ -1127,6 +1127,12 @@ namespace Microsoft.ClearScript
         {
             Dispose(false);
         }
+
+        #endregion
+
+        #region IHostContext implementation
+
+        ScriptEngine IHostContext.Engine => this;
 
         #endregion
 

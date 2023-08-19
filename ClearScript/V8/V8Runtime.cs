@@ -153,6 +153,16 @@ namespace Microsoft.ClearScript.V8
         #region public members
 
         /// <summary>
+        /// Occurs when a debugger connects to a V8 runtime.
+        /// </summary>
+        public static event EventHandler<V8RuntimeDebuggerEventArgs> DebuggerConnected;
+
+        /// <summary>
+        /// Occurs when a debugger disconnects from a V8 runtime.
+        /// </summary>
+        public static event EventHandler<V8RuntimeDebuggerEventArgs> DebuggerDisconnected;
+
+        /// <summary>
         /// Gets the name associated with the V8 runtime instance.
         /// </summary>
         public string Name { get; }
@@ -537,11 +547,13 @@ namespace Microsoft.ClearScript.V8
         /// <param name="code">The script code to compile.</param>
         /// <param name="cacheKind">The kind of cache data to be consumed.</param>
         /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
-        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted and used to accelerate script compilation, <c>false</c> otherwise.</param>
         /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
         /// <remarks>
         /// To be accepted, the cache data must have been generated for identical script code by
-        /// the same V8 build.
+        /// the same V8 build. Note that script compilation may be bypassed if a suitable compiled
+        /// script already exists in the V8 runtime's memory. In that case, the cache data is
+        /// ignored and <paramref name="cacheAccepted"/> is set to <c>false</c>.
         /// </remarks>
         /// <c><seealso cref="Compile(string, V8CacheKind, out byte[])"/></c>
         public V8Script Compile(string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
@@ -556,11 +568,13 @@ namespace Microsoft.ClearScript.V8
         /// <param name="code">The script code to compile.</param>
         /// <param name="cacheKind">The kind of cache data to be consumed.</param>
         /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
-        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted and used to accelerate script compilation, <c>false</c> otherwise.</param>
         /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
         /// <remarks>
         /// To be accepted, the cache data must have been generated for identical script code by
-        /// the same V8 build.
+        /// the same V8 build. Note that script compilation may be bypassed if a suitable compiled
+        /// script already exists in the V8 runtime's memory. In that case, the cache data is
+        /// ignored and <paramref name="cacheAccepted"/> is set to <c>false</c>.
         /// </remarks>
         /// <c><seealso cref="Compile(string, string, V8CacheKind, out byte[])"/></c>
         public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
@@ -575,17 +589,76 @@ namespace Microsoft.ClearScript.V8
         /// <param name="code">The script code to compile.</param>
         /// <param name="cacheKind">The kind of cache data to be consumed.</param>
         /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
-        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted and used to accelerate script compilation, <c>false</c> otherwise.</param>
         /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
         /// <remarks>
         /// To be accepted, the cache data must have been generated for identical script code by
-        /// the same V8 build.
+        /// the same V8 build. Note that script compilation may be bypassed if a suitable compiled
+        /// script already exists in the V8 runtime's memory. In that case, the cache data is
+        /// ignored and <paramref name="cacheAccepted"/> is set to <c>false</c>.
         /// </remarks>
         /// <c><seealso cref="Compile(DocumentInfo, string, V8CacheKind, out byte[])"/></c>
         public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             VerifyNotDisposed();
             return CompileInternal(documentInfo.MakeUnique(DocumentNameManager), code, cacheKind, cacheBytes, out cacheAccepted);
+        }
+
+        /// <summary>
+        /// Creates a compiled script, consuming previously generated cache data and updating it if necessary.
+        /// </summary>
+        /// <param name="code">The script code to compile.</param>
+        /// <param name="cacheKind">The kind of cache data to be processed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheResult">The cache data processing result for the operation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build. If returned, the updated cache data can be stored externally and is
+        /// usable in other V8 script engines and application processes.
+        /// </remarks>
+        public V8Script Compile(string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+        {
+            return Compile(null, code, cacheKind, ref cacheBytes, out cacheResult);
+        }
+
+        /// <summary>
+        /// Creates a compiled script with an associated document name, consuming previously generated cache data and updating it if necessary.
+        /// </summary>
+        /// <param name="documentName">A document name for the compiled script. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <param name="cacheKind">The kind of cache data to be processed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheResult">The cache data processing result for the operation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build. If returned, the updated cache data can be stored externally and is
+        /// usable in other V8 script engines and application processes.
+        /// </remarks>
+        public V8Script Compile(string documentName, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+        {
+            return Compile(new DocumentInfo(documentName), code, cacheKind, ref cacheBytes, out cacheResult);
+        }
+
+        /// <summary>
+        /// Creates a compiled script with the specified document meta-information, consuming previously generated cache data and updating it if necessary.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing meta-information for the script document.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <param name="cacheKind">The kind of cache data to be processed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheResult">The cache data processing result for the operation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build. If returned, the updated cache data can be stored externally and is
+        /// usable in other V8 script engines and application processes.
+        /// </remarks>
+        public V8Script Compile(DocumentInfo documentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+        {
+            VerifyNotDisposed();
+            return CompileInternal(documentInfo.MakeUnique(DocumentNameManager), code, cacheKind, ref cacheBytes, out cacheResult);
         }
 
         /// <summary>
@@ -682,11 +755,13 @@ namespace Microsoft.ClearScript.V8
         /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
         /// <param name="cacheKind">The kind of cache data to be consumed.</param>
         /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
-        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted and used to accelerate script compilation, <c>false</c> otherwise.</param>
         /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
         /// <remarks>
         /// To be accepted, the cache data must have been generated for identical script code by
-        /// the same V8 build.
+        /// the same V8 build. Note that script compilation may be bypassed if a suitable compiled
+        /// script already exists in the V8 runtime's memory. In that case, the cache data is
+        /// ignored and <paramref name="cacheAccepted"/> is set to <c>false</c>.
         /// </remarks>
         public V8Script CompileDocument(string specifier, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
@@ -700,11 +775,13 @@ namespace Microsoft.ClearScript.V8
         /// <param name="category">An optional category for the requested document.</param>
         /// <param name="cacheKind">The kind of cache data to be consumed.</param>
         /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
-        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted and used to accelerate script compilation, <c>false</c> otherwise.</param>
         /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
         /// <remarks>
         /// To be accepted, the cache data must have been generated for identical script code by
-        /// the same V8 build.
+        /// the same V8 build. Note that script compilation may be bypassed if a suitable compiled
+        /// script already exists in the V8 runtime's memory. In that case, the cache data is
+        /// ignored and <paramref name="cacheAccepted"/> is set to <c>false</c>.
         /// </remarks>
         public V8Script CompileDocument(string specifier, DocumentCategory category, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
@@ -719,17 +796,78 @@ namespace Microsoft.ClearScript.V8
         /// <param name="contextCallback">An optional context callback for the requested document.</param>
         /// <param name="cacheKind">The kind of cache data to be consumed.</param>
         /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
-        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted, <c>false</c> otherwise.</param>
+        /// <param name="cacheAccepted"><c>True</c> if <paramref name="cacheBytes"/> was accepted and used to accelerate script compilation, <c>false</c> otherwise.</param>
         /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
         /// <remarks>
         /// To be accepted, the cache data must have been generated for identical script code by
-        /// the same V8 build.
+        /// the same V8 build. Note that script compilation may be bypassed if a suitable compiled
+        /// script already exists in the V8 runtime's memory. In that case, the cache data is
+        /// ignored and <paramref name="cacheAccepted"/> is set to <c>false</c>.
         /// </remarks>
         public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
             MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
             var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
             return Compile(document.Info, document.GetTextContents(), cacheKind, cacheBytes, out cacheAccepted);
+        }
+
+        /// <summary>
+        /// Loads and compiles a script document, consuming previously generated cache data and updating it if necessary.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="cacheKind">The kind of cache data to be processed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheResult">The cache data processing result for the operation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build. If returned, the updated cache data can be stored externally and is
+        /// usable in other V8 script engines and application processes.
+        /// </remarks>
+        public V8Script CompileDocument(string specifier, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+        {
+            return CompileDocument(specifier, null, cacheKind, ref cacheBytes, out cacheResult);
+        }
+
+        /// <summary>
+        /// Loads and compiles a document with the specified category, consuming previously generated cache data and updating it if necessary.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <param name="cacheKind">The kind of cache data to be processed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheResult">The cache data processing result for the operation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build. If returned, the updated cache data can be stored externally and is
+        /// usable in other V8 script engines and application processes.
+        /// </remarks>
+        public V8Script CompileDocument(string specifier, DocumentCategory category, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+        {
+            return CompileDocument(specifier, category, null, cacheKind, ref cacheBytes, out cacheResult);
+        }
+
+        /// <summary>
+        /// Loads and compiles a document with the specified category and context callback, consuming previously generated cache data and updating it if necessary.
+        /// </summary>
+        /// <param name="specifier">A string specifying the document to be loaded and compiled.</param>
+        /// <param name="category">An optional category for the requested document.</param>
+        /// <param name="contextCallback">An optional context callback for the requested document.</param>
+        /// <param name="cacheKind">The kind of cache data to be processed.</param>
+        /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
+        /// <param name="cacheResult">The cache data processing result for the operation.</param>
+        /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
+        /// <remarks>
+        /// To be accepted, the cache data must have been generated for identical script code by
+        /// the same V8 build. If returned, the updated cache data can be stored externally and is
+        /// usable in other V8 script engines and application processes.
+        /// </remarks>
+        public V8Script CompileDocument(string specifier, DocumentCategory category, DocumentContextCallback contextCallback, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+        {
+            MiscHelpers.VerifyNonBlankArgument(specifier, nameof(specifier), "Invalid document specifier");
+            var document = DocumentSettings.LoadDocument(null, specifier, category, contextCallback);
+            return Compile(document.Info, document.GetTextContents(), cacheKind, ref cacheBytes, out cacheResult);
         }
 
         /// <summary>
@@ -851,6 +989,16 @@ namespace Microsoft.ClearScript.V8
 
         internal readonly HostItemCollateral HostItemCollateral = new HostItemCollateral();
 
+        internal static void OnDebuggerConnected(V8RuntimeDebuggerEventArgs args)
+        {
+            DebuggerConnected?.Invoke(null, args);
+        }
+
+        internal static void OnDebuggerDisconnected(V8RuntimeDebuggerEventArgs args)
+        {
+            DebuggerDisconnected?.Invoke(null, args);
+        }
+
         internal V8IsolateProxy IsolateProxy
         {
             get
@@ -885,6 +1033,10 @@ namespace Microsoft.ClearScript.V8
             {
                 code = CommonJSManager.Module.GetAugmentedCode(code);
             }
+            else if ((documentInfo.Category != DocumentCategory.Script) && (documentInfo.Category != ModuleCategory.Standard))
+            {
+                throw new NotSupportedException("The V8 runtime cannot compile documents of type '" + documentInfo.Category + "'");
+            }
 
             return proxy.Compile(documentInfo, code);
         }
@@ -899,6 +1051,10 @@ namespace Microsoft.ClearScript.V8
             if (documentInfo.Category == ModuleCategory.CommonJS)
             {
                 code = CommonJSManager.Module.GetAugmentedCode(code);
+            }
+            else if ((documentInfo.Category != DocumentCategory.Script) && (documentInfo.Category != ModuleCategory.Standard))
+            {
+                throw new NotSupportedException("The V8 runtime cannot compile documents of type '" + documentInfo.Category + "'");
             }
 
             return proxy.Compile(documentInfo, code, cacheKind, out cacheBytes);
@@ -915,8 +1071,31 @@ namespace Microsoft.ClearScript.V8
             {
                 code = CommonJSManager.Module.GetAugmentedCode(code);
             }
+            else if ((documentInfo.Category != DocumentCategory.Script) && (documentInfo.Category != ModuleCategory.Standard))
+            {
+                throw new NotSupportedException("The V8 runtime cannot compile documents of type '" + documentInfo.Category + "'");
+            }
 
             return proxy.Compile(documentInfo, code, cacheKind, cacheBytes, out cacheAccepted);
+        }
+
+        private V8Script CompileInternal(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+        {
+            if (FormatCode)
+            {
+                code = MiscHelpers.FormatCode(code);
+            }
+
+            if (documentInfo.Category == ModuleCategory.CommonJS)
+            {
+                code = CommonJSManager.Module.GetAugmentedCode(code);
+            }
+            else if ((documentInfo.Category != DocumentCategory.Script) && (documentInfo.Category != ModuleCategory.Standard))
+            {
+                throw new NotSupportedException("The V8 runtime cannot compile documents of type '" + documentInfo.Category + "'");
+            }
+
+            return proxy.Compile(documentInfo, code, cacheKind, ref cacheBytes, out cacheResult);
         }
 
         #endregion

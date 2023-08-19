@@ -324,22 +324,22 @@ namespace Microsoft.ClearScript.Util
             return type.GetGenericArguments().Count(typeArg => typeArg.IsGenericParameter);
         }
 
-        public static IEnumerable<EventInfo> GetScriptableEvents(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static IEnumerable<EventInfo> GetScriptableEvents(this Type type, IHostContext context, BindingFlags bindFlags)
         {
             var events = type.GetEvents(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                events = events.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableEvents(bindFlags, accessContext, defaultAccess)));
+                events = events.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableEvents(context, bindFlags)));
             }
 
-            return events.Where(eventInfo => eventInfo.IsScriptable(accessContext, defaultAccess));
+            return events.Where(eventInfo => eventInfo.IsScriptable(context));
         }
 
-        public static EventInfo GetScriptableEvent(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static EventInfo GetScriptableEvent(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
             try
             {
-                var eventInfo = type.GetScriptableEventInternal(name, bindFlags, accessContext, defaultAccess);
+                var eventInfo = type.GetScriptableEventInternal(context, name, bindFlags);
                 if (eventInfo != null)
                 {
                     return eventInfo;
@@ -349,54 +349,54 @@ namespace Microsoft.ClearScript.Util
             {
             }
 
-            return type.GetScriptableEvents(bindFlags, accessContext, defaultAccess).FirstOrDefault(eventInfo => string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            return type.GetScriptableEvents(context, bindFlags).FirstOrDefault(eventInfo => string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
         }
 
-        public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, IHostContext context, BindingFlags bindFlags)
         {
-            return type.GetFields(bindFlags).Where(field => field.IsScriptable(accessContext, defaultAccess));
+            return type.GetFields(bindFlags).Where(field => field.IsScriptable(context));
         }
 
-        public static FieldInfo GetScriptableField(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static FieldInfo GetScriptableField(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
             var candidate = type.GetField(name, bindFlags);
-            if ((candidate != null) && candidate.IsScriptable(accessContext, defaultAccess) && string.Equals(candidate.GetScriptName(), name, bindFlags.GetMemberNameComparison()))
+            if ((candidate != null) && candidate.IsScriptable(context) && string.Equals(candidate.GetScriptName(), name, bindFlags.GetMemberNameComparison()))
             {
                 return candidate;
             }
 
-            return type.GetScriptableFields(bindFlags, accessContext, defaultAccess).FirstOrDefault(field => string.Equals(field.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            return type.GetScriptableFields(context, bindFlags).FirstOrDefault(field => string.Equals(field.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
         }
 
-        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, IHostContext context, BindingFlags bindFlags)
         {
             var methods = type.GetMethods(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                methods = methods.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableMethods(bindFlags, accessContext, defaultAccess)));
-                methods = methods.Concat(typeof(object).GetScriptableMethods(bindFlags, accessContext, defaultAccess));
+                methods = methods.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableMethods(context, bindFlags)));
+                methods = methods.Concat(typeof(object).GetScriptableMethods(context, bindFlags));
             }
 
-            return methods.Where(method => method.IsScriptable(accessContext, defaultAccess));
+            return methods.Where(method => method.IsScriptable(context));
         }
 
-        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
-            return type.GetScriptableMethods(bindFlags, accessContext, defaultAccess).Where(method => string.Equals(method.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            return type.GetScriptableMethods(context, bindFlags).Where(method => string.Equals(method.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
         }
 
-        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, IHostContext context, BindingFlags bindFlags)
         {
             var properties = type.GetProperties(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags, accessContext, defaultAccess)));
+                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(context, bindFlags)));
             }
 
-            return properties.Where(property => property.IsScriptable(accessContext, defaultAccess));
+            return properties.Where(property => property.IsScriptable(context));
         }
 
-        public static IEnumerable<PropertyInfo> GetScriptableDefaultProperties(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static IEnumerable<PropertyInfo> GetScriptableDefaultProperties(this Type type, IHostContext context, BindingFlags bindFlags)
         {
             if (type.IsArray)
             {
@@ -407,30 +407,30 @@ namespace Microsoft.ClearScript.Util
             var properties = type.GetProperties(bindFlags).AsEnumerable();
             if (type.IsInterface)
             {
-                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(bindFlags, accessContext, defaultAccess)));
+                properties = properties.Concat(type.GetInterfaces().SelectMany(interfaceType => interfaceType.GetScriptableProperties(context, bindFlags)));
             }
 
             var defaultMembers = type.GetDefaultMembers();
-            return properties.Where(property => property.IsScriptable(accessContext, defaultAccess) && (defaultMembers.Contains(property) || property.IsDispID(SpecialDispIDs.Default)));
+            return properties.Where(property => property.IsScriptable(context) && (defaultMembers.Contains(property) || property.IsDispID(SpecialDispIDs.Default)));
         }
 
-        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
-            return type.GetScriptableProperties(bindFlags, accessContext, defaultAccess).Where(property => string.Equals(property.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            return type.GetScriptableProperties(context, bindFlags).Where(property => string.Equals(property.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
         }
 
-        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static PropertyInfo GetScriptableProperty(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
             var candidates = type.GetProperty(name, bindFlags)?.ToEnumerable() ?? Enumerable.Empty<PropertyInfo>();
             if (type.IsInterface)
             {
-                candidates = candidates.Concat(type.GetInterfaces().Select(interfaceType => interfaceType.GetScriptableProperty(name, bindFlags, accessContext, defaultAccess)));
+                candidates = candidates.Concat(type.GetInterfaces().Select(interfaceType => interfaceType.GetScriptableProperty(context, name, bindFlags)));
             }
 
             try
             {
                 // ReSharper disable once RedundantEnumerableCastCall
-                return candidates.OfType<PropertyInfo>().SingleOrDefault(property => (property.GetIndexParameters().Length < 1) && property.IsScriptable(accessContext, defaultAccess) && string.Equals(property.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+                return candidates.OfType<PropertyInfo>().SingleOrDefault(property => (property.GetIndexParameters().Length < 1) && property.IsScriptable(context) && string.Equals(property.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
             }
             catch (InvalidOperationException exception)
             {
@@ -438,13 +438,13 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
-        public static PropertyInfo GetScriptableProperty(this Type type, string name, BindingFlags bindFlags, object[] args, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
+        public static PropertyInfo GetScriptableProperty(this Type type, IHostContext context, string name, BindingFlags bindFlags, object[] args, object[] bindArgs)
         {
             if (bindArgs.Length < 1)
             {
                 try
                 {
-                    var property = type.GetScriptableProperty(name, bindFlags, accessContext, defaultAccess);
+                    var property = type.GetScriptableProperty(context, name, bindFlags);
                     if (property != null)
                     {
                         return property;
@@ -455,24 +455,24 @@ namespace Microsoft.ClearScript.Util
                 }
             }
 
-            var candidates = type.GetScriptableProperties(name, bindFlags, accessContext, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
+            var candidates = type.GetScriptableProperties(context, name, bindFlags).Distinct(PropertySignatureComparer.Instance).ToArray();
             return BindToMember(candidates, bindFlags, args, bindArgs);
         }
 
-        public static PropertyInfo GetScriptableDefaultProperty(this Type type, BindingFlags bindFlags, object[] args, object[] bindArgs, Type accessContext, ScriptAccess defaultAccess)
+        public static PropertyInfo GetScriptableDefaultProperty(this Type type, IHostContext context, BindingFlags bindFlags, object[] args, object[] bindArgs)
         {
-            var candidates = type.GetScriptableDefaultProperties(bindFlags, accessContext, defaultAccess).Distinct(PropertySignatureComparer.Instance).ToArray();
+            var candidates = type.GetScriptableDefaultProperties(context, bindFlags).Distinct(PropertySignatureComparer.Instance).ToArray();
             return BindToMember(candidates, bindFlags, args, bindArgs);
         }
 
-        public static IEnumerable<Type> GetScriptableNestedTypes(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        public static IEnumerable<Type> GetScriptableNestedTypes(this Type type, IHostContext context, BindingFlags bindFlags)
         {
-            return type.GetNestedTypes(bindFlags).Where(nestedType => nestedType.IsScriptable(accessContext, defaultAccess));
+            return type.GetNestedTypes(bindFlags).Where(nestedType => nestedType.IsScriptable(context));
         }
 
-        public static Invocability GetInvocability(this Type type, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public static Invocability GetInvocability(this Type type, IHostContext context, BindingFlags bindFlags, bool ignoreDynamic)
         {
-            return invocabilityMap.GetOrAdd(Tuple.Create(type, bindFlags, accessContext, defaultAccess, ignoreDynamic), GetInvocabilityInternal);
+            return invocabilityMap.GetOrAdd(Tuple.Create(type, bindFlags, context.AccessContext, context.DefaultAccess, ignoreDynamic), _ => GetInvocabilityInternal(type, context, bindFlags, ignoreDynamic));
         }
 
         public static object CreateInstance(this Type type, params object[] args)
@@ -485,7 +485,7 @@ namespace Microsoft.ClearScript.Util
             return type.InvokeMember(string.Empty, BindingFlags.CreateInstance | BindingFlags.Instance | (flags & ~BindingFlags.Static), null, null, args, CultureInfo.InvariantCulture);
         }
 
-        public static object CreateInstance(this Type type, IHostInvokeContext invokeContext, HostTarget target, object[] args, object[] bindArgs)
+        public static object CreateInstance(this Type type, IHostContext context, HostTarget target, object[] args, object[] bindArgs)
         {
             if (type.IsCOMObject)
             {
@@ -494,10 +494,10 @@ namespace Microsoft.ClearScript.Util
 
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-            var signature = new BindSignature(invokeContext.AccessContext, flags, target, type.TypeHandle.Value.ToString(), ArrayHelpers.GetEmptyArray<Type>(), bindArgs);
-            if (invokeContext.Engine.TryGetCachedConstructorBindResult(signature, out var boundConstructor))
+            var signature = new BindSignature(context.AccessContext, flags, target, type.TypeHandle.Value.ToString(), ArrayHelpers.GetEmptyArray<Type>(), bindArgs);
+            if (context.Engine.TryGetCachedConstructorBindResult(signature, out var boundConstructor))
             {
-                return InvokeHelpers.InvokeConstructor(invokeContext, boundConstructor, args);
+                return InvokeHelpers.InvokeConstructor(context, boundConstructor, args);
             }
 
             var constructors = type.GetConstructors(flags);
@@ -506,7 +506,7 @@ namespace Microsoft.ClearScript.Util
                 return type.CreateInstance();
             }
 
-            var candidates = constructors.Where(testConstructor => testConstructor.IsAccessible(invokeContext.AccessContext) && !testConstructor.IsBlockedFromScript(invokeContext.DefaultAccess)).ToArray();
+            var candidates = constructors.Where(testConstructor => testConstructor.IsAccessible(context) && !testConstructor.IsBlockedFromScript(context.DefaultAccess)).ToArray();
             if (candidates.Length < 1)
             {
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
@@ -518,8 +518,8 @@ namespace Microsoft.ClearScript.Util
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
             }
 
-            invokeContext.Engine.CacheConstructorBindResult(signature, constructor);
-            return InvokeHelpers.InvokeConstructor(invokeContext, constructor, args);
+            context.Engine.CacheConstructorBindResult(signature, constructor);
+            return InvokeHelpers.InvokeConstructor(context, constructor, args);
         }
 
         public static Type MakeSpecificType(this Type template, params Type[] typeArgs)
@@ -707,18 +707,18 @@ namespace Microsoft.ClearScript.Util
             return MiscHelpers.FormatInvariant("{0}{1}<{2}>", parentPrefix, name, paramList);
         }
 
-        private static EventInfo GetScriptableEventInternal(this Type type, string name, BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess)
+        private static EventInfo GetScriptableEventInternal(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
             var candidates = type.GetEvent(name, bindFlags)?.ToEnumerable() ?? Enumerable.Empty<EventInfo>();
             if (type.IsInterface)
             {
-                candidates = candidates.Concat(type.GetInterfaces().Select(interfaceType => interfaceType.GetScriptableEventInternal(name, bindFlags, accessContext, defaultAccess)));
+                candidates = candidates.Concat(type.GetInterfaces().Select(interfaceType => interfaceType.GetScriptableEventInternal(context, name, bindFlags)));
             }
 
             try
             {
                 // ReSharper disable once RedundantEnumerableCastCall
-                return candidates.OfType<EventInfo>().SingleOrDefault(eventInfo => eventInfo.IsScriptable(accessContext, defaultAccess) && string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+                return candidates.OfType<EventInfo>().SingleOrDefault(eventInfo => eventInfo.IsScriptable(context) && string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
             }
             catch (InvalidOperationException exception)
             {
@@ -726,10 +726,8 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
-        private static Invocability GetInvocabilityInternal(Tuple<Type, BindingFlags, Type, ScriptAccess, bool> args)
+        private static Invocability GetInvocabilityInternal(Type type, IHostContext context, BindingFlags bindFlags, bool ignoreDynamic)
         {
-            var (type, bindFlags, accessContext, defaultAccess, ignoreDynamic) = args;
-
             if (typeof(Delegate).IsAssignableFrom(type))
             {
                 return Invocability.Delegate;
@@ -740,7 +738,7 @@ namespace Microsoft.ClearScript.Util
                 return Invocability.Dynamic;
             }
 
-            if (type.GetScriptableDefaultProperties(bindFlags, accessContext, defaultAccess).Any())
+            if (type.GetScriptableDefaultProperties(context, bindFlags).Any())
             {
                 return Invocability.DefaultProperty;
             }

@@ -3,30 +3,39 @@
 
 #pragma once
 
+enum class DocumentKind : int32_t
+{
+    // IMPORTANT: maintain bitwise equivalence with managed enum DocumentKind
+    Script,
+    JavaScriptModule,
+    CommonJSModule,
+    Json
+};
+
 struct V8DocumentInfo final
 {
 public:
 
     V8DocumentInfo():
-        m_IsModule(false),
+        m_Kind(DocumentKind::Script),
         m_pvDocumentInfo(nullptr)
     {
     }
 
-    V8DocumentInfo(const StdChar* pResourceName, const StdChar* pSourceMapUrl, uint64_t uniqueId, bool isModule, void* pvDocumentInfo):
+    V8DocumentInfo(const StdChar* pResourceName, const StdChar* pSourceMapUrl, uint64_t uniqueId, DocumentKind kind, void* pvDocumentInfo):
         m_ResourceName(pResourceName),
         m_SourceMapUrl(pSourceMapUrl),
         m_UniqueId(uniqueId),
-        m_IsModule(isModule),
+        m_Kind(kind),
         m_pvDocumentInfo(pvDocumentInfo)
     {
     }
 
-    V8DocumentInfo(StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, bool isModule, void* pvDocumentInfo):
+    V8DocumentInfo(StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind kind, void* pvDocumentInfo):
         m_ResourceName(std::move(resourceName)),
         m_SourceMapUrl(std::move(sourceMapUrl)),
         m_UniqueId(uniqueId),
-        m_IsModule(isModule),
+        m_Kind(kind),
         m_pvDocumentInfo(pvDocumentInfo)
     {
     }
@@ -35,7 +44,7 @@ public:
         m_ResourceName(that.m_ResourceName),
         m_SourceMapUrl(that.m_SourceMapUrl),
         m_UniqueId(that.m_UniqueId),
-        m_IsModule(that.m_IsModule),
+        m_Kind(that.m_Kind),
         m_pvDocumentInfo((that.m_pvDocumentInfo != nullptr) ? HostObjectUtil::GetInstance().AddRef(that.m_pvDocumentInfo) : nullptr)
     {
     }
@@ -44,7 +53,7 @@ public:
         m_ResourceName(std::move(that.m_ResourceName)),
         m_SourceMapUrl(std::move(that.m_SourceMapUrl)),
         m_UniqueId(that.m_UniqueId),
-        m_IsModule(that.m_IsModule),
+        m_Kind(that.m_Kind),
         m_pvDocumentInfo(that.m_pvDocumentInfo)
     {
         that.m_pvDocumentInfo = nullptr;
@@ -56,7 +65,7 @@ public:
         m_ResourceName = that.m_ResourceName;
         m_SourceMapUrl = that.m_SourceMapUrl;
         m_UniqueId = that.m_UniqueId;
-        m_IsModule = that.m_IsModule;
+        m_Kind = that.m_Kind;
         m_pvDocumentInfo = (that.m_pvDocumentInfo != nullptr) ? HostObjectUtil::GetInstance().AddRef(that.m_pvDocumentInfo) : nullptr;
         return *this;
     }
@@ -67,7 +76,7 @@ public:
         m_ResourceName = std::move(that.m_ResourceName);
         m_SourceMapUrl = std::move(that.m_SourceMapUrl);
         m_UniqueId = that.m_UniqueId;
-        m_IsModule = that.m_IsModule;
+        m_Kind = that.m_Kind;
         m_pvDocumentInfo = that.m_pvDocumentInfo;
         that.m_pvDocumentInfo = nullptr;
         return *this;
@@ -84,14 +93,16 @@ public:
     const StdString& GetResourceName() const { return m_ResourceName; }
     const StdString& GetSourceMapUrl() const { return m_SourceMapUrl; }
     uint64_t GetUniqueId() const { return m_UniqueId; }
-    bool IsModule() const { return m_IsModule; }
+    DocumentKind GetKind() const { return m_Kind; }
     void* GetDocumentInfo() const { return m_pvDocumentInfo; }
+
+    bool IsModule() const { return GetKind() == DocumentKind::JavaScriptModule; }
 
 private:
 
     StdString m_ResourceName;
     StdString m_SourceMapUrl;
     uint64_t m_UniqueId {};
-    bool m_IsModule;
+    DocumentKind m_Kind;
     void* m_pvDocumentInfo;
 };

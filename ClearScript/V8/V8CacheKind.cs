@@ -10,7 +10,7 @@ namespace Microsoft.ClearScript.V8
     /// </summary>
     public enum V8CacheKind
     {
-        // IMPORTANT: maintain bitwise equivalence with unmanaged enum V8CacheType
+        // IMPORTANT: maintain bitwise equivalence with unmanaged enum V8CacheKind
 
         /// <summary>
         /// Specifies that no cache data is to be generated or consumed during V8 script

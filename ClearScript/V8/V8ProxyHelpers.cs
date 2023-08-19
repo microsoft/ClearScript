@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
@@ -238,9 +239,15 @@ namespace Microsoft.ClearScript.V8
             {
                 exports = null;
             }
+            else if (category == DocumentCategory.Json)
+            {
+                exports = engine.MarshalToScript(javaScriptEngine.JsonModuleManager.GetOrCreateModule(documentInfo, code).Result);
+            }
             else
             {
-                throw new InvalidOperationException("Unsupported document category");
+                var uri = document.Info.Uri;
+                var name = (uri != null) ? (uri.IsFile ? uri.LocalPath : uri.AbsoluteUri) : document.Info.Name;
+                throw new FileLoadException($"Unsupported document category '{category}'", name);
             }
 
             return code;

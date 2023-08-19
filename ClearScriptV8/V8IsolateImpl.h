@@ -476,8 +476,9 @@ public:
     virtual void CancelAwaitDebugger() override;
 
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) override;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) override;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult) override;
 
     virtual bool GetEnableInterruptPropagation() override;
     virtual void SetEnableInterruptPropagation(bool value) override;
@@ -535,7 +536,10 @@ public:
 
     bool TryGetCachedScriptInfo(uint64_t uniqueId, V8DocumentInfo& documentInfo);
     v8::Local<v8::UnboundScript> GetCachedScript(uint64_t uniqueId, size_t codeDigest);
+    v8::Local<v8::UnboundScript> GetCachedScript(uint64_t uniqueId, size_t codeDigest, std::vector<uint8_t>& cacheBytes);
     void CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript);
+    void CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript, const std::vector<uint8_t>& cacheBytes);
+    void SetCachedScriptCacheBytes(uint64_t uniqueId, size_t codeDigest, const std::vector<uint8_t>& cacheBytes);
     void ClearScriptCache();
 
     ~V8IsolateImpl();
@@ -585,6 +589,7 @@ private:
         V8DocumentInfo DocumentInfo;
         size_t CodeDigest;
         Persistent<v8::UnboundScript> hScript;
+        std::vector<uint8_t> CacheBytes;
     };
 
     enum class RunMessageLoopReason

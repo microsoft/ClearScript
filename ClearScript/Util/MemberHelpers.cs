@@ -11,41 +11,41 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class MemberHelpers
     {
-        public static bool IsScriptable(this EventInfo eventInfo, Type accessContext, ScriptAccess defaultAccess)
+        public static bool IsScriptable(this EventInfo eventInfo, IHostContext context)
         {
-            return !eventInfo.IsSpecialName && !eventInfo.IsExplicitImplementation() && eventInfo.IsAccessible(accessContext) && !eventInfo.IsBlockedFromScript(defaultAccess);
+            return !eventInfo.IsSpecialName && !eventInfo.IsExplicitImplementation() && eventInfo.IsAccessible(context) && !eventInfo.IsBlockedFromScript(context.DefaultAccess);
         }
 
-        public static bool IsScriptable(this FieldInfo field, Type accessContext, ScriptAccess defaultAccess)
+        public static bool IsScriptable(this FieldInfo field, IHostContext context)
         {
-            return !field.IsSpecialName && field.IsAccessible(accessContext) && !field.IsBlockedFromScript(defaultAccess);
+            return !field.IsSpecialName && field.IsAccessible(context) && !field.IsBlockedFromScript(context.DefaultAccess);
         }
 
-        public static bool IsScriptable(this MethodInfo method, Type accessContext, ScriptAccess defaultAccess)
+        public static bool IsScriptable(this MethodInfo method, IHostContext context)
         {
-            return !method.IsSpecialName && !method.IsExplicitImplementation() && method.IsAccessible(accessContext) && !method.IsBlockedFromScript(defaultAccess);
+            return !method.IsSpecialName && !method.IsExplicitImplementation() && method.IsAccessible(context) && !method.IsBlockedFromScript(context.DefaultAccess);
         }
 
-        public static bool IsScriptable(this PropertyInfo property, Type accessContext, ScriptAccess defaultAccess)
+        public static bool IsScriptable(this PropertyInfo property, IHostContext context)
         {
-            return !property.IsSpecialName && !property.IsExplicitImplementation() && property.IsAccessible(accessContext) && !property.IsBlockedFromScript(defaultAccess);
+            return !property.IsSpecialName && !property.IsExplicitImplementation() && property.IsAccessible(context) && !property.IsBlockedFromScript(context.DefaultAccess);
         }
 
-        public static bool IsScriptable(this Type type, Type accessContext, ScriptAccess defaultAccess)
+        public static bool IsScriptable(this Type type, IHostContext context)
         {
-            return !type.IsSpecialName && type.IsAccessible(accessContext) && !type.IsBlockedFromScript(defaultAccess);
+            return !type.IsSpecialName && type.IsAccessible(context) && !type.IsBlockedFromScript(context.DefaultAccess);
         }
 
-        public static bool IsAccessible(this EventInfo eventInfo, Type accessContext)
+        public static bool IsAccessible(this EventInfo eventInfo, IHostContext context)
         {
-            return eventInfo.AddMethod.IsAccessible(accessContext);
+            return eventInfo.AddMethod.IsAccessible(context);
         }
 
-        public static bool IsAccessible(this FieldInfo field, Type accessContext)
+        public static bool IsAccessible(this FieldInfo field, IHostContext context)
         {
             var type = field.DeclaringType;
 
-            if (!type.IsAccessible(accessContext))
+            if (!type.IsAccessible(context))
             {
                 return false;
             }
@@ -56,6 +56,8 @@ namespace Microsoft.ClearScript.Util
             {
                 return true;
             }
+
+            var accessContext = context.AccessContext;
 
             if (accessContext == null)
             {
@@ -90,11 +92,11 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        public static bool IsAccessible(this MethodBase method, Type accessContext)
+        public static bool IsAccessible(this MethodBase method, IHostContext context)
         {
             var type = method.DeclaringType;
 
-            if (!type.IsAccessible(accessContext))
+            if (!type.IsAccessible(context))
             {
                 return false;
             }
@@ -105,6 +107,8 @@ namespace Microsoft.ClearScript.Util
             {
                 return true;
             }
+
+            var accessContext = context.AccessContext;
 
             if (accessContext == null)
             {
@@ -139,21 +143,21 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        public static bool IsAccessible(this MethodInfo method, Type accessContext)
+        public static bool IsAccessible(this MethodInfo method, IHostContext context)
         {
-            return ((MethodBase)method.GetBaseDefinition()).IsAccessible(accessContext);
+            return ((MethodBase)method.GetBaseDefinition()).IsAccessible(context);
         }
 
-        public static bool IsAccessible(this PropertyInfo property, Type accessContext)
+        public static bool IsAccessible(this PropertyInfo property, IHostContext context)
         {
             var getMethod = property.GetMethod;
-            if ((getMethod != null) && getMethod.IsAccessible(accessContext))
+            if ((getMethod != null) && getMethod.IsAccessible(context))
             {
                 return true;
             }
 
             var setMethod = property.SetMethod;
-            if ((setMethod != null) && setMethod.IsAccessible(accessContext))
+            if ((setMethod != null) && setMethod.IsAccessible(context))
             {
                 return true;
             }
@@ -161,18 +165,20 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        public static bool IsAccessible(this Type type, Type accessContext)
+        public static bool IsAccessible(this Type type, IHostContext context)
         {
-            var visibility = type.Attributes & TypeAttributes.VisibilityMask;
+            var visibility = (type.IsAnonymous() && !context.Engine.EnforceAnonymousTypeAccess) ? TypeAttributes.Public : type.Attributes & TypeAttributes.VisibilityMask;
 
             if (visibility == TypeAttributes.Public)
             {
                 return true;
             }
 
+            var accessContext = context.AccessContext;
+
             if (accessContext == null)
             {
-                return (visibility == TypeAttributes.NestedPublic) && type.DeclaringType.IsAccessible(null);
+                return (visibility == TypeAttributes.NestedPublic) && type.DeclaringType.IsAccessible(context);
             }
 
             if (visibility == TypeAttributes.NotPublic)
@@ -182,7 +188,7 @@ namespace Microsoft.ClearScript.Util
 
             type = type.DeclaringType;
 
-            if (!type.IsAccessible(accessContext))
+            if (!type.IsAccessible(context))
             {
                 return false;
             }

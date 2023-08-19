@@ -30,6 +30,8 @@ namespace Microsoft.ClearScript.JavaScript
 
             #region DocumentCategory overrides
 
+            internal override DocumentKind Kind => DocumentKind.JavaScriptModule;
+
             internal override string DefaultName => "Module";
 
             #endregion
@@ -57,6 +59,8 @@ namespace Microsoft.ClearScript.JavaScript
             }
 
             #region DocumentCategory overrides
+
+            internal override DocumentKind Kind => DocumentKind.CommonJSModule;
 
             internal override string DefaultName => "Module";
 

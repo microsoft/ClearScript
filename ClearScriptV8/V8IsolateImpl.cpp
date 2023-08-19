@@ -759,7 +759,7 @@ V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
+        SharedPtr<V8ContextImpl> spContextImpl(!m_ContextEntries.empty() ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
         return spContextImpl->Compile(documentInfo, std::move(code));
 
     END_ISOLATE_SCOPE
@@ -767,24 +767,36 @@ V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes)
+V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes)
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
-        return spContextImpl->Compile(documentInfo, std::move(code), cacheType, cacheBytes);
+        SharedPtr<V8ContextImpl> spContextImpl(!m_ContextEntries.empty() ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
+        return spContextImpl->Compile(documentInfo, std::move(code), cacheKind, cacheBytes);
 
     END_ISOLATE_SCOPE
 }
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted)
+V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted)
 {
     BEGIN_ISOLATE_SCOPE
 
-        SharedPtr<V8ContextImpl> spContextImpl((m_ContextEntries.size() > 0) ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
-        return spContextImpl->Compile(documentInfo, std::move(code), cacheType, cacheBytes, cacheAccepted);
+        SharedPtr<V8ContextImpl> spContextImpl(!m_ContextEntries.empty() ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
+        return spContextImpl->Compile(documentInfo, std::move(code), cacheKind, cacheBytes, cacheAccepted);
+
+    END_ISOLATE_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+V8ScriptHolder* V8IsolateImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult)
+{
+    BEGIN_ISOLATE_SCOPE
+
+        SharedPtr<V8ContextImpl> spContextImpl(!m_ContextEntries.empty() ? m_ContextEntries.front().pContextImpl : new V8ContextImpl(this, m_Name));
+        return spContextImpl->Compile(documentInfo, std::move(code), cacheKind, cacheBytes, cacheResult);
 
     END_ISOLATE_SCOPE
 }
@@ -1003,7 +1015,7 @@ v8::Local<v8::Context> V8IsolateImpl::ensureDefaultContextInGroup(int contextGro
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    if (m_ContextEntries.size() > 0)
+    if (!m_ContextEntries.empty())
     {
         return m_ContextEntries.front().pContextImpl->GetContext();
     }
@@ -1463,7 +1475,7 @@ bool V8IsolateImpl::TryGetCachedScriptInfo(uint64_t uniqueId, V8DocumentInfo& do
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    for (auto it = m_ScriptCache.begin(); it != m_ScriptCache.end(); it++)
+    for (auto it = m_ScriptCache.cbegin(); it != m_ScriptCache.cend(); it++)
     {
         if (it->DocumentInfo.GetUniqueId() == uniqueId)
         {
@@ -1482,7 +1494,7 @@ v8::Local<v8::UnboundScript> V8IsolateImpl::GetCachedScript(uint64_t uniqueId, s
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    for (auto it = m_ScriptCache.begin(); it != m_ScriptCache.end(); it++)
+    for (auto it = m_ScriptCache.cbegin(); it != m_ScriptCache.cend(); it++)
     {
         if ((it->DocumentInfo.GetUniqueId() == uniqueId) && (it->CodeDigest == codeDigest))
         {
@@ -1496,7 +1508,34 @@ v8::Local<v8::UnboundScript> V8IsolateImpl::GetCachedScript(uint64_t uniqueId, s
 
 //-----------------------------------------------------------------------------
 
+v8::Local<v8::UnboundScript> V8IsolateImpl::GetCachedScript(uint64_t uniqueId, size_t codeDigest, std::vector<uint8_t>& cacheBytes)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    for (auto it = m_ScriptCache.cbegin(); it != m_ScriptCache.cend(); it++)
+    {
+        if ((it->DocumentInfo.GetUniqueId() == uniqueId) && (it->CodeDigest == codeDigest))
+        {
+            m_ScriptCache.splice(m_ScriptCache.begin(), m_ScriptCache, it);
+            cacheBytes = it->CacheBytes;
+            return it->hScript;
+        }
+    }
+
+    cacheBytes.clear();
+    return v8::Local<v8::UnboundScript>();
+}
+
+//-----------------------------------------------------------------------------
+
 void V8IsolateImpl::CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript)
+{
+    CacheScript(documentInfo, codeDigest, hScript, std::vector<uint8_t>());
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript, const std::vector<uint8_t>& cacheBytes)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
@@ -1513,10 +1552,27 @@ void V8IsolateImpl::CacheScript(const V8DocumentInfo& documentInfo, size_t codeD
         return (entry.DocumentInfo.GetUniqueId() == documentInfo.GetUniqueId()) && (entry.CodeDigest == codeDigest);
     }));
 
-    ScriptCacheEntry entry { documentInfo, codeDigest, CreatePersistent(hScript) };
+    ScriptCacheEntry entry { documentInfo, codeDigest, CreatePersistent(hScript), cacheBytes };
     m_ScriptCache.push_front(std::move(entry));
 
     m_Statistics.ScriptCacheSize = m_ScriptCache.size();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SetCachedScriptCacheBytes(uint64_t uniqueId, size_t codeDigest, const std::vector<uint8_t>& cacheBytes)
+{
+    _ASSERTE(IsCurrent() && IsLocked());
+
+    for (auto it = m_ScriptCache.begin(); it != m_ScriptCache.end(); it++)
+    {
+        if ((it->DocumentInfo.GetUniqueId() == uniqueId) && (it->CodeDigest == codeDigest))
+        {
+            m_ScriptCache.splice(m_ScriptCache.begin(), m_ScriptCache, it);
+            it->CacheBytes = cacheBytes;
+            return;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1525,7 +1581,7 @@ void V8IsolateImpl::ClearScriptCache()
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    while (m_ScriptCache.size() > 0)
+    while (!m_ScriptCache.empty())
     {
         Dispose(m_ScriptCache.front().hScript);
         m_ScriptCache.pop_front();
@@ -1686,7 +1742,7 @@ void V8IsolateImpl::ProcessCallWithLockQueue(std::unique_lock<std::mutex>& lock)
     _ASSERTE(lock.owns_lock());
 
     CallWithLockQueue callWithLockQueue(PopCallWithLockQueue(lock));
-    while (callWithLockQueue.size() > 0)
+    while (!callWithLockQueue.empty())
     {
         lock.unlock();
         ProcessCallWithLockQueue(callWithLockQueue);
@@ -1703,7 +1759,7 @@ void V8IsolateImpl::ProcessCallWithLockQueue(CallWithLockQueue& callWithLockQueu
 
     BEGIN_PULSE_VALUE_SCOPE(&m_CallWithLockLevel, m_CallWithLockLevel + 1)
 
-        while (callWithLockQueue.size() > 0)
+        while (!callWithLockQueue.empty())
         {
             try
             {
@@ -1736,7 +1792,7 @@ V8IsolateImpl::CallWithLockQueue V8IsolateImpl::PopCallWithLockQueue(const std::
     CallWithLockQueue nestableCallWithLockQueue;
     CallWithLockQueue nonNestableCallWithLockQueue;
 
-    while (m_CallWithLockQueue.size() > 0)
+    while (!m_CallWithLockQueue.empty())
     {
         auto& callWithLockEntry = m_CallWithLockQueue.front();
         auto& callWithLockQueue = callWithLockEntry.first ? nestableCallWithLockQueue : nonNestableCallWithLockQueue;

@@ -19,7 +19,7 @@
 #include "V8ScriptHolder.h"
 #include "HostException.h"
 #include "V8Exception.h"
-#include "V8CacheType.h"
+#include "V8CacheTypes.h"
 #include "V8GlobalFlags.h"
 #include "IV8Entity.h"
 #include "V8Isolate.h"

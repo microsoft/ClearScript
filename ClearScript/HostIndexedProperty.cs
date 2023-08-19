@@ -39,17 +39,17 @@ namespace Microsoft.ClearScript
 
         public override object DynamicInvokeTarget => null;
 
-        public override HostTargetFlags GetFlags(IHostInvokeContext context)
+        public override HostTargetFlags GetFlags(IHostContext context)
         {
             return HostTargetFlags.None;
         }
 
-        public override string[] GetAuxMethodNames(IHostInvokeContext context, BindingFlags bindFlags)
+        public override string[] GetAuxMethodNames(IHostContext context, BindingFlags bindFlags)
         {
             return auxMethodNames;
         }
 
-        public override bool TryInvokeAuxMember(IHostInvokeContext context, string memberName, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(IHostContext context, string memberName, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
             {
@@ -70,13 +70,13 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public override bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(IHostContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             result = target.InvokeMember(name, (invokeFlags.HasFlag(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty) | BindingFlags.SuppressChangeType, args, bindArgs, null, true);
             return true;
         }
 
-        public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public override Invocability GetInvocability(IHostContext context, BindingFlags bindFlags, bool ignoreDynamic)
         {
             return Invocability.Delegate;
         }

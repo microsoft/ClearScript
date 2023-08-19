@@ -309,9 +309,11 @@ namespace Microsoft.ClearScript
             }
 
             var document = CacheDocument((bytes != null) ? new StringDocument(documentInfo, bytes) : new StringDocument(documentInfo, contents), false);
-            if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.AllowCategoryMismatch) && (documentInfo.Category != (category ?? DocumentCategory.Script)))
+
+            var expectedCategory = category ?? DocumentCategory.Script;
+            if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.AllowCategoryMismatch) && (documentInfo.Category != expectedCategory))
             {
-                throw new FileLoadException("Document category mismatch", uri.IsFile ? uri.LocalPath : uri.AbsoluteUri);
+                throw new FileLoadException($"Document category mismatch: '{expectedCategory}' expected, '{documentInfo.Category}' loaded", uri.IsFile ? uri.LocalPath : uri.AbsoluteUri);
             }
 
             return document;
@@ -426,7 +428,7 @@ namespace Microsoft.ClearScript
         public override Document CacheDocument(Document document, bool replace)
         {
             MiscHelpers.VerifyNonNullArgument(document, nameof(document));
-            if (!document.Info.Uri.IsAbsoluteUri)
+            if ((document.Info.Uri == null) || !document.Info.Uri.IsAbsoluteUri)
             {
                 throw new ArgumentException("The document must have an absolute URI");
             }

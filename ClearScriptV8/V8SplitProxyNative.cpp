@@ -800,9 +800,9 @@ NATIVE_ENTRY_POINT(void) V8Isolate_CancelAwaitDebugger(const V8IsolateHandle& ha
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_Compile(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code) noexcept
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_Compile(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code) noexcept
 {
-    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo);
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
 
     auto spIsolate = handle.GetEntity();
     if (!spIsolate.IsEmpty())
@@ -822,23 +822,23 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_Compile(const V8IsolateHandle& han
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileProducingCache(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) noexcept
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileProducingCache(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes) noexcept
 {
     cacheBytes.clear();
 
-    if (cacheType == V8CacheType::None)
+    if (cacheKind == V8CacheKind::None)
     {
-        return V8Isolate_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo, std::move(code));
+        return V8Isolate_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo, std::move(code));
     }
 
-    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo);
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
 
     auto spIsolate = handle.GetEntity();
     if (!spIsolate.IsEmpty())
     {
         try
         {
-            return new V8ScriptHandle(spIsolate->Compile(documentInfo, std::move(code), cacheType, cacheBytes));
+            return new V8ScriptHandle(spIsolate->Compile(documentInfo, std::move(code), cacheKind, cacheBytes));
         }
         catch (const V8Exception& exception)
         {
@@ -851,16 +851,16 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileProducingCache(const V8Isol
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileConsumingCache(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, StdBool& cacheAccepted) noexcept
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileConsumingCache(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, StdBool& cacheAccepted) noexcept
 {
     cacheAccepted = false;
 
-    if ((cacheType == V8CacheType::None) || cacheBytes.empty())
+    if ((cacheKind == V8CacheKind::None) || cacheBytes.empty())
     {
-        return V8Isolate_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo, std::move(code));
+        return V8Isolate_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo, std::move(code));
     }
 
-    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo);
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
 
     auto spIsolate = handle.GetEntity();
     if (!spIsolate.IsEmpty())
@@ -868,10 +868,45 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileConsumingCache(const V8Isol
         try
         {
             auto tempCacheAccepted = false;
-            auto pScriptHandle = new V8ScriptHandle(spIsolate->Compile(documentInfo, std::move(code), cacheType, cacheBytes, tempCacheAccepted));
+            auto pScriptHandle = new V8ScriptHandle(spIsolate->Compile(documentInfo, std::move(code), cacheKind, cacheBytes, tempCacheAccepted));
 
             cacheAccepted = tempCacheAccepted;
             return pScriptHandle;
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ScheduleScriptEngineException();
+        }
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Isolate_CompileUpdatingCache(const V8IsolateHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult) noexcept
+{
+    if (cacheKind == V8CacheKind::None)
+    {
+        cacheResult = V8CacheResult::Disabled;
+        return V8Isolate_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo, std::move(code));
+    }
+
+    if (cacheBytes.empty())
+    {
+        auto pScriptHandle = V8Isolate_CompileProducingCache(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo, std::move(code), cacheKind, cacheBytes);
+        cacheResult = !cacheBytes.empty() ? V8CacheResult::Updated : V8CacheResult::UpdateFailed;
+        return pScriptHandle;
+    }
+
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
+
+    auto spIsolate = handle.GetEntity();
+    if (!spIsolate.IsEmpty())
+    {
+        try
+        {
+            return new V8ScriptHandle(spIsolate->Compile(documentInfo, std::move(code), cacheKind, cacheBytes, cacheResult));
         }
         catch (const V8Exception& exception)
         {
@@ -1190,9 +1225,9 @@ NATIVE_ENTRY_POINT(void) V8Context_CancelAwaitDebugger(const V8ContextHandle& ha
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8Context_ExecuteCode(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, const StdString& code, StdBool evaluate, V8Value& result) noexcept
+NATIVE_ENTRY_POINT(void) V8Context_ExecuteCode(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, const StdString& code, StdBool evaluate, V8Value& result) noexcept
 {
-    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo);
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
 
     auto spContext = handle.GetEntity();
     if (!spContext.IsEmpty())
@@ -1210,9 +1245,9 @@ NATIVE_ENTRY_POINT(void) V8Context_ExecuteCode(const V8ContextHandle& handle, St
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_Compile(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code) noexcept
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_Compile(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code) noexcept
 {
-    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo);
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
 
     auto spContext = handle.GetEntity();
     if (!spContext.IsEmpty())
@@ -1232,23 +1267,23 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_Compile(const V8ContextHandle& han
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileProducingCache(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) noexcept
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileProducingCache(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes) noexcept
 {
     cacheBytes.clear();
 
-    if (cacheType == V8CacheType::None)
+    if (cacheKind == V8CacheKind::None)
     {
-        return V8Context_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo, std::move(code));
+        return V8Context_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo, std::move(code));
     }
 
-    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo);
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
 
     auto spContext = handle.GetEntity();
     if (!spContext.IsEmpty())
     {
         try
         {
-            return new V8ScriptHandle(spContext->Compile(documentInfo, std::move(code), cacheType, cacheBytes));
+            return new V8ScriptHandle(spContext->Compile(documentInfo, std::move(code), cacheKind, cacheBytes));
         }
         catch (const V8Exception& exception)
         {
@@ -1261,16 +1296,16 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileProducingCache(const V8Cont
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileConsumingCache(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, StdBool isModule, void* pvDocumentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, StdBool& cacheAccepted) noexcept
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileConsumingCache(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, StdBool& cacheAccepted) noexcept
 {
     cacheAccepted = false;
 
-    if ((cacheType == V8CacheType::None) || cacheBytes.empty())
+    if ((cacheKind == V8CacheKind::None) || cacheBytes.empty())
     {
-        return V8Context_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo, std::move(code));
+        return V8Context_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo, std::move(code));
     }
 
-    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo);
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
 
     auto spContext = handle.GetEntity();
     if (!spContext.IsEmpty())
@@ -1278,10 +1313,45 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileConsumingCache(const V8Cont
         try
         {
             auto tempCacheAccepted = false;
-            auto pScriptHandle = new V8ScriptHandle(spContext->Compile(documentInfo, std::move(code), cacheType, cacheBytes, tempCacheAccepted));
+            auto pScriptHandle = new V8ScriptHandle(spContext->Compile(documentInfo, std::move(code), cacheKind, cacheBytes, tempCacheAccepted));
 
             cacheAccepted = tempCacheAccepted;
             return pScriptHandle;
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ScheduleScriptEngineException();
+        }
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileUpdatingCache(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult) noexcept
+{
+    if (cacheKind == V8CacheKind::None)
+    {
+        cacheResult = V8CacheResult::Disabled;
+        return V8Context_Compile(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo, std::move(code));
+    }
+
+    if (cacheBytes.empty())
+    {
+        auto pScriptHandle = V8Context_CompileProducingCache(handle, std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo, std::move(code), cacheKind, cacheBytes);
+        cacheResult = !cacheBytes.empty() ? V8CacheResult::Updated : V8CacheResult::UpdateFailed;
+        return pScriptHandle;
+    }
+
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
+
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        try
+        {
+            return new V8ScriptHandle(spContext->Compile(documentInfo, std::move(code), cacheKind, cacheBytes, cacheResult));
         }
         catch (const V8Exception& exception)
         {

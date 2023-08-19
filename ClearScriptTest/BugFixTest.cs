@@ -1,6 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8;
+using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,11 +22,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Microsoft.ClearScript.V8;
-using Microsoft.ClearScript.Util;
-using Microsoft.CSharp.RuntimeBinder;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -1751,6 +1751,46 @@ namespace Microsoft.ClearScript.Test
             engine.DefaultAccess = ScriptAccess.None;
             engine.AddHostObject("test", new DefaultScriptAccessOverrideTestObject());
             engine.Execute("Array.from(test.Values)");
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8HostPropertyEnumeration()
+        {
+            var foo = new PropertyBag { { "foo", 123 }, { "bar", "baz" } };
+
+            engine.Script.foo = foo;
+            engine.Execute(@"
+                var keys = [];
+                for (let key in foo) {
+                    keys.push(key);
+                }
+            ");
+
+            Assert.AreEqual(foo.Keys.Count, engine.Script.keys.length);
+            Assert.IsTrue(foo.Keys.All(key => engine.Script.keys.includes(key)));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AnonymousTypeMemberEnumeration()
+        {
+            var foo = new { foo = 123, bar = "baz" };
+            ((V8ScriptEngine)engine).SuppressInstanceMethodEnumeration = true;
+
+            Assert.AreEqual(2, engine.Script.Object.keys(foo).length);
+            Assert.IsTrue(new[] { "foo", "bar" }.All(key => engine.Script.Object.keys(foo).includes(key)));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AnonymousTypeMemberEnumeration_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New V8ScriptEngine
+                    engine.Script.foo = New With {.foo = 123, .bar = ""baz""}
+                    engine.SuppressInstanceMethodEnumeration = True
+                    Assert.AreEqual(2, engine.Evaluate(""Object.keys(foo).length""))
+                    Assert.IsTrue((New String() {""foo"", ""bar""}).All(Function (key) engine.Evaluate(""Object.keys(foo).includes('"" & key & ""')"")))
+                End Using
+            ");
         }
 
     #if NET6_0_OR_GREATER

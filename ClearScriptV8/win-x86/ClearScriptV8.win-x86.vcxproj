@@ -174,7 +174,7 @@
     <ClInclude Include="..\SharedPtr.h" />
     <ClInclude Include="..\StdString.h" />
     <ClInclude Include="..\Timer.h" />
-    <ClInclude Include="..\V8CacheType.h" />
+    <ClInclude Include="..\V8CacheTypes.h" />
     <ClInclude Include="..\V8Context.h" />
     <ClInclude Include="..\V8ContextImpl.h" />
     <ClInclude Include="..\V8DocumentInfo.h" />

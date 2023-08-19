@@ -23,7 +23,6 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <PlatformTarget>x86</PlatformTarget>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -31,7 +30,6 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <PlatformTarget>x86</PlatformTarget>
     </PropertyGroup>
 
     <ItemGroup>

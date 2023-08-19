@@ -56,6 +56,7 @@
         <Compile Include="..\..\ClearScript\DocumentContextCallback.cs" Link="DocumentContextCallback.cs" />
         <Compile Include="..\..\ClearScript\DocumentFlags.cs" Link="DocumentFlags.cs" />
         <Compile Include="..\..\ClearScript\DocumentInfo.cs" Link="DocumentInfo.cs" />
+        <Compile Include="..\..\ClearScript\DocumentKind.cs" Link="DocumentKind.cs" />
         <Compile Include="..\..\ClearScript\DocumentLoadCallback.cs" Link="DocumentLoadCallback.cs" />
         <Compile Include="..\..\ClearScript\DocumentLoader.cs" Link="DocumentLoader.cs" />
         <Compile Include="..\..\ClearScript\DocumentSettings.cs" Link="DocumentSettings.cs" />
@@ -101,6 +102,7 @@
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptExtensions.NetStandard.cs" Link="JavaScript\JavaScriptExtensions.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptObjectFlags.cs" Link="JavaScript\JavaScriptObjectFlags.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptObjectKind.cs" Link="JavaScript\JavaScriptObjectKind.cs" />
+        <Compile Include="..\..\ClearScript\JavaScript\JsonModuleManager.cs" Link="JavaScript\JsonModuleManager.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\ModuleCategory.cs" Link="JavaScript\ModuleCategory.cs" />
         <Compile Include="..\..\ClearScript\NoDefaultScriptAccessAttribute.cs" Link="NoDefaultScriptAccessAttribute.cs" />
         <Compile Include="..\..\ClearScript\NoScriptAccessAttribute.cs" Link="NoScriptAccessAttribute.cs" />
@@ -145,7 +147,8 @@
         <Compile Include="..\..\ClearScript\Util\Holder.cs" Link="Util\Holder.cs" />
         <Compile Include="..\..\ClearScript\Util\IDynamic.cs" Link="Util\IDynamic.cs" />
         <Compile Include="..\..\ClearScript\Util\IExpando.cs" Link="Util\IExpando.cs" />
-        <Compile Include="..\..\ClearScript\Util\IHostInvokeContext.cs" Link="Util\IHostInvokeContext.cs" />
+        <Compile Include="..\..\ClearScript\Util\IHostContext.cs" Link="Util\IHostContext.cs" />
+        <Compile Include="..\..\ClearScript\Util\IHostTargetContext.cs" Link="Util\IHostTargetContext.cs" />
         <Compile Include="..\..\ClearScript\Util\INativeCallback.cs" Link="Util\INativeCallback.cs" />
         <Compile Include="..\..\ClearScript\Util\InvokeHelpers.cs" Link="Util\InvokeHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\IScriptMarshalWrapper.cs" Link="Util\IScriptMarshalWrapper.cs" />

@@ -11,22 +11,22 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class InvokeHelpers
     {
-        public static object InvokeMethod(IHostInvokeContext context, MethodInfo method, object target, object[] args, ScriptMemberFlags flags)
+        public static object InvokeMethod(IHostContext context, MethodInfo method, object target, object[] args, ScriptMemberFlags flags)
         {
             return InvokeMethodInternal(context, method, target, args, (invokeMethod, invokeTarget, invokeArgs) => invokeMethod.Invoke(invokeTarget, invokeArgs), method.ReturnType, flags);
         }
 
-        public static object InvokeConstructor(IHostInvokeContext context, ConstructorInfo constructor, object[] args)
+        public static object InvokeConstructor(IHostContext context, ConstructorInfo constructor, object[] args)
         {
             return InvokeMethodInternal(context, constructor, null, args, (invokeConstructor, invokeTarget, invokeArgs) => invokeConstructor.Invoke(invokeArgs), constructor.DeclaringType, ScriptMemberFlags.None);
         }
 
-        public static object InvokeDelegate(IHostInvokeContext context, Delegate del, object[] args)
+        public static object InvokeDelegate(IHostContext context, Delegate del, object[] args)
         {
             return InvokeMethod(context, del.GetType().GetMethod("Invoke"), del, args, ScriptMemberFlags.None);
         }
 
-        public static bool TryInvokeObject(IHostInvokeContext context, object target, BindingFlags invokeFlags, object[] args, object[] bindArgs, bool tryDynamic, out object result)
+        public static bool TryInvokeObject(IHostContext context, object target, BindingFlags invokeFlags, object[] args, object[] bindArgs, bool tryDynamic, out object result)
         {
             if (target is HostTarget hostTarget)
             {
@@ -73,7 +73,7 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        private static object InvokeMethodInternal<T>(IHostInvokeContext context, T method, object target, object[] args, Func<T, object, object[], object> invoker, Type returnType, ScriptMemberFlags flags) where T : MethodBase
+        private static object InvokeMethodInternal<T>(IHostContext context, T method, object target, object[] args, Func<T, object, object[], object> invoker, Type returnType, ScriptMemberFlags flags) where T : MethodBase
         {
             var argList = new List<object>();
             var byRefArgInfo = new List<ByRefArgItem>();
