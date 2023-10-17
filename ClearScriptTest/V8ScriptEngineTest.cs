@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
@@ -4487,6 +4488,22 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CustomAttributeLoader_Private()
+        {
+            using (var otherEngine = new V8ScriptEngine())
+            {
+                engine.CustomAttributeLoader = new CamelCaseAttributeLoader();
+                TestCamelCaseMemberBinding();
+
+                using (Scope.Create(() => engine, originalEngine => engine = originalEngine))
+                {
+                    engine = otherEngine;
+                    TestUtil.AssertException<InvalidCastException>(TestCamelCaseMemberBinding);
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_StringifyEnhancements()
         {
             engine.Script.hostObject = new Dictionary<string, object> { { "foo", 123 }, { "bar", "baz" }, { "qux", engine.Evaluate("({ quux: 456.789, quuz: 'corge' })") } };
@@ -5166,6 +5183,63 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_UseSynchronizationContexts()
+        {
+            Func<SingleThreadSynchronizationContext, Task<bool>> doWork = context => Task<bool>.Factory.StartNew(() =>
+            {
+                Thread.Sleep(100);
+                return context.OnThread;
+            });
+
+            var managedResults = SingleThreadSynchronizationContext.RunTask(async context =>
+            {
+                var results = new List<bool> { context.OnThread };
+                results.Add(await doWork(context));
+                results.Add(context.OnThread);
+                return results;
+            });
+
+            Assert.IsTrue(managedResults.SequenceEqual(new[] { true, false, true }));
+
+            // ReSharper disable AccessToDisposedClosure
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion);
+            engine.Script.doWork = doWork;
+            var scriptResults = (IList<object>)SingleThreadSynchronizationContext.RunTask(async context =>
+            {
+                engine.Script.context = context;
+                return await (Task<object>)engine.Evaluate(@"(async function () {
+                    const results = [context.OnThread];
+                    results.push(await doWork(context));
+                    results.push(context.OnThread);
+                    return results;
+                })()");
+            });
+
+            Assert.IsTrue(scriptResults.SequenceEqual(new object[] { true, false, false }));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion | V8ScriptEngineFlags.UseSynchronizationContexts);
+            engine.Script.doWork = doWork;
+            scriptResults = (IList<object>)SingleThreadSynchronizationContext.RunTask(async context =>
+            {
+                engine.Script.context = context;
+                return await (Task<object>)engine.Evaluate(@"(async function () {
+                    const results = [context.OnThread];
+                    results.push(await doWork(context));
+                    results.push(context.OnThread);
+                    return results;
+                })()");
+            });
+
+            Assert.IsTrue(scriptResults.SequenceEqual(new object[] { true, false, true }));
+
+            // ReSharper restore AccessToDisposedClosure
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -5252,7 +5326,7 @@ namespace Microsoft.ClearScript.Test
 
             builder.AppendLine();
             AppendCpuProfileTestSequence(builder, 4, MiscHelpers.CreateSeededRandom(), new List<int>());
-            builder.Append(@"                })()");
+            builder.Append("                })()");
             builder.AppendLine();
 
             return builder.ToString();
@@ -5530,6 +5604,47 @@ namespace Microsoft.ClearScript.Test
             public ConstructorBindingTest(double c, int a = 789, string b = "bar")
             {
                 A = a; B = b; C = c;
+            }
+        }
+
+        public class SingleThreadSynchronizationContext : SynchronizationContext
+        {
+            private readonly BlockingCollection<(SendOrPostCallback, object)> queue = new BlockingCollection<(SendOrPostCallback, object)>();
+            private readonly Thread thread;
+
+            private SingleThreadSynchronizationContext()
+            {
+                thread = new Thread(RunLoop);
+                thread.Start();
+            }
+
+            public bool OnThread => Thread.CurrentThread == thread;
+
+            public static T RunTask<T>(Func<SingleThreadSynchronizationContext, Task<T>> createTask)
+            {
+                var context = new SingleThreadSynchronizationContext();
+
+                T result = default;
+                var doneEvent = new ManualResetEventSlim();
+
+                context.Post(_ => createTask(context).ContinueWith(task => { result = task.Result; doneEvent.Set(); }), null);
+                doneEvent.Wait();
+
+                context.queue.CompleteAdding();
+                context.thread.Join();
+
+                return result;
+            }
+
+            public override void Post(SendOrPostCallback callback, object state) => queue.Add((callback, state));
+
+            private void RunLoop()
+            {
+                SetSynchronizationContext(this);
+                foreach (var (callback, state) in queue.GetConsumingEnumerable())
+                {
+                    callback(state);
+                }
             }
         }
 

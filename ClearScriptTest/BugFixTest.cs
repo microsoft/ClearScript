@@ -1837,6 +1837,32 @@ namespace Microsoft.ClearScript.Test
 
     #endif // !NET6_0_OR_GREATER
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_PropertyAccessorRecursion()
+        {
+            engine.Script.test = new PropertyAccessorRecursionTest { Engine = engine };
+            var result = engine.Evaluate(@"
+                (function() {
+                    let count = 0;
+                    globalThis.onGetProperty = function () {
+                        if (count++ < 5) {
+                            const value = test.Property;
+                        }
+                    };
+                    globalThis.onSetProperty = function () {
+                        if (test.Property == 123) {
+                            test.Property = 456;
+                        } else {
+                            test.Property = 789;
+                        }
+                    };
+                })();
+                test.Property = 123;
+                test.Property
+            ");
+            Assert.AreEqual(789, result);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2379,6 +2405,30 @@ namespace Microsoft.ClearScript.Test
                 }
 
                 return base.LoadCustomAttributes<T>(resource, inherit);
+            }
+        }
+
+        public class PropertyAccessorRecursionTest
+        {
+            public ScriptEngine Engine;
+            private int property;
+
+            public int Property
+            {
+                get
+                {
+                    Engine.Script.onGetProperty();
+                    return property;
+                }
+
+                set
+                {
+                    if (value != property)
+                    {
+                        property = value;
+                        Engine.Script.onSetProperty();
+                    }
+                }
             }
         }
 

@@ -13,27 +13,27 @@ namespace Microsoft.ClearScript.Util
     {
         public static bool IsScriptable(this EventInfo eventInfo, IHostContext context)
         {
-            return !eventInfo.IsSpecialName && !eventInfo.IsExplicitImplementation() && eventInfo.IsAccessible(context) && !eventInfo.IsBlockedFromScript(context.DefaultAccess);
+            return !eventInfo.IsSpecialName && !eventInfo.IsExplicitImplementation() && eventInfo.IsAccessible(context) && !eventInfo.IsBlockedFromScript(context, context.DefaultAccess);
         }
 
         public static bool IsScriptable(this FieldInfo field, IHostContext context)
         {
-            return !field.IsSpecialName && field.IsAccessible(context) && !field.IsBlockedFromScript(context.DefaultAccess);
+            return !field.IsSpecialName && field.IsAccessible(context) && !field.IsBlockedFromScript(context, context.DefaultAccess);
         }
 
         public static bool IsScriptable(this MethodInfo method, IHostContext context)
         {
-            return !method.IsSpecialName && !method.IsExplicitImplementation() && method.IsAccessible(context) && !method.IsBlockedFromScript(context.DefaultAccess);
+            return !method.IsSpecialName && !method.IsExplicitImplementation() && method.IsAccessible(context) && !method.IsBlockedFromScript(context, context.DefaultAccess);
         }
 
         public static bool IsScriptable(this PropertyInfo property, IHostContext context)
         {
-            return !property.IsSpecialName && !property.IsExplicitImplementation() && property.IsAccessible(context) && !property.IsBlockedFromScript(context.DefaultAccess);
+            return !property.IsSpecialName && !property.IsExplicitImplementation() && property.IsAccessible(context) && !property.IsBlockedFromScript(context, context.DefaultAccess);
         }
 
         public static bool IsScriptable(this Type type, IHostContext context)
         {
-            return !type.IsSpecialName && type.IsAccessible(context) && !type.IsBlockedFromScript(context.DefaultAccess);
+            return !type.IsSpecialName && type.IsAccessible(context) && !type.IsBlockedFromScript(context, context.DefaultAccess);
         }
 
         public static bool IsAccessible(this EventInfo eventInfo, IHostContext context)
@@ -76,17 +76,17 @@ namespace Microsoft.ClearScript.Util
 
             if (access == FieldAttributes.Assembly)
             {
-                return accessContext.IsFriendOf(type);
+                return accessContext.IsFriendOf(context, type);
             }
 
             if (access == FieldAttributes.FamORAssem)
             {
-                return accessContext.IsFamilyOf(type) || accessContext.IsFriendOf(type);
+                return accessContext.IsFamilyOf(type) || accessContext.IsFriendOf(context, type);
             }
 
             if (access == FieldAttributes.FamANDAssem)
             {
-                return accessContext.IsFamilyOf(type) && accessContext.IsFriendOf(type);
+                return accessContext.IsFamilyOf(type) && accessContext.IsFriendOf(context, type);
             }
 
             return false;
@@ -127,17 +127,17 @@ namespace Microsoft.ClearScript.Util
 
             if (access == MethodAttributes.Assembly)
             {
-                return accessContext.IsFriendOf(type);
+                return accessContext.IsFriendOf(context, type);
             }
 
             if (access == MethodAttributes.FamORAssem)
             {
-                return accessContext.IsFamilyOf(type) || accessContext.IsFriendOf(type);
+                return accessContext.IsFamilyOf(type) || accessContext.IsFriendOf(context, type);
             }
 
             if (access == MethodAttributes.FamANDAssem)
             {
-                return accessContext.IsFamilyOf(type) && accessContext.IsFriendOf(type);
+                return accessContext.IsFamilyOf(type) && accessContext.IsFriendOf(context, type);
             }
 
             return false;
@@ -167,7 +167,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsAccessible(this Type type, IHostContext context)
         {
-            var visibility = (type.IsAnonymous() && !context.Engine.EnforceAnonymousTypeAccess) ? TypeAttributes.Public : type.Attributes & TypeAttributes.VisibilityMask;
+            var visibility = (type.IsAnonymous(context) && !context.Engine.EnforceAnonymousTypeAccess) ? TypeAttributes.Public : type.Attributes & TypeAttributes.VisibilityMask;
 
             if (visibility == TypeAttributes.Public)
             {
@@ -183,7 +183,7 @@ namespace Microsoft.ClearScript.Util
 
             if (visibility == TypeAttributes.NotPublic)
             {
-                return accessContext.IsFriendOf(type);
+                return accessContext.IsFriendOf(context, type);
             }
 
             type = type.DeclaringType;
@@ -210,41 +210,41 @@ namespace Microsoft.ClearScript.Util
 
             if (visibility == TypeAttributes.NestedAssembly)
             {
-                return accessContext.IsFriendOf(type);
+                return accessContext.IsFriendOf(context, type);
             }
 
             if (visibility == TypeAttributes.NestedFamORAssem)
             {
-                return accessContext.IsFamilyOf(type) || accessContext.IsFriendOf(type);
+                return accessContext.IsFamilyOf(type) || accessContext.IsFriendOf(context, type);
             }
 
             if (visibility == TypeAttributes.NestedFamANDAssem)
             {
-                return accessContext.IsFamilyOf(type) && accessContext.IsFriendOf(type);
+                return accessContext.IsFamilyOf(type) && accessContext.IsFriendOf(context, type);
             }
 
             return false;
         }
 
-        public static string GetScriptName(this MemberInfo member)
+        public static string GetScriptName(this MemberInfo member, IHostContext context)
         {
-            var attribute = member.GetOrLoadCustomAttribute<ScriptMemberAttribute>();
+            var attribute = member.GetOrLoadCustomAttribute<ScriptMemberAttribute>(context);
             return attribute?.Name ?? member.GetShortName();
         }
 
-        public static bool IsBlockedFromScript(this MemberInfo member, ScriptAccess defaultAccess, bool chain = true)
+        public static bool IsBlockedFromScript(this MemberInfo member, IHostContext context, ScriptAccess defaultAccess, bool chain = true)
         {
-            return member.GetScriptAccess(defaultAccess, chain) == ScriptAccess.None;
+            return member.GetScriptAccess(context, defaultAccess, chain) == ScriptAccess.None;
         }
 
-        public static bool IsReadOnlyForScript(this MemberInfo member, ScriptAccess defaultAccess)
+        public static bool IsReadOnlyForScript(this MemberInfo member, IHostContext context, ScriptAccess defaultAccess)
         {
-            return member.GetScriptAccess(defaultAccess) == ScriptAccess.ReadOnly;
+            return member.GetScriptAccess(context, defaultAccess) == ScriptAccess.ReadOnly;
         }
 
-        public static ScriptAccess GetScriptAccess(this MemberInfo member, ScriptAccess defaultValue, bool chain = true)
+        public static ScriptAccess GetScriptAccess(this MemberInfo member, IHostContext context, ScriptAccess defaultValue, bool chain = true)
         {
-            var attribute = member.GetOrLoadCustomAttribute<ScriptUsageAttribute>();
+            var attribute = member.GetOrLoadCustomAttribute<ScriptUsageAttribute>(context);
             if (attribute != null)
             {
                 return attribute.Access;
@@ -260,14 +260,14 @@ namespace Microsoft.ClearScript.Util
                     {
                         if (testType.IsNested)
                         {
-                            var nestedTypeAttribute = testType.GetOrLoadCustomAttribute<ScriptUsageAttribute>();
+                            var nestedTypeAttribute = testType.GetOrLoadCustomAttribute<ScriptUsageAttribute>(context);
                             if (nestedTypeAttribute != null)
                             {
                                 return nestedTypeAttribute.Access;
                             }
                         }
 
-                        var typeAttribute = testType.GetOrLoadCustomAttribute<DefaultScriptUsageAttribute>();
+                        var typeAttribute = testType.GetOrLoadCustomAttribute<DefaultScriptUsageAttribute>(context);
                         if (typeAttribute != null)
                         {
                             return typeAttribute.Access;
@@ -277,7 +277,7 @@ namespace Microsoft.ClearScript.Util
 
                     } while (testType != null);
 
-                    var assemblyAttribute = declaringType.Assembly.GetOrLoadCustomAttribute<DefaultScriptUsageAttribute>();
+                    var assemblyAttribute = declaringType.Assembly.GetOrLoadCustomAttribute<DefaultScriptUsageAttribute>(context);
                     if (assemblyAttribute != null)
                     {
                         return assemblyAttribute.Access;
@@ -288,20 +288,20 @@ namespace Microsoft.ClearScript.Util
             return defaultValue;
         }
 
-        public static bool IsRestrictedForScript(this MemberInfo member)
+        public static bool IsRestrictedForScript(this MemberInfo member, IHostContext context)
         {
-            return !member.GetScriptMemberFlags().HasFlag(ScriptMemberFlags.ExposeRuntimeType);
+            return !member.GetScriptMemberFlags(context).HasFlag(ScriptMemberFlags.ExposeRuntimeType);
         }
 
-        public static bool IsDispID(this MemberInfo member, int dispid)
+        public static bool IsDispID(this MemberInfo member, IHostContext context, int dispid)
         {
-            var attribute = member.GetOrLoadCustomAttribute<DispIdAttribute>();
+            var attribute = member.GetOrLoadCustomAttribute<DispIdAttribute>(context);
             return (attribute != null) && (attribute.Value == dispid);
         }
 
-        public static ScriptMemberFlags GetScriptMemberFlags(this MemberInfo member)
+        public static ScriptMemberFlags GetScriptMemberFlags(this MemberInfo member, IHostContext context)
         {
-            var attribute = member.GetOrLoadCustomAttribute<ScriptMemberAttribute>();
+            var attribute = member.GetOrLoadCustomAttribute<ScriptMemberAttribute>(context);
             return attribute?.Flags ?? ScriptMemberFlags.None;
         }
 
@@ -312,11 +312,11 @@ namespace Microsoft.ClearScript.Util
             return (index >= 0) ? name.Substring(index + 1) : name;
         }
 
-        public static T GetOrLoadCustomAttribute<T>(this MemberInfo member, bool inherit = true) where T : Attribute
+        public static T GetOrLoadCustomAttribute<T>(this MemberInfo member, IHostContext context, bool inherit = true) where T : Attribute
         {
             try
             {
-                return CustomAttributes.GetOrLoad<T>(member, inherit).SingleOrDefault();
+                return CustomAttributes.GetOrLoad<T>(context, member, inherit).SingleOrDefault();
             }
             catch (AmbiguousMatchException)
             {
@@ -325,21 +325,21 @@ namespace Microsoft.ClearScript.Util
                     // this affects SqlDataReader and is indicative of a .NET issue described here:
                     // http://connect.microsoft.com/VisualStudio/feedback/details/646399/attribute-isdefined-throws-ambiguousmatchexception-for-indexer-properties-and-inherited-attributes
 
-                    return CustomAttributes.GetOrLoad<T>(member, false).SingleOrDefault();
+                    return CustomAttributes.GetOrLoad<T>(context, member, false).SingleOrDefault();
                 }
 
                 throw;
             }
         }
 
-        public static IEnumerable<T> GetOrLoadCustomAttributes<T>(this MemberInfo member, bool inherit = true) where T : Attribute
+        public static IEnumerable<T> GetOrLoadCustomAttributes<T>(this MemberInfo member, IHostContext context, bool inherit = true) where T : Attribute
         {
-            return CustomAttributes.GetOrLoad<T>(member, inherit);
+            return CustomAttributes.GetOrLoad<T>(context, member, inherit);
         }
 
-        public static bool HasCustomAttributes<T>(this MemberInfo member, bool inherit = true) where T : Attribute
+        public static bool HasCustomAttributes<T>(this MemberInfo member, IHostContext context, bool inherit = true) where T : Attribute
         {
-            return CustomAttributes.Has<T>(member, inherit);
+            return CustomAttributes.Has<T>(context, member, inherit);
         }
 
         private static bool IsExplicitImplementation(this MemberInfo member)

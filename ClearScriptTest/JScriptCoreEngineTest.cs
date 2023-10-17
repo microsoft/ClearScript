@@ -657,7 +657,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("JScriptCoreEngine")]
         public void JScriptCoreEngine_CollectGarbage()
         {
-            engine.Execute(@"x = []; for (i = 0; i < 1024 * 1024; i++) { x.push(x); }");
+            engine.Execute("x = []; for (i = 0; i < 1024 * 1024; i++) { x.push(x); }");
             engine.CollectGarbage(true);
             // can't test JScript GC effectiveness
         }
@@ -2951,6 +2951,22 @@ namespace Microsoft.ClearScript.Test
             {
                 HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
                 TestCamelCaseMemberBinding();
+            }
+        }
+
+        [TestMethod, TestCategory("JScriptCoreEngine")]
+        public void JScriptCoreEngine_CustomAttributeLoader_Private()
+        {
+            using (var otherEngine = new JScriptEngine(NullSyncInvoker.Instance))
+            {
+                engine.CustomAttributeLoader = new CamelCaseAttributeLoader();
+                TestCamelCaseMemberBinding();
+
+                using (Scope.Create(() => engine, originalEngine => engine = originalEngine))
+                {
+                    engine = otherEngine;
+                    TestUtil.AssertException<InvalidCastException>(TestCamelCaseMemberBinding);
+                }
             }
         }
 

@@ -17,28 +17,28 @@ namespace Microsoft.ClearScript
 
         public ExtensionMethodSummary Summary { get; private set; } = new ExtensionMethodSummary();
 
-        public bool ProcessType(Type type, IHostContext context)
+        public bool ProcessType(IHostContext context, Type type)
         {
             Debug.Assert(type.IsSpecific());
-            if (!table.ContainsKey(type) && type.HasExtensionMethods())
+            if (!table.ContainsKey(type) && type.HasExtensionMethods(context))
             {
                 const BindingFlags bindFlags = BindingFlags.Public | BindingFlags.Static;
-                table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(method, context)).ToArray();
-                RebuildSummary();
+                table[type] = type.GetMethods(bindFlags).Where(method => IsScriptableExtensionMethod(context, method)).ToArray();
+                RebuildSummary(context);
                 return true;
             }
 
             return false;
         }
 
-        public void RebuildSummary()
+        public void RebuildSummary(IHostContext context)
         {
-            Summary = new ExtensionMethodSummary(table);
+            Summary = new ExtensionMethodSummary(context, table);
         }
 
-        private static bool IsScriptableExtensionMethod(MethodInfo method, IHostContext context)
+        private static bool IsScriptableExtensionMethod(IHostContext context, MethodInfo method)
         {
-            return method.IsScriptable(context) && method.HasCustomAttributes<ExtensionAttribute>(false);
+            return method.IsScriptable(context) && method.HasCustomAttributes<ExtensionAttribute>(context, false);
         }
     }
 
@@ -51,11 +51,11 @@ namespace Microsoft.ClearScript
             MethodNames = ArrayHelpers.GetEmptyArray<string>();
         }
 
-        public ExtensionMethodSummary(Dictionary<Type, MethodInfo[]> table)
+        public ExtensionMethodSummary(IHostContext context, Dictionary<Type, MethodInfo[]> table)
         {
             Types = table.Keys.ToArray();
             Methods = table.SelectMany(pair => pair.Value).ToArray();
-            MethodNames = Methods.Select(method => method.GetScriptName()).ToArray();
+            MethodNames = Methods.Select(method => method.GetScriptName(context)).ToArray();
         }
 
         public Type[] Types { get; }

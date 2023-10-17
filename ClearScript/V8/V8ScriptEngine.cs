@@ -1792,17 +1792,19 @@ namespace Microsoft.ClearScript.V8
 
         object IJavaScriptEngine.CreatePromiseForTask<T>(Task<T> task)
         {
+            var scheduler = (engineFlags.HasFlag(V8ScriptEngineFlags.UseSynchronizationContexts) && MiscHelpers.Try(out var contextScheduler, TaskScheduler.FromCurrentSynchronizationContext)) ? contextScheduler : TaskScheduler.Current;
             return CreatePromise((resolve, reject) =>
             {
-                task.ContinueWith(_ => CompletePromise(task, resolve, reject), TaskContinuationOptions.ExecuteSynchronously);
+                task.ContinueWith(_ => CompletePromise(task, resolve, reject), CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, scheduler);
             });
         }
 
         object IJavaScriptEngine.CreatePromiseForTask(Task task)
         {
+            var scheduler = (engineFlags.HasFlag(V8ScriptEngineFlags.UseSynchronizationContexts) && MiscHelpers.Try(out var contextScheduler, TaskScheduler.FromCurrentSynchronizationContext)) ? contextScheduler : TaskScheduler.Current;
             return CreatePromise((resolve, reject) =>
             {
-                task.ContinueWith(_ => CompletePromise(task, resolve, reject), TaskContinuationOptions.ExecuteSynchronously);
+                task.ContinueWith(_ => CompletePromise(task, resolve, reject), CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, scheduler);
             });
         }
 
@@ -1814,10 +1816,17 @@ namespace Microsoft.ClearScript.V8
             }
 
             var source = new TaskCompletionSource<object>();
+            var context = engineFlags.HasFlag(V8ScriptEngineFlags.UseSynchronizationContexts) ? SynchronizationContext.Current : null;
+
+            Action<object> setResultWorker = result => source.SetResult(result);
+            var setResult = (context == null) ? setResultWorker : result => context.Post(_ => setResultWorker(result), null);
+
+            Action<Exception> setExceptionWorker = exception => source.SetException(exception);
+            var setException = (context == null) ? setExceptionWorker : exception => context.Post(_ => setExceptionWorker(exception), null);
 
             Action<object> onResolved = result =>
             {
-                source.SetResult(result);
+                setResult(result);
             };
 
             Action<object> onRejected = error =>
@@ -1829,7 +1838,7 @@ namespace Microsoft.ClearScript.V8
                 }
                 catch (Exception exception)
                 {
-                    source.SetException(exception);
+                    setException(exception);
                 }
             };
 

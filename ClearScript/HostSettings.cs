@@ -40,17 +40,14 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Gets or sets the custom attribute loader for ClearScript.
         /// </summary>
+        /// <remarks>
+        /// When not explicitly assigned to a non-<c>null</c> value, this property returns the
+        /// <see cref="CustomAttributeLoader.Default">default custom attribute loader.</see>.
+        /// </remarks>
         public static CustomAttributeLoader CustomAttributeLoader
         {
-            get => customAttributeLoader ?? DefaultCustomAttributeLoader;
-
-            set
-            {
-                customAttributeLoader = value;
-                CustomAttributes.ClearCache();
-            }
+            get => customAttributeLoader ?? CustomAttributeLoader.Default;
+            set => customAttributeLoader = value;
         }
-
-        internal static readonly CustomAttributeLoader DefaultCustomAttributeLoader = new CustomAttributeLoader();
     }
 }

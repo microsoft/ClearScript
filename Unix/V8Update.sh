@@ -1,8 +1,8 @@
 #!/bin/bash
 
-v8testedrev=11.6.189.18
+v8testedrev=11.8.172.15
 v8testedcommit=
-v8cherrypicks=
+v8cherrypicks=28a7e2d45fd620fa68fb0678a7246fc8e426d1cc
 v8linuxbuildcommit=3d9590754d5d23e62d15472c5baf6777ca59df20
 v8linuxclangcommit=184bc29dd86c3994a02b4f3feca125ffe785319c
 
@@ -174,6 +174,9 @@ if [[ $download == true ]]; then
     fi
     git apply --reject --ignore-whitespace ../../V8Patch.txt 2>apply-patch.log || fail
     if [[ $linux == true ]]; then
+        cd third_party/abseil-cpp || abort
+            git apply --reject --ignore-whitespace ../../../../AbseilCppPatch.txt 2>apply-patch.log || fail
+        cd ../..
         cd build || abort
         if [[ $v8linuxbuildcommit != "" ]]; then
             git reset --hard $v8linuxbuildcommit >resetBuild.log || fail
@@ -210,6 +213,12 @@ echo "Creating/updating patches ..."
 git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>create-patch.log || fail
 
 if [[ $linux == true ]]; then
+    cd third_party/abseil-cpp || abort
+    git diff --ignore-space-change --ignore-space-at-eol >AbseilCppPatch.txt 2>create-patch.log || fail
+    cd ../..
+fi
+
+if [[ $linux == true ]]; then
     echo "Installing LKG sysroots ..."
     build/linux/sysroot_scripts/install-sysroot.py --arch=x64 >install-x64-sysroot.log || fail
     build/linux/sysroot_scripts/install-sysroot.py --arch=i386 >install-i386-sysroot.log || fail
@@ -224,6 +233,10 @@ cd ../..
 
 echo "Importing patches ..."
 cp build/v8/V8Patch.txt . || fail
+
+if [[ $linux == true ]]; then
+    cp build/v8/third_party/abseil-cpp/AbseilCppPatch.txt . || fail
+fi
 
 echo "Importing ICU data ..."
 cp build/v8/out/$cpu/$mode/icudtl.dat . || fail

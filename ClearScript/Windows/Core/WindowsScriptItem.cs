@@ -93,7 +93,7 @@ namespace Microsoft.ClearScript.Windows.Core
                 else if (HResult.GetFacility(result) == HResult.FACILITY_CONTROL)
                 {
                     // These exceptions often have awful messages that include COM error codes.
-                    // The engine itself may be able to provide a better message.
+                    // The script engine itself may be able to provide a better message.
 
                     if (engine.RuntimeErrorMap.TryGetValue(HResult.GetCode(result), out var runtimeErrorMessage) && (runtimeErrorMessage != exception.Message))
                     {

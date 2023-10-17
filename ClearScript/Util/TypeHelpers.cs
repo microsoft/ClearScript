@@ -67,19 +67,19 @@ namespace Microsoft.ClearScript.Util
             return !type.IsGenericParameter && !type.ContainsGenericParameters;
         }
 
-        public static bool IsCompilerGenerated(this Type type)
+        public static bool IsCompilerGenerated(this Type type, IHostContext context)
         {
-            return type.HasCustomAttributes<CompilerGeneratedAttribute>(false);
+            return type.HasCustomAttributes<CompilerGeneratedAttribute>(context, false);
         }
 
-        public static bool IsFlagsEnum(this Type type)
+        public static bool IsFlagsEnum(this Type type, IHostContext context)
         {
-            return type.IsEnum && type.HasCustomAttributes<FlagsAttribute>(false);
+            return type.IsEnum && type.HasCustomAttributes<FlagsAttribute>(context, false);
         }
 
-        public static bool IsImportable(this Type type)
+        public static bool IsImportable(this Type type, IHostContext context)
         {
-            if (!type.IsNested && !type.IsSpecialName && !type.IsCompilerGenerated())
+            if (!type.IsNested && !type.IsSpecialName && !type.IsCompilerGenerated(context))
             {
                 var locator = type.GetLocator();
                 return !importDenyList.Contains(locator) && IsValidLocator(locator);
@@ -88,7 +88,7 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        public static bool IsAnonymous(this Type type)
+        public static bool IsAnonymous(this Type type, IHostContext context)
         {
             if (!type.IsGenericType)
             {
@@ -112,7 +112,7 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
 
-            if (!type.IsCompilerGenerated())
+            if (!type.IsCompilerGenerated(context))
             {
                 return false;
             }
@@ -222,9 +222,9 @@ namespace Microsoft.ClearScript.Util
             return numericConversions[(int)valueType.GetNumericType()].HasFlag(GetNumericTypes(type.GetNumericType()));
         }
 
-        public static bool HasExtensionMethods(this Type type)
+        public static bool HasExtensionMethods(this Type type, IHostContext context)
         {
-            return type.HasCustomAttributes<ExtensionAttribute>(false);
+            return type.HasCustomAttributes<ExtensionAttribute>(context, false);
         }
 
         public static bool EqualsOrDeclares(this Type type, Type thatType)
@@ -253,20 +253,20 @@ namespace Microsoft.ClearScript.Util
             return false;
         }
 
-        public static bool IsFriendOf(this Type type, Type thatType)
+        public static bool IsFriendOf(this Type type, IHostContext context, Type thatType)
         {
-            return type.Assembly.IsFriendOf(thatType.Assembly);
+            return type.Assembly.IsFriendOf(context, thatType.Assembly);
         }
 
-        public static bool IsCOMVisible(this Type type)
+        public static bool IsCOMVisible(this Type type, IHostContext context)
         {
-            var attribute = type.GetOrLoadCustomAttribute<ComVisibleAttribute>(false);
+            var attribute = type.GetOrLoadCustomAttribute<ComVisibleAttribute>(context, false);
             if (attribute != null)
             {
                 return attribute.Value;
             }
 
-            attribute = type.Assembly.GetOrLoadCustomAttribute<ComVisibleAttribute>(false);
+            attribute = type.Assembly.GetOrLoadCustomAttribute<ComVisibleAttribute>(context, false);
             if (attribute != null)
             {
                 return attribute.Value;
@@ -349,7 +349,7 @@ namespace Microsoft.ClearScript.Util
             {
             }
 
-            return type.GetScriptableEvents(context, bindFlags).FirstOrDefault(eventInfo => string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            return type.GetScriptableEvents(context, bindFlags).FirstOrDefault(eventInfo => string.Equals(eventInfo.GetScriptName(context), name, bindFlags.GetMemberNameComparison()));
         }
 
         public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, IHostContext context, BindingFlags bindFlags)
@@ -360,12 +360,12 @@ namespace Microsoft.ClearScript.Util
         public static FieldInfo GetScriptableField(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
             var candidate = type.GetField(name, bindFlags);
-            if ((candidate != null) && candidate.IsScriptable(context) && string.Equals(candidate.GetScriptName(), name, bindFlags.GetMemberNameComparison()))
+            if ((candidate != null) && candidate.IsScriptable(context) && string.Equals(candidate.GetScriptName(context), name, bindFlags.GetMemberNameComparison()))
             {
                 return candidate;
             }
 
-            return type.GetScriptableFields(context, bindFlags).FirstOrDefault(field => string.Equals(field.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            return type.GetScriptableFields(context, bindFlags).FirstOrDefault(field => string.Equals(field.GetScriptName(context), name, bindFlags.GetMemberNameComparison()));
         }
 
         public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, IHostContext context, BindingFlags bindFlags)
@@ -382,7 +382,7 @@ namespace Microsoft.ClearScript.Util
 
         public static IEnumerable<MethodInfo> GetScriptableMethods(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
-            return type.GetScriptableMethods(context, bindFlags).Where(method => string.Equals(method.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            return type.GetScriptableMethods(context, bindFlags).Where(method => string.Equals(method.GetScriptName(context), name, bindFlags.GetMemberNameComparison()));
         }
 
         public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, IHostContext context, BindingFlags bindFlags)
@@ -411,12 +411,12 @@ namespace Microsoft.ClearScript.Util
             }
 
             var defaultMembers = type.GetDefaultMembers();
-            return properties.Where(property => property.IsScriptable(context) && (defaultMembers.Contains(property) || property.IsDispID(SpecialDispIDs.Default)));
+            return properties.Where(property => property.IsScriptable(context) && (defaultMembers.Contains(property) || property.IsDispID(context, SpecialDispIDs.Default)));
         }
 
         public static IEnumerable<PropertyInfo> GetScriptableProperties(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
-            return type.GetScriptableProperties(context, bindFlags).Where(property => string.Equals(property.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+            return type.GetScriptableProperties(context, bindFlags).Where(property => string.Equals(property.GetScriptName(context), name, bindFlags.GetMemberNameComparison()));
         }
 
         public static PropertyInfo GetScriptableProperty(this Type type, IHostContext context, string name, BindingFlags bindFlags)
@@ -430,7 +430,7 @@ namespace Microsoft.ClearScript.Util
             try
             {
                 // ReSharper disable once RedundantEnumerableCastCall
-                return candidates.OfType<PropertyInfo>().SingleOrDefault(property => (property.GetIndexParameters().Length < 1) && property.IsScriptable(context) && string.Equals(property.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+                return candidates.OfType<PropertyInfo>().SingleOrDefault(property => (property.GetIndexParameters().Length < 1) && property.IsScriptable(context) && string.Equals(property.GetScriptName(context), name, bindFlags.GetMemberNameComparison()));
             }
             catch (InvalidOperationException exception)
             {
@@ -456,13 +456,13 @@ namespace Microsoft.ClearScript.Util
             }
 
             var candidates = type.GetScriptableProperties(context, name, bindFlags).Distinct(PropertySignatureComparer.Instance).ToArray();
-            return BindToMember(candidates, bindFlags, args, bindArgs);
+            return BindToMember(context, candidates, bindFlags, args, bindArgs);
         }
 
         public static PropertyInfo GetScriptableDefaultProperty(this Type type, IHostContext context, BindingFlags bindFlags, object[] args, object[] bindArgs)
         {
             var candidates = type.GetScriptableDefaultProperties(context, bindFlags).Distinct(PropertySignatureComparer.Instance).ToArray();
-            return BindToMember(candidates, bindFlags, args, bindArgs);
+            return BindToMember(context, candidates, bindFlags, args, bindArgs);
         }
 
         public static IEnumerable<Type> GetScriptableNestedTypes(this Type type, IHostContext context, BindingFlags bindFlags)
@@ -506,13 +506,13 @@ namespace Microsoft.ClearScript.Util
                 return type.CreateInstance();
             }
 
-            var candidates = constructors.Where(testConstructor => testConstructor.IsAccessible(context) && !testConstructor.IsBlockedFromScript(context.DefaultAccess)).ToArray();
+            var candidates = constructors.Where(testConstructor => testConstructor.IsAccessible(context) && !testConstructor.IsBlockedFromScript(context, context.DefaultAccess)).ToArray();
             if (candidates.Length < 1)
             {
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
             }
 
-            var constructor = BindToMember(candidates, flags, args, bindArgs);
+            var constructor = BindToMember(context, candidates, flags, args, bindArgs);
             if (constructor == null)
             {
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
@@ -553,26 +553,26 @@ namespace Microsoft.ClearScript.Util
             return type;
         }
 
-        public static T BindToMember<T>(T[] candidates, BindingFlags bindFlags, object[] args, object[] bindArgs) where T : MethodBase
+        public static T BindToMember<T>(IHostContext context, T[] candidates, BindingFlags bindFlags, object[] args, object[] bindArgs) where T : MethodBase
         {
             T result = null;
 
             if (candidates.Length > 0)
             {
-                var bindCandidates = GetBindCandidates(candidates, args, bindArgs.Select(GetBindArgType).ToArray()).ToArray();
+                var bindCandidates = GetBindCandidates(context, candidates, args, bindArgs.Select(GetBindArgType).ToArray()).ToArray();
                 result = SelectBindCandidate(bindCandidates);
             }
 
             return result;
         }
 
-        public static PropertyInfo BindToMember(PropertyInfo[] candidates, BindingFlags bindFlags, object[] args, object[] bindArgs)
+        public static PropertyInfo BindToMember(IHostContext context, PropertyInfo[] candidates, BindingFlags bindFlags, object[] args, object[] bindArgs)
         {
             PropertyInfo result = null;
 
             if (candidates.Length > 0)
             {
-                var bindCandidates = GetBindCandidates(candidates, args, bindArgs.Select(GetBindArgType).ToArray()).ToArray();
+                var bindCandidates = GetBindCandidates(context, candidates, args, bindArgs.Select(GetBindArgType).ToArray()).ToArray();
                 result = SelectBindCandidate(bindCandidates);
 
                 if (result == null)
@@ -718,7 +718,7 @@ namespace Microsoft.ClearScript.Util
             try
             {
                 // ReSharper disable once RedundantEnumerableCastCall
-                return candidates.OfType<EventInfo>().SingleOrDefault(eventInfo => eventInfo.IsScriptable(context) && string.Equals(eventInfo.GetScriptName(), name, bindFlags.GetMemberNameComparison()));
+                return candidates.OfType<EventInfo>().SingleOrDefault(eventInfo => eventInfo.IsScriptable(context) && string.Equals(eventInfo.GetScriptName(context), name, bindFlags.GetMemberNameComparison()));
             }
             catch (InvalidOperationException exception)
             {
@@ -1001,21 +1001,21 @@ namespace Microsoft.ClearScript.Util
             return null;
         }
 
-        private static IEnumerable<BindCandidate<T>> GetBindCandidates<T>(T[] candidates, object[] args, Type[] argTypes) where T : MethodBase
+        private static IEnumerable<BindCandidate<T>> GetBindCandidates<T>(IHostContext context, T[] candidates, object[] args, Type[] argTypes) where T : MethodBase
         {
-            return GetBindCandidates(candidates, candidate => candidate.GetParameters(), args, argTypes);
+            return GetBindCandidates(context, candidates, candidate => candidate.GetParameters(), args, argTypes);
         }
 
-        private static IEnumerable<BindCandidate<PropertyInfo>> GetBindCandidates(PropertyInfo[] candidates, object[] args, Type[] argTypes)
+        private static IEnumerable<BindCandidate<PropertyInfo>> GetBindCandidates(IHostContext context, PropertyInfo[] candidates, object[] args, Type[] argTypes)
         {
-            return GetBindCandidates(candidates, candidate => candidate.GetIndexParameters(), args, argTypes);
+            return GetBindCandidates(context, candidates, candidate => candidate.GetIndexParameters(), args, argTypes);
         }
 
-        private static IEnumerable<BindCandidate<T>> GetBindCandidates<T>(T[] candidates, Func<T, ParameterInfo[]> getParameters, object[] args, Type[] argTypes) where T : MemberInfo
+        private static IEnumerable<BindCandidate<T>> GetBindCandidates<T>(IHostContext context, T[] candidates, Func<T, ParameterInfo[]> getParameters, object[] args, Type[] argTypes) where T : MemberInfo
         {
             foreach (var candidate in candidates)
             {
-                if (MiscHelpers.Try(out var bindCandidate, () => BindCandidate<T>.TryCreateInstance(candidate, getParameters(candidate), args, argTypes)) && (bindCandidate != null))
+                if (MiscHelpers.Try(out var bindCandidate, () => BindCandidate<T>.TryCreateInstance(context, candidate, getParameters(candidate), args, argTypes)) && (bindCandidate != null))
                 {
                     yield return bindCandidate;
                 }
@@ -1326,7 +1326,7 @@ namespace Microsoft.ClearScript.Util
                 return TypeNode.TryGetUpcastCount(Candidate.DeclaringType, other.Candidate.DeclaringType, out _) ? -1 : 1;
             }
 
-            public static BindCandidate<T> TryCreateInstance(T candidate, ParameterInfo[] parameters, object[] args, Type[] argTypes)
+            public static BindCandidate<T> TryCreateInstance(IHostContext context, T candidate, ParameterInfo[] parameters, object[] args, Type[] argTypes)
             {
                 var defaultArgCount = 0;
                 var paramArray = false;
@@ -1343,7 +1343,7 @@ namespace Microsoft.ClearScript.Util
                     var param = parameters[paramIndex];
                     paramType = param.ParameterType;
 
-                    if ((paramIndex == (parameters.Length - 1)) && paramType.IsArray && CustomAttributes.Has<ParamArrayAttribute>(param, false))
+                    if ((paramIndex == (parameters.Length - 1)) && paramType.IsArray && CustomAttributes.Has<ParamArrayAttribute>(context, param, false))
                     {
                         paramArray = true;
                         break;

@@ -1,8 +1,9 @@
 @echo off
 setlocal
 
-set v8testedrev=11.6.189.18
+set v8testedrev=11.8.172.15
 set v8testedcommit=
+set v8cherrypicks=28a7e2d45fd620fa68fb0678a7246fc8e426d1cc
 
 if not "%v8testedcommit%"=="" goto ProcessArgs
 set v8testedcommit=%v8testedrev%
@@ -184,6 +185,10 @@ call git config user.name ClearScript
 if errorlevel 1 goto Error
 call git config user.email "ClearScript@microsoft.com"
 if errorlevel 1 goto Error
+if "%v8cherrypicks%"=="" goto ApplyV8Patch
+call git cherry-pick --allow-empty-message --keep-redundant-commits %v8cherrypicks% >applyCherryPicks.log 2>&1
+if errorlevel 1 goto Error
+:ApplyV8Patch
 call git apply --reject --ignore-whitespace ..\..\V8Patch.txt 2>applyV8Patch.log
 if errorlevel 1 goto Error
 cd ..

@@ -21,6 +21,7 @@ namespace Microsoft.ClearScript
         private ScriptAccess defaultAccess;
         private bool enforceAnonymousTypeAccess;
         private bool exposeHostObjectStaticMembers;
+        private CustomAttributeLoader customAttributeLoader;
 
         private DocumentSettings documentSettings;
         private readonly DocumentSettings defaultDocumentSettings = new DocumentSettings();
@@ -80,7 +81,7 @@ namespace Microsoft.ClearScript
         /// <inheritdoc/>
         public abstract string FileNameExtension { get; }
 
-        /// <inheritdoc cref="ScriptEngine" />
+        /// <inheritdoc cref="IScriptEngine.AccessContext" />
         public Type AccessContext
         {
             get => accessContext;
@@ -92,7 +93,7 @@ namespace Microsoft.ClearScript
             }
         }
 
-        /// <inheritdoc cref="ScriptEngine" />
+        /// <inheritdoc cref="IScriptEngine.DefaultAccess" />
         public ScriptAccess DefaultAccess
         {
             get => defaultAccess;
@@ -202,6 +203,21 @@ namespace Microsoft.ClearScript
             get => documentSettings ?? defaultDocumentSettings;
             set => documentSettings = value;
         }
+
+        /// <inheritdoc cref="IScriptEngine.CustomAttributeLoader" />
+        public CustomAttributeLoader CustomAttributeLoader
+        {
+            get => customAttributeLoader;
+
+            set
+            {
+                customAttributeLoader = value;
+                OnAccessSettingsChanged();
+            }
+        }
+
+        /// <inheritdoc/>
+        public object HostData { get; set; }
 
         /// <inheritdoc/>
         public void AddHostObject(string itemName, object target)
@@ -760,7 +776,7 @@ namespace Microsoft.ClearScript
         {
             if (extensionMethodTable != emptyExtensionMethodTable)
             {
-                if (extensionMethodTable.ProcessType(type, this))
+                if (extensionMethodTable.ProcessType(this, type))
                 {
                     ClearMethodBindCache();
                 }
@@ -773,7 +789,7 @@ namespace Microsoft.ClearScript
         {
             if (extensionMethodTable != emptyExtensionMethodTable)
             {
-                extensionMethodTable.RebuildSummary();
+                extensionMethodTable.RebuildSummary(this);
             }
         }
 
@@ -785,7 +801,7 @@ namespace Microsoft.ClearScript
 
         internal void CacheConstructorBindResult(BindSignature signature, ConstructorInfo result)
         {
-            constructorBindCache.Add(signature, result);
+            constructorBindCache[signature] = result;
         }
 
         internal bool TryGetCachedConstructorBindResult(BindSignature signature, out ConstructorInfo result)
@@ -806,7 +822,7 @@ namespace Microsoft.ClearScript
 
         internal void CacheMethodBindResult(BindSignature signature, object result)
         {
-            methodBindCache.Add(signature, result);
+            methodBindCache[signature] = result;
         }
 
         internal bool TryGetCachedMethodBindResult(BindSignature signature, out object result)
@@ -828,7 +844,7 @@ namespace Microsoft.ClearScript
 
         internal void CachePropertyGetBindResult(BindSignature signature, MemberInfo property)
         {
-            propertyGetBindCache.Add(signature, property);
+            propertyGetBindCache[signature] = property;
         }
 
         internal bool TryGetCachedPropertyGetBindResult(BindSignature signature, out MemberInfo property)
@@ -838,7 +854,7 @@ namespace Microsoft.ClearScript
 
         internal void CachePropertySetBindResult(BindSignature signature, MemberInfo property)
         {
-            propertySetBindCache.Add(signature, property);
+            propertySetBindCache[signature] = property;
         }
 
         internal bool TryGetCachedPropertySetBindResult(BindSignature signature, out MemberInfo property)
@@ -1013,7 +1029,7 @@ namespace Microsoft.ClearScript
 
         private readonly ConditionalWeakTable<Type, List<WeakReference>> sharedHostObjectMemberDataCache = new ConditionalWeakTable<Type, List<WeakReference>>();
 
-        internal HostTargetMemberData GetSharedHostObjectMemberData(HostObject target, Type targetAccessContext, ScriptAccess targetDefaultAccess, HostTargetFlags targetFlags)
+        internal HostTargetMemberData GetSharedHostObjectMemberData(HostObject target, CustomAttributeLoader targetCustomAttributeLoader, Type targetAccessContext, ScriptAccess targetDefaultAccess, HostTargetFlags targetFlags)
         {
             var cacheEntry = sharedHostObjectMemberDataCache.GetOrCreateValue(target.Type);
 
@@ -1029,7 +1045,7 @@ namespace Microsoft.ClearScript
                 }
                 else
                 {
-                    if ((memberData.AccessContext == targetAccessContext) && (memberData.DefaultAccess == targetDefaultAccess) && (memberData.TargetFlags == targetFlags))
+                    if ((memberData.CustomAttributeLoader == targetCustomAttributeLoader) && (memberData.AccessContext == targetAccessContext) && (memberData.DefaultAccess == targetDefaultAccess) && (memberData.TargetFlags == targetFlags))
                     {
                         return memberData;
                     }
@@ -1053,7 +1069,7 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            var newMemberData = new HostTargetMemberDataWithContext(targetAccessContext, targetDefaultAccess, targetFlags);
+            var newMemberData = new HostTargetMemberDataWithContext(targetCustomAttributeLoader, targetAccessContext, targetDefaultAccess, targetFlags);
             cacheEntry.Add(new WeakReference(newMemberData));
             return newMemberData;
         }

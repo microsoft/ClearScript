@@ -27,7 +27,8 @@ public:
         EnableValueTaskPromiseConversion = 0x00000200,
         UseCaseInsensitiveMemberBinding = 0x00000400,
         EnableStringifyEnhancements = 0x00000800,
-        HideHostExceptions = 0x00001000
+        HideHostExceptions = 0x00001000,
+        UseSynchronizationContexts = 0x00002000
     };
 
     struct Options final

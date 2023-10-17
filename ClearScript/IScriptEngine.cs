@@ -189,7 +189,7 @@ namespace Microsoft.ClearScript
         bool EnableAutoHostVariables { get; set; }
 
         /// <summary>
-        /// Gets or sets the engine's undefined import value.
+        /// Gets or sets the script engine's undefined import value.
         /// </summary>
         /// <remarks>
         /// Some script languages support one or more special non-<c>null</c> values that represent
@@ -200,7 +200,7 @@ namespace Microsoft.ClearScript
         object UndefinedImportValue { get; set; }
 
         /// <summary>
-        /// Gets or sets the engine's null export value.
+        /// Gets or sets the script engine's null export value.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -221,7 +221,7 @@ namespace Microsoft.ClearScript
         object NullExportValue { get; set; }
 
         /// <summary>
-        /// Gets or sets the engine's void result export value.
+        /// Gets or sets the script engine's void result export value.
         /// </summary>
         /// <remarks>
         /// Some script languages expect every subroutine call to return a value. When script code
@@ -259,7 +259,7 @@ namespace Microsoft.ClearScript
         /// <remarks>
         /// The value of this property is an object that is bound to the script engine's root
         /// namespace. It allows you to access global script resources via the
-        /// <c><see cref="ScriptObject"/></c> class interface. Doing so is likely to perform better than
+        /// <c><see cref="ScriptObject"/></c> class interface. Doing so is likely to outperform
         /// dynamic access via <c><see cref="Script"/></c>.
         /// </remarks>
         ScriptObject Global { get; }
@@ -268,6 +268,20 @@ namespace Microsoft.ClearScript
         /// Gets or sets the script engine's document settings.
         /// </summary>
         DocumentSettings DocumentSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the script engine's custom attribute loader.
+        /// </summary>
+        /// <remarks>
+        /// By default, all script engines use the
+        /// <see cref="HostSettings.CustomAttributeLoader">global custom attribute loader</see>.
+        /// </remarks>
+        CustomAttributeLoader CustomAttributeLoader { get; set; }
+
+        /// <summary>
+        /// Allows the host to attach arbitrary data to the script engine.
+        /// </summary>
+        object HostData { get; set; }
 
         /// <summary>
         /// Exposes a host object to script code.

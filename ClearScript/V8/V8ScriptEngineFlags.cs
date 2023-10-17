@@ -122,6 +122,13 @@ namespace Microsoft.ClearScript.V8
         /// accessible to script code via the <c>Error</c> object's <c>hostException</c> property.
         /// This option suppresses that behavior.
         /// </summary>
-        HideHostExceptions = 0x00001000
+        HideHostExceptions = 0x00001000,
+
+        /// <summary>
+        /// Specifies that support for synchronization contexts is to be enabled for task-promise
+        /// interoperability. This option is ignored if
+        /// <c><see cref="EnableTaskPromiseConversion"/></c> is not specified.
+        /// </summary>
+        UseSynchronizationContexts = 0x00002000
     }
 }

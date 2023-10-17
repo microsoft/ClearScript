@@ -362,11 +362,15 @@ namespace Microsoft.ClearScript
             set => targetMemberData.TargetInvocability = value;
         }
 
+        private CustomAttributeLoader CurrentCustomAttributeLoader => Engine.CustomAttributeLoader;
+
         private Type CurrentAccessContext => Flags.HasFlag(HostItemFlags.PrivateAccess) ? Target.Type : Engine.AccessContext;
 
         private ScriptAccess CurrentDefaultAccess => Engine.DefaultAccess;
 
         private HostTargetFlags CurrentTargetFlags => Target.GetFlags(this);
+
+        private CustomAttributeLoader CachedCustomAttributeLoader => (targetMemberData is HostTargetMemberDataWithContext targetMemberDataWithContext) ? targetMemberDataWithContext.CustomAttributeLoader : CurrentCustomAttributeLoader;
 
         private Type CachedAccessContext => (targetMemberData is HostTargetMemberDataWithContext targetMemberDataWithContext) ? targetMemberDataWithContext.AccessContext : CurrentAccessContext;
 
@@ -562,7 +566,7 @@ namespace Microsoft.ClearScript
 
         private void BindTargetMemberData()
         {
-            if ((targetMemberData == null) || (AccessContext != CurrentAccessContext) || (DefaultAccess != CurrentDefaultAccess) || (TargetFlags != CurrentTargetFlags))
+            if ((targetMemberData == null) || (CustomAttributeLoader != CurrentCustomAttributeLoader) || (AccessContext != CurrentAccessContext) || (DefaultAccess != CurrentDefaultAccess) || (TargetFlags != CurrentTargetFlags))
             {
                 if (Target is HostMethod)
                 {
@@ -590,13 +594,13 @@ namespace Microsoft.ClearScript
                     if ((TargetDynamic == null) && (TargetPropertyBag == null) && (TargetList == null) && (TargetDynamicMetaObject == null))
                     {
                         // host objects without dynamic members can share their member data
-                        targetMemberData = Engine.GetSharedHostObjectMemberData(hostObject, CurrentAccessContext, CurrentDefaultAccess, CurrentTargetFlags);
+                        targetMemberData = Engine.GetSharedHostObjectMemberData(hostObject, CurrentCustomAttributeLoader, CurrentAccessContext, CurrentDefaultAccess, CurrentTargetFlags);
                         return;
                     }
                 }
 
                 // all other targets use unique member data
-                targetMemberData = new HostTargetMemberDataWithContext(CurrentAccessContext, CurrentDefaultAccess, CurrentTargetFlags);
+                targetMemberData = new HostTargetMemberDataWithContext(CurrentCustomAttributeLoader, CurrentAccessContext, CurrentDefaultAccess, CurrentTargetFlags);
             }
         }
 
@@ -614,7 +618,7 @@ namespace Microsoft.ClearScript
             if (TypeEventNames == null)
             {
                 var localEvents = Target.Type.GetScriptableEvents(this, GetCommonBindFlags());
-                TypeEventNames = localEvents.Select(eventInfo => eventInfo.GetScriptName()).ToArray();
+                TypeEventNames = localEvents.Select(eventInfo => eventInfo.GetScriptName(this)).ToArray();
             }
 
             return TypeEventNames;
@@ -625,7 +629,7 @@ namespace Microsoft.ClearScript
             if (TypeFieldNames == null)
             {
                 var localFields = Target.Type.GetScriptableFields(this, GetCommonBindFlags());
-                TypeFieldNames = localFields.Select(field => field.GetScriptName()).ToArray();
+                TypeFieldNames = localFields.Select(field => field.GetScriptName(this)).ToArray();
             }
 
             return TypeFieldNames;
@@ -636,7 +640,7 @@ namespace Microsoft.ClearScript
             if (TypeMethodNames == null)
             {
                 var localMethods = Target.Type.GetScriptableMethods(this, GetMethodBindFlags());
-                TypeMethodNames = localMethods.Select(method => method.GetScriptName()).ToArray();
+                TypeMethodNames = localMethods.Select(method => method.GetScriptName(this)).ToArray();
             }
 
             return TypeMethodNames;
@@ -647,7 +651,7 @@ namespace Microsoft.ClearScript
             if (TypePropertyNames == null)
             {
                 var localProperties = Target.Type.GetScriptableProperties(this, GetCommonBindFlags());
-                TypePropertyNames = localProperties.Select(property => property.GetScriptName()).ToArray();
+                TypePropertyNames = localProperties.Select(property => property.GetScriptName(this)).ToArray();
             }
 
             return TypePropertyNames;
@@ -1600,33 +1604,31 @@ namespace Microsoft.ClearScript
             }
 
             var getMethod = property.GetMethod;
-            if ((getMethod == null) || !getMethod.IsAccessible(this) || getMethod.IsBlockedFromScript(property.GetScriptAccess(DefaultAccess), false))
+            if ((getMethod == null) || !getMethod.IsAccessible(this) || getMethod.IsBlockedFromScript(this, property.GetScriptAccess(this, DefaultAccess), false))
             {
                 throw new UnauthorizedAccessException("The property get method is unavailable or inaccessible");
             }
 
-            var result = GetHostPropertyWorker(property, getMethod, args);
             Engine.CachePropertyGetBindResult(signature, property);
-            return result;
+            return GetHostPropertyWorker(property, getMethod, args);
         }
 
         private object GetHostPropertyWorker(PropertyInfo property, MethodInfo getMethod, object[] args)
         {
-            return InvokeHelpers.InvokeMethod(this, getMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags());
+            return InvokeHelpers.InvokeMethod(this, getMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags(this));
         }
 
         private object GetHostField(BindSignature signature, FieldInfo field, out bool isCacheable)
         {
-            var result = GetHostFieldWorker(field, out isCacheable);
             Engine.CachePropertyGetBindResult(signature, field);
-            return result;
+            return GetHostFieldWorker(field, out isCacheable);
         }
 
         private object GetHostFieldWorker(FieldInfo field, out bool isCacheable)
         {
             var result = field.GetValue(Target.InvokeTarget);
             isCacheable = (TargetDynamicMetaObject == null) && (field.IsLiteral || field.IsInitOnly);
-            return Engine.PrepareResult(result, field.FieldType, field.GetScriptMemberFlags(), false);
+            return Engine.PrepareResult(result, field.FieldType, field.GetScriptMemberFlags(this), false);
         }
 
         private object SetHostProperty(string name, BindingFlags invokeFlags, object[] args, object[] bindArgs)
@@ -1752,21 +1754,20 @@ namespace Microsoft.ClearScript
 
         private object SetHostProperty(BindSignature signature, PropertyInfo property, object[] args, object[] bindArgs)
         {
-            var scriptAccess = property.GetScriptAccess(DefaultAccess);
+            var scriptAccess = property.GetScriptAccess(this, DefaultAccess);
             if (scriptAccess == ScriptAccess.ReadOnly)
             {
                 throw new UnauthorizedAccessException("The property is read-only");
             }
 
             var setMethod = property.SetMethod;
-            if ((setMethod == null) || !setMethod.IsAccessible(this) || setMethod.IsBlockedFromScript(scriptAccess, false))
+            if ((setMethod == null) || !setMethod.IsAccessible(this) || setMethod.IsBlockedFromScript(this, scriptAccess, false))
             {
                 throw new UnauthorizedAccessException("The property set method is unavailable or inaccessible");
             }
 
-            var result = SetHostPropertyWorker(property, setMethod, args, bindArgs);
             Engine.CachePropertySetBindResult(signature, property);
-            return result;
+            return SetHostPropertyWorker(property, setMethod, args, bindArgs);
         }
 
         private object SetHostPropertyWorker(PropertyInfo property, MethodInfo setMethod, object[] args, object[] bindArgs)
@@ -1810,7 +1811,7 @@ namespace Microsoft.ClearScript
             if (property.PropertyType.IsAssignableFromValue(ref value))
             {
                 args[args.Length - 1] = value;
-                InvokeHelpers.InvokeMethod(this, setMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags());
+                InvokeHelpers.InvokeMethod(this, setMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags(this));
                 return value;
             }
 
@@ -1821,7 +1822,7 @@ namespace Microsoft.ClearScript
             if ((setParams.Length >= args.Length) && (setParams[args.Length - 1].ParameterType.IsAssignableFromValue(ref value)))
             {
                 args[args.Length - 1] = value;
-                InvokeHelpers.InvokeMethod(this, setMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags());
+                InvokeHelpers.InvokeMethod(this, setMethod, Target.InvokeTarget, args, property.GetScriptMemberFlags(this));
                 return value;
             }
 
@@ -1835,14 +1836,13 @@ namespace Microsoft.ClearScript
                 throw new InvalidOperationException("Invalid argument count");
             }
 
-            if (field.IsLiteral || field.IsInitOnly || field.IsReadOnlyForScript(DefaultAccess))
+            if (field.IsLiteral || field.IsInitOnly || field.IsReadOnlyForScript(this, DefaultAccess))
             {
                 throw new UnauthorizedAccessException("The field is read-only");
             }
 
-            var result = SetHostFieldWorker(field, args);
             Engine.CachePropertySetBindResult(signature, field);
-            return result;
+            return SetHostFieldWorker(field, args);
         }
 
         private object SetHostFieldWorker(FieldInfo field, object[] args)
@@ -2259,6 +2259,8 @@ namespace Microsoft.ClearScript
             return HostInvoke(() =>
             {
                 var index = 0;
+
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (elements != null)
                 {
                     var maxCount = Math.Min(count, elements.Length);
@@ -2367,6 +2369,8 @@ namespace Microsoft.ClearScript
         #endregion
 
         #region IHostTargetContext implementation
+
+        public CustomAttributeLoader CustomAttributeLoader => CachedCustomAttributeLoader;
 
         public Type AccessContext => CachedAccessContext;
 

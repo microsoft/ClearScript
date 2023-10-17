@@ -346,7 +346,7 @@ namespace Microsoft.ClearScript
             {
                 try
                 {
-                    var rawResult = TypeHelpers.BindToMember(candidates, bindFlags, args, bindArgs);
+                    var rawResult = TypeHelpers.BindToMember(this, candidates, bindFlags, args, bindArgs);
                     if (rawResult != null)
                     {
                         return MethodBindResult.Create(name, bindFlags, rawResult, hostTarget, args);
@@ -494,12 +494,12 @@ namespace Microsoft.ClearScript
 
             public override bool IsPreferredMethod(HostItem hostItem, string name)
             {
-                return !method.IsBlockedFromScript(hostItem.DefaultAccess) && (method.GetScriptName() == name);
+                return IsUnblockedMethod(hostItem) && (method.GetScriptName(hostItem) == name);
             }
 
             public override bool IsUnblockedMethod(HostItem hostItem)
             {
-                return !method.IsBlockedFromScript(hostItem.DefaultAccess);
+                return !method.IsBlockedFromScript(hostItem, hostItem.DefaultAccess);
             }
 
             public override object Invoke(HostItem hostItem)
@@ -509,7 +509,7 @@ namespace Microsoft.ClearScript
                     hostItem.Engine.CheckReflection();
                 }
 
-                return InvokeHelpers.InvokeMethod(hostItem, method, hostTarget.InvokeTarget, args, method.GetScriptMemberFlags());
+                return InvokeHelpers.InvokeMethod(hostItem, method, hostTarget.InvokeTarget, args, method.GetScriptMemberFlags(hostItem));
             }
 
             #endregion

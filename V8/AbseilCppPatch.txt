@@ -1,0 +1,12 @@
+diff --git a/absl.gni b/absl.gni
+index cf8a39e..06c0af0 100644
+--- a/absl.gni
++++ b/absl.gni
+@@ -25,7 +25,6 @@ template("absl_source_set") {
+     configs -= [ "//build/config/compiler:chromium_code" ]
+     configs += [
+       "//build/config/compiler:no_chromium_code",
+-      "//build/config/compiler:prevent_unsafe_narrowing",
+       "//third_party/abseil-cpp:absl_default_cflags_cc",
+       "//third_party/abseil-cpp:absl_define_config",
+     ]

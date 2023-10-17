@@ -252,7 +252,7 @@ namespace Microsoft.ClearScript.Windows.Core
             }
         }
 
-        private static bool GetDirectAccessItem(object item, out object directAccessItem)
+        private bool GetDirectAccessItem(object item, out object directAccessItem)
         {
             while (true)
             {
@@ -278,7 +278,7 @@ namespace Microsoft.ClearScript.Windows.Core
                     continue;
                 }
 
-                if ((item != null) && (item.GetType().IsCOMObject || item.GetType().IsCOMVisible()))
+                if ((item != null) && (item.GetType().IsCOMObject || item.GetType().IsCOMVisible(this)))
                 {
                     directAccessItem = item;
                     return true;

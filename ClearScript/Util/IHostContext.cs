@@ -7,6 +7,7 @@ namespace Microsoft.ClearScript.Util
 {
     internal interface IHostContext
     {
+        CustomAttributeLoader CustomAttributeLoader { get; }
         ScriptEngine Engine { get; }
         Type AccessContext { get; }
         ScriptAccess DefaultAccess { get; }
