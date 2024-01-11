@@ -16,6 +16,15 @@ namespace Microsoft.ClearScript.Util
 
         public override bool Equals(T x, T y)
         {
+            if ((x == null) && (y == null))
+            {
+                return true;
+            }
+            else if ((x == null) || (y == null))
+            {
+                return false;
+            }
+
             try
             {
                 return (x.Module == y.Module) && (x.MetadataToken == y.MetadataToken);
