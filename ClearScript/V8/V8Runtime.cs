@@ -38,7 +38,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Initializes a new V8 runtime instance with the specified name.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         public V8Runtime(string name)
             : this(name, null)
         {
@@ -56,7 +56,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Initializes a new V8 runtime instance with the specified name and resource constraints.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="constraints">Resource constraints for the instance.</param>
         public V8Runtime(string name, V8RuntimeConstraints constraints)
             : this(name, constraints, V8RuntimeFlags.None)
@@ -85,7 +85,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Initializes a new V8 runtime instance with the specified name and options.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         public V8Runtime(string name, V8RuntimeFlags flags)
             : this(name, flags, 0)
@@ -95,7 +95,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Initializes a new V8 runtime instance with the specified name, options, and debug port.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         public V8Runtime(string name, V8RuntimeFlags flags, int debugPort)
@@ -127,7 +127,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Initializes a new V8 runtime instance with the specified name, resource constraints, and options.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="constraints">Resource constraints for the instance.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         public V8Runtime(string name, V8RuntimeConstraints constraints, V8RuntimeFlags flags)
@@ -138,7 +138,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Initializes a new V8 runtime instance with the specified name, resource constraints, options, and debug port.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="constraints">Resource constraints for the instance.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
@@ -354,7 +354,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Creates a new V8 script engine instance with the specified name.
         /// </summary>
-        /// <param name="engineName">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="engineName">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <returns>A new V8 script engine instance.</returns>
         /// <remarks>
         /// The new script engine instance shares the V8 runtime with other instances created by
@@ -411,7 +411,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Creates a new V8 script engine instance with the specified name and options.
         /// </summary>
-        /// <param name="engineName">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="engineName">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <returns>A new V8 script engine instance.</returns>
         /// <remarks>
@@ -433,7 +433,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Creates a new V8 script engine instance with the specified name, options, and debug port.
         /// </summary>
-        /// <param name="engineName">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="engineName">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="debugPort">A TCP port on which to listen for a debugger connection.</param>
         /// <returns>A new V8 script engine instance.</returns>
@@ -467,7 +467,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Creates a compiled script with an associated document name.
         /// </summary>
-        /// <param name="documentName">A document name for the compiled script. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="documentName">A document name for the compiled script. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="code">The script code to compile.</param>
         /// <returns>A compiled script that can be executed by multiple V8 script engine instances.</returns>
         public V8Script Compile(string documentName, string code)
@@ -507,7 +507,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Creates a compiled script with an associated document name, generating cache data for accelerated recompilation.
         /// </summary>
-        /// <param name="documentName">A document name for the compiled script. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="documentName">A document name for the compiled script. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="code">The script code to compile.</param>
         /// <param name="cacheKind">The kind of cache data to be generated.</param>
         /// <param name="cacheBytes">Cache data for accelerated recompilation.</param>
@@ -564,7 +564,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Creates a compiled script with an associated document name, consuming previously generated cache data.
         /// </summary>
-        /// <param name="documentName">A document name for the compiled script. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="documentName">A document name for the compiled script. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="code">The script code to compile.</param>
         /// <param name="cacheKind">The kind of cache data to be consumed.</param>
         /// <param name="cacheBytes">Cache data for accelerated compilation.</param>
@@ -625,7 +625,7 @@ namespace Microsoft.ClearScript.V8
         /// <summary>
         /// Creates a compiled script with an associated document name, consuming previously generated cache data and updating it if necessary.
         /// </summary>
-        /// <param name="documentName">A document name for the compiled script. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="documentName">A document name for the compiled script. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="code">The script code to compile.</param>
         /// <param name="cacheKind">The kind of cache data to be processed.</param>
         /// <param name="cacheBytes">Cache data for accelerated compilation.</param>

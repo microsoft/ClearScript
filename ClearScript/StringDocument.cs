@@ -11,23 +11,21 @@ namespace Microsoft.ClearScript
     /// </summary>
     public class StringDocument : Document
     {
-        private readonly byte[] contents;
-
         /// <summary>
         /// Initializes a new <c><see cref="StringDocument"/></c> instance.
         /// </summary>
         /// <param name="info">A structure containing meta-information for the document.</param>
         /// <param name="contents">A string containing the document's contents.</param>
         public StringDocument(DocumentInfo info, string contents)
-            : this(info, Encoding.UTF8.GetBytes(contents))
-        {
-        }
-
-        internal StringDocument(DocumentInfo info, byte[] contents)
         {
             Info = info;
-            this.contents = contents;
+            StringContents = contents;
         }
+
+        /// <summary>
+        /// Gets the document's contents as a string.
+        /// </summary>
+        public string StringContents { get; }
 
         #region Document overrides
 
@@ -43,7 +41,7 @@ namespace Microsoft.ClearScript
         /// The <c><see cref="StringDocument"/></c> implementation of this property returns a
         /// <c><see cref="MemoryStream"/></c> instance.
         /// </remarks>
-        public override Stream Contents => new MemoryStream(contents, false);
+        public override Stream Contents => new MemoryStream(Encoding.GetBytes(StringContents), false);
 
         /// <summary>
         /// Gets the document's character encoding.

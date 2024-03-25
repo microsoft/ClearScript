@@ -42,7 +42,7 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <remarks>
         /// When not explicitly assigned to a non-<c>null</c> value, this property returns the
-        /// <see cref="CustomAttributeLoader.Default">default custom attribute loader.</see>.
+        /// <see cref="CustomAttributeLoader.Default">default custom attribute loader</see>.
         /// </remarks>
         public static CustomAttributeLoader CustomAttributeLoader
         {

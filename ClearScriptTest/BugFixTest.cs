@@ -1863,6 +1863,44 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(789, result);
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8Runtime_CreateScriptEngineAfterNoopInterrupt()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var tempEngine = runtime.CreateScriptEngine())
+                {
+                    tempEngine.Interrupt();
+                    using (runtime.CreateScriptEngine())
+                    {
+                    }
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8Runtime_CreateScriptEngineWithPendingInterrupt()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var tempEngine = runtime.CreateScriptEngine())
+                {
+                    // ReSharper disable AccessToDisposedClosure
+
+                    tempEngine.Script.foo = new Action(() =>
+                    {
+                        tempEngine.Interrupt();
+                        TestUtil.AssertException<ScriptEngineException>(() => runtime.CreateScriptEngine(), false);
+                        tempEngine.CancelInterrupt();
+                    });
+
+                    // ReSharper restore AccessToDisposedClosure
+
+                    tempEngine.Execute("foo()");
+                }
+            }
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion

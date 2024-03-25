@@ -15,6 +15,7 @@
     <Keyword>ManagedCProj</Keyword>
     <RootNamespace>ClearScriptV832</RootNamespace>
     <ProjectName>ClearScriptV8.win-x86</ProjectName>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -29,7 +30,7 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)'=='17.0'">
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)'==''">$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion('Windows', '10.0'))</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)'=='16.0'">
@@ -82,8 +83,9 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <SDLCheck>true</SDLCheck>
       <StringPooling>true</StringPooling>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>-Wno-unused-parameter -Wno-unused-private-field</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='17.0'">DebugFull</GenerateDebugInformation>
@@ -119,8 +121,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>-Wno-unused-parameter -Wno-unused-private-field</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='17.0'">DebugFull</GenerateDebugInformation>
@@ -138,6 +141,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\HighResolutionClock.cpp" />
     <ClCompile Include="..\HighResolutionClock.Windows.cpp" />
     <ClCompile Include="..\HostObjectHolderImpl.cpp" />
     <ClCompile Include="..\HostObjectUtil.cpp" />

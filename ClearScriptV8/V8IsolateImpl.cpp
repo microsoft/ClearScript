@@ -17,13 +17,16 @@ public:
 
     virtual v8::PageAllocator* GetPageAllocator() override;
     virtual int NumberOfWorkerThreads() override;
-    virtual std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner(v8::Isolate* pIsolate) override;
-    virtual void CallOnWorkerThread(std::unique_ptr<v8::Task> upTask) override;
-    virtual void CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> upTask, double delayInSeconds) override;
-    virtual std::unique_ptr<v8::JobHandle> CreateJob(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask) override;
+    virtual std::shared_ptr<v8::TaskRunner> GetForegroundTaskRunner(v8::Isolate* pIsolate, v8::TaskPriority priority) override;
     virtual double MonotonicallyIncreasingTime() override;
     virtual double CurrentClockTimeMillis() override;
     virtual v8::TracingController* GetTracingController() override;
+
+protected:
+
+    virtual std::unique_ptr<v8::JobHandle> CreateJobImpl(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask, const v8::SourceLocation& location) override;
+    virtual void PostTaskOnWorkerThreadImpl(v8::TaskPriority priority, std::unique_ptr<v8::Task> upTask, const v8::SourceLocation& location) override;
+    virtual void PostDelayedTaskOnWorkerThreadImpl(v8::TaskPriority priority, std::unique_ptr<v8::Task> upTask, double delayInSeconds, const v8::SourceLocation& location) override;
 
 private:
 
@@ -113,14 +116,21 @@ int V8Platform::NumberOfWorkerThreads()
 
 //-----------------------------------------------------------------------------
 
-std::shared_ptr<v8::TaskRunner> V8Platform::GetForegroundTaskRunner(v8::Isolate* pIsolate)
+std::shared_ptr<v8::TaskRunner> V8Platform::GetForegroundTaskRunner(v8::Isolate* pIsolate, v8::TaskPriority /*priority*/)
 {
     return V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->GetForegroundTaskRunner();
 }
 
 //-----------------------------------------------------------------------------
 
-void V8Platform::CallOnWorkerThread(std::unique_ptr<v8::Task> upTask)
+std::unique_ptr<v8::JobHandle> V8Platform::CreateJobImpl(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask, const v8::SourceLocation& /*location*/)
+{
+    return v8::platform::NewDefaultJobHandle(this, priority, std::move(upJobTask), NumberOfWorkerThreads());
+}
+
+//-----------------------------------------------------------------------------
+
+void V8Platform::PostTaskOnWorkerThreadImpl(v8::TaskPriority /*priority*/, std::unique_ptr<v8::Task> upTask, const v8::SourceLocation& /*location*/)
 {
     auto pIsolate = v8::Isolate::GetCurrent();
     if (pIsolate == nullptr)
@@ -135,20 +145,13 @@ void V8Platform::CallOnWorkerThread(std::unique_ptr<v8::Task> upTask)
 
 //-----------------------------------------------------------------------------
 
-void V8Platform::CallDelayedOnWorkerThread(std::unique_ptr<v8::Task> upTask, double delayInSeconds)
+void V8Platform::PostDelayedTaskOnWorkerThreadImpl(v8::TaskPriority /*priority*/, std::unique_ptr<v8::Task> upTask, double delayInSeconds, const v8::SourceLocation& /*location*/)
 {
     auto pIsolate = v8::Isolate::GetCurrent();
     if (pIsolate != nullptr)
     {
         V8IsolateImpl::GetInstanceFromIsolate(pIsolate)->RunTaskDelayed(std::move(upTask), delayInSeconds);
     }
-}
-
-//-----------------------------------------------------------------------------
-
-std::unique_ptr<v8::JobHandle> V8Platform::CreateJob(v8::TaskPriority priority, std::unique_ptr<v8::JobTask> upJobTask)
-{
-    return v8::platform::NewDefaultJobHandle(this, priority, std::move(upJobTask), NumberOfWorkerThreads());
 }
 
 //-----------------------------------------------------------------------------
@@ -477,10 +480,10 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
     m_CpuProfileSampleInterval(1000U),
     m_StackWatchLevel(0),
     m_pStackLimit(nullptr),
+    m_IsExecutionTerminating(false),
     m_pExecutionScope(nullptr),
     m_pDocumentInfo(nullptr),
     m_IsOutOfMemory(false),
-    m_IsExecutionTerminating(false),
     m_Released(false)
 {
     V8Platform::GetInstance().EnsureInitialized();
@@ -1402,7 +1405,7 @@ void V8IsolateImpl::CallWithLockNoWait(bool allowNesting, CallWithLockCallback&&
 void NORETURN V8IsolateImpl::ThrowOutOfMemoryException()
 {
     m_IsOutOfMemory = true;
-    throw V8Exception(V8Exception::Type::Fatal, m_Name, StdString(SL("The V8 runtime has exceeded its memory limit")), (m_pExecutionScope != nullptr) ? m_pExecutionScope->ExecutionStarted() : false);
+    throw V8Exception(V8Exception::Type::Fatal, m_Name, StdString(SL("The V8 runtime has exceeded its memory limit")), ExecutionStarted());
 }
 
 //-----------------------------------------------------------------------------
@@ -1588,6 +1591,28 @@ void V8IsolateImpl::ClearScriptCache()
     }
 
     m_Statistics.ScriptCacheSize = m_ScriptCache.size();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::TerminateExecutionInternal()
+{
+    if (!m_IsExecutionTerminating)
+    {
+        m_upIsolate->TerminateExecution();
+        m_IsExecutionTerminating = true;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::CancelTerminateExecutionInternal()
+{
+    if (m_IsExecutionTerminating)
+    {
+        m_upIsolate->CancelTerminateExecution();
+        m_IsExecutionTerminating = false;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1916,13 +1941,8 @@ V8IsolateImpl::ExecutionScope* V8IsolateImpl::EnterExecutionScope(ExecutionScope
         m_StackWatchLevel++;
     }
 
-    // clear termination flag
-    m_IsExecutionTerminating = false;
-
     // mark execution scope
-    auto pPreviousExecutionScope = m_pExecutionScope;
-    m_pExecutionScope = pExecutionScope;
-    return pPreviousExecutionScope;
+    return SetExecutionScope(pExecutionScope);
 }
 
 //-----------------------------------------------------------------------------
@@ -1932,7 +1952,7 @@ void V8IsolateImpl::ExitExecutionScope(ExecutionScope* pPreviousExecutionScope)
     _ASSERTE(IsCurrent() && IsLocked());
 
     // reset execution scope
-    m_pExecutionScope = pPreviousExecutionScope;
+    SetExecutionScope(pPreviousExecutionScope);
 
     // is interrupt propagation enabled?
     if (!m_EnableInterruptPropagation)
@@ -1969,15 +1989,69 @@ void V8IsolateImpl::ExitExecutionScope(ExecutionScope* pPreviousExecutionScope)
     }
 }
 
+
 //-----------------------------------------------------------------------------
 
-void V8IsolateImpl::SetUpHeapWatchTimer()
+V8IsolateImpl::ExecutionScope* V8IsolateImpl::SetExecutionScope(ExecutionScope* pExecutionScope)
+{
+    BEGIN_MUTEX_SCOPE(m_TerminateExecutionMutex)
+
+        auto pPrevExecutionScope = std::exchange(m_pExecutionScope, pExecutionScope);
+
+        if (pExecutionScope == nullptr)
+        {
+            CancelTerminateExecutionInternal();
+        }
+
+        return pPrevExecutionScope;
+
+    END_MUTEX_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8IsolateImpl::InExecutionScope()
+{
+    BEGIN_MUTEX_SCOPE(m_TerminateExecutionMutex)
+        return m_pExecutionScope != nullptr;
+    END_MUTEX_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::OnExecutionStarted()
+{
+    BEGIN_MUTEX_SCOPE(m_TerminateExecutionMutex)
+
+        if (m_pExecutionScope != nullptr)
+        {
+            m_pExecutionScope->OnExecutionStarted();
+        }
+
+    END_MUTEX_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+bool V8IsolateImpl::ExecutionStarted()
+{
+    BEGIN_MUTEX_SCOPE(m_TerminateExecutionMutex)
+        return (m_pExecutionScope != nullptr) ? m_pExecutionScope->ExecutionStarted() : false;
+    END_MUTEX_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+void V8IsolateImpl::SetUpHeapWatchTimer(bool forceMinInterval)
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
+    const auto minInterval = 50.0;
+    auto interval = forceMinInterval ? minInterval : std::max(GetHeapSizeSampleInterval(), minInterval);
+
     // create heap watch timer
     auto wrIsolate = CreateWeakRef();
-    m_spHeapWatchTimer = new Timer(static_cast<int>(std::max(GetHeapSizeSampleInterval(), 125.0)), -1, [this, wrIsolate] (Timer* pTimer)
+    m_spHeapWatchTimer = new Timer(static_cast<int>(interval), -1, [this, wrIsolate] (Timer* pTimer)
     {
         // heap watch callback; is the isolate still alive?
         auto spIsolate = wrIsolate.GetTarget();
@@ -2012,7 +2086,10 @@ void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, b
     auto maxHeapSize = optMaxHeapSize.has_value() ? optMaxHeapSize.value() : m_MaxHeapSize.load();
     if (maxHeapSize > 0)
     {
-        // yes; is the total heap size over the limit?
+        // yes; use normal heap watch timer interval by default
+        auto forceMinInterval = false;
+
+        // is the total heap size over the limit?
         v8::HeapStatistics heapStatistics;
         GetHeapStatistics(heapStatistics);
         if (heapStatistics.total_heap_size() > maxHeapSize)
@@ -2028,17 +2105,22 @@ void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, b
                 // yes; the isolate is out of memory; act based on policy
                 if (m_DisableHeapSizeViolationInterrupt)
                 {
-                    m_MaxHeapSize = 0;
-                    m_upIsolate->ThrowError("The V8 runtime has exceeded its memory limit");
+                    if (InExecutionScope())
+                    {
+                        m_MaxHeapSize = 0;
+                        m_upIsolate->ThrowError("The V8 runtime has exceeded its memory limit");
+                        return;
+                    }
+
+                    // defer exception until code execution is in progress
+                    forceMinInterval = true;
                 }
                 else
                 {
                     m_IsOutOfMemory = true;
                     TerminateExecution();
+                    return;
                 }
-
-                // exit to avoid restarting the timer
-                return;
             }
         }
 
@@ -2046,7 +2128,7 @@ void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, b
         if (!timerTriggered || (m_HeapWatchLevel > 0))
         {
             // yes; restart heap watch timer
-            SetUpHeapWatchTimer();
+            SetUpHeapWatchTimer(forceMinInterval);
         }
     }
 }
@@ -2063,11 +2145,7 @@ void V8IsolateImpl::OnBeforeCallEntered(v8::Isolate* pIsolate)
 void V8IsolateImpl::OnBeforeCallEntered()
 {
     _ASSERTE(IsCurrent() && IsLocked());
-
-    if (m_pExecutionScope)
-    {
-        m_pExecutionScope->OnExecutionStarted();
-    }
+    OnExecutionStarted();
 }
 
 //-----------------------------------------------------------------------------

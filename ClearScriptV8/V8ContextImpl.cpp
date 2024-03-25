@@ -4,7 +4,7 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
-// FromMaybeScope
+// support for v8::Maybe and v8::MaybeLocal
 //-----------------------------------------------------------------------------
 
 class FromMaybeScope final
@@ -12,15 +12,11 @@ class FromMaybeScope final
 };
 
 //-----------------------------------------------------------------------------
-// FromMaybeFailure
-//-----------------------------------------------------------------------------
 
 class FromMaybeFailure final
 {
 };
 
-//-----------------------------------------------------------------------------
-// local helper functions
 //-----------------------------------------------------------------------------
 
 template <typename T>
@@ -67,9 +63,57 @@ inline v8::Local<T> FromMaybeDefault(const v8::MaybeLocal<T>& maybe, const v8::L
 
 //-----------------------------------------------------------------------------
 
+#define FROM_MAYBE_TRY \
+    { \
+        DISABLE_WARNING(4456) /* declaration hides previous local declaration */ \
+        FromMaybeScope t_FromMaybeScope; \
+        DEFAULT_WARNING(4456) \
+        try \
+        {
+
+#define FROM_MAYBE_CATCH \
+            IGNORE_UNUSED(t_FromMaybeScope); \
+        } \
+        catch (const FromMaybeFailure&) \
+        { \
+
+#define FROM_MAYBE_END \
+            IGNORE_UNUSED(t_FromMaybeScope); \
+        } \
+    }
+
+#define FROM_MAYBE_CATCH_CONSUME \
+    FROM_MAYBE_CATCH \
+    FROM_MAYBE_END
+
+#define FROM_MAYBE(...) \
+    (::FromMaybe(t_FromMaybeScope, __VA_ARGS__))
+
+#define FROM_MAYBE_DEFAULT(...) \
+    (::FromMaybeDefault(__VA_ARGS__))
+
+//-----------------------------------------------------------------------------
+// local helper functions
+//-----------------------------------------------------------------------------
+
 inline v8::Local<v8::String> ValueAsString(const v8::Local<v8::Value>& hValue)
 {
-    return (!hValue.IsEmpty() && hValue->IsString()) ? hValue.As<v8::String>() : v8::Local<v8::String>();
+    if (hValue.IsEmpty())
+    {
+        return v8::Local<v8::String>();
+    }
+
+    if (hValue->IsString())
+    {
+        return hValue.As<v8::String>();
+    }
+
+    if (hValue->IsStringObject())
+    {
+        return hValue.As<v8::StringObject>()->ValueOf();
+    }
+
+    return v8::Local<v8::String>();
 }
 
 //-----------------------------------------------------------------------------
@@ -90,7 +134,102 @@ inline v8::Local<v8::External> ValueAsExternal(const v8::Local<v8::Value>& hValu
 
 inline v8::Local<v8::BigInt> ValueAsBigInt(const v8::Local<v8::Value>& hValue)
 {
-    return (!hValue.IsEmpty() && hValue->IsBigInt()) ? hValue.As<v8::BigInt>() : v8::Local<v8::BigInt>();
+    if (hValue.IsEmpty())
+    {
+        return v8::Local<v8::BigInt>();
+    }
+
+    if (hValue->IsBigInt())
+    {
+        return hValue.As<v8::BigInt>();
+    }
+
+    if (hValue->IsBigIntObject())
+    {
+        return hValue.As<v8::BigIntObject>()->ValueOf();
+    }
+
+    return v8::Local<v8::BigInt>();
+}
+
+//-----------------------------------------------------------------------------
+
+inline bool TryGetValueAsBoolean(const SharedPtr<V8IsolateImpl>& spIsolateImpl, const v8::Local<v8::Value>& hValue, bool& value)
+{
+    if (hValue.IsEmpty())
+    {
+        return false;
+    }
+
+    if (hValue->IsBoolean())
+    {
+        value = spIsolateImpl->BooleanValue(hValue);
+        return true;
+    }
+
+    if (hValue->IsBooleanObject())
+    {
+        value = hValue.As<v8::BooleanObject>()->ValueOf();
+        return true;
+    }
+
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+inline bool TryGetValueAsNumber(v8::Local<v8::Context> hContext, const v8::Local<v8::Value>& hValue, double& value)
+{
+    if (hValue.IsEmpty())
+    {
+        return false;
+    }
+
+    FROM_MAYBE_TRY
+
+        if (hValue->IsNumber())
+        {
+            value = FROM_MAYBE(hValue->NumberValue(hContext));
+            return true;
+        }
+
+        if (hValue->IsNumberObject())
+        {
+            value = hValue.As<v8::NumberObject>()->ValueOf();
+            return true;
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
+
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+inline bool TryGetValueAsAnyNumber(v8::Local<v8::Context> hContext, const v8::Local<v8::Value>& hValue, double& value)
+{
+    if (hValue.IsEmpty())
+    {
+        return false;
+    }
+
+    FROM_MAYBE_TRY
+
+        if (hValue->IsInt32())
+        {
+            value = FROM_MAYBE(hValue->Int32Value(hContext));
+            return true;
+        }
+
+        if (hValue->IsUint32())
+        {
+            value = FROM_MAYBE(hValue->Uint32Value(hContext));
+            return true;
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
+
+    return TryGetValueAsNumber(hContext, hValue, value);
 }
 
 //-----------------------------------------------------------------------------
@@ -102,7 +241,7 @@ static V8ContextImpl* GetContextImplFromHolder(const TInfo& info)
     if (!hHolder.IsEmpty() && hHolder->InternalFieldCount() > 0)
     {
         auto hField = hHolder->GetInternalField(0);
-        if (!hField.IsEmpty() && !hField->IsUndefined())
+        if (!hField.IsEmpty() && hField->IsValue() && !hField.template As<v8::Value>()->IsUndefined())
         {
             return static_cast<V8ContextImpl*>(hHolder->GetAlignedPointerFromInternalField(0));
         }
@@ -133,35 +272,6 @@ static V8ContextImpl* GetContextImplFromData(const TInfo& info)
 #define END_ISOLATE_SCOPE \
         IGNORE_UNUSED(t_IsolateScope); \
     }
-
-#define FROM_MAYBE_TRY \
-    { \
-        DISABLE_WARNING(4456) /* declaration hides previous local declaration */ \
-        FromMaybeScope t_FromMaybeScope; \
-        DEFAULT_WARNING(4456) \
-        try \
-        {
-
-#define FROM_MAYBE_CATCH \
-            IGNORE_UNUSED(t_FromMaybeScope); \
-        } \
-        catch (const FromMaybeFailure&) \
-        { \
-
-#define FROM_MAYBE_END \
-            IGNORE_UNUSED(t_FromMaybeScope); \
-        } \
-    }
-
-#define FROM_MAYBE_CATCH_CONSUME \
-    FROM_MAYBE_CATCH \
-    FROM_MAYBE_END
-
-#define FROM_MAYBE(...) \
-    (::FromMaybe(t_FromMaybeScope, __VA_ARGS__))
-
-#define FROM_MAYBE_DEFAULT(...) \
-    (::FromMaybeDefault(__VA_ARGS__))
 
 #define BEGIN_CONTEXT_SCOPE \
     { \
@@ -231,10 +341,19 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
     m_spIsolateImpl(std::move(spIsolateImpl)),
     m_DateTimeConversionEnabled(HasFlag(options.Flags, Flags::EnableDateTimeConversion)),
     m_HideHostExceptions(HasFlag(options.Flags, Flags::HideHostExceptions)),
-    m_pvV8ObjectCache(nullptr),
-    m_AllowHostObjectConstructorCall(false)
+    m_AllowHostObjectConstructorCall(false),
+    m_ChangedTimerResolution(false),
+    m_pvV8ObjectCache(nullptr)
 {
     VerifyNotOutOfMemory();
+
+    if (HasFlags(options.Flags, Flags::AddPerformanceObject, Flags::SetTimerResolution))
+    {
+        m_ChangedTimerResolution = HighResolutionClock::SetTimerResolution();
+    }
+
+    auto timeOrigin = HighResolutionClock::GetMillisecondsSinceUnixEpoch();
+    m_RelativeTimeOrigin = HighResolutionClock::GetRelativeMilliseconds();
 
     BEGIN_ISOLATE_SCOPE
     FROM_MAYBE_TRY
@@ -251,12 +370,23 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             hGlobalTemplate->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyIndices));
 
             m_hContext = CreatePersistent(CreateContext(nullptr, hGlobalTemplate));
-
-            auto hGlobal = ::ValueAsObject(m_hContext->Global()->GetPrototype());
-            if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
+            if (!m_hContext.IsEmpty())
             {
-                hGlobal->SetAlignedPointerInInternalField(0, this);
+                auto hGlobalProxy = m_hContext->Global();
+                if (!hGlobalProxy.IsEmpty())
+                {
+                    auto hGlobal = ::ValueAsObject(hGlobalProxy->GetPrototype());
+                    if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
+                    {
+                        hGlobal->SetAlignedPointerInInternalField(0, this);
+                    }
+                }
             }
+        }
+
+        if (m_hContext.IsEmpty())
+        {
+            throw FromMaybeFailure();
         }
 
         auto hContextImpl = CreateExternal(this);
@@ -271,7 +401,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             m_hContext->SetAlignedPointerInEmbedderData(1, this);
 
             m_hIsHostObjectKey = CreatePersistent(CreateSymbol());
-            FROM_MAYBE(m_hContext->Global()->Set(m_hContext, CreateString("isHostObjectKey"), m_hIsHostObjectKey));
+            ASSERT_EVAL(FROM_MAYBE(m_hContext->Global()->Set(m_hContext, CreateString("isHostObjectKey"), m_hIsHostObjectKey)));
 
             m_hHostExceptionKey = CreatePersistent(CreateString("hostException"));
             m_hCacheKey = CreatePersistent(CreatePrivate());
@@ -292,6 +422,15 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             m_hAccessToken = CreatePersistent(CreateObject());
             m_hFlushFunction = CreatePersistent(FROM_MAYBE(v8::Function::New(m_hContext, FlushCallback)));
             m_hTerminationException = CreatePersistent(v8::Exception::Error(CreateString("Script execution was interrupted")));
+
+            if (HasFlag(options.Flags, Flags::AddPerformanceObject))
+            {
+                auto hPerformance = CreateObject();
+                ASSERT_EVAL(FROM_MAYBE(hPerformance->DefineOwnProperty(m_hContext, CreateString("timeOrigin"), CreateNumber(timeOrigin), CombineFlags(v8::ReadOnly, v8::DontDelete))));
+                ASSERT_EVAL(FROM_MAYBE(hPerformance->DefineOwnProperty(m_hContext, CreateString("now"), FROM_MAYBE(v8::Function::New(m_hContext, PerformanceNowCallback, hContextImpl)), CombineFlags(v8::ReadOnly, v8::DontDelete))));
+                ASSERT_EVAL(FROM_MAYBE(hPerformance->DefineOwnProperty(m_hContext, CreateString("sleep"), FROM_MAYBE(v8::Function::New(m_hContext, PerformanceSleepCallback, hContextImpl)), CombineFlags(v8::ReadOnly, v8::DontDelete))));
+                ASSERT_EVAL(FROM_MAYBE(m_hContext->Global()->DefineOwnProperty(m_hContext, CreateString("Performance"), hPerformance, v8::DontEnum)));
+            }
 
         END_CONTEXT_SCOPE
 
@@ -1941,18 +2080,31 @@ void V8ContextImpl::Teardown()
     // As of V8 3.16.0, the global property getter for a disposed context
     // may be invoked during GC after the V8ContextImpl instance is gone.
 
-    auto hGlobal = ::ValueAsObject(m_hContext->Global()->GetPrototype());
-    if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
+    if (!m_hContext.IsEmpty())
     {
-        hGlobal->SetAlignedPointerInInternalField(0, nullptr);
+        auto hGlobalProxy = m_hContext->Global();
+        if (!hGlobalProxy.IsEmpty())
+        {
+            auto hGlobal = ::ValueAsObject(hGlobalProxy->GetPrototype());
+            if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
+            {
+                hGlobal->SetAlignedPointerInInternalField(0, nullptr);
+            }
+        }
+
+        if (m_hContext->GetNumberOfEmbedderDataFields() > 1)
+        {
+            m_hContext->SetAlignedPointerInEmbedderData(1, nullptr);
+        }
+
+        Dispose(m_hContext);
     }
 
-    if (m_hContext->GetNumberOfEmbedderDataFields() > 1)
+    if (m_ChangedTimerResolution)
     {
-        m_hContext->SetAlignedPointerInEmbedderData(1, nullptr);
+        HighResolutionClock::RestoreTimerResolution();
+        m_ChangedTimerResolution = false;
     }
-
-    Dispose(m_hContext);
 }
 
 //-----------------------------------------------------------------------------
@@ -2067,8 +2219,8 @@ void V8ContextImpl::GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std:
         names.reserve(nameCount);
         for (auto index = 0; index < nameCount; index++)
         {
-            auto hName = FROM_MAYBE(hNames->Get(m_hContext, index));
-            if (hName->IsString())
+            auto hName = ::ValueAsString(FROM_MAYBE(hNames->Get(m_hContext, index)));
+            if (!hName.IsEmpty())
             {
                 names.push_back(CreateStdString(hName));
             }
@@ -2104,12 +2256,15 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, st
                     indices.push_back(static_cast<int>(value));
                 }
             }
-            else if (hName->IsNumber())
+            else
             {
-                auto value = FROM_MAYBE(hName->NumberValue(m_hContext));
-                if (value == std::round(value) && (value >= static_cast<double>(INT_MIN)) && (value <= static_cast<double>(INT_MAX)))
+                double value;
+                if (::TryGetValueAsNumber(m_hContext, hName, value))
                 {
-                    indices.push_back(static_cast<int>(value));
+                    if (value == std::round(value) && (value >= static_cast<double>(INT_MIN)) && (value <= static_cast<double>(INT_MAX)))
+                    {
+                        indices.push_back(static_cast<int>(value));
+                    }
                 }
             }
         }
@@ -3008,6 +3163,54 @@ void V8ContextImpl::FlushCallback(const v8::FunctionCallbackInfo<v8::Value>& /*i
 
 //-----------------------------------------------------------------------------
 
+void V8ContextImpl::PerformanceNowCallback(const v8::FunctionCallbackInfo<v8::Value>& info)
+{
+    auto now = HighResolutionClock::GetRelativeMilliseconds();
+
+    auto pContextImpl = ::GetContextImplFromData(info);
+    if (pContextImpl == nullptr)
+    {
+        return;
+    }
+
+    CALLBACK_RETURN(now - pContextImpl->m_RelativeTimeOrigin);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::PerformanceSleepCallback(const v8::FunctionCallbackInfo<v8::Value>& info)
+{
+    auto pContextImpl = ::GetContextImplFromData(info);
+    if (pContextImpl == nullptr)
+    {
+        return;
+    }
+
+    double delay;
+    if ((info.Length() < 1) || !::TryGetValueAsAnyNumber(pContextImpl->m_hContext, info[0], delay))
+    {
+        pContextImpl->ThrowException(v8::Exception::TypeError(pContextImpl->CreateString("Invalid argument: 'delay' must be a number")));
+        return;
+    }
+
+    auto precise = false;
+    if (info.Length() > 1)
+    {
+        auto hArg = info[1];
+        if (!hArg.IsEmpty())
+        {
+            precise = hArg->BooleanValue(info.GetIsolate());
+        }
+    }
+
+    if (delay > 0)
+    {
+        HighResolutionClock::SleepMilliseconds(delay, precise);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ContextImpl::DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, HostObjectHolder* pHolder, void* pvV8ObjectCache)
 {
     IGNORE_UNUSED(pIsolate);
@@ -3411,14 +3614,20 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
             return V8Value(V8Value::Null);
         }
 
-        if (hValue->IsBoolean())
         {
-            return V8Value(m_spIsolateImpl->BooleanValue(hValue));
+            bool value;
+            if (::TryGetValueAsBoolean(m_spIsolateImpl, hValue, value))
+            {
+                return V8Value(value);
+            }
         }
 
-        if (hValue->IsNumber())
         {
-            return V8Value(FROM_MAYBE(hValue->NumberValue(m_hContext)));
+            double value;
+            if (::TryGetValueAsNumber(m_hContext, hValue, value))
+            {
+                return V8Value(value);
+            }
         }
 
         if (hValue->IsInt32())
@@ -3431,9 +3640,10 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
             return V8Value(FROM_MAYBE(hValue->Uint32Value(m_hContext)));
         }
 
-        if (hValue->IsString())
+        auto hString = ::ValueAsString(hValue);
+        if (!hString.IsEmpty())
         {
-            return V8Value(new StdString(CreateStdString(hValue)));
+            return V8Value(new StdString(CreateStdString(hString)));
         }
 
         if (m_DateTimeConversionEnabled && hValue->IsDate())

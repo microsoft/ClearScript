@@ -56,7 +56,7 @@ namespace Microsoft.ClearScript.V8
 
         /// <summary>
         /// Specifies that
-        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#Dynamic_Imports">dynamic module imports</see>
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import">dynamic module imports</see>
         /// are to be enabled. This is an experimental feature and may be removed in a future release.
         /// </summary>
         EnableDynamicModuleImports = 0x00000020,
@@ -129,6 +129,23 @@ namespace Microsoft.ClearScript.V8
         /// interoperability. This option is ignored if
         /// <c><see cref="EnableTaskPromiseConversion"/></c> is not specified.
         /// </summary>
-        UseSynchronizationContexts = 0x00002000
+        UseSynchronizationContexts = 0x00002000,
+
+        /// <summary>
+        /// Specifies that the
+        /// <c><see href="https://microsoft.github.io/ClearScript/2024/03/21/performance-api.html">Performance</see></c>
+        /// object is to be added to the script engine's global namespace. This object provides a
+        /// set of low-level native facilities for performance-sensitive scripts.
+        /// </summary>
+        AddPerformanceObject = 0x00004000,
+
+        /// <summary>
+        /// Specifies that native timers are to be set to the highest available resolution while
+        /// the current <c><see cref="V8ScriptEngine"/></c> instance is active. This option is
+        /// ignored if <c><see cref="AddPerformanceObject"/></c> is not specified. It is only a
+        /// hint and may be ignored on some systems. On platforms that support it, this option can
+        /// degrade overall system performance or power efficiency, so caution is recommended.
+        /// </summary>
+        SetTimerResolution = 0x00008000
     }
 }

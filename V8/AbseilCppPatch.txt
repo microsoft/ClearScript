@@ -1,5 +1,5 @@
 diff --git a/absl.gni b/absl.gni
-index cf8a39e..06c0af0 100644
+index 91d4111..9800433 100644
 --- a/absl.gni
 +++ b/absl.gni
 @@ -25,7 +25,6 @@ template("absl_source_set") {

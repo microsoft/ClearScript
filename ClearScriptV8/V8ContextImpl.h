@@ -458,6 +458,8 @@ private:
 
     static void InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void FlushCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void PerformanceNowCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void PerformanceSleepCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
 
     v8::MaybeLocal<v8::Promise> ImportModule(const V8DocumentInfo* pSourceDocumentInfo, v8::Local<v8::String> hSpecifier);
     v8::MaybeLocal<v8::Module> ResolveModule(v8::Local<v8::String> hSpecifier, const V8DocumentInfo* pSourceDocumentInfo);
@@ -493,8 +495,6 @@ private:
 
     StdString m_Name;
     SharedPtr<V8IsolateImpl> m_spIsolateImpl;
-    bool m_DateTimeConversionEnabled;
-    bool m_HideHostExceptions;
     Persistent<v8::Context> m_hContext;
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
     Persistent<v8::Symbol> m_hIsHostObjectKey;
@@ -521,9 +521,13 @@ private:
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     std::list<ModuleCacheEntry> m_ModuleCache;
     std::list<SyntheticModuleEntry> m_SyntheticModuleData;
-    void* m_pvV8ObjectCache;
-    bool m_AllowHostObjectConstructorCall;
     Statistics m_Statistics;
+    bool m_DateTimeConversionEnabled;
+    bool m_HideHostExceptions;
+    bool m_AllowHostObjectConstructorCall;
+    bool m_ChangedTimerResolution;
+    void* m_pvV8ObjectCache;
+    double m_RelativeTimeOrigin;
 };
 
 //-----------------------------------------------------------------------------

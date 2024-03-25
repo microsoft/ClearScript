@@ -5183,7 +5183,6 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
-
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_UseSynchronizationContexts()
         {
@@ -5238,6 +5237,49 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(scriptResults.SequenceEqual(new object[] { true, false, true }));
 
             // ReSharper restore AccessToDisposedClosure
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_PerformanceObject()
+        {
+            Assert.IsInstanceOfType(engine.Script.Performance, typeof(Undefined));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AddPerformanceObject);
+
+            Assert.IsInstanceOfType(engine.Script.Performance, typeof(IJavaScriptObject));
+            Assert.IsInstanceOfType(engine.Script.Performance.sleep, typeof(IJavaScriptObject));
+            Assert.IsInstanceOfType(engine.Script.Performance.now, typeof(IJavaScriptObject));
+
+            var elapsed = Convert.ToDouble(engine.Evaluate(@"(() => {
+                const start = Performance.now();
+                Performance.sleep(25);
+                return Performance.now() - start;
+            })()"));
+
+            Assert.IsTrue(elapsed >= 25);
+
+            elapsed = Convert.ToDouble(engine.Evaluate(@"(() => {
+                const start = Performance.now();
+                Performance.sleep(25, false);
+                return Performance.now() - start;
+            })()"));
+
+            Assert.IsTrue(elapsed >= 25);
+
+            var average = Convert.ToDouble(engine.Evaluate(@"(() => {
+                const start = Performance.now();
+                for (let i = 0; i < 1000; ++i) Performance.sleep(5, true);
+                return (Performance.now() - start) / 1000;
+            })()"));
+
+            Assert.IsTrue((average >= 5) && (average < 5.5));
+
+            var delta = Convert.ToDouble(engine.Evaluate(@"
+                Math.abs(Performance.timeOrigin + Performance.now() - Date.now());
+            "));
+
+            Assert.IsTrue(delta < 5);
         }
 
         // ReSharper restore InconsistentNaming

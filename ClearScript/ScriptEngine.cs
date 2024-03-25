@@ -37,7 +37,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Initializes a new script engine instance.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         [Obsolete("Use ScriptEngine(string name, string fileNameExtensions) instead.")]
         protected ScriptEngine(string name)
             : this(name, null)
@@ -47,7 +47,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Initializes a new script engine instance with the specified list of supported file name extensions.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
         protected ScriptEngine(string name, string fileNameExtensions)
         {

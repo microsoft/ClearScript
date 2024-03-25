@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System.Collections.Generic;
@@ -16,29 +16,28 @@ namespace Microsoft.ClearScript.Util
 
         public override bool Equals(T x, T y)
         {
-            if ((x == null) && (y == null))
+            if (ReferenceEquals(x, y))
             {
                 return true;
             }
-            else if ((x == null) || (y == null))
+
+            if (ReferenceEquals(x, null) || ReferenceEquals(y, null))
             {
                 return false;
             }
 
-            try
-            {
-                return (x.Module == y.Module) && (x.MetadataToken == y.MetadataToken);
-            }
-            catch
-            {
-                return x == y;
-            }
+            return MiscHelpers.Try(out var result, () => UnsafeEquals(x, y)) && result;
         }
 
         public override int GetHashCode(T obj)
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            return (obj == null) ? 0 : obj.GetHashCode();
+            return ReferenceEquals(obj, null) ? 0 : obj.GetHashCode();
+        }
+
+        private static bool UnsafeEquals(T x, T y)
+        {
+            return (x.Module == y.Module) && (x.MetadataToken == y.MetadataToken);
         }
     }
 }

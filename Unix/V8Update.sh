@@ -1,8 +1,8 @@
 #!/bin/bash
 
-v8testedrev=11.8.172.15
+v8testedrev=12.3.219.12
 v8testedcommit=
-v8cherrypicks=28a7e2d45fd620fa68fb0678a7246fc8e426d1cc
+v8cherrypicks=
 v8linuxbuildcommit=3d9590754d5d23e62d15472c5baf6777ca59df20
 v8linuxclangcommit=184bc29dd86c3994a02b4f3feca125ffe785319c
 
@@ -226,7 +226,7 @@ if [[ $linux == true ]]; then
 fi
 
 echo "Building V8 ..."
-gn gen out/$cpu/$mode --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\"" >gn-$cpu-$mode.log || fail
+gn gen out/$cpu/$mode --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\"" >gn-$cpu-$mode.log || fail
 ninja -C out/$cpu/$mode obj/libv8_monolith.a >build-$cpu-$mode.log || fail
 
 cd ../..

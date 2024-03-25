@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set v8testedrev=11.8.172.15
+set v8testedrev=12.3.219.12
 set v8testedcommit=
 set v8cherrypicks=28a7e2d45fd620fa68fb0678a7246fc8e426d1cc
 

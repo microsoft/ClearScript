@@ -51,7 +51,7 @@ namespace Microsoft.ClearScript.Windows.Core
         /// Initializes a new Windows Script engine instance with the specified list of supported file name extensions and synchronous invoker.
         /// </summary>
         /// <param name="progID">The programmatic identifier (ProgID) of the Windows Script engine class.</param>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <param name="syncInvoker">An object that enforces thread affinity for the instance.</param>
@@ -481,7 +481,7 @@ namespace Microsoft.ClearScript.Windows.Core
                     // A host exception surrogate passed through the COM boundary; this happens
                     // when some script engines are invoked via script item access rather than
                     // script execution. Use the exception in the script frame if one is available.
-                    // Otherwise chain the host exception to a new script exception.
+                    // Otherwise, chain the host exception to a new script exception.
 
                     ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
 

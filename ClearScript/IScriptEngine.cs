@@ -886,7 +886,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Executes script code with an associated document name.
         /// </summary>
-        /// <param name="documentName">A document name for the script code. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="documentName">A document name for the script code. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="code">The script code to execute.</param>
         /// <remarks>
         /// <para>
@@ -904,7 +904,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Executes script code with an associated document name, optionally discarding the document after execution.
         /// </summary>
-        /// <param name="documentName">A document name for the script code. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="documentName">A document name for the script code. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="discard"><c>True</c> to discard the script document after execution, <c>false</c> otherwise.</param>
         /// <param name="code">The script code to execute.</param>
         /// <remarks>
@@ -1009,7 +1009,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Evaluates script code with an associated document name.
         /// </summary>
-        /// <param name="documentName">A document name for the script code. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="documentName">A document name for the script code. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="code">The script code to evaluate.</param>
         /// <returns>The result value.</returns>
         /// <remarks>
@@ -1032,7 +1032,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Evaluates script code with an associated document name, optionally discarding the document after execution.
         /// </summary>
-        /// <param name="documentName">A document name for the script code. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="documentName">A document name for the script code. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="discard"><c>True</c> to discard the script document after execution, <c>false</c> otherwise.</param>
         /// <param name="code">The script code to evaluate.</param>
         /// <returns>The result value.</returns>

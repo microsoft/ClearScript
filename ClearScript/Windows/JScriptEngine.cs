@@ -42,7 +42,7 @@ namespace Microsoft.ClearScript.Windows
         /// <summary>
         /// Initializes a new JScript engine instance with the specified name.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         public JScriptEngine(string name)
             : this(name, WindowsScriptEngineFlags.None)
         {
@@ -60,7 +60,7 @@ namespace Microsoft.ClearScript.Windows
         /// <summary>
         /// Initializes a new JScript engine instance with the specified name and options.
         /// </summary>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         public JScriptEngine(string name, WindowsScriptEngineFlags flags)
             : this("JScript", name, "js", flags)
@@ -72,7 +72,7 @@ namespace Microsoft.ClearScript.Windows
         /// identifier, name, list of supported file name extensions, and options.
         /// </summary>
         /// <param name="progID">The programmatic identifier (ProgID) of the JScript engine class.</param>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <remarks>

@@ -1180,20 +1180,18 @@ namespace Microsoft.ClearScript.Util
 
         #region Nested type: PropertySignatureComparer
 
-        private sealed class PropertySignatureComparer : IEqualityComparer<PropertyInfo>
+        private sealed class PropertySignatureComparer : EqualityComparer<PropertyInfo>
         {
             public static readonly PropertySignatureComparer Instance = new PropertySignatureComparer();
 
-            #region IEqualityComparer<PropertyInfo> implementation
-
-            public bool Equals(PropertyInfo first, PropertyInfo second)
+            public override bool Equals(PropertyInfo first, PropertyInfo second)
             {
                 var firstParamTypes = first.GetIndexParameters().Select(param => param.ParameterType);
                 var secondParamTypes = second.GetIndexParameters().Select(param => param.ParameterType);
                 return firstParamTypes.SequenceEqual(secondParamTypes);
             }
 
-            public int GetHashCode(PropertyInfo property)
+            public override int GetHashCode(PropertyInfo property)
             {
                 var hashCode = 0;
 
@@ -1205,8 +1203,6 @@ namespace Microsoft.ClearScript.Util
 
                 return hashCode;
             }
-
-            #endregion
         }
 
         #endregion

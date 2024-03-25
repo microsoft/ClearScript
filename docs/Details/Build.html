@@ -283,16 +283,14 @@ avoid path length issues.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>The provided project and solution
 files support <a href="https://visualstudio.microsoft.com/downloads/">Visual
-Studio 2022</a> and <a
-href="https://visualstudio.microsoft.com/vs/older-downloads/">Visual Studio 2019</a>
-Version 16.4 or later. They produce architecture-neutral managed libraries that
+Studio 2022</a>. They produce architecture-neutral managed libraries that
 target .NET 5.0+, .NET Framework 4.5+, .NET Core 3.1, and .NET Standard 2.1.
 ClearScript does not support older environments. The output directory is <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>bin\[Debug|Release]</span></b>.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:red'>Important:
 </span></b>Ensure that <a
-href="https://dotnet.microsoft.com/en-us/download/dotnet/6.0">.NET 6.0 SDK</a>
+href="https://dotnet.microsoft.com/en-us/download/dotnet/8.0">.NET 8.0 SDK</a>
 is installed before building ClearScript.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>There are two ways to build
@@ -307,8 +305,7 @@ support, you must first acquire and build V8:</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> This procedure currently requires <a
-href="https://visualstudio.microsoft.com/downloads/">Visual Studio 2022</a> or <a
-href="https://visualstudio.microsoft.com/vs/older-downloads/">Visual Studio 2019</a>.</p>
+href="https://visualstudio.microsoft.com/downloads/">Visual Studio 2022</a>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
@@ -320,23 +317,24 @@ style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span
 style='color:red'>Important:</span></b> Your Visual Studio installation must
 include the <b>.NET desktop development</b>, <b>Desktop development with C++</b>,
 and <b>Universal Windows Platform Development</b> workloads, as well as the <b>C++
-ARM build tools </b>and<b> C++ ARM64</b> <b>build tools</b> components.</p>
+ARM build tools</b>, <b>C++ ARM64</b> <b>build tools</b>, and <b>C++ Clang
+Compiler for Windows</b> components.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>4.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
 style='color:red'>Important:</span></b> The V8 build also requires <a
 href="https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/"><span
 style='font-size:10.5pt;line-height:115%;font-family:"Segoe UI",sans-serif;
-background:white'>Windows 10 SDK</span></a><span style='font-size:10.5pt;
+background:white'>Windows SDK</span></a><span style='font-size:10.5pt;
 line-height:115%;font-family:"Segoe UI",sans-serif;color:#171717;background:
-white'> version </span><a href="https://go.microsoft.com/fwlink/?linkid=2164145"><span
+white'> version </span><a href="https://go.microsoft.com/fwlink/?linkid=2261842"><span
 style='font-size:10.5pt;line-height:115%;font-family:"Segoe UI",sans-serif;
-background:white'>2104 (10.0.20348.0)</span></a>. Your Windows SDK installation
-must include the <b>Debugging Tools for Windows</b> feature.</p>
+background:white'>10.0.22621</span></a>. Your Windows SDK installation must
+include the <b>Debugging Tools for Windows</b> feature.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>5.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Open
-a Visual Studio 2022 or 2019 developer command prompt and run the <b><span
+a Visual Studio 2022 developer command prompt and run the <b><span
 style='font-size:10.0pt;line-height:115%;font-family:Consolas'>V8Update</span></b>
 script from your ClearScript root directory:</p>
 
@@ -386,7 +384,7 @@ revision history.</p>
 
 <p class=MsoNormal style='margin-left:.25in'>You are now ready to build the full
 <b><span style='font-size:10.0pt;line-height:115%;font-family:Consolas'>ClearScript</span></b>
-solution using Visual Studio 2022 or 2019.</p>
+solution using Visual Studio 2022.</p>
 
 <p class=MsoNormal style='margin-left:.25in'><b><span style='color:#00B050'>Note:</span></b>
 The first time you open the solution, Visual Studio may prompt you to upgrade
@@ -420,7 +418,7 @@ and ClearScript on Linux:</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
 the following packages: <a href="https://www.git-scm.com/download/linux">Git</a>,
-<a href="https://dotnet.microsoft.com/en-us/download/dotnet/6.0">.NET 6.0 SDK</a>,
+<a href="https://dotnet.microsoft.com/en-us/download/dotnet/8.0">.NET 8.0 SDK</a>,
 <a href="https://clang.llvm.org/">Clang</a>, <a
 href="https://www.gnu.org/software/make/">GNU Make</a>, and <a
 href="http://pkgconf.org/">pkgconf</a>. For each of these, check your package
@@ -476,7 +474,7 @@ and ClearScript on macOS:</p>
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>1.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Install
 <a href="https://developer.apple.com/xcode/">Xcode</a> and <a
-href="https://dotnet.microsoft.com/en-us/download/dotnet/6.0">.NET 6.0 SDK</a>.</p>
+href="https://dotnet.microsoft.com/en-us/download/dotnet/8.0">.NET 8.0 SDK</a>.</p>
 
 <p class=MsoListParagraph style='margin-left:.75in;text-indent:-.25in'>2.<span
 style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Use

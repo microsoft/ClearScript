@@ -3,7 +3,7 @@
     <!-- ReSharper disable once UnknownProperty -->
     <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>netcoreapp3.1;net5.0-windows;net6.0-windows;net7.0-windows</TargetFrameworks>
+        <TargetFrameworks>netcoreapp3.1;net5.0-windows;net6.0-windows;net7.0-windows;net8.0-windows</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
