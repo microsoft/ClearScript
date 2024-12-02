@@ -43,6 +43,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\NetCore\ClearScript.Core\ClearScript.Core.csproj" />
         <ProjectReference Include="..\..\NetCore\ClearScript.V8\ClearScript.V8.csproj" />
+        <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     </ItemGroup>
 
 </Project>
