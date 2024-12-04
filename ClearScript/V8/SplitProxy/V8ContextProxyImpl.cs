@@ -94,6 +94,22 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             )));
         }
 
+        /// <param name="documentInfo">Meta-information for a document</param>
+        /// <param name="code">A pointer to a UTF-16 string</param>
+        /// <param name="length">The length of the code string</param>
+        public override V8.V8Script Compile(UniqueDocumentInfo documentInfo, IntPtr code, int length)
+        {
+            return new V8ScriptImpl(documentInfo, MiscHelpers.GetDigest(code, length), V8SplitProxyNative.Invoke(instance => instance.V8Context_Compile(
+                Handle,
+                MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
+                MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
+                documentInfo.UniqueId,
+                documentInfo.Category.Kind,
+                V8ProxyHelpers.AddRefHostObject(documentInfo),
+                code, length
+            )));
+        }
+
         public override V8.V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
         {
             if (cacheKind == V8CacheKind.None)

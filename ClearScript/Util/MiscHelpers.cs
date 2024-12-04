@@ -224,17 +224,36 @@ namespace Microsoft.ClearScript.Util
             return (UIntPtr.Size == 4) ? (UIntPtr)code.GetDigestAsUInt32() : (UIntPtr)code.GetDigestAsUInt64();
         }
 
+        public static UIntPtr GetDigest(IntPtr code, int length)
+        {
+            return (UIntPtr.Size == 4) ? (UIntPtr)GetDigestAsUInt32(code, length) : (UIntPtr)GetDigestAsUInt64(code, length);
+        }
+
         public static uint GetDigestAsUInt32(this string code)
+        {
+            unsafe
+            {
+                fixed (char* charPtr = code)
+                {
+                    return GetDigestAsUInt32((IntPtr)charPtr, code.Length);
+                }
+            }
+        }
+
+        /// <param name="code">A pointer to a UTF-16 string</param>
+        /// <param name="length">The length of the code string</param>
+        public static uint GetDigestAsUInt32(IntPtr code, int length)
         {
             var digest = 2166136261U;
             const uint prime = 16777619U;
 
-            unchecked
+            unsafe
             {
-                var bytes = Encoding.Unicode.GetBytes(code);
-                for (var index = 0; index < bytes.Length; index++)
+                byte* bytePtr = (byte*)code;
+
+                for (var index = 0; index < length; index++)
                 {
-                    digest ^= bytes[index];
+                    digest ^= bytePtr[index];
                     digest *= prime;
                 }
             }
@@ -244,14 +263,31 @@ namespace Microsoft.ClearScript.Util
 
         public static ulong GetDigestAsUInt64(this string code)
         {
+            unsafe
+            {
+                fixed (char* charPtr = code)
+                {
+                    return GetDigestAsUInt64((IntPtr)charPtr, code.Length);
+                }
+            }
+        }
+
+        /// <param name="code">A pointer to a UTF-16 string</param>
+        /// <param name="length">The length of the code string</param>
+        public static ulong GetDigestAsUInt64(IntPtr code, int length)
+        {
             var digest = 14695981039346656037UL;
             const ulong prime = 1099511628211UL;
 
-            var bytes = Encoding.Unicode.GetBytes(code);
-            for (var index = 0; index < bytes.Length; index++)
+            unsafe
             {
-                digest ^= bytes[index];
-                digest *= prime;
+                byte* bytePtr = (byte*)code;
+
+                for (var index = 0; index < length; index++)
+                {
+                    digest ^= bytePtr[index];
+                    digest *= prime;
+                }
             }
 
             return digest;

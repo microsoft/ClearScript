@@ -1267,6 +1267,28 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_Compile(const V8ContextHandle& han
 
 //-----------------------------------------------------------------------------
 
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileIntPtr(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, const StdChar* code, int32_t length) noexcept
+{
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
+
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        try
+        {
+            return new V8ScriptHandle(spContext->Compile(documentInfo, StdString(code, length)));
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ScheduleScriptEngineException();
+        }
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileProducingCache(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes) noexcept
 {
     cacheBytes.clear();

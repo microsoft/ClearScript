@@ -494,6 +494,19 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
+        /// Creates a compiled script with the specified document meta-information.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing meta-information for the script document.</param>
+        /// <param name="code">A pointer to a UTF-16 string</param>
+        /// <param name="length">The length of the code string</param>
+        /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
+        public V8Script Compile(DocumentInfo documentInfo, IntPtr code, int length)
+        {
+            VerifyNotDisposed();
+            return ScriptInvoke(() => CompileInternal(documentInfo.MakeUnique(this), code, length));
+        }
+
+        /// <summary>
         /// Creates a compiled script, generating cache data for accelerated recompilation.
         /// </summary>
         /// <param name="code">The script code to compile.</param>
@@ -1167,6 +1180,36 @@ namespace Microsoft.ClearScript.V8
 
             // ReSharper disable once LocalVariableHidesMember
             var script = proxy.Compile(documentInfo, code);
+
+            if (module != null)
+            {
+                module.Evaluator = () => proxy.Execute(script, true);
+            }
+
+            return script;
+        }
+
+        private V8Script CompileInternal(UniqueDocumentInfo documentInfo, IntPtr code, int length)
+        {
+            /*if (FormatCode)
+            {
+                code = MiscHelpers.FormatCode(code);
+            }*/
+
+            CommonJSManager.Module module = null;
+            if (documentInfo.Category == ModuleCategory.CommonJS)
+            {
+                /*module = CommonJSManager.GetOrCreateModule(documentInfo, code);
+                code = CommonJSManager.Module.GetAugmentedCode(code);*/
+                throw new NotImplementedException();
+            }
+            else if ((documentInfo.Category != DocumentCategory.Script) && (documentInfo.Category != ModuleCategory.Standard))
+            {
+                throw new NotSupportedException("The script engine cannot compile documents of type '" + documentInfo.Category + "'");
+            }
+
+            // ReSharper disable once LocalVariableHidesMember
+            var script = proxy.Compile(documentInfo, code, length);
 
             if (module != null)
             {
