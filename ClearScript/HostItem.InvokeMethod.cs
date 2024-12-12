@@ -485,25 +485,29 @@ namespace Microsoft.ClearScript
 
             public bool IsSuccess => method != null;
 
-            public object RawResult => (object)method ?? exceptionFactory;
+            public object RawResult => IsSuccess ? (object)method : exceptionFactory;
 
             public bool IsPreferredMethod(HostItem hostItem, string name)
             {
-                return method != null && IsUnblockedMethod(hostItem) && (method.GetScriptName(hostItem) == name);
+                return IsSuccess && IsUnblockedMethod(hostItem) && (method.GetScriptName(hostItem) == name);
             }
 
             public bool IsUnblockedMethod(HostItem hostItem)
             {
-                return method != null && !method.IsBlockedFromScript(hostItem, hostItem.DefaultAccess);
+                return IsSuccess && !method.IsBlockedFromScript(hostItem, hostItem.DefaultAccess);
             }
 
             public object Invoke(HostItem hostItem)
             {
-                if (method == null)
+                if (!IsSuccess)
+                {
                     throw exceptionFactory();
+                }
 
                 if (reflectionMethods.Contains(method, MemberComparer<MethodInfo>.Instance))
+                {
                     hostItem.Engine.CheckReflection();
+                }
 
                 return InvokeHelpers.InvokeMethod(hostItem, method, hostTarget.InvokeTarget, args, method.GetScriptMemberFlags(hostItem));
             }
