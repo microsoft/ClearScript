@@ -53,7 +53,7 @@ namespace Microsoft.ClearScript
         private object InvokeMethod(string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
             var bindResult = BindMethod(name, typeArgs, args, bindArgs);
-            if ((bindResult is MethodBindFailure) && Target.GetFlags(this).HasFlag(HostTargetFlags.AllowExtensionMethods))
+            if (!bindResult.IsSuccess && Target.GetFlags(this).HasFlag(HostTargetFlags.AllowExtensionMethods))
             {
                 var targetArg = Target.Target.ToEnumerable();
                 var extensionArgs = targetArg.Concat(args).ToArray();
@@ -65,7 +65,7 @@ namespace Microsoft.ClearScript
                 {
                     var extensionHostItem = (HostItem)Wrap(Engine, HostType.Wrap(type));
                     var extensionBindResult = extensionHostItem.BindMethod(name, typeArgs, extensionArgs, extensionBindArgs);
-                    if (extensionBindResult is MethodBindSuccess)
+                    if (extensionBindResult.IsSuccess)
                     {
                         var result = extensionBindResult.Invoke(extensionHostItem);
                         for (var index = 1; index < extensionArgs.Length; index++)
@@ -121,16 +121,16 @@ namespace Microsoft.ClearScript
 
                 if (forceReflection)
                 {
-                    result = new MethodBindFailure(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+                    result = new MethodBindResult(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
                 }
                 else
                 {
                     result = BindMethodInternal(signature, AccessContext, bindFlags, Target, name, typeArgs, args, bindArgs);
                     if (!result.IsPreferredMethod(this, name))
                     {
-                        if (result is MethodBindSuccess)
+                        if (result.IsSuccess)
                         {
-                            result = new MethodBindFailure(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+                            result = new MethodBindResult(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
                         }
 
                         foreach (var altName in GetAltMethodNames(name, bindFlags))
@@ -145,10 +145,10 @@ namespace Microsoft.ClearScript
                     }
                 }
 
-                if ((result is MethodBindFailure) && (forceReflection || Engine.UseReflectionBindFallback))
+                if ((!result.IsSuccess) && (forceReflection || Engine.UseReflectionBindFallback))
                 {
                     var reflectionResult = BindMethodUsingReflection(bindFlags, Target, name, typeArgs, args, bindArgs);
-                    if ((reflectionResult is MethodBindSuccess) || forceReflection)
+                    if ((reflectionResult.IsSuccess) || forceReflection)
                     {
                         result = reflectionResult;
                     }
@@ -197,7 +197,7 @@ namespace Microsoft.ClearScript
             var rawResult = BindMethodRaw(bindFlags, binder, target, bindArgs);
 
             var result = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
-            if ((result is MethodBindFailure) && !(target is HostType) && target.Type.IsInterface)
+            if (!result.IsSuccess && !(target is HostType) && target.Type.IsInterface)
             {
                 // binding through interface failed; try base interfaces
                 foreach (var interfaceType in target.Type.GetInterfaces())
@@ -206,7 +206,7 @@ namespace Microsoft.ClearScript
                     rawResult = BindMethodRaw(bindFlags, binder, baseInterfaceTarget, bindArgs);
 
                     var baseInterfaceResult = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
-                    if (baseInterfaceResult is MethodBindSuccess)
+                    if (baseInterfaceResult.IsSuccess)
                     {
                         return baseInterfaceResult;
                     }
@@ -217,7 +217,7 @@ namespace Microsoft.ClearScript
                 rawResult = BindMethodRaw(bindFlags, binder, objectTarget, bindArgs);
 
                 var objectResult = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
-                if (objectResult is MethodBindSuccess)
+                if (objectResult.IsSuccess)
                 {
                     return objectResult;
                 }
@@ -354,11 +354,11 @@ namespace Microsoft.ClearScript
                 }
                 catch (AmbiguousMatchException)
                 {
-                    return new MethodBindFailure(() => new AmbiguousMatchException(MiscHelpers.FormatInvariant("The object has multiple methods named '{0}' that match the specified arguments", name)));
+                    return new MethodBindResult(() => new AmbiguousMatchException(MiscHelpers.FormatInvariant("The object has multiple methods named '{0}' that match the specified arguments", name)));
                 }
             }
 
-            return new MethodBindFailure(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+            return new MethodBindResult(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
         }
 
         private IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs)
@@ -437,39 +437,13 @@ namespace Microsoft.ClearScript
 
         #region Nested type: MethodBindResult
 
-        private abstract class MethodBindResult
+        private readonly ref struct MethodBindResult
         {
-            public static MethodBindResult Create(string name, BindingFlags bindFlags, object rawResult, HostTarget hostTarget, object[] args)
-            {
-                var method = rawResult as MethodInfo;
-                if (method != null)
-                {
-                    if (method.IsStatic && !bindFlags.HasFlag(BindingFlags.Static))
-                    {
-                        return new MethodBindFailure(() => new InvalidOperationException(MiscHelpers.FormatInvariant("Cannot access static method '{0}' in non-static context", method.Name)));
-                    }
+            private readonly HostTarget hostTarget;
+            private readonly MethodInfo method;
+            private readonly object[] args;
+            private readonly Func<Exception> exceptionFactory;
 
-                    return new MethodBindSuccess(hostTarget, method, args);
-                }
-
-                return new MethodBindFailure((rawResult as Func<Exception>) ?? (() => new NotSupportedException(MiscHelpers.FormatInvariant("Invocation of method '{0}' failed (unrecognized binding)", name))));
-            }
-
-            public abstract object RawResult { get; }
-
-            public abstract bool IsPreferredMethod(HostItem hostItem, string name);
-
-            public abstract bool IsUnblockedMethod(HostItem hostItem);
-
-            public abstract object Invoke(HostItem hostItem);
-        }
-
-        #endregion
-
-        #region Nested type: MethodBindSuccess
-
-        private sealed class MethodBindSuccess : MethodBindResult
-        {
             private static readonly MethodInfo[] reflectionMethods =
             {
                 typeof(object).GetMethod("GetType"),
@@ -477,33 +451,59 @@ namespace Microsoft.ClearScript
                 typeof(Exception).GetMethod("GetType")
             };
 
-            private readonly HostTarget hostTarget;
-            private readonly MethodInfo method;
-            private readonly object[] args;
-
-            public MethodBindSuccess(HostTarget hostTarget, MethodInfo method, object[] args)
+            public MethodBindResult(HostTarget hostTarget, MethodInfo method, object[] args)
             {
                 this.hostTarget = hostTarget;
                 this.method = method;
                 this.args = args;
+                exceptionFactory = null;
             }
 
-            #region MethodBindResult overrides
-
-            public override object RawResult => method;
-
-            public override bool IsPreferredMethod(HostItem hostItem, string name)
+            public MethodBindResult(Func<Exception> exceptionFactory)
             {
-                return IsUnblockedMethod(hostItem) && (method.GetScriptName(hostItem) == name);
+                hostTarget = null;
+                method = null;
+                args = null;
+                this.exceptionFactory = exceptionFactory;
             }
 
-            public override bool IsUnblockedMethod(HostItem hostItem)
+            public static MethodBindResult Create(string name, BindingFlags bindFlags, object rawResult, HostTarget hostTarget, object[] args)
             {
-                return !method.IsBlockedFromScript(hostItem, hostItem.DefaultAccess);
+                var method = rawResult as MethodInfo;
+                if (method != null)
+                {
+                    if (method.IsStatic && !bindFlags.HasFlag(BindingFlags.Static))
+                    {
+                        return new MethodBindResult(() => new InvalidOperationException(MiscHelpers.FormatInvariant("Cannot access static method '{0}' in non-static context", method.Name)));
+                    }
+
+                    return new MethodBindResult(hostTarget, method, args);
+                }
+
+                return new MethodBindResult((rawResult as Func<Exception>) ?? (() => new NotSupportedException(MiscHelpers.FormatInvariant("Invocation of method '{0}' failed (unrecognized binding)", name))));
             }
 
-            public override object Invoke(HostItem hostItem)
+            public bool IsSuccess => method != null;
+
+            public object RawResult => IsSuccess ? (object)method : exceptionFactory;
+
+            public bool IsPreferredMethod(HostItem hostItem, string name)
             {
+                return IsSuccess && IsUnblockedMethod(hostItem) && (method.GetScriptName(hostItem) == name);
+            }
+
+            public bool IsUnblockedMethod(HostItem hostItem)
+            {
+                return IsSuccess && !method.IsBlockedFromScript(hostItem, hostItem.DefaultAccess);
+            }
+
+            public object Invoke(HostItem hostItem)
+            {
+                if (!IsSuccess)
+                {
+                    throw exceptionFactory();
+                }
+
                 if (reflectionMethods.Contains(method, MemberComparer<MethodInfo>.Instance))
                 {
                     hostItem.Engine.CheckReflection();
@@ -511,43 +511,6 @@ namespace Microsoft.ClearScript
 
                 return InvokeHelpers.InvokeMethod(hostItem, method, hostTarget.InvokeTarget, args, method.GetScriptMemberFlags(hostItem));
             }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region Nested type: MethodBindFailure
-
-        private sealed class MethodBindFailure : MethodBindResult
-        {
-            private readonly Func<Exception> exceptionFactory;
-
-            public MethodBindFailure(Func<Exception> exceptionFactory)
-            {
-                this.exceptionFactory = exceptionFactory;
-            }
-
-            #region MethodBindResult overrides
-
-            public override object RawResult => exceptionFactory;
-
-            public override bool IsPreferredMethod(HostItem hostItem, string name)
-            {
-                return false;
-            }
-
-            public override bool IsUnblockedMethod(HostItem hostItem)
-            {
-                return false;
-            }
-
-            public override object Invoke(HostItem hostItem)
-            {
-                throw exceptionFactory();
-            }
-
-            #endregion
         }
 
         #endregion
