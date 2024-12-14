@@ -34,6 +34,8 @@ namespace Microsoft.ClearScript.V8
 
         public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code);
 
+        public abstract V8Script Compile(UniqueDocumentInfo documentInfo, IntPtr code, int length);
+
         public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
 
         public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);

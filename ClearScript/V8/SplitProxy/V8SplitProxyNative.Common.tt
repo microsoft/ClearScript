@@ -756,6 +756,17 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, IntPtr code, int length)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        return V8Context_CompileIntPtr(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, code, length);
+                    }
+                }
+            }
+
             V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
@@ -1846,6 +1857,17 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
+            );
+
+            [DllImport("<#= fileName #>", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileIntPtr(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] IntPtr pCode, [In] int length
             );
 
             [DllImport("<#= fileName #>", CallingConvention = CallingConvention.StdCall)]
