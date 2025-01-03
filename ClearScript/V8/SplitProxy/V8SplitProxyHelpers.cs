@@ -81,7 +81,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
                     while (i < end)
                     {
-                        if (&i != &j)
+                        if (*i != *j)
                         {
                             return false;
                         }
