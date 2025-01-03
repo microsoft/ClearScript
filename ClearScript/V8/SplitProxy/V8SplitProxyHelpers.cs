@@ -12,26 +12,115 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 {
     #region native object helpers
 
-    internal static class StdString
+    /// <summary>
+    /// Represents an std::wstring on the C++ side of ClearScript.
+    /// </summary>
+    public readonly ref struct StdString
     {
-        public static IScope<Ptr> CreateScope(string value = null)
+        private readonly Ptr ptr;
+        private readonly bool owns;
+
+        /// <summary>
+        /// Creates a new std::wstring.
+        /// </summary>
+        /// <param name="value">The text to copy into the std::wstring.</param>
+        public StdString(string value)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdString_New(value ?? string.Empty), instance.StdString_Delete));
+            ptr = V8SplitProxyNative.Instance.StdString_New(value);
+            owns = true;
         }
 
-        public static string GetValue(Ptr pString)
+        internal StdString(Ptr pValue)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdString_GetValue(pString));
+            ptr = pValue;
+            owns = false;
         }
 
-        public static void SetValue(Ptr pString, string value)
+        /// <summary>
+        /// Releases the underlying std::wstring if this StdString owns it.
+        /// </summary>
+        public void Dispose()
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdString_SetValue(pString, value));
+            if (owns)
+            {
+                V8SplitProxyNative.Instance.StdString_Delete(ptr);
+            }
         }
+
+        internal static IScope<Ptr> CreateScope(string value = null)
+        {
+            return Scope.Create(() => V8SplitProxyNative.Instance.StdString_New(value ?? string.Empty), V8SplitProxyNative.Instance.StdString_Delete);
+        }
+
+        /// <summary>
+        /// Compares this std::wstring with a string without allocating memory.
+        /// </summary>
+        /// <param name="other">The string to compare this std::wstring with.</param>
+        /// <returns>True if this std::wstring is the same length as the other string and both contain the same char values.</returns>
+        public bool Equals(string other)
+        {
+            V8SplitProxyNative.Instance.StdString_GetValue(ptr, out IntPtr value, out int length);
+
+            if (length != other.Length)
+            {
+                return false;
+            }
+            else if (length == 0)
+            {
+                return true;
+            }
+
+            unsafe
+            {
+                char* i = (char*)value;
+                char* end = i + length;
+
+                fixed (char* otherPtr = other)
+                {
+                    char* j = otherPtr;
+
+                    while (i < end)
+                    {
+                        if (&i != &j)
+                        {
+                            return false;
+                        }
+
+                        i++;
+                        j++;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        internal static string GetValue(Ptr pString)
+        {
+            return V8SplitProxyNative.Instance.StdString_GetValue(pString);
+        }
+
+        internal static void SetValue(Ptr pString, string value)
+        {
+            V8SplitProxyNative.Instance.StdString_SetValue(pString, value);
+        }
+
+        #region Object overrides
+
+        /// <summary>
+        /// Creates a new string from the value of this std::wstring.
+        /// </summary>
+        /// <returns>A new string representing the value of this std::wstring.</returns>
+        public override string ToString()
+        {
+            return GetValue(ptr);
+        }
+
+        #endregion
 
         #region Nested type: Ptr
 
-        public readonly struct Ptr
+        internal readonly struct Ptr
         {
             private readonly IntPtr bits;
 
@@ -56,29 +145,58 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #endregion
     }
 
-    internal static class StdStringArray
+    /// <summary>
+    /// An array of <see cref="StdString"/>
+    /// </summary>
+    public readonly ref struct StdStringArray
     {
-        public static IScope<Ptr> CreateScope(int elementCount = 0)
+        private readonly Ptr ptr;
+        private readonly bool owns;
+
+        internal StdStringArray(Ptr pValue)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdStringArray_New(elementCount), instance.StdStringArray_Delete));
+            ptr = pValue;
+            owns = false;
         }
 
-        public static IScope<Ptr> CreateScope(string[] array)
+        /// <summary>
+        /// Deletes the underlying array if this <see cref="StdStringArray"/> owns it.
+        /// </summary>
+        public void Dispose()
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdStringArray_Delete));
+            if (owns)
+            {
+                V8SplitProxyNative.Instance.StdStringArray_Delete(ptr);
+            }
         }
 
-        public static int GetElementCount(Ptr pArray)
+        internal static IScope<Ptr> CreateScope(int elementCount = 0)
+        {
+            return Scope.Create(() => V8SplitProxyNative.Instance.StdStringArray_New(elementCount), V8SplitProxyNative.Instance.StdStringArray_Delete);
+        }
+
+        internal static IScope<Ptr> CreateScope(string[] array)
+        {
+            return Scope.Create(() => NewFromArray(V8SplitProxyNative.Instance, array), V8SplitProxyNative.Instance.StdStringArray_Delete);
+        }
+
+        internal static int GetElementCount(Ptr pArray)
         {
             return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdStringArray_GetElementCount(pArray));
         }
 
-        public static void SetElementCount(Ptr pArray, int elementCount)
+        /// <summary>
+        /// Set the length of the array.
+        /// </summary>
+        /// <param name="elementCount">The new length of the array.</param>
+        public void SetElementCount(int elementCount) => SetElementCount(ptr, elementCount);
+
+        internal static void SetElementCount(Ptr pArray, int elementCount)
         {
             V8SplitProxyNative.InvokeNoThrow(instance => instance.StdStringArray_SetElementCount(pArray, elementCount));
         }
 
-        public static string[] ToArray(Ptr pArray)
+        internal static string[] ToArray(Ptr pArray)
         {
             return V8SplitProxyNative.InvokeNoThrow(instance =>
             {
@@ -97,7 +215,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             });
         }
 
-        public static void CopyFromArray(Ptr pArray, string[] array)
+        internal static void CopyFromArray(Ptr pArray, string[] array)
         {
             V8SplitProxyNative.InvokeNoThrow(instance =>
             {
@@ -129,7 +247,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Ptr
 
-        public readonly struct Ptr
+        internal readonly struct Ptr
         {
             private readonly IntPtr bits;
 
@@ -246,29 +364,58 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #endregion
     }
 
-    internal static class StdInt32Array
+    /// <summary>
+    /// An array of integers.
+    /// </summary>
+    public readonly ref struct StdInt32Array
     {
-        public static IScope<Ptr> CreateScope(int elementCount = 0)
+        private readonly Ptr ptr;
+        private readonly bool owns;
+
+        internal StdInt32Array(Ptr pValue)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdInt32Array_New(elementCount), instance.StdInt32Array_Delete));
+            ptr = pValue;
+            owns = false;
         }
 
-        public static IScope<Ptr> CreateScope(int[] array)
+        /// <summary>
+        /// Delete the underlying integer array if this value owns it.
+        /// </summary>
+        public void Dispose()
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdInt32Array_Delete));
+            if (owns)
+            {
+                V8SplitProxyNative.Instance.StdInt32Array_Delete(ptr);
+            }
         }
 
-        public static int GetElementCount(Ptr pArray)
+        internal static IScope<Ptr> CreateScope(int elementCount = 0)
+        {
+            return Scope.Create(() => V8SplitProxyNative.Instance.StdInt32Array_New(elementCount), V8SplitProxyNative.Instance.StdInt32Array_Delete);
+        }
+
+        internal static IScope<Ptr> CreateScope(int[] array)
+        {
+            return Scope.Create(() => NewFromArray(V8SplitProxyNative.Instance, array), V8SplitProxyNative.Instance.StdInt32Array_Delete);
+        }
+
+        internal static int GetElementCount(Ptr pArray)
         {
             return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdInt32Array_GetElementCount(pArray));
         }
 
-        public static void SetElementCount(Ptr pArray, int elementCount)
+        /// <summary>
+        /// Set the length of the array.
+        /// </summary>
+        /// <param name="elementCount"></param>
+        public void SetElementCount(int elementCount) => SetElementCount(ptr, elementCount);
+
+        internal static void SetElementCount(Ptr pArray, int elementCount)
         {
             V8SplitProxyNative.InvokeNoThrow(instance => instance.StdInt32Array_SetElementCount(pArray, elementCount));
         }
 
-        public static int[] ToArray(Ptr pArray)
+        internal static int[] ToArray(Ptr pArray)
         {
             return V8SplitProxyNative.InvokeNoThrow(instance =>
             {
@@ -284,7 +431,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             });
         }
 
-        public static void CopyFromArray(Ptr pArray, int[] array)
+        internal static void CopyFromArray(Ptr pArray, int[] array)
         {
             V8SplitProxyNative.InvokeNoThrow(instance =>
             {
@@ -313,7 +460,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Ptr
 
-        public readonly struct Ptr
+        internal readonly struct Ptr
         {
             private readonly IntPtr bits;
 
@@ -720,23 +867,50 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #endregion
     }
 
-    internal static class V8Value
+    /// <summary>
+    /// Represents a value in JavaScript. Equivalent to <see cref="object"/> in C#.
+    /// </summary>
+    public readonly ref struct V8Value
     {
+        /// <summary>
+        /// The size in bytes of <see cref="V8Value"/>.
+        /// </summary>
         public const int Size = 16;
 
-        public static IScope<Ptr> CreateScope()
+        private readonly Ptr ptr;
+        private readonly bool owns;
+
+        internal V8Value(Ptr pValue)
+        {
+            ptr = pValue;
+            owns = false;
+        }
+
+        /// <summary>
+        /// Delete the underlying value if this <see cref="V8Value"/> owns it.
+        /// </summary>
+        public void Dispose()
+        {
+            if (owns)
+            {
+                Ptr ptr = this.ptr;
+                V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_Delete(ptr));
+            }
+        }
+
+        internal static IScope<Ptr> CreateScope()
         {
             return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(instance.V8Value_New, instance.V8Value_Delete));
         }
 
-        public static IScope<Ptr> CreateScope(object obj)
+        internal static IScope<Ptr> CreateScope(object obj)
         {
             var scope = CreateScope();
             Set(scope.Value, obj);
             return scope;
         }
 
-        public static void Set(Ptr pV8Value, object obj)
+        internal static void Set(Ptr pV8Value, object obj)
         {
             if (obj is Nonexistent)
             {
@@ -895,11 +1069,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             SetHostObject(pV8Value, obj);
         }
 
-        public static object Get(Ptr pV8Value)
+        internal static object Get(Ptr pV8Value)
         {
             var decoded = default(Decoded);
             V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_Decode(pV8Value, out decoded));
             return decoded.Get();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public object GetHostObject()
+        {
+            return V8ProxyHelpers.GetHostObject((IntPtr)ptr);
         }
 
         private static bool TryGetBigInteger(int signBit, int wordCount, IntPtr pWords, out BigInteger result)
@@ -928,6 +1111,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             return true;
         }
+
+        /// <summary>
+        /// Set the value to nonexistent.
+        /// </summary>
+        public void SetNonexistent() => SetNonexistent(ptr);
 
         private static void SetNonexistent(Ptr pV8Value)
         {
@@ -992,6 +1180,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetV8Object(pV8Value, v8ObjectImpl.Handle, v8ObjectImpl.Subtype, v8ObjectImpl.Flags));
         }
 
+        /// <summary>
+        /// Set the value to a host object.
+        /// </summary>
+        /// <param name="value"></param>
+        public void SetHostObject(object value) => SetHostObject(ptr, value);
+
         private static void SetHostObject(Ptr pV8Value, object obj)
         {
             V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetHostObject(pV8Value, V8ProxyHelpers.AddRefHostObject(obj)));
@@ -999,20 +1193,71 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Type
 
+        /// <summary>
+        /// The type of a <see cref="V8Value"/>
+        /// </summary>
         public enum Type : byte
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Type
+
+            /// <summary>
+            /// A value that does not exist. Equivalent to <see cref="void"/> in C#.
+            /// </summary>
             Nonexistent,
+
+            /// <summary>
+            /// I don't know what this means.
+            /// </summary>
             Undefined,
+
+            /// <summary>
+            /// An untyped null value.
+            /// </summary>
             Null,
+
+            /// <summary>
+            /// <see cref="bool"/>
+            /// </summary>
             Boolean,
+
+            /// <summary>
+            /// <see cref="double"/>
+            /// </summary>
             Number,
+
+            /// <summary>
+            /// <see cref="int"/>
+            /// </summary>
             Int32,
+
+            /// <summary>
+            /// <see cref="uint"/>
+            /// </summary>
             UInt32,
+
+            /// <summary>
+            /// <see cref="string"/>
+            /// </summary>
             String,
+
+            /// <summary>
+            /// <see cref="DateTime"/>
+            /// </summary>
             DateTime,
+
+            /// <summary>
+            /// <see cref="BigInteger"/>
+            /// </summary>
             BigInt,
+
+            /// <summary>
+            /// A reference type. See <see cref="Subtype"/> for more.
+            /// </summary>
             V8Object,
+
+            /// <summary>
+            /// A .NET object that was exported to the script engine, directly or indirectly.
+            /// </summary>
             HostObject
         }
 
@@ -1020,26 +1265,101 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Subtype
 
+        /// <summary>
+        /// When a <see cref="V8Value"/> is of type <see cref="Type.V8Object"/>, this tells what kind of reference type it is.
+        /// </summary>
         public enum Subtype : byte
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Subtype
+
+            /// <summary>
+            /// A regular JavaScript object.
+            /// </summary>
             None,
+
+            /// <summary>
+            /// <see cref="Delegate"/>
+            /// </summary>
             Function,
+
+            /// <summary>
+            /// <see cref="IScriptableEnumerator"/>?
+            /// </summary>
             Iterator,
+
+            /// <summary>
+            /// Dunno.
+            /// </summary>
             Promise,
+
+            /// <summary>
+            /// An array of a type that's not one of the specialized array types listed below.
+            /// </summary>
             Array,
+
+            /// <summary>
+            /// Dunno.
+            /// </summary>
             ArrayBuffer,
+
+            /// <summary>
+            /// Dunno.
+            /// </summary>
             DataView,
+
+            /// <summary>
+            /// An array of <see cref="byte"/>
+            /// </summary>
             Uint8Array,
+
+            /// <summary>
+            /// What?
+            /// </summary>
             Uint8ClampedArray,
+
+            /// <summary>
+            /// An array of <see cref="sbyte"/>
+            /// </summary>
             Int8Array,
+
+            /// <summary>
+            /// An array of <see cref="ushort"/>
+            /// </summary>
             Uint16Array,
+
+            /// <summary>
+            /// An array of <see cref="short"/>
+            /// </summary>
             Int16Array,
+
+            /// <summary>
+            /// An array of <see cref="uint"/>
+            /// </summary>
             Uint32Array,
+
+            /// <summary>
+            /// An array of <see cref="int"/>
+            /// </summary>
             Int32Array,
+
+            /// <summary>
+            /// An array of <see cref="ulong"/>
+            /// </summary>
             BigUint64Array,
+
+            /// <summary>
+            /// An array of <see cref="long"/>
+            /// </summary>
             BigInt64Array,
+
+            /// <summary>
+            /// An array of <see cref="float"/>
+            /// </summary>
             Float32Array,
+
+            /// <summary>
+            /// An array of <see cref="double"/>
+            /// </summary>
             Float64Array
         }
 
@@ -1048,7 +1368,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #region Nested type: Flags
 
         [Flags]
-        public enum Flags : ushort
+        internal enum Flags : ushort
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Flags
             None = 0,
@@ -1061,7 +1381,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Ptr
 
-        public readonly struct Ptr
+        internal readonly struct Ptr
         {
             private readonly IntPtr bits;
 
@@ -1087,22 +1407,62 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Decoded
 
+        /// <summary>
+        /// The value of a <see cref="V8Value"/>
+        /// </summary>
         [StructLayout(LayoutKind.Explicit)]
         public struct Decoded
         {
             // IMPORTANT: maintain bitwise equivalence with native struct V8Value::Decoded
+
+            /// <summary>
+            /// The type of the contained value.
+            /// </summary>
             [FieldOffset(0)] public Type Type;
+
+            /// <summary>
+            /// If the value is a reference type, what kind.
+            /// </summary>
             [FieldOffset(1)] public Subtype Subtype;
-            [FieldOffset(2)] public Flags Flags;
+
+            [FieldOffset(2)] internal Flags Flags;
+
+            /// <summary>
+            /// If the contained value is a <see cref="BigInteger"/>, whether it's negative.
+            /// </summary>
             [FieldOffset(2)] public short SignBit;
+
+            /// <summary>
+            /// If the contained value is a <see cref="BigInteger"/> or a <see cref="string"/>, its length.
+            /// </summary>
             [FieldOffset(4)] public int Length;
+
+            /// <summary>
+            /// If the contained value is a JavaScript object, its hash code?
+            /// </summary>
             [FieldOffset(4)] public int IdentityHash;
+
+            /// <summary>
+            /// If the contained value is <see cref="int"/>, its value.
+            /// </summary>
             [FieldOffset(8)] public int Int32Value;
+
+            /// <summary>
+            /// If the containedd value is <see cref="uint"/>, its value.
+            /// </summary>
             [FieldOffset(8)] public uint UInt32Value;
+
+            /// <summary>
+            /// If the contained value is <see cref="double"/>, its value.
+            /// </summary>
             [FieldOffset(8)] public double DoubleValue;
+
+            /// <summary>
+            /// If the contained value is a reference type, the pointer to it.
+            /// </summary>
             [FieldOffset(8)] public IntPtr PtrOrHandle;
 
-            public object Get()
+            internal object Get()
             {
                 switch (Type)
                 {
@@ -1144,12 +1504,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            public static unsafe object Get(Ptr pValues, int index)
+            internal static unsafe object Get(Ptr pValues, int index)
             {
                 return ((Decoded*)(IntPtr)pValues + index)->Get();
             }
 
-            public static object[] ToArray(int count, Ptr pValues)
+            internal static object[] ToArray(int count, Ptr pValues)
             {
                 var array = new object[count];
 
@@ -1164,7 +1524,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             #region Nested type: Ptr
 
             // ReSharper disable once MemberHidesStaticFromOuterClass
-            public readonly struct Ptr
+            internal readonly struct Ptr
             {
                 private readonly IntPtr bits;
 
