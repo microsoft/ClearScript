@@ -19,6 +19,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         StdString.Ptr StdString_New(string value);
         string StdString_GetValue(StdString.Ptr pString);
+        void StdString_GetValue(StdString.Ptr pString, out IntPtr pValue, out int length);
         void StdString_SetValue(StdString.Ptr pString, string value);
         void StdString_Delete(StdString.Ptr pString);
 

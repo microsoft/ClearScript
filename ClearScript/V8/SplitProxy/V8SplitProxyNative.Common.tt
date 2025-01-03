@@ -90,6 +90,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return Marshal.PtrToStringUni(pValue, length);
             }
 
+            void IV8SplitProxyNative.StdString_GetValue(StdString.Ptr pString, out IntPtr pValue, out int length)
+            {
+                pValue = StdString_GetValue(pString, out length);
+            }
+
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
             {
                 StdString_SetValue(pString, value, value.Length);
