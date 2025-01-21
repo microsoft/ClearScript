@@ -337,16 +337,11 @@ namespace Microsoft.ClearScript.Util
 
         public static EventInfo GetScriptableEvent(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
-            var eventKey = TypesCache.GetMemberKey(type, name, bindFlags, accessContext, defaultAccess);
-            if (TypesCache.TryGetEvent(in eventKey, out var eventCachedResult))
-                return eventCachedResult.EventInfo;
-
             try
             {
                 var eventInfo = type.GetScriptableEventInternal(context, name, bindFlags);
                 if (eventInfo != null)
                 {
-                    TypesCache.SetEventValue(in eventKey, eventInfo);
                     return eventInfo;
                 }
             }
@@ -354,9 +349,7 @@ namespace Microsoft.ClearScript.Util
             {
             }
 
-            var result = type.GetScriptableEvents(context, bindFlags).FirstOrDefault(eventInfo => string.Equals(eventInfo.GetScriptName(context), name, bindFlags.GetMemberNameComparison()));
-            TypesCache.SetEventValue(in eventKey, result);
-            return result;
+            return type.GetScriptableEvents(context, bindFlags).FirstOrDefault(eventInfo => string.Equals(eventInfo.GetScriptName(context), name, bindFlags.GetMemberNameComparison()));
         }
 
         public static IEnumerable<FieldInfo> GetScriptableFields(this Type type, IHostContext context, BindingFlags bindFlags)
@@ -447,10 +440,6 @@ namespace Microsoft.ClearScript.Util
 
         public static PropertyInfo GetScriptableProperty(this Type type, IHostContext context, string name, BindingFlags bindFlags, object[] args, object[] bindArgs)
         {
-            var propertyKey = TypesCache.GetMemberKey(type, name, bindFlags, accessContext, defaultAccess);
-            if (TypesCache.TryGetProperty(in propertyKey, out var propertyCachedResult))
-                return propertyCachedResult.PropertyInfo;
-            
             if (bindArgs.Length < 1)
             {
                 try
@@ -458,7 +447,6 @@ namespace Microsoft.ClearScript.Util
                     var property = type.GetScriptableProperty(context, name, bindFlags);
                     if (property != null)
                     {
-                        TypesCache.SetPropertyValue(in propertyKey, property);
                         return property;
                     }
                 }
@@ -468,9 +456,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var candidates = type.GetScriptableProperties(context, name, bindFlags).Distinct(PropertySignatureComparer.Instance).ToArray();
-            var result = BindToMember(context, candidates, bindFlags, args, bindArgs);
-            TypesCache.SetPropertyValue(in propertyKey, result);
-            return result;
+            return BindToMember(context, candidates, bindFlags, args, bindArgs);
         }
 
         public static PropertyInfo GetScriptableDefaultProperty(this Type type, IHostContext context, BindingFlags bindFlags, object[] args, object[] bindArgs)

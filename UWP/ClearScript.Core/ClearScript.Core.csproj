@@ -142,6 +142,7 @@
     <Compile Include="..\..\ClearScript\StringDocument.cs" Link="StringDocument.cs" />
     <Compile Include="..\..\ClearScript\Undefined.cs" Link="Undefined.cs" />
     <Compile Include="..\..\ClearScript\UniqueDocumentInfo.cs" Link="UniqueDocumentInfo.cs" />
+    <Compile Include="..\..\ClearScript\Util\EnumUtils.cs" Link="Util\EnumUtils.cs" />
     <Compile Include="..\..\ClearScript\ValueRef.cs" Link="ValueRef.cs" />
     <Compile Include="..\..\ClearScript\Util\ArrayHelpers.cs" Link="Util\ArrayHelpers.cs" />
     <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.cs" Link="Util\AssemblyHelpers.cs" />
