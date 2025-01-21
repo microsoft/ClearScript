@@ -39,9 +39,6 @@
         <Compile Include="..\..\ClearScript\V8\IV8DebugListener.cs" Link="V8\IV8DebugListener.cs" />
         <Compile Include="..\..\ClearScript\V8\IV8Object.cs" Link="V8\IV8Object.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\IV8SplitProxyNative.cs" Link="V8\SplitProxy\IV8SplitProxyNative.cs" />
-        <Compile Include="..\..\ClearScript\V8\SplitProxy\MonoPInvokeCallbackAttribute.cs">
-          <Link>V8\SplitProxy\MonoPInvokeCallbackAttribute.cs</Link>
-        </Compile>
         <Compile Include="..\..\ClearScript\V8\SplitProxy\NativeCallbackImpl.cs" Link="V8\SplitProxy\NativeCallbackImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ContextProxyImpl.cs" Link="V8\SplitProxy\V8ContextProxyImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8DebugListenerImpl.cs" Link="V8\SplitProxy\V8DebugListenerImpl.cs" />
