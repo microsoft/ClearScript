@@ -289,7 +289,6 @@ namespace Microsoft.ClearScript
             }
 
             var documentInfo = new DocumentInfo(uri) { Category = category, ContextCallback = contextCallback };
-            byte[] bytes = null;
 
             if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.UseAsyncLoadCallback))
             {
@@ -301,17 +300,18 @@ namespace Microsoft.ClearScript
                 var callback = settings.AsyncLoadCallback;
                 if (callback != null)
                 {
-                    bytes = Encoding.UTF8.GetBytes(contents);
                     var documentInfoRef = ValueRef.Create(documentInfo);
-                    await callback(documentInfoRef, new MemoryStream(bytes, false)).ConfigureAwait(false);
+                    await callback(documentInfoRef, new MemoryStream(Encoding.UTF8.GetBytes(contents), false)).ConfigureAwait(false);
                     documentInfo = documentInfoRef.Value;
                 }
             }
 
-            var document = CacheDocument((bytes != null) ? new StringDocument(documentInfo, bytes) : new StringDocument(documentInfo, contents), false);
-            if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.AllowCategoryMismatch) && (documentInfo.Category != (category ?? DocumentCategory.Script)))
+            var document = CacheDocument(new StringDocument(documentInfo, contents), false);
+
+            var expectedCategory = category ?? DocumentCategory.Script;
+            if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.AllowCategoryMismatch) && (documentInfo.Category != expectedCategory))
             {
-                throw new FileLoadException("Document category mismatch", uri.IsFile ? uri.LocalPath : uri.AbsoluteUri);
+                throw new FileLoadException($"Document category mismatch: '{expectedCategory}' expected, '{documentInfo.Category}' loaded", uri.IsFile ? uri.LocalPath : uri.AbsoluteUri);
             }
 
             return document;
@@ -426,7 +426,7 @@ namespace Microsoft.ClearScript
         public override Document CacheDocument(Document document, bool replace)
         {
             MiscHelpers.VerifyNonNullArgument(document, nameof(document));
-            if (!document.Info.Uri.IsAbsoluteUri)
+            if ((document.Info.Uri == null) || !document.Info.Uri.IsAbsoluteUri)
             {
                 throw new ArgumentException("The document must have an absolute URI");
             }

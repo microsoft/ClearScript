@@ -27,7 +27,10 @@ public:
         EnableValueTaskPromiseConversion = 0x00000200,
         UseCaseInsensitiveMemberBinding = 0x00000400,
         EnableStringifyEnhancements = 0x00000800,
-        HideHostExceptions = 0x00001000
+        HideHostExceptions = 0x00001000,
+        UseSynchronizationContexts = 0x00002000,
+        AddPerformanceObject = 0x00004000,
+        SetTimerResolution = 0x00008000
     };
 
     struct Options final
@@ -64,9 +67,12 @@ public:
     virtual void CancelAwaitDebugger() = 0;
 
     virtual V8Value Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate) = 0;
+
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) = 0;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) = 0;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult) = 0;
+
     virtual bool CanExecute(const SharedPtr<V8ScriptHolder>& spHolder) = 0;
     virtual V8Value Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool evaluate) = 0;
 

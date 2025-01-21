@@ -1191,6 +1191,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #endregion
     }
+
     internal static class V8CpuProfile
     {
         public static void ProcessProfile(V8Entity.Handle hEntity, Ptr pProfile, V8.V8CpuProfile profile)

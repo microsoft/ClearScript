@@ -142,29 +142,29 @@ namespace Microsoft.ClearScript
 
         public override object DynamicInvokeTarget => GetSpecificType();
 
-        public override HostTargetFlags GetFlags(IHostInvokeContext context)
+        public override HostTargetFlags GetFlags(IHostContext context)
         {
             var type = GetSpecificTypeNoThrow();
             return (type != null) ? HostTargetFlags.AllowStaticMembers : HostTargetFlags.None;
         }
 
-        public override string[] GetAuxPropertyNames(IHostInvokeContext context, BindingFlags bindFlags)
+        public override string[] GetAuxPropertyNames(IHostContext context, BindingFlags bindFlags)
         {
             var type = GetSpecificTypeNoThrow();
             if (type != null)
             {
-                return type.GetScriptableNestedTypes(bindFlags, context.AccessContext, context.DefaultAccess).Select(testType => testType.GetRootName()).Distinct().ToArray();
+                return type.GetScriptableNestedTypes(context, bindFlags).Select(testType => testType.GetRootName()).Distinct().ToArray();
             }
 
             return ArrayHelpers.GetEmptyArray<string>();
         }
 
-        public override bool TryInvokeAuxMember(IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(IHostContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             var type = GetSpecificTypeNoThrow();
             if (type != null)
             {
-                var nestedTypes = type.GetScriptableNestedTypes(invokeFlags, context.AccessContext, context.DefaultAccess).Where(testType => string.Equals(testType.GetRootName(), name, invokeFlags.GetMemberNameComparison())).ToIList();
+                var nestedTypes = type.GetScriptableNestedTypes(context, invokeFlags).Where(testType => string.Equals(testType.GetRootName(), name, invokeFlags.GetMemberNameComparison())).ToIList();
                 if (nestedTypes.Count > 0)
                 {
                     var tempResult = Wrap(nestedTypes.Select(testType => testType.ApplyTypeArguments(type.GetGenericArguments())).ToArray());
@@ -190,7 +190,7 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public override bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(IHostContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             if (!invokeFlags.HasFlag(BindingFlags.InvokeMethod) || (args.Length < 1))
             {
@@ -216,7 +216,7 @@ namespace Microsoft.ClearScript
             return true;
         }
 
-        public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public override Invocability GetInvocability(IHostContext context, BindingFlags bindFlags, bool ignoreDynamic)
         {
             return Invocability.Delegate;
         }

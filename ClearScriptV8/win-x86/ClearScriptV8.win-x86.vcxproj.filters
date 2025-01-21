@@ -46,6 +46,9 @@
     <ClCompile Include="..\HighResolutionClock.Windows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\HighResolutionClock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -141,7 +144,7 @@
     <ClInclude Include="..\HighResolutionClock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\V8CacheType.h">
+    <ClInclude Include="..\V8CacheTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\V8DocumentInfo.h">

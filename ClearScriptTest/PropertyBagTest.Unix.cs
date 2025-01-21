@@ -21,8 +21,8 @@ namespace Microsoft.ClearScript.Test
 
             Action innerTest = () =>
             {
-                // The Visual Studio 2013 debugging stack fails to release the engine properly,
-                // resulting in test failure. Visual Studio 2012 does not have this bug.
+                // The Visual Studio 2013 debugging stack fails to release the script engine
+                // properly, resulting in test failure. Visual Studio 2012 does not have this bug.
 
                 using (var scriptEngine = new V8ScriptEngine())
                 {
@@ -45,8 +45,8 @@ namespace Microsoft.ClearScript.Test
             var innerBag = new PropertyBag();
             Action innerTest = () =>
             {
-                // The Visual Studio 2013 debugging stack fails to release the engine properly,
-                // resulting in test failure. Visual Studio 2012 does not have this bug.
+                // The Visual Studio 2013 debugging stack fails to release the script engine
+                // properly, resulting in test failure. Visual Studio 2012 does not have this bug.
 
                 using (var scriptEngine = new V8ScriptEngine())
                 {

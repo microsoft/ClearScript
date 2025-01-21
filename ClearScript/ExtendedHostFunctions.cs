@@ -299,7 +299,7 @@ namespace Microsoft.ClearScript
                     }
                 }
             }
-            else if (type.IsImport && (type.Assembly.GetOrLoadCustomAttribute<ImportedFromTypeLibAttribute>(false) != null))
+            else if (type.IsImport && (type.Assembly.GetOrLoadCustomAttribute<ImportedFromTypeLibAttribute>(ScriptEngine.Current, false) != null))
             {
                 type.Assembly.GetReferencedEnums().ForEach(collection.AddType);
                 return collection;

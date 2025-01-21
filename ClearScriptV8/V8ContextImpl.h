@@ -43,9 +43,12 @@ public:
     virtual void CancelAwaitDebugger() override;
 
     virtual V8Value Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate) override;
+
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) override;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) override;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult) override;
+
     virtual bool CanExecute(const SharedPtr<V8ScriptHolder>& spHolder) override;
     virtual V8Value Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool evaluate) override;
 
@@ -118,6 +121,7 @@ private:
         V8DocumentInfo DocumentInfo;
         size_t CodeDigest;
         Persistent<v8::Module> hModule;
+        std::vector<uint8_t> CacheBytes;
     };
 
     struct SyntheticModuleExport final
@@ -454,6 +458,8 @@ private:
 
     static void InvokeHostObject(const v8::FunctionCallbackInfo<v8::Value>& info);
     static void FlushCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void PerformanceNowCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
+    static void PerformanceSleepCallback(const v8::FunctionCallbackInfo<v8::Value>& info);
 
     v8::MaybeLocal<v8::Promise> ImportModule(const V8DocumentInfo* pSourceDocumentInfo, v8::Local<v8::String> hSpecifier);
     v8::MaybeLocal<v8::Module> ResolveModule(v8::Local<v8::String> hSpecifier, const V8DocumentInfo* pSourceDocumentInfo);
@@ -465,12 +471,18 @@ private:
     bool TryGetCachedModuleInfo(uint64_t uniqueId, V8DocumentInfo& documentInfo);
     bool TryGetCachedModuleInfo(v8::Local<v8::Module> hModule, V8DocumentInfo& documentInfo);
     v8::Local<v8::Module> GetCachedModule(uint64_t uniqueId, size_t codeDigest);
+    v8::Local<v8::Module> GetCachedModule(uint64_t uniqueId, size_t codeDigest, std::vector<uint8_t>& cacheBytes);
     void CacheModule(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::Module> hModule);
+    void CacheModule(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::Module> hModule, const std::vector<uint8_t>& cacheBytes);
+    void SetCachedModuleCacheBytes(uint64_t uniqueId, size_t codeDigest, const std::vector<uint8_t>& cacheBytes);
     void ClearModuleCache();
 
     bool TryGetCachedScriptInfo(uint64_t uniqueId, V8DocumentInfo& documentInfo);
     v8::Local<v8::UnboundScript> GetCachedScript(uint64_t uniqueId, size_t codeDigest);
+    v8::Local<v8::UnboundScript> GetCachedScript(uint64_t uniqueId, size_t codeDigest, std::vector<uint8_t>& cacheBytes);
     void CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript);
+    void CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript, const std::vector<uint8_t>& cacheBytes);
+    void SetCachedScriptCacheBytes(uint64_t uniqueId, size_t codeDigest, const std::vector<uint8_t>& cacheBytes);
 
     v8::Local<v8::Value> ImportValue(const V8Value& value);
     V8Value ExportValue(v8::Local<v8::Value> hValue);
@@ -483,8 +495,6 @@ private:
 
     StdString m_Name;
     SharedPtr<V8IsolateImpl> m_spIsolateImpl;
-    bool m_DateTimeConversionEnabled;
-    bool m_HideHostExceptions;
     Persistent<v8::Context> m_hContext;
     std::vector<std::pair<StdString, Persistent<v8::Object>>> m_GlobalMembersStack;
     Persistent<v8::Symbol> m_hIsHostObjectKey;
@@ -511,9 +521,13 @@ private:
     SharedPtr<V8WeakContextBinding> m_spWeakBinding;
     std::list<ModuleCacheEntry> m_ModuleCache;
     std::list<SyntheticModuleEntry> m_SyntheticModuleData;
-    void* m_pvV8ObjectCache;
-    bool m_AllowHostObjectConstructorCall;
     Statistics m_Statistics;
+    bool m_DateTimeConversionEnabled;
+    bool m_HideHostExceptions;
+    bool m_AllowHostObjectConstructorCall;
+    bool m_ChangedTimerResolution;
+    void* m_pvV8ObjectCache;
+    double m_RelativeTimeOrigin;
 };
 
 //-----------------------------------------------------------------------------

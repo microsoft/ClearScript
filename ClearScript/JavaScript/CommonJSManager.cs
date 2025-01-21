@@ -53,7 +53,6 @@ namespace Microsoft.ClearScript.JavaScript
                     }).valueOf()
                 ");
             }
-
         }
 
         public int ModuleCacheSize => moduleCache.Count;
@@ -203,22 +202,29 @@ namespace Microsoft.ClearScript.JavaScript
             private object Require(string specifier)
             {
                 var document = engine.DocumentSettings.LoadDocument(DocumentInfo.Info, specifier, ModuleCategory.CommonJS, null);
-                if (document.Info.Category != ModuleCategory.CommonJS)
+
+                if (document.Info.Category == ModuleCategory.CommonJS)
                 {
-                    var uri = document.Info.Uri;
-                    throw new FileLoadException("Document category mismatch", uri.IsFile ? uri.LocalPath : uri.AbsoluteUri);
+                    var code = document.GetTextContents();
+                    if (engine.FormatCode)
+                    {
+                        code = MiscHelpers.FormatCode(code);
+                    }
+
+                    var target = manager.GetOrCreateModule(document.Info.MakeUnique(engine), code);
+                    target.Process();
+
+                    return target.exports;
                 }
 
-                var code = document.GetTextContents();
-                if (engine.FormatCode)
+                if (document.Info.Category == DocumentCategory.Json)
                 {
-                    code = MiscHelpers.FormatCode(code);
+                    return ((IJavaScriptEngine)engine).JsonModuleManager.GetOrCreateModule(document.Info.MakeUnique(engine), document.GetTextContents()).Result;
                 }
 
-                var target = manager.GetOrCreateModule(document.Info.MakeUnique(engine), code);
-                target.Process();
-
-                return target.exports;
+                var uri = document.Info.Uri;
+                var name = (uri != null) ? (uri.IsFile ? uri.LocalPath : uri.AbsoluteUri) : document.Info.Name;
+                throw new FileLoadException($"Unsupported document category '{document.Info.Category}'", name);
             }
 
             private ScriptObject InitializeContext(ScriptObject context)

@@ -22,6 +22,7 @@
 #include <memory>
 #include <queue>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -99,6 +100,31 @@ inline bool HasFlag(TFlag mask, TFlag flag)
 {
     using TUnderlying = std::underlying_type_t<TFlag>;
     return (static_cast<TUnderlying>(mask) & static_cast<TUnderlying>(flag)) != 0;
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag, typename... TOthers>
+inline bool HasFlag(TFlag mask, TOthers... others)
+{
+    return HasFlag(mask, CombineFlags(others...));
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag>
+inline bool HasFlags(TFlag mask, TFlag flags)
+{
+    using TUnderlying = std::underlying_type_t<TFlag>;
+    return (static_cast<TUnderlying>(mask) & static_cast<TUnderlying>(flags)) == static_cast<TUnderlying>(flags);
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag, typename... TOthers>
+inline bool HasFlags(TFlag mask, TOthers... others)
+{
+    return HasFlags(mask, CombineFlags(others...));
 }
 
 //-----------------------------------------------------------------------------

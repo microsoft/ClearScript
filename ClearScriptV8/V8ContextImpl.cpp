@@ -4,7 +4,7 @@
 #include "ClearScriptV8Native.h"
 
 //-----------------------------------------------------------------------------
-// FromMaybeScope
+// support for v8::Maybe and v8::MaybeLocal
 //-----------------------------------------------------------------------------
 
 class FromMaybeScope final
@@ -12,15 +12,11 @@ class FromMaybeScope final
 };
 
 //-----------------------------------------------------------------------------
-// FromMaybeFailure
-//-----------------------------------------------------------------------------
 
 class FromMaybeFailure final
 {
 };
 
-//-----------------------------------------------------------------------------
-// local helper functions
 //-----------------------------------------------------------------------------
 
 template <typename T>
@@ -67,9 +63,57 @@ inline v8::Local<T> FromMaybeDefault(const v8::MaybeLocal<T>& maybe, const v8::L
 
 //-----------------------------------------------------------------------------
 
+#define FROM_MAYBE_TRY \
+    { \
+        DISABLE_WARNING(4456) /* declaration hides previous local declaration */ \
+        FromMaybeScope t_FromMaybeScope; \
+        DEFAULT_WARNING(4456) \
+        try \
+        {
+
+#define FROM_MAYBE_CATCH \
+            IGNORE_UNUSED(t_FromMaybeScope); \
+        } \
+        catch (const FromMaybeFailure&) \
+        { \
+
+#define FROM_MAYBE_END \
+            IGNORE_UNUSED(t_FromMaybeScope); \
+        } \
+    }
+
+#define FROM_MAYBE_CATCH_CONSUME \
+    FROM_MAYBE_CATCH \
+    FROM_MAYBE_END
+
+#define FROM_MAYBE(...) \
+    (::FromMaybe(t_FromMaybeScope, __VA_ARGS__))
+
+#define FROM_MAYBE_DEFAULT(...) \
+    (::FromMaybeDefault(__VA_ARGS__))
+
+//-----------------------------------------------------------------------------
+// local helper functions
+//-----------------------------------------------------------------------------
+
 inline v8::Local<v8::String> ValueAsString(const v8::Local<v8::Value>& hValue)
 {
-    return (!hValue.IsEmpty() && hValue->IsString()) ? hValue.As<v8::String>() : v8::Local<v8::String>();
+    if (hValue.IsEmpty())
+    {
+        return v8::Local<v8::String>();
+    }
+
+    if (hValue->IsString())
+    {
+        return hValue.As<v8::String>();
+    }
+
+    if (hValue->IsStringObject())
+    {
+        return hValue.As<v8::StringObject>()->ValueOf();
+    }
+
+    return v8::Local<v8::String>();
 }
 
 //-----------------------------------------------------------------------------
@@ -90,7 +134,102 @@ inline v8::Local<v8::External> ValueAsExternal(const v8::Local<v8::Value>& hValu
 
 inline v8::Local<v8::BigInt> ValueAsBigInt(const v8::Local<v8::Value>& hValue)
 {
-    return (!hValue.IsEmpty() && hValue->IsBigInt()) ? hValue.As<v8::BigInt>() : v8::Local<v8::BigInt>();
+    if (hValue.IsEmpty())
+    {
+        return v8::Local<v8::BigInt>();
+    }
+
+    if (hValue->IsBigInt())
+    {
+        return hValue.As<v8::BigInt>();
+    }
+
+    if (hValue->IsBigIntObject())
+    {
+        return hValue.As<v8::BigIntObject>()->ValueOf();
+    }
+
+    return v8::Local<v8::BigInt>();
+}
+
+//-----------------------------------------------------------------------------
+
+inline bool TryGetValueAsBoolean(const SharedPtr<V8IsolateImpl>& spIsolateImpl, const v8::Local<v8::Value>& hValue, bool& value)
+{
+    if (hValue.IsEmpty())
+    {
+        return false;
+    }
+
+    if (hValue->IsBoolean())
+    {
+        value = spIsolateImpl->BooleanValue(hValue);
+        return true;
+    }
+
+    if (hValue->IsBooleanObject())
+    {
+        value = hValue.As<v8::BooleanObject>()->ValueOf();
+        return true;
+    }
+
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+inline bool TryGetValueAsNumber(v8::Local<v8::Context> hContext, const v8::Local<v8::Value>& hValue, double& value)
+{
+    if (hValue.IsEmpty())
+    {
+        return false;
+    }
+
+    FROM_MAYBE_TRY
+
+        if (hValue->IsNumber())
+        {
+            value = FROM_MAYBE(hValue->NumberValue(hContext));
+            return true;
+        }
+
+        if (hValue->IsNumberObject())
+        {
+            value = hValue.As<v8::NumberObject>()->ValueOf();
+            return true;
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
+
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+inline bool TryGetValueAsAnyNumber(v8::Local<v8::Context> hContext, const v8::Local<v8::Value>& hValue, double& value)
+{
+    if (hValue.IsEmpty())
+    {
+        return false;
+    }
+
+    FROM_MAYBE_TRY
+
+        if (hValue->IsInt32())
+        {
+            value = FROM_MAYBE(hValue->Int32Value(hContext));
+            return true;
+        }
+
+        if (hValue->IsUint32())
+        {
+            value = FROM_MAYBE(hValue->Uint32Value(hContext));
+            return true;
+        }
+
+    FROM_MAYBE_CATCH_CONSUME
+
+    return TryGetValueAsNumber(hContext, hValue, value);
 }
 
 //-----------------------------------------------------------------------------
@@ -102,7 +241,7 @@ static V8ContextImpl* GetContextImplFromHolder(const TInfo& info)
     if (!hHolder.IsEmpty() && hHolder->InternalFieldCount() > 0)
     {
         auto hField = hHolder->GetInternalField(0);
-        if (!hField.IsEmpty() && !hField->IsUndefined())
+        if (!hField.IsEmpty() && hField->IsValue() && !hField.template As<v8::Value>()->IsUndefined())
         {
             return static_cast<V8ContextImpl*>(hHolder->GetAlignedPointerFromInternalField(0));
         }
@@ -133,35 +272,6 @@ static V8ContextImpl* GetContextImplFromData(const TInfo& info)
 #define END_ISOLATE_SCOPE \
         IGNORE_UNUSED(t_IsolateScope); \
     }
-
-#define FROM_MAYBE_TRY \
-    { \
-        DISABLE_WARNING(4456) /* declaration hides previous local declaration */ \
-        FromMaybeScope t_FromMaybeScope; \
-        DEFAULT_WARNING(4456) \
-        try \
-        {
-
-#define FROM_MAYBE_CATCH \
-            IGNORE_UNUSED(t_FromMaybeScope); \
-        } \
-        catch (const FromMaybeFailure&) \
-        { \
-
-#define FROM_MAYBE_END \
-            IGNORE_UNUSED(t_FromMaybeScope); \
-        } \
-    }
-
-#define FROM_MAYBE_CATCH_CONSUME \
-    FROM_MAYBE_CATCH \
-    FROM_MAYBE_END
-
-#define FROM_MAYBE(...) \
-    (::FromMaybe(t_FromMaybeScope, __VA_ARGS__))
-
-#define FROM_MAYBE_DEFAULT(...) \
-    (::FromMaybeDefault(__VA_ARGS__))
 
 #define BEGIN_CONTEXT_SCOPE \
     { \
@@ -231,10 +341,19 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
     m_spIsolateImpl(std::move(spIsolateImpl)),
     m_DateTimeConversionEnabled(HasFlag(options.Flags, Flags::EnableDateTimeConversion)),
     m_HideHostExceptions(HasFlag(options.Flags, Flags::HideHostExceptions)),
-    m_pvV8ObjectCache(nullptr),
-    m_AllowHostObjectConstructorCall(false)
+    m_AllowHostObjectConstructorCall(false),
+    m_ChangedTimerResolution(false),
+    m_pvV8ObjectCache(nullptr)
 {
     VerifyNotOutOfMemory();
+
+    if (HasFlags(options.Flags, Flags::AddPerformanceObject, Flags::SetTimerResolution))
+    {
+        m_ChangedTimerResolution = HighResolutionClock::SetTimerResolution();
+    }
+
+    auto timeOrigin = HighResolutionClock::GetMillisecondsSinceUnixEpoch();
+    m_RelativeTimeOrigin = HighResolutionClock::GetRelativeMilliseconds();
 
     BEGIN_ISOLATE_SCOPE
     FROM_MAYBE_TRY
@@ -251,12 +370,23 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             hGlobalTemplate->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetGlobalProperty, SetGlobalProperty, QueryGlobalProperty, DeleteGlobalProperty, GetGlobalPropertyIndices));
 
             m_hContext = CreatePersistent(CreateContext(nullptr, hGlobalTemplate));
-
-            auto hGlobal = ::ValueAsObject(m_hContext->Global()->GetPrototype());
-            if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
+            if (!m_hContext.IsEmpty())
             {
-                hGlobal->SetAlignedPointerInInternalField(0, this);
+                auto hGlobalProxy = m_hContext->Global();
+                if (!hGlobalProxy.IsEmpty())
+                {
+                    auto hGlobal = ::ValueAsObject(hGlobalProxy->GetPrototype());
+                    if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
+                    {
+                        hGlobal->SetAlignedPointerInInternalField(0, this);
+                    }
+                }
             }
+        }
+
+        if (m_hContext.IsEmpty())
+        {
+            throw FromMaybeFailure();
         }
 
         auto hContextImpl = CreateExternal(this);
@@ -271,7 +401,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             m_hContext->SetAlignedPointerInEmbedderData(1, this);
 
             m_hIsHostObjectKey = CreatePersistent(CreateSymbol());
-            FROM_MAYBE(m_hContext->Global()->Set(m_hContext, CreateString("isHostObjectKey"), m_hIsHostObjectKey));
+            ASSERT_EVAL(FROM_MAYBE(m_hContext->Global()->Set(m_hContext, CreateString("isHostObjectKey"), m_hIsHostObjectKey)));
 
             m_hHostExceptionKey = CreatePersistent(CreateString("hostException"));
             m_hCacheKey = CreatePersistent(CreatePrivate());
@@ -293,6 +423,15 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
             m_hFlushFunction = CreatePersistent(FROM_MAYBE(v8::Function::New(m_hContext, FlushCallback)));
             m_hTerminationException = CreatePersistent(v8::Exception::Error(CreateString("Script execution was interrupted")));
 
+            if (HasFlag(options.Flags, Flags::AddPerformanceObject))
+            {
+                auto hPerformance = CreateObject();
+                ASSERT_EVAL(FROM_MAYBE(hPerformance->DefineOwnProperty(m_hContext, CreateString("timeOrigin"), CreateNumber(timeOrigin), CombineFlags(v8::ReadOnly, v8::DontDelete))));
+                ASSERT_EVAL(FROM_MAYBE(hPerformance->DefineOwnProperty(m_hContext, CreateString("now"), FROM_MAYBE(v8::Function::New(m_hContext, PerformanceNowCallback, hContextImpl)), CombineFlags(v8::ReadOnly, v8::DontDelete))));
+                ASSERT_EVAL(FROM_MAYBE(hPerformance->DefineOwnProperty(m_hContext, CreateString("sleep"), FROM_MAYBE(v8::Function::New(m_hContext, PerformanceSleepCallback, hContextImpl)), CombineFlags(v8::ReadOnly, v8::DontDelete))));
+                ASSERT_EVAL(FROM_MAYBE(m_hContext->Global()->DefineOwnProperty(m_hContext, CreateString("Performance"), hPerformance, v8::DontEnum)));
+            }
+
         END_CONTEXT_SCOPE
 
         auto hToJSON = CreateString("toJSON");
@@ -304,7 +443,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostObjectTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
         m_hHostObjectTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
-        m_hHostObjectTemplate->PrototypeTemplate()->Set(hToJSON, hGetJsonFunction);
+        m_hHostObjectTemplate->PrototypeTemplate()->Set(hToJSON, hGetJsonFunction, CombineFlags(v8::ReadOnly, v8::DontDelete, v8::DontEnum));
 
         m_hHostInvocableTemplate = CreatePersistent(CreateFunctionTemplate());
         m_hHostInvocableTemplate->SetClassName(CreateString("HostInvocable"));
@@ -313,7 +452,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostInvocableTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
         m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
         m_hHostInvocableTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
-        m_hHostInvocableTemplate->PrototypeTemplate()->Set(hToJSON, hGetJsonFunction);
+        m_hHostInvocableTemplate->PrototypeTemplate()->Set(hToJSON, hGetJsonFunction, CombineFlags(v8::ReadOnly, v8::DontDelete, v8::DontEnum));
         m_hHostInvocableTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
 
         m_hHostDelegateTemplate = CreatePersistent(CreateFunctionTemplate());
@@ -323,7 +462,7 @@ V8ContextImpl::V8ContextImpl(SharedPtr<V8IsolateImpl>&& spIsolateImpl, const Std
         m_hHostDelegateTemplate->InstanceTemplate()->SetHandler(v8::IndexedPropertyHandlerConfiguration(GetHostObjectProperty, SetHostObjectProperty, QueryHostObjectProperty, DeleteHostObjectProperty, GetHostObjectPropertyIndices, hContextImpl));
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetIteratorSymbol(), hGetIteratorFunction);
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(GetAsyncIteratorSymbol(), hGetAsyncIteratorFunction);
-        m_hHostDelegateTemplate->PrototypeTemplate()->Set(hToJSON, hGetJsonFunction);
+        m_hHostDelegateTemplate->PrototypeTemplate()->Set(hToJSON, hGetJsonFunction, CombineFlags(v8::ReadOnly, v8::DontDelete, v8::DontEnum));
         m_hHostDelegateTemplate->InstanceTemplate()->SetCallAsFunctionHandler(InvokeHostObject, hContextImpl);
         m_hHostDelegateTemplate->InstanceTemplate()->SetHostDelegate(); // instructs our patched V8 typeof implementation to return "function" 
         m_hHostDelegateTemplate->PrototypeTemplate()->Set(CreateString("toFunction"), hToFunctionFunction);
@@ -628,9 +767,9 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes)
+V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes)
 {
-    if (cacheType == V8CacheType::None)
+    if (cacheKind == V8CacheKind::None)
     {
         cacheBytes.clear();
         return Compile(documentInfo, std::move(code));
@@ -644,11 +783,10 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
         auto codeDigest = code.GetDigest();
         v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo));
         std::unique_ptr<V8ScriptHolder> upScriptHolder;
-        std::unique_ptr<v8::ScriptCompiler::CachedData> upCachedData;
 
         if (documentInfo.IsModule())
         {
-            auto hModule = GetCachedModule(documentInfo.GetUniqueId(), codeDigest);
+            auto hModule = GetCachedModule(documentInfo.GetUniqueId(), codeDigest, cacheBytes);
             if (hModule.IsEmpty())
             {
                 hModule = VERIFY_MAYBE(CompileModule(&source));
@@ -657,15 +795,31 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                     throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Module compilation failed; no additional information was provided by the V8 runtime")), false /*executionStarted*/);
                 }
 
-                CacheModule(documentInfo, codeDigest, hModule);
+                std::unique_ptr<v8::ScriptCompiler::CachedData> upCachedData(v8::ScriptCompiler::CreateCodeCache(hModule->GetUnboundModuleScript()));
+                if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
+                {
+                    cacheBytes.resize(upCachedData->length);
+                    memcpy(cacheBytes.data(), upCachedData->data, upCachedData->length);
+                }
+
+                CacheModule(documentInfo, codeDigest, hModule, cacheBytes);
+            }
+            else if (cacheBytes.empty())
+            {
+                std::unique_ptr<v8::ScriptCompiler::CachedData> upCachedData(v8::ScriptCompiler::CreateCodeCache(hModule->GetUnboundModuleScript()));
+                if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
+                {
+                    cacheBytes.resize(upCachedData->length);
+                    memcpy(cacheBytes.data(), upCachedData->data, upCachedData->length);
+                    SetCachedModuleCacheBytes(documentInfo.GetUniqueId(), codeDigest, cacheBytes);
+                }
             }
 
             upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hModule)), documentInfo, codeDigest, std::move(code)));
-            upCachedData.reset(v8::ScriptCompiler::CreateCodeCache(hModule->GetUnboundModuleScript()));
         }
         else
         {
-            auto hScript = GetCachedScript(documentInfo.GetUniqueId(), codeDigest);
+            auto hScript = GetCachedScript(documentInfo.GetUniqueId(), codeDigest, cacheBytes);
             if (hScript.IsEmpty())
             {
                 hScript = VERIFY_MAYBE(CompileUnboundScript(&source));
@@ -674,23 +828,32 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                     throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Script compilation failed; no additional information was provided by the V8 runtime")), false /*executionStarted*/);
                 }
 
-                CacheScript(documentInfo, codeDigest, hScript);
+                std::unique_ptr<v8::ScriptCompiler::CachedData> upCachedData(v8::ScriptCompiler::CreateCodeCache(hScript));
+                if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
+                {
+                    cacheBytes.resize(upCachedData->length);
+                    memcpy(cacheBytes.data(), upCachedData->data, upCachedData->length);
+                }
+
+                CacheScript(documentInfo, codeDigest, hScript, cacheBytes);
+            }
+            else if (cacheBytes.empty())
+            {
+                std::unique_ptr<v8::ScriptCompiler::CachedData> upCachedData(v8::ScriptCompiler::CreateCodeCache(hScript));
+                if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
+                {
+                    cacheBytes.resize(upCachedData->length);
+                    memcpy(cacheBytes.data(), upCachedData->data, upCachedData->length);
+                    SetCachedScriptCacheBytes(documentInfo.GetUniqueId(), codeDigest, cacheBytes);
+                }
             }
 
             upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
-            upCachedData.reset(v8::ScriptCompiler::CreateCodeCache(hScript));
         }
 
-        cacheBytes.clear();
-        if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
+        if (!cacheBytes.empty() && documentInfo.IsModule())
         {
-            cacheBytes.resize(upCachedData->length);
-            memcpy(cacheBytes.data(), upCachedData->data, upCachedData->length);
-
-            if (documentInfo.IsModule())
-            {
-                upScriptHolder->SetCacheBytes(cacheBytes);
-            }
+            upScriptHolder->SetCacheBytes(cacheBytes);
         }
 
         return upScriptHolder.release();
@@ -707,11 +870,12 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
 
 //-----------------------------------------------------------------------------
 
-V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted)
+V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted)
 {
-    if ((cacheType == V8CacheType::None) || (cacheBytes.size() < 1))
+    cacheAccepted = false;
+
+    if ((cacheKind == V8CacheKind::None) || cacheBytes.empty())
     {
-        cacheAccepted = false;
         return Compile(documentInfo, std::move(code));
     }
 
@@ -736,7 +900,8 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                     throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Module compilation failed; no additional information was provided by the V8 runtime")), false /*executionStarted*/);
                 }
 
-                CacheModule(documentInfo, codeDigest, hModule);
+                cacheAccepted = !pCachedData->rejected;
+                CacheModule(documentInfo, codeDigest, hModule, cacheAccepted ? cacheBytes : std::vector<uint8_t>());
             }
 
             upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hModule)), documentInfo, codeDigest, std::move(code)));
@@ -752,14 +917,178 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
                     throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Script compilation failed; no additional information was provided by the V8 runtime")), false /*executionStarted*/);
                 }
 
-                CacheScript(documentInfo, codeDigest, hScript);
+                cacheAccepted = !pCachedData->rejected;
+                CacheScript(documentInfo, codeDigest, hScript, cacheAccepted ? cacheBytes : std::vector<uint8_t>());
             }
 
             upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
         }
 
-        cacheAccepted = !pCachedData->rejected;
         if (cacheAccepted && documentInfo.IsModule())
+        {
+            upScriptHolder->SetCacheBytes(cacheBytes);
+        }
+
+        return upScriptHolder.release();
+
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("The V8 runtime cannot perform the requested operation because a script exception is pending")), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
+    END_EXECUTION_SCOPE
+    END_DOCUMENT_SCOPE
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult)
+{
+    if (cacheKind == V8CacheKind::None)
+    {
+        cacheResult = V8CacheResult::Disabled;
+        return Compile(documentInfo, std::move(code));
+    }
+
+    if (cacheBytes.empty())
+    {
+        auto pScriptHolder = Compile(documentInfo, std::move(code), cacheKind, cacheBytes);
+        cacheResult = !cacheBytes.empty() ? V8CacheResult::Updated : V8CacheResult::UpdateFailed;
+        return pScriptHolder;
+    }
+
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_DOCUMENT_SCOPE(documentInfo)
+    BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
+
+        auto codeDigest = code.GetDigest();
+        auto pCachedData = new v8::ScriptCompiler::CachedData(cacheBytes.data(), static_cast<int>(cacheBytes.size()), v8::ScriptCompiler::CachedData::BufferNotOwned);
+        v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(code)), CreateScriptOrigin(documentInfo), pCachedData);
+        std::unique_ptr<V8ScriptHolder> upScriptHolder;
+        std::vector<uint8_t> cachedCacheBytes;
+
+        if (documentInfo.IsModule())
+        {
+            auto hModule = GetCachedModule(documentInfo.GetUniqueId(), codeDigest, cachedCacheBytes);
+            if (hModule.IsEmpty())
+            {
+                hModule = VERIFY_MAYBE(CompileModule(&source, v8::ScriptCompiler::kConsumeCodeCache));
+                if (hModule.IsEmpty())
+                {
+                    throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Module compilation failed; no additional information was provided by the V8 runtime")), false /*executionStarted*/);
+                }
+
+                if (!pCachedData->rejected)
+                {
+                    cacheResult = V8CacheResult::Accepted;
+                }
+                else
+                {
+                    std::unique_ptr<v8::ScriptCompiler::CachedData> upCachedData(v8::ScriptCompiler::CreateCodeCache(hModule->GetUnboundModuleScript()));
+                    if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
+                    {
+                        cacheBytes.resize(upCachedData->length);
+                        memcpy(cacheBytes.data(), upCachedData->data, upCachedData->length);
+                        cacheResult = V8CacheResult::Updated;
+                    }
+                    else
+                    {
+                        cacheResult = V8CacheResult::UpdateFailed;
+                    }
+                }
+
+                CacheModule(documentInfo, codeDigest, hModule, (cacheResult != V8CacheResult::UpdateFailed) ? cacheBytes : std::vector<uint8_t>());
+            }
+            else if (cachedCacheBytes.empty())
+            {
+                std::unique_ptr<v8::ScriptCompiler::CachedData> upCachedData(v8::ScriptCompiler::CreateCodeCache(hModule->GetUnboundModuleScript()));
+                if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
+                {
+                    cacheBytes.resize(upCachedData->length);
+                    memcpy(cacheBytes.data(), upCachedData->data, upCachedData->length);
+                    SetCachedModuleCacheBytes(documentInfo.GetUniqueId(), codeDigest, cacheBytes);
+                    cacheResult = V8CacheResult::Updated;
+                }
+                else
+                {
+                    cacheResult = V8CacheResult::UpdateFailed;
+                }
+            }
+            else if (cachedCacheBytes == cacheBytes)
+            {
+                cacheResult = V8CacheResult::Verified;
+            }
+            else
+            {
+                cacheBytes = cachedCacheBytes;
+                cacheResult = V8CacheResult::Updated;
+            }
+
+            upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hModule)), documentInfo, codeDigest, std::move(code)));
+        }
+        else
+        {
+            auto hScript = GetCachedScript(documentInfo.GetUniqueId(), codeDigest, cachedCacheBytes);
+            if (hScript.IsEmpty())
+            {
+                hScript = VERIFY_MAYBE(CompileUnboundScript(&source, v8::ScriptCompiler::kConsumeCodeCache));
+                if (hScript.IsEmpty())
+                {
+                    throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Script compilation failed; no additional information was provided by the V8 runtime")), false /*executionStarted*/);
+                }
+
+                if (!pCachedData->rejected)
+                {
+                    cacheResult = V8CacheResult::Accepted;
+                }
+                else
+                {
+                    std::unique_ptr<v8::ScriptCompiler::CachedData> upCachedData(v8::ScriptCompiler::CreateCodeCache(hScript));
+                    if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
+                    {
+                        cacheBytes.resize(upCachedData->length);
+                        memcpy(cacheBytes.data(), upCachedData->data, upCachedData->length);
+                        cacheResult = V8CacheResult::Updated;
+                    }
+                    else
+                    {
+                        cacheResult = V8CacheResult::UpdateFailed;
+                    }
+                }
+
+                CacheScript(documentInfo, codeDigest, hScript, (cacheResult != V8CacheResult::UpdateFailed) ? cacheBytes : std::vector<uint8_t>());
+            }
+            else if (cachedCacheBytes.empty())
+            {
+                std::unique_ptr<v8::ScriptCompiler::CachedData> upCachedData(v8::ScriptCompiler::CreateCodeCache(hScript));
+                if (upCachedData && (upCachedData->length > 0) && (upCachedData->data != nullptr))
+                {
+                    cacheBytes.resize(upCachedData->length);
+                    memcpy(cacheBytes.data(), upCachedData->data, upCachedData->length);
+                    SetCachedScriptCacheBytes(documentInfo.GetUniqueId(), codeDigest, cacheBytes);
+                    cacheResult = V8CacheResult::Updated;
+                }
+                else
+                {
+                    cacheResult = V8CacheResult::UpdateFailed;
+                }
+            }
+            else if (cachedCacheBytes == cacheBytes)
+            {
+                cacheResult = V8CacheResult::Verified;
+            }
+            else
+            {
+                cacheBytes = cachedCacheBytes;
+                cacheResult = V8CacheResult::Updated;
+            }
+
+            upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
+        }
+
+        if (cacheResult != V8CacheResult::UpdateFailed)
         {
             upScriptHolder->SetCacheBytes(cacheBytes);
         }
@@ -805,7 +1134,7 @@ V8Value V8ContextImpl::Execute(const SharedPtr<V8ScriptHolder>& spHolder, bool e
             auto hModule = GetCachedModule(spHolder->GetDocumentInfo().GetUniqueId(), codeDigest);
             if (hModule.IsEmpty())
             {
-                if (spHolder->GetCacheBytes().size() > 0)
+                if (!spHolder->GetCacheBytes().empty())
                 {
                     auto pCachedData = new v8::ScriptCompiler::CachedData(spHolder->GetCacheBytes().data(), static_cast<int>(spHolder->GetCacheBytes().size()), v8::ScriptCompiler::CachedData::BufferNotOwned);
                     v8::ScriptCompiler::Source source(FROM_MAYBE(CreateString(spHolder->GetCode())), CreateScriptOrigin(spHolder->GetDocumentInfo()), pCachedData);
@@ -1552,10 +1881,22 @@ v8::MaybeLocal<v8::Module> V8ContextImpl::ResolveModule(v8::Local<v8::String> hS
                         std::vector<v8::Local<v8::String>> names;
                         std::vector<SyntheticModuleExport> exports;
 
-                        auto hExports = ::ValueAsObject(ImportValue(exportsValue));
-                        if (!hExports.IsEmpty())
+                        auto hExportsValue = ImportValue(exportsValue);
+                        if (hExportsValue.IsEmpty())
                         {
-                            auto hOwnPropertyNames = FROM_MAYBE(hExports->GetOwnPropertyNames(m_hContext, v8::SKIP_SYMBOLS, v8::KeyConversionMode::kNoNumbers));
+                            hExportsValue = GetUndefined();
+                        }
+
+                        if ((documentInfo.GetKind() == DocumentKind::Json) || !hExportsValue->IsObject())
+                        {
+                            auto hName = CreateString("default");
+                            names.push_back(hName);
+                            exports.push_back({ CreatePersistent(hName), CreatePersistent(hExportsValue) });
+                        }
+                        else
+                        {
+                            auto hExports = hExportsValue.As<v8::Object>();
+                            auto hOwnPropertyNames = FROM_MAYBE(hExports->GetOwnPropertyNames(m_hContext, v8::SKIP_SYMBOLS, v8::KeyConversionMode::kConvertToString));
                             if (!hOwnPropertyNames.IsEmpty())
                             {
                                 auto length = hOwnPropertyNames->Length();
@@ -1739,18 +2080,31 @@ void V8ContextImpl::Teardown()
     // As of V8 3.16.0, the global property getter for a disposed context
     // may be invoked during GC after the V8ContextImpl instance is gone.
 
-    auto hGlobal = ::ValueAsObject(m_hContext->Global()->GetPrototype());
-    if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
+    if (!m_hContext.IsEmpty())
     {
-        hGlobal->SetAlignedPointerInInternalField(0, nullptr);
+        auto hGlobalProxy = m_hContext->Global();
+        if (!hGlobalProxy.IsEmpty())
+        {
+            auto hGlobal = ::ValueAsObject(hGlobalProxy->GetPrototype());
+            if (!hGlobal.IsEmpty() && (hGlobal->InternalFieldCount() > 0))
+            {
+                hGlobal->SetAlignedPointerInInternalField(0, nullptr);
+            }
+        }
+
+        if (m_hContext->GetNumberOfEmbedderDataFields() > 1)
+        {
+            m_hContext->SetAlignedPointerInEmbedderData(1, nullptr);
+        }
+
+        Dispose(m_hContext);
     }
 
-    if (m_hContext->GetNumberOfEmbedderDataFields() > 1)
+    if (m_ChangedTimerResolution)
     {
-        m_hContext->SetAlignedPointerInEmbedderData(1, nullptr);
+        HighResolutionClock::RestoreTimerResolution();
+        m_ChangedTimerResolution = false;
     }
-
-    Dispose(m_hContext);
 }
 
 //-----------------------------------------------------------------------------
@@ -1865,8 +2219,8 @@ void V8ContextImpl::GetV8ObjectPropertyNames(v8::Local<v8::Object> hObject, std:
         names.reserve(nameCount);
         for (auto index = 0; index < nameCount; index++)
         {
-            auto hName = FROM_MAYBE(hNames->Get(m_hContext, index));
-            if (hName->IsString())
+            auto hName = ::ValueAsString(FROM_MAYBE(hNames->Get(m_hContext, index)));
+            if (!hName.IsEmpty())
             {
                 names.push_back(CreateStdString(hName));
             }
@@ -1902,12 +2256,15 @@ void V8ContextImpl::GetV8ObjectPropertyIndices(v8::Local<v8::Object> hObject, st
                     indices.push_back(static_cast<int>(value));
                 }
             }
-            else if (hName->IsNumber())
+            else
             {
-                auto value = FROM_MAYBE(hName->NumberValue(m_hContext));
-                if (value == std::round(value) && (value >= static_cast<double>(INT_MIN)) && (value <= static_cast<double>(INT_MAX)))
+                double value;
+                if (::TryGetValueAsNumber(m_hContext, hName, value))
                 {
-                    indices.push_back(static_cast<int>(value));
+                    if (value == std::round(value) && (value >= static_cast<double>(INT_MIN)) && (value <= static_cast<double>(INT_MAX)))
+                    {
+                        indices.push_back(static_cast<int>(value));
+                    }
                 }
             }
         }
@@ -1931,7 +2288,7 @@ void V8ContextImpl::GetGlobalProperty(v8::Local<v8::Name> hKey, const v8::Proper
         if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
             const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            if (!stack.empty())
             {
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
@@ -1962,7 +2319,7 @@ void V8ContextImpl::SetGlobalProperty(v8::Local<v8::Name> hKey, v8::Local<v8::Va
         if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
             const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            if (!stack.empty())
             {
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
@@ -1994,7 +2351,7 @@ void V8ContextImpl::QueryGlobalProperty(v8::Local<v8::Name> hKey, const v8::Prop
         if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
             const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            if (!stack.empty())
             {
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
@@ -2025,7 +2382,7 @@ void V8ContextImpl::DeleteGlobalProperty(v8::Local<v8::Name> hKey, const v8::Pro
         if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
             const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            if (!stack.empty())
             {
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
                 {
@@ -2069,7 +2426,7 @@ void V8ContextImpl::GetGlobalPropertyNames(const v8::PropertyCallbackInfo<v8::Ar
             try
             {
                 const auto& stack = pContextImpl->m_GlobalMembersStack;
-                if (stack.size() > 0)
+                if (!stack.empty())
                 {
                     std::vector<StdString> names;
                     for (auto it = stack.rbegin(); it != stack.rend(); it++)
@@ -2121,7 +2478,7 @@ void V8ContextImpl::GetGlobalProperty(uint32_t index, const v8::PropertyCallback
         if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
             const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            if (!stack.empty())
             {
                 auto hName = FROM_MAYBE(pContextImpl->CreateInteger(index)->ToString(pContextImpl->m_hContext));
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
@@ -2147,7 +2504,7 @@ void V8ContextImpl::SetGlobalProperty(uint32_t index, v8::Local<v8::Value> hValu
         if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
             const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            if (!stack.empty())
             {
                 auto hName = FROM_MAYBE(pContextImpl->CreateInteger(index)->ToString(pContextImpl->m_hContext));
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
@@ -2174,7 +2531,7 @@ void V8ContextImpl::QueryGlobalProperty(uint32_t index, const v8::PropertyCallba
         if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
             const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            if (!stack.empty())
             {
                 auto hIndex = pContextImpl->CreateInteger(index);
                 auto hName = FROM_MAYBE(hIndex->ToString(pContextImpl->m_hContext));
@@ -2201,7 +2558,7 @@ void V8ContextImpl::DeleteGlobalProperty(uint32_t index, const v8::PropertyCallb
         if (CheckContextImplForGlobalObjectCallback(pContextImpl))
         {
             const auto& stack = pContextImpl->m_GlobalMembersStack;
-            if (stack.size() > 0)
+            if (!stack.empty())
             {
                 auto hName = FROM_MAYBE(pContextImpl->CreateInteger(index)->ToString(pContextImpl->m_hContext));
                 for (auto it = stack.rbegin(); it != stack.rend(); it++)
@@ -2229,7 +2586,7 @@ void V8ContextImpl::GetGlobalPropertyIndices(const v8::PropertyCallbackInfo<v8::
             try
             {
                 const auto& stack = pContextImpl->m_GlobalMembersStack;
-                if (stack.size() > 0)
+                if (!stack.empty())
                 {
                     std::vector<int> indices;
                     for (auto it = stack.rbegin(); it != stack.rend(); it++)
@@ -2806,6 +3163,54 @@ void V8ContextImpl::FlushCallback(const v8::FunctionCallbackInfo<v8::Value>& /*i
 
 //-----------------------------------------------------------------------------
 
+void V8ContextImpl::PerformanceNowCallback(const v8::FunctionCallbackInfo<v8::Value>& info)
+{
+    auto now = HighResolutionClock::GetRelativeMilliseconds();
+
+    auto pContextImpl = ::GetContextImplFromData(info);
+    if (pContextImpl == nullptr)
+    {
+        return;
+    }
+
+    CALLBACK_RETURN(now - pContextImpl->m_RelativeTimeOrigin);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::PerformanceSleepCallback(const v8::FunctionCallbackInfo<v8::Value>& info)
+{
+    auto pContextImpl = ::GetContextImplFromData(info);
+    if (pContextImpl == nullptr)
+    {
+        return;
+    }
+
+    double delay;
+    if ((info.Length() < 1) || !::TryGetValueAsAnyNumber(pContextImpl->m_hContext, info[0], delay))
+    {
+        pContextImpl->ThrowException(v8::Exception::TypeError(pContextImpl->CreateString("Invalid argument: 'delay' must be a number")));
+        return;
+    }
+
+    auto precise = false;
+    if (info.Length() > 1)
+    {
+        auto hArg = info[1];
+        if (!hArg.IsEmpty())
+        {
+            precise = hArg->BooleanValue(info.GetIsolate());
+        }
+    }
+
+    if (delay > 0)
+    {
+        HighResolutionClock::SleepMilliseconds(delay, precise);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ContextImpl::DisposeWeakHandle(v8::Isolate* pIsolate, Persistent<v8::Object>* phObject, HostObjectHolder* pHolder, void* pvV8ObjectCache)
 {
     IGNORE_UNUSED(pIsolate);
@@ -2874,7 +3279,34 @@ v8::Local<v8::Module> V8ContextImpl::GetCachedModule(uint64_t uniqueId, size_t c
 
 //-----------------------------------------------------------------------------
 
+v8::Local<v8::Module> V8ContextImpl::GetCachedModule(uint64_t uniqueId, size_t codeDigest, std::vector<uint8_t>& cacheBytes)
+{
+    _ASSERTE(m_spIsolateImpl->IsCurrent() && m_spIsolateImpl->IsLocked());
+
+    for (auto it = m_ModuleCache.begin(); it != m_ModuleCache.end(); it++)
+    {
+        if ((it->DocumentInfo.GetUniqueId() == uniqueId) && (it->CodeDigest == codeDigest))
+        {
+            m_ModuleCache.splice(m_ModuleCache.begin(), m_ModuleCache, it);
+            cacheBytes = it->CacheBytes;
+            return it->hModule;
+        }
+    }
+
+    cacheBytes.clear();
+    return v8::Local<v8::Module>();
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ContextImpl::CacheModule(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::Module> hModule)
+{
+    CacheModule(documentInfo, codeDigest, hModule, std::vector<uint8_t>());
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::CacheModule(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::Module> hModule, const std::vector<uint8_t>& cacheBytes)
 {
     _ASSERTE(m_spIsolateImpl->IsCurrent() && m_spIsolateImpl->IsLocked());
 
@@ -2891,10 +3323,27 @@ void V8ContextImpl::CacheModule(const V8DocumentInfo& documentInfo, size_t codeD
         return (entry.DocumentInfo.GetUniqueId() == documentInfo.GetUniqueId()) && (entry.CodeDigest == codeDigest);
     }));
 
-    ModuleCacheEntry entry { documentInfo, codeDigest, CreatePersistent(hModule) };
+    ModuleCacheEntry entry { documentInfo, codeDigest, CreatePersistent(hModule), cacheBytes };
     m_ModuleCache.push_front(std::move(entry));
 
     m_Statistics.ModuleCacheSize = m_ModuleCache.size();
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::SetCachedModuleCacheBytes(uint64_t uniqueId, size_t codeDigest, const std::vector<uint8_t>& cacheBytes)
+{
+    _ASSERTE(m_spIsolateImpl->IsCurrent() && m_spIsolateImpl->IsLocked());
+
+    for (auto it = m_ModuleCache.begin(); it != m_ModuleCache.end(); it++)
+    {
+        if ((it->DocumentInfo.GetUniqueId() == uniqueId) && (it->CodeDigest == codeDigest))
+        {
+            m_ModuleCache.splice(m_ModuleCache.begin(), m_ModuleCache, it);
+            it->CacheBytes = cacheBytes;
+            return;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -2903,7 +3352,7 @@ void V8ContextImpl::ClearModuleCache()
 {
     _ASSERTE(m_spIsolateImpl->IsCurrent() && m_spIsolateImpl->IsLocked());
 
-    while (m_ModuleCache.size() > 0)
+    while (!m_ModuleCache.empty())
     {
         Dispose(m_ModuleCache.front().hModule);
         m_ModuleCache.pop_front();
@@ -2928,9 +3377,28 @@ v8::Local<v8::UnboundScript> V8ContextImpl::GetCachedScript(uint64_t uniqueId, s
 
 //-----------------------------------------------------------------------------
 
+v8::Local<v8::UnboundScript> V8ContextImpl::GetCachedScript(uint64_t uniqueId, size_t codeDigest, std::vector<uint8_t>& cacheBytes)
+{
+    return m_spIsolateImpl->GetCachedScript(uniqueId, codeDigest, cacheBytes);
+}
+
+//-----------------------------------------------------------------------------
+
 void V8ContextImpl::CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript)
 {
     m_spIsolateImpl->CacheScript(documentInfo, codeDigest, hScript);
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ContextImpl::CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript, const std::vector<uint8_t>& cacheBytes)
+{
+    m_spIsolateImpl->CacheScript(documentInfo, codeDigest, hScript, cacheBytes);
+}
+
+void V8ContextImpl::SetCachedScriptCacheBytes(uint64_t uniqueId, size_t codeDigest, const std::vector<uint8_t>& cacheBytes)
+{
+    m_spIsolateImpl->SetCachedScriptCacheBytes(uniqueId, codeDigest, cacheBytes);
 }
 
 //-----------------------------------------------------------------------------
@@ -3146,14 +3614,20 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
             return V8Value(V8Value::Null);
         }
 
-        if (hValue->IsBoolean())
         {
-            return V8Value(m_spIsolateImpl->BooleanValue(hValue));
+            bool value;
+            if (::TryGetValueAsBoolean(m_spIsolateImpl, hValue, value))
+            {
+                return V8Value(value);
+            }
         }
 
-        if (hValue->IsNumber())
         {
-            return V8Value(FROM_MAYBE(hValue->NumberValue(m_hContext)));
+            double value;
+            if (::TryGetValueAsNumber(m_hContext, hValue, value))
+            {
+                return V8Value(value);
+            }
         }
 
         if (hValue->IsInt32())
@@ -3166,9 +3640,10 @@ V8Value V8ContextImpl::ExportValue(v8::Local<v8::Value> hValue)
             return V8Value(FROM_MAYBE(hValue->Uint32Value(m_hContext)));
         }
 
-        if (hValue->IsString())
+        auto hString = ::ValueAsString(hValue);
+        if (!hString.IsEmpty())
         {
-            return V8Value(new StdString(CreateStdString(hValue)));
+            return V8Value(new StdString(CreateStdString(hString)));
         }
 
         if (m_DateTimeConversionEnabled && hValue->IsDate())

@@ -12,6 +12,8 @@ namespace Microsoft.ClearScript
     /// </summary>
     public class CustomAttributeLoader
     {
+        private readonly CustomAttributeCache cache = new CustomAttributeCache();
+
         // ReSharper disable EmptyConstructor
 
         /// <summary>
@@ -21,6 +23,11 @@ namespace Microsoft.ClearScript
         {
             // the help file builder (SHFB) insists on an empty constructor here
         }
+
+        /// <summary>
+        /// Gets the default custom attribute loader.
+        /// </summary>
+        public static CustomAttributeLoader Default { get; } = new CustomAttributeLoader();
 
         // ReSharper restore EmptyConstructor
 
@@ -59,6 +66,11 @@ namespace Microsoft.ClearScript
             }
 
             return resource.GetCustomAttributes(typeof(T), inherit).OfType<T>().ToArray();
+        }
+
+        internal T[] GetOrLoad<T>(ICustomAttributeProvider resource, bool inherit) where T : Attribute
+        {
+            return cache.GetOrLoad<T>(this, resource, inherit);
         }
     }
 }

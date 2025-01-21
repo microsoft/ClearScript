@@ -720,6 +720,8 @@ namespace Microsoft.ClearScript.Windows.Core
 
         #region IDebugDocument methods
 
+        // inherited methods only
+
         #endregion
 
         void GetDocumentAttributes(

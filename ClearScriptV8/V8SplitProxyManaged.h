@@ -62,7 +62,7 @@
     V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, ChangeNativeCallbackTimer, void* pvTimer, int32_t dueTime, int32_t period) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, DestroyNativeCallbackTimer, void* pvTimer) \
     \
-    V8_SPLIT_PROXY_MANAGED_METHOD(void, LoadModule, void* pvSourceDocumentInfo, const StdString& specifier, StdString& resourceName, StdString& sourceMapUrl, uint64_t& uniqueId, StdBool& isModule, StdString& code, void*& pvDocumentInfo, V8Value& exports) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, LoadModule, void* pvSourceDocumentInfo, const StdString& specifier, StdString& resourceName, StdString& sourceMapUrl, uint64_t& uniqueId, DocumentKind& documentKind, StdString& code, void*& pvDocumentInfo, V8Value& exports) \
     V8_SPLIT_PROXY_MANAGED_METHOD(int32_t, CreateModuleContext, void* pvDocumentInfo, std::vector<StdString>& names, std::vector<V8Value>& values) \
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, WriteBytesToStream, void* pvStream, const uint8_t* pBytes, int32_t count) \

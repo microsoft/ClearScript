@@ -3,6 +3,9 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Threading;
+using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -194,6 +197,75 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(456, engine.Evaluate("bag.bar"));
             bag.Remove("bar");
             Assert.AreSame(Undefined.Value, engine.Evaluate("bag.bar"));
+        }
+
+        [TestMethod, TestCategory("PropertyBag")]
+        public void PropertyBag_Concurrent()
+        {
+            var bag = new ConcurrentPropertyBag();
+            engine.AddHostObject("bag", bag);
+
+            // 32-bit V8 starts failing requests to create new contexts rather quickly. This is
+            // because each V8 isolate requires (among other things) a 32MB address space
+            // reservation. 64-bit V8 reserves much larger blocks but benefits from the enormous
+            // available address space.
+
+            var threadCount = Environment.Is64BitProcess ? 512 : 16;
+            var engineCount = 0;
+
+            var startEvent = new ManualResetEventSlim(false);
+            var checkpointEvent = new ManualResetEventSlim(false);
+            var continueEvent = new ManualResetEventSlim(false);
+            var stopEvent = new ManualResetEventSlim(false);
+
+            ParameterizedThreadStart body = arg =>
+            {
+                // ReSharper disable AccessToDisposedClosure
+
+                var index = (int)arg;
+                startEvent.Wait();
+
+                var scriptEngine = new V8ScriptEngine();
+
+                scriptEngine.AddHostObject("bag", bag);
+                scriptEngine.Global["index"] = index;
+
+                scriptEngine.Execute("bag['foo' + index] = index");
+                Assert.AreEqual(index, scriptEngine.Evaluate("bag['foo' + index]"));
+
+                if (Interlocked.Increment(ref engineCount) == threadCount)
+                {
+                    checkpointEvent.Set();
+                }
+
+                continueEvent.Wait();
+
+                scriptEngine.Dispose();
+                if (Interlocked.Decrement(ref engineCount) == 0)
+                {
+                    stopEvent.Set();
+                }
+
+                // ReSharper restore AccessToDisposedClosure
+            };
+
+            var threads = Enumerable.Range(0, threadCount).Select(index => new Thread(body)).ToArray();
+            threads.ForEach((thread, index) => thread.Start(index));
+
+            startEvent.Set();
+            checkpointEvent.Wait();
+            Assert.AreEqual(threadCount + 1, bag.EngineCount);
+
+            continueEvent.Set();
+            stopEvent.Wait();
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            Assert.AreEqual(1, bag.EngineCount);
+
+            Array.ForEach(threads, thread => thread.Join());
+            startEvent.Dispose();
+            checkpointEvent.Dispose();
+            continueEvent.Dispose();
+            stopEvent.Dispose();
         }
 
         // ReSharper restore InconsistentNaming

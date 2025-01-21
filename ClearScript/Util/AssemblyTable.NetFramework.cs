@@ -3,9 +3,11 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Xml.Serialization;
 using Microsoft.Win32;
 
 namespace Microsoft.ClearScript.Util
@@ -71,8 +73,8 @@ namespace Microsoft.ClearScript.Util
                     {
                         using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                         {
-                            var formatter = new BinaryFormatter();
-                            table = (ConcurrentDictionary<string, string>)formatter.Deserialize(stream);
+                            var serializer = new XmlSerializer(typeof(AssemblyTableData));
+                            table = ((AssemblyTableData)serializer.Deserialize(stream)).CreateTable();
                         }
                     }
                 });
@@ -120,8 +122,8 @@ namespace Microsoft.ClearScript.Util
                     var filePath = GetFilePath(rootPath);
                     using (var stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
                     {
-                        var formatter = new BinaryFormatter();
-                        formatter.Serialize(stream, table);
+                        var serializer = new XmlSerializer(typeof(AssemblyTableData));
+                        serializer.Serialize(stream, new AssemblyTableData(table));
                     }
                 });
             }
@@ -131,13 +133,52 @@ namespace Microsoft.ClearScript.Util
                 var dirPath = Path.Combine(rootPath, GetRuntimeVersionDirectoryName());
                 Directory.CreateDirectory(dirPath);
 
-                return Path.Combine(dirPath, "AssemblyTable.bin");
+                return Path.Combine(dirPath, "AssemblyTable.xml");
             }
 
             private static string GetRuntimeVersionDirectoryName()
             {
                 return MiscHelpers.FormatInvariant("v{0}", Environment.Version.ToString(3));
             }
+        }
+
+        #endregion
+    }
+
+    /// <exclude/>
+    [XmlRoot("AssemblyTable")]
+    public sealed class AssemblyTableData
+    {
+        /// <exclude/>
+        [XmlArray] public List<Entry> Entries;
+
+        /// <exclude/>
+        public AssemblyTableData()
+        {
+        }
+
+        /// <exclude/>
+        public AssemblyTableData(ConcurrentDictionary<string, string> table)
+        {
+            Entries = table.Select(pair => new Entry { Name = pair.Key, FullName = pair.Value }).ToList();
+        }
+
+        /// <exclude/>
+        public ConcurrentDictionary<string, string> CreateTable()
+        {
+            return (Entries is null) ? null : new ConcurrentDictionary<string, string>(Entries.Select(entry => new KeyValuePair<string, string>(entry.Name, entry.FullName)));
+        }
+
+        #region Nested type: Entry
+
+        /// <exclude/>
+        public sealed class Entry
+        {
+            /// <exclude/>
+            [XmlAttribute] public string Name { get; set; }
+
+            /// <exclude/>
+            [XmlAttribute] public string FullName { get; set; }
         }
 
         #endregion

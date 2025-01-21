@@ -5,11 +5,11 @@ using System;
 
 namespace Microsoft.ClearScript.Util
 {
-    internal interface IHostInvokeContext
+    internal interface IHostContext
     {
+        CustomAttributeLoader CustomAttributeLoader { get; }
         ScriptEngine Engine { get; }
         Type AccessContext { get; }
         ScriptAccess DefaultAccess { get; }
-        HostTargetFlags TargetFlags { get; }
     }
 }

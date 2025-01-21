@@ -22,7 +22,7 @@ namespace Microsoft.ClearScript.Windows
         /// Initializes a new Windows Script engine instance with the specified list of supported file name extensions.
         /// </summary>
         /// <param name="progID">The programmatic identifier (ProgID) of the Windows Script engine class.</param>
-        /// <param name="name">A name to associate with the instance. Currently this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="name">A name to associate with the instance. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
         /// <param name="fileNameExtensions">A semicolon-delimited list of supported file name extensions.</param>
         /// <param name="flags">A value that selects options for the operation.</param>
         /// <remarks>

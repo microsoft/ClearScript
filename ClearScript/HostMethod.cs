@@ -37,18 +37,18 @@ namespace Microsoft.ClearScript
 
         public override object DynamicInvokeTarget => null;
 
-        public override HostTargetFlags GetFlags(IHostInvokeContext context)
+        public override HostTargetFlags GetFlags(IHostContext context)
         {
             return HostTargetFlags.None;
         }
 
-        public override bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(IHostContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             result = target.InvokeMember(name, invokeFlags, args, bindArgs, null, true);
             return true;
         }
 
-        public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public override Invocability GetInvocability(IHostContext context, BindingFlags bindFlags, bool ignoreDynamic)
         {
             return Invocability.Delegate;
         }

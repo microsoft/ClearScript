@@ -57,6 +57,7 @@
         <Compile Include="..\..\ClearScript\V8\V8ArrayBufferOrViewInfo.cs" Link="V8\V8ArrayBufferOrViewInfo.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ArrayBufferOrViewKind.cs" Link="V8\V8ArrayBufferOrViewKind.cs" />
         <Compile Include="..\..\ClearScript\V8\V8CacheKind.cs" Link="V8\V8CacheKind.cs" />
+        <Compile Include="..\..\ClearScript\V8\V8CacheResult.cs" Link="V8\V8CacheResult.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ContextProxy.cs" Link="V8\V8ContextProxy.cs" />
         <Compile Include="..\..\ClearScript\V8\V8CpuProfile.cs" Link="V8\V8CpuProfile.cs" />
         <Compile Include="..\..\ClearScript\V8\V8CpuProfileFlags.cs" Link="V8\V8CpuProfileFlags.cs" />
@@ -73,6 +74,7 @@
         <Compile Include="..\..\ClearScript\V8\V8ProxyHelpers.cs" Link="V8\V8ProxyHelpers.cs" />
         <Compile Include="..\..\ClearScript\V8\V8Runtime.cs" Link="V8\V8Runtime.cs" />
         <Compile Include="..\..\ClearScript\V8\V8RuntimeConstraints.cs" Link="V8\V8RuntimeConstraints.cs" />
+        <Compile Include="..\..\ClearScript\V8\V8RuntimeDebuggerEventArgs.cs" Link="V8\V8RuntimeDebuggerEventArgs.cs" />
         <Compile Include="..\..\ClearScript\V8\V8RuntimeFlags.cs" Link="V8\V8RuntimeFlags.cs" />
         <Compile Include="..\..\ClearScript\V8\V8RuntimeHeapInfo.cs" Link="V8\V8RuntimeHeapInfo.cs" />
         <Compile Include="..\..\ClearScript\V8\V8Script.cs" Link="V8\V8Script.cs" />
@@ -145,7 +147,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="System.Net.Http" Version="4.3.4" />
+        <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     </ItemGroup>
 
     <ItemGroup>

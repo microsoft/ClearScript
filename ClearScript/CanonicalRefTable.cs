@@ -40,9 +40,9 @@ namespace Microsoft.ClearScript
                         type == typeof(TimeSpan) ||
                         type == typeof(Guid) ||
                     #if NET471_OR_GREATER || NETCOREAPP2_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-                        type.GetOrLoadCustomAttributes<System.Runtime.CompilerServices.IsReadOnlyAttribute>(false).Any() ||
+                        type.GetOrLoadCustomAttributes<System.Runtime.CompilerServices.IsReadOnlyAttribute>(null, false).Any() ||
                     #endif
-                        type.GetOrLoadCustomAttributes<ImmutableValueAttribute>(false).Any())
+                        type.GetOrLoadCustomAttributes<ImmutableValueAttribute>(null, false).Any())
                     {
                         map = (ICanonicalRefMap)typeof(CanonicalRefMap<>).MakeGenericType(type).CreateInstance();
                     }

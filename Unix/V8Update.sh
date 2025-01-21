@@ -1,6 +1,6 @@
 #!/bin/bash
 
-v8testedrev=11.4.183.17
+v8testedrev=12.3.219.12
 v8testedcommit=
 v8cherrypicks=
 v8linuxbuildcommit=3d9590754d5d23e62d15472c5baf6777ca59df20
@@ -174,6 +174,9 @@ if [[ $download == true ]]; then
     fi
     git apply --reject --ignore-whitespace ../../V8Patch.txt 2>apply-patch.log || fail
     if [[ $linux == true ]]; then
+        cd third_party/abseil-cpp || abort
+            git apply --reject --ignore-whitespace ../../../../AbseilCppPatch.txt 2>apply-patch.log || fail
+        cd ../..
         cd build || abort
         if [[ $v8linuxbuildcommit != "" ]]; then
             git reset --hard $v8linuxbuildcommit >resetBuild.log || fail
@@ -210,6 +213,12 @@ echo "Creating/updating patches ..."
 git diff --ignore-space-change --ignore-space-at-eol >V8Patch.txt 2>create-patch.log || fail
 
 if [[ $linux == true ]]; then
+    cd third_party/abseil-cpp || abort
+    git diff --ignore-space-change --ignore-space-at-eol >AbseilCppPatch.txt 2>create-patch.log || fail
+    cd ../..
+fi
+
+if [[ $linux == true ]]; then
     echo "Installing LKG sysroots ..."
     build/linux/sysroot_scripts/install-sysroot.py --arch=x64 >install-x64-sysroot.log || fail
     build/linux/sysroot_scripts/install-sysroot.py --arch=i386 >install-i386-sysroot.log || fail
@@ -217,13 +226,17 @@ if [[ $linux == true ]]; then
 fi
 
 echo "Building V8 ..."
-gn gen out/$cpu/$mode --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\"" >gn-$cpu-$mode.log || fail
+gn gen out/$cpu/$mode --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\"" >gn-$cpu-$mode.log || fail
 ninja -C out/$cpu/$mode obj/libv8_monolith.a >build-$cpu-$mode.log || fail
 
 cd ../..
 
 echo "Importing patches ..."
 cp build/v8/V8Patch.txt . || fail
+
+if [[ $linux == true ]]; then
+    cp build/v8/third_party/abseil-cpp/AbseilCppPatch.txt . || fail
+fi
 
 echo "Importing ICU data ..."
 cp build/v8/out/$cpu/$mode/icudtl.dat . || fail
