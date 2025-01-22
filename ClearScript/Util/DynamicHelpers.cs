@@ -134,12 +134,12 @@ namespace Microsoft.ClearScript.Util
             return TryDynamicOperation(() => target.CreateInstance(args), out result);
         }
 
-        public static bool TryInvoke(this DynamicMetaObject target, IHostInvokeContext context, object[] args, out object result)
+        public static bool TryInvoke(this DynamicMetaObject target, IHostContext context, object[] args, out object result)
         {
             return TryDynamicOperation(() => target.Invoke(args), out result);
         }
 
-        public static bool TryInvokeMember(this DynamicMetaObject target, IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, out object result)
+        public static bool TryInvokeMember(this DynamicMetaObject target, IHostContext context, string name, BindingFlags invokeFlags, object[] args, out object result)
         {
             return TryDynamicOperation(() => target.InvokeMember(context, name, invokeFlags, args), out result);
         }
@@ -384,7 +384,7 @@ namespace Microsoft.ClearScript.Util
             return Invoke(block, paramExprs, args);
         }
 
-        private static object InvokeMember(this DynamicMetaObject target, IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args)
+        private static object InvokeMember(this DynamicMetaObject target, IHostContext context, string name, BindingFlags invokeFlags, object[] args)
         {
             var paramNames = Enumerable.Range(0, args.Length).Select(index => "a" + index).ToArray();
             var paramExprs = paramNames.Select((paramName, index) => Expression.Parameter(GetParamTypeForArg(args[index]), paramName)).ToArray();
@@ -687,10 +687,10 @@ namespace Microsoft.ClearScript.Util
         private sealed class DynamicInvokeMemberBinder : InvokeMemberBinder
         {
             private static readonly MethodInfo invokeMemberValueMethod = typeof(DynamicInvokeMemberBinder).GetMethod("InvokeMemberValue", BindingFlags.NonPublic | BindingFlags.Static);
-            private readonly IHostInvokeContext context;
+            private readonly IHostContext context;
             private readonly BindingFlags invokeFlags;
 
-            public DynamicInvokeMemberBinder(IHostInvokeContext context, string name, BindingFlags invokeFlags, string[] paramNames)
+            public DynamicInvokeMemberBinder(IHostContext context, string name, BindingFlags invokeFlags, string[] paramNames)
                 : base(name, false, new CallInfo(paramNames.Length, paramNames))
             {
                 this.context = context;
@@ -731,7 +731,7 @@ namespace Microsoft.ClearScript.Util
 
             // ReSharper disable UnusedMember.Local
 
-            private static object InvokeMemberValue(IHostInvokeContext context, object target, BindingFlags invokeFlags, object[] args)
+            private static object InvokeMemberValue(IHostContext context, object target, BindingFlags invokeFlags, object[] args)
             {
                 if (InvokeHelpers.TryInvokeObject(context, target, BindingFlags.InvokeMethod, args, args, true, out var result))
                 {

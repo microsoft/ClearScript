@@ -21,8 +21,8 @@ V8ScriptHolderImpl::V8ScriptHolderImpl(const SharedPtr<V8WeakContextBinding>& sp
     m_spBinding(spBinding),
     m_pvScript(pvScript),
     m_DocumentInfo(documentInfo),
-    m_Code(std::move(code)),
-    m_CodeDigest(codeDigest)
+    m_CodeDigest(codeDigest),
+    m_Code(std::move(code))
 {
 }
 

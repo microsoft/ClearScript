@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
@@ -4487,6 +4488,22 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_CustomAttributeLoader_Private()
+        {
+            using (var otherEngine = new V8ScriptEngine())
+            {
+                engine.CustomAttributeLoader = new CamelCaseAttributeLoader();
+                TestCamelCaseMemberBinding();
+
+                using (Scope.Create(() => engine, originalEngine => engine = originalEngine))
+                {
+                    engine = otherEngine;
+                    TestUtil.AssertException<InvalidCastException>(TestCamelCaseMemberBinding);
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_StringifyEnhancements()
         {
             engine.Script.hostObject = new Dictionary<string, object> { { "foo", 123 }, { "bar", "baz" }, { "qux", engine.Evaluate("({ quux: 456.789, quuz: 'corge' })") } };
@@ -4648,6 +4665,623 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(c.All(value => ((ConstructorBindingTest)value).A == 789));
         }
 
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Compilation_CacheResult()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                engine.Dispose();
+                engine = runtime.CreateScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
+
+                const string code = "obj = { foo: 123, bar: 'baz', qux: 456.789 }; count = 0; for (let name in obj) count += 1; Math.PI";
+                var info = new DocumentInfo("foo.js");
+                byte[] goodCacheBytes;
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = engine.Compile(code, V8CacheKind.None, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Disabled, cacheResult);
+                    Assert.IsNull(cacheBytes);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = engine.Compile(info, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                    goodCacheBytes = cacheBytes;
+                }
+
+                {
+                    var cacheBytes = ArrayHelpers.GetEmptyArray<byte>();
+                    var script = engine.Compile(code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes;
+                    var script = engine.Compile(code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Accepted, cacheResult);
+                    Assert.AreEqual(goodCacheBytes, cacheBytes);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = engine.Compile(code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Accepted, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = engine.Compile(info, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.Take(goodCacheBytes.Length - 1).ToArray();
+                    var script = engine.Compile(code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = runtime.Compile(code, V8CacheKind.None, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Disabled, cacheResult);
+                    Assert.IsNull(cacheBytes);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = runtime.Compile(code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = ArrayHelpers.GetEmptyArray<byte>();
+                    var script = runtime.Compile(code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes;
+                    var script = runtime.Compile(code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Accepted, cacheResult);
+                    Assert.AreEqual(goodCacheBytes, cacheBytes);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = runtime.Compile(code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Accepted, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = runtime.Compile(info, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.Take(goodCacheBytes.Length - 1).ToArray();
+                    var script = runtime.Compile(code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Compilation_CacheResult_Module()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                engine.Dispose();
+                engine = runtime.CreateScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
+
+                const string code = "let obj = { foo: 123, bar: 'baz', qux: 456.789 }; let count = 0; for (let name in obj) count += 1; Math.PI";
+                var info = new DocumentInfo("foo.js") { Category = ModuleCategory.Standard };
+                byte[] goodCacheBytes;
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = engine.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.None, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Disabled, cacheResult);
+                    Assert.IsNull(cacheBytes);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = engine.Compile(info, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                    goodCacheBytes = cacheBytes;
+                }
+
+                {
+                    var cacheBytes = ArrayHelpers.GetEmptyArray<byte>();
+                    var script = engine.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes;
+                    var script = engine.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Accepted, cacheResult);
+                    Assert.AreEqual(goodCacheBytes, cacheBytes);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = engine.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Accepted, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = engine.Compile(info, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.Take(goodCacheBytes.Length - 1).ToArray();
+                    var script = engine.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = runtime.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.None, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Disabled, cacheResult);
+                    Assert.IsNull(cacheBytes);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = runtime.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = ArrayHelpers.GetEmptyArray<byte>();
+                    var script = runtime.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes;
+                    var script = runtime.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Accepted, cacheResult);
+                    Assert.AreEqual(goodCacheBytes, cacheBytes);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = runtime.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Accepted, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = runtime.Compile(info, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.Take(goodCacheBytes.Length - 1).ToArray();
+                    var script = runtime.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, code, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DocumentCompilation_CacheResult()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                engine.Dispose();
+                engine = runtime.CreateScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
+
+                const string code = "obj = { foo: 123, bar: 'baz', qux: 456.789 }; count = 0; for (let name in obj) count += 1; Math.PI";
+                byte[] goodCacheBytes;
+
+                runtime.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+                runtime.DocumentSettings.AddSystemDocument("foo.js", code);
+                engine.DocumentSettings = runtime.DocumentSettings;
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = engine.CompileDocument("foo.js", V8CacheKind.None, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Disabled, cacheResult);
+                    Assert.IsNull(cacheBytes);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = engine.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                    goodCacheBytes = cacheBytes;
+                }
+
+                {
+                    var cacheBytes = ArrayHelpers.GetEmptyArray<byte>();
+                    var script = engine.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes;
+                    var script = engine.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.AreEqual(goodCacheBytes, cacheBytes);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = engine.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.Take(goodCacheBytes.Length - 1).ToArray();
+                    var script = engine.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = runtime.CompileDocument("foo.js", V8CacheKind.None, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Disabled, cacheResult);
+                    Assert.IsNull(cacheBytes);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = runtime.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = ArrayHelpers.GetEmptyArray<byte>();
+                    var script = runtime.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes;
+                    var script = runtime.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.AreEqual(goodCacheBytes, cacheBytes);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = runtime.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.Take(goodCacheBytes.Length - 1).ToArray();
+                    var script = runtime.CompileDocument("foo.js", V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_DocumentCompilation_CacheResult_Module()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                engine.Dispose();
+                engine = runtime.CreateScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
+
+                const string code = "let obj = { foo: 123, bar: 'baz', qux: 456.789 }; let count = 0; for (let name in obj) count += 1; Math.PI";
+                byte[] goodCacheBytes;
+
+                runtime.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
+                runtime.DocumentSettings.AddSystemDocument("foo.js", ModuleCategory.Standard, code);
+                engine.DocumentSettings = runtime.DocumentSettings;
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = engine.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.None, ref cacheBytes, out var cacheResult);
+                    Assert.AreEqual(Math.PI, engine.Evaluate(script));
+                    Assert.AreEqual(V8CacheResult.Disabled, cacheResult);
+                    Assert.IsNull(cacheBytes);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = engine.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                    goodCacheBytes = cacheBytes;
+                }
+
+                {
+                    var cacheBytes = ArrayHelpers.GetEmptyArray<byte>();
+                    var script = engine.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes;
+                    var script = engine.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.AreEqual(goodCacheBytes, cacheBytes);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = engine.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.Take(goodCacheBytes.Length - 1).ToArray();
+                    var script = engine.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = runtime.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.None, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Disabled, cacheResult);
+                    Assert.IsNull(cacheBytes);
+                }
+
+                {
+                    byte[] cacheBytes = null;
+                    var script = runtime.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = ArrayHelpers.GetEmptyArray<byte>();
+                    var script = runtime.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes;
+                    var script = runtime.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.AreEqual(goodCacheBytes, cacheBytes);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.ToArray();
+                    var script = runtime.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Verified, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+
+                {
+                    var cacheBytes = goodCacheBytes.Take(goodCacheBytes.Length - 1).ToArray();
+                    var script = runtime.CompileDocument("foo.js", ModuleCategory.Standard, V8CacheKind.Code, ref cacheBytes, out var cacheResult);
+                    Assert.IsInstanceOfType(engine.Evaluate(script), typeof(Undefined));
+                    Assert.AreEqual(V8CacheResult.Updated, cacheResult);
+                    Assert.IsNotNull(cacheBytes);
+                    Assert.IsTrue(cacheBytes.Length > 0);
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_UseSynchronizationContexts()
+        {
+            Func<SingleThreadSynchronizationContext, Task<bool>> doWork = context => Task<bool>.Factory.StartNew(() =>
+            {
+                Thread.Sleep(100);
+                return context.OnThread;
+            });
+
+            var managedResults = SingleThreadSynchronizationContext.RunTask(async context =>
+            {
+                var results = new List<bool> { context.OnThread };
+                results.Add(await doWork(context));
+                results.Add(context.OnThread);
+                return results;
+            });
+
+            Assert.IsTrue(managedResults.SequenceEqual(new[] { true, false, true }));
+
+            // ReSharper disable AccessToDisposedClosure
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion);
+            engine.Script.doWork = doWork;
+            var scriptResults = (IList<object>)SingleThreadSynchronizationContext.RunTask(async context =>
+            {
+                engine.Script.context = context;
+                return await (Task<object>)engine.Evaluate(@"(async function () {
+                    const results = [context.OnThread];
+                    results.push(await doWork(context));
+                    results.push(context.OnThread);
+                    return results;
+                })()");
+            });
+
+            Assert.IsTrue(scriptResults.SequenceEqual(new object[] { true, false, false }));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion | V8ScriptEngineFlags.UseSynchronizationContexts);
+            engine.Script.doWork = doWork;
+            scriptResults = (IList<object>)SingleThreadSynchronizationContext.RunTask(async context =>
+            {
+                engine.Script.context = context;
+                return await (Task<object>)engine.Evaluate(@"(async function () {
+                    const results = [context.OnThread];
+                    results.push(await doWork(context));
+                    results.push(context.OnThread);
+                    return results;
+                })()");
+            });
+
+            Assert.IsTrue(scriptResults.SequenceEqual(new object[] { true, false, true }));
+
+            // ReSharper restore AccessToDisposedClosure
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_PerformanceObject()
+        {
+            Assert.IsInstanceOfType(engine.Script.Performance, typeof(Undefined));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AddPerformanceObject);
+
+            Assert.IsInstanceOfType(engine.Script.Performance, typeof(IJavaScriptObject));
+            Assert.IsInstanceOfType(engine.Script.Performance.sleep, typeof(IJavaScriptObject));
+            Assert.IsInstanceOfType(engine.Script.Performance.now, typeof(IJavaScriptObject));
+
+            var elapsed = Convert.ToDouble(engine.Evaluate(@"(() => {
+                const start = Performance.now();
+                Performance.sleep(25);
+                return Performance.now() - start;
+            })()"));
+
+            Assert.IsTrue(elapsed >= 25);
+
+            elapsed = Convert.ToDouble(engine.Evaluate(@"(() => {
+                const start = Performance.now();
+                Performance.sleep(25, false);
+                return Performance.now() - start;
+            })()"));
+
+            Assert.IsTrue(elapsed >= 25);
+
+            var average = Convert.ToDouble(engine.Evaluate(@"(() => {
+                const start = Performance.now();
+                for (let i = 0; i < 1000; ++i) Performance.sleep(5, true);
+                return (Performance.now() - start) / 1000;
+            })()"));
+
+            Assert.IsTrue((average >= 5) && (average < 5.5));
+
+            var delta = Convert.ToDouble(engine.Evaluate(@"
+                Math.abs(Performance.timeOrigin + Performance.now() - Date.now());
+            "));
+
+            Assert.IsTrue(delta < 5);
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -4734,7 +5368,7 @@ namespace Microsoft.ClearScript.Test
 
             builder.AppendLine();
             AppendCpuProfileTestSequence(builder, 4, MiscHelpers.CreateSeededRandom(), new List<int>());
-            builder.Append(@"                })()");
+            builder.Append("                })()");
             builder.AppendLine();
 
             return builder.ToString();
@@ -5012,6 +5646,47 @@ namespace Microsoft.ClearScript.Test
             public ConstructorBindingTest(double c, int a = 789, string b = "bar")
             {
                 A = a; B = b; C = c;
+            }
+        }
+
+        public class SingleThreadSynchronizationContext : SynchronizationContext
+        {
+            private readonly BlockingCollection<(SendOrPostCallback, object)> queue = new BlockingCollection<(SendOrPostCallback, object)>();
+            private readonly Thread thread;
+
+            private SingleThreadSynchronizationContext()
+            {
+                thread = new Thread(RunLoop);
+                thread.Start();
+            }
+
+            public bool OnThread => Thread.CurrentThread == thread;
+
+            public static T RunTask<T>(Func<SingleThreadSynchronizationContext, Task<T>> createTask)
+            {
+                var context = new SingleThreadSynchronizationContext();
+
+                T result = default;
+                var doneEvent = new ManualResetEventSlim();
+
+                context.Post(_ => createTask(context).ContinueWith(task => { result = task.Result; doneEvent.Set(); }), null);
+                doneEvent.Wait();
+
+                context.queue.CompleteAdding();
+                context.thread.Join();
+
+                return result;
+            }
+
+            public override void Post(SendOrPostCallback callback, object state) => queue.Add((callback, state));
+
+            private void RunLoop()
+            {
+                SetSynchronizationContext(this);
+                foreach (var (callback, state) in queue.GetConsumingEnumerable())
+                {
+                    callback(state);
+                }
             }
         }
 

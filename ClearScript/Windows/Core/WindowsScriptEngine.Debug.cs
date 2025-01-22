@@ -129,6 +129,8 @@ namespace Microsoft.ClearScript.Windows.Core
 
             #region IDebugDocument implementation
 
+            // inherited methods only
+
             #endregion
 
             #region IDebugDocumentText implementation

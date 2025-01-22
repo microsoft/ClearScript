@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
@@ -33,8 +34,7 @@ namespace Microsoft.ClearScript
     {
         #region data
 
-        private readonly Dictionary<string, object> dictionary;
-        private readonly ICollection<KeyValuePair<string, object>> collection;
+        private readonly IDictionary<string, object> dictionary;
         private readonly bool isReadOnly;
         private readonly ConcurrentWeakSet<ScriptEngine> engineSet = new ConcurrentWeakSet<ScriptEngine>();
 
@@ -80,10 +80,15 @@ namespace Microsoft.ClearScript
         /// <param name="isReadOnly"><c>True</c> to make the <c><see cref="PropertyBag"/></c> read-only, <c>false</c> to make it writable.</param>
         /// <param name="comparer">The comparer to use for property names, or <c>null</c> to use the default string comparer.</param>
         public PropertyBag(bool isReadOnly, IEqualityComparer<string> comparer)
+            : this(isReadOnly, comparer, new Dictionary<string, object>(comparer ?? EqualityComparer<string>.Default))
         {
-            dictionary = new Dictionary<string, object>(comparer);
-            collection = dictionary;
+        }
+
+        internal PropertyBag(bool isReadOnly, IEqualityComparer<string> comparer, IDictionary<string, object> dictionary)
+        {
+            this.dictionary = dictionary;
             this.isReadOnly = isReadOnly;
+            Comparer = comparer;
         }
 
         #endregion
@@ -93,7 +98,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Gets the property name comparer for the <c><see cref="PropertyBag"/></c>.
         /// </summary>
-        public IEqualityComparer<string> Comparer => dictionary.Comparer;
+        public IEqualityComparer<string> Comparer { get; }
 
         /// <summary>
         /// Sets a property value without checking whether the <c><see cref="PropertyBag"/></c> is read-only.
@@ -217,20 +222,20 @@ namespace Microsoft.ClearScript
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
         {
-            return collection.Contains(item);
+            return dictionary.Contains(item);
         }
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
         {
-            collection.CopyTo(array, arrayIndex);
+            dictionary.CopyTo(array, arrayIndex);
         }
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
         {
             CheckReadOnly();
-            if (collection.Remove(item))
+            if (dictionary.Remove(item))
             {
                 NotifyPropertyChanged(item.Key);
                 return true;
@@ -240,7 +245,7 @@ namespace Microsoft.ClearScript
         }
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
-        int ICollection<KeyValuePair<string, object>>.Count => collection.Count;
+        int ICollection<KeyValuePair<string, object>>.Count => dictionary.Count;
 
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         bool ICollection<KeyValuePair<string, object>>.IsReadOnly => isReadOnly;
@@ -341,6 +346,58 @@ namespace Microsoft.ClearScript
                     scriptableObject.OnExposedToScriptCode(engine);
                 }
             }
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// Provides a thread-safe <c><see cref="IPropertyBag"/></c> implementation.
+    /// </summary>
+    public class ConcurrentPropertyBag : PropertyBag
+    {
+        #region constructors
+
+        /// <summary>
+        /// Initializes a new writable <c><see cref="ConcurrentPropertyBag"/></c> with the default property name comparer.
+        /// </summary>
+        public ConcurrentPropertyBag()
+            : this(false)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new <c><see cref="ConcurrentPropertyBag"/></c> with the default property name comparer.
+        /// </summary>
+        /// <param name="isReadOnly"><c>True</c> to make the <c><see cref="PropertyBag"/></c> read-only, <c>false</c> to make it writable.</param>
+        /// <remarks>
+        /// The host can modify a read-only <c><see cref="ConcurrentPropertyBag"/></c> by calling
+        /// <c><see cref="PropertyBag.SetPropertyNoCheck">SetPropertyNoCheck</see></c>,
+        /// <c><see cref="PropertyBag.RemovePropertyNoCheck">RemovePropertyNoCheck</see></c>, or
+        /// <c><see cref="PropertyBag.ClearNoCheck">ClearNoCheck</see></c>.
+        /// </remarks>
+        public ConcurrentPropertyBag(bool isReadOnly)
+            : this(isReadOnly, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new writable <c><see cref="ConcurrentPropertyBag"/></c>.
+        /// </summary>
+        /// <param name="comparer">The comparer to use for property names, or <c>null</c> to use the default string comparer.</param>
+        public ConcurrentPropertyBag(IEqualityComparer<string> comparer)
+            : this(false, comparer)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new <c><see cref="ConcurrentPropertyBag"/></c>.
+        /// </summary>
+        /// <param name="isReadOnly"><c>True</c> to make the <c><see cref="ConcurrentPropertyBag"/></c> read-only, <c>false</c> to make it writable.</param>
+        /// <param name="comparer">The comparer to use for property names, or <c>null</c> to use the default string comparer.</param>
+        public ConcurrentPropertyBag(bool isReadOnly, IEqualityComparer<string> comparer)
+            : base(isReadOnly, comparer, new ConcurrentDictionary<string, object>(comparer ?? EqualityComparer<string>.Default))
+        {
         }
 
         #endregion

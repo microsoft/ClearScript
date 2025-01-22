@@ -34,6 +34,13 @@ namespace Microsoft.ClearScript
         /// </summary>
         public static DocumentCategory Script => ScriptDocument.Instance;
 
+        /// <summary>
+        /// Gets the document category for JSON documents.
+        /// </summary>
+        public static DocumentCategory Json => JsonDocument.Instance;
+
+        internal abstract DocumentKind Kind { get; }
+
         internal abstract string DefaultName { get; }
 
         #region Nested type: ScriptDocument
@@ -48,6 +55,8 @@ namespace Microsoft.ClearScript
 
             #region DocumentCategory overrides
 
+            internal override DocumentKind Kind => DocumentKind.Script;
+
             internal override string DefaultName => "Script";
 
             #endregion
@@ -57,6 +66,36 @@ namespace Microsoft.ClearScript
             public override string ToString()
             {
                 return "Script";
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Nested type: JsonDocument
+
+        private sealed class JsonDocument : DocumentCategory
+        {
+            public static readonly JsonDocument Instance = new JsonDocument();
+
+            private JsonDocument()
+            {
+            }
+
+            #region DocumentCategory overrides
+
+            internal override DocumentKind Kind => DocumentKind.Json;
+
+            internal override string DefaultName => "JSON";
+
+            #endregion
+
+            #region Object overrides
+
+            public override string ToString()
+            {
+                return "JSON Document";
             }
 
             #endregion

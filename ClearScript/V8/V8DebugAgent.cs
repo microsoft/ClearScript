@@ -24,6 +24,7 @@ namespace Microsoft.ClearScript.V8
         private readonly Guid targetId = Guid.NewGuid();
         private readonly string name;
         private readonly string version;
+        private readonly int port;
         private readonly IV8DebugListener listener;
 
         private TcpListener tcpListener;
@@ -39,6 +40,7 @@ namespace Microsoft.ClearScript.V8
         {
             this.name = name;
             this.version = version;
+            this.port = port;
             this.listener = listener;
 
             var started = false;
@@ -93,6 +95,7 @@ namespace Microsoft.ClearScript.V8
             if (Interlocked.CompareExchange(ref activeClient, null, client) == client)
             {
                 listener.DisconnectClient();
+                ThreadPool.QueueUserWorkItem(_ => V8Runtime.OnDebuggerDisconnected(new V8RuntimeDebuggerEventArgs(name, port)));
             }
         }
 
@@ -266,6 +269,7 @@ namespace Microsoft.ClearScript.V8
             {
                 listener.ConnectClient();
                 client.Start();
+                ThreadPool.QueueUserWorkItem(_ => V8Runtime.OnDebuggerConnected(new V8RuntimeDebuggerEventArgs(name, port)));
                 return true;
             }
 
@@ -279,6 +283,7 @@ namespace Microsoft.ClearScript.V8
             {
                 client.Dispose(errorCode, message);
                 listener.DisconnectClient();
+                ThreadPool.QueueUserWorkItem(_ => V8Runtime.OnDebuggerDisconnected(new V8RuntimeDebuggerEventArgs(name, port)));
             }
         }
 

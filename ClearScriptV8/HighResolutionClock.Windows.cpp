@@ -8,25 +8,30 @@
 // HighResolutionClock implementation
 //-----------------------------------------------------------------------------
 
-static OnceFlag s_InitializationFlag;
-static LARGE_INTEGER s_TicksPerSecond;
+static TIMECAPS s_TimeCaps {};
+static auto s_GotTimeCaps = false;
+ 
+//-----------------------------------------------------------------------------
+
+bool HighResolutionClock::SetTimerResolution()
+{
+    static OnceFlag s_InitializationFlag;
+    s_InitializationFlag.CallOnce([]()
+    {
+        s_GotTimeCaps = ::timeGetDevCaps(&s_TimeCaps, sizeof s_TimeCaps) == MMSYSERR_NOERROR;
+    });
+
+    return s_GotTimeCaps && (::timeBeginPeriod(s_TimeCaps.wPeriodMin) == TIMERR_NOERROR);
+}
 
 //-----------------------------------------------------------------------------
 
-double HighResolutionClock::GetRelativeSeconds()
+void HighResolutionClock::RestoreTimerResolution()
 {
-    s_InitializationFlag.CallOnce([]
+    if (s_GotTimeCaps)
     {
-        ASSERT_EVAL(::QueryPerformanceFrequency(&s_TicksPerSecond));
-    });
-
-    LARGE_INTEGER tickCount;
-    ASSERT_EVAL(::QueryPerformanceCounter(&tickCount));
-
-    auto wholeSeconds = tickCount.QuadPart / s_TicksPerSecond.QuadPart;
-    auto remainingTicks = tickCount.QuadPart % s_TicksPerSecond.QuadPart;
-
-    return wholeSeconds + (static_cast<double>(remainingTicks) / s_TicksPerSecond.QuadPart);
+        ASSERT_EVAL(::timeEndPeriod(s_TimeCaps.wPeriodMin) == TIMERR_NOERROR);
+    }
 }
 
 //-----------------------------------------------------------------------------

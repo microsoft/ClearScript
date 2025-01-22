@@ -18,7 +18,7 @@ namespace Microsoft.ClearScript
     {
         private static readonly string[] auxPropertyNames = { "out", "ref", "value" };
 
-        public override string[] GetAuxPropertyNames(IHostInvokeContext context, BindingFlags bindFlags)
+        public override string[] GetAuxPropertyNames(IHostContext context, BindingFlags bindFlags)
         {
             return auxPropertyNames;
         }
@@ -70,7 +70,7 @@ namespace Microsoft.ClearScript
 
         public override object DynamicInvokeTarget => Value;
 
-        public override HostTargetFlags GetFlags(IHostInvokeContext context)
+        public override HostTargetFlags GetFlags(IHostContext context)
         {
             var flags = HostTargetFlags.AllowInstanceMembers | HostTargetFlags.AllowExtensionMethods;
             if (context.Engine.ExposeHostObjectStaticMembers)
@@ -81,7 +81,7 @@ namespace Microsoft.ClearScript
             return flags;
         }
 
-        public override bool TryInvokeAuxMember(IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(IHostContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             const BindingFlags getPropertyFlags =
                 BindingFlags.GetField |
@@ -147,9 +147,9 @@ namespace Microsoft.ClearScript
             return false;
         }
 
-        public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public override Invocability GetInvocability(IHostContext context, BindingFlags bindFlags, bool ignoreDynamic)
         {
-            return typeof(T).GetInvocability(bindFlags, accessContext, defaultAccess, ignoreDynamic);
+            return typeof(T).GetInvocability(context, bindFlags, ignoreDynamic);
         }
 
         #endregion

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
@@ -25,8 +25,8 @@ namespace Microsoft.ClearScript.Test
 
             Action innerTest = () =>
             {
-                // The Visual Studio 2013 debugging stack fails to release the engine properly,
-                // resulting in test failure. Visual Studio 2012 does not have this bug.
+                // The Visual Studio 2013 debugging stack fails to release the script engine
+                // properly, resulting in test failure. Visual Studio 2012 does not have this bug.
 
                 using (var scriptEngine = new VBScriptEngine())
                 {
@@ -49,8 +49,8 @@ namespace Microsoft.ClearScript.Test
             var innerBag = new PropertyBag();
             Action innerTest = () =>
             {
-                // The Visual Studio 2013 debugging stack fails to release the engine properly,
-                // resulting in test failure. Visual Studio 2012 does not have this bug.
+                // The Visual Studio 2013 debugging stack fails to release the script engine
+                // properly, resulting in test failure. Visual Studio 2012 does not have this bug.
 
                 using (var scriptEngine = new VBScriptEngine())
                 {
@@ -135,6 +135,70 @@ namespace Microsoft.ClearScript.Test
                 }
 
                 scriptEngine.AddHostObject("bag", bag);
+                if (Interlocked.Increment(ref engineCount) == threadCount)
+                {
+                    checkpointEvent.Set();
+                }
+
+                continueEvent.Wait();
+
+                scriptEngine.Dispose();
+                if (Interlocked.Decrement(ref engineCount) == 0)
+                {
+                    stopEvent.Set();
+                }
+
+                // ReSharper restore AccessToDisposedClosure
+            };
+
+            var threads = Enumerable.Range(0, threadCount).Select(index => new Thread(body)).ToArray();
+            threads.ForEach((thread, index) => thread.Start(index));
+
+            startEvent.Set();
+            checkpointEvent.Wait();
+            Assert.AreEqual(threadCount + 1, bag.EngineCount);
+
+            continueEvent.Set();
+            stopEvent.Wait();
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced);
+            Assert.AreEqual(1, bag.EngineCount);
+
+            Array.ForEach(threads, thread => thread.Join());
+            startEvent.Dispose();
+            checkpointEvent.Dispose();
+            continueEvent.Dispose();
+            stopEvent.Dispose();
+        }
+
+        [TestMethod, TestCategory("PropertyBag")]
+        public void PropertyBag_Concurrent_JScript()
+        {
+            var bag = new ConcurrentPropertyBag();
+            engine.AddHostObject("bag", bag);
+
+            var threadCount = Environment.Is64BitProcess ? 512 : 16;
+            var engineCount = 0;
+
+            var startEvent = new ManualResetEventSlim(false);
+            var checkpointEvent = new ManualResetEventSlim(false);
+            var continueEvent = new ManualResetEventSlim(false);
+            var stopEvent = new ManualResetEventSlim(false);
+
+            ParameterizedThreadStart body = arg =>
+            {
+                // ReSharper disable AccessToDisposedClosure
+
+                var index = (int)arg;
+                startEvent.Wait();
+
+                var scriptEngine = new Windows.Core.JScriptEngine(Windows.Core.NullSyncInvoker.Instance);
+
+                scriptEngine.AddHostObject("bag", bag);
+                scriptEngine.Global["index"] = index;
+
+                scriptEngine.Execute("bag['foo' + index] = index");
+                Assert.AreEqual(index, scriptEngine.Evaluate("bag['foo' + index]"));
+
                 if (Interlocked.Increment(ref engineCount) == threadCount)
                 {
                     checkpointEvent.Set();

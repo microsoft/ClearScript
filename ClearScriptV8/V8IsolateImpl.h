@@ -319,7 +319,7 @@ public:
 
     v8::Local<v8::Module> CreateSyntheticModule(v8::Local<v8::String> moduleName, const std::vector<v8::Local<v8::String>>& exportNames, v8::Module::SyntheticModuleEvaluationSteps evaluationSteps)
     {
-        return v8::Module::CreateSyntheticModule(m_upIsolate.get(), moduleName, exportNames, evaluationSteps);
+        return v8::Module::CreateSyntheticModule(m_upIsolate.get(), moduleName, v8::MemorySpan<const v8::Local<v8::String>>(exportNames.cbegin(), exportNames.cend()), evaluationSteps);
     }
 
     v8::Maybe<bool> SetSyntheticModuleExport(v8::Local<v8::Module> hModule, v8::Local<v8::String> hName, v8::Local<v8::Value> hValue)
@@ -329,7 +329,7 @@ public:
 
     v8::ScriptOrigin CreateScriptOrigin(v8::Local<v8::Value> hResourceName, int lineOffset = 0, int columnOffset = 0, bool isSharedCrossOrigin = false, int scriptId = -1, v8::Local<v8::Value> hSourceMapUrl = v8::Local<v8::Value>(), bool isOpaque = false, bool isWasm = false, bool isModule = false, v8::Local<v8::PrimitiveArray> hHostDefinedOptions = v8::Local<v8::PrimitiveArray>())
     {
-        return v8::ScriptOrigin(m_upIsolate.get(), hResourceName, lineOffset, columnOffset, isSharedCrossOrigin, scriptId, hSourceMapUrl, isOpaque, isWasm, isModule, hHostDefinedOptions);
+        return v8::ScriptOrigin(hResourceName, lineOffset, columnOffset, isSharedCrossOrigin, scriptId, hSourceMapUrl, isOpaque, isWasm, isModule, hHostDefinedOptions);
     }
 
     template <typename T>
@@ -397,19 +397,33 @@ public:
 
         END_MUTEX_SCOPE
 
-        m_upIsolate->TerminateExecution();
-        m_IsExecutionTerminating = true;
+        BEGIN_MUTEX_SCOPE(m_TerminateExecutionMutex)
+
+            if (m_pExecutionScope != nullptr)
+            {
+                TerminateExecutionInternal();
+            }
+
+        END_MUTEX_SCOPE
     }
 
     bool IsExecutionTerminating()
     {
-        return m_upIsolate->IsExecutionTerminating() || m_IsExecutionTerminating;
+        BEGIN_MUTEX_SCOPE(m_TerminateExecutionMutex)
+            return m_IsExecutionTerminating;
+        END_MUTEX_SCOPE
     }
 
     void CancelTerminateExecution()
     {
-        m_upIsolate->CancelTerminateExecution();
-        m_IsExecutionTerminating = false;
+        BEGIN_MUTEX_SCOPE(m_TerminateExecutionMutex)
+
+            if (m_pExecutionScope != nullptr)
+            {
+                CancelTerminateExecutionInternal();
+            }
+
+        END_MUTEX_SCOPE
     }
 
     int ContextDisposedNotification()
@@ -476,8 +490,9 @@ public:
     virtual void CancelAwaitDebugger() override;
 
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) override;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, std::vector<uint8_t>& cacheBytes) override;
-    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheType cacheType, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
+    virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult) override;
 
     virtual bool GetEnableInterruptPropagation() override;
     virtual void SetEnableInterruptPropagation(bool value) override;
@@ -535,8 +550,14 @@ public:
 
     bool TryGetCachedScriptInfo(uint64_t uniqueId, V8DocumentInfo& documentInfo);
     v8::Local<v8::UnboundScript> GetCachedScript(uint64_t uniqueId, size_t codeDigest);
+    v8::Local<v8::UnboundScript> GetCachedScript(uint64_t uniqueId, size_t codeDigest, std::vector<uint8_t>& cacheBytes);
     void CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript);
+    void CacheScript(const V8DocumentInfo& documentInfo, size_t codeDigest, v8::Local<v8::UnboundScript> hScript, const std::vector<uint8_t>& cacheBytes);
+    void SetCachedScriptCacheBytes(uint64_t uniqueId, size_t codeDigest, const std::vector<uint8_t>& cacheBytes);
     void ClearScriptCache();
+
+    void TerminateExecutionInternal();
+    void CancelTerminateExecutionInternal();
 
     ~V8IsolateImpl();
 
@@ -585,6 +606,7 @@ private:
         V8DocumentInfo DocumentInfo;
         size_t CodeDigest;
         Persistent<v8::UnboundScript> hScript;
+        std::vector<uint8_t> CacheBytes;
     };
 
     enum class RunMessageLoopReason
@@ -617,7 +639,12 @@ private:
     ExecutionScope* EnterExecutionScope(ExecutionScope* pExecutionScope, size_t* pStackMarker);
     void ExitExecutionScope(ExecutionScope* pPreviousExecutionScope);
 
-    void SetUpHeapWatchTimer();
+    ExecutionScope* SetExecutionScope(ExecutionScope* pExecutionScope);
+    bool InExecutionScope();
+    void OnExecutionStarted();
+    bool ExecutionStarted();
+
+    void SetUpHeapWatchTimer(bool forceMinInterval);
     void CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, bool timerTriggered);
 
     static void OnBeforeCallEntered(v8::Isolate* pIsolate);
@@ -665,10 +692,11 @@ private:
     std::atomic<uint32_t> m_CpuProfileSampleInterval;
     size_t m_StackWatchLevel;
     size_t* m_pStackLimit;
+    SimpleMutex m_TerminateExecutionMutex;
+    bool m_IsExecutionTerminating;
     ExecutionScope* m_pExecutionScope;
     const V8DocumentInfo* m_pDocumentInfo;
     std::atomic<bool> m_IsOutOfMemory;
-    std::atomic<bool> m_IsExecutionTerminating;
     std::atomic<bool> m_Released;
     Statistics m_Statistics;
 };

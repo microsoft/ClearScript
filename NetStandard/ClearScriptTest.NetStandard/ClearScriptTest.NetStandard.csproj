@@ -2,7 +2,7 @@
 
     <!-- ReSharper disable once UnknownProperty -->
     <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
-        <TargetFrameworks>netcoreapp3.1;net5.0-windows;net6.0-windows;net7.0-windows</TargetFrameworks>
+        <TargetFrameworks>netcoreapp3.1;net5.0-windows;net6.0-windows;net7.0-windows;net8.0-windows</TargetFrameworks>
         <UseWPF>true</UseWPF>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -141,6 +141,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.4.0" />
+        <PackageReference Include="System.Net.Http" Version="4.3.4" />
     </ItemGroup>
 
     <ItemGroup>
@@ -181,6 +182,15 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\JavaScript\General.js" Link="JavaScript\General.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\Object.json" Link="JavaScript\Object.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\Array.json" Link="JavaScript\Array.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\..\ClearScriptTest\JavaScript\Malformed.json" Link="JavaScript\Malformed.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="..\..\ClearScriptTest\JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js" Link="JavaScript\LegacyCommonJS\Arithmetic\Arithmetic.js">

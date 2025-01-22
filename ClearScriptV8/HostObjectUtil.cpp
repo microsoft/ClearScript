@@ -230,12 +230,12 @@ public:
         StdString resourceName;
         StdString sourceMapUrl;
         uint64_t uniqueId;
-        StdBool isModule;
+        DocumentKind documentKind;
         StdString code;
         void* pvDocumentInfo;
-        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(LoadModule, sourceDocumentInfo.GetDocumentInfo(), specifier, resourceName, sourceMapUrl, uniqueId, isModule, code, pvDocumentInfo, exports);
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(LoadModule, sourceDocumentInfo.GetDocumentInfo(), specifier, resourceName, sourceMapUrl, uniqueId, documentKind, code, pvDocumentInfo, exports);
 
-        documentInfo = V8DocumentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, isModule, pvDocumentInfo);
+        documentInfo = V8DocumentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
         return code;
     }
 

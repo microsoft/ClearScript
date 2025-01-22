@@ -3,7 +3,7 @@
     <!-- ReSharper disable once UnknownProperty -->
     <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>netcoreapp3.1;net5.0-windows;net6.0-windows;net7.0-windows</TargetFrameworks>
+        <TargetFrameworks>netcoreapp3.1;net5.0-windows;net6.0-windows;net7.0-windows;net8.0-windows</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
@@ -23,7 +23,6 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <PlatformTarget>x86</PlatformTarget>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -31,7 +30,6 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <PlatformTarget>x86</PlatformTarget>
     </PropertyGroup>
 
     <ItemGroup>
@@ -42,7 +40,7 @@
 
     <ItemGroup>
         <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 
     <ItemGroup>

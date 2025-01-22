@@ -473,7 +473,7 @@ namespace Microsoft.ClearScript.Util
                 //
                 // UPDATE: The observed behavior is actually documented. As Dispose is invoked via
                 // the callback's only reference, the callback may become eligible for finalization
-                // during the call. Typically Dispose invokes GC.SuppressFinalize just before
+                // during the call. Typically, Dispose invokes GC.SuppressFinalize just before
                 // exiting, which, in addition to canceling finalization, extends the object's
                 // lifetime until Dispose has done its job. The callback here is unusual in that it
                 // requires finalization regardless of disposal, so the correct fix is for Dispose
@@ -506,6 +506,11 @@ namespace Microsoft.ClearScript.Util
 
         public static string GetTextContents(this Document document)
         {
+            if (document is StringDocument stringDocument)
+            {
+                return stringDocument.StringContents;
+            }
+
             using (var reader = new StreamReader(document.Contents, document.Encoding ?? Encoding.UTF8))
             {
                 return reader.ReadToEnd();

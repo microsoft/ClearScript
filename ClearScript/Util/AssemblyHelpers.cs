@@ -74,22 +74,22 @@ namespace Microsoft.ClearScript.Util
             return null;
         }
 
-        public static T GetOrLoadCustomAttribute<T>(this Assembly assembly, bool inherit = true) where T : Attribute
+        public static T GetOrLoadCustomAttribute<T>(this Assembly assembly, IHostContext context, bool inherit = true) where T : Attribute
         {
-            return CustomAttributes.GetOrLoad<T>(assembly, inherit).SingleOrDefault();
+            return CustomAttributes.GetOrLoad<T>(context, assembly, inherit).SingleOrDefault();
         }
 
-        public static IEnumerable<T> GetOrLoadCustomAttributes<T>(this Assembly assembly, bool inherit = true) where T : Attribute
+        public static IEnumerable<T> GetOrLoadCustomAttributes<T>(this Assembly assembly, IHostContext context, bool inherit = true) where T : Attribute
         {
-            return CustomAttributes.GetOrLoad<T>(assembly, inherit);
+            return CustomAttributes.GetOrLoad<T>(context, assembly, inherit);
         }
 
-        public static bool HasCustomAttributes<T>(this Assembly assembly, bool inherit = true) where T : Attribute
+        public static bool HasCustomAttributes<T>(this Assembly assembly, IHostContext context, bool inherit = true) where T : Attribute
         {
-            return CustomAttributes.Has<T>(assembly, inherit);
+            return CustomAttributes.Has<T>(context, assembly, inherit);
         }
 
-        public static bool IsFriendOf(this Assembly thisAssembly, Assembly thatAssembly)
+        public static bool IsFriendOf(this Assembly thisAssembly, IHostContext context, Assembly thatAssembly)
         {
             if (thatAssembly == thisAssembly)
             {
@@ -97,7 +97,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var thisName = thisAssembly.GetName();
-            foreach (var attribute in thatAssembly.GetOrLoadCustomAttributes<InternalsVisibleToAttribute>(false))
+            foreach (var attribute in thatAssembly.GetOrLoadCustomAttributes<InternalsVisibleToAttribute>(context, false))
             {
                 var thatName = new AssemblyName(attribute.AssemblyName);
                 if (AssemblyName.ReferenceMatchesDefinition(thatName, thisName))

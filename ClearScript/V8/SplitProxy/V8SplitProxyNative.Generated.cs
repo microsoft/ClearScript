@@ -545,7 +545,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -553,13 +553,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -569,7 +569,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -578,7 +578,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -588,7 +588,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileUpdatingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Isolate_CompileUpdatingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+
+                                return hScript;
                             }
                         }
                     }
@@ -743,7 +766,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_CancelAwaitDebugger(hContext);
             }
 
-            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
+            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, bool evaluate)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -753,7 +776,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var resultScope = V8Value.CreateScope())
                             {
-                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
+                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
                                 return V8Value.Get(resultScope.Value);
                             }
                         }
@@ -761,7 +784,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -769,13 +792,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -785,7 +808,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -794,7 +817,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -804,7 +827,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileUpdatingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Context_CompileUpdatingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+                
+                                return hScript;
                             }
                         }
                     }
@@ -1618,7 +1664,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -1629,7 +1675,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -1642,12 +1688,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Isolate_CompileUpdatingCache(
+                [In] V8Isolate.Handle hIsolate,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
@@ -1812,7 +1872,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
@@ -1825,7 +1885,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -1836,7 +1896,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -1849,12 +1909,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileUpdatingCache(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
@@ -2604,7 +2678,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -2612,13 +2686,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -2628,7 +2702,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -2637,7 +2711,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -2647,7 +2721,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileUpdatingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Isolate_CompileUpdatingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+
+                                return hScript;
                             }
                         }
                     }
@@ -2802,7 +2899,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_CancelAwaitDebugger(hContext);
             }
 
-            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
+            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, bool evaluate)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -2812,7 +2909,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var resultScope = V8Value.CreateScope())
                             {
-                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
+                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
                                 return V8Value.Get(resultScope.Value);
                             }
                         }
@@ -2820,7 +2917,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -2828,13 +2925,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -2844,7 +2941,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -2853,7 +2950,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -2863,7 +2960,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileUpdatingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Context_CompileUpdatingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+                
+                                return hScript;
                             }
                         }
                     }
@@ -3677,7 +3797,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -3688,7 +3808,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -3701,12 +3821,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Isolate_CompileUpdatingCache(
+                [In] V8Isolate.Handle hIsolate,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -3871,7 +4005,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
@@ -3884,7 +4018,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -3895,7 +4029,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -3908,12 +4042,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileUpdatingCache(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -4663,7 +4811,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -4671,13 +4819,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -4687,7 +4835,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -4696,7 +4844,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -4706,7 +4854,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileUpdatingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Isolate_CompileUpdatingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+
+                                return hScript;
                             }
                         }
                     }
@@ -4861,7 +5032,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_CancelAwaitDebugger(hContext);
             }
 
-            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
+            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, bool evaluate)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -4871,7 +5042,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var resultScope = V8Value.CreateScope())
                             {
-                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
+                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
                                 return V8Value.Get(resultScope.Value);
                             }
                         }
@@ -4879,7 +5050,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -4887,13 +5058,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -4903,7 +5074,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -4912,7 +5083,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -4922,7 +5093,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileUpdatingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Context_CompileUpdatingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+                
+                                return hScript;
                             }
                         }
                     }
@@ -5736,7 +5930,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -5747,7 +5941,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -5760,12 +5954,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Isolate_CompileUpdatingCache(
+                [In] V8Isolate.Handle hIsolate,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -5930,7 +6138,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
@@ -5943,7 +6151,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -5954,7 +6162,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -5967,12 +6175,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileUpdatingCache(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -6722,7 +6944,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -6730,13 +6952,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -6746,7 +6968,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -6755,7 +6977,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -6765,7 +6987,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileUpdatingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Isolate_CompileUpdatingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+
+                                return hScript;
                             }
                         }
                     }
@@ -6920,7 +7165,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_CancelAwaitDebugger(hContext);
             }
 
-            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
+            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, bool evaluate)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -6930,7 +7175,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var resultScope = V8Value.CreateScope())
                             {
-                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
+                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
                                 return V8Value.Get(resultScope.Value);
                             }
                         }
@@ -6938,7 +7183,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -6946,13 +7191,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -6962,7 +7207,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -6971,7 +7216,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -6981,7 +7226,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileUpdatingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Context_CompileUpdatingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+                
+                                return hScript;
                             }
                         }
                     }
@@ -7795,7 +8063,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -7806,7 +8074,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -7819,12 +8087,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Isolate_CompileUpdatingCache(
+                [In] V8Isolate.Handle hIsolate,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
@@ -7989,7 +8271,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
@@ -8002,7 +8284,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -8013,7 +8295,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -8026,12 +8308,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileUpdatingCache(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.linux-x64.so", CallingConvention = CallingConvention.StdCall)]
@@ -8781,7 +9077,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -8789,13 +9085,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -8805,7 +9101,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -8814,7 +9110,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -8824,7 +9120,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileUpdatingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Isolate_CompileUpdatingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+
+                                return hScript;
                             }
                         }
                     }
@@ -8979,7 +9298,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_CancelAwaitDebugger(hContext);
             }
 
-            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
+            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, bool evaluate)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -8989,7 +9308,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var resultScope = V8Value.CreateScope())
                             {
-                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
+                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
                                 return V8Value.Get(resultScope.Value);
                             }
                         }
@@ -8997,7 +9316,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -9005,13 +9324,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -9021,7 +9340,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -9030,7 +9349,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -9040,7 +9359,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileUpdatingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Context_CompileUpdatingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+                
+                                return hScript;
                             }
                         }
                     }
@@ -9854,7 +10196,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -9865,7 +10207,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -9878,12 +10220,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Isolate_CompileUpdatingCache(
+                [In] V8Isolate.Handle hIsolate,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
@@ -10048,7 +10404,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
@@ -10061,7 +10417,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -10072,7 +10428,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -10085,12 +10441,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileUpdatingCache(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.linux-arm64.so", CallingConvention = CallingConvention.StdCall)]
@@ -10840,7 +11210,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -10848,13 +11218,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -10864,7 +11234,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -10873,7 +11243,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -10883,7 +11253,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileUpdatingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Isolate_CompileUpdatingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+
+                                return hScript;
                             }
                         }
                     }
@@ -11038,7 +11431,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_CancelAwaitDebugger(hContext);
             }
 
-            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
+            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, bool evaluate)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -11048,7 +11441,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var resultScope = V8Value.CreateScope())
                             {
-                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
+                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
                                 return V8Value.Get(resultScope.Value);
                             }
                         }
@@ -11056,7 +11449,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -11064,13 +11457,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -11080,7 +11473,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -11089,7 +11482,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -11099,7 +11492,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileUpdatingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Context_CompileUpdatingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+                
+                                return hScript;
                             }
                         }
                     }
@@ -11913,7 +12329,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -11924,7 +12340,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -11937,12 +12353,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Isolate_CompileUpdatingCache(
+                [In] V8Isolate.Handle hIsolate,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
@@ -12107,7 +12537,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
@@ -12120,7 +12550,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -12131,7 +12561,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -12144,12 +12574,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileUpdatingCache(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.linux-arm.so", CallingConvention = CallingConvention.StdCall)]
@@ -12899,7 +13343,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -12907,13 +13351,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -12923,7 +13367,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -12932,7 +13376,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -12942,7 +13386,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileUpdatingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Isolate_CompileUpdatingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+
+                                return hScript;
                             }
                         }
                     }
@@ -13097,7 +13564,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_CancelAwaitDebugger(hContext);
             }
 
-            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
+            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, bool evaluate)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -13107,7 +13574,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var resultScope = V8Value.CreateScope())
                             {
-                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
+                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
                                 return V8Value.Get(resultScope.Value);
                             }
                         }
@@ -13115,7 +13582,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -13123,13 +13590,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -13139,7 +13606,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -13148,7 +13615,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -13158,7 +13625,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileUpdatingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Context_CompileUpdatingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+                
+                                return hScript;
                             }
                         }
                     }
@@ -13972,7 +14462,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -13983,7 +14473,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -13996,12 +14486,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Isolate_CompileUpdatingCache(
+                [In] V8Isolate.Handle hIsolate,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
@@ -14166,7 +14670,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
@@ -14179,7 +14683,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -14190,7 +14694,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -14203,12 +14707,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileUpdatingCache(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.osx-x64.dylib", CallingConvention = CallingConvention.StdCall)]
@@ -14958,7 +15476,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Isolate_CancelAwaitDebugger(hIsolate);
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_Compile(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -14966,13 +15484,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Isolate_Compile(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileProducingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -14982,7 +15500,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Isolate_CompileProducingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -14991,7 +15509,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileConsumingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -15001,7 +15519,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Isolate_CompileConsumingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Isolate_CompileUpdatingCache(V8Isolate.Handle hIsolate, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Isolate_CompileUpdatingCache(hIsolate, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+
+                                return hScript;
                             }
                         }
                     }
@@ -15156,7 +15697,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Context_CancelAwaitDebugger(hContext);
             }
 
-            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, bool evaluate)
+            object IV8SplitProxyNative.V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, bool evaluate)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -15166,7 +15707,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var resultScope = V8Value.CreateScope())
                             {
-                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
+                                V8Context_ExecuteCode(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, evaluate, resultScope.Value);
                                 return V8Value.Get(resultScope.Value);
                             }
                         }
@@ -15174,7 +15715,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code)
+            V8Script.Handle IV8SplitProxyNative.V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -15182,13 +15723,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         using (var codeScope = StdString.CreateScope(code))
                         {
-                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value);
+                            return V8Context_Compile(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value);
                         }
                     }
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -15198,7 +15739,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope())
                             {
-                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
+                                var hScript = V8Context_CompileProducingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value);
                                 cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
                                 return hScript;
                             }
@@ -15207,7 +15748,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
-            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, bool isModule, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
             {
                 using (var resourceNameScope = StdString.CreateScope(resourceName))
                 {
@@ -15217,7 +15758,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         {
                             using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
                             {
-                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, isModule, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                                return V8Context_CompileConsumingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheAccepted);
+                            }
+                        }
+                    }
+                }
+            }
+
+            V8Script.Handle IV8SplitProxyNative.V8Context_CompileUpdatingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult)
+            {
+                using (var resourceNameScope = StdString.CreateScope(resourceName))
+                {
+                    using (var sourceMapUrlScope = StdString.CreateScope(sourceMapUrl))
+                    {
+                        using (var codeScope = StdString.CreateScope(code))
+                        {
+                            using (var cacheBytesScope = StdByteArray.CreateScope(cacheBytes))
+                            {
+                                var hScript = V8Context_CompileUpdatingCache(hContext, resourceNameScope.Value, sourceMapUrlScope.Value, uniqueId, documentKind, pDocumentInfo, codeScope.Value, cacheKind, cacheBytesScope.Value, out cacheResult);
+                                if (cacheResult == V8CacheResult.Updated)
+                                {
+                                    cacheBytes = StdByteArray.ToArray(cacheBytesScope.Value);
+                                }
+                
+                                return hScript;
                             }
                         }
                     }
@@ -16031,7 +16595,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -16042,7 +16606,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -16055,12 +16619,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Isolate_CompileUpdatingCache(
+                [In] V8Isolate.Handle hIsolate,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
@@ -16225,7 +16803,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] [MarshalAs(UnmanagedType.I1)] bool evaluate,
@@ -16238,7 +16816,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode
             );
@@ -16249,7 +16827,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
@@ -16262,12 +16840,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] StdString.Ptr pResourceName,
                 [In] StdString.Ptr pSourceMapUrl,
                 [In] ulong uniqueId,
-                [In] [MarshalAs(UnmanagedType.I1)] bool isModule,
+                [In] DocumentKind documentKind,
                 [In] IntPtr pDocumentInfo,
                 [In] StdString.Ptr pCode,
                 [In] V8CacheKind cacheKind,
                 [In] StdByteArray.Ptr pCacheBytes,
                 [Out] [MarshalAs(UnmanagedType.I1)] out bool cacheAccepted
+            );
+
+            [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Script.Handle V8Context_CompileUpdatingCache(
+                [In] V8Context.Handle hContext,
+                [In] StdString.Ptr pResourceName,
+                [In] StdString.Ptr pSourceMapUrl,
+                [In] ulong uniqueId,
+                [In] DocumentKind documentKind,
+                [In] IntPtr pDocumentInfo,
+                [In] StdString.Ptr pCode,
+                [In] V8CacheKind cacheKind,
+                [In] StdByteArray.Ptr pCacheBytes,
+                [Out] out V8CacheResult cacheResult
             );
 
             [DllImport("ClearScriptV8.osx-arm64.dylib", CallingConvention = CallingConvention.StdCall)]

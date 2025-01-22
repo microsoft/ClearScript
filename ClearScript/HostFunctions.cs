@@ -643,7 +643,7 @@ namespace Microsoft.ClearScript
         public T flags<T>(params T[] args)
         {
             var type = typeof(T);
-            if (!type.IsFlagsEnum())
+            if (!type.IsFlagsEnum(ScriptEngine.Current))
             {
                 throw new InvalidOperationException(MiscHelpers.FormatInvariant("{0} is not a flag set type", type.GetFullFriendlyName()));
             }

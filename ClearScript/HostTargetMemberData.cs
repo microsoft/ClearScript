@@ -30,12 +30,14 @@ namespace Microsoft.ClearScript
 
     internal class HostTargetMemberDataWithContext : HostTargetMemberData
     {
+        public readonly CustomAttributeLoader CustomAttributeLoader;
         public readonly Type AccessContext;
         public readonly ScriptAccess DefaultAccess;
         public readonly HostTargetFlags TargetFlags;
 
-        public HostTargetMemberDataWithContext(Type accessContext, ScriptAccess defaultAccess, HostTargetFlags targetFlags)
+        public HostTargetMemberDataWithContext(CustomAttributeLoader customAttributeLoader, Type accessContext, ScriptAccess defaultAccess, HostTargetFlags targetFlags)
         {
+            CustomAttributeLoader = customAttributeLoader;
             AccessContext = accessContext;
             DefaultAccess = defaultAccess;
             TargetFlags = targetFlags;

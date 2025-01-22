@@ -91,7 +91,7 @@ namespace Microsoft.ClearScript
         public void AddAssembly(Assembly assembly)
         {
             MiscHelpers.VerifyNonNullArgument(assembly, nameof(assembly));
-            assembly.GetAllTypes().Where(type => type.IsImportable()).ForEach(AddType);
+            assembly.GetAllTypes().Where(type => type.IsImportable(null)).ForEach(AddType);
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace Microsoft.ClearScript
         {
             MiscHelpers.VerifyNonNullArgument(assembly, nameof(assembly));
             var activeFilter = filter ?? defaultFilter;
-            assembly.GetAllTypes().Where(type => type.IsImportable() && activeFilter(type)).ForEach(AddType);
+            assembly.GetAllTypes().Where(type => type.IsImportable(null) && activeFilter(type)).ForEach(AddType);
         }
 
         /// <summary>

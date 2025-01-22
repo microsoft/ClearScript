@@ -40,9 +40,9 @@
         <Compile Include="..\..\ClearScript\ByRefArg.cs" Link="ByRefArg.cs" />
         <Compile Include="..\..\ClearScript\CanonicalRefTable.cs" Link="CanonicalRefTable.cs" />
         <Compile Include="..\..\ClearScript\ContinuationCallback.cs" Link="ContinuationCallback.cs" />
+        <Compile Include="..\..\ClearScript\CustomAttributeCache.cs" Link="CustomAttributeCache.cs" />
         <Compile Include="..\..\ClearScript\CustomAttributeLoader.cs" Link="CustomAttributeLoader.cs" />
         <Compile Include="..\..\ClearScript\CustomAttributes.cs" Link="CustomAttributes.cs" />
-        <Compile Include="..\..\ClearScript\CustomAttributes.NetFramework.cs" Link="CustomAttributes.NetFramework.cs" />
         <Compile Include="..\..\ClearScript\DefaultDocumentLoader.cs" Link="DefaultDocumentLoader.cs" />
         <Compile Include="..\..\ClearScript\DefaultScriptUsageAttribute.cs" Link="DefaultScriptUsageAttribute.cs" />
         <Compile Include="..\..\ClearScript\DelegateFactory.cs" Link="DelegateFactory.cs" />
@@ -57,6 +57,7 @@
         <Compile Include="..\..\ClearScript\DocumentContextCallback.cs" Link="DocumentContextCallback.cs" />
         <Compile Include="..\..\ClearScript\DocumentFlags.cs" Link="DocumentFlags.cs" />
         <Compile Include="..\..\ClearScript\DocumentInfo.cs" Link="DocumentInfo.cs" />
+        <Compile Include="..\..\ClearScript\DocumentKind.cs" Link="DocumentKind.cs" />
         <Compile Include="..\..\ClearScript\DocumentLoadCallback.cs" Link="DocumentLoadCallback.cs" />
         <Compile Include="..\..\ClearScript\DocumentLoader.cs" Link="DocumentLoader.cs" />
         <Compile Include="..\..\ClearScript\DocumentSettings.cs" Link="DocumentSettings.cs" />
@@ -100,6 +101,7 @@
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptExtensions.cs" Link="JavaScript\JavaScriptExtensions.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptObjectFlags.cs" Link="JavaScript\JavaScriptObjectFlags.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptObjectKind.cs" Link="JavaScript\JavaScriptObjectKind.cs" />
+        <Compile Include="..\..\ClearScript\JavaScript\JsonModuleManager.cs" Link="JavaScript\JsonModuleManager.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\ModuleCategory.cs" Link="JavaScript\ModuleCategory.cs" />
         <Compile Include="..\..\ClearScript\NoDefaultScriptAccessAttribute.cs" Link="NoDefaultScriptAccessAttribute.cs" />
         <Compile Include="..\..\ClearScript\NoScriptAccessAttribute.cs" Link="NoScriptAccessAttribute.cs" />
@@ -122,9 +124,7 @@
         <Compile Include="..\..\ClearScript\StringDocument.cs" Link="StringDocument.cs" />
         <Compile Include="..\..\ClearScript\Undefined.cs" Link="Undefined.cs" />
         <Compile Include="..\..\ClearScript\UniqueDocumentInfo.cs" Link="UniqueDocumentInfo.cs" />
-        <Compile Include="..\..\ClearScript\Util\TypesCache.cs">
-          <Link>TypesCache.cs</Link>
-        </Compile>
+        <Compile Include="..\..\ClearScript\Util\EnumUtils.cs" Link="Util\EnumUtils.cs" />
         <Compile Include="..\..\ClearScript\ValueRef.cs" Link="ValueRef.cs" />
         <Compile Include="..\..\ClearScript\Util\ArrayHelpers.cs" Link="Util\ArrayHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\AssemblyHelpers.cs" Link="Util\AssemblyHelpers.cs" />
@@ -150,7 +150,8 @@
         <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.NetFramework.cs" Link="Util\EnumerableHelpers.NetFramework.cs" />
         <Compile Include="..\..\ClearScript\Util\Holder.cs" Link="Util\Holder.cs" />
         <Compile Include="..\..\ClearScript\Util\IDynamic.cs" Link="Util\IDynamic.cs" />
-        <Compile Include="..\..\ClearScript\Util\IHostInvokeContext.cs" Link="Util\IHostInvokeContext.cs" />
+        <Compile Include="..\..\ClearScript\Util\IHostContext.cs" Link="Util\IHostContext.cs" />
+        <Compile Include="..\..\ClearScript\Util\IHostTargetContext.cs" Link="Util\IHostTargetContext.cs" />
         <Compile Include="..\..\ClearScript\Util\INativeCallback.cs" Link="Util\INativeCallback.cs" />
         <Compile Include="..\..\ClearScript\Util\InvokeHelpers.cs" Link="Util\InvokeHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\IScriptMarshalWrapper.cs" Link="Util\IScriptMarshalWrapper.cs" />

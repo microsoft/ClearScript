@@ -46,34 +46,34 @@ namespace Microsoft.ClearScript
 
         public override object DynamicInvokeTarget => target.DynamicInvokeTarget;
 
-        public override HostTargetFlags GetFlags(IHostInvokeContext context)
+        public override HostTargetFlags GetFlags(IHostContext context)
         {
             return target.GetFlags(context);
         }
 
-        public override string[] GetAuxMethodNames(IHostInvokeContext context, BindingFlags bindFlags)
+        public override string[] GetAuxMethodNames(IHostContext context, BindingFlags bindFlags)
         {
             return target.GetAuxMethodNames(context, bindFlags);
         }
 
-        public override string[] GetAuxPropertyNames(IHostInvokeContext context, BindingFlags bindFlags)
+        public override string[] GetAuxPropertyNames(IHostContext context, BindingFlags bindFlags)
         {
             return target.GetAuxPropertyNames(context, bindFlags);
         }
 
-        public override bool TryInvokeAuxMember(IHostInvokeContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvokeAuxMember(IHostContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             return target.TryInvokeAuxMember(context, name, invokeFlags, args, bindArgs, out result);
         }
 
-        public override bool TryInvoke(IHostInvokeContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
+        public override bool TryInvoke(IHostContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             return target.TryInvoke(context, invokeFlags, args, bindArgs, out result);
         }
 
-        public override Invocability GetInvocability(BindingFlags bindFlags, Type accessContext, ScriptAccess defaultAccess, bool ignoreDynamic)
+        public override Invocability GetInvocability(IHostContext context, BindingFlags bindFlags, bool ignoreDynamic)
         {
-            return target.GetInvocability(bindFlags, accessContext, defaultAccess, ignoreDynamic);
+            return target.GetInvocability(context, bindFlags, ignoreDynamic);
         }
 
         #endregion

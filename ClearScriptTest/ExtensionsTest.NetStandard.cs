@@ -127,6 +127,8 @@ namespace Microsoft.ClearScript.Test
             {
                 yield return asyncEnumerator.Current;
             }
+
+            asyncEnumerator.DisposeAsync().AsTask().Wait();
         }
 
         #endregion

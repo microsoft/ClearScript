@@ -1,6 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8;
+using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,11 +22,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Microsoft.ClearScript.V8;
-using Microsoft.ClearScript.Util;
-using Microsoft.CSharp.RuntimeBinder;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -1753,6 +1753,46 @@ namespace Microsoft.ClearScript.Test
             engine.Execute("Array.from(test.Values)");
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8HostPropertyEnumeration()
+        {
+            var foo = new PropertyBag { { "foo", 123 }, { "bar", "baz" } };
+
+            engine.Script.foo = foo;
+            engine.Execute(@"
+                var keys = [];
+                for (let key in foo) {
+                    keys.push(key);
+                }
+            ");
+
+            Assert.AreEqual(foo.Keys.Count, engine.Script.keys.length);
+            Assert.IsTrue(foo.Keys.All(key => engine.Script.keys.includes(key)));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AnonymousTypeMemberEnumeration()
+        {
+            var foo = new { foo = 123, bar = "baz" };
+            ((V8ScriptEngine)engine).SuppressInstanceMethodEnumeration = true;
+
+            Assert.AreEqual(2, engine.Script.Object.keys(foo).length);
+            Assert.IsTrue(new[] { "foo", "bar" }.All(key => engine.Script.Object.keys(foo).includes(key)));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_AnonymousTypeMemberEnumeration_VB()
+        {
+            TestUtil.InvokeVBTestSub(@"
+                Using engine As New V8ScriptEngine
+                    engine.Script.foo = New With {.foo = 123, .bar = ""baz""}
+                    engine.SuppressInstanceMethodEnumeration = True
+                    Assert.AreEqual(2, engine.Evaluate(""Object.keys(foo).length""))
+                    Assert.IsTrue((New String() {""foo"", ""bar""}).All(Function (key) engine.Evaluate(""Object.keys(foo).includes('"" & key & ""')"")))
+                End Using
+            ");
+        }
+
     #if NET6_0_OR_GREATER
 
         [TestMethod, TestCategory("BugFix")]
@@ -1796,6 +1836,70 @@ namespace Microsoft.ClearScript.Test
         }
 
     #endif // !NET6_0_OR_GREATER
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_PropertyAccessorRecursion()
+        {
+            engine.Script.test = new PropertyAccessorRecursionTest { Engine = engine };
+            var result = engine.Evaluate(@"
+                (function() {
+                    let count = 0;
+                    globalThis.onGetProperty = function () {
+                        if (count++ < 5) {
+                            const value = test.Property;
+                        }
+                    };
+                    globalThis.onSetProperty = function () {
+                        if (test.Property == 123) {
+                            test.Property = 456;
+                        } else {
+                            test.Property = 789;
+                        }
+                    };
+                })();
+                test.Property = 123;
+                test.Property
+            ");
+            Assert.AreEqual(789, result);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8Runtime_CreateScriptEngineAfterNoopInterrupt()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var tempEngine = runtime.CreateScriptEngine())
+                {
+                    tempEngine.Interrupt();
+                    using (runtime.CreateScriptEngine())
+                    {
+                    }
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8Runtime_CreateScriptEngineWithPendingInterrupt()
+        {
+            using (var runtime = new V8Runtime())
+            {
+                using (var tempEngine = runtime.CreateScriptEngine())
+                {
+                    // ReSharper disable AccessToDisposedClosure
+
+                    tempEngine.Script.foo = new Action(() =>
+                    {
+                        tempEngine.Interrupt();
+                        TestUtil.AssertException<ScriptEngineException>(() => runtime.CreateScriptEngine(), false);
+                        tempEngine.CancelInterrupt();
+                    });
+
+                    // ReSharper restore AccessToDisposedClosure
+
+                    tempEngine.Execute("foo()");
+                }
+            }
+        }
 
         // ReSharper restore InconsistentNaming
 
@@ -2339,6 +2443,30 @@ namespace Microsoft.ClearScript.Test
                 }
 
                 return base.LoadCustomAttributes<T>(resource, inherit);
+            }
+        }
+
+        public class PropertyAccessorRecursionTest
+        {
+            public ScriptEngine Engine;
+            private int property;
+
+            public int Property
+            {
+                get
+                {
+                    Engine.Script.onGetProperty();
+                    return property;
+                }
+
+                set
+                {
+                    if (value != property)
+                    {
+                        property = value;
+                        Engine.Script.onSetProperty();
+                    }
+                }
             }
         }
 

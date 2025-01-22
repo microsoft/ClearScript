@@ -30,6 +30,8 @@ namespace Microsoft.ClearScript.V8
 
         public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
 
+        public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, ref byte[] cacheBytes, out V8CacheResult cacheResult);
+
         public abstract bool EnableInterruptPropagation { get; set; }
 
         public abstract bool DisableHeapSizeViolationInterrupt { get; set; }

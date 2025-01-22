@@ -29,7 +29,7 @@ namespace Microsoft.ClearScript.Test
 
             Console.WriteLine("ClearScript Console ({0}, {1}, {2} {3})", RuntimeInformation.FrameworkDescription.Trim(), RuntimeInformation.OSDescription.Trim(), RuntimeInformation.ProcessArchitecture, flavor);
 
-            using (var engine = new V8ScriptEngine(nameof(ClearScriptConsole), V8ScriptEngineFlags.EnableDebugging))
+            using (var engine = new V8ScriptEngine(nameof(ClearScriptConsole), V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AddPerformanceObject))
             {
                 engine.AddHostObject("host", new ExtendedHostFunctions());
                 engine.AddHostObject("lib", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib", "System", "System.Core", "System.Numerics", "ClearScript.Core", "ClearScript.V8"));
