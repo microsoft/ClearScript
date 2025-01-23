@@ -1053,6 +1053,8 @@ namespace Microsoft.ClearScript.V8
 
         #region internal members
 
+        internal V8ContextProxy ContextProxy => proxy;
+
         internal V8Runtime.Statistics GetRuntimeStatistics()
         {
             VerifyNotDisposed();

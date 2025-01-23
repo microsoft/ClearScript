@@ -11,7 +11,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         private V8EntityHolder holder;
 
-        private V8Context.Handle Handle => (V8Context.Handle)holder.Handle;
+        internal V8Context.Handle Handle => (V8Context.Handle)holder.Handle;
 
         public V8ContextProxyImpl(V8IsolateProxy isolateProxy, string name, V8ScriptEngineFlags flags, int debugPort)
         {
