@@ -5,6 +5,14 @@
 
 
 
+
+
+
+
+
+
+
+
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -13,6 +21,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("ClearScript")]
 [assembly: AssemblyCopyright("(c) Microsoft Corporation")]
 [assembly: InternalsVisibleTo("ClearScript.V8")]
+[assembly: InternalsVisibleTo("Decentraland.ClearScript")]
 
 [assembly: ComVisible(false)]
 [assembly: AssemblyVersion("7.4.5")]
