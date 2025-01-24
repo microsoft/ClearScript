@@ -1482,10 +1482,21 @@ namespace Microsoft.ClearScript.V8
 
             ScriptInvoke(() =>
             {
-                var marshaledItem = MarshalToScript(item, flags);
-                if (!(marshaledItem is HostItem))
+                object marshaledItem;
+
+#if NETCOREAPP || NETSTANDARD
+                if (item is SplitProxy.IV8HostObject)
                 {
-                    throw new InvalidOperationException("Invalid host item");
+                    marshaledItem = item;
+                }
+                else
+#endif
+                {
+                    marshaledItem = MarshalToScript(item, flags);
+                    if (!(marshaledItem is HostItem))
+                    {
+                        throw new InvalidOperationException("Invalid host item");
+                    }
                 }
 
                 proxy.AddGlobalItem(itemName, marshaledItem, globalMembers);
