@@ -26,9 +26,9 @@ namespace Microsoft.ClearScript
             var allByValueExpr = (count == 0) ? "true" : "GetAllByValue(" + string.Join(", ", Enumerable.Range(1, count).Select(index => "typeof(T" + index + ")")) + ")";
             var methodParamList = string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index + " a" + index));
             var argList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
-            var varDeclList = string.Join("\r\n                    ", Enumerable.Range(1, count).Select(index => "var v" + index + " = GetArgValue(a" + index + ");"));
+            var varDeclList = string.Join("\n                    ", Enumerable.Range(1, count).Select(index => "var v" + index + " = GetArgValue(a" + index + ");"));
             var byRefArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "ref v" + index));
-            var varAssignList = string.Join("\r\n                        ", Enumerable.Range(1, count).Select(index => "SetArgValue(a" + index + ", v" + index + ");"));
+            var varAssignList = string.Join("\n                        ", Enumerable.Range(1, count).Select(index => "SetArgValue(a" + index + ", v" + index + ");"));
         #>
 
         [ExcludeFromCodeCoverage]
@@ -97,9 +97,9 @@ namespace Microsoft.ClearScript
             var allByValueExpr = (count == 0) ? "true" : "GetAllByValue(" + string.Join(", ", Enumerable.Range(1, count).Select(index => "typeof(T" + index + ")")) + ")";
             var methodParamList = string.Join(", ", Enumerable.Range(1, count).Select(index => "T" + index + " a" + index));
             var argList = string.Join(", ", Enumerable.Range(1, count).Select(index => "a" + index));
-            var varDeclList = string.Join("\r\n                ", Enumerable.Range(1, count).Select(index => "var v" + index + " = GetArgValue(a" + index + ");"));
+            var varDeclList = string.Join("\n                ", Enumerable.Range(1, count).Select(index => "var v" + index + " = GetArgValue(a" + index + ");"));
             var byRefArgList = string.Join(", ", Enumerable.Range(1, count).Select(index => "ref v" + index));
-            var varAssignList = string.Join("\r\n                    ", Enumerable.Range(1, count).Select(index => "SetArgValue(a" + index + ", v" + index + ");"));
+            var varAssignList = string.Join("\n                    ", Enumerable.Range(1, count).Select(index => "SetArgValue(a" + index + ", v" + index + ");"));
         #>
 
         [ExcludeFromCodeCoverage]
