@@ -19,6 +19,7 @@
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -59,9 +60,11 @@
     <Compile Include="..\..\ClearScript\V8\IV8Object.cs" Link="V8\IV8Object.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\IV8SplitProxyNative.cs" Link="V8\SplitProxy\IV8SplitProxyNative.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\NativeCallbackImpl.cs" Link="V8\SplitProxy\NativeCallbackImpl.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\Uint8Array.cs" Link="V8\SplitProxy\Uint8Array.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ContextProxyImpl.cs" Link="V8\SplitProxy\V8ContextProxyImpl.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8DebugListenerImpl.cs" Link="V8\SplitProxy\V8DebugListenerImpl.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8EntityHolder.cs" Link="V8\SplitProxy\V8EntityHolder.cs" />
+    <Compile Include="..\..\ClearScript\V8\SplitProxy\V8Function.cs" Link="V8\SplitProxy\V8Function.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8IsolateProxyImpl.cs" Link="V8\SplitProxy\V8IsolateProxyImpl.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ObjectImpl.cs" Link="V8\SplitProxy\V8ObjectImpl.cs" />
     <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ScriptImpl.cs" Link="V8\SplitProxy\V8ScriptImpl.cs" />
