@@ -1,0 +1,26 @@
+{
+    "name": "org.decentraland.clearscript",
+    "version": "7.4.5",
+    "description": "This is a fork of Microsoft's ClearScript library, which itself is a wrapper around Google's V8 JavaScript engine. Besides being packaged for Unity, this version of ClearScript offers an additional unsafe, mostly alloc-free V8 API.",
+    "displayName": "ClearScript",
+    "unity": "2022.3",
+    "author": {
+        "name": "Decentraland",
+        "email": "hello@decentraland.org",
+        "url": "https://decentraland.org"
+    },
+    "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+    },
+    "documentationUrl": "https://github.com/decentraland/ClearScript",
+    "keywords": [
+        "clearscript",
+        "javascript",
+        "jscript",
+        "v8",
+        "vbscript",
+        "webassembly"
+    ],
+    "license": "MIT",
+    "licensesUrl": "https://github.com/decentraland/ClearScript/blob/master/License.txt"
+}

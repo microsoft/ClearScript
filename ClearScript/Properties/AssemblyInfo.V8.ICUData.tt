@@ -38,6 +38,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("ClearScript")]
 [assembly: AssemblyCopyright("(c) Microsoft Corporation")]
 [assembly: InternalsVisibleTo("<#= "ClearScript.V8" + publicKeySpec #>")]
+[assembly: InternalsVisibleTo("Decentraland.ClearScript")]
 
 [assembly: ComVisible(false)]
 [assembly: AssemblyVersion("<#= version.ToString(3) #>")]
