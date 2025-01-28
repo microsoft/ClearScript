@@ -19,6 +19,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         StdString.Ptr StdString_New(string value);
         string StdString_GetValue(StdString.Ptr pString);
+        void StdString_GetValue(StdString.Ptr pString, out IntPtr value, out int length);
         void StdString_SetValue(StdString.Ptr pString, string value);
         void StdString_Delete(StdString.Ptr pString);
 
@@ -171,6 +172,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         void V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext);
         void V8Context_CancelAwaitDebugger(V8Context.Handle hContext);
         object V8Context_ExecuteCode(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, bool evaluate);
+        void V8Context_ExecuteCode(V8Context.Handle hContext, StdString.Ptr pResourceName, StdString.Ptr pSourceMapUrl, ulong uniquId, DocumentKind documentKind, IntPtr pDocumentInfo, StdString.Ptr pCode, bool evaluate, V8Value.Ptr pResult);
         V8Script.Handle V8Context_Compile(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code);
         V8Script.Handle V8Context_CompileProducingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
         V8Script.Handle V8Context_CompileConsumingCache(V8Context.Handle hContext, string resourceName, string sourceMapUrl, ulong uniqueId, DocumentKind documentKind, IntPtr pDocumentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted);
@@ -199,6 +201,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #region V8 object methods
 
         object V8Object_GetNamedProperty(V8Object.Handle hObject, string name);
+        void V8Object_GetNamedProperty(V8Object.Handle hObject, StdString.Ptr pName, V8Value.Ptr pValue);
         bool V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value);
         void V8Object_SetNamedProperty(V8Object.Handle hObject, string name, object value);
         bool V8Object_DeleteNamedProperty(V8Object.Handle hObject, string name);
@@ -208,8 +211,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         bool V8Object_DeleteIndexedProperty(V8Object.Handle hObject, int index);
         int[] V8Object_GetPropertyIndices(V8Object.Handle hObject);
         object V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, object[] args);
+        void V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult);
         object V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args);
         void V8Object_GetArrayBufferOrViewInfo(V8Object.Handle hObject, out IV8Object arrayBuffer, out ulong offset, out ulong size, out ulong length);
+        void V8Object_GetArrayBufferOrViewInfo(V8Object.Handle hObject, V8Value.Ptr pArrayBuffer, out ulong offset, out ulong size, out ulong length);
         void V8Object_InvokeWithArrayBufferOrViewData(V8Object.Handle hObject, IntPtr pAction);
 
         #endregion

@@ -171,9 +171,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClearScriptConsole", "NetSt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClearScript.V8.ICUData", "NetStandard\ClearScript.V8.ICUData\ClearScript.V8.ICUData.csproj", "{47FC5CB5-A6F2-4FEE-99F8-A758D3A7373C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unity", "Unity", "{21CDAF3B-E2C1-498D-B3DC-FD7C451C8184}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unity", "Unity", "{C2F3A73A-B503-48AB-88CF-600252015008}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageBuilder", "Unity\PackageBuilder\PackageBuilder.csproj", "{12069E68-F85C-4C2E-812A-9F92F63AE9A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageBuilder", "Unity\PackageBuilder\PackageBuilder.csproj", "{D21DFD33-8138-4EBA-AE97-A7CB0B38D56B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
