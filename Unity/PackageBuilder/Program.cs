@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 try
 {
@@ -27,13 +30,77 @@ try
 
         string dstFile = string.Concat(dstPath, file.AsSpan(srcPath.Length));
         Directory.CreateDirectory(Path.GetDirectoryName(dstFile)!);
-        File.Copy(file, dstFile);
+
+        if (file.EndsWith("V8SplitProxyManaged.cs"))
+        {
+            using var reader = new StreamReader(file);
+            using var writer = new StreamWriter(dstFile);
+            writer.NewLine = "\n";
+            var methods = new Dictionary<string, string>();
+
+            while (true)
+            {
+                string? line = reader.ReadLine();
+
+                if (line == null)
+                    break;
+
+                {
+                    Match match = Regex.Match(line, @"\bGetMethodPair<(\w+)>\((\w+)\)");
+
+                    if (match.Success)
+                    {
+                        string delegateType = match.Groups[1].Value;
+                        string method = match.Groups[2].Value;
+                        methods.Add(method, delegateType);
+                    }
+                }
+
+                {
+                    Match match = Regex.Match(line, @"^(\s*)private static \w+ (\w+)\([^)]*\)");
+
+                    if (match.Success)
+                    {
+                        string method = match.Groups[2].Value;
+
+                        if (methods.TryGetValue(method, out string? delegateType))
+                        {
+                            writer.Write(match.Groups[1].Value);
+                            writer.Write("[AOT.MonoPInvokeCallback(typeof(");
+                            writer.Write(delegateType);
+                            writer.WriteLine("))]");
+                        }
+                    }
+                }
+
+                writer.WriteLine(line);
+            }
+        }
+        else
+        {
+            File.Copy(file, dstFile);
+        }
     }
 
-    foreach (string file in Directory.GetFiles(dstPath, "*.meta", SearchOption.AllDirectories))
+    foreach (string metaFile in Directory.GetFiles(dstPath, "*.meta", SearchOption.AllDirectories))
     {
-        if (!File.Exists(file[..^".meta".Length]))
-            File.Delete(file);
+        string fileOrFolder = metaFile[..^".meta".Length];
+
+        if (File.Exists(fileOrFolder))
+            continue;
+
+        if (Directory.Exists(fileOrFolder))
+        {
+            string[] files = Directory.GetFiles(fileOrFolder, "", SearchOption.AllDirectories);
+
+            if (files.Any(i => !i.EndsWith(".meta")))
+                continue;
+
+            // Delete meta files of directories that contain nothing but meta files. These directories
+            // will then become empty and eligible for deletion in the next step.
+        }
+
+        File.Delete(metaFile);
     }
 
     foreach (string folder in Directory.GetDirectories(dstPath, "", SearchOption.AllDirectories))
