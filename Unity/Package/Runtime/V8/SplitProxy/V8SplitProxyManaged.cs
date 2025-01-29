@@ -67,8 +67,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] StdString.Ptr pEngineName,
             [In] StdString.Ptr pMessage,
             [In] StdString.Ptr pStackTrace,
-            [In][MarshalAs(UnmanagedType.I1)] bool isFatal,
-            [In][MarshalAs(UnmanagedType.I1)] bool executionStarted,
+            [In] [MarshalAs(UnmanagedType.I1)] bool isFatal,
+            [In] [MarshalAs(UnmanagedType.I1)] bool executionStarted,
             [In] V8Value.Ptr pScriptException,
             [In] V8Value.Ptr pInnerException
         );
@@ -78,8 +78,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] StdString.Ptr pEngineName,
             [In] StdString.Ptr pMessage,
             [In] StdString.Ptr pStackTrace,
-            [In][MarshalAs(UnmanagedType.I1)] bool isFatal,
-            [In][MarshalAs(UnmanagedType.I1)] bool executionStarted,
+            [In] [MarshalAs(UnmanagedType.I1)] bool isFatal,
+            [In] [MarshalAs(UnmanagedType.I1)] bool executionStarted,
             [In] V8Value.Ptr pScriptException,
             [In] V8Value.Ptr pInnerException
         );
@@ -135,7 +135,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] StdString.Ptr pName,
             [In] StdString.Ptr pVersion,
             [In] int port,
-            [In][MarshalAs(UnmanagedType.I1)] bool remote,
+            [In] [MarshalAs(UnmanagedType.I1)] bool remote,
             [In] V8DebugCallback.Handle hCallback
         );
 
@@ -183,7 +183,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [In] IntPtr pObject,
             [In] StdString.Ptr pName,
             [In] V8Value.Ptr pValue,
-            [Out][MarshalAs(UnmanagedType.I1)] out bool isCacheable
+            [Out] [MarshalAs(UnmanagedType.I1)] out bool isCacheable
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -236,7 +236,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawInvokeHostObject(
             [In] IntPtr pObject,
-            [In][MarshalAs(UnmanagedType.I1)] bool asConstructor,
+            [In] [MarshalAs(UnmanagedType.I1)] bool asConstructor,
             [In] int argCount,
             [In] V8Value.Decoded.Ptr pArgs,
             [In] V8Value.Ptr pResult
@@ -1118,6 +1118,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return V8Settings.GlobalFlags;
         }
 
-#endregion
+        #endregion
     }
 }

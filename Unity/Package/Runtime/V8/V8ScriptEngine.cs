@@ -12,7 +12,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
-using Microsoft.ClearScript.V8.SplitProxy;
 using Newtonsoft.Json;
 
 namespace Microsoft.ClearScript.V8
@@ -1485,11 +1484,13 @@ namespace Microsoft.ClearScript.V8
             {
                 object marshaledItem;
 
-                if (item is IV8HostObject)
+#if NETCOREAPP || NETSTANDARD
+                if (item is SplitProxy.IV8HostObject)
                 {
                     marshaledItem = item;
                 }
                 else
+#endif
                 {
                     marshaledItem = MarshalToScript(item, flags);
                     if (!(marshaledItem is HostItem))
