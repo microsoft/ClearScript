@@ -2154,12 +2154,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(hObject, pName, pValue));
         }
 
-        public string[] GetNamedPropertyNames()
-        {
-            Handle hObject = ptr;
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetPropertyNames(hObject, false));
-        }
-
         /// <summary>
         /// Invoke the wrapped JavaScript object as a function.
         /// </summary>
