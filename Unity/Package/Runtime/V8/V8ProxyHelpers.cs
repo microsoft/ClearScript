@@ -205,7 +205,9 @@ namespace Microsoft.ClearScript.V8
 
         public static object MarshalExceptionToScript(object source, Exception exception)
         {
-            return ((IScriptMarshalWrapper)source).Engine.MarshalToScript(exception);
+            return source is IScriptMarshalWrapper scriptMarshalWrapper
+                ? scriptMarshalWrapper.Engine.MarshalToScript(exception)
+                : ScriptEngine.Current?.MarshalToScript(exception);
         }
 
         public static Exception MarshalExceptionToHost(object exception)

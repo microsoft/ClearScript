@@ -26,8 +26,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         /// <param name="value">The contents of the new std::wstring.</param>
         public StdString(string value)
         {
-            ptr = V8SplitProxyNative.Instance.StdString_New(value);
-            owns = true;
+            if (value != null)
+            {
+                ptr = V8SplitProxyNative.Instance.StdString_New(value);
+                owns = true;
+            }
+            else
+            {
+                ptr = Ptr.Null;
+                owns = false;
+            }
         }
 
         internal StdString(Ptr pValue)
@@ -54,6 +62,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         /// <returns>True if the strings are byte for byte equal, false otherwise.</returns>
         public bool Equals(string other)
         {
+            if (ptr == Ptr.Null)
+            {
+                return other == null;
+            }
+            else if (other == null)
+            {
+                return false;
+            }
+
             V8SplitProxyNative.Instance.StdString_GetValue(ptr, out IntPtr value, out int length);
 
             if (length != other.Length)
@@ -96,7 +113,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         /// <returns>A new managed string with the same contents as the wrapped std::wtring byte for byte.</returns>
         public override string ToString()
         {
-            return GetValue(ptr);
+            return ptr != Ptr.Null ? GetValue(ptr) : null;
         }
 
         internal static IScope<Ptr> CreateScope(string value = null)
@@ -760,8 +777,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         internal StdV8ValueArray(Ptr pArray)
         {
             ptr = pArray;
-            data = V8SplitProxyNative.Instance.StdV8ValueArray_GetData(ptr);
             owns = false;
+            
+            data = pArray != Ptr.Null
+                ? V8SplitProxyNative.Instance.StdV8ValueArray_GetData(ptr) : V8Value.Ptr.Null;
         }
 
         /// <summary>
@@ -1294,7 +1313,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             Nonexistent,
 
             /// <summary>
-            /// Unused.
+            /// Returned by JavaScript when a property does not exist.
             /// </summary>
             Undefined,
 
@@ -1576,6 +1595,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [FieldOffset(8)] public IntPtr PtrOrHandle;
 
             /// <summary>
+            /// If the value is a <see cref="Type.V8Object"/>, we must dispose of it when we're done.
+            /// </summary>
+            public void Dispose()
+            {
+                if (Type == Type.V8Object)
+                    V8SplitProxyNative.Instance.V8Entity_DestroyHandle((V8Entity.Handle)PtrOrHandle);
+            }
+            
+            /// <summary>
             /// Check that the value is a <see cref="Type.Boolean"/> and return it as a
             /// <see cref="bool"/>.
             /// </summary>
@@ -1615,7 +1643,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             /// </summary>
             /// <returns>The <see cref="Type.Number"/> value as a <see cref="double"/>.</returns>
             /// <exception cref="InvalidCastException">If the value is not a <see cref="Type.Number"/>.</exception>
-            public readonly double GetDouble()
+            public readonly double GetNumber()
             {
                 if (Type != Type.Number)
                     throw new InvalidCastException($"Tried to get a Double out of a {GetTypeName()}");
@@ -1652,6 +1680,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
 
             /// <summary>
+            /// Check that the value is a <see cref="Type.V8Object"/> and return a <see cref="V8Object"/>
+            /// that wraps it.
+            /// </summary>
+            /// <returns>The pointer to the <see cref="Type.V8Object"/> wrapped in a <see cref="V8Object"/>.</returns>
+            /// <exception cref="InvalidCastException">The value is not a pointer to a <see cref="Type.V8Object"/>.</exception>
+            public readonly V8Object GetV8Object()
+            {
+                if (Type != Type.V8Object)
+                    throw new InvalidCastException($"Tried to get a JavaScript object out of a {GetTypeName()}");
+
+                return new V8Object((V8Object.Handle)PtrOrHandle);
+            }
+
+            /// <summary>
             /// Check that the value is a <see cref="Type.String"/> and return it as a
             /// <see cref="string"/>.
             /// </summary>
@@ -1684,8 +1726,32 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             /// Return a string describing the type of the value.
             /// </summary>
             /// <returns>A string describing the type of the value.</returns>
-            public readonly string GetTypeName() =>
-                Type != Type.V8Object || Subtype == Subtype.None ? Type.ToString() : Subtype.ToString();
+            public readonly string GetTypeName()
+            {
+                return Type != Type.V8Object || Subtype == Subtype.None
+                    ? Type.ToString() : Subtype.ToString();
+            }
+
+            /// <summary>
+            /// Returns a string representing the value and the type of the value.
+            /// </summary>
+            /// <returns>A string representing the value and the type of the value.</returns>
+            public override string ToString() => Type switch
+            {
+                Type.Nonexistent => "void (Nonexistent)",
+                Type.Undefined => "undefined (Undefined)",
+                Type.Null => "null (Null)",
+                Type.Boolean => Int32Value != 0 ? "True (Boolean)" : "False (Boolean)",
+                Type.Number => $"{DoubleValue} (Number)",
+                Type.Int32 => $"{Int32Value} (Int32)",
+                Type.UInt32 => $"{UInt32Value} (UInt32)",
+                Type.String => $"\"{Marshal.PtrToStringUni(PtrOrHandle, Length)}\" (String)",
+                Type.DateTime => $"{new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc) + TimeSpan.FromMilliseconds(DoubleValue)} (DateTime)",
+                Type.BigInt => $"{(TryGetBigInteger(SignBit, Length, PtrOrHandle, out var bigInt) ? bigInt.ToString() : "null")} (BigInt)",
+                Type.V8Object => $"0x{PtrOrHandle:x} ({Subtype})",
+                Type.HostObject => $"0x{PtrOrHandle:x} (HostObject)",
+                _ => $"unknown ({Type})"
+            };
 
             internal readonly object Get()
             {
@@ -2053,11 +2119,64 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #endregion
     }
 
-    internal static class V8Object
+    public readonly ref struct V8Object
     {
+        private readonly Handle ptr;
+
+        internal V8Object(Handle hObject)
+        {
+            ptr = hObject;
+        }
+        
+        /// <summary>
+        /// Obtain a thin wrapper around a JavaScript object wrapped by a <see cref="ScriptObject"/>.
+        /// </summary>
+        /// <param name="scriptObject">A wrapper around a JavaScript object.</param>
+        /// <remarks>
+        /// The common case is to pass <see cref="V8ScriptEngine.Global"/> to this constructor.
+        /// </remarks>
+        public V8Object(ScriptObject scriptObject)
+        {
+            object impl = ((V8ScriptItem)scriptObject).Unwrap();
+            ptr = ((V8ObjectImpl)impl).Handle;
+        }
+
+        /// <summary>
+        /// Obtain the value of a named property of the wrapped JavaScript object.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property will be written here.</param>
+        public void GetNamedProperty(StdString name, V8Value value)
+        {
+            Handle hObject = ptr;
+            StdString.Ptr pName = name.ptr;
+            V8Value.Ptr pValue = value.ptr;
+            V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(hObject, pName, pValue));
+        }
+
+        public string[] GetNamedPropertyNames()
+        {
+            Handle hObject = ptr;
+            return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetPropertyNames(hObject, false));
+        }
+
+        /// <summary>
+        /// Invoke the wrapped JavaScript object as a function.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <param name="result">The return value of the function will be written here.</param>
+        /// <param name="asConstructor">Call the JavaScript as a constructor?</param>
+        public void Invoke(StdV8ValueArray args, V8Value result, bool asConstructor = false)
+        {
+            Handle hObject = ptr;
+            StdV8ValueArray.Ptr pArgs = args.ptr;
+            V8Value.Ptr pResult = result.ptr;
+            V8SplitProxyNative.Invoke(instance => instance.V8Object_Invoke(hObject, asConstructor, pArgs, pResult));
+        }
+        
         #region Nested type: Handle
 
-        public readonly struct Handle
+        internal readonly struct Handle
         {
             private readonly IntPtr guts;
 
