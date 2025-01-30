@@ -2119,6 +2119,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #endregion
     }
 
+    /// <summary>
+    /// Wraps a JavaScript object.
+    /// </summary>
     public readonly ref struct V8Object
     {
         private readonly Handle ptr;
