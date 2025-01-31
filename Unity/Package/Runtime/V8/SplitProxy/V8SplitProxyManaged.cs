@@ -461,6 +461,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region method table implementation
 
+        [AOT.MonoPInvokeCallback(typeof(RawScheduleForwardingException))]
         private static void ScheduleForwardingException(V8Value.Ptr pException)
         {
             Debug.Assert(ScheduledException == null);
@@ -480,12 +481,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawScheduleInvalidOperationException))]
         private static void ScheduleInvalidOperationException(StdString.Ptr pMessage)
         {
             Debug.Assert(ScheduledException == null);
             ScheduledException = new InvalidOperationException(StdString.GetValue(pMessage));
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawScheduleScriptEngineException))]
         private static void ScheduleScriptEngineException(StdString.Ptr pEngineName, StdString.Ptr pMessage, StdString.Ptr pStackTrace, bool isFatal, bool executionStarted, V8Value.Ptr pScriptException, V8Value.Ptr pInnerException)
         {
             Debug.Assert(ScheduledException == null);
@@ -494,6 +497,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             ScheduledException = new ScriptEngineException(StdString.GetValue(pEngineName), StdString.GetValue(pMessage), StdString.GetValue(pStackTrace), 0, isFatal, executionStarted, scriptException, innerException);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawScheduleScriptInterruptedException))]
         private static void ScheduleScriptInterruptedException(StdString.Ptr pEngineName, StdString.Ptr pMessage, StdString.Ptr pStackTrace, bool isFatal, bool executionStarted, V8Value.Ptr pScriptException, V8Value.Ptr pInnerException)
         {
             Debug.Assert(ScheduledException == null);
@@ -502,6 +506,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             ScheduledException = new ScriptInterruptedException(StdString.GetValue(pEngineName), StdString.GetValue(pMessage), StdString.GetValue(pStackTrace), 0, isFatal, executionStarted, scriptException, innerException);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawInvokeAction))]
         private static void InvokeHostAction(IntPtr pAction)
         {
             try
@@ -515,6 +520,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawProcessArrayBufferOrViewData))]
         private static void ProcessArrayBufferOrViewData(IntPtr pData, IntPtr pAction)
         {
             try
@@ -528,6 +534,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawProcessCpuProfile))]
         private static void ProcessCpuProfile(V8CpuProfile.Ptr pProfile, IntPtr pAction)
         {
             try
@@ -541,11 +548,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawCreateV8ObjectCache))]
         private static IntPtr CreateV8ObjectCache()
         {
             return V8ProxyHelpers.AddRefHostObject(new Dictionary<object, IntPtr>());
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawCacheV8Object))]
         private static void CacheV8Object(IntPtr pCache, IntPtr pObject, IntPtr pV8Object)
         {
             object cache = V8ProxyHelpers.GetHostObject(pCache);
@@ -553,6 +562,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             ((Dictionary<object, IntPtr>)cache).Add(key, pV8Object);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetCachedV8Object))]
         private static IntPtr GetCachedV8Object(IntPtr pCache, IntPtr pObject)
         {
             object cache = V8ProxyHelpers.GetHostObject(pCache);
@@ -560,12 +570,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return ((Dictionary<object, IntPtr>)cache).TryGetValue(key, out IntPtr pV8Object) ? pV8Object : IntPtr.Zero;
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetAllCachedV8Objects))]
         private static void GetAllCachedV8Objects(IntPtr pCache, StdPtrArray.Ptr pV8ObjectPtrs)
         {
             object cache = V8ProxyHelpers.GetHostObject(pCache);
             StdPtrArray.CopyFromArray(pV8ObjectPtrs, ((Dictionary<object, IntPtr>)cache).Values.ToArray());
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawRemoveV8ObjectCacheEntry))]
         private static bool RemoveV8ObjectCacheEntry(IntPtr pCache, IntPtr pObject)
         {
             object cache = V8ProxyHelpers.GetHostObject(pCache);
@@ -573,6 +585,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return ((Dictionary<object, IntPtr>)cache).Remove(key);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawCreateDebugAgent))]
         private static IntPtr CreateDebugAgent(StdString.Ptr pName, StdString.Ptr pVersion, int port, bool remote, V8DebugCallback.Handle hCallback)
         {
             string name = StdString.GetValue(pName);
@@ -582,6 +595,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return V8ProxyHelpers.AddRefHostObject(agent);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawSendDebugMessage))]
         private static void SendDebugMessage(IntPtr pAgent, StdString.Ptr pContent)
         {
             object agent = V8ProxyHelpers.GetHostObject(pAgent);
@@ -589,6 +603,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             ((V8DebugAgent)agent).SendMessage(content);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawDestroyDebugAgent))]
         private static void DestroyDebugAgent(IntPtr pAgent)
         {
             object agent = V8ProxyHelpers.GetHostObject(pAgent);
@@ -596,28 +611,33 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8ProxyHelpers.ReleaseHostObject(pAgent);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetMaxScriptCacheSize))]
         private static uint GetMaxScriptCacheSize()
         {
             return GetMaxCacheSizeForCategory(DocumentCategory.Script);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetMaxModuleCacheSize))]
         private static uint GetMaxModuleCacheSize()
         {
             return GetMaxCacheSizeForCategory(ModuleCategory.Standard);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawAddRefHostObject))]
         private static IntPtr AddRefHostObject(IntPtr pObject)
         {
             object obj = V8ProxyHelpers.GetHostObject(pObject);
             return V8ProxyHelpers.AddRefHostObject(obj);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawReleaseHostObject))]
         private static void ReleaseHostObject(IntPtr pObject)
         {
             GCHandle handle = GCHandle.FromIntPtr(pObject);
             handle.Free();
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetHostObjectInvocability))]
         private static Invocability GetHostObjectInvocability(IntPtr pObject)
         {
             try
@@ -642,6 +662,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetHostObjectNamedProperty))]
         private static void GetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue)
         {
             try
@@ -668,6 +689,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetHostObjectNamedPropertyWithCacheability))]
         private static void GetHostObjectNamedPropertyWithCacheability(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue, out bool isCacheable)
         {
             try
@@ -695,6 +717,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawSetHostObjectNamedProperty))]
         private static void SetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Decoded.Ptr pValue)
         {
             try
@@ -730,6 +753,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawDeleteHostObjectNamedProperty))]
         private static bool DeleteHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName)
         {
             try
@@ -756,6 +780,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetHostObjectPropertyNames))]
         private static void GetHostObjectPropertyNames(IntPtr pObject, StdStringArray.Ptr pNames)
         {
             try
@@ -781,6 +806,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetHostObjectIndexedProperty))]
         private static void GetHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.Ptr pValue)
         {
             try
@@ -806,6 +832,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawSetHostObjectIndexedProperty))]
         private static void SetHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.Decoded.Ptr pValue)
         {
             try
@@ -839,6 +866,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawDeleteHostObjectIndexedProperty))]
         private static bool DeleteHostObjectIndexedProperty(IntPtr pObject, int index)
         {
             try
@@ -863,6 +891,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetHostObjectPropertyIndices))]
         private static void GetHostObjectPropertyIndices(IntPtr pObject, StdInt32Array.Ptr pIndices)
         {
             try
@@ -888,6 +917,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawInvokeHostObject))]
         private static void InvokeHostObject(IntPtr pObject, bool asConstructor, int argCount, V8Value.Decoded.Ptr pArgs, V8Value.Ptr pResult)
         {
             try
@@ -926,6 +956,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawInvokeHostObjectMethod))]
         private static void InvokeHostObjectMethod(IntPtr pObject, StdString.Ptr pName, int argCount, V8Value.Decoded.Ptr pArgs, V8Value.Ptr pResult)
         {
             try
@@ -966,6 +997,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetHostObjectEnumerator))]
         private static void GetHostObjectEnumerator(IntPtr pObject, V8Value.Ptr pResult)
         {
             try
@@ -991,6 +1023,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetHostObjectAsyncEnumerator))]
         private static void GetHostObjectAsyncEnumerator(IntPtr pObject, V8Value.Ptr pResult)
         {
             try
@@ -1016,27 +1049,32 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawQueueNativeCallback))]
         private static void QueueNativeCallback(NativeCallback.Handle hCallback)
         {
             MiscHelpers.QueueNativeCallback(new NativeCallbackImpl(hCallback));
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawCreateNativeCallbackTimer))]
         private static IntPtr CreateNativeCallbackTimer(int dueTime, int period, NativeCallback.Handle hCallback)
         {
             return V8ProxyHelpers.AddRefHostObject(new NativeCallbackTimer(dueTime, period, new NativeCallbackImpl(hCallback)));
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawChangeNativeCallbackTimer))]
         private static bool ChangeNativeCallbackTimer(IntPtr pTimer, int dueTime, int period)
         {
             return V8ProxyHelpers.GetHostObject<NativeCallbackTimer>(pTimer).Change(dueTime, period);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawDestroyNativeCallbackTimer))]
         private static void DestroyNativeCallbackTimer(IntPtr pTimer)
         {
             V8ProxyHelpers.GetHostObject<NativeCallbackTimer>(pTimer).Dispose();
             V8ProxyHelpers.ReleaseHostObject(pTimer);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawLoadModule))]
         private static void LoadModule(IntPtr pSourceDocumentInfo, StdString.Ptr pSpecifier, StdString.Ptr pResourceName, StdString.Ptr pSourceMapUrl, out ulong uniqueId, out DocumentKind documentKind, StdString.Ptr pCode, out IntPtr pDocumentInfo, V8Value.Ptr pExports)
         {
             string code;
@@ -1065,6 +1103,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8Value.Set(pExports, exports);
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawCreateModuleContext))]
         private static void CreateModuleContext(IntPtr pDocumentInfo, StdStringArray.Ptr pNames, StdV8ValueArray.Ptr pValues)
         {
             IDictionary<string, object> context;
@@ -1090,6 +1129,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawWriteBytesToStream))]
         private static void WriteBytesToStream(IntPtr pStream, IntPtr pBytes, int count)
         {
             try
@@ -1113,6 +1153,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        [AOT.MonoPInvokeCallback(typeof(RawGetGlobalFlags))]
         private static V8GlobalFlags GetGlobalFlags()
         {
             return V8Settings.GlobalFlags;
