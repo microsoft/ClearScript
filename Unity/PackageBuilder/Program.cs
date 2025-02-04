@@ -16,9 +16,9 @@ try
 
     foreach (string file in Directory.GetFiles(srcPath, "*.cs", SearchOption.AllDirectories))
     {
-        if (file.Contains(@"\Windows\")
-            || file.Contains(@"\AssemblyInfo.") && !file.Contains(".Core.")
-            || file.Contains(@"\ICUData\")
+        if (file.Contains(@"\ICUData\")
+            || file.Contains(@"\Properties\") && !file.EndsWith(@"\AssemblyInfo.Core.cs")
+            || file.Contains(@"\Windows\")
             || file.Contains(".Net5.")
             || file.Contains(".NetCore.")
             || file.Contains(".NetFramework.")
@@ -82,7 +82,73 @@ try
         }
     }
 
-    foreach (string metaFile in Directory.GetFiles(dstPath, "*.meta", SearchOption.AllDirectories))
+    DeleteEmptyFolders(dstPath);
+}
+catch (Exception ex)
+{
+    Console.WriteLine(ex);
+    Console.ReadKey(true);
+    throw;
+}
+
+// TODO: Write tests in MSTest and convert them to NUnit.
+/*try
+{
+    string srcPath = @"..\..\..\..\..\ClearScriptTest";
+    string dstPath = @"..\..\..\..\Package\Tests\Runtime";
+
+    foreach (string file in Directory.GetFiles(dstPath, "*.cs", SearchOption.AllDirectories))
+    {
+        File.Delete(file);
+    }
+
+    foreach (string file in Directory.GetFiles(srcPath, "*.cs", SearchOption.AllDirectories))
+    {
+        if (file.Contains(".NetCore.")
+            || file.Contains(".NetFramework."))
+        {
+            continue;
+        }
+
+        string dstFile = string.Concat(dstPath, file.AsSpan(srcPath.Length));
+        Directory.CreateDirectory(Path.GetDirectoryName(dstFile)!);
+        using var reader = new StreamReader(file);
+        using var writer = new StreamWriter(dstFile);
+        writer.NewLine = "\n";
+
+        while (true)
+        {
+            string? line = reader.ReadLine();
+
+            if (line == null)
+                break;
+            else if (line == "using Microsoft.VisualStudio.TestTools.UnitTesting;")
+                writer.WriteLine("using NUnit.Framework;");
+            else if (line == "    [TestClass]")
+                writer.WriteLine("    [TestFixture]");
+            else if (line == "        [TestInitialize]")
+                writer.WriteLine("        [SetUp]");
+            else if (line == "        [TestCleanup]")
+                writer.WriteLine("        [TearDown]");
+            else if (line.StartsWith("        [TestMethod, TestCategory(\""))
+                writer.WriteLine("        [Test]");
+            else
+                writer.WriteLine(line);
+        }
+    }
+
+    DeleteEmptyFolders(dstPath);
+}
+catch (Exception ex)
+{
+    Console.WriteLine(ex);
+    Console.ReadKey(true);
+    throw;
+}*/
+
+static void DeleteEmptyFolders(string path)
+{
+    foreach (string metaFile in Directory.GetFiles(path, "*.meta", SearchOption.AllDirectories))
     {
         string fileOrFolder = metaFile[..^".meta".Length];
 
@@ -103,7 +169,7 @@ try
         File.Delete(metaFile);
     }
 
-    foreach (string folder in Directory.GetDirectories(dstPath, "", SearchOption.AllDirectories))
+    foreach (string folder in Directory.GetDirectories(path, "", SearchOption.AllDirectories))
     {
         try
         {
@@ -112,10 +178,4 @@ try
         }
         catch (DirectoryNotFoundException) { }
     }
-}
-catch (Exception ex)
-{
-    Console.WriteLine(ex);
-    Console.ReadKey(true);
-    throw;
 }

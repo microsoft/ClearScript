@@ -1,0 +1,25 @@
+{
+    "name": "Decentraland.ClearScript.Tests",
+    "rootNamespace": "Microsoft.ClearScript.Tests",
+    "references": [
+        "GUID:9659fcb6593e30b46909c1245ed056df"
+    ],
+    "includePlatforms": [
+        "Editor",
+        "LinuxStandalone64",
+        "macOSStandalone",
+        "WindowsStandalone64"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Microsoft.CodeAnalysis.dll",
+        "Microsoft.CSharp.dll",
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
