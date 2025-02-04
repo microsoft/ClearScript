@@ -778,7 +778,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             ptr = pArray;
             owns = false;
-            
+
             data = pArray != Ptr.Null
                 ? V8SplitProxyNative.Instance.StdV8ValueArray_GetData(ptr) : V8Value.Ptr.Null;
         }
@@ -963,12 +963,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         }
 
         /// <summary>
+        /// Store a <see cref="BigInteger"/> in the wrapped V8Value as a <see cref="Type.BigInt"/>.
+        /// </summary>
+        /// <param name="value">The value to store.</param>
+        public void SetBigInt(BigInteger value)
+        {
+            SetBigInt(ptr, value);
+        }
+
+        /// <summary>
         /// Store a <see cref="bool"/> in the wrapped V8Value as a <see cref="Type.Boolean"/>.
         /// </summary>
         /// <param name="value">The value to store.</param>
         public void SetBoolean(bool value)
         {
             SetBoolean(ptr, value);
+        }
+
+        /// <summary>
+        /// Store a <see cref="DateTime"/> in the wrapped V8Value as a <see cref="Type.DateTime"/>.
+        /// </summary>
+        /// <param name="value">The value to store.</param>
+        public void SetDateTime(DateTime value)
+        {
+            SetDateTime(ptr, value);
         }
 
         /// <summary>
@@ -1011,6 +1029,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         }
 
         /// <summary>
+        /// Store a <see cref="double"/> in the wrapped V8Value as a <see cref="Type.Number"/>.
+        /// </summary>
+        /// <param name="value">The value to store.</param>
+        public void SetNumber(double value)
+        {
+            SetNumeric(ptr, value);
+        }
+
+        /// <summary>
         /// Store a <see cref="string"/> in the wrapped V8Value as a <see cref="Type.String"/> or
         /// <see cref="Type.Null"/>.
         /// </summary>
@@ -1021,6 +1048,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 SetString(ptr, value);
             else
                 SetNull(ptr);
+        }
+
+        /// <summary>
+        /// Store a <see cref="uint"/> in the wrapped V8Value as a <see cref="Type.UInt32"/>.
+        /// </summary>
+        /// <param name="value">The value to store.</param>
+        public void SetUInt32(uint value)
+        {
+            SetNumeric(ptr, value);
         }
 
         internal const int Size = 16;
@@ -1602,7 +1638,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 if (Type == Type.V8Object)
                     V8SplitProxyNative.Instance.V8Entity_DestroyHandle((V8Entity.Handle)PtrOrHandle);
             }
-            
+
             /// <summary>
             /// Check that the value is a <see cref="Type.Boolean"/> and return it as a
             /// <see cref="bool"/>.
@@ -1615,6 +1651,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     throw new InvalidCastException($"Tried to get a Boolean out of a {GetTypeName()}");
 
                 return Int32Value != 0;
+            }
+
+            /// <summary>
+            /// Chech that the value is a <see cref="Type.DateTime"/> and return it as a
+            /// <see cref="DateTime"/>.
+            /// </summary>
+            /// <returns>The <see cref="Type.DateTime"/> value as a <see cref="DateTime"/>.</returns>
+            /// <remarks>
+            /// The <see cref="V8ScriptEngine"/> must have been created with the
+            /// <see cref="V8ScriptEngineFlags.EnableDateTimeConversion"/> flag set for this method to
+            /// work. Else, the Date object will be passed from JavaScript as a
+            /// <see cref="Type.V8Object"/>.
+            /// </remarks>
+            public readonly DateTime GetDateTime()
+            {
+                if (Type != Type.DateTime)
+                    throw new InvalidCastException($"Tried to get a DateTime out of a {GetTypeName()}");
+
+                return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                       + TimeSpan.FromMilliseconds(DoubleValue);
             }
 
             /// <summary>
@@ -2173,7 +2229,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             V8Value.Ptr pResult = result.ptr;
             V8SplitProxyNative.Invoke(instance => instance.V8Object_Invoke(hObject, asConstructor, pArgs, pResult));
         }
-        
+
         #region Nested type: Handle
 
         internal readonly struct Handle
