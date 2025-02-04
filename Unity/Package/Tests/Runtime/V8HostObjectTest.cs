@@ -19,7 +19,7 @@ namespace Microsoft.ClearScript.Test
             hostObject = new HostObject();
             engine.AddHostObject("hostObject", hostObject);
 
-            engine.AddHostObject("assert", new InvokeHostObject((args, result) =>
+            engine.AddHostObject("assert", new InvokeHostObject((args, _) =>
             {
                 if (args.Length != 1)
                     throw new ArgumentException($"Expected 1 argument, but got {args.Length}");
@@ -43,7 +43,7 @@ namespace Microsoft.ClearScript.Test
             hostObject.GetIndexedProperty = null;
             hostObject.SetIndexedProperty = null;
             hostObject.DeleteIndexedProperty = null;
-            hostObject.GetEnumertor = null;
+            hostObject.GetEnumerator = null;
             hostObject.GetAsyncEnumerator = null;
             hostObject.GetNamedPropertyNames = null;
             hostObject.GetIndexedPropertyIndices = null;
@@ -57,7 +57,7 @@ namespace Microsoft.ClearScript.Test
             hostObject.DeleteIndexedProperty = index =>
             {
                 wasCalled = true;
-                Assert.That(index == 42);
+                Assert.That(index, Is.EqualTo(42));
                 return true;
             };
             
@@ -107,7 +107,8 @@ namespace Microsoft.ClearScript.Test
             }");
             
             Assert.That(wasCalled);
-            Assert.That(result is true);
+            Assert.That(result, Is.TypeOf<bool>());
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -135,7 +136,8 @@ namespace Microsoft.ClearScript.Test
             }");
             
             Assert.That(wasCalled);
-            Assert.That(result is DateTime dateTime && dateTime == ponyEpoch);
+            Assert.That(result, Is.TypeOf<DateTime>());
+            Assert.That(result, Is.EqualTo(ponyEpoch));
         }
 
         [Test]
@@ -158,7 +160,8 @@ namespace Microsoft.ClearScript.Test
             }");
 
             Assert.That(wasCalled);
-            Assert.That(result == hostObject);
+            Assert.That(result, Is.TypeOf<HostObject>());
+            Assert.That(result, Is.EqualTo(hostObject));
         }
 
         [Test]
@@ -180,7 +183,8 @@ namespace Microsoft.ClearScript.Test
             }");
 
             Assert.That(wasCalled);
-            Assert.That(result is "Bing bong!");
+            Assert.That(result, Is.TypeOf<string>());
+            Assert.That(result, Is.EqualTo("Bing bong!"));
         }
         
         [Test]
@@ -203,7 +207,8 @@ namespace Microsoft.ClearScript.Test
             }");
 
             Assert.That(wasCalled);
-            Assert.That(result is -273);
+            Assert.That(result, Is.TypeOf<int>());
+            Assert.That(result, Is.EqualTo(-273));
         }
 
         [Test]
@@ -226,7 +231,8 @@ namespace Microsoft.ClearScript.Test
             }");
             
             Assert.That(wasCalled);
-            Assert.That(result is Math.PI);
+            Assert.That(result, Is.TypeOf<double>());
+            Assert.That(result, Is.EqualTo(Math.PI));
         }
 
         [Test]
@@ -249,7 +255,8 @@ namespace Microsoft.ClearScript.Test
             }");
             
             Assert.That(wasCalled);
-            Assert.That(result is "Bing bong!");
+            Assert.That(result, Is.TypeOf<string>());
+            Assert.That(result, Is.EqualTo("Bing bong!"));
         }
 
         [Test]
@@ -261,7 +268,7 @@ namespace Microsoft.ClearScript.Test
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setBoolean"));
-                Assert.That(value.GetBoolean() == true);
+                Assert.That(value.GetBoolean(), Is.True);
             };
             
             engine.Execute(@"{
@@ -283,7 +290,7 @@ namespace Microsoft.ClearScript.Test
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setDateTime"));
-                Assert.That(value.GetDateTime() == ponyEpoch);
+                Assert.That(value.GetDateTime(), Is.EqualTo(ponyEpoch));
             };
             
             engine.Execute(@"{
@@ -302,7 +309,7 @@ namespace Microsoft.ClearScript.Test
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setHostObject"));
-                Assert.That(value.GetHostObject() == hostObject);
+                Assert.That(value.GetHostObject(), Is.EqualTo(hostObject));
             };
             
             engine.Execute(@"{
@@ -320,8 +327,8 @@ namespace Microsoft.ClearScript.Test
             hostObject.SetIndexedProperty = (index, value) =>
             {
                 wasCalled = true;
-                Assert.That(index == 13);
-                Assert.That(value.GetString() == "Bing bong!");
+                Assert.That(index, Is.EqualTo(13));
+                Assert.That(value.GetString(), Is.EqualTo("Bing bong!"));
             };
             
             engine.Execute(@"{
@@ -340,7 +347,7 @@ namespace Microsoft.ClearScript.Test
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setNumber"));
-                Assert.That(value.GetNumber() == Math.PI);
+                Assert.That(value.GetNumber(), Is.EqualTo(Math.PI));
             };
             
             engine.Execute(@"{
@@ -359,7 +366,7 @@ namespace Microsoft.ClearScript.Test
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setString"));
-                Assert.That(value.GetString() == "Bing bong!");
+                Assert.That(value.GetString(), Is.EqualTo("Bing bong!"));
             };
             
             engine.Execute(@"{
@@ -377,7 +384,7 @@ namespace Microsoft.ClearScript.Test
             public GetIndexedPropertyCallback GetIndexedProperty;
             public SetIndexedPropertyCallback SetIndexedProperty;
             public DeleteIndexedPropertyCallback DeleteIndexedProperty;
-            public GetEnumeratorCallback GetEnumertor;
+            public GetEnumeratorCallback GetEnumerator;
             public GetAsyncEnumeratorCallback GetAsyncEnumerator;
             public GetNamedPropertyNamesCallback GetNamedPropertyNames;
             public GetIndexedPropertyIndicesCallback GetIndexedPropertyIndices;
@@ -401,7 +408,7 @@ namespace Microsoft.ClearScript.Test
                 DeleteIndexedProperty(index);
 
             void IV8HostObject.GetEnumerator(V8Value result) =>
-                GetEnumertor(result);
+                GetEnumerator(result);
 
             void IV8HostObject.GetAsyncEnumerator(V8Value result) =>
                 GetAsyncEnumerator(result);
