@@ -49,7 +49,6 @@
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ContextProxyImpl.cs" Link="V8\SplitProxy\V8ContextProxyImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8DebugListenerImpl.cs" Link="V8\SplitProxy\V8DebugListenerImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8EntityHolder.cs" Link="V8\SplitProxy\V8EntityHolder.cs" />
-        <Compile Include="..\..\ClearScript\V8\SplitProxy\V8Function.cs" Link="V8\SplitProxy\V8Function.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8IsolateProxyImpl.cs" Link="V8\SplitProxy\V8IsolateProxyImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ObjectImpl.cs" Link="V8\SplitProxy\V8ObjectImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ScriptImpl.cs" Link="V8\SplitProxy\V8ScriptImpl.cs" />
