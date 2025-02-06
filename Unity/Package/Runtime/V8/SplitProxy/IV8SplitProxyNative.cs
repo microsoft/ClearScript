@@ -207,6 +207,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         bool V8Object_DeleteNamedProperty(V8Object.Handle hObject, string name);
         string[] V8Object_GetPropertyNames(V8Object.Handle hObject, bool includeIndices);
         object V8Object_GetIndexedProperty(V8Object.Handle hObject, int index);
+        void V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue);
         void V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value);
         bool V8Object_DeleteIndexedProperty(V8Object.Handle hObject, int index);
         int[] V8Object_GetPropertyIndices(V8Object.Handle hObject);

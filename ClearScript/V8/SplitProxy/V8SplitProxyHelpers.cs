@@ -1375,7 +1375,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             Undefined,
 
             /// <summary>
-            /// null.
+            /// An untyped null.
             /// </summary>
             Null,
 
@@ -2261,7 +2261,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         }
 
         /// <summary>
-        /// Returns the identity hash of the JavaScript object.
+        /// Return the identity hash of the JavaScript object.
         /// </summary>
         /// <returns>The identity hash of the JavaScript object.</returns>
         public override int GetHashCode()
@@ -2287,6 +2287,32 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 throw new ArgumentNullException(nameof(value));
 
             V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(hObject, pName, pValue));
+        }
+
+        /// <summary>
+        /// Obtain the value of a named property of the wrapped JavaScript object.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property will be written here.</param>
+        public void GetNamedProperty(string name, V8Value value)
+        {
+            Handle hObject = ptr;
+            using var stdName = new StdString(name);
+            StdString.Ptr pName = stdName.ptr;
+            V8Value.Ptr pValue = value.ptr;
+            V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(hObject, pName, pValue));
+        }
+
+        /// <summary>
+        /// Obtain the value of an indexed property of the wrapped JavaScript object.
+        /// </summary>
+        /// <param name="index">The index of the property.</param>
+        /// <param name="value">The value of the property will be written here.</param>
+        public void GetIndexedProperty(int index, V8Value value)
+        {
+            Handle hObject = ptr;
+            V8Value.Ptr pValue = value.ptr;
+            V8SplitProxyNative.Invoke(instance => instance.V8Object_GetIndexedProperty(hObject, index, pValue));
         }
 
         /// <summary>
