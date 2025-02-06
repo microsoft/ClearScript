@@ -31,7 +31,53 @@ try
         string dstFile = string.Concat(dstPath, file.AsSpan(srcPath.Length));
         Directory.CreateDirectory(Path.GetDirectoryName(dstFile)!);
 
-        if (file.EndsWith("V8SplitProxyManaged.cs"))
+        if (file.EndsWith(@"\AssemblyInfo.Core.cs"))
+        {
+            using var reader = new StreamReader(file);
+            using var writer = new StreamWriter(dstFile);
+            writer.NewLine = "\n";
+
+            while (true)
+            {
+                string? line = reader.ReadLine();
+
+                if (line == null)
+                    goto endOfFile;
+
+                if (line.StartsWith("[assembly: InternalsVisibleTo("))
+                    break;
+
+                writer.WriteLine(line);
+            }
+
+            writer.WriteLine(@"[assembly: InternalsVisibleTo(""Decentraland.ClearScript.Tests"")]");
+
+            while (true)
+            {
+                string? line = reader.ReadLine();
+
+                if (line == null)
+                    goto endOfFile;
+
+                if (!line.StartsWith("[assembly: InternalsVisibleTo("))
+                {
+                    break;
+                }
+            }
+
+            while (true)
+            {
+                string? line = reader.ReadLine();
+
+                if (line == null)
+                    goto endOfFile;
+
+                writer.WriteLine(line);
+            }
+
+        endOfFile:;
+        }
+        else if (file.EndsWith(@"\V8SplitProxyManaged.cs"))
         {
             using var reader = new StreamReader(file);
             using var writer = new StreamWriter(dstFile);

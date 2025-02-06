@@ -12,10 +12,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("ClearScript Core Library")]
 [assembly: AssemblyProduct("ClearScript")]
 [assembly: AssemblyCopyright("(c) Microsoft Corporation")]
-[assembly: InternalsVisibleTo("ClearScript.V8")]
-[assembly: InternalsVisibleTo("ClearScript.Windows")]
-[assembly: InternalsVisibleTo("ClearScript.Windows.Core")]
-[assembly: InternalsVisibleTo("ClearScriptTest")]
+[assembly: InternalsVisibleTo("Decentraland.ClearScript.Tests")]
 
 [assembly: ComVisible(false)]
 [assembly: AssemblyVersion("7.4.5")]
