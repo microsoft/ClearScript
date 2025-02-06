@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Microsoft.ClearScript.V8.SplitProxy
 {
