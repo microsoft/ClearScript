@@ -1485,7 +1485,7 @@ namespace Microsoft.ClearScript.V8
                 object marshaledItem;
 
 #if NETCOREAPP || NETSTANDARD
-                if (item is SplitProxy.IV8HostObject or SplitProxy.InvokeHostObject)
+                if (item is SplitProxy.IV8HostObject || item is SplitProxy.InvokeHostObject)
                 {
                     marshaledItem = item;
                 }

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Globalization;
+using System.Numerics;
 using Microsoft.ClearScript.V8;
 using Microsoft.ClearScript.V8.SplitProxy;
 using NUnit.Framework;
 
-namespace Microsoft.ClearScript.Test
+namespace Microsoft.ClearScript.Tests
 {
     [TestFixture, Parallelizable(ParallelScope.Fixtures)]
     internal sealed class V8HostObjectTest
@@ -23,7 +24,7 @@ namespace Microsoft.ClearScript.Test
             {
                 if (args.Length != 1)
                     throw new ArgumentException($"Expected 1 argument, but got {args.Length}");
-                
+
                 Assert.That(args[0].GetBoolean());
             }));
         }
@@ -60,38 +61,63 @@ namespace Microsoft.ClearScript.Test
                 Assert.That(index, Is.EqualTo(42));
                 return true;
             };
-            
+
             engine.Execute(@"{
                 delete hostObject[42];
             }");
-            
+
             Assert.That(wasCalled);
         }
-        
+
         [Test]
         public void DeleteNamedProperty()
         {
             bool wasCalled = false;
-            
+
             hostObject.DeleteNamedProperty = name =>
             {
                 wasCalled = true;
                 Assert.That(name.Equals("deleteProperty"));
                 return true;
             };
-            
+
             engine.Execute(@"{
                 delete hostObject.deleteProperty;
             }");
-            
+
             Assert.That(wasCalled);
+        }
+
+        [Test]
+        public void GetBigInt()
+        {
+            bool wasCalled = false;
+            var avogadro = BigInteger.Parse("602200000000000000000000");
+
+            hostObject.GetNamedProperty = ((StdString name, V8Value value, out bool isConst) =>
+            {
+                wasCalled = true;
+                isConst = false;
+                Assert.That(name.Equals("getBigInt"));
+                value.SetBigInt(avogadro);
+            });
+
+            object result = engine.Evaluate(@"{
+                let value = hostObject.getBigInt;
+                assert(value === 602200000000000000000000n);
+                value;
+            }");
+
+            Assert.That(wasCalled);
+            Assert.That(result, Is.TypeOf<BigInteger>());
+            Assert.That(result, Is.EqualTo(avogadro));
         }
 
         [Test]
         public void GetBoolean()
         {
             bool wasCalled = false;
-            
+
             hostObject.GetNamedProperty = (StdString name, V8Value value, out bool isConst) =>
             {
                 wasCalled = true;
@@ -105,7 +131,7 @@ namespace Microsoft.ClearScript.Test
                 assert(value === true);
                 value;
             }");
-            
+
             Assert.That(wasCalled);
             Assert.That(result, Is.TypeOf<bool>());
             Assert.That(result, Is.True);
@@ -115,10 +141,10 @@ namespace Microsoft.ClearScript.Test
         public void GetDateTime()
         {
             bool wasCalled = false;
-            
+
             var ponyEpoch = DateTime.Parse("2010-10-10T20:30:00Z", CultureInfo.InvariantCulture,
                 DateTimeStyles.AdjustToUniversal);
-            
+
             hostObject.GetNamedProperty = (StdString name, V8Value value, out bool isConst) =>
             {
                 wasCalled = true;
@@ -126,7 +152,7 @@ namespace Microsoft.ClearScript.Test
                 Assert.That(name.Equals("getDateTime"));
                 value.SetDateTime(ponyEpoch);
             };
-            
+
             object result = engine.Evaluate(@"{
                 let value = hostObject.getDateTime;
                 assert(value instanceof Date);
@@ -134,7 +160,7 @@ namespace Microsoft.ClearScript.Test
                 assert(value.getTime() === ponyEpoch.getTime());
                 value;
             }");
-            
+
             Assert.That(wasCalled);
             Assert.That(result, Is.TypeOf<DateTime>());
             Assert.That(result, Is.EqualTo(ponyEpoch));
@@ -144,7 +170,7 @@ namespace Microsoft.ClearScript.Test
         public void GetHostObject()
         {
             bool wasCalled = false;
-            
+
             hostObject.GetNamedProperty = (StdString name, V8Value value, out bool isConst) =>
             {
                 wasCalled = true;
@@ -186,12 +212,12 @@ namespace Microsoft.ClearScript.Test
             Assert.That(result, Is.TypeOf<string>());
             Assert.That(result, Is.EqualTo("Bing bong!"));
         }
-        
+
         [Test]
         public void GetInt32()
         {
             bool wasCalled = false;
-            
+
             hostObject.GetNamedProperty = (StdString name, V8Value value, out bool isConst) =>
             {
                 wasCalled = true;
@@ -212,10 +238,33 @@ namespace Microsoft.ClearScript.Test
         }
 
         [Test]
+        public void GetNull()
+        {
+            bool wasCalled = false;
+
+            hostObject.GetNamedProperty = (StdString name, V8Value value, out bool isConst) =>
+            {
+                wasCalled = true;
+                isConst = false;
+                Assert.That(name.Equals("getNull"));
+                value.SetNull();
+            };
+
+            object result = engine.Evaluate(@"{
+                let value = hostObject.getNull;
+                assert(value === null);
+                value;
+            }");
+
+            Assert.That(wasCalled);
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
         public void GetNumber()
         {
             bool wasCalled = false;
-            
+
             hostObject.GetNamedProperty = (StdString name, V8Value value, out bool isConst) =>
             {
                 wasCalled = true;
@@ -229,7 +278,7 @@ namespace Microsoft.ClearScript.Test
                 assert(value === 3.1415926535897931);
                 value;
             }");
-            
+
             Assert.That(wasCalled);
             Assert.That(result, Is.TypeOf<double>());
             Assert.That(result, Is.EqualTo(Math.PI));
@@ -239,7 +288,7 @@ namespace Microsoft.ClearScript.Test
         public void GetString()
         {
             bool wasCalled = false;
-            
+
             hostObject.GetNamedProperty = (StdString name, V8Value value, out bool isConst) =>
             {
                 wasCalled = true;
@@ -253,28 +302,71 @@ namespace Microsoft.ClearScript.Test
                 assert(value ==='Bing bong!');
                 value;
             }");
-            
+
             Assert.That(wasCalled);
             Assert.That(result, Is.TypeOf<string>());
             Assert.That(result, Is.EqualTo("Bing bong!"));
         }
 
         [Test]
+        public void GetUndefined()
+        {
+            bool wasCalled = false;
+
+            hostObject.GetNamedProperty = (StdString name, V8Value value, out bool isConst) =>
+            {
+                wasCalled = true;
+                isConst = false;
+                Assert.That(name.Equals("getUndefined"));
+                value.SetUndefined();
+            };
+
+            object result = engine.Evaluate(@"{
+                let value = hostObject.getUndefined;
+                assert(value === undefined);
+                value;
+            }");
+
+            Assert.That(wasCalled);
+            Assert.That(result, Is.EqualTo(Undefined.Value));
+        }
+
+        [Test]
+        public void SetBigInt()
+        {
+            bool wasCalled = false;
+            var avogadro = BigInteger.Parse("602200000000000000000000");
+
+            hostObject.SetNamedProperty = (name, value) =>
+            {
+                wasCalled = true;
+                Assert.That(name.Equals("setBigInt"));
+                Assert.That(value.GetBigInt(), Is.EqualTo(avogadro));
+            };
+
+            engine.Execute(@"{
+                hostObject.setBigInt = 602200000000000000000000n;
+            }");
+
+            Assert.That(wasCalled);
+        }
+
+        [Test]
         public void SetBoolean()
         {
             bool wasCalled = false;
-            
+
             hostObject.SetNamedProperty = (name, value) =>
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setBoolean"));
                 Assert.That(value.GetBoolean(), Is.True);
             };
-            
+
             engine.Execute(@"{
                 hostObject.setBoolean = true;
             }");
-            
+
             Assert.That(wasCalled);
         }
 
@@ -282,21 +374,21 @@ namespace Microsoft.ClearScript.Test
         public void SetDateTime()
         {
             bool wasCalled = false;
-            
+
             var ponyEpoch = DateTime.Parse("2010-10-10T20:30:00Z", CultureInfo.InvariantCulture,
                 DateTimeStyles.AdjustToUniversal);
-            
+
             hostObject.SetNamedProperty = (name, value) =>
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setDateTime"));
                 Assert.That(value.GetDateTime(), Is.EqualTo(ponyEpoch));
             };
-            
+
             engine.Execute(@"{
                 hostObject.setDateTime = new Date('2010-10-10T20:30:00Z');
             }");
-            
+
             Assert.That(wasCalled);
         }
 
@@ -304,18 +396,18 @@ namespace Microsoft.ClearScript.Test
         public void SetHostObject()
         {
             bool wasCalled = false;
-            
+
             hostObject.SetNamedProperty = (name, value) =>
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setHostObject"));
                 Assert.That(value.GetHostObject(), Is.EqualTo(hostObject));
             };
-            
+
             engine.Execute(@"{
                 hostObject.setHostObject = hostObject;
             }");
-            
+
             Assert.That(wasCalled);
         }
 
@@ -330,11 +422,30 @@ namespace Microsoft.ClearScript.Test
                 Assert.That(index, Is.EqualTo(13));
                 Assert.That(value.GetString(), Is.EqualTo("Bing bong!"));
             };
-            
+
             engine.Execute(@"{
                 hostObject[13] = 'Bing bong!';
             }");
-            
+
+            Assert.That(wasCalled);
+        }
+
+        [Test]
+        public void SetNull()
+        {
+            bool wasCalled = false;
+
+            hostObject.SetNamedProperty = (name, value) =>
+            {
+                wasCalled = true;
+                Assert.That(name.Equals("setNull"));
+                Assert.That(value.Type, Is.EqualTo(V8Value.Type.Null));
+            };
+
+            engine.Execute(@"{
+                hostObject.setNull = null;
+            }");
+
             Assert.That(wasCalled);
         }
 
@@ -342,18 +453,18 @@ namespace Microsoft.ClearScript.Test
         public void SetNumber()
         {
             bool wasCalled = false;
-            
+
             hostObject.SetNamedProperty = (name, value) =>
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setNumber"));
                 Assert.That(value.GetNumber(), Is.EqualTo(Math.PI));
             };
-            
+
             engine.Execute(@"{
                 hostObject.setNumber = 3.1415926535897931;
             }");
-            
+
             Assert.That(wasCalled);
         }
 
@@ -361,21 +472,40 @@ namespace Microsoft.ClearScript.Test
         public void SetString()
         {
             bool wasCalled = false;
-            
+
             hostObject.SetNamedProperty = (name, value) =>
             {
                 wasCalled = true;
                 Assert.That(name.Equals("setString"));
                 Assert.That(value.GetString(), Is.EqualTo("Bing bong!"));
             };
-            
+
             engine.Execute(@"{
                 hostObject.setString = 'Bing bong!';
             }");
-            
+
             Assert.That(wasCalled);
         }
-        
+
+        [Test]
+        public void SetUndefined()
+        {
+            bool wasCalled = false;
+
+            hostObject.SetNamedProperty = (name, value) =>
+            {
+                wasCalled = true;
+                Assert.That(name.Equals("setUndefined"));
+                Assert.That(value.Type, Is.EqualTo(V8Value.Type.Undefined));
+            };
+
+            engine.Execute(@"{
+                hostObject.setUndefined = undefined;
+            }");
+
+            Assert.That(wasCalled);
+        }
+
         private sealed class HostObject : IV8HostObject
         {
             public GetNamedPropertyCallback GetNamedProperty;
@@ -425,7 +555,7 @@ namespace Microsoft.ClearScript.Test
         private delegate void SetNamedPropertyCallback(StdString name, V8Value.Decoded value);
 
         private delegate bool DeleteNamedPropertyCallback(StdString name);
-        
+
         private delegate void GetIndexedPropertyCallback(int index, V8Value value);
 
         private delegate void SetIndexedPropertyCallback(int index, V8Value.Decoded value);

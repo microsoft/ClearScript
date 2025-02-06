@@ -994,6 +994,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         /// or <see cref="Type.Null"/>.
         /// </summary>
         /// <param name="value">The pointer to store.</param>
+        /// <remarks>
+        /// For best performance, only pass <see cref="IV8HostObject"/> and
+        /// <see cref="InvokeHostObject"/> to JavaScript.
+        /// </remarks>
         public void SetHostObject(object value)
         {
             if (value != null)
@@ -1012,8 +1016,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         }
 
         /// <summary>
-        /// Store a <see cref="void"/> (nothing, not even null) in the wrapped V8Value as a
-        /// <see cref="Type.Nonexistent"/>.
+        /// Store a <see cref="Void"/> (nothing, not even null, not even undefined) in the wrapped
+        /// V8Value as a <see cref="Type.Nonexistent"/>. Nonexistent is the default value of V8Value.
         /// </summary>
         public void SetNonexistent()
         {
@@ -1051,12 +1055,30 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         }
 
         /// <summary>
+        /// Store an <see cref="Undefined"/> in the wrapped V8Value as a <see cref="Type.Undefined"/>.
+        /// </summary>
+        public void SetUndefined()
+        {
+            SetUndefined(ptr);
+        }
+
+        /// <summary>
         /// Store a <see cref="uint"/> in the wrapped V8Value as a <see cref="Type.UInt32"/>.
         /// </summary>
         /// <param name="value">The value to store.</param>
         public void SetUInt32(uint value)
         {
             SetNumeric(ptr, value);
+        }
+
+        /// <summary>
+        /// Store a JavaScript object in the wrapped V8Value as a <see cref="Type.V8Object"/>.
+        /// </summary>
+        /// <param name="value">The value to store.</param>
+        public void SetV8Object(ScriptObject value)
+        {
+            var impl = ((V8ScriptItem)value).Unwrap();
+            SetV8Object(ptr, (V8ObjectImpl)impl);
         }
 
         internal const int Size = 16;
@@ -1344,7 +1366,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Type
 
             /// <summary>
-            /// <see cref="void"/>.
+            /// <see cref="Void"/>. This is the default value of V8Value.
             /// </summary>
             Nonexistent,
 
@@ -1354,7 +1376,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             Undefined,
 
             /// <summary>
-            /// An untyped null.
+            /// null.
             /// </summary>
             Null,
 
@@ -1574,7 +1596,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         /// A variant struct that contains the value retrieved from a <see cref="V8Value"/>.
         /// </summary>
         [StructLayout(LayoutKind.Explicit)]
-        public struct Decoded
+        public struct Decoded : IDisposable
         {
             // IMPORTANT: maintain bitwise equivalence with native struct V8Value::Decoded
 
@@ -1637,6 +1659,24 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 if (Type == Type.V8Object)
                     V8SplitProxyNative.Instance.V8Entity_DestroyHandle((V8Entity.Handle)PtrOrHandle);
+            }
+
+            /// <summary>
+            /// Check that the value is a <see cref="Type.BigInt"/> and return it as a
+            /// <see cref="BigInteger"/>.
+            /// </summary>
+            /// <returns>The <see cref="Type.BigInt"/> value as a <see cref="BigInteger"/></returns>
+            /// <exception cref="InvalidCastException">If the value is not a <see cref="Type.BigInt"/>.</exception>
+            /// <exception cref="NotSupportedException">If the big integer is more than two gigabytes in size.</exception>
+            public readonly BigInteger GetBigInt()
+            {
+                if (Type != Type.BigInt)
+                    throw new InvalidCastException($"Tried to get a BigInt out of a {GetTypeName()}");
+
+                if (!TryGetBigInteger(SignBit, Length, PtrOrHandle, out var result))
+                    throw new NotSupportedException("The size of the big integer exceeds two gigabytes");
+
+                return result;
             }
 
             /// <summary>
@@ -1746,7 +1786,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 if (Type != Type.V8Object)
                     throw new InvalidCastException($"Tried to get a JavaScript object out of a {GetTypeName()}");
 
-                return new V8Object((V8Object.Handle)PtrOrHandle);
+                return new V8Object((V8Object.Handle)PtrOrHandle, IdentityHash);
             }
 
             /// <summary>
@@ -1761,6 +1801,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     throw new InvalidCastException($"Tried to get a String out of a {GetTypeName()}");
 
                 return Marshal.PtrToStringUni(PtrOrHandle, Length);
+            }
+
+            /// <summary>
+            /// Check that the value is a <see cref="Type.UInt32"/> and return it as a
+            /// <see cref="uint"/>.
+            /// </summary>
+            /// <returns>The <see cref="Type.UInt32"/> value decoded as a <see cref="uint"/>.</returns>
+            /// <exception cref="InvalidCastException">If the value is not a <see cref="Type.UInt32"/>.</exception>
+            public readonly uint GetUInt32()
+            {
+                if (Type != Type.UInt32)
+                    throw new InvalidCastException($"Tried to get a UInt32 out of a {GetTypeName()}");
+
+                return UInt32Value;
             }
 
             /// <summary>
@@ -2175,15 +2229,23 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #endregion
     }
 
+    /// <summary>
+    /// Wraps a JavaScript object.
+    /// </summary>
     public readonly ref struct V8Object
     {
         private readonly Handle ptr;
+        private readonly int identityHash;
 
-        internal V8Object(Handle hObject)
+        internal V8Object(Handle hObject, int identityHash)
         {
+            if (hObject == Handle.Empty)
+                throw new ArgumentNullException(nameof(hObject));
+
             ptr = hObject;
+            this.identityHash = identityHash;
         }
-        
+
         /// <summary>
         /// Obtain a thin wrapper around a JavaScript object wrapped by a <see cref="ScriptObject"/>.
         /// </summary>
@@ -2193,8 +2255,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         /// </remarks>
         public V8Object(ScriptObject scriptObject)
         {
-            object impl = ((V8ScriptItem)scriptObject).Unwrap();
-            ptr = ((V8ObjectImpl)impl).Handle;
+            object target = ((V8ScriptItem)scriptObject).Unwrap();
+            var impl = (V8ObjectImpl)target;
+            ptr = impl.Handle;
+            identityHash = impl.IdentityHash;
+        }
+
+        /// <summary>
+        /// Returns the identity hash of the JavaScript object.
+        /// </summary>
+        /// <returns>The identity hash of the JavaScript object.</returns>
+        public override int GetHashCode()
+        {
+            return identityHash;
         }
 
         /// <summary>
@@ -2207,13 +2280,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             Handle hObject = ptr;
             StdString.Ptr pName = name.ptr;
             V8Value.Ptr pValue = value.ptr;
-            V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(hObject, pName, pValue));
-        }
 
-        public string[] GetNamedPropertyNames()
-        {
-            Handle hObject = ptr;
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetPropertyNames(hObject, false));
+            if (pName == StdString.Ptr.Null)
+                throw new ArgumentNullException(nameof(name));
+
+            if (pValue == V8Value.Ptr.Null)
+                throw new ArgumentNullException(nameof(value));
+
+            V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(hObject, pName, pValue));
         }
 
         /// <summary>
@@ -2227,6 +2301,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             Handle hObject = ptr;
             StdV8ValueArray.Ptr pArgs = args.ptr;
             V8Value.Ptr pResult = result.ptr;
+
+            if (pArgs == StdV8ValueArray.Ptr.Null)
+                throw new ArgumentNullException(nameof(args));
+
+            if (pResult == V8Value.Ptr.Null)
+                throw new ArgumentNullException(nameof(result));
+
             V8SplitProxyNative.Invoke(instance => instance.V8Object_Invoke(hObject, asConstructor, pArgs, pResult));
         }
 
