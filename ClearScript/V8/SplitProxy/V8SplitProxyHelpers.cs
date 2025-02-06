@@ -995,8 +995,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         /// </summary>
         /// <param name="value">The pointer to store.</param>
         /// <remarks>
-        /// For best performance, only pass <see cref="IV8HostObject"/> and
-        /// <see cref="InvokeHostObject"/> to JavaScript.
+        /// For best performance, only pass IV8HostObject or InvokeHostObject to JavaScript.
         /// </remarks>
         public void SetHostObject(object value)
         {
