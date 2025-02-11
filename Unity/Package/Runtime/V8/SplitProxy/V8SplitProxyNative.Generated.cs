@@ -1072,6 +1072,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            void IV8SplitProxyNative.V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue)
+            {
+                V8Object_GetIndexedProperty(hObject, index, pValue);
+            }
+
             void IV8SplitProxyNative.V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value)
             {
                 using (var valueScope = V8Value.CreateScope(value))
@@ -3229,6 +3234,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     V8Object_GetIndexedProperty(hObject, index, valueScope.Value);
                     return V8Value.Get(valueScope.Value);
                 }
+            }
+
+            void IV8SplitProxyNative.V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue)
+            {
+                V8Object_GetIndexedProperty(hObject, index, pValue);
             }
 
             void IV8SplitProxyNative.V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value)
@@ -5390,6 +5400,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            void IV8SplitProxyNative.V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue)
+            {
+                V8Object_GetIndexedProperty(hObject, index, pValue);
+            }
+
             void IV8SplitProxyNative.V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value)
             {
                 using (var valueScope = V8Value.CreateScope(value))
@@ -7547,6 +7562,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     V8Object_GetIndexedProperty(hObject, index, valueScope.Value);
                     return V8Value.Get(valueScope.Value);
                 }
+            }
+
+            void IV8SplitProxyNative.V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue)
+            {
+                V8Object_GetIndexedProperty(hObject, index, pValue);
             }
 
             void IV8SplitProxyNative.V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value)
@@ -9708,6 +9728,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            void IV8SplitProxyNative.V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue)
+            {
+                V8Object_GetIndexedProperty(hObject, index, pValue);
+            }
+
             void IV8SplitProxyNative.V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value)
             {
                 using (var valueScope = V8Value.CreateScope(value))
@@ -11865,6 +11890,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     V8Object_GetIndexedProperty(hObject, index, valueScope.Value);
                     return V8Value.Get(valueScope.Value);
                 }
+            }
+
+            void IV8SplitProxyNative.V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue)
+            {
+                V8Object_GetIndexedProperty(hObject, index, pValue);
             }
 
             void IV8SplitProxyNative.V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value)
@@ -14026,6 +14056,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            void IV8SplitProxyNative.V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue)
+            {
+                V8Object_GetIndexedProperty(hObject, index, pValue);
+            }
+
             void IV8SplitProxyNative.V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value)
             {
                 using (var valueScope = V8Value.CreateScope(value))
@@ -16183,6 +16218,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     V8Object_GetIndexedProperty(hObject, index, valueScope.Value);
                     return V8Value.Get(valueScope.Value);
                 }
+            }
+
+            void IV8SplitProxyNative.V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue)
+            {
+                V8Object_GetIndexedProperty(hObject, index, pValue);
             }
 
             void IV8SplitProxyNative.V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value)

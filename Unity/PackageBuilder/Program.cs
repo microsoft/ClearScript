@@ -61,6 +61,7 @@ try
 
                 if (!line.StartsWith("[assembly: InternalsVisibleTo("))
                 {
+                    writer.WriteLine(line);
                     break;
                 }
             }
