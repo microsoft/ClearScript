@@ -954,6 +954,86 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         }
 
         /// <summary>
+        /// Decode the value and attempt to obtain a <see cref="BigInteger"/> from it.
+        /// </summary>
+        /// <returns>The <see cref="BigInteger"/> value.</returns>
+        public BigInteger GetBigInt()
+        {
+            using var decoded = Decode();
+            return decoded.GetBigInt();
+        }
+
+        /// <summary>
+        /// Decode the value and attempt to obtain a <see cref="bool"/> from it.
+        /// </summary>
+        /// <returns>The <see cref="bool"/> value.</returns>
+        public bool GetBoolean()
+        {
+            using var decoded = Decode();
+            return decoded.GetBoolean();
+        }
+
+        /// <summary>
+        /// Decode the value and attempt to obtain a <see cref="DateTime"/> from it.
+        /// </summary>
+        /// <returns>The <see cref="DateTime"/> value.</returns>
+        public DateTime GetDateTime()
+        {
+            using var decoded = Decode();
+            return decoded.GetDateTime();
+        }
+
+        /// <summary>
+        /// Decode the value and attempt to obtain a host object from it.
+        /// </summary>
+        /// <returns>The host object value.</returns>
+        public object GetHostObject()
+        {
+            using var decoded = Decode();
+            return decoded.GetHostObject();
+        }
+
+        /// <summary>
+        /// Decode the value and attempt to obtain a <see cref="int"/> from it.
+        /// </summary>
+        /// <returns>The <see cref="int"/> value.</returns>
+        public int GetInt32()
+        {
+            using var decoded = Decode();
+            return decoded.GetInt32();
+        }
+
+        /// <summary>
+        /// Decode the value and attempt to obtain a <see cref="double"/> from it.
+        /// </summary>
+        /// <returns>The <see cref="double"/> value.</returns>
+        public double GetNumber()
+        {
+            using var decoded = Decode();
+            return decoded.GetNumber();
+        }
+
+        /// <summary>
+        /// Decode the value and attempt to obtain a <see cref="string"/> from it.
+        /// </summary>
+        /// <returns>The <see cref="string"/> value.</returns>
+        public string GetString()
+        {
+            using var decoded = Decode();
+            return decoded.GetString();
+        }
+
+        /// <summary>
+        /// Decode the value and attempt to obtain a <see cref="uint"/> from it.
+        /// </summary>
+        /// <returns>The <see cref="uint"/> value.</returns>
+        public uint GetUInt32()
+        {
+            using var decoded = Decode();
+            return decoded.GetUInt32();
+        }
+
+        /// <summary>
         /// Store a <see cref="BigInteger"/> in the wrapped V8Value as a <see cref="Type.BigInt"/>.
         /// </summary>
         /// <param name="value">The value to store.</param>
@@ -1686,6 +1766,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 if (Type == Type.V8Object)
                 {
+                    Type = Type.Nonexistent;
                     var hEntity = (V8Entity.Handle)PtrOrHandle;
                     V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Entity_DestroyHandle(hEntity));
                 }
