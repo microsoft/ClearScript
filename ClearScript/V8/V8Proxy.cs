@@ -169,8 +169,10 @@ namespace Microsoft.ClearScript.V8
 
                 fixed (byte* pBytes = bytes)
                 {
-                    var pICUData = (IntPtr)pBytes;
-                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Environment_InitializeICU(pICUData, Convert.ToUInt32(length)));
+                    using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                    {
+                        instance.V8Environment_InitializeICU((IntPtr)pBytes, Convert.ToUInt32(length));
+                    }
                 }
             }
         }

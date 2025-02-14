@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
@@ -98,60 +98,90 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public object GetProperty(string name)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(Handle, name));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                return instance.V8Object_GetNamedProperty(Handle, name);
+            }
         }
 
         public bool TryGetProperty(string name, out object value)
         {
-            object tempValue = null;
-            var result = V8SplitProxyNative.Invoke(instance => instance.V8Object_TryGetNamedProperty(Handle, name, out tempValue));
-            value = tempValue;
-            return result;
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                return instance.V8Object_TryGetNamedProperty(Handle, name, out value);
+            }
         }
 
         public void SetProperty(string name, object value)
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Object_SetNamedProperty(Handle, name, value));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                instance.V8Object_SetNamedProperty(Handle, name, value);
+            }
         }
 
         public bool DeleteProperty(string name)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_DeleteNamedProperty(Handle, name));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                return instance.V8Object_DeleteNamedProperty(Handle, name);
+            }
         }
 
         public string[] GetPropertyNames(bool includeIndices)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetPropertyNames(Handle, includeIndices));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                return instance.V8Object_GetPropertyNames(Handle, includeIndices);
+            }
         }
 
         public object GetProperty(int index)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetIndexedProperty(Handle, index));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                return instance.V8Object_GetIndexedProperty(Handle, index);
+            }
         }
 
         public void SetProperty(int index, object value)
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Object_SetIndexedProperty(Handle, index, value));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                instance.V8Object_SetIndexedProperty(Handle, index, value);
+            }
         }
 
         public bool DeleteProperty(int index)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_DeleteIndexedProperty(Handle, index));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                return instance.V8Object_DeleteIndexedProperty(Handle, index);
+            }
         }
 
         public int[] GetPropertyIndices()
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_GetPropertyIndices(Handle));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                return instance.V8Object_GetPropertyIndices(Handle);
+            }
         }
 
         public object Invoke(bool asConstructor, object[] args)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_Invoke(Handle, asConstructor, args));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                return instance.V8Object_Invoke(Handle, asConstructor, args);
+            }
         }
 
         public object InvokeMethod(string name, object[] args)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Object_InvokeMethod(Handle, name, args));
+            using (V8SplitProxyNative.Invoke(out var instance))
+            {
+                return instance.V8Object_InvokeMethod(Handle, name, args);
+            }
         }
 
         public bool IsPromise => Subtype == V8Value.Subtype.Promise;
@@ -247,7 +277,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 var offset = 0UL;
                 var size = 0UL;
                 var length = 0UL;
-                V8SplitProxyNative.Invoke(instance => instance.V8Object_GetArrayBufferOrViewInfo(Handle, out arrayBuffer, out offset, out size, out length));
+
+                using (V8SplitProxyNative.Invoke(out var instance))
+                {
+                    instance.V8Object_GetArrayBufferOrViewInfo(Handle, out arrayBuffer, out offset, out size, out length);
+                }
+
                 return new V8ArrayBufferOrViewInfo(kind, arrayBuffer, offset, size, length);
             }
 
@@ -258,8 +293,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             using (var actionScope = V8ProxyHelpers.CreateAddRefHostObjectScope(action))
             {
-                var pAction = actionScope.Value;
-                V8SplitProxyNative.Invoke(instance => instance.V8Object_InvokeWithArrayBufferOrViewData(Handle, pAction));
+                using (V8SplitProxyNative.Invoke(out var instance))
+                {
+                    instance.V8Object_InvokeWithArrayBufferOrViewData(Handle, actionScope.Value);
+                }
             }
         }
 
