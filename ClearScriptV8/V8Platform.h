@@ -26,7 +26,11 @@
     #endif // INTPTR_MAX == INT64_MAX
 #endif // CLEARSCRIPT_V8_POINTER_COMPRESSION_ENABLED
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-function-type-mismatch"
 #include "v8.h"
+#pragma clang diagnostic pop
+
 #include "v8-platform.h"
 #include "v8-inspector.h"
 #include "v8-profiler.h"
