@@ -453,7 +453,7 @@ namespace Microsoft.ClearScript.Test
             engine.Execute("test.PrivateMethod()");
         }
 
-        [TestMethod, TestCategory("JScriptCoreEngine")]
+        [TestMethod, TestCategory("JScriptCoreEngine"), Timeout(1000)]
         public void JScriptCoreEngine_ContinuationCallback()
         {
             engine.ContinuationCallback = () => false;
