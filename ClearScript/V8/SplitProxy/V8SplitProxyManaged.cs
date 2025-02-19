@@ -35,12 +35,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void ScheduleHostException(IntPtr pObject, Exception exception)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.HostException_Schedule(exception.GetBaseException().Message, V8ProxyHelpers.MarshalExceptionToScript(pObject, exception)));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.HostException_Schedule(exception.GetBaseException().Message, V8ProxyHelpers.MarshalExceptionToScript(pObject, exception));
+            }
         }
 
         private static void ScheduleHostException(Exception exception)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.HostException_Schedule(exception.GetBaseException().Message, ScriptEngine.Current?.MarshalToScript(exception)));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.HostException_Schedule(exception.GetBaseException().Message, ScriptEngine.Current?.MarshalToScript(exception));
+            }
         }
 
         private static uint GetMaxCacheSizeForCategory(DocumentCategory category)

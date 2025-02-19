@@ -21,7 +21,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public void Invoke()
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.NativeCallback_Invoke(Handle));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.NativeCallback_Invoke(Handle);
+            }
         }
 
         #endregion

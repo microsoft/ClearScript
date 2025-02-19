@@ -22,63 +22,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        public static void Invoke(Action<IV8SplitProxyNative> action)
+        public static InvokeScope Invoke(out IV8SplitProxyNative instance)
         {
+            instance = V8SplitProxyNative.instance;
             var previousScheduledException = MiscHelpers.Exchange(ref V8SplitProxyManaged.ScheduledException, null);
             var previousMethodTable = instance.V8SplitProxyManaged_SetMethodTable(V8SplitProxyManaged.MethodTable);
-            try
-            {
-                action(instance);
-                ThrowScheduledException();
-            }
-            finally
-            {
-                instance.V8SplitProxyManaged_SetMethodTable(previousMethodTable);
-                V8SplitProxyManaged.ScheduledException = previousScheduledException;
-            }
+            return new InvokeScope(previousScheduledException, previousMethodTable);
         }
 
-        public static T Invoke<T>(Func<IV8SplitProxyNative, T> func)
+        public static InvokeNoThrowScope InvokeNoThrow(out IV8SplitProxyNative instance)
         {
-            var previousScheduledException = MiscHelpers.Exchange(ref V8SplitProxyManaged.ScheduledException, null);
+            instance = V8SplitProxyNative.instance;
             var previousMethodTable = instance.V8SplitProxyManaged_SetMethodTable(V8SplitProxyManaged.MethodTable);
-            try
-            {
-                var result = func(instance);
-                ThrowScheduledException();
-                return result;
-            }
-            finally
-            {
-                instance.V8SplitProxyManaged_SetMethodTable(previousMethodTable);
-                V8SplitProxyManaged.ScheduledException = previousScheduledException;
-            }
-        }
-
-        public static void InvokeNoThrow(Action<IV8SplitProxyNative> action)
-        {
-            var previousMethodTable = instance.V8SplitProxyManaged_SetMethodTable(V8SplitProxyManaged.MethodTable);
-            try
-            {
-                action(instance);
-            }
-            finally
-            {
-                instance.V8SplitProxyManaged_SetMethodTable(previousMethodTable);
-            }
-        }
-
-        public static T InvokeNoThrow<T>(Func<IV8SplitProxyNative, T> func)
-        {
-            var previousMethodTable = instance.V8SplitProxyManaged_SetMethodTable(V8SplitProxyManaged.MethodTable);
-            try
-            {
-                return func(instance);
-            }
-            finally
-            {
-                instance.V8SplitProxyManaged_SetMethodTable(previousMethodTable);
-            }
+            return new InvokeNoThrowScope(previousMethodTable);
         }
 
         private static void ThrowScheduledException()
@@ -86,6 +42,46 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             if (V8SplitProxyManaged.ScheduledException != null)
             {
                 throw V8SplitProxyManaged.ScheduledException;
+            }
+        }
+
+        public readonly struct InvokeNoThrowScope : IDisposable
+        {
+            private readonly IntPtr previousMethodTable;
+
+            public InvokeNoThrowScope(IntPtr previousMethodTable)
+            {
+                this.previousMethodTable = previousMethodTable;
+            }
+
+            public void Dispose()
+            {
+                instance.V8SplitProxyManaged_SetMethodTable(previousMethodTable);
+            }
+        }
+
+        public readonly struct InvokeScope : IDisposable
+        {
+            private readonly Exception previousScheduledException;
+            private readonly IntPtr previousMethodTable;
+
+            public InvokeScope(Exception previousScheduledException, IntPtr previousMethodTable)
+            {
+                this.previousScheduledException = previousScheduledException;
+                this.previousMethodTable = previousMethodTable;
+            }
+
+            public void Dispose()
+            {
+                try
+                {
+                    ThrowScheduledException();
+                }
+                finally
+                {
+                    instance.V8SplitProxyManaged_SetMethodTable(previousMethodTable);
+                    V8SplitProxyManaged.ScheduledException = previousScheduledException;
+                }
             }
         }
     }

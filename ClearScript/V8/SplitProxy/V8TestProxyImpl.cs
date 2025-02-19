@@ -9,13 +9,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         public override UIntPtr GetNativeDigest(string value)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.V8UnitTestSupport_GetTextDigest(value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                return instance.V8UnitTestSupport_GetTextDigest(value);
+            }
         }
 
         public override Statistics GetStatistics()
         {
             var statistics = new Statistics();
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8UnitTestSupport_GetStatistics(out statistics.IsolateCount, out statistics.ContextCount));
+
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8UnitTestSupport_GetStatistics(out statistics.IsolateCount, out statistics.ContextCount);
+            }
+
             return statistics;
         }
 
