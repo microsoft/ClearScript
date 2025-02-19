@@ -20,17 +20,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public void ConnectClient()
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8DebugCallback_ConnectClient(Handle));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8DebugCallback_ConnectClient(Handle);
+            }
         }
 
         public void SendCommand(string command)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8DebugCallback_SendCommand(Handle, command));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8DebugCallback_SendCommand(Handle, command);
+            }
         }
 
         public void DisconnectClient()
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8DebugCallback_DisconnectClient(Handle));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8DebugCallback_DisconnectClient(Handle);
+            }
         }
 
         #endregion

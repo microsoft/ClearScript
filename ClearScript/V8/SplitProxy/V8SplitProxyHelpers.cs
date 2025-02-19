@@ -16,17 +16,35 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         public static IScope<Ptr> CreateScope(string value = null)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdString_New(value ?? string.Empty), instance.StdString_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return instance.StdString_New(value ?? string.Empty);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdString_Delete(ptr);
+                }
+            });
         }
 
         public static string GetValue(Ptr pString)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdString_GetValue(pString));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                return instance.StdString_GetValue(pString);
+            }
         }
 
         public static void SetValue(Ptr pString, string value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdString_SetValue(pString, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.StdString_SetValue(pString, value);
+            }
         }
 
         #region Nested type: Ptr
@@ -60,27 +78,57 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         public static IScope<Ptr> CreateScope(int elementCount = 0)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdStringArray_New(elementCount), instance.StdStringArray_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return instance.StdStringArray_New(elementCount);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdStringArray_Delete(ptr);
+                }
+            });
         }
 
         public static IScope<Ptr> CreateScope(string[] array)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdStringArray_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return NewFromArray(instance, array);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdStringArray_Delete(ptr);
+                }
+            });
         }
 
         public static int GetElementCount(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdStringArray_GetElementCount(pArray));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                return instance.StdStringArray_GetElementCount(pArray);
+            }
         }
 
         public static void SetElementCount(Ptr pArray, int elementCount)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdStringArray_SetElementCount(pArray, elementCount));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.StdStringArray_SetElementCount(pArray, elementCount);
+            }
         }
 
         public static string[] ToArray(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = instance.StdStringArray_GetElementCount(pArray);
                 var array = new string[elementCount];
@@ -94,12 +142,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
 
                 return array;
-            });
+            };
         }
 
         public static void CopyFromArray(Ptr pArray, string[] array)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = array?.Length ?? 0;
                 instance.StdStringArray_SetElementCount(pArray, elementCount);
@@ -108,7 +156,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 {
                     instance.StdStringArray_SetElement(pArray, index, array[index]);
                 }
-            });
+            };
         }
 
         private static Ptr NewFromArray(IV8SplitProxyNative instance, string[] array)
@@ -158,27 +206,57 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         public static IScope<Ptr> CreateScope(int elementCount = 0)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdByteArray_New(elementCount), instance.StdByteArray_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return instance.StdByteArray_New(elementCount);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdByteArray_Delete(ptr);
+                }
+            });
         }
 
         public static IScope<Ptr> CreateScope(byte[] array)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdByteArray_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return NewFromArray(instance, array);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdByteArray_Delete(ptr);
+                }
+            });
         }
 
         public static int GetElementCount(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdByteArray_GetElementCount(pArray));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                return instance.StdByteArray_GetElementCount(pArray);
+            }
         }
 
         public static void SetElementCount(Ptr pArray, int elementCount)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdByteArray_SetElementCount(pArray, elementCount));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.StdByteArray_SetElementCount(pArray, elementCount);
+            }
         }
 
         public static byte[] ToArray(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = instance.StdByteArray_GetElementCount(pArray);
                 var array = new byte[elementCount];
@@ -189,12 +267,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
 
                 return array;
-            });
+            };
         }
 
         public static void CopyFromArray(Ptr pArray, byte[] array)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = array?.Length ?? 0;
                 instance.StdByteArray_SetElementCount(pArray, elementCount);
@@ -203,7 +281,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 {
                     Marshal.Copy(array, 0, instance.StdByteArray_GetData(pArray), elementCount);
                 }
-            });
+            };
         }
 
         private static Ptr NewFromArray(IV8SplitProxyNative instance, byte[] array)
@@ -250,27 +328,57 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         public static IScope<Ptr> CreateScope(int elementCount = 0)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdInt32Array_New(elementCount), instance.StdInt32Array_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return instance.StdInt32Array_New(elementCount);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdInt32Array_Delete(ptr);
+                }
+            });
         }
 
         public static IScope<Ptr> CreateScope(int[] array)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdInt32Array_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return NewFromArray(instance, array);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdInt32Array_Delete(ptr);
+                }
+            });
         }
 
         public static int GetElementCount(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdInt32Array_GetElementCount(pArray));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                return instance.StdInt32Array_GetElementCount(pArray);
+            }
         }
 
         public static void SetElementCount(Ptr pArray, int elementCount)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdInt32Array_SetElementCount(pArray, elementCount));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.StdInt32Array_SetElementCount(pArray, elementCount);
+            }
         }
 
         public static int[] ToArray(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = instance.StdInt32Array_GetElementCount(pArray);
                 var array = new int[elementCount];
@@ -281,12 +389,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
 
                 return array;
-            });
+            };
         }
 
         public static void CopyFromArray(Ptr pArray, int[] array)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = array?.Length ?? 0;
                 instance.StdInt32Array_SetElementCount(pArray, elementCount);
@@ -295,7 +403,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 {
                     Marshal.Copy(array, 0, instance.StdInt32Array_GetData(pArray), elementCount);
                 }
-            });
+            };
         }
 
         private static Ptr NewFromArray(IV8SplitProxyNative instance, int[] array)
@@ -342,27 +450,57 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         public static IScope<Ptr> CreateScope(int elementCount = 0)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdUInt32Array_New(elementCount), instance.StdUInt32Array_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return instance.StdUInt32Array_New(elementCount);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdUInt32Array_Delete(ptr);
+                }
+            });
         }
 
         public static IScope<Ptr> CreateScope(uint[] array)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdUInt32Array_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return NewFromArray(instance, array);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdUInt32Array_Delete(ptr);
+                }
+            });
         }
 
         public static int GetElementCount(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdUInt32Array_GetElementCount(pArray));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                return instance.StdUInt32Array_GetElementCount(pArray);
+            }
         }
 
         public static void SetElementCount(Ptr pArray, int elementCount)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdUInt32Array_SetElementCount(pArray, elementCount));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.StdUInt32Array_SetElementCount(pArray, elementCount);
+            }
         }
 
         public static uint[] ToArray(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = instance.StdUInt32Array_GetElementCount(pArray);
                 var array = new uint[elementCount];
@@ -373,12 +511,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
 
                 return array;
-            });
+            };
         }
 
         public static void CopyFromArray(Ptr pArray, uint[] array)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = array?.Length ?? 0;
                 instance.StdUInt32Array_SetElementCount(pArray, elementCount);
@@ -387,7 +525,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 {
                     UnmanagedMemoryHelpers.Copy(array, 0, (ulong)elementCount, instance.StdUInt32Array_GetData(pArray));
                 }
-            });
+            };
         }
 
         private static Ptr NewFromArray(IV8SplitProxyNative instance, uint[] array)
@@ -434,27 +572,57 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         public static IScope<Ptr> CreateScope(int elementCount = 0)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdUInt64Array_New(elementCount), instance.StdUInt64Array_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return instance.StdUInt64Array_New(elementCount);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdUInt64Array_Delete(ptr);
+                }
+            });
         }
 
         public static IScope<Ptr> CreateScope(ulong[] array)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdUInt64Array_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return NewFromArray(instance, array);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdUInt64Array_Delete(ptr);
+                }
+            });
         }
 
         public static int GetElementCount(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdUInt64Array_GetElementCount(pArray));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                return instance.StdUInt64Array_GetElementCount(pArray);
+            }
         }
 
         public static void SetElementCount(Ptr pArray, int elementCount)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdUInt64Array_SetElementCount(pArray, elementCount));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.StdUInt64Array_SetElementCount(pArray, elementCount);
+            }
         }
 
         public static ulong[] ToArray(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = instance.StdUInt64Array_GetElementCount(pArray);
                 var array = new ulong[elementCount];
@@ -465,12 +633,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
 
                 return array;
-            });
+            };
         }
 
         public static void CopyFromArray(Ptr pArray, ulong[] array)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = array?.Length ?? 0;
                 instance.StdUInt64Array_SetElementCount(pArray, elementCount);
@@ -479,7 +647,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 {
                     UnmanagedMemoryHelpers.Copy(array, 0, (ulong)elementCount, instance.StdUInt64Array_GetData(pArray));
                 }
-            });
+            };
         }
 
         private static Ptr NewFromArray(IV8SplitProxyNative instance, ulong[] array)
@@ -526,27 +694,57 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         public static IScope<Ptr> CreateScope(int elementCount = 0)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdPtrArray_New(elementCount), instance.StdPtrArray_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return instance.StdPtrArray_New(elementCount);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdPtrArray_Delete(ptr);
+                }
+            });
         }
 
         public static IScope<Ptr> CreateScope(IntPtr[] array)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdPtrArray_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return NewFromArray(instance, array);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdPtrArray_Delete(ptr);
+                }
+            });
         }
 
         public static int GetElementCount(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdPtrArray_GetElementCount(pArray));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                return instance.StdPtrArray_GetElementCount(pArray);
+            }
         }
 
         public static void SetElementCount(Ptr pArray, int elementCount)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdPtrArray_SetElementCount(pArray, elementCount));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.StdPtrArray_SetElementCount(pArray, elementCount);
+            }
         }
 
         public static IntPtr[] ToArray(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = instance.StdPtrArray_GetElementCount(pArray);
                 var array = new IntPtr[elementCount];
@@ -557,12 +755,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
 
                 return array;
-            });
+            };
         }
 
         public static void CopyFromArray(Ptr pArray, IntPtr[] array)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = array?.Length ?? 0;
                 instance.StdPtrArray_SetElementCount(pArray, elementCount);
@@ -571,7 +769,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 {
                     Marshal.Copy(array, 0, instance.StdPtrArray_GetData(pArray), elementCount);
                 }
-            });
+            };
         }
 
         private static Ptr NewFromArray(IV8SplitProxyNative instance, IntPtr[] array)
@@ -618,27 +816,57 @@ namespace Microsoft.ClearScript.V8.SplitProxy
     {
         public static IScope<Ptr> CreateScope(int elementCount = 0)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdV8ValueArray_New(elementCount), instance.StdV8ValueArray_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return instance.StdV8ValueArray_New(elementCount);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdV8ValueArray_Delete(ptr);
+                }
+            });
         }
 
         public static IScope<Ptr> CreateScope(object[] array)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdV8ValueArray_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return NewFromArray(instance, array);
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.StdV8ValueArray_Delete(ptr);
+                }
+            });
         }
 
         public static int GetElementCount(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_GetElementCount(pArray));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                return instance.StdV8ValueArray_GetElementCount(pArray);
+            }
         }
 
         public static void SetElementCount(Ptr pArray, int elementCount)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_SetElementCount(pArray, elementCount));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.StdV8ValueArray_SetElementCount(pArray, elementCount);
+            }
         }
 
         public static object[] ToArray(Ptr pArray)
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = instance.StdV8ValueArray_GetElementCount(pArray);
                 var array = new object[elementCount];
@@ -653,12 +881,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
 
                 return array;
-            });
+            };
         }
 
         public static void CopyFromArray(Ptr pArray, object[] array)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = array?.Length ?? 0;
                 instance.StdV8ValueArray_SetElementCount(pArray, elementCount);
@@ -671,7 +899,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         V8Value.Set(GetElementPtr(pElements, index), array[index]);
                     }
                 }
-            });
+            };
         }
 
         private static Ptr NewFromArray(IV8SplitProxyNative instance, object[] array)
@@ -726,7 +954,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public static IScope<Ptr> CreateScope()
         {
-            return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(instance.V8Value_New, instance.V8Value_Delete));
+            return Scope.Create(() =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    return instance.V8Value_New();
+                }
+            }, ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.V8Value_Delete(ptr);
+                }
+            });
         }
 
         public static IScope<Ptr> CreateScope(object obj)
@@ -898,7 +1138,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         public static object Get(Ptr pV8Value)
         {
             var decoded = default(Decoded);
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_Decode(pV8Value, out decoded));
+
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_Decode(pV8Value, out decoded);
+            }
+
             return decoded.Get();
         }
 
@@ -931,47 +1176,74 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void SetNonexistent(Ptr pV8Value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetNonexistent(pV8Value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetNonexistent(pV8Value);
+            }
         }
 
         private static void SetUndefined(Ptr pV8Value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetUndefined(pV8Value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetUndefined(pV8Value);
+            }
         }
 
         private static void SetNull(Ptr pV8Value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetNull(pV8Value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetNull(pV8Value);
+            }
         }
 
         private static void SetBoolean(Ptr pV8Value, bool value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetBoolean(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetBoolean(pV8Value, value);
+            }
         }
 
         private static void SetNumeric(Ptr pV8Value, double value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetNumber(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetNumber(pV8Value, value);
+            }
         }
 
         private static void SetNumeric(Ptr pV8Value, int value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetInt32(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetInt32(pV8Value, value);
+            }
         }
 
         private static void SetNumeric(Ptr pV8Value, uint value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetUInt32(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetUInt32(pV8Value, value);
+            }
         }
 
         private static void SetString(Ptr pV8Value, string value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetString(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetString(pV8Value, value);
+            }
         }
 
         private static void SetDateTime(Ptr pV8Value, DateTime value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetDateTime(pV8Value, (value.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetDateTime(pV8Value, (value.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+            }
         }
 
         private static void SetBigInt(Ptr pV8Value, BigInteger value)
@@ -984,17 +1256,27 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
 
             var bytes = value.ToByteArray();
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetBigInt(pV8Value, signBit, bytes));
+
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetBigInt(pV8Value, signBit, bytes);
+            }
         }
 
         private static void SetV8Object(Ptr pV8Value, V8ObjectImpl v8ObjectImpl)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetV8Object(pV8Value, v8ObjectImpl.Handle, v8ObjectImpl.Subtype, v8ObjectImpl.Flags));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetV8Object(pV8Value, v8ObjectImpl.Handle, v8ObjectImpl.Subtype, v8ObjectImpl.Flags);
+            }
         }
 
         private static void SetHostObject(Ptr pV8Value, object obj)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetHostObject(pV8Value, V8ProxyHelpers.AddRefHostObject(obj)));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_SetHostObject(pV8Value, V8ProxyHelpers.AddRefHostObject(obj));
+            }
         }
 
         #region Nested type: Type
@@ -1201,7 +1483,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             var endTimestamp = 0UL;
             var sampleCount = 0;
             var pRootNode = Node.Ptr.Null;
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfile_GetInfo(pProfile, hEntity, out name, out startTimestamp, out endTimestamp, out sampleCount, out pRootNode));
+
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8CpuProfile_GetInfo(pProfile, hEntity, out name, out startTimestamp, out endTimestamp, out sampleCount, out pRootNode);
+            }
 
             profile.Name = name;
             profile.StartTimestamp = startTimestamp;
@@ -1221,7 +1507,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     var nodeId = 0UL;
                     var timestamp = 0UL;
                     var sampleIndex = index;
-                    var found = V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfile_GetSample(pProfile, sampleIndex, out nodeId, out timestamp));
+                    var found = false;
+
+                    using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                    {
+                        found = instance.V8CpuProfile_GetSample(pProfile, sampleIndex, out nodeId, out timestamp);
+                    }
+
                     if (found)
                     {
                         var node = profile.FindNode(nodeId);
@@ -1251,7 +1543,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             var hitCount = 0UL;
             var hitLineCount = 0U;
             var childCount = 0;
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfileNode_GetInfo(pNode, hEntity, out nodeId, out scriptId, out scriptName, out functionName, out bailoutReason, out lineNumber, out columnNumber, out hitCount, out hitLineCount, out childCount));
+
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8CpuProfileNode_GetInfo(pNode, hEntity, out nodeId, out scriptId, out scriptName, out functionName, out bailoutReason, out lineNumber, out columnNumber, out hitCount, out hitLineCount, out childCount);
+            }
 
             var node = new V8.V8CpuProfile.Node
             {
@@ -1269,7 +1565,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 int[] lineNumbers = null;
                 uint[] hitCounts = null;
-                if (V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfileNode_GetHitLines(pNode, out lineNumbers, out hitCounts)))
+                bool found = false;
+
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    found = instance.V8CpuProfileNode_GetHitLines(pNode, out lineNumbers, out hitCounts);
+                }
+
+                if (found)
                 {
                     var actualHitLineCount = Math.Min(lineNumbers.Length, hitCounts.Length);
                     if (actualHitLineCount > 0)
@@ -1294,7 +1597,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 for (var index = 0; index < childCount; index++)
                 {
                     var childIndex = index;
-                    var pChildNode = V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfileNode_GetChildNode(pNode, childIndex));
+                    var pChildNode = Node.Ptr.Null;
+
+                    using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                    {
+                        pChildNode = instance.V8CpuProfileNode_GetChildNode(pNode, childIndex);
+                    }
+
                     if (pChildNode != Node.Ptr.Null)
                     {
                         childNodes.Add(CreateNode(hEntity, pChildNode));
