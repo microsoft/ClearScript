@@ -1105,6 +1105,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 #else
                 var bytes = new byte[count];
                 Marshal.Copy(pBytes, bytes, 0, count);
+                stream.Write(bytes, 0, count);
 #endif
             }
             catch (Exception exception)
