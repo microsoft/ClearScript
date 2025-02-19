@@ -73,9 +73,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             public void Dispose()
             {
-                ThrowScheduledException();
-                Instance.V8SplitProxyManaged_SetMethodTable(previousMethodTable);
-                V8SplitProxyManaged.ScheduledException = previousScheduledException;
+                try
+                {
+                    ThrowScheduledException();
+                }
+                finally
+                {
+                    Instance.V8SplitProxyManaged_SetMethodTable(previousMethodTable);
+                    V8SplitProxyManaged.ScheduledException = previousScheduledException;
+                }
             }
         }
     }
