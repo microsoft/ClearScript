@@ -30,19 +30,23 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public void ReleaseEntity()
         {
-            var tempHandle = handle;
-            if (tempHandle != V8Entity.Handle.Empty)
+            if (handle != V8Entity.Handle.Empty)
             {
-                V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Entity_Release(tempHandle));
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.V8Entity_Release(handle);
+                }
             }
         }
 
         public static void Destroy(ref V8EntityHolder holder)
         {
-            var tempHandle = holder.handle;
-            if (tempHandle != V8Entity.Handle.Empty)
+            if (holder.handle != V8Entity.Handle.Empty)
             {
-                V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Entity_DestroyHandle(tempHandle));
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                {
+                    instance.V8Entity_DestroyHandle(holder.handle);
+                }
             }
 
             if (holder.registered)

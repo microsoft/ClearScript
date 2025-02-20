@@ -35,12 +35,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void ScheduleHostException(IntPtr pObject, Exception exception)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.HostException_Schedule(exception.GetBaseException().Message, V8ProxyHelpers.MarshalExceptionToScript(pObject, exception)));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.HostException_Schedule(exception.GetBaseException().Message, V8ProxyHelpers.MarshalExceptionToScript(pObject, exception));
+            }
         }
 
         private static void ScheduleHostException(Exception exception)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.HostException_Schedule(exception.GetBaseException().Message, ScriptEngine.Current?.MarshalToScript(exception)));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.HostException_Schedule(exception.GetBaseException().Message, ScriptEngine.Current?.MarshalToScript(exception));
+            }
         }
 
         private static uint GetMaxCacheSizeForCategory(DocumentCategory category)
@@ -707,12 +713,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     unsafe
                     {
                         var name = new StdString(pName);
-                        var value = *(V8Value.Decoded*)(IntPtr)pValue;
-                        hostObject.SetNamedProperty(name, value);
 
-                        if (value.Type == V8Value.Type.V8Object)
+                        using (var value = *(V8Value.Decoded*)(IntPtr)pValue)
                         {
-                            V8SplitProxyNative.Instance.V8Entity_DestroyHandle((V8Entity.Handle)value.PtrOrHandle);
+                            hostObject.SetNamedProperty(name, value);
                         }
                     }
                 }
@@ -817,12 +821,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 {
                     unsafe
                     {
-                        var value = *(V8Value.Decoded*)(IntPtr)pValue;
-                        hostObject.SetIndexedProperty(index, value);
-
-                        if (value.Type == V8Value.Type.V8Object)
+                        using (var value = *(V8Value.Decoded*)(IntPtr)pValue)
                         {
-                            V8SplitProxyNative.Instance.V8Entity_DestroyHandle((V8Entity.Handle)value.PtrOrHandle);
+                            hostObject.SetIndexedProperty(index, value);
                         }
                     }
                 }
@@ -901,13 +902,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     {
                         var args = new ReadOnlySpan<V8Value.Decoded>((V8Value.Decoded*)(IntPtr)pArgs, argCount);
                         var result = new V8Value(pResult);
-                        method(args, result);
 
-                        for (int i = 0; i < argCount; i++)
+                        try
                         {
-                            if (args[i].Type == V8Value.Type.V8Object)
+                            method(args, result);
+                        }
+                        finally
+                        {
+                            for (int i = 0; i < argCount; i++)
                             {
-                                V8SplitProxyNative.Instance.V8Entity_DestroyHandle((V8Entity.Handle)args[i].PtrOrHandle);
+                                args[i].Dispose();
                             }
                         }
                     }
@@ -940,13 +944,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         var name = new StdString(pName);
                         var args = new ReadOnlySpan<V8Value.Decoded>((V8Value.Decoded*)(IntPtr)pArgs, argCount);
                         var result = new V8Value(pResult);
-                        hostObject.InvokeMethod(name, args, result);
 
-                        for (int i = 0; i < argCount; i++)
+                        try
                         {
-                            if (args[i].Type == V8Value.Type.V8Object)
+                            hostObject.InvokeMethod(name, args, result);
+                        }
+                        finally
+                        {
+                            for (int i = 0; i < argCount; i++)
                             {
-                                V8SplitProxyNative.Instance.V8Entity_DestroyHandle((V8Entity.Handle)args[i].PtrOrHandle);
+                                args[i].Dispose();
                             }
                         }
                     }
