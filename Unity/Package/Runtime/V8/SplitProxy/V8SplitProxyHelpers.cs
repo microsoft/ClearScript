@@ -417,7 +417,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         internal static void CopyFromArray(Ptr pArray, int[] array)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = array?.Length ?? 0;
                 instance.StdInt32Array_SetElementCount(pArray, elementCount);
@@ -426,7 +426,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 {
                     Marshal.Copy(array, 0, instance.StdInt32Array_GetData(pArray), elementCount);
                 }
-            });
+            };
         }
 
         private static Ptr NewFromArray(IV8SplitProxyNative instance, int[] array)
@@ -767,7 +767,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             if (owns)
             {
                 Ptr ptr = this.ptr;
-                V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_Delete(ptr));
+
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                    instance.StdV8ValueArray_Delete(ptr);
             }
         }
 
@@ -789,14 +791,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         internal static IScope<Ptr> CreateScope(int elementCount = 0)
         {
-            return Scope.Create(() => V8SplitProxyNative.Instance.StdV8ValueArray_New(elementCount),
-                ptr => V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_Delete(ptr)));
+            return Scope.Create(() => V8SplitProxyNative.Instance.StdV8ValueArray_New(elementCount), ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                    instance.StdV8ValueArray_Delete(ptr);
+            });
         }
 
         internal static IScope<Ptr> CreateScope(object[] array)
         {
-            return Scope.Create(() => NewFromArray(V8SplitProxyNative.Instance, array),
-                ptr => V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_Delete(ptr)));
+            return Scope.Create(() => NewFromArray(V8SplitProxyNative.Instance, array), ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                    instance.StdV8ValueArray_Delete(ptr);
+            });
         }
 
         internal static int GetElementCount(Ptr pArray)
@@ -806,7 +814,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         internal static void SetElementCount(Ptr pArray, int elementCount)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_SetElementCount(pArray, elementCount));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.StdV8ValueArray_SetElementCount(pArray, elementCount);
         }
 
         internal static object[] ToArray(Ptr pArray)
@@ -828,7 +837,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         internal static void CopyFromArray(Ptr pArray, object[] array)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 var elementCount = array?.Length ?? 0;
                 instance.StdV8ValueArray_SetElementCount(pArray, elementCount);
@@ -841,7 +850,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         V8Value.Set(GetElementPtr(pElements, index), array[index]);
                     }
                 }
-            });
+            };
         }
 
         internal static Ptr NewFromArray(IV8SplitProxyNative instance, object[] array)
@@ -927,7 +936,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             if (owns)
             {
                 Ptr ptr = this.ptr;
-                V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_Delete(ptr));
+
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                    instance.V8Value_Delete(ptr);
             }
         }
 
@@ -946,11 +957,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             if (ptr == Ptr.Null)
                 throw new NullReferenceException("V8Value is uninitialized");
 
-            return V8SplitProxyNative.InvokeNoThrow(instance =>
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
             {
                 instance.V8Value_Decode(ptr, out Decoded decoded);
                 return decoded;
-            });
+            };
         }
 
         /// <summary>
@@ -1191,8 +1202,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         internal static IScope<Ptr> CreateScope()
         {
-            return Scope.Create(() => V8SplitProxyNative.Instance.V8Value_New(),
-                ptr => V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_Delete(ptr)));
+            return Scope.Create(() => V8SplitProxyNative.Instance.V8Value_New(), ptr =>
+            {
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                    instance.V8Value_Delete(ptr);
+            });
         }
 
         internal static IScope<Ptr> CreateScope(object obj)
@@ -1363,9 +1377,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         internal static object Get(Ptr pV8Value)
         {
-            var decoded = default(Decoded);
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_Decode(pV8Value, out decoded));
-            return decoded.Get();
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+            {
+                instance.V8Value_Decode(pV8Value, out Decoded decoded);
+                return decoded.Get();
+            }
         }
 
         private static bool TryGetBigInteger(int signBit, int wordCount, IntPtr pWords, out BigInteger result)
@@ -1397,47 +1413,56 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void SetNonexistent(Ptr pV8Value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetNonexistent(pV8Value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetNonexistent(pV8Value);
         }
 
         private static void SetUndefined(Ptr pV8Value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetUndefined(pV8Value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetUndefined(pV8Value);
         }
 
         private static void SetNull(Ptr pV8Value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetNull(pV8Value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetNull(pV8Value);
         }
 
         private static void SetBoolean(Ptr pV8Value, bool value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetBoolean(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetBoolean(pV8Value, value);
         }
 
         private static void SetNumeric(Ptr pV8Value, double value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetNumber(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetNumber(pV8Value, value);
         }
 
         private static void SetNumeric(Ptr pV8Value, int value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetInt32(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetInt32(pV8Value, value);
         }
 
         private static void SetNumeric(Ptr pV8Value, uint value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetUInt32(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetUInt32(pV8Value, value);
         }
 
         private static void SetString(Ptr pV8Value, string value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetString(pV8Value, value));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetString(pV8Value, value);
         }
 
         private static void SetDateTime(Ptr pV8Value, DateTime value)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetDateTime(pV8Value, (value.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetDateTime(pV8Value, (value.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
         }
 
         private static void SetBigInt(Ptr pV8Value, BigInteger value)
@@ -1450,17 +1475,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
 
             var bytes = value.ToByteArray();
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetBigInt(pV8Value, signBit, bytes));
+
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetBigInt(pV8Value, signBit, bytes);
         }
 
         private static void SetV8Object(Ptr pV8Value, V8ObjectImpl v8ObjectImpl)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetV8Object(pV8Value, v8ObjectImpl.Handle, v8ObjectImpl.Subtype, v8ObjectImpl.Flags));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetV8Object(pV8Value, v8ObjectImpl.Handle, v8ObjectImpl.Subtype, v8ObjectImpl.Flags);
         }
 
         private static void SetHostObject(Ptr pV8Value, object obj)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_SetHostObject(pV8Value, V8ProxyHelpers.AddRefHostObject(obj)));
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8Value_SetHostObject(pV8Value, V8ProxyHelpers.AddRefHostObject(obj));
         }
 
         #region Nested type: Type
@@ -1768,7 +1797,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 {
                     Type = Type.Nonexistent;
                     var hEntity = (V8Entity.Handle)PtrOrHandle;
-                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Entity_DestroyHandle(hEntity));
+
+                    using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                        instance.V8Entity_DestroyHandle(hEntity);
                 }
             }
 
@@ -2053,7 +2084,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             var endTimestamp = 0UL;
             var sampleCount = 0;
             var pRootNode = Node.Ptr.Null;
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfile_GetInfo(pProfile, hEntity, out name, out startTimestamp, out endTimestamp, out sampleCount, out pRootNode));
+
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8CpuProfile_GetInfo(pProfile, hEntity, out name, out startTimestamp, out endTimestamp, out sampleCount, out pRootNode);
 
             profile.Name = name;
             profile.StartTimestamp = startTimestamp;
@@ -2073,7 +2106,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     var nodeId = 0UL;
                     var timestamp = 0UL;
                     var sampleIndex = index;
-                    var found = V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfile_GetSample(pProfile, sampleIndex, out nodeId, out timestamp));
+                    bool found;
+
+                    using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                        found = instance.V8CpuProfile_GetSample(pProfile, sampleIndex, out nodeId, out timestamp);
+
                     if (found)
                     {
                         var node = profile.FindNode(nodeId);
@@ -2103,7 +2140,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             var hitCount = 0UL;
             var hitLineCount = 0U;
             var childCount = 0;
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfileNode_GetInfo(pNode, hEntity, out nodeId, out scriptId, out scriptName, out functionName, out bailoutReason, out lineNumber, out columnNumber, out hitCount, out hitLineCount, out childCount));
+
+            using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                instance.V8CpuProfileNode_GetInfo(pNode, hEntity, out nodeId, out scriptId, out scriptName, out functionName, out bailoutReason, out lineNumber, out columnNumber, out hitCount, out hitLineCount, out childCount);
 
             var node = new V8.V8CpuProfile.Node
             {
@@ -2121,7 +2160,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 int[] lineNumbers = null;
                 uint[] hitCounts = null;
-                if (V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfileNode_GetHitLines(pNode, out lineNumbers, out hitCounts)))
+                bool found;
+
+                using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                    found = instance.V8CpuProfileNode_GetHitLines(pNode, out lineNumbers, out hitCounts);
+
+                if (found)
                 {
                     var actualHitLineCount = Math.Min(lineNumbers.Length, hitCounts.Length);
                     if (actualHitLineCount > 0)
@@ -2146,7 +2190,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 for (var index = 0; index < childCount; index++)
                 {
                     var childIndex = index;
-                    var pChildNode = V8SplitProxyNative.InvokeNoThrow(instance => instance.V8CpuProfileNode_GetChildNode(pNode, childIndex));
+                    Node.Ptr pChildNode;
+
+                    using (V8SplitProxyNative.InvokeNoThrow(out var instance))
+                        pChildNode = instance.V8CpuProfileNode_GetChildNode(pNode, childIndex);
+
                     if (pChildNode != Node.Ptr.Null)
                     {
                         childNodes.Add(CreateNode(hEntity, pChildNode));
@@ -2384,7 +2432,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             if (pValue == V8Value.Ptr.Null)
                 throw new ArgumentNullException(nameof(value));
 
-            V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(hObject, pName, pValue));
+            using (V8SplitProxyNative.Invoke(out var instance))
+                instance.V8Object_GetNamedProperty(hObject, pName, pValue);
         }
 
         /// <summary>
@@ -2408,7 +2457,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             using var stdName = new StdString(name);
             StdString.Ptr pName = stdName.ptr;
-            V8SplitProxyNative.Invoke(instance => instance.V8Object_GetNamedProperty(hObject, pName, pValue));
+
+            using (V8SplitProxyNative.Invoke(out var instance))
+                instance.V8Object_GetNamedProperty(hObject, pName, pValue);
         }
 
         /// <summary>
@@ -2427,7 +2478,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             if (pValue == V8Value.Ptr.Null)
                 throw new ArgumentNullException(nameof(value));
 
-            V8SplitProxyNative.Invoke(instance => instance.V8Object_GetIndexedProperty(hObject, index, pValue));
+            using (V8SplitProxyNative.Invoke(out var instance))
+                instance.V8Object_GetIndexedProperty(hObject, index, pValue);
         }
 
         /// <summary>
@@ -2451,7 +2503,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             if (pResult == V8Value.Ptr.Null)
                 throw new ArgumentNullException(nameof(result));
 
-            V8SplitProxyNative.Invoke(instance => instance.V8Object_Invoke(hObject, asConstructor, pArgs, pResult));
+            using (V8SplitProxyNative.Invoke(out var instance))
+                instance.V8Object_Invoke(hObject, asConstructor, pArgs, pResult);
         }
 
         #region Nested type: Handle
