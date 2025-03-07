@@ -32,7 +32,7 @@ namespace Microsoft.ClearScript.Util
             // ReSharper restore StringLiteralTypo
         };
 
-        private static readonly ConcurrentDictionary<Tuple<Type, BindingFlags, Type, ScriptAccess, bool>, Invocability> invocabilityMap = new ConcurrentDictionary<Tuple<Type, BindingFlags, Type, ScriptAccess, bool>, Invocability>();
+        private static readonly ConcurrentDictionary<Tuple<Type, BindingFlags, Type, ScriptAccess, bool>, Invocability> invocabilityMap = new();
 
         private static readonly NumericTypes[] numericConversions =
         {
@@ -192,7 +192,7 @@ namespace Microsoft.ClearScript.Util
         {
             Debug.Assert(genericTypeDefinition.IsGenericTypeDefinition);
 
-            for (var testType = type; testType != null; testType = testType.BaseType)
+            for (var testType = type; testType is not null; testType = testType.BaseType)
             {
                 if (testType.IsGenericType && (testType.GetGenericTypeDefinition() == genericTypeDefinition))
                 {
@@ -219,7 +219,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsNumericallyConvertibleFrom(this Type type, Type valueType)
         {
-            return numericConversions[(int)valueType.GetNumericType()].HasFlag(GetNumericTypes(type.GetNumericType()));
+            return numericConversions[(int)valueType.GetNumericType()].HasAllFlags(GetNumericTypes(type.GetNumericType()));
         }
 
         public static bool HasExtensionMethods(this Type type, IHostContext context)
@@ -229,7 +229,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool EqualsOrDeclares(this Type type, Type thatType)
         {
-            for (; thatType != null; thatType = thatType.DeclaringType)
+            for (; thatType is not null; thatType = thatType.DeclaringType)
             {
                 if (thatType == type)
                 {
@@ -242,7 +242,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsFamilyOf(this Type type, Type thatType)
         {
-            for (; type != null; type = type.DeclaringType)
+            for (; type is not null; type = type.DeclaringType)
             {
                 if ((type == thatType) || type.IsSubclassOf(thatType))
                 {
@@ -261,13 +261,13 @@ namespace Microsoft.ClearScript.Util
         public static bool IsCOMVisible(this Type type, IHostContext context)
         {
             var attribute = type.GetOrLoadCustomAttribute<ComVisibleAttribute>(context, false);
-            if (attribute != null)
+            if (attribute is not null)
             {
                 return attribute.Value;
             }
 
             attribute = type.Assembly.GetOrLoadCustomAttribute<ComVisibleAttribute>(context, false);
-            if (attribute != null)
+            if (attribute is not null)
             {
                 return attribute.Value;
             }
@@ -340,7 +340,7 @@ namespace Microsoft.ClearScript.Util
             try
             {
                 var eventInfo = type.GetScriptableEventInternal(context, name, bindFlags);
-                if (eventInfo != null)
+                if (eventInfo is not null)
                 {
                     return eventInfo;
                 }
@@ -360,7 +360,7 @@ namespace Microsoft.ClearScript.Util
         public static FieldInfo GetScriptableField(this Type type, IHostContext context, string name, BindingFlags bindFlags)
         {
             var candidate = type.GetField(name, bindFlags);
-            if ((candidate != null) && candidate.IsScriptable(context) && string.Equals(candidate.GetScriptName(context), name, bindFlags.GetMemberNameComparison()))
+            if ((candidate is not null) && candidate.IsScriptable(context) && string.Equals(candidate.GetScriptName(context), name, bindFlags.GetMemberNameComparison()))
             {
                 return candidate;
             }
@@ -401,7 +401,7 @@ namespace Microsoft.ClearScript.Util
             if (type.IsArray)
             {
                 var property = typeof(IList<>).MakeSpecificType(type.GetElementType()).GetProperty("Item");
-                return (property != null) ? property.ToEnumerable() : ArrayHelpers.GetEmptyArray<PropertyInfo>();
+                return (property is not null) ? property.ToEnumerable() : ArrayHelpers.GetEmptyArray<PropertyInfo>();
             }
 
             var properties = type.GetProperties(bindFlags).AsEnumerable();
@@ -445,7 +445,7 @@ namespace Microsoft.ClearScript.Util
                 try
                 {
                     var property = type.GetScriptableProperty(context, name, bindFlags);
-                    if (property != null)
+                    if (property is not null)
                     {
                         return property;
                     }
@@ -513,7 +513,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var constructor = BindToMember(context, candidates, flags, args, bindArgs);
-            if (constructor == null)
+            if (constructor is null)
             {
                 throw new MissingMethodException(MiscHelpers.FormatInvariant("Type '{0}' has no constructor that matches the specified arguments", type.GetFullFriendlyName()));
             }
@@ -575,7 +575,7 @@ namespace Microsoft.ClearScript.Util
                 var bindCandidates = GetBindCandidates(context, candidates, args, bindArgs.Select(GetBindArgType).ToArray()).ToArray();
                 result = SelectBindCandidate(bindCandidates);
 
-                if (result == null)
+                if (result is null)
                 {
                     // the default binder fails to bind to some COM properties because of by-ref parameter types
                     if (candidates.Length == 1)
@@ -606,7 +606,7 @@ namespace Microsoft.ClearScript.Util
 
             if (!hostTypeArgs.All(arg => arg is HostType))
             {
-                throw new ArgumentException("Invalid generic type argument");
+                throw new ArgumentException("Invalid generic type argument", nameof(hostTypeArgs));
             }
 
             var typeArgs = hostTypeArgs.Cast<HostType>().Select(hostType => hostType.GetTypeArg()).ToArray();
@@ -617,10 +617,10 @@ namespace Microsoft.ClearScript.Util
         {
             const int maxTypeArgCount = 16;
 
-            if ((typeArgs != null) && (typeArgs.Length > 0))
+            if ((typeArgs is not null) && (typeArgs.Length > 0))
             {
                 var template = ImportType(typeName, assemblyName, useAssemblyName, typeArgs.Length);
-                if (template == null)
+                if (template is null)
                 {
                     throw new TypeLoadException(MiscHelpers.FormatInvariant("Could not find a matching generic type definition for '{0}'", typeName));
                 }
@@ -640,7 +640,7 @@ namespace Microsoft.ClearScript.Util
 
             if (templates.Length < 1)
             {
-                if (type == null)
+                if (type is null)
                 {
                     throw new TypeLoadException(MiscHelpers.FormatInvariant("Could not find a specific type or generic type definition for '{0}'", typeName));
                 }
@@ -648,7 +648,7 @@ namespace Microsoft.ClearScript.Util
                 return HostType.Wrap(type);
             }
 
-            if (type == null)
+            if (type is null)
             {
                 return HostType.Wrap(templates);
             }
@@ -675,7 +675,7 @@ namespace Microsoft.ClearScript.Util
             {
             }
 
-            return ((type != null) && useAssemblyName && (type.AssemblyQualifiedName != assemblyQualifiedName)) ? null : type;
+            return ((type is not null) && useAssemblyName && (type.AssemblyQualifiedName != assemblyQualifiedName)) ? null : type;
         }
 
         private static string GetFriendlyName(this Type type, Func<Type, string> getBaseName)
@@ -777,22 +777,22 @@ namespace Microsoft.ClearScript.Util
                 type = type.GetElementType();
             }
 
-            var valueIsByRef = (valueType != null) && valueType.IsByRef;
+            var valueIsByRef = (valueType is not null) && valueType.IsByRef;
             if (valueIsByRef)
             {
                 valueType = valueType.GetElementType();
             }
 
-            if ((cost != null) && (typeIsByRef != valueIsByRef))
+            if ((cost is not null) && (typeIsByRef != valueIsByRef))
             {
                 cost.Flags |= BindArgFlags.ByRefMismatch;
             }
 
-            if ((value == null) && (valueType == null))
+            if ((value is null) && (valueType is null))
             {
                 if (type.IsNullable())
                 {
-                    if (cost != null)
+                    if (cost is not null)
                     {
                         cost.NumericType = Nullable.GetUnderlyingType(type).GetNumericType();
                     }
@@ -803,7 +803,7 @@ namespace Microsoft.ClearScript.Util
                 return !type.IsValueType;
             }
 
-            if (valueType == null)
+            if (valueType is null)
             {
                 valueType = value.GetType();
             }
@@ -815,7 +815,7 @@ namespace Microsoft.ClearScript.Util
 
             if (type.IsAssignableFrom(valueType))
             {
-                if (cost != null)
+                if (cost is not null)
                 {
                     if (type.IsNullable())
                     {
@@ -833,7 +833,7 @@ namespace Microsoft.ClearScript.Util
 
             if (type.IsImplicitlyConvertibleFromValue(valueType, ref value))
             {
-                if (cost != null)
+                if (cost is not null)
                 {
                     cost.Flags |= BindArgFlags.ImplicitConversion;
                 }
@@ -841,7 +841,7 @@ namespace Microsoft.ClearScript.Util
                 return true;
             }
 
-            if (value == null)
+            if (value is null)
             {
                 return false;
             }
@@ -851,7 +851,7 @@ namespace Microsoft.ClearScript.Util
                 var underlyingType = Nullable.GetUnderlyingType(type);
                 if (underlyingType.IsAssignableFromValueInternal(ref value, valueType, cost))
                 {
-                    if (cost != null)
+                    if (cost is not null)
                     {
                         cost.Flags |= BindArgFlags.NullableTransition;
                         cost.NumericType = underlyingType.GetNumericType();
@@ -920,16 +920,16 @@ namespace Microsoft.ClearScript.Util
 
                     // special case for method binding only
 
-                    if ((cost != null) && !valueTypeIsIntegral && !type.IsNumericallyConvertibleFrom(valueType))
+                    if ((cost is not null) && !valueTypeIsIntegral && !type.IsNumericallyConvertibleFrom(valueType))
                     {
                         return false;
                     }
                 }
 
                 var tempValue = value;
-                if (MiscHelpers.Try(out var tempResult, () => Convert.ChangeType(tempValue, type)))
+                if (MiscHelpers.Try(out var tempResult, static ctx => Convert.ChangeType(ctx.tempValue, ctx.type), (tempValue, type)))
                 {
-                    if (cost != null)
+                    if (cost is not null)
                     {
                         cost.Flags |= BindArgFlags.NumericConversion;
                         cost.NumericType = type.GetNumericType();
@@ -951,7 +951,7 @@ namespace Microsoft.ClearScript.Util
                 if ((parameters.Length == 1) && parameters[0].ParameterType.IsAssignableFrom(sourceType) && targetType.IsAssignableFrom(converter.ReturnType))
                 {
                     var args = new[] { value };
-                    if (MiscHelpers.Try(out var result, () => converter.Invoke(null, args)))
+                    if (MiscHelpers.Try(out var result, static ctx => ctx.converter.Invoke(null, ctx.args), (converter, args)))
                     {
                         value = result;
                         return true;
@@ -993,7 +993,7 @@ namespace Microsoft.ClearScript.Util
                 return hostTarget.Type;
             }
 
-            if (bindArg != null)
+            if (bindArg is not null)
             {
                 return bindArg.GetType();
             }
@@ -1015,7 +1015,7 @@ namespace Microsoft.ClearScript.Util
         {
             foreach (var candidate in candidates)
             {
-                if (MiscHelpers.Try(out var bindCandidate, () => BindCandidate<T>.TryCreateInstance(context, candidate, getParameters(candidate), args, argTypes)) && (bindCandidate != null))
+                if (MiscHelpers.Try(out var bindCandidate, static ctx => BindCandidate<T>.TryCreateInstance(ctx.context, ctx.candidate, ctx.getParameters(ctx.candidate), ctx.args, ctx.argTypes), (context, candidate, getParameters, args, argTypes)) && (bindCandidate is not null))
                 {
                     yield return bindCandidate;
                 }
@@ -1072,7 +1072,7 @@ namespace Microsoft.ClearScript.Util
         #region Nested type: NumericTypes
 
         [Flags]
-        private enum NumericTypes
+        public enum NumericTypes
         {
             // ReSharper disable UnusedMember.Local
 
@@ -1095,13 +1095,16 @@ namespace Microsoft.ClearScript.Util
             // ReSharper restore UnusedMember.Local
         }
 
+        public static bool HasAllFlags(this NumericTypes value, NumericTypes flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this NumericTypes value, NumericTypes flags) => (value & flags) != 0;
+
         #endregion
 
         #region Nested type: TypeNode
 
         private sealed class TypeNode
         {
-            private static readonly ConcurrentDictionary<Type, TypeNode> typeNodeMap = new ConcurrentDictionary<Type, TypeNode>();
+            private static readonly ConcurrentDictionary<Type, TypeNode> typeNodeMap = new();
 
             private readonly Type type;
 
@@ -1137,7 +1140,7 @@ namespace Microsoft.ClearScript.Util
                 var redundantInterfaces = new List<Type>();
 
                 var baseType = type.BaseType;
-                if (baseType != null)
+                if (baseType is not null)
                 {
                     redundantInterfaces.AddRange(baseType.GetInterfaces());
                     baseNode = GetOrCreate(baseType);
@@ -1182,7 +1185,7 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class PropertySignatureComparer : EqualityComparer<PropertyInfo>
         {
-            public static readonly PropertySignatureComparer Instance = new PropertySignatureComparer();
+            public static readonly PropertySignatureComparer Instance = new();
 
             public override bool Equals(PropertyInfo first, PropertyInfo second)
             {
@@ -1352,7 +1355,14 @@ namespace Microsoft.ClearScript.Util
                             return null;
                         }
 
-                        defaultArgCount += 1;
+                        ++defaultArgCount;
+                        continue;
+                    }
+
+                    if ((args[argIndex] is Missing) && (param.IsOptional || param.HasDefaultValue))
+                    {
+                        ++defaultArgCount;
+                        ++argIndex;
                         continue;
                     }
 

@@ -55,7 +55,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static void Check(int result)
         {
-            if (Succeeded(result) || !MiscHelpers.Try(out var exception, () => Marshal.GetExceptionForHR(result)))
+            if (Succeeded(result) || !MiscHelpers.Try(out var exception, static result => Marshal.GetExceptionForHR(result), result))
             {
                 return;
             }

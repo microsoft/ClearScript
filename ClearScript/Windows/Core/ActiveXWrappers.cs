@@ -127,7 +127,7 @@ namespace Microsoft.ClearScript.Windows.Core
             activeScriptGarbageCollector = activeScript as IActiveScriptGarbageCollector;
             debugStackFrameSniffer = activeScript as IDebugStackFrameSnifferEx32;
 
-            if (flags.HasFlag(WindowsScriptEngineFlags.EnableStandardsMode))
+            if (flags.HasAllFlags(WindowsScriptEngineFlags.EnableStandardsMode))
             {
                 if (activeScript is IActiveScriptProperty activeScriptProperty)
                 {
@@ -139,7 +139,7 @@ namespace Microsoft.ClearScript.Windows.Core
                     }
                 }
 
-                if (!flags.HasFlag(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.ProcessorArchitectureIsIntel())
+                if (!flags.HasAllFlags(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.ProcessorArchitectureIsIntel())
                 {
                     HostItem.EnableVTablePatching = true;
                 }
@@ -197,7 +197,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
         public override void EnumStackFrames(out IEnumDebugStackFrames enumFrames)
         {
-            if (debugStackFrameSniffer != null)
+            if (debugStackFrameSniffer is not null)
             {
                 debugStackFrameSniffer.EnumStackFrames(out enumFrames);
             }
@@ -280,7 +280,7 @@ namespace Microsoft.ClearScript.Windows.Core
             activeScriptGarbageCollector = activeScript as IActiveScriptGarbageCollector;
             debugStackFrameSniffer = activeScript as IDebugStackFrameSnifferEx64;
 
-            if (flags.HasFlag(WindowsScriptEngineFlags.EnableStandardsMode))
+            if (flags.HasAllFlags(WindowsScriptEngineFlags.EnableStandardsMode))
             {
                 if (activeScript is IActiveScriptProperty activeScriptProperty)
                 {
@@ -292,7 +292,7 @@ namespace Microsoft.ClearScript.Windows.Core
                     }
                 }
 
-                if (!flags.HasFlag(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.ProcessorArchitectureIsIntel())
+                if (!flags.HasAllFlags(WindowsScriptEngineFlags.DoNotEnableVTablePatching) && MiscHelpers.ProcessorArchitectureIsIntel())
                 {
                     HostItem.EnableVTablePatching = true;
                 }
@@ -350,7 +350,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
         public override void EnumStackFrames(out IEnumDebugStackFrames enumFrames)
         {
-            if (debugStackFrameSniffer != null)
+            if (debugStackFrameSniffer is not null)
             {
                 debugStackFrameSniffer.EnumStackFrames(out enumFrames);
             }

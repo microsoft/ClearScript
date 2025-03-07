@@ -18,7 +18,7 @@ namespace Microsoft.ClearScript.Windows.Core
     {
         #region data
 
-        internal static readonly Dictionary<int, string> StaticRuntimeErrorMap = new Dictionary<int, string>
+        internal static readonly Dictionary<int, string> StaticRuntimeErrorMap = new()
         {
             // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/xe43cc8d(v=vs.84)
             { 429, "ActiveX component can't create object" },
@@ -66,7 +66,7 @@ namespace Microsoft.ClearScript.Windows.Core
             { 450, "Wrong number of arguments or invalid property assignment" }
         };
 
-        internal static readonly Dictionary<int, string> StaticSyntaxErrorMap = new Dictionary<int, string>
+        internal static readonly Dictionary<int, string> StaticSyntaxErrorMap = new()
         {
             // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/2z84dwk8(v=vs.84)
             { 1052, "Cannot have multiple default property/method in a Class" },

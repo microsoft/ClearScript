@@ -27,7 +27,7 @@ namespace Microsoft.ClearScript
             ".." + Path.AltDirectorySeparatorChar,
         };
 
-        private readonly List<Document> cache = new List<Document>();
+        private readonly List<Document> cache = new();
         private long fileCheckCount;
         private long webCheckCount;
 
@@ -65,10 +65,10 @@ namespace Microsoft.ClearScript
             foreach (var testUri in testUris)
             {
                 var flag = testUri.IsFile ? DocumentAccessFlags.EnableFileLoading : DocumentAccessFlags.EnableWebLoading;
-                if (settings.AccessFlags.HasFlag(flag))
+                if (settings.AccessFlags.HasAllFlags(flag))
                 {
                     var document = GetCachedDocument(testUri);
-                    if (document != null)
+                    if (document is not null)
                     {
                         return (document, null);
                     }
@@ -96,7 +96,7 @@ namespace Microsoft.ClearScript
             if (sourceInfo.HasValue && SpecifierMayBeRelative(settings, specifier))
             {
                 baseUri = GetBaseUri(sourceInfo.Value);
-                if ((baseUri != null) && Uri.TryCreate(baseUri, specifier, out uri))
+                if ((baseUri is not null) && Uri.TryCreate(baseUri, specifier, out uri))
                 {
                     yield return uri;
                 }
@@ -114,12 +114,12 @@ namespace Microsoft.ClearScript
                 }
             }
 
-            if (MiscHelpers.Try(out var path, () => Path.Combine(Directory.GetCurrentDirectory(), specifier)) && Uri.TryCreate(path, UriKind.Absolute, out uri))
+            if (MiscHelpers.Try(out var path, static specifier => Path.Combine(Directory.GetCurrentDirectory(), specifier), specifier) && Uri.TryCreate(path, UriKind.Absolute, out uri))
             {
                 yield return uri;
             }
 
-            if (MiscHelpers.Try(out path, () => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, specifier)) && Uri.TryCreate(path, UriKind.Absolute, out uri))
+            if (MiscHelpers.Try(out path, static specifier => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, specifier), specifier) && Uri.TryCreate(path, UriKind.Absolute, out uri))
             {
                 yield return uri;
             }
@@ -127,7 +127,7 @@ namespace Microsoft.ClearScript
             using (var process = Process.GetCurrentProcess())
             {
                 var module = process.MainModule;
-                if ((module != null) && Uri.TryCreate(module.FileName, UriKind.Absolute, out baseUri) && Uri.TryCreate(baseUri, specifier, out uri))
+                if ((module is not null) && Uri.TryCreate(module.FileName, UriKind.Absolute, out baseUri) && Uri.TryCreate(baseUri, specifier, out uri))
                 {
                     yield return uri;
                 }
@@ -163,7 +163,7 @@ namespace Microsoft.ClearScript
 
             if (sourceInfo.HasValue)
             {
-                sourceExtension = Path.GetExtension((sourceInfo.Value.Uri != null) ? new UriBuilder(sourceInfo.Value.Uri).Path : sourceInfo.Value.Name);
+                sourceExtension = Path.GetExtension((sourceInfo.Value.Uri is not null) ? new UriBuilder(sourceInfo.Value.Uri).Path : sourceInfo.Value.Name);
                 if (!string.IsNullOrEmpty(sourceExtension))
                 {
                     yield return sourceExtension;
@@ -182,14 +182,14 @@ namespace Microsoft.ClearScript
 
         private static bool SpecifierMayBeRelative(DocumentSettings settings, string specifier)
         {
-            return !settings.AccessFlags.HasFlag(DocumentAccessFlags.EnforceRelativePrefix) || relativePrefixes.Any(specifier.StartsWith);
+            return !settings.AccessFlags.HasAllFlags(DocumentAccessFlags.EnforceRelativePrefix) || relativePrefixes.Any(specifier.StartsWith);
         }
 
         private static Uri GetBaseUri(DocumentInfo sourceInfo)
         {
             var sourceUri = sourceInfo.Uri;
 
-            if ((sourceUri == null) && !Uri.TryCreate(sourceInfo.Name, UriKind.RelativeOrAbsolute, out sourceUri))
+            if ((sourceUri is null) && !Uri.TryCreate(sourceInfo.Name, UriKind.RelativeOrAbsolute, out sourceUri))
             {
                 return null;
             }
@@ -216,8 +216,8 @@ namespace Microsoft.ClearScript
         private async Task<bool> IsCandidateUriAsync(DocumentSettings settings, Uri uri)
         {
             return uri.IsFile ?
-                settings.AccessFlags.HasFlag(DocumentAccessFlags.EnableFileLoading) && await FileDocumentExistsAsync(uri.LocalPath).ConfigureAwait(false) :
-                settings.AccessFlags.HasFlag(DocumentAccessFlags.EnableWebLoading) && await WebDocumentExistsAsync(uri).ConfigureAwait(false);
+                settings.AccessFlags.HasAllFlags(DocumentAccessFlags.EnableFileLoading) && await FileDocumentExistsAsync(uri.LocalPath).ConfigureAwait(false) :
+                settings.AccessFlags.HasAllFlags(DocumentAccessFlags.EnableWebLoading) && await WebDocumentExistsAsync(uri).ConfigureAwait(false);
         }
 
         private Task<bool> FileDocumentExistsAsync(string path)
@@ -252,21 +252,21 @@ namespace Microsoft.ClearScript
         {
             if (uri.IsFile)
             {
-                if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.EnableFileLoading))
+                if (!settings.AccessFlags.HasAllFlags(DocumentAccessFlags.EnableFileLoading))
                 {
                     throw new UnauthorizedAccessException("The script engine is not configured for loading documents from the file system");
                 }
             }
             else
             {
-                if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.EnableWebLoading))
+                if (!settings.AccessFlags.HasAllFlags(DocumentAccessFlags.EnableWebLoading))
                 {
                     throw new UnauthorizedAccessException("The script engine is not configured for downloading documents from the Web");
                 }
             }
 
             var cachedDocument = GetCachedDocument(uri);
-            if (cachedDocument != null)
+            if (cachedDocument is not null)
             {
                 return cachedDocument;
             }
@@ -290,7 +290,7 @@ namespace Microsoft.ClearScript
 
             var documentInfo = new DocumentInfo(uri) { Category = category, ContextCallback = contextCallback };
 
-            if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.UseAsyncLoadCallback))
+            if (!settings.AccessFlags.HasAllFlags(DocumentAccessFlags.UseAsyncLoadCallback))
             {
                 var callback = settings.LoadCallback;
                 callback?.Invoke(ref documentInfo);
@@ -298,7 +298,7 @@ namespace Microsoft.ClearScript
             else
             {
                 var callback = settings.AsyncLoadCallback;
-                if (callback != null)
+                if (callback is not null)
                 {
                     var documentInfoRef = ValueRef.Create(documentInfo);
                     await callback(documentInfoRef, new MemoryStream(Encoding.UTF8.GetBytes(contents), false)).ConfigureAwait(false);
@@ -309,7 +309,7 @@ namespace Microsoft.ClearScript
             var document = CacheDocument(new StringDocument(documentInfo, contents), false);
 
             var expectedCategory = category ?? DocumentCategory.Script;
-            if (!settings.AccessFlags.HasFlag(DocumentAccessFlags.AllowCategoryMismatch) && (documentInfo.Category != expectedCategory))
+            if (!settings.AccessFlags.HasAllFlags(DocumentAccessFlags.AllowCategoryMismatch) && (documentInfo.Category != expectedCategory))
             {
                 throw new FileLoadException($"Document category mismatch: '{expectedCategory}' expected, '{documentInfo.Category}' loaded", uri.IsFile ? uri.LocalPath : uri.AbsoluteUri);
             }
@@ -333,7 +333,7 @@ namespace Microsoft.ClearScript
                 throw new UnauthorizedAccessException("The script engine is not configured for loading documents");
             }
 
-            if (category == null)
+            if (category is null)
             {
                 category = sourceInfo.HasValue ? sourceInfo.Value.Category : DocumentCategory.Script;
             }
@@ -349,7 +349,7 @@ namespace Microsoft.ClearScript
                 result = await GetCachedDocumentOrCandidateUrisAsync(settings, sourceInfo, specifier).ConfigureAwait(false);
             }
 
-            if (result.Document != null)
+            if (result.Document is not null)
             {
                 return result.Document;
             }
@@ -375,7 +375,7 @@ namespace Microsoft.ClearScript
                 }
                 catch (Exception exception)
                 {
-                    if ((task.Exception != null) && task.Exception.InnerExceptions.Count == 1)
+                    if ((task.Exception is not null) && task.Exception.InnerExceptions.Count == 1)
                     {
                         Debug.Assert(ReferenceEquals(task.Exception.InnerExceptions[0], exception));
                         exceptions.Add(exception);
@@ -426,9 +426,9 @@ namespace Microsoft.ClearScript
         public override Document CacheDocument(Document document, bool replace)
         {
             MiscHelpers.VerifyNonNullArgument(document, nameof(document));
-            if ((document.Info.Uri == null) || !document.Info.Uri.IsAbsoluteUri)
+            if ((document.Info.Uri is null) || !document.Info.Uri.IsAbsoluteUri)
             {
-                throw new ArgumentException("The document must have an absolute URI");
+                throw new ArgumentException("The document must have an absolute URI", nameof(document));
             }
 
             lock (cache)

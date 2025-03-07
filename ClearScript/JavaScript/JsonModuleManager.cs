@@ -11,7 +11,7 @@ namespace Microsoft.ClearScript.JavaScript
     internal sealed class JsonModuleManager
     {
         private readonly ScriptEngine engine;
-        private readonly List<Module> moduleCache = new List<Module>();
+        private readonly List<Module> moduleCache = new();
 
         public JsonModuleManager(ScriptEngine engine)
         {
@@ -25,7 +25,7 @@ namespace Microsoft.ClearScript.JavaScript
             var jsonDigest = json.GetDigest();
 
             var cachedModule = GetCachedModule(documentInfo, jsonDigest);
-            if (cachedModule != null)
+            if (cachedModule is not null)
             {
                 return cachedModule;
             }
@@ -52,7 +52,7 @@ namespace Microsoft.ClearScript.JavaScript
         private Module CacheModule(Module module)
         {
             var cachedModule = moduleCache.FirstOrDefault(testModule => (testModule.DocumentInfo.UniqueId == module.DocumentInfo.UniqueId) && (testModule.JsonDigest == module.JsonDigest));
-            if (cachedModule != null)
+            if (cachedModule is not null)
             {
                 return cachedModule;
             }

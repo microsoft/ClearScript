@@ -21,6 +21,12 @@ namespace Microsoft.ClearScript.Util.COM
         Construct = 0x4000
     }
 
+    internal static class DispatchFlagsHelpers
+    {
+        public static bool HasAllFlags(this DispatchFlags value, DispatchFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this DispatchFlags value, DispatchFlags flags) => (value & flags) != 0;
+    }
+
     [Flags]
     internal enum DispatchNameFlags : uint
     {
@@ -30,6 +36,12 @@ namespace Microsoft.ClearScript.Util.COM
         CaseInsensitive = 0x00000008,
         Internal = 0x00000010,
         NoDynamicProperties = 0x00000020
+    }
+
+    internal static class DispatchNameFlagsHelpers
+    {
+        public static bool HasAllFlags(this DispatchNameFlags value, DispatchNameFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this DispatchNameFlags value, DispatchNameFlags flags) => (value & flags) != 0;
     }
 
     [Flags]
@@ -53,6 +65,12 @@ namespace Microsoft.ClearScript.Util.COM
         CannotAll = CannotGet | CannotPut | CannotPutRef | CannotCall | CannotConstruct | CannotSourceEvents,
         ExtraAll = NoSideEffects | DynamicType,
         All = CanAll | CannotAll | ExtraAll
+    }
+
+    internal static class DispatchPropFlagsHelpers
+    {
+        public static bool HasAllFlags(this DispatchPropFlags value, DispatchPropFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this DispatchPropFlags value, DispatchPropFlags flags) => (value & flags) != 0;
     }
 
     [Flags]

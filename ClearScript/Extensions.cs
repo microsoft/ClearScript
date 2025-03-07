@@ -65,8 +65,8 @@ namespace Microsoft.ClearScript
 
         /// <summary>
         /// Converts an object to a host object with a type restriction specified as a
-        /// <see cref="Type"/> instance, for use with script code currently running on the calling
-        /// thread.
+        /// <c><see cref="Type"/></c> instance, for use with script code currently running on the
+        /// calling thread.
         /// </summary>
         /// <param name="target">The object to convert to a host object for use with script code.</param>
         /// <param name="type">The type whose members are to be made accessible from script code.</param>
@@ -78,8 +78,8 @@ namespace Microsoft.ClearScript
 
         /// <summary>
         /// Converts an object to a host object with a type restriction specified as a
-        /// <see cref="Type"/> instance, for use with script code running in the specified script
-        /// engine.
+        /// <c><see cref="Type"/></c> instance, for use with script code running in the specified
+        /// script engine.
         /// </summary>
         /// <param name="target">The object to convert to a host object for use with script code.</param>
         /// <param name="type">The type whose members are to be made accessible from script code.</param>
@@ -91,12 +91,12 @@ namespace Microsoft.ClearScript
             MiscHelpers.VerifyNonNullArgument(type, nameof(type));
             MiscHelpers.VerifyNonNullArgument(engine, nameof(engine));
 
-            if (!MiscHelpers.Try(out var holder, () => typeof(Holder<>).MakeGenericType(type).CreateInstance()))
+            if (!MiscHelpers.Try(out var holder, static type => Activator.CreateInstance(typeof(Holder<>).MakeGenericType(type)), type))
             {
                 throw new ArgumentException("The specified type is invalid", nameof(type));
             }
 
-            if (!MiscHelpers.Try(() => ((IHolder)holder).Value = target))
+            if (!MiscHelpers.Try(static ctx => ((IHolder)ctx.holder).Value = ctx.target, (holder, target)))
             {
                 throw new ArgumentException("The target object is incompatible with the specified type", nameof(target));
             }

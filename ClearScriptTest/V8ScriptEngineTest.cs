@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Globalization;
@@ -857,8 +858,8 @@ namespace Microsoft.ClearScript.Test
         public void V8ScriptEngine_new_Scalar()
         {
             engine.AddHostObject("clr", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));
-            Assert.AreEqual(default(int), engine.Evaluate("new System.Int32"));
-            Assert.AreEqual(default(int), engine.Evaluate("new System.Int32()"));
+            Assert.AreEqual(0, engine.Evaluate("new System.Int32"));
+            Assert.AreEqual(0, engine.Evaluate("new System.Int32()"));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -1969,6 +1970,7 @@ namespace Microsoft.ClearScript.Test
                         Assert.AreEqual(UIntPtr.Zero, engine2.MaxRuntimeStackUsage);
                         Assert.AreEqual(UIntPtr.Zero, runtime.MaxStackUsage);
 
+                        // ReSharper disable once RedundantCast
                         value = (UIntPtr)654321;
                         runtime.MaxHeapSize = value;
                         Assert.AreEqual(value, engine1.MaxRuntimeHeapSize);
@@ -2025,6 +2027,7 @@ namespace Microsoft.ClearScript.Test
                         Assert.AreEqual(UIntPtr.Zero, engine2.MaxRuntimeHeapSize);
                         Assert.AreEqual(UIntPtr.Zero, runtime.MaxHeapSize);
 
+                        // ReSharper disable once RedundantCast
                         value = (UIntPtr)654321;
                         runtime.MaxStackUsage = value;
                         Assert.AreEqual(value, engine1.MaxRuntimeStackUsage);
@@ -2930,6 +2933,79 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_Disposal_AsyncSource()
+        {
+            var source = TestEnumerable.CreateAsync("foo", "bar", "baz");
+
+            engine.Script.done = new ManualResetEventSlim();
+            engine.AddRestrictedHostObject("source", source);
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    for await (let item of source) {
+                        result += item;
+                    }
+                    done.Set();
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            Assert.AreEqual("foobarbaz", engine.Script.result);
+            Assert.AreEqual(1, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_Disposal_AsyncSource_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                var source = TestEnumerable.CreateAsync("foo", "bar", "baz");
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.AddRestrictedHostObject("source", source);
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (let item of source) {
+                            result += item;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                Assert.AreEqual("foobarbaz", engine.Script.result);
+                Assert.AreEqual(1, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_Iteration_Disposal_AsyncSource_DisableTypeRestriction()
+        {
+            engine.DisableTypeRestriction = true;
+
+            var source = TestEnumerable.CreateAsync("foo", "bar", "baz");
+
+            engine.Script.done = new ManualResetEventSlim();
+            engine.AddRestrictedHostObject("source", source);
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    for await (let item of source) {
+                        result += item;
+                    }
+                    done.Set();
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            Assert.AreEqual("foobarbaz", engine.Script.result);
+            Assert.AreEqual(1, ((TestEnumerable.IDisposableEnumeratorFactory)source).DisposedEnumeratorCount);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_AsyncIteration_PropertyBag()
         {
             engine.Script.done = new ManualResetEventSlim();
@@ -3222,6 +3298,234 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable()
+        {
+            static async IAsyncEnumerable<object> GetItems()
+            {
+                await Task.Delay(10);
+                yield return 123;
+                await Task.Delay(10);
+                yield return "blah";
+            }
+
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = GetItems();
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    for await (var item of enumerable) {
+                        result += item;
+                    }
+                    done.Set();
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                static async IAsyncEnumerable<object> GetItems()
+                {
+                    await Task.Delay(10);
+                    yield return 123;
+                    await Task.Delay(10);
+                    yield return "blah";
+                }
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Script.enumerable = GetItems();
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        for await (var item of enumerable) {
+                            result += item;
+                        }
+                        done.set();
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                var result = (string)engine.Script.result;
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable_DisableTypeRestriction()
+        {
+            engine.DisableTypeRestriction = true;
+
+            static async IAsyncEnumerable<object> GetItems()
+            {
+                await Task.Delay(10);
+                yield return 123;
+                await Task.Delay(10);
+                yield return "blah";
+            }
+
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = GetItems();
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    for await (var item of enumerable) {
+                        result += item;
+                    }
+                    done.Set();
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable_Exception()
+        {
+            const string errorMessage = "Well, this is bogus!";
+            static async IAsyncEnumerable<object> GetItems()
+            {
+                await Task.Delay(10);
+                yield return 123;
+                await Task.Delay(10);
+                yield return "blah";
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = GetItems();
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    try {
+                        for await (var item of enumerable) {
+                            result += item;
+                        }
+                    }
+                    catch (error) {
+                        errorMessage = error.message;
+                        throw error;
+                    }
+                    finally {
+                        done.Set();
+                    }
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            Assert.AreEqual(errorMessage, engine.Script.errorMessage);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable_Exception_GlobalRenaming()
+        {
+            using (Scope.Create(() => HostSettings.CustomAttributeLoader, loader => HostSettings.CustomAttributeLoader = loader))
+            {
+                HostSettings.CustomAttributeLoader = new CamelCaseAttributeLoader();
+
+                const string errorMessage = "Well, this is bogus!";
+                static async IAsyncEnumerable<object> GetItems()
+                {
+                    await Task.Delay(10);
+                    yield return 123;
+                    await Task.Delay(10);
+                    yield return "blah";
+                    throw new InvalidOperationException(errorMessage);
+                }
+
+                engine.Script.done = new ManualResetEventSlim();
+                engine.Script.enumerable = GetItems();
+                engine.Execute(@"
+                    result = '';
+                    (async function () {
+                        try {
+                            for await (var item of enumerable) {
+                                result += item;
+                            }
+                        }
+                        catch (error) {
+                            errorMessage = error.message;
+                            throw error;
+                        }
+                        finally {
+                            done.set();
+                        }
+                    })();
+                ");
+                engine.Script.done.Wait();
+
+                var result = (string)engine.Script.result;
+                Assert.AreEqual(7, result.Length);
+                Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+                Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+                Assert.AreEqual(errorMessage, engine.Script.errorMessage);
+            }
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_AsyncIteration_AsyncEnumerable_Exception_DisableTypeRestriction()
+        {
+            engine.DisableTypeRestriction = true;
+
+            const string errorMessage = "Well, this is bogus!";
+
+            static async IAsyncEnumerable<object> GetItems()
+            {
+                await Task.Delay(10);
+                yield return 123;
+                await Task.Delay(10);
+                yield return "blah";
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            engine.Script.done = new ManualResetEventSlim();
+            engine.Script.enumerable = GetItems();
+            engine.Execute(@"
+                result = '';
+                (async function () {
+                    try {
+                        for await (var item of enumerable) {
+                            result += item;
+                        }
+                    }
+                    catch (error) {
+                        errorMessage = error.message;
+                        throw error;
+                    }
+                    finally {
+                        done.Set();
+                    }
+                })();
+            ");
+            engine.Script.done.Wait();
+
+            var result = (string)engine.Script.result;
+            Assert.AreEqual(7, result.Length);
+            Assert.IsTrue(result.IndexOf("123", StringComparison.Ordinal) >= 0);
+            Assert.IsTrue(result.IndexOf("blah", StringComparison.Ordinal) >= 0);
+            Assert.AreEqual(errorMessage, engine.Script.errorMessage);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_SuppressInstanceMethodEnumeration()
         {
             engine.Script.foo = Enumerable.Range(0, 25).ToArray();
@@ -3309,6 +3613,197 @@ namespace Microsoft.ClearScript.Test
             engine.Script.promise = Task.FromResult(456);
             engine.Execute("promise.then(value => result = value);");
             Assert.AreEqual(456, engine.Script.result);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public async Task V8ScriptEngine_TaskPromiseConversion_TaskOptimizations()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion);
+            engine.AddHostType(typeof(Task));
+
+            var task = (Task<object>)engine.Evaluate("(async function () { await Task.Delay(500); return 'foo'; })()");
+            Assert.IsFalse(task.IsCompleted);
+            Assert.AreEqual("foo", await task);
+
+            task = (Task<object>)engine.Evaluate("(async function () { await Task.Delay(500); throw new Error('Huh?'); })()");
+            Assert.IsFalse(task.IsCompleted);
+
+            var gotException = false;
+            try
+            {
+                await task;
+            }
+            catch (Exception exception)
+            {
+                Assert.IsTrue(exception.Message.Contains("Huh?"));
+                gotException = true;
+            }
+            Assert.IsTrue(gotException);
+
+            task = (Task<object>)engine.Evaluate("(async function () { return 'bar'; })()");
+            Assert.AreEqual(TaskStatus.RanToCompletion, task.Status);
+            Assert.AreEqual("bar", await task);
+
+            task = (Task<object>)engine.Evaluate("(async function () { throw new Error('Blah!'); })()");
+            Assert.IsTrue(task.IsFaulted);
+
+            gotException = false;
+            try
+            {
+                await task;
+            }
+            catch (Exception exception)
+            {
+                Assert.IsTrue(exception.Message.Contains("Blah!"));
+                gotException = true;
+            }
+            Assert.IsTrue(gotException);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public async Task V8ScriptEngine_TaskPromiseConversion_PromiseOptimizations()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion);
+
+            engine.Script.promise = Task.Delay(500);
+            Assert.AreEqual(0, engine.Evaluate("EngineInternal.getPromiseState(promise)"));
+            Assert.IsInstanceOfType(engine.Evaluate("EngineInternal.getPromiseResult(promise)"), typeof(Undefined));
+            Assert.AreEqual(123, await (Task<object>)engine.Evaluate("(async function () { await promise; return 123; })()"));
+
+            engine.Script.promise = Task.Run(async () => { await Task.Delay(500); throw new InvalidOperationException("Boom!"); });
+            Assert.AreEqual(0, engine.Evaluate("EngineInternal.getPromiseState(promise)"));
+            Assert.IsInstanceOfType(engine.Evaluate("EngineInternal.getPromiseResult(promise)"), typeof(Undefined));
+
+            var gotException = false;
+            try
+            {
+                await (Task<object>)engine.Evaluate("(async function () { await promise; })()");
+            }
+            catch (Exception exception)
+            {
+                Assert.IsTrue(exception.Message.Contains("Boom!"));
+                gotException = true;
+            }
+            Assert.IsTrue(gotException);
+
+            engine.Script.promise = Task.CompletedTask;
+            Assert.AreEqual(1, engine.Evaluate("EngineInternal.getPromiseState(promise)"));
+            Assert.IsInstanceOfType(engine.Evaluate("EngineInternal.getPromiseResult(promise)"), typeof(Undefined));
+            Assert.AreEqual(456, await (Task<object>)engine.Evaluate("(async function () { await promise; return 456; })()"));
+
+            engine.Script.promise = Task.FromException(new InvalidOperationException("Meh?!"));
+            Assert.AreEqual(2, engine.Evaluate("EngineInternal.getPromiseState(promise)"));
+            Assert.IsTrue((engine.Evaluate("EngineInternal.getPromiseResult(promise)") is ScriptObject error1) && ((string)error1["message"]).Contains("Meh?!"));
+
+            gotException = false;
+            try
+            {
+                await (Task<object>)engine.Evaluate("(async function () { await promise; })()");
+            }
+            catch (Exception exception)
+            {
+                Assert.IsTrue(exception.Message.Contains("Meh?!"));
+                gotException = true;
+            }
+            Assert.IsTrue(gotException);
+
+            engine.Script.promise = Task.Run(async () => { await Task.Delay(500); return 789; });
+            Assert.AreEqual(0, engine.Evaluate("EngineInternal.getPromiseState(promise)"));
+            Assert.IsInstanceOfType(engine.Evaluate("EngineInternal.getPromiseResult(promise)"), typeof(Undefined));
+            Assert.AreEqual(789, await (Task<object>)engine.Evaluate("(async function () { return await promise; })()"));
+
+            engine.Script.promise = Task.FromResult(987);
+            Assert.AreEqual(1, engine.Evaluate("EngineInternal.getPromiseState(promise)"));
+            Assert.AreEqual(987, engine.Evaluate("EngineInternal.getPromiseResult(promise)"));
+            Assert.AreEqual(987, await (Task<object>)engine.Evaluate("(async function () { return await promise; })()"));
+
+            engine.Script.promise = Task.FromException<int>(new InvalidOperationException("Yuck!?"));
+            Assert.AreEqual(2, engine.Evaluate("EngineInternal.getPromiseState(promise)"));
+            Assert.IsTrue((engine.Evaluate("EngineInternal.getPromiseResult(promise)") is ScriptObject error2) && ((string)error2["message"]).Contains("Yuck!?"));
+
+            gotException = false;
+            try
+            {
+                await (Task<object>)engine.Evaluate("(async function () { await promise; })()");
+            }
+            catch (Exception exception)
+            {
+                Assert.IsTrue(exception.Message.Contains("Yuck!?"));
+                gotException = true;
+            }
+            Assert.IsTrue(gotException);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ValueTaskPromiseConversion()
+        {
+            engine.Script.value = new ValueTask<string>("foo");
+            Assert.AreEqual("HostObject", engine.Evaluate("value.constructor.name"));
+            Assert.IsInstanceOfType(engine.Evaluate("Promise.resolve(123)"), typeof(ScriptObject));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion | V8ScriptEngineFlags.EnableValueTaskPromiseConversion);
+
+            engine.Script.value = new ValueTask<string>("bar");
+            Assert.AreEqual("Promise", engine.Evaluate("value.constructor.name"));
+            Assert.IsInstanceOfType(engine.Evaluate("Promise.resolve(123)"), typeof(Task));
+
+            var task = new Func<Task<object>>(async () => await (Task<object>)engine.Evaluate("Promise.resolve(123)"))();
+            Assert.AreEqual(123, task.Result);
+
+            engine.Script.promise = new ValueTask<int>(456);
+            engine.Execute("promise.then(value => result = value);");
+            Assert.AreEqual(456, engine.Script.result);
+
+            var cancelSource = new CancellationTokenSource();
+            cancelSource.Cancel();
+            engine.Script.promise = new ValueTask<string>(Task<string>.Factory.StartNew(() => "baz", cancelSource.Token));
+            Thread.Sleep(250);
+            engine.Execute("promise.then(value => result = value, value => error = value);");
+            Assert.IsInstanceOfType(engine.Script.error.hostException.GetBaseException(), typeof(TaskCanceledException));
+
+            cancelSource = new CancellationTokenSource();
+            engine.Script.promise = new ValueTask<double>(Task<double>.Factory.StartNew(() => throw new ConstraintException(), cancelSource.Token));
+            Thread.Sleep(250);
+            engine.Execute("promise.then(value => result = value, value => error = value);");
+            Assert.IsInstanceOfType(engine.Script.error.hostException.GetBaseException(), typeof(ConstraintException));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ValueTaskPromiseConversion_NoResult()
+        {
+            engine.Script.value = new ValueTask(Task.CompletedTask);
+            Assert.AreEqual("HostObject", engine.Evaluate("value.constructor.name"));
+            Assert.IsInstanceOfType(engine.Evaluate("Promise.resolve(123)"), typeof(ScriptObject));
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion | V8ScriptEngineFlags.EnableValueTaskPromiseConversion);
+
+            engine.Script.value = new ValueTask(Task.CompletedTask);
+            Assert.AreEqual("Promise", engine.Evaluate("value.constructor.name"));
+            Assert.IsInstanceOfType(engine.Evaluate("Promise.resolve(123)"), typeof(Task));
+
+            var task = new Func<Task<object>>(async () => await (Task<object>)engine.Evaluate("Promise.resolve(123)"))();
+            Assert.AreEqual(123, task.Result);
+
+            engine.Script.promise = new ValueTask(Task.CompletedTask);
+            engine.Execute("promise.then(value => result = value);");
+            Assert.IsInstanceOfType(engine.Script.result, typeof(Undefined));
+
+            var cancelSource = new CancellationTokenSource();
+            cancelSource.Cancel();
+            engine.Script.promise = new ValueTask(Task.Factory.StartNew(() => {}, cancelSource.Token));
+            Thread.Sleep(250);
+            engine.Execute("promise.then(value => result = value, value => error = value);");
+            Assert.IsInstanceOfType(engine.Script.error.hostException.GetBaseException(), typeof(TaskCanceledException));
+
+            cancelSource = new CancellationTokenSource();
+            engine.Script.promise = new ValueTask(Task.Factory.StartNew(() => throw new ConstraintException(), cancelSource.Token));
+            Thread.Sleep(250);
+            engine.Execute("promise.then(value => result = value, value => error = value);");
+            Assert.IsInstanceOfType(engine.Script.error.hostException.GetBaseException(), typeof(ConstraintException));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -3723,14 +4218,16 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("V8ScriptEngine")]
         public void V8ScriptEngine_ScriptObject_IDictionary()
         {
+            // ReSharper disable UsageOfDefaultStructEquality
+
             var pairs = new List<KeyValuePair<string, object>>
             {
-                new KeyValuePair<string, object>("123", 987),
-                new KeyValuePair<string, object>("456", 654.321),
-                new KeyValuePair<string, object>("abc", 123),
-                new KeyValuePair<string, object>("def", 456.789),
-                new KeyValuePair<string, object>("ghi", "foo"),
-                new KeyValuePair<string, object>("jkl", engine.Evaluate("({ bar: 'baz' })"))
+                new("123", 987),
+                new("456", 654.321),
+                new("abc", 123),
+                new("def", 456.789),
+                new("ghi", "foo"),
+                new("jkl", engine.Evaluate("({ bar: 'baz' })"))
             };
 
             var dict = (IDictionary<string, object>)engine.Evaluate("dict = {}");
@@ -3790,6 +4287,8 @@ namespace Microsoft.ClearScript.Test
 
             Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("delete dict[789]")));
             Assert.IsTrue(pairs.SequenceEqual(dict));
+
+            // ReSharper restore UsageOfDefaultStructEquality
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -3805,6 +4304,21 @@ namespace Microsoft.ClearScript.Test
             engine.UndefinedImportValue = 123;
             Assert.IsNull(engine.Evaluate("null"));
             Assert.AreEqual(123, engine.Evaluate("undefined"));
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_NullImportValue()
+        {
+            Assert.IsNull(engine.Evaluate("null"));
+            Assert.IsInstanceOfType(engine.Evaluate("undefined"), typeof(Undefined));
+
+            engine.NullImportValue = Undefined.Value;
+            Assert.IsInstanceOfType(engine.Evaluate("null"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("undefined"), typeof(Undefined));
+
+            engine.NullImportValue = 123;
+            Assert.AreEqual(123, engine.Evaluate("null"));
+            Assert.IsInstanceOfType(engine.Evaluate("undefined"), typeof(Undefined));
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
@@ -3889,23 +4403,21 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_BigInt_NoLongConversion()
+        public void V8ScriptEngine_BigInt_NoInt64Conversion()
         {
-            const long maxIntInDouble = (1L << 53) - 1;
-
-            engine.Script.value = maxIntInDouble;
+            engine.Script.value = MiscHelpers.MaxInt64InDouble;
             Assert.AreEqual("number", engine.Evaluate("typeof value"));
-            engine.Script.value = maxIntInDouble + 1;
+            engine.Script.value = MiscHelpers.MaxInt64InDouble + 1;
             Assert.AreEqual("number", engine.Evaluate("typeof value"));
 
-            engine.Script.value = -maxIntInDouble;
+            engine.Script.value = -MiscHelpers.MaxInt64InDouble;
             Assert.AreEqual("number", engine.Evaluate("typeof value"));
-            engine.Script.value = -maxIntInDouble - 1;
+            engine.Script.value = -MiscHelpers.MaxInt64InDouble - 1;
             Assert.AreEqual("number", engine.Evaluate("typeof value"));
 
-            engine.Script.value = (ulong)maxIntInDouble;
+            engine.Script.value = (ulong)MiscHelpers.MaxInt64InDouble;
             Assert.AreEqual("number", engine.Evaluate("typeof value"));
-            engine.Script.value = (ulong)maxIntInDouble + 1;
+            engine.Script.value = (ulong)MiscHelpers.MaxInt64InDouble + 1;
             Assert.AreEqual("number", engine.Evaluate("typeof value"));
 
             engine.Script.value = int.MinValue;
@@ -3915,26 +4427,24 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_BigInt_UnsafeLongConversion()
+        public void V8ScriptEngine_BigInt_UnsafeInt64Conversion()
         {
-            const long maxIntInDouble = (1L << 53) - 1;
-
             engine.Dispose();
-            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt);
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.MarshalUnsafeInt64AsBigInt);
 
-            engine.Script.value = maxIntInDouble;
+            engine.Script.value = MiscHelpers.MaxInt64InDouble;
             Assert.AreEqual("number", engine.Evaluate("typeof value"));
-            engine.Script.value = maxIntInDouble + 1;
+            engine.Script.value = MiscHelpers.MaxInt64InDouble + 1;
             Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
 
-            engine.Script.value = -maxIntInDouble;
+            engine.Script.value = -MiscHelpers.MaxInt64InDouble;
             Assert.AreEqual("number", engine.Evaluate("typeof value"));
-            engine.Script.value = -maxIntInDouble - 1;
+            engine.Script.value = -MiscHelpers.MaxInt64InDouble - 1;
             Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
 
-            engine.Script.value = (ulong)maxIntInDouble;
+            engine.Script.value = (ulong)MiscHelpers.MaxInt64InDouble;
             Assert.AreEqual("number", engine.Evaluate("typeof value"));
-            engine.Script.value = (ulong)maxIntInDouble + 1;
+            engine.Script.value = (ulong)MiscHelpers.MaxInt64InDouble + 1;
             Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
 
             engine.Script.value = int.MinValue;
@@ -3944,26 +4454,24 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ScriptEngine")]
-        public void V8ScriptEngine_BigInt_AllLongConversion()
+        public void V8ScriptEngine_BigInt_AllInt64Conversion()
         {
-            const long maxIntInDouble = (1L << 53) - 1;
-
             engine.Dispose();
-            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.MarshalAllLongAsBigInt);
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.MarshalAllInt64AsBigInt);
 
-            engine.Script.value = maxIntInDouble;
+            engine.Script.value = MiscHelpers.MaxInt64InDouble;
             Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
-            engine.Script.value = maxIntInDouble + 1;
-            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
-
-            engine.Script.value = -maxIntInDouble;
-            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
-            engine.Script.value = -maxIntInDouble - 1;
+            engine.Script.value = MiscHelpers.MaxInt64InDouble + 1;
             Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
 
-            engine.Script.value = (ulong)maxIntInDouble;
+            engine.Script.value = -MiscHelpers.MaxInt64InDouble;
             Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
-            engine.Script.value = (ulong)maxIntInDouble + 1;
+            engine.Script.value = -MiscHelpers.MaxInt64InDouble - 1;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+
+            engine.Script.value = (ulong)MiscHelpers.MaxInt64InDouble;
+            Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
+            engine.Script.value = (ulong)MiscHelpers.MaxInt64InDouble + 1;
             Assert.AreEqual("bigint", engine.Evaluate("typeof value"));
 
             engine.Script.value = int.MinValue;
@@ -4810,7 +5318,7 @@ namespace Microsoft.ClearScript.Test
                 engine.Dispose();
                 engine = runtime.CreateScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
 
-                const string code = "let obj = { foo: 123, bar: 'baz', qux: 456.789 }; let count = 0; for (let name in obj) count += 1; Math.PI";
+                const string code = "let obj = { foo: 123, bar: 'baz', qux: 456.789 }; let count = 0; for (let name in obj) count += 1; import.meta.setResult(Math.PI)";
                 var info = new DocumentInfo("foo.js") { Category = ModuleCategory.Standard };
                 byte[] goodCacheBytes;
 
@@ -5069,7 +5577,7 @@ namespace Microsoft.ClearScript.Test
                 engine.Dispose();
                 engine = runtime.CreateScriptEngine(); // default engine enables debugging, which disables caching (in older V8 versions)
 
-                const string code = "let obj = { foo: 123, bar: 'baz', qux: 456.789 }; let count = 0; for (let name in obj) count += 1; Math.PI";
+                const string code = "let obj = { foo: 123, bar: 'baz', qux: 456.789 }; let count = 0; for (let name in obj) count += 1; import.meta.setResult(Math.PI)";
                 byte[] goodCacheBytes;
 
                 runtime.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
@@ -5273,13 +5781,63 @@ namespace Microsoft.ClearScript.Test
                 return (Performance.now() - start) / 1000;
             })()"));
 
-            Assert.IsTrue((average >= 5) && (average < 5.5));
+            Assert.IsTrue((average >= 5) && (average < 7.5));
 
             var delta = Convert.ToDouble(engine.Evaluate(@"
                 Math.abs(Performance.timeOrigin + Performance.now() - Date.now());
             "));
 
             Assert.IsTrue(delta < 5);
+        }
+
+        [TestMethod, TestCategory("V8ScriptEngine")]
+        public void V8ScriptEngine_ArrayConversion()
+        {
+            engine.Script.array = new object[0];
+            var array = engine.Script.array as object[];
+            Assert.IsNotNull(array);
+
+            var scriptArray = engine.Evaluate("([])") as IJavaScriptObject;
+            Assert.IsNotNull(scriptArray);
+            Assert.IsTrue(scriptArray.Kind == JavaScriptObjectKind.Array);
+
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableArrayConversion | V8ScriptEngineFlags.EnableDateTimeConversion);
+
+            engine.Execute(@"
+                array = [ 123, 'foo' ];
+                array.push(new Date(), [ 456, 'bar', array ]);
+            ");
+
+            array = engine.Script.array as object[];
+            Assert.IsNotNull(array);
+            Assert.AreEqual(4, array.Length);
+            Assert.AreEqual(123, array[0]);
+            Assert.AreEqual("foo", array[1]);
+            Assert.IsInstanceOfType(array[2], typeof(DateTime));
+
+            var innerArray = array[3] as object[];
+            Assert.IsNotNull(innerArray);
+            Assert.AreEqual(3, innerArray.Length);
+            Assert.AreEqual(456, innerArray[0]);
+            Assert.AreEqual("bar", innerArray[1]);
+            Assert.AreEqual(array, innerArray[2]);
+
+            array = new object[] { 789, "baz", DateTime.Now, null };
+            array[3] = new object[] { 987, "qux", array };
+            engine.Script.array = array;
+
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("Array.isArray(array)")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("array.length === 4")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("array[0] === 789")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("array[1] === 'baz'")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("array[2] instanceof Date")));
+
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("Array.isArray(array[3])")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("array[3].length === 3")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("array[3][0] === 987")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("array[3][1] === 'qux'")));
+            Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("array[3][2] === array")));
         }
 
         // ReSharper restore InconsistentNaming
@@ -5651,7 +6209,7 @@ namespace Microsoft.ClearScript.Test
 
         public class SingleThreadSynchronizationContext : SynchronizationContext
         {
-            private readonly BlockingCollection<(SendOrPostCallback, object)> queue = new BlockingCollection<(SendOrPostCallback, object)>();
+            private readonly BlockingCollection<(SendOrPostCallback, object)> queue = new();
             private readonly Thread thread;
 
             private SingleThreadSynchronizationContext()

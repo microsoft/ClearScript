@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net45</TargetFramework>
+        <TargetFramework>net462</TargetFramework>
         <RootNamespace>Microsoft.ClearScript.Windows</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <LangVersion>9.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -11,7 +12,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
-        <DocumentationFile>..\..\bin\Debug\net45\ClearScript.Windows.Core.xml</DocumentationFile>
+        <DocumentationFile>..\..\bin\Debug\$(TargetFramework)\ClearScript.Windows.Core.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -19,7 +20,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
-        <DocumentationFile>..\..\bin\Release\net45\ClearScript.Windows.Core.xml</DocumentationFile>
+        <DocumentationFile>..\..\bin\Release\$(TargetFramework)\ClearScript.Windows.Core.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition="Exists('$(SolutionDir)ClearScript.snk')">
@@ -69,15 +70,11 @@
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>JScriptEngine.InitScript.cs</LastGenOutput>
         </None>
-        <None Include="..\..\ClearScript\Windows\Core\JScriptEngine.InitScript.js" Link="Windows\Core\JScriptEngine.InitScript.js"/>
+        <None Include="..\..\ClearScript\Windows\Core\JScriptEngine.InitScript.js" Link="Windows\Core\JScriptEngine.InitScript.js" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Microsoft.CSharp" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,9 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net45;net471</TargetFrameworks>
+        <TargetFrameworks>net462;net471</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <LangVersion>9.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -144,12 +145,13 @@
         <Compile Include="..\..\ClearScript\Util\COM\UnknownHelpers.cs" Link="Util\COM\UnknownHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\ConcurrentWeakSet.cs" Link="Util\ConcurrentWeakSet.cs" />
         <Compile Include="..\..\ClearScript\Util\CoTaskMemBlock.cs" Link="Util\CoTaskMemBlock.cs" />
+        <Compile Include="..\..\ClearScript\Util\DateTimeHelpers.cs" Link="Util\DateTimeHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\DynamicHelpers.cs" Link="Util\DynamicHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.cs" Link="Util\EnumerableHelpers.cs" />
-        <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.NetFramework.cs" Link="Util\EnumerableHelpers.NetFramework.cs" />
         <Compile Include="..\..\ClearScript\Util\Holder.cs" Link="Util\Holder.cs" />
         <Compile Include="..\..\ClearScript\Util\IDynamic.cs" Link="Util\IDynamic.cs" />
         <Compile Include="..\..\ClearScript\Util\IHostContext.cs" Link="Util\IHostContext.cs" />
+        <Compile Include="..\..\ClearScript\Util\IHostItem.cs" Link="Util\IHostItem.cs" />
         <Compile Include="..\..\ClearScript\Util\IHostTargetContext.cs" Link="Util\IHostTargetContext.cs" />
         <Compile Include="..\..\ClearScript\Util\INativeCallback.cs" Link="Util\INativeCallback.cs" />
         <Compile Include="..\..\ClearScript\Util\InvokeHelpers.cs" Link="Util\InvokeHelpers.cs" />
@@ -169,12 +171,14 @@
         <Compile Include="..\..\ClearScript\Util\SpecialDispIDs.cs" Link="Util\SpecialDispIDs.cs" />
         <Compile Include="..\..\ClearScript\Util\SpecialMemberNames.cs" Link="Util\SpecialMemberNames.cs" />
         <Compile Include="..\..\ClearScript\Util\SpecialParamNames.cs" Link="Util\SpecialParamNames.cs" />
+        <Compile Include="..\..\ClearScript\Util\StructPtr.cs" Link="Util\StructPtr.cs" />
         <Compile Include="..\..\ClearScript\Util\Test\AccessContextTestObject.cs" Link="Util\Test\AccessContextTestObject.cs" />
         <Compile Include="..\..\ClearScript\Util\TypeHelpers.cs" Link="Util\TypeHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\TypeHelpers.NetFramework.cs" Link="Util\TypeHelpers.NetFramework.cs" />
         <Compile Include="..\..\ClearScript\Util\TypeTags.cs" Link="Util\TypeTags.cs" />
         <Compile Include="..\..\ClearScript\Util\UniqueNameManager.cs" Link="Util\UniqueNameManager.cs" />
         <Compile Include="..\..\ClearScript\Util\UnmanagedMemoryHelpers.cs" Link="Util\UnmanagedMemoryHelpers.cs" />
+        <Compile Include="..\..\ClearScript\Util\ValueScope.cs" Link="Util\ValueScope.cs" />
         <Compile Include="..\..\ClearScript\Util\VTableHelpers.cs" Link="Util\VTableHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\VTablePatcher.cs" Link="Util\VTablePatcher.cs" />
         <Compile Include="..\..\ClearScript\Util\Web\WebContext.cs" Link="Util\Web\WebContext.cs" />
@@ -205,17 +209,16 @@
     </ItemGroup>
 
     <!-- ReSharper disable once UnknownProperty -->
-    <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
+    <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
         <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="System.Net.Http" Version="4.3.4" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Microsoft.CSharp" />
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0" />
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+        <PackageReference Include="System.Memory" Version="4.5.5" />
+        <PackageReference Include="System.Net.Http" Version="4.3.4" />
     </ItemGroup>
 
     <ItemGroup>

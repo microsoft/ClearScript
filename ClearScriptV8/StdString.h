@@ -221,8 +221,27 @@ private:
 
     static Value GetValue(v8::Isolate* pIsolate, v8::Local<v8::Value> hValue)
     {
-        v8::String::Value value(pIsolate, hValue);
-        return Value(EnsureNonNull(reinterpret_cast<const StdChar*>(*value)), value.length());
+        Value value;
+        if (hValue.IsEmpty())
+        {
+            return value;
+        }
+
+        v8::Local<v8::String> hString;
+        if (hValue->IsString())
+        {
+            hString = hValue.As<v8::String>();
+        }
+        else if (!hValue->ToString(pIsolate->GetCurrentContext()).ToLocal(&hString))
+        {
+            return value;
+        }
+
+        auto length = hString->Length();
+        value.resize(length);
+
+        hString->WriteV2(pIsolate, 0, length, reinterpret_cast<uint16_t*>(value.data()));
+        return value;
     }
 
     static Value GetValue(const v8_inspector::StringView& stringView);

@@ -43,19 +43,19 @@ namespace Microsoft.ClearScript
             MiscHelpers.VerifyNonNullArgument(target, nameof(target));
             if (!typeof(Delegate).IsAssignableFrom(delegateType))
             {
-                throw new ArgumentException("Invalid delegate type");
+                throw new ArgumentException("Invalid delegate type", nameof(delegateType));
             }
 
             var method = delegateType.GetMethod("Invoke");
-            if (method == null)
+            if (method is null)
             {
-                throw new ArgumentException("Invalid delegate type (invocation method not found)");
+                throw new ArgumentException("Invalid delegate type (invocation method not found)", nameof(delegateType));
             }
 
             var parameters = method.GetParameters();
             if (parameters.Length > maxArgCount)
             {
-                throw new ArgumentException("Invalid delegate type (parameter count too large)");
+                throw new ArgumentException("Invalid delegate type (parameter count too large)", nameof(delegateType));
             }
 
             var paramTypes = parameters.Select(param => param.ParameterType).ToArray();
@@ -84,7 +84,7 @@ namespace Microsoft.ClearScript
                 shimType = funcShimTemplates[paramTypes.Length].MakeSpecificType(typeArgs);
             }
 
-            var shim = (DelegateShim)shimType.CreateInstance(engine, target);
+            var shim = (DelegateShim)Activator.CreateInstance(shimType, engine, target);
             return shim.Delegate;
         }
 
@@ -219,7 +219,7 @@ namespace Microsoft.ClearScript
             protected ProcShim(ScriptEngine engine)
                 : base(engine)
             {
-                if (engine == null)
+                if (engine is null)
                 {
                     invoker = action => action();
                 }
@@ -242,7 +242,7 @@ namespace Microsoft.ClearScript
             protected FuncShim(ScriptEngine engine)
                 : base(engine)
             {
-                if (engine == null)
+                if (engine is null)
                 {
                     invoker = func => func();
                 }

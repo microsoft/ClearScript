@@ -22,7 +22,7 @@ namespace Microsoft.ClearScript.JavaScript
 
         private sealed class StandardModule : DocumentCategory
         {
-            public static readonly StandardModule Instance = new StandardModule();
+            public static readonly StandardModule Instance = new();
 
             private StandardModule()
             {
@@ -52,7 +52,7 @@ namespace Microsoft.ClearScript.JavaScript
 
         private sealed class CommonJSModule : DocumentCategory
         {
-            public static readonly CommonJSModule Instance = new CommonJSModule();
+            public static readonly CommonJSModule Instance = new();
 
             private CommonJSModule()
             {

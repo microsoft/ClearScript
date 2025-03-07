@@ -95,7 +95,7 @@ namespace Microsoft.ClearScript.Windows.Core
     #region structures
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct DebugStackFrameDescriptor
+    internal ref struct DebugStackFrameDescriptor
     {
         [MarshalAs(UnmanagedType.Interface)]
         public IDebugStackFrame Frame;
@@ -110,7 +110,7 @@ namespace Microsoft.ClearScript.Windows.Core
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct DebugStackFrameDescriptor64
+    internal ref struct DebugStackFrameDescriptor64
     {
         [MarshalAs(UnmanagedType.Interface)]
         public IDebugStackFrame Frame;

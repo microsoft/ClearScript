@@ -5,6 +5,7 @@
         <TargetFrameworks>net471</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <LangVersion>9.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -42,10 +43,6 @@
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
         <ProjectReference Include="..\ClearScript.V8\ClearScript.V8.csproj" />
         <ProjectReference Include="..\ClearScript.Windows\ClearScript.Windows.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Microsoft.CSharp" />
     </ItemGroup>
 
     <ItemGroup>

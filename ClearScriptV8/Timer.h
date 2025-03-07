@@ -17,7 +17,7 @@ public:
         m_Func(std::move(func))
     {
         auto wrTimer = CreateWeakRef();
-        IHostObjectUtil::NativeCallback callback = [wrTimer] ()
+        HostObjectUtil::NativeCallback callback = [wrTimer] ()
         {
             auto spTimer = wrTimer.GetTarget();
             if (!spTimer.IsEmpty())
@@ -26,17 +26,17 @@ public:
             }
         };
 
-        m_pvTimer = HostObjectUtil::GetInstance().CreateNativeCallbackTimer(-1, -1, std::move(callback));
+        m_pvTimer = HostObjectUtil::CreateNativeCallbackTimer(-1, -1, std::move(callback));
     }
 
     void Start()
     {
-        HostObjectUtil::GetInstance().ChangeNativeCallbackTimer(m_pvTimer, m_DueTime, m_Period);
+        HostObjectUtil::ChangeNativeCallbackTimer(m_pvTimer, m_DueTime, m_Period);
     }
 
     ~Timer()
     {
-        HostObjectUtil::GetInstance().DestroyNativeCallbackTimer(m_pvTimer);
+        HostObjectUtil::DestroyNativeCallbackTimer(m_pvTimer);
     }
 
 private:

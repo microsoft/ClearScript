@@ -44,7 +44,7 @@ namespace Microsoft.ClearScript
         /// </summary>
         /// <param name="message">The error message.</param>
         public ScriptInterruptedException(string message)
-            : base(MiscHelpers.EnsureNonBlank(message, defaultMessage))
+            : base(message.ToNonBlank(defaultMessage))
         {
             errorDetails = base.Message;
         }
@@ -55,7 +55,7 @@ namespace Microsoft.ClearScript
         /// <param name="message">The error message.</param>
         /// <param name="innerException">The exception that caused the current exception to be thrown.</param>
         public ScriptInterruptedException(string message, Exception innerException)
-            : base(MiscHelpers.EnsureNonBlank(message, defaultMessage), innerException)
+            : base(message.ToNonBlank(defaultMessage), innerException)
         {
             errorDetails = base.Message;
         }
@@ -75,10 +75,10 @@ namespace Microsoft.ClearScript
         }
 
         internal ScriptInterruptedException(string engineName, string message, string errorDetails, int errorCode, bool isFatal, bool executionStarted, object scriptException, Exception innerException)
-            : base(MiscHelpers.EnsureNonBlank(message, defaultMessage), innerException)
+            : base(message.ToNonBlank(defaultMessage), innerException)
         {
             this.engineName = engineName;
-            this.errorDetails = MiscHelpers.EnsureNonBlank(errorDetails, base.Message);
+            this.errorDetails = errorDetails.ToNonBlank(base.Message);
             this.isFatal = isFatal;
             this.executionStarted = executionStarted;
             this.scriptException = scriptException;

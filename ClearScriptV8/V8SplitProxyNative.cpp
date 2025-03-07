@@ -39,11 +39,41 @@ static void InvokeHostAction(void* pvAction) noexcept
 
 //-------------------------------------------------------------------------
 
+static void InvokeHostActionWithArg(void* pvAction, void* pvArg) noexcept
+{
+    try
+    {
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(InvokeHostActionWithArg, pvAction, pvArg);
+    }
+    catch (const HostException& exception)
+    {
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(ScheduleForwardingException, exception.GetException());
+    }
+}
+
+//-------------------------------------------------------------------------
+
 static void ProcessArrayBufferOrViewData(void* pvData, void* pvAction)
 {
     try
     {
         V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(ProcessArrayBufferOrViewData, pvData, pvAction);
+    }
+    catch (const HostException& exception)
+    {
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(ScheduleForwardingException, exception.GetException());
+    }
+}
+
+//-------------------------------------------------------------------------
+
+static void ProcessArrayBufferOrViewDataWithArg(void* pvData, void* pvArgs)
+{
+    const auto& args = *reinterpret_cast<std::pair<void*, void*>*>(pvArgs);
+
+    try
+    {
+        V8_SPLIT_PROXY_MANAGED_INVOKE_VOID(ProcessArrayBufferOrViewDataWithArg, pvData, args.first, args.second);
     }
     catch (const HostException& exception)
     {
@@ -88,7 +118,7 @@ void V8Exception::ScheduleScriptEngineException() const noexcept
 }
 
 //-----------------------------------------------------------------------------
-// V8EntityHandleBase (implementation)
+// V8EntityHandleBase implementation
 //-----------------------------------------------------------------------------
 
 StdString V8EntityHandleBase::GetEntityReleasedMessage(const StdChar* pName) noexcept
@@ -107,7 +137,7 @@ void V8EntityHandleBase::ScheduleInvalidOperationException(const StdString& mess
 }
 
 //-----------------------------------------------------------------------------
-// V8Value (implementation)
+// V8Value implementation
 //-----------------------------------------------------------------------------
 
 void V8Value::Decode(Decoded& decoded) const
@@ -121,17 +151,9 @@ void V8Value::Decode(Decoded& decoded) const
     {
         decoded.DoubleValue = m_Data.DoubleValue;
     }
-    else if (m_Type == Type::Int32)
-    {
-        decoded.Int32Value = m_Data.Int32Value;
-    }
-    else if (m_Type == Type::UInt32)
-    {
-        decoded.UInt32Value = m_Data.UInt32Value;
-    }
     else if (m_Type == Type::String)
     {
-        decoded.pvData = m_Data.pString->ToCString();
+        decoded.pStringData = m_Data.pString->ToCString();
         decoded.Length = static_cast<int32_t>(m_Data.pString->GetLength());
     }
     else if (m_Type == Type::DateTime)
@@ -140,25 +162,76 @@ void V8Value::Decode(Decoded& decoded) const
     }
     else if (m_Type == Type::BigInt)
     {
-        decoded.pvData = m_Data.pBigInt->GetWords().data();
+        decoded.pBigIntData = m_Data.pBigInt->GetWords().data();
         decoded.Length = static_cast<int32_t>(m_Data.pBigInt->GetWords().size());
         decoded.SignBit = static_cast<int16_t>(m_Data.pBigInt->GetSignBit());
     }
     else if (m_Type == Type::V8Object)
     {
-        decoded.pvData = new V8ObjectHandle(m_Data.pV8ObjectHolder->Clone());
+        decoded.pV8ObjectHandle = new V8ObjectHandle(m_Data.pV8ObjectHolder->Clone());
         decoded.Subtype = m_Subtype;
         decoded.Flags = m_Flags;
         decoded.IdentityHash = m_Data.pV8ObjectHolder->GetIdentityHash();
     }
     else if (m_Type == Type::HostObject)
     {
-        decoded.pvData = m_Data.pHostObjectHolder->GetObject();
+        decoded.pvHostObject = m_Data.pHostObjectHolder->GetObject();
+        decoded.Subtype = m_Subtype;
+        decoded.Flags = m_Flags;
     }
 }
 
 //-----------------------------------------------------------------------------
-// V8 split proxy native entry points (implementation)
+
+void V8Value::InitializeFromFastResult(const FastResult& result)
+{
+    m_Type = result.Type;
+    if (m_Type == Type::Boolean)
+    {
+        m_Data.BooleanValue = result.Int32Value;
+    }
+    else if (m_Type == Type::Number)
+    {
+        m_Data.DoubleValue = result.DoubleValue;
+    }
+    else if (m_Type == Type::String)
+    {
+        m_Data.pString = new StdString(result.pStringData, result.Length);
+    }
+    else if (m_Type == Type::DateTime)
+    {
+        m_Data.DoubleValue = result.DoubleValue;
+    }
+    else if (m_Type == Type::BigInt)
+    {
+        std::vector<uint64_t> words(result.pBigIntData, result.pBigIntData + result.Length);
+        m_Data.pBigInt = new V8BigInt(result.SignBit, std::move(words));
+    }
+    else if (m_Type == Type::V8Object)
+    {
+        SharedPtr<V8ObjectHolder> spHolder;
+        if (!result.pV8ObjectHandle->TryGetEntity(spHolder))
+        {
+            m_Type = Type::Undefined;
+        }
+        else
+        {
+            m_Type = Type::V8Object;
+            m_Subtype = result.Subtype;
+            m_Flags = result.Flags;
+            m_Data.pV8ObjectHolder = spHolder->Clone();
+        }
+    }
+    else if (m_Type == Type::HostObject)
+    {
+        m_Subtype = result.Subtype;
+        m_Flags = result.Flags;
+        m_Data.pHostObjectHolder = new HostObjectHolderImpl(result.pvHostObject, ::ToUnderlyingType(m_Subtype), ::ToUnderlyingType(m_Flags));
+    }
+}
+
+//-----------------------------------------------------------------------------
+// V8 split proxy native entry points implementation
 //-----------------------------------------------------------------------------
 
 NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTable) noexcept
@@ -171,6 +244,27 @@ NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTabl
 NATIVE_ENTRY_POINT(const StdChar*) V8SplitProxyNative_GetVersion() noexcept
 {
     return SL(CLEARSCRIPT_VERSION_STRING_INFORMATIONAL);
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void*) Memory_Allocate(size_t size) noexcept
+{
+    return ::malloc(size);
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void*) Memory_AllocateZeroed(size_t size) noexcept
+{
+    return ::calloc(1, size);
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) Memory_Free(const void* pMemory) noexcept
+{
+    ::free(const_cast<void*>(pMemory));
 }
 
 //-----------------------------------------------------------------------------
@@ -506,20 +600,6 @@ NATIVE_ENTRY_POINT(void) V8Value_SetNumber(V8Value* pV8Value, double value) noex
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8Value_SetInt32(V8Value* pV8Value, int32_t value) noexcept
-{
-    *pV8Value = V8Value(value);
-}
-
-//-----------------------------------------------------------------------------
-
-NATIVE_ENTRY_POINT(void) V8Value_SetUInt32(V8Value* pV8Value, uint32_t value) noexcept
-{
-    *pV8Value = V8Value(value);
-}
-
-//-----------------------------------------------------------------------------
-
 NATIVE_ENTRY_POINT(void) V8Value_SetString(V8Value* pV8Value, const StdChar* pValue, int32_t length) noexcept
 {
     *pV8Value = V8Value(new StdString(pValue, length));
@@ -559,9 +639,9 @@ NATIVE_ENTRY_POINT(void) V8Value_SetV8Object(V8Value* pV8Value, const V8ObjectHa
 
 //-----------------------------------------------------------------------------
 
-NATIVE_ENTRY_POINT(void) V8Value_SetHostObject(V8Value* pV8Value, void* pvObject) noexcept
+NATIVE_ENTRY_POINT(void) V8Value_SetHostObject(V8Value* pV8Value, void* pvObject, V8Value::Subtype subtype, V8Value::Flags flags) noexcept
 {
-    *pV8Value = V8Value(new HostObjectHolderImpl(pvObject));
+    *pV8Value = V8Value(new HostObjectHolderImpl(pvObject, ::ToUnderlyingType(subtype), ::ToUnderlyingType(flags)));
 }
 
 //-----------------------------------------------------------------------------
@@ -1150,6 +1230,24 @@ NATIVE_ENTRY_POINT(void) V8Context_InvokeWithLock(const V8ContextHandle& handle,
         try
         {
             spContext->CallWithLock(InvokeHostAction, pvAction);
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ScheduleScriptEngineException();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(void) V8Context_InvokeWithLockWithArg(const V8ContextHandle& handle, void* pvAction, void* pvArg) noexcept
+{
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        try
+        {
+            spContext->CallWithLockWithArg(InvokeHostActionWithArg, pvAction, pvArg);
         }
         catch (const V8Exception& exception)
         {
@@ -1852,12 +1950,31 @@ NATIVE_ENTRY_POINT(void) V8Object_InvokeWithArrayBufferOrViewData(const V8Object
 
 //-----------------------------------------------------------------------------
 
+NATIVE_ENTRY_POINT(void) V8Object_InvokeWithArrayBufferOrViewDataWithArg(const V8ObjectHandle& handle, void* pvAction, void* pvArg) noexcept
+{
+    auto spV8ObjectHolder = handle.GetEntity();
+    if (!spV8ObjectHolder.IsEmpty())
+    {
+        try
+        {
+            auto args = std::make_pair(pvAction, pvArg);
+            V8ObjectHelpers::InvokeWithArrayBufferOrViewData(spV8ObjectHolder, ProcessArrayBufferOrViewDataWithArg, &args);
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ScheduleScriptEngineException();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 NATIVE_ENTRY_POINT(void) V8DebugCallback_ConnectClient(const V8DebugCallbackHandle& handle) noexcept
 {
-    SharedPtr<IHostObjectUtil::DebugCallback> spCallback;
+    SharedPtr<HostObjectUtil::DebugCallback> spCallback;
     if (handle.TryGetEntity(spCallback))
     {
-        (*spCallback)(IHostObjectUtil::DebugDirective::ConnectClient, nullptr /*pCommand*/);
+        (*spCallback)(HostObjectUtil::DebugDirective::ConnectClient, nullptr);
     }
 }
 
@@ -1865,10 +1982,10 @@ NATIVE_ENTRY_POINT(void) V8DebugCallback_ConnectClient(const V8DebugCallbackHand
 
 NATIVE_ENTRY_POINT(void) V8DebugCallback_SendCommand(const V8DebugCallbackHandle& handle, const StdString& command) noexcept
 {
-    SharedPtr<IHostObjectUtil::DebugCallback> spCallback;
+    SharedPtr<HostObjectUtil::DebugCallback> spCallback;
     if (handle.TryGetEntity(spCallback))
     {
-        (*spCallback)(IHostObjectUtil::DebugDirective::SendCommand, &command);
+        (*spCallback)(HostObjectUtil::DebugDirective::SendCommand, &command);
     }
 }
 
@@ -1876,10 +1993,10 @@ NATIVE_ENTRY_POINT(void) V8DebugCallback_SendCommand(const V8DebugCallbackHandle
 
 NATIVE_ENTRY_POINT(void) V8DebugCallback_DisconnectClient(const V8DebugCallbackHandle& handle) noexcept
 {
-    SharedPtr<IHostObjectUtil::DebugCallback> spCallback;
+    SharedPtr<HostObjectUtil::DebugCallback> spCallback;
     if (handle.TryGetEntity(spCallback))
     {
-        (*spCallback)(IHostObjectUtil::DebugDirective::DisconnectClient, nullptr /*pCommand*/);
+        (*spCallback)(HostObjectUtil::DebugDirective::DisconnectClient, nullptr);
     }
 }
 
@@ -1887,7 +2004,7 @@ NATIVE_ENTRY_POINT(void) V8DebugCallback_DisconnectClient(const V8DebugCallbackH
 
 NATIVE_ENTRY_POINT(void) NativeCallback_Invoke(const NativeCallbackHandle& handle) noexcept
 {
-    SharedPtr<IHostObjectUtil::NativeCallback> spCallback;
+    SharedPtr<HostObjectUtil::NativeCallback> spCallback;
     if (handle.TryGetEntity(spCallback))
     {
         try
@@ -1908,6 +2025,13 @@ NATIVE_ENTRY_POINT(void) NativeCallback_Invoke(const NativeCallbackHandle& handl
 NATIVE_ENTRY_POINT(void) V8Entity_Release(V8EntityHandleBase& handle) noexcept
 {
     handle.ReleaseEntity();
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(V8EntityHandleBase*) V8Entity_CloneHandle(V8EntityHandleBase& handle) noexcept
+{
+    return handle.Clone();
 }
 
 //-----------------------------------------------------------------------------

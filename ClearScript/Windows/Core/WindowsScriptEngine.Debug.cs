@@ -60,7 +60,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
             private string GetUrl()
             {
-                if (documentInfo.Uri != null)
+                if (documentInfo.Uri is not null)
                 {
                     return documentInfo.Uri.IsAbsoluteUri ? documentInfo.Uri.AbsoluteUri : documentInfo.Uri.ToString();
                 }
@@ -70,7 +70,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
             private bool TryGetSourceMapUrl(out string sourceMapUrl)
             {
-                if (documentInfo.SourceMapUri != null)
+                if (documentInfo.SourceMapUri is not null)
                 {
                     sourceMapUrl = documentInfo.SourceMapUri.IsAbsoluteUri ? documentInfo.SourceMapUri.AbsoluteUri : documentInfo.SourceMapUri.ToString();
                     return true;

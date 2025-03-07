@@ -17,7 +17,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// The sole instance of the <c><see cref="Undefined"/></c> class.
         /// </summary>
-        public static readonly Undefined Value = new Undefined();
+        public static readonly Undefined Value = new();
 
         private Undefined()
         {

@@ -20,7 +20,7 @@ namespace Microsoft.ClearScript
     {
         #region data
 
-        private static readonly ConcurrentDictionary<BindSignature, object> coreBindCache = new ConcurrentDictionary<BindSignature, object>();
+        private static readonly ConcurrentDictionary<BindSignature, object> coreBindCache = new();
         private static long coreBindCount;
 
         #endregion
@@ -53,7 +53,7 @@ namespace Microsoft.ClearScript
         private object InvokeMethod(string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
             var bindResult = BindMethod(name, typeArgs, args, bindArgs);
-            if (!bindResult.IsSuccess && Target.GetFlags(this).HasFlag(HostTargetFlags.AllowExtensionMethods))
+            if (!bindResult.IsSuccess && Target.GetFlags(this).HasAllFlags(HostTargetFlags.AllowExtensionMethods))
             {
                 var targetArg = Target.Target.ToEnumerable();
                 var extensionArgs = targetArg.Concat(args).ToArray();
@@ -86,13 +86,13 @@ namespace Microsoft.ClearScript
             foreach (var arg in args)
             {
                 var hostType = arg as HostType;
-                if (hostType == null)
+                if (hostType is null)
                 {
                     yield break;
                 }
 
                 var typeArg = hostType.GetTypeArgNoThrow();
-                if (typeArg == null)
+                if (typeArg is null)
                 {
                     yield break;
                 }
@@ -121,7 +121,7 @@ namespace Microsoft.ClearScript
 
                 if (forceReflection)
                 {
-                    result = new MethodBindResult(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+                    result = MethodBindResult.CreateFailure(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
                 }
                 else
                 {
@@ -130,7 +130,7 @@ namespace Microsoft.ClearScript
                     {
                         if (result.IsSuccess)
                         {
-                            result = new MethodBindResult(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+                            result = MethodBindResult.CreateFailure(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
                         }
 
                         foreach (var altName in GetAltMethodNames(name, bindFlags))
@@ -145,10 +145,10 @@ namespace Microsoft.ClearScript
                     }
                 }
 
-                if ((!result.IsSuccess) && (forceReflection || Engine.UseReflectionBindFallback))
+                if (!result.IsSuccess && (forceReflection || Engine.UseReflectionBindFallback))
                 {
                     var reflectionResult = BindMethodUsingReflection(bindFlags, Target, name, typeArgs, args, bindArgs);
-                    if ((reflectionResult.IsSuccess) || forceReflection)
+                    if (reflectionResult.IsSuccess || forceReflection)
                     {
                         result = reflectionResult;
                     }
@@ -162,7 +162,7 @@ namespace Microsoft.ClearScript
 
         private static MethodBindResult BindMethodInternal(BindSignature signature, Type bindContext, BindingFlags bindFlags, HostTarget target, string name, Type[] typeArgs, object[] args, object[] bindArgs)
         {
-            if (signature == null)
+            if (signature is null)
             {
                 // WARNING: BindSignature holds on to the specified typeArgs; subsequent modification
                 // will result in bugs that are difficult to diagnose. Create a copy if necessary.
@@ -197,7 +197,7 @@ namespace Microsoft.ClearScript
             var rawResult = BindMethodRaw(bindFlags, binder, target, bindArgs);
 
             var result = MethodBindResult.Create(name, bindFlags, rawResult, target, args);
-            if (!result.IsSuccess && !(target is HostType) && target.Type.IsInterface)
+            if (!result.IsSuccess && (target is not HostType) && target.Type.IsInterface)
             {
                 // binding through interface failed; try base interfaces
                 foreach (var interfaceType in target.Type.GetInterfaces())
@@ -233,7 +233,7 @@ namespace Microsoft.ClearScript
             // ReSharper disable ConditionIsAlwaysTrueOrFalse
             // ReSharper disable HeuristicUnreachableCode
 
-            if (expr == null)
+            if (expr is null)
             {
                 return new Func<Exception>(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}'", binder.Name)));
             }
@@ -300,7 +300,7 @@ namespace Microsoft.ClearScript
         private static CSharpArgumentInfo CreateArgInfo(object arg)
         {
             var flags = CSharpArgumentInfoFlags.None;
-            if (arg != null)
+            if (arg is not null)
             {
                 flags |= CSharpArgumentInfoFlags.UseCompileTimeType;
                 if (arg is HostObject hostObject)
@@ -347,18 +347,18 @@ namespace Microsoft.ClearScript
                 try
                 {
                     var rawResult = TypeHelpers.BindToMember(this, candidates, bindFlags, args, bindArgs);
-                    if (rawResult != null)
+                    if (rawResult is not null)
                     {
                         return MethodBindResult.Create(name, bindFlags, rawResult, hostTarget, args);
                     }
                 }
                 catch (AmbiguousMatchException)
                 {
-                    return new MethodBindResult(() => new AmbiguousMatchException(MiscHelpers.FormatInvariant("The object has multiple methods named '{0}' that match the specified arguments", name)));
+                    return MethodBindResult.CreateFailure(() => new AmbiguousMatchException(MiscHelpers.FormatInvariant("The object has multiple methods named '{0}' that match the specified arguments", name)));
                 }
             }
 
-            return new MethodBindResult(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
+            return MethodBindResult.CreateFailure(() => new MissingMethodException(MiscHelpers.FormatInvariant("The object has no method named '{0}' that matches the specified arguments", name)));
         }
 
         private IEnumerable<MethodInfo> GetReflectionCandidates(BindingFlags bindFlags, HostTarget hostTarget, string name, Type[] typeArgs)
@@ -368,7 +368,7 @@ namespace Microsoft.ClearScript
                 yield return method;
             }
 
-            if (!(hostTarget is HostType) && hostTarget.Type.IsInterface)
+            if ((hostTarget is not HostType) && hostTarget.Type.IsInterface)
             {
                 foreach (var interfaceType in hostTarget.Type.GetInterfaces())
                 {
@@ -411,7 +411,7 @@ namespace Microsoft.ClearScript
                     tempMethod = method;
                 }
 
-                if ((tempMethod != null) && !tempMethod.ContainsGenericParameters)
+                if ((tempMethod is not null) && !tempMethod.ContainsGenericParameters)
                 {
                     yield return tempMethod;
                 }
@@ -451,7 +451,7 @@ namespace Microsoft.ClearScript
                 typeof(Exception).GetMethod("GetType")
             };
 
-            public MethodBindResult(HostTarget hostTarget, MethodInfo method, object[] args)
+            private MethodBindResult(HostTarget hostTarget, MethodInfo method, object[] args)
             {
                 this.hostTarget = hostTarget;
                 this.method = method;
@@ -459,7 +459,7 @@ namespace Microsoft.ClearScript
                 exceptionFactory = null;
             }
 
-            public MethodBindResult(Func<Exception> exceptionFactory)
+            private MethodBindResult(Func<Exception> exceptionFactory)
             {
                 hostTarget = null;
                 method = null;
@@ -472,7 +472,7 @@ namespace Microsoft.ClearScript
                 var method = rawResult as MethodInfo;
                 if (method != null)
                 {
-                    if (method.IsStatic && !bindFlags.HasFlag(BindingFlags.Static))
+                    if (method.IsStatic && !bindFlags.HasAllFlags(BindingFlags.Static))
                     {
                         return new MethodBindResult(() => new InvalidOperationException(MiscHelpers.FormatInvariant("Cannot access static method '{0}' in non-static context", method.Name)));
                     }
@@ -483,9 +483,11 @@ namespace Microsoft.ClearScript
                 return new MethodBindResult((rawResult as Func<Exception>) ?? (() => new NotSupportedException(MiscHelpers.FormatInvariant("Invocation of method '{0}' failed (unrecognized binding)", name))));
             }
 
+            public static MethodBindResult CreateFailure(Func<Exception> exceptionFactory) => new(exceptionFactory);
+
             public bool IsSuccess => method != null;
 
-            public object RawResult => IsSuccess ? (object)method : exceptionFactory;
+            public object RawResult => IsSuccess ? method : exceptionFactory;
 
             public bool IsPreferredMethod(HostItem hostItem, string name)
             {
@@ -521,7 +523,7 @@ namespace Microsoft.ClearScript
         {
             private readonly object target;
             private readonly string name;
-            private readonly List<object> results = new List<object>();
+            private readonly List<object> results = new();
 
             public MethodBindingVisitor(object target, string name, Expression expression)
             {
@@ -537,7 +539,7 @@ namespace Microsoft.ClearScript
                 else
                 {
                     var method = results[0] as MethodInfo;
-                    if (method != null)
+                    if (method is not null)
                     {
                         Debug.Assert(method.Name == name);
                     }

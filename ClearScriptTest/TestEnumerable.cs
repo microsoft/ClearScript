@@ -1,10 +1,11 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -26,18 +27,21 @@ namespace Microsoft.ClearScript.Test
             return CreateGeneric(items);
         }
 
+        public static IAsyncEnumerable<T> CreateAsync<T>(params T[] items)
+        {
+            return CreateInternal(items);
+        }
+
         private static TestEnumerableImpl<T> CreateInternal<T>(T[] items)
         {
             return new TestEnumerableImpl<T>(items);
         }
 
         // ReSharper disable once PartialTypeWithSinglePart
-        private partial class TestEnumerableImpl<T> : IEnumerable<T>, IDisposableEnumeratorFactory
+        private partial class TestEnumerableImpl<T> : IEnumerable<T>, IAsyncEnumerable<T>, IDisposableEnumeratorFactory
         {
             private readonly T[] items;
             private int disposedEnumeratorCount;
-
-            int IDisposableEnumeratorFactory.DisposedEnumeratorCount => disposedEnumeratorCount;
 
             public TestEnumerableImpl(T[] items)
             {
@@ -51,11 +55,19 @@ namespace Microsoft.ClearScript.Test
 
             IEnumerator IEnumerable.GetEnumerator()
             {
+                // ReSharper disable once NotDisposedResourceIsReturned
                 return ((IEnumerable<T>)this).GetEnumerator();
             }
 
+            IAsyncEnumerator<T> IAsyncEnumerable<T>.GetAsyncEnumerator(CancellationToken cancellationToken)
+            {
+                return new Enumerator(this);
+            }
+
+            int IDisposableEnumeratorFactory.DisposedEnumeratorCount => disposedEnumeratorCount;
+
             // ReSharper disable once PartialTypeWithSinglePart
-            private partial class Enumerator : IEnumerator<T>
+            private partial class Enumerator : IEnumerator<T>, IAsyncEnumerator<T>
             {
                 private readonly TestEnumerableImpl<T> enumerable;
                 private int index = -1;
@@ -82,6 +94,19 @@ namespace Microsoft.ClearScript.Test
                 void IDisposable.Dispose()
                 {
                     Interlocked.Increment(ref enumerable.disposedEnumeratorCount);
+                }
+
+                T IAsyncEnumerator<T>.Current => ((IEnumerator<T>)this).Current;
+
+                ValueTask<bool> IAsyncEnumerator<T>.MoveNextAsync()
+                {
+                    return new ValueTask<bool>(((IEnumerator)this).MoveNext());
+                }
+
+                ValueTask IAsyncDisposable.DisposeAsync()
+                {
+                    ((IDisposable)this).Dispose();
+                    return default;
                 }
             }
         }

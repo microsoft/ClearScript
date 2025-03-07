@@ -20,10 +20,14 @@ namespace Microsoft.ClearScript
 
         #region constructors
 
-        private HostObject(object target, Type type)
+        private HostObject(object target, Type type, bool isCanonicalRef)
         {
-            target = CanonicalRefTable.GetCanonicalRef(target);
-            if (type == null)
+            if (!isCanonicalRef)
+            {
+                target = CanonicalRefTable.GetCanonicalRef(target);
+            }
+
+            if (type is null)
             {
                 type = target.GetType();
             }
@@ -52,17 +56,22 @@ namespace Microsoft.ClearScript
 
         public static HostObject Wrap(object target, Type type)
         {
-            return (target != null) ? new HostObject(target, type) : null;
+            return Wrap(target, type, false);
+        }
+
+        public static HostObject Wrap(object target, Type type, bool isCanonicalRef)
+        {
+            return (target is not null) ? new HostObject(target, type, isCanonicalRef) : null;
         }
 
         public static object WrapResult(object result, Type type, bool wrapNull)
         {
-            if ((result is HostItem) || (result is HostTarget))
+            if ((result is IScriptMarshalWrapper) || (result is HostTarget))
             {
                 return result;
             }
 
-            if (result == null)
+            if (result is null)
             {
                 return wrapNull ? GetNullWrapper(type) : null;
             }
@@ -149,7 +158,7 @@ namespace Microsoft.ClearScript
 
         private static class NullWrapper<T>
         {
-            public static readonly HostObject Value = new HostObject(null, typeof(T));
+            public static readonly HostObject Value = new(null, typeof(T), true);
         }
 
         // ReSharper restore UnusedMember.Local

@@ -67,7 +67,7 @@ namespace Microsoft.ClearScript
 
         public bool Equals(BindSignature that)
         {
-            if (that == null)
+            if (that is null)
             {
                 return false;
             }
@@ -149,7 +149,7 @@ namespace Microsoft.ClearScript
                     kind = TargetKind.Static;
                     targetType = target.Type;
                 }
-                else if (target.InvokeTarget == null)
+                else if (target.InvokeTarget is null)
                 {
                     kind = TargetKind.Null;
                     targetType = target.Type;
@@ -194,7 +194,7 @@ namespace Microsoft.ClearScript
 
             public bool Equals(TargetInfo that)
             {
-                return (that != null) && (kind == that.kind) && (targetType == that.targetType) && (instanceType == that.instanceType);
+                return (that is not null) && (kind == that.kind) && (targetType == that.targetType) && (instanceType == that.instanceType);
             }
 
             #endregion
@@ -224,7 +224,7 @@ namespace Microsoft.ClearScript
 
             public ArgInfo(object arg)
             {
-                if (arg == null)
+                if (arg is null)
                 {
                     kind = ArgKind.Null;
                     return;
@@ -286,7 +286,7 @@ namespace Microsoft.ClearScript
                     return;
                 }
 
-                Debug.Assert(!(arg is HostTarget));
+                Debug.Assert(arg is not HostTarget);
                 kind = arg.IsZero() ? ArgKind.Zero : ArgKind.ByValue;
                 type = arg.GetType();
             }
@@ -317,7 +317,7 @@ namespace Microsoft.ClearScript
 
             public bool Equals(ArgInfo that)
             {
-                return (that != null) && (kind == that.kind) && (type == that.type);
+                return (that is not null) && (kind == that.kind) && (type == that.type);
             }
 
             #endregion
@@ -327,7 +327,7 @@ namespace Microsoft.ClearScript
 
         #region Nested type: HashAccumulator
 
-        private struct HashAccumulator
+        private ref struct HashAccumulator
         {
             public int HashCode { get; private set; }
 

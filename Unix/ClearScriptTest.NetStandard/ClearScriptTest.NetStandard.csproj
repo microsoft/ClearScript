@@ -1,8 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
+        <LangVersion Condition="'$(TargetFramework)' == 'netcoreapp3.1'">9.0</LangVersion>
+    </PropertyGroup>
 
     <!-- ReSharper disable once UnknownProperty -->
     <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
-        <TargetFrameworks>netcoreapp3.1;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
+        <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
         <IsPackable>false</IsPackable>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -23,6 +28,7 @@
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <DefineConstants>DEBUG;TRACE</DefineConstants>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <NoWarn>CA1416</NoWarn>
         <OutputPath>..\..\bin\Debug\Unix\NetStandard</OutputPath>
     </PropertyGroup>
@@ -30,6 +36,7 @@
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
         <DefineConstants>TRACE</DefineConstants>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <NoWarn>CA1416</NoWarn>
         <OutputPath>..\..\bin\Release\Unix\NetStandard</OutputPath>
     </PropertyGroup>
@@ -59,7 +66,6 @@
         <Compile Include="..\..\ClearScriptTest\ExplicitInterfaceMemberAccessTest.cs" Link="ExplicitInterfaceMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\ExtendedHostFunctionsTest.cs" Link="ExtendedHostFunctionsTest.cs" />
         <Compile Include="..\..\ClearScriptTest\ExtensionsTest.cs" Link="ExtensionsTest.cs" />
-        <Compile Include="..\..\ClearScriptTest\ExtensionsTest.NetStandard.cs" Link="ExtensionsTest.NetStandard.cs" />
         <Compile Include="..\..\ClearScriptTest\GeneralTestObject.cs" Link="GeneralTestObject.cs" />
         <Compile Include="..\..\ClearScriptTest\HostFunctionsTest.cs" Link="HostFunctionsTest.cs" />
         <Compile Include="..\..\ClearScriptTest\HostListTest.cs" Link="HostListTest.cs" />
@@ -80,13 +86,12 @@
         <Compile Include="..\..\ClearScriptTest\StaticMemberAccessTest.cs" Link="StaticMemberAccessTest.cs" />
         <Compile Include="..\..\ClearScriptTest\StaticTestClass.cs" Link="StaticTestClass.cs" />
         <Compile Include="..\..\ClearScriptTest\TestEnumerable.cs" Link="TestEnumerable.cs" />
-        <Compile Include="..\..\ClearScriptTest\TestEnumerable.NetStandard.cs" Link="TestEnumerable.NetStandard.cs" />
         <Compile Include="..\..\ClearScriptTest\TestObject.cs" Link="TestObject.cs" />
         <Compile Include="..\..\ClearScriptTest\TypeRestrictionTest.cs" Link="TypeRestrictionTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ArrayBufferOrViewTest.cs" Link="V8ArrayBufferOrViewTest.cs" />
+        <Compile Include="..\..\ClearScriptTest\V8FastProxyTest.cs" Link="V8FastProxyTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ModuleTest.cs" Link="V8ModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.cs" Link="V8ScriptEngineTest.cs" />
-        <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.NetStandard.cs" Link="V8ScriptEngineTest.NetStandard.cs" />
         <Compile Include="..\..\ClearScriptTest\V8SharedObjectTest.cs" Link="V8SharedObjectTest.cs" />
     </ItemGroup>
 
@@ -106,15 +111,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
-        <PackageReference Include="MSTest.TestAdapter" Version="3.0.2" />
-        <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
-        <PackageReference Include="coverlet.collector" Version="3.2.0">
+        <PackageReference Include="coverlet.collector" Version="6.0.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.4.0" />
-        <PackageReference Include="System.Net.Http" Version="4.3.4" />
+        <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.9.2" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+        <PackageReference Include="MSTest.TestAdapter" Version="3.2.2" />
+        <PackageReference Include="MSTest.TestFramework" Version="3.2.2" />
     </ItemGroup>
 
     <ItemGroup>

@@ -87,6 +87,7 @@ ifeq ($(TARGETOS), linux)
     endif
 else ifeq ($(TARGETOS), darwin)
     TARGET = $(TARGETARCH)-$(TARGETOS)
+    CXXLINKFLAGS := -framework CoreFoundation
     ifndef DEBUG
         STRIP = strip -r -u
         ENTITLEMENTS = $(MAKEDIR)/entitlements.xml

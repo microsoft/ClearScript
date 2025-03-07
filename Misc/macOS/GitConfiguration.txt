@@ -1,0 +1,3 @@
+The "gclient sync" command fails, indicating "HTTP 500".
+
+Possible fix: git config --global http.postBuffer 524288000

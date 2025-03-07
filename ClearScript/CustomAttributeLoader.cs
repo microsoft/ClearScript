@@ -12,7 +12,7 @@ namespace Microsoft.ClearScript
     /// </summary>
     public class CustomAttributeLoader
     {
-        private readonly CustomAttributeCache cache = new CustomAttributeCache();
+        private readonly CustomAttributeCache cache = new();
 
         // ReSharper disable EmptyConstructor
 
@@ -27,7 +27,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// Gets the default custom attribute loader.
         /// </summary>
-        public static CustomAttributeLoader Default { get; } = new CustomAttributeLoader();
+        public static CustomAttributeLoader Default { get; } = new();
 
         // ReSharper restore EmptyConstructor
 

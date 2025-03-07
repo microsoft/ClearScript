@@ -384,7 +384,7 @@ public:
         return m_DebuggingEnabled;
     }
 
-    void TerminateExecution()
+    void TerminateExecution(bool force)
     {
         BEGIN_MUTEX_SCOPE(m_DataMutex)
 
@@ -399,7 +399,7 @@ public:
 
         BEGIN_MUTEX_SCOPE(m_TerminateExecutionMutex)
 
-            if (m_pExecutionScope != nullptr)
+            if (force || (m_pExecutionScope != nullptr))
             {
                 TerminateExecutionInternal();
             }

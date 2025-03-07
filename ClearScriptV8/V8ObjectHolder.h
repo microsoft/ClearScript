@@ -13,7 +13,7 @@ class V8IsolateImpl;
 // V8SharedObjectInfo
 //-----------------------------------------------------------------------------
 
-class V8SharedObjectInfo final : public SharedPtrTarget
+class V8SharedObjectInfo final: public SharedPtrTarget
 {
 public:
 

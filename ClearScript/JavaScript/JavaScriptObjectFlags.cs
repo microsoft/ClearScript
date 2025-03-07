@@ -39,6 +39,27 @@ namespace Microsoft.ClearScript.JavaScript
         /// or
         /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function*">async generator function</see>.
         /// </summary>
-        Generator = 0x00000004
+        Generator = 0x00000004,
+
+        /// <summary>
+        /// Indicates that the object is a
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>
+        /// that is not yet settled. If the object is a promise and this attribute is not present,
+        /// then the promise is fulfilled unless <c><see cref="Rejected"/></c> is present.
+        /// </summary>
+        Pending = 0x00000008,
+
+        /// <summary>
+        /// Indicates that the object is a rejected
+        /// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</see>.
+        /// This attribute has no meaning if <c><see cref="Pending"/></c> is present.
+        /// </summary>
+        Rejected = 0x00000010
+    }
+
+    internal static class JavaScriptObjectFlagsHelpers
+    {
+        public static bool HasAllFlags(this JavaScriptObjectFlags value, JavaScriptObjectFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this JavaScriptObjectFlags value, JavaScriptObjectFlags flags) => (value & flags) != 0;
     }
 }

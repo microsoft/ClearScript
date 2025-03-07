@@ -31,9 +31,9 @@ namespace Microsoft.ClearScript.Util
                 // ReSharper disable HeuristicUnreachableCode
 
                 LoadAssemblyTable();
-                if (table != null)
+                if (table is not null)
                 {
-                    AppDomain.CurrentDomain.AssemblyLoad += (sender, args) => table.TryAdd(args.LoadedAssembly.GetName().Name, args.LoadedAssembly.FullName);
+                    AppDomain.CurrentDomain.AssemblyLoad += (_, args) => table.TryAdd(args.LoadedAssembly.GetName().Name, args.LoadedAssembly.FullName);
                     AppDomain.CurrentDomain.GetAssemblies().ForEach(assembly => table.TryAdd(assembly.GetName().Name, assembly.FullName));
                 }
 
@@ -43,7 +43,7 @@ namespace Microsoft.ClearScript.Util
 
             public static string GetFullAssemblyNameImpl(string name)
             {
-                return ((table != null) && table.TryGetValue(name, out var fullName)) ? fullName : AssemblyHelpers.GetFullAssemblyName(name);
+                return ((table is not null) && table.TryGetValue(name, out var fullName)) ? fullName : AssemblyHelpers.GetFullAssemblyName(name);
             }
 
             private static void LoadAssemblyTable()
@@ -66,45 +66,53 @@ namespace Microsoft.ClearScript.Util
 
             private static bool ReadAssemblyTable(string rootPath)
             {
-                var succeeded = MiscHelpers.Try(() =>
-                {
-                    var filePath = GetFilePath(rootPath);
-                    if (File.Exists(filePath))
+                var succeeded = MiscHelpers.Try(
+                    static rootPath =>
                     {
-                        using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        var filePath = GetFilePath(rootPath);
+                        if (File.Exists(filePath))
                         {
-                            var serializer = new XmlSerializer(typeof(AssemblyTableData));
-                            table = ((AssemblyTableData)serializer.Deserialize(stream)).CreateTable();
+                            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            {
+                                var serializer = new XmlSerializer(typeof(AssemblyTableData));
+                                table = ((AssemblyTableData)serializer.Deserialize(stream)).CreateTable();
+                            }
                         }
-                    }
-                });
+                    },
+                    rootPath
+                );
 
-                return succeeded && (table != null);
+                return succeeded && (table is not null);
             }
 
             private static bool BuildAssemblyTable()
             {
-                var succeeded = MiscHelpers.Try(() =>
-                {
-                    var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\.NETFramework");
-                    if (key != null)
+                var succeeded = MiscHelpers.Try(
+                    static () =>
                     {
-                        var dirPath = Path.Combine((string)key.GetValue("InstallRoot"), GetRuntimeVersionDirectoryName());
-
-                        table = new ConcurrentDictionary<string, string>();
-                        foreach (var filePath in Directory.EnumerateFiles(dirPath, "*.dll", SearchOption.AllDirectories))
+                        var key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\.NETFramework");
+                        if (key is not null)
                         {
-                            var path = filePath;
-                            MiscHelpers.Try(() =>
+                            var dirPath = Path.Combine((string)key.GetValue("InstallRoot"), GetRuntimeVersionDirectoryName());
+
+                            table = new ConcurrentDictionary<string, string>();
+                            foreach (var filePath in Directory.EnumerateFiles(dirPath, "*.dll", SearchOption.AllDirectories))
                             {
-                                var assemblyName = Assembly.ReflectionOnlyLoadFrom(path).GetName();
-                                table.TryAdd(assemblyName.Name, assemblyName.FullName);
-                            });
+                                var path = filePath;
+                                MiscHelpers.Try(
+                                    static path =>
+                                    {
+                                        var assemblyName = Assembly.ReflectionOnlyLoadFrom(path).GetName();
+                                        table.TryAdd(assemblyName.Name, assemblyName.FullName);
+                                    },
+                                    path
+                                );
+                            }
                         }
                     }
-                });
+                );
 
-                return succeeded && (table != null);
+                return succeeded && (table is not null);
             }
 
             private static void WriteAssemblyTable()
@@ -117,15 +125,18 @@ namespace Microsoft.ClearScript.Util
 
             private static bool WriteAssemblyTable(string rootPath)
             {
-                return MiscHelpers.Try(() =>
-                {
-                    var filePath = GetFilePath(rootPath);
-                    using (var stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+                return MiscHelpers.Try(
+                    static rootPath =>
                     {
-                        var serializer = new XmlSerializer(typeof(AssemblyTableData));
-                        serializer.Serialize(stream, new AssemblyTableData(table));
-                    }
-                });
+                        var filePath = GetFilePath(rootPath);
+                        using (var stream = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+                        {
+                            var serializer = new XmlSerializer(typeof(AssemblyTableData));
+                            serializer.Serialize(stream, new AssemblyTableData(table));
+                        }
+                    },
+                    rootPath
+                );
             }
 
             private static string GetFilePath(string rootPath)

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-v8testedrev=12.3.219.12
+v8testedrev=13.3.415.23
 v8testedcommit=
 v8cherrypicks=
 v8linuxbuildcommit=3d9590754d5d23e62d15472c5baf6777ca59df20
@@ -181,7 +181,7 @@ if [[ $download == true ]]; then
         if [[ $v8linuxbuildcommit != "" ]]; then
             git reset --hard $v8linuxbuildcommit >resetBuild.log || fail
         fi
-        cp ../../../sysroots.json linux/sysroot_scripts || fail
+        git apply --reject --ignore-whitespace ../../../BuildPatch.txt 2>apply-patch.log || fail
         cd ..
         cd tools/clang || abort
         if [[ $v8linuxclangcommit != "" ]]; then
@@ -216,17 +216,23 @@ if [[ $linux == true ]]; then
     cd third_party/abseil-cpp || abort
     git diff --ignore-space-change --ignore-space-at-eol >AbseilCppPatch.txt 2>create-patch.log || fail
     cd ../..
+    cd build || abort
+    git restore linux/sysroot_scripts/sysroots.json || fail
+    git diff --ignore-space-change --ignore-space-at-eol >BuildPatch.txt 2>create-patch.log || fail
+    cd ..
 fi
 
 if [[ $linux == true ]]; then
     echo "Installing LKG sysroots ..."
+    cp ../../sysroots.json build/linux/sysroot_scripts || fail
     build/linux/sysroot_scripts/install-sysroot.py --arch=x64 >install-x64-sysroot.log || fail
     build/linux/sysroot_scripts/install-sysroot.py --arch=i386 >install-i386-sysroot.log || fail
     build/linux/sysroot_scripts/install-sysroot.py --arch=$cpu >install-$cpu-sysroot.log || fail
 fi
 
 echo "Building V8 ..."
-gn gen out/$cpu/$mode --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\"" >gn-$cpu-$mode.log || fail
+gn gen out/$cpu/$mode --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=$isdebug target_cpu=\"$cpu\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_use_external_startup_data=false v8_target_cpu=\"$cpu\"" >gn-$cpu-$mode.log 2>gn-$cpu-$mode.log || fail
+gn args out/$cpu/$mode --list >out/$cpu/$mode/allArgs.txt || fail
 ninja -C out/$cpu/$mode obj/libv8_monolith.a >build-$cpu-$mode.log || fail
 
 cd ../..
@@ -236,6 +242,7 @@ cp build/v8/V8Patch.txt . || fail
 
 if [[ $linux == true ]]; then
     cp build/v8/third_party/abseil-cpp/AbseilCppPatch.txt . || fail
+    cp build/v8/build/BuildPatch.txt . || fail
 fi
 
 echo "Importing ICU data ..."

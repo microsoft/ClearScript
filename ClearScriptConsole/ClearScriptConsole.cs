@@ -65,7 +65,7 @@ namespace Microsoft.ClearScript.Test
                 Console.Write("-> ");
 
                 var command = Console.ReadLine();
-                if (command == null)
+                if (command is null)
                 {
                     break;
                 }
@@ -78,7 +78,7 @@ namespace Microsoft.ClearScript.Test
                 try
                 {
                     var result = engine.ExecuteCommand(command);
-                    if (result != null)
+                    if (result is not null)
                     {
                         Console.WriteLine(result);
                     }

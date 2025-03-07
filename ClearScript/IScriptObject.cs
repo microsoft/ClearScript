@@ -39,7 +39,7 @@ namespace Microsoft.ClearScript
         /// Removes a named script object property.
         /// </summary>
         /// <param name="name">The name of the property to remove.</param>
-        /// <returns><c>True</c> if the property was removed successfully, <c>false</c> otherwise.</returns>
+        /// <returns><c>True</c> if the property was removed, <c>false</c> otherwise.</returns>
         bool DeleteProperty(string name);
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace Microsoft.ClearScript
         /// Removes an indexed script object property.
         /// </summary>
         /// <param name="index">The index of the property to remove.</param>
-        /// <returns><c>True</c> if the property was removed successfully, <c>false</c> otherwise.</returns>
+        /// <returns><c>True</c> if the property was removed, <c>false</c> otherwise.</returns>
         bool DeleteProperty(int index);
 
         /// <summary>

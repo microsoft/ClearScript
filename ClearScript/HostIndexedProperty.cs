@@ -51,7 +51,7 @@ namespace Microsoft.ClearScript
 
         public override bool TryInvokeAuxMember(IHostContext context, string memberName, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+            if (invokeFlags.HasAllFlags(BindingFlags.InvokeMethod))
             {
                 if (string.Equals(memberName, "get", invokeFlags.GetMemberNameComparison()))
                 {
@@ -72,7 +72,7 @@ namespace Microsoft.ClearScript
 
         public override bool TryInvoke(IHostContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            result = target.InvokeMember(name, (invokeFlags.HasFlag(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty) | BindingFlags.SuppressChangeType, args, bindArgs, null, true);
+            result = target.InvokeMember(name, (invokeFlags.HasAllFlags(BindingFlags.SetField) ? BindingFlags.SetProperty : BindingFlags.GetProperty) | BindingFlags.SuppressChangeType, args, bindArgs, null, true);
             return true;
         }
 

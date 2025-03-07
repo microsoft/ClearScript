@@ -1,9 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net45;net471</TargetFrameworks>
+        <TargetFrameworks>net462;net471</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.V8</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <LangVersion>9.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -40,6 +41,32 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>AssemblyInfo.V8.tt</DependentUpon>
         </Compile>
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastAsyncEnumerator.cs" Link="V8\FastProxy\IV8FastAsyncEnumerator.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastEnumerator.cs" Link="V8\FastProxy\IV8FastEnumerator.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostDynamicProperties.cs" Link="V8\FastProxy\IV8FastHostDynamicProperties.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostFunction.cs" Link="V8\FastProxy\IV8FastHostFunction.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostFunctionOperations.cs" Link="V8\FastProxy\IV8FastHostFunctionOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostMethod.cs" Link="V8\FastProxy\IV8FastHostMethod.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostMethodOperations.cs" Link="V8\FastProxy\IV8FastHostMethodOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostObject.cs" Link="V8\FastProxy\IV8FastHostObject.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostObjectOperations.cs" Link="V8\FastProxy\IV8FastHostObjectOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArg.cs" Link="V8\FastProxy\V8FastArg.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArgImpl.cs" Link="V8\FastProxy\V8FastArgImpl.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArgKind.cs" Link="V8\FastProxy\V8FastArgKind.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArgs.cs" Link="V8\FastProxy\V8FastArgs.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostDelegates.cs" Link="V8\FastProxy\V8FastHostDelegates.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostDynamicObject.cs" Link="V8\FastProxy\V8FastHostDynamicObject.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostFunction.cs" Link="V8\FastProxy\V8FastHostFunction.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostFunctionOperations.cs" Link="V8\FastProxy\V8FastHostFunctionOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostItem.cs" Link="V8\FastProxy\V8FastHostItem.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostMethod.cs" Link="V8\FastProxy\V8FastHostMethod.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostMethodOperations.cs" Link="V8\FastProxy\V8FastHostMethodOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostObject.cs" Link="V8\FastProxy\V8FastHostObject.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostObjectConfiguration.cs" Link="V8\FastProxy\V8FastHostObjectConfiguration.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostObjectOperations.cs" Link="V8\FastProxy\V8FastHostObjectOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostPropertyFlags.cs" Link="V8\FastProxy\V8FastHostPropertyFlags.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastProxyHelpers.cs" Link="V8\FastProxy\V8FastProxyHelpers.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastResult.cs" Link="V8\FastProxy\V8FastResult.cs" />
         <Compile Include="..\..\ClearScript\V8\IV8DebugListener.cs" Link="V8\IV8DebugListener.cs" />
         <Compile Include="..\..\ClearScript\V8\IV8Object.cs" Link="V8\IV8Object.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\IV8SplitProxyNative.cs" Link="V8\SplitProxy\IV8SplitProxyNative.cs" />
@@ -101,12 +128,12 @@
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>V8ScriptEngine.InitScript.cs</LastGenOutput>
         </None>
-        <None Include="..\..\ClearScript\V8\V8ScriptEngine.InitScript.js" Link="V8\V8ScriptEngine.InitScript.js"/>
+        <None Include="..\..\ClearScript\V8\V8ScriptEngine.InitScript.js" Link="V8\V8ScriptEngine.InitScript.js" />
         <None Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.tt" Link="V8\SplitProxy\V8SplitProxyNative.tt">
             <Generator>TextTemplatingFileGenerator</Generator>
             <LastGenOutput>V8SplitProxyNative.Generated.cs</LastGenOutput>
         </None>
-        <None Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Common.tt" Link="V8\SplitProxy\V8SplitProxyNative.Common.tt"/>
+        <None Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Common.tt" Link="V8\SplitProxy\V8SplitProxyNative.Common.tt" />
     </ItemGroup>
 
     <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))'">
@@ -168,24 +195,13 @@
         </None>
     </ItemGroup>
 
-    <!-- ReSharper disable once UnknownProperty -->
-    <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
-        <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-        <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    </ItemGroup>
-
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
         <ProjectReference Include="..\..\NetStandard\ClearScript.V8.ICUData\ClearScript.V8.ICUData.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Microsoft.CSharp" />
     </ItemGroup>
 
     <ItemGroup>

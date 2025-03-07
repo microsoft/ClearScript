@@ -17,7 +17,7 @@ namespace Microsoft.ClearScript.V8
 {
     internal abstract partial class V8Proxy : IDisposable
     {
-        private static readonly object dataLock = new object();
+        private static readonly object dataLock = new();
 
         private static IntPtr hNativeAssembly;
         private static ulong splitImplCount;
@@ -47,7 +47,7 @@ namespace Microsoft.ClearScript.V8
                     }
                     catch
                     {
-                        gotNativeVersion = MiscHelpers.Try(out nativeVersion, V8SplitProxyNative.GetVersion);
+                        gotNativeVersion = MiscHelpers.Try(out nativeVersion, static () => V8SplitProxyNative.GetVersion());
                         if (!gotNativeVersion)
                         {
                             throw;
@@ -151,7 +151,7 @@ namespace Microsoft.ClearScript.V8
                     return hLibrary;
                 }
 
-                messageBuilder.AppendInvariant("\n{0}: {1}", path, MiscHelpers.EnsureNonBlank(GetLoadLibraryErrorMessage(), "Unknown error"));
+                messageBuilder.AppendInvariant("\n{0}: {1}", path, GetLoadLibraryErrorMessage().ToNonBlank("Unknown error"));
             }
 
             var message = MiscHelpers.FormatInvariant("Cannot load ClearScript V8 library. Load failure information for {0}:{1}", fileName, messageBuilder);
@@ -170,7 +170,7 @@ namespace Microsoft.ClearScript.V8
                 fixed (byte* pBytes = bytes)
                 {
                     var pICUData = (IntPtr)pBytes;
-                    V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Environment_InitializeICU(pICUData, Convert.ToUInt32(length)));
+                    V8SplitProxyNative.InvokeNoThrow(static (instance, ctx) => instance.V8Environment_InitializeICU(ctx.pICUData, Convert.ToUInt32(ctx.length)), (pICUData, length));
                 }
             }
         }
@@ -183,7 +183,7 @@ namespace Microsoft.ClearScript.V8
             var location = typeof(V8Proxy).Assembly.Location;
             if (!string.IsNullOrWhiteSpace(location))
             {
-                if ((platform != null) && (architecture != null))
+                if ((platform is not null) && (architecture is not null))
                 {
                     yield return Path.Combine(Path.GetDirectoryName(location), "runtimes", $"{platform}-{architecture}", "native");
                 }

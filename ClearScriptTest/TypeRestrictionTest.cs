@@ -90,7 +90,7 @@ namespace Microsoft.ClearScript.Test
             public const int ObjectTestValue = 123456;
             public const string InterfaceTestValue = "fooBARbazQUX";
 
-            public TestObject Field = new TestObject();
+            public TestObject Field = new();
             public ITestInterface InterfaceField = new TestObject();
             public object ObjectField = new TestObject();
             [ScriptMember(ScriptMemberFlags.ExposeRuntimeType)] public ITestInterface UnrestrictedField = new TestObject();

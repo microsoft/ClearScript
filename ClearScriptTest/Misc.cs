@@ -68,8 +68,8 @@ namespace Microsoft.ClearScript.Test
 
     public class DefaultPropertyTestObject
     {
-        private readonly Dictionary<string, object> byName = new Dictionary<string, object>();
-        private readonly Dictionary<DayOfWeek, object> byDay = new Dictionary<DayOfWeek, object>();
+        private readonly Dictionary<string, object> byName = new();
+        private readonly Dictionary<DayOfWeek, object> byDay = new();
 
         public object this[string name]
         {
@@ -89,7 +89,7 @@ namespace Microsoft.ClearScript.Test
 
     public class DefaultPropertyTestContainer
     {
-        public readonly DefaultPropertyTestObject Field = new DefaultPropertyTestObject();
+        public readonly DefaultPropertyTestObject Field = new();
 
         public DefaultPropertyTestObject Property => Field;
 
@@ -134,7 +134,7 @@ namespace Microsoft.ClearScript.Test
             return hashCode * Math.E / Math.PI;
         }
 
-        public static void AssertException<T>(Action action, bool checkScriptStackTrace = true) where T : Exception
+        public static void AssertException<TException>(Action action, bool checkScriptStackTrace = true) where TException : Exception
         {
             Exception caughtException = null;
             var gotExpectedException = false;
@@ -143,7 +143,7 @@ namespace Microsoft.ClearScript.Test
             {
                 action();
             }
-            catch (T exception)
+            catch (TException exception)
             {
                 caughtException = exception;
                 gotExpectedException = true;
@@ -152,12 +152,12 @@ namespace Microsoft.ClearScript.Test
             catch (Exception exception)
             {
                 caughtException = exception;
-                gotExpectedException = exception.GetBaseException() is T;
+                gotExpectedException = exception.GetBaseException() is TException;
                 AssertValidExceptionChain(exception, checkScriptStackTrace);
             }
 
-            var message = "Expected " + typeof(T).Name + " was not thrown.";
-            if (caughtException != null)
+            var message = "Expected " + typeof(TException).Name + " was not thrown.";
+            if (caughtException is not null)
             {
                 message += " " + caughtException.GetType().Name + " was thrown instead.";
             }
@@ -165,22 +165,16 @@ namespace Microsoft.ClearScript.Test
             Assert.IsTrue(gotExpectedException, message);
         }
 
-        public static void AssertException<T1, T2>(Action action, bool checkScriptStackTrace = true) where T1 : Exception where T2 : Exception
+        public static void AssertException<TArg, TException>(Action<TArg> action, in TArg arg, bool checkScriptStackTrace = true) where TException : Exception
         {
             Exception caughtException = null;
             var gotExpectedException = false;
 
             try
             {
-                action();
+                action(arg);
             }
-            catch (T1 exception)
-            {
-                caughtException = exception;
-                gotExpectedException = true;
-                AssertValidExceptionChain(exception, checkScriptStackTrace);
-            }
-            catch (T2 exception)
+            catch (TException exception)
             {
                 caughtException = exception;
                 gotExpectedException = true;
@@ -189,12 +183,86 @@ namespace Microsoft.ClearScript.Test
             catch (Exception exception)
             {
                 caughtException = exception;
-                gotExpectedException = (exception.GetBaseException() is T1) || (exception.GetBaseException() is T2);
+                gotExpectedException = exception.GetBaseException() is TException;
                 AssertValidExceptionChain(exception, checkScriptStackTrace);
             }
 
-            var message = "Expected " + typeof(T1).Name + " or " + typeof(T2).Name + " was not thrown.";
-            if (caughtException != null)
+            var message = "Expected " + typeof(TException).Name + " was not thrown.";
+            if (caughtException is not null)
+            {
+                message += " " + caughtException.GetType().Name + " was thrown instead.";
+            }
+
+            Assert.IsTrue(gotExpectedException, message);
+        }
+
+        public static void AssertException<TArg, TException1, TException2>(Action<TArg> action, in TArg arg, bool checkScriptStackTrace = true) where TException1 : Exception where TException2 : Exception
+        {
+            Exception caughtException = null;
+            var gotExpectedException = false;
+
+            try
+            {
+                action(arg);
+            }
+            catch (TException1 exception)
+            {
+                caughtException = exception;
+                gotExpectedException = true;
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
+            }
+            catch (TException2 exception)
+            {
+                caughtException = exception;
+                gotExpectedException = true;
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
+            }
+            catch (Exception exception)
+            {
+                caughtException = exception;
+                gotExpectedException = (exception.GetBaseException() is TException1) || (exception.GetBaseException() is TException2);
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
+            }
+
+            var message = "Expected " + typeof(TException1).Name + " or " + typeof(TException2).Name + " was not thrown.";
+            if (caughtException is not null)
+            {
+                message += " " + caughtException.GetType().Name + " was thrown instead.";
+            }
+
+            Assert.IsTrue(gotExpectedException, message);
+        }
+
+        public static void AssertException<TException1, TException2>(Action action, bool checkScriptStackTrace = true) where TException1 : Exception where TException2 : Exception
+        {
+            Exception caughtException = null;
+            var gotExpectedException = false;
+
+            try
+            {
+                action();
+            }
+            catch (TException1 exception)
+            {
+                caughtException = exception;
+                gotExpectedException = true;
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
+            }
+            catch (TException2 exception)
+            {
+                caughtException = exception;
+                gotExpectedException = true;
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
+            }
+            catch (Exception exception)
+            {
+                caughtException = exception;
+                gotExpectedException = (exception.GetBaseException() is TException1) || (exception.GetBaseException() is TException2);
+                AssertValidExceptionChain(exception, checkScriptStackTrace);
+            }
+
+            var message = "Expected " + typeof(TException1).Name + " or " + typeof(TException2).Name + " was not thrown.";
+            if (caughtException is not null)
             {
                 message += " " + caughtException.GetType().Name + " was thrown instead.";
             }
@@ -213,7 +281,7 @@ namespace Microsoft.ClearScript.Test
             Assert.IsFalse(string.IsNullOrWhiteSpace(exception.StackTrace));
             Assert.IsFalse(exception.Message.Contains("COM"));
 
-            if (!(exception is IOException))
+            if (exception is not IOException)
             {
                 Assert.IsFalse(exception.Message.Contains("HRESULT"));
                 Assert.IsFalse(exception.Message.Contains("0x"));
@@ -241,7 +309,7 @@ namespace Microsoft.ClearScript.Test
 
         private static void AssertValidExceptionChain(Exception exception, bool checkScriptStackTrace)
         {
-            while (exception != null)
+            while (exception is not null)
             {
                 if (exception is IScriptEngineException scriptError)
                 {
@@ -261,7 +329,7 @@ namespace Microsoft.ClearScript.Test
             if (obj is IDispatch dispatch)
             {
                 var typeInfo = dispatch.GetTypeInfo();
-                if (typeInfo != null)
+                if (typeInfo is not null)
                 {
                     return typeInfo.GetName();
                 }
@@ -269,5 +337,19 @@ namespace Microsoft.ClearScript.Test
 
             return null;
         }
+    }
+
+    public static class TestUtil<TException> where TException : Exception
+    {
+        public static void AssertException(Action action, bool checkScriptStackTrace = true) => TestUtil.AssertException<TException>(action, checkScriptStackTrace);
+
+        public static void AssertException<TArg>(Action<TArg> action, in TArg arg, bool checkScriptStackTrace = true) => TestUtil.AssertException<TArg, TException>(action, arg, checkScriptStackTrace);
+    }
+
+    public static class TestUtil<TException1, TException2> where TException1 : Exception where TException2 : Exception
+    {
+        public static void AssertException(Action action, bool checkScriptStackTrace = true) => TestUtil.AssertException<TException1, TException2>(action, checkScriptStackTrace);
+
+        public static void AssertException<TArg>(Action<TArg> action, in TArg arg, bool checkScriptStackTrace = true) => TestUtil.AssertException<TArg, TException1, TException2>(action, arg, checkScriptStackTrace);
     }
 }

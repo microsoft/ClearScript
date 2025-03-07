@@ -45,7 +45,7 @@ public:
         m_SourceMapUrl(that.m_SourceMapUrl),
         m_UniqueId(that.m_UniqueId),
         m_Kind(that.m_Kind),
-        m_pvDocumentInfo((that.m_pvDocumentInfo != nullptr) ? HostObjectUtil::GetInstance().AddRef(that.m_pvDocumentInfo) : nullptr)
+        m_pvDocumentInfo((that.m_pvDocumentInfo != nullptr) ? HostObjectUtil::AddRef(that.m_pvDocumentInfo) : nullptr)
     {
     }
 
@@ -66,7 +66,7 @@ public:
         m_SourceMapUrl = that.m_SourceMapUrl;
         m_UniqueId = that.m_UniqueId;
         m_Kind = that.m_Kind;
-        m_pvDocumentInfo = (that.m_pvDocumentInfo != nullptr) ? HostObjectUtil::GetInstance().AddRef(that.m_pvDocumentInfo) : nullptr;
+        m_pvDocumentInfo = (that.m_pvDocumentInfo != nullptr) ? HostObjectUtil::AddRef(that.m_pvDocumentInfo) : nullptr;
         return *this;
     }
 
@@ -86,7 +86,7 @@ public:
     {
         if (m_pvDocumentInfo != nullptr)
         {
-            HostObjectUtil::GetInstance().Release(m_pvDocumentInfo);
+            HostObjectUtil::Release(m_pvDocumentInfo);
         }
     }
 

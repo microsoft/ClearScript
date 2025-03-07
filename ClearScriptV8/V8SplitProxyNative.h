@@ -4,12 +4,6 @@
 #pragma once
 
 //-----------------------------------------------------------------------------
-// forward declarations
-//-----------------------------------------------------------------------------
-
-struct IV8SplitProxyManaged;
-
-//-----------------------------------------------------------------------------
 // V8EntityName
 //-----------------------------------------------------------------------------
 
@@ -61,6 +55,7 @@ class V8EntityHandleBase
 {
 public:
 
+    virtual V8EntityHandleBase* Clone() const noexcept = 0;
     virtual StdString CreateStdString(v8::Local<v8::Value> hValue) const noexcept = 0;
     virtual void ReleaseEntity() noexcept = 0;
     virtual ~V8EntityHandleBase() noexcept {}
@@ -82,7 +77,7 @@ class V8EntityHandle final: public V8EntityHandleBase
 
 public:
 
-    V8EntityHandle(T* pEntity) noexcept:
+    explicit V8EntityHandle(T* pEntity) noexcept:
         m_spEntity(pEntity)
     {
     }
@@ -118,6 +113,17 @@ public:
         END_MUTEX_SCOPE
     }
 
+    V8EntityHandleBase* Clone() const noexcept override
+    {
+        SharedPtr<T> spEntity;
+
+        BEGIN_MUTEX_SCOPE(m_Mutex)
+            spEntity = m_spEntity;
+        END_MUTEX_SCOPE
+
+        return new V8EntityHandle(std::move(spEntity));
+    }
+
     StdString CreateStdString(v8::Local<v8::Value> hValue) const noexcept override
     {
         SharedPtr<T> spEntity;
@@ -135,6 +141,11 @@ public:
 
 private:
 
+    explicit V8EntityHandle(SharedPtr<T>&& spEntity) noexcept :
+        m_spEntity(std::move(spEntity))
+    {
+    }
+
     mutable SimpleMutex m_Mutex;
     SharedPtr<T> m_spEntity;
 };
@@ -149,8 +160,8 @@ DEFINE_V8_ENTITY_HANDLE(V8IsolateHandle, V8Isolate, SL("V8 runtime"))
 DEFINE_V8_ENTITY_HANDLE(V8ContextHandle, V8Context, SL("V8 script engine"))
 DEFINE_V8_ENTITY_HANDLE(V8ObjectHandle, V8ObjectHolder, SL("V8 object"))
 DEFINE_V8_ENTITY_HANDLE(V8ScriptHandle, V8ScriptHolder, SL("V8 script"))
-DEFINE_V8_ENTITY_HANDLE(V8DebugCallbackHandle, IHostObjectUtil::DebugCallback, SL("V8 debug callback"))
-DEFINE_V8_ENTITY_HANDLE(NativeCallbackHandle, IHostObjectUtil::NativeCallback, SL("native callback"))
+DEFINE_V8_ENTITY_HANDLE(V8DebugCallbackHandle, HostObjectUtil::DebugCallback, SL("V8 debug callback"))
+DEFINE_V8_ENTITY_HANDLE(NativeCallbackHandle, HostObjectUtil::NativeCallback, SL("native callback"))
 
 //-----------------------------------------------------------------------------
 // V8 split proxy native entry points
@@ -159,6 +170,10 @@ DEFINE_V8_ENTITY_HANDLE(NativeCallbackHandle, IHostObjectUtil::NativeCallback, S
 NATIVE_ENTRY_POINT(void**) V8SplitProxyManaged_SetMethodTable(void** pMethodTable) noexcept;
 NATIVE_ENTRY_POINT(const StdChar*) V8SplitProxyNative_GetVersion() noexcept;
 NATIVE_ENTRY_POINT(void) V8Environment_InitializeICU(const char* pICUData, uint32_t size) noexcept;
+
+NATIVE_ENTRY_POINT(void*) Memory_Allocate(size_t size) noexcept;
+NATIVE_ENTRY_POINT(void*) Memory_AllocateZeroed(size_t size) noexcept;
+NATIVE_ENTRY_POINT(void) Memory_Free(const void* pMemory) noexcept;
 
 NATIVE_ENTRY_POINT(StdString*) StdString_New(const StdChar* pValue, int32_t length) noexcept;
 NATIVE_ENTRY_POINT(const StdChar*) StdString_GetValue(const StdString& string, int32_t& length) noexcept;
@@ -214,13 +229,11 @@ NATIVE_ENTRY_POINT(void) V8Value_SetUndefined(V8Value* pV8Value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetNull(V8Value* pV8Value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetBoolean(V8Value* pV8Value, StdBool value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetNumber(V8Value* pV8Value, double value) noexcept;
-NATIVE_ENTRY_POINT(void) V8Value_SetInt32(V8Value* pV8Value, int32_t value) noexcept;
-NATIVE_ENTRY_POINT(void) V8Value_SetUInt32(V8Value* pV8Value, uint32_t value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetString(V8Value* pV8Value, const StdChar* pValue, int32_t length) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetDateTime(V8Value* pV8Value, double value) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetBigInt(V8Value* pV8Value, int32_t signBit, const uint8_t* pBytes, int32_t length) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_SetV8Object(V8Value* pV8Value, const V8ObjectHandle& handle, V8Value::Subtype subtype, V8Value::Flags flags) noexcept;
-NATIVE_ENTRY_POINT(void) V8Value_SetHostObject(V8Value* pV8Value, void* pvObject) noexcept;
+NATIVE_ENTRY_POINT(void) V8Value_SetHostObject(V8Value* pV8Value, void* pvObject, V8Value::Subtype subtype, V8Value::Flags flags) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_Decode(const V8Value& value, V8Value::Decoded& decoded) noexcept;
 NATIVE_ENTRY_POINT(void) V8Value_Delete(V8Value* pV8Value) noexcept;
 
@@ -265,6 +278,7 @@ NATIVE_ENTRY_POINT(void) V8Context_SetIsolateHeapSizeSampleInterval(const V8Cont
 NATIVE_ENTRY_POINT(size_t) V8Context_GetMaxIsolateStackUsage(const V8ContextHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_SetMaxIsolateStackUsage(const V8ContextHandle& handle, size_t size) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_InvokeWithLock(const V8ContextHandle& handle, void* pvAction) noexcept;
+NATIVE_ENTRY_POINT(void) V8Context_InvokeWithLockWithArg(const V8ContextHandle& handle, void* pvAction, void* pvArg) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_GetRootItem(const V8ContextHandle& handle, V8Value& item) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_AddGlobalItem(const V8ContextHandle& handle, const StdString& name, const V8Value& value, StdBool globalMembers) noexcept;
 NATIVE_ENTRY_POINT(void) V8Context_AwaitDebuggerAndPause(const V8ContextHandle& handle) noexcept;
@@ -306,6 +320,7 @@ NATIVE_ENTRY_POINT(void) V8Object_Invoke(const V8ObjectHandle& handle, StdBool a
 NATIVE_ENTRY_POINT(void) V8Object_InvokeMethod(const V8ObjectHandle& handle, const StdString& name, const std::vector<V8Value>& args, V8Value& result) noexcept;
 NATIVE_ENTRY_POINT(void) V8Object_GetArrayBufferOrViewInfo(const V8ObjectHandle& handle, V8Value& arrayBuffer, uint64_t& offset, uint64_t& size, uint64_t& length) noexcept;
 NATIVE_ENTRY_POINT(void) V8Object_InvokeWithArrayBufferOrViewData(const V8ObjectHandle& handle, void* pvAction) noexcept;
+NATIVE_ENTRY_POINT(void) V8Object_InvokeWithArrayBufferOrViewDataWithArg(const V8ObjectHandle& handle, void* pvAction, void* pvArg) noexcept;
 
 NATIVE_ENTRY_POINT(void) V8DebugCallback_ConnectClient(const V8DebugCallbackHandle& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8DebugCallback_SendCommand(const V8DebugCallbackHandle& handle, const StdString& command) noexcept;
@@ -314,6 +329,7 @@ NATIVE_ENTRY_POINT(void) V8DebugCallback_DisconnectClient(const V8DebugCallbackH
 NATIVE_ENTRY_POINT(void) NativeCallback_Invoke(const NativeCallbackHandle& handle) noexcept;
 
 NATIVE_ENTRY_POINT(void) V8Entity_Release(V8EntityHandleBase& handle) noexcept;
+NATIVE_ENTRY_POINT(V8EntityHandleBase*) V8Entity_CloneHandle(V8EntityHandleBase& handle) noexcept;
 NATIVE_ENTRY_POINT(void) V8Entity_DestroyHandle(V8EntityHandleBase* pHandle) noexcept;
 
 NATIVE_ENTRY_POINT(void) HostException_Schedule(StdString&& message, V8Value&& exception) noexcept;

@@ -29,7 +29,7 @@ namespace Microsoft.ClearScript.Windows.Core
         private ActiveScriptWrapper activeScript;
         private WindowsScriptEngineFlags engineFlags;
 
-        private readonly HostItemMap hostItemMap = new HostItemMap();
+        private readonly HostItemMap hostItemMap = new();
         private readonly WindowsScriptItem script;
 
         private ProcessDebugManagerWrapper processDebugManager;
@@ -37,11 +37,11 @@ namespace Microsoft.ClearScript.Windows.Core
         private uint debugApplicationCookie;
 
         private bool sourceManagement;
-        private readonly DebugDocumentMap debugDocumentMap = new DebugDocumentMap();
+        private readonly DebugDocumentMap debugDocumentMap = new();
         private uint nextSourceContext = 1;
 
         private readonly ISyncInvoker syncInvoker;
-        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new();
 
         #endregion
 
@@ -65,33 +65,36 @@ namespace Microsoft.ClearScript.Windows.Core
             MiscHelpers.VerifyNonNullArgument(syncInvoker, nameof(syncInvoker));
             this.syncInvoker = syncInvoker;
 
-            script = (WindowsScriptItem)base.ScriptInvoke(() =>
-            {
-                activeScript = ActiveScriptWrapper.Create(progID, flags);
-                engineFlags = flags;
-
-                if (flags.HasFlag(WindowsScriptEngineFlags.EnableDebugging) && ProcessDebugManagerWrapper.TryCreate(out processDebugManager))
+            script = (WindowsScriptItem)base.ScriptInvoke(
+                static ctx =>
                 {
-                    processDebugManager.CreateApplication(out debugApplication);
-                    debugApplication.SetName(Name);
+                    ctx.self.activeScript = ActiveScriptWrapper.Create(ctx.progID, ctx.flags);
+                    ctx.self.engineFlags = ctx.flags;
 
-                    if (processDebugManager.TryAddApplication(debugApplication, out debugApplicationCookie))
+                    if (ctx.flags.HasAllFlags(WindowsScriptEngineFlags.EnableDebugging) && ProcessDebugManagerWrapper.TryCreate(out ctx.self.processDebugManager))
                     {
-                        sourceManagement = !flags.HasFlag(WindowsScriptEngineFlags.DisableSourceManagement);
-                    }
-                    else
-                    {
-                        debugApplication.Close();
-                        debugApplication = null;
-                        processDebugManager = null;
-                    }
-                }
+                        ctx.self.processDebugManager.CreateApplication(out ctx.self.debugApplication);
+                        ctx.self.debugApplication.SetName(ctx.self.Name);
 
-                activeScript.SetScriptSite(new ScriptSite(this));
-                activeScript.InitNew();
-                activeScript.SetScriptState(ScriptState.Started);
-                return WindowsScriptItem.Wrap(this, GetScriptDispatch());
-            });
+                        if (ctx.self.processDebugManager.TryAddApplication(ctx.self.debugApplication, out ctx.self.debugApplicationCookie))
+                        {
+                            ctx.self.sourceManagement = !ctx.flags.HasAllFlags(WindowsScriptEngineFlags.DisableSourceManagement);
+                        }
+                        else
+                        {
+                            ctx.self.debugApplication.Close();
+                            ctx.self.debugApplication = null;
+                            ctx.self.processDebugManager = null;
+                        }
+                    }
+
+                    ctx.self.activeScript.SetScriptSite(new ScriptSite(ctx.self));
+                    ctx.self.activeScript.InitNew();
+                    ctx.self.activeScript.SetScriptState(ScriptState.Started);
+                    return WindowsScriptItem.Wrap(ctx.self, ctx.self.GetScriptDispatch());
+                },
+                (self: this, progID, flags)
+            );
         }
 
         #endregion
@@ -162,7 +165,7 @@ namespace Microsoft.ClearScript.Windows.Core
             }
             finally
             {
-                if (documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient) && (sourceContext != UIntPtr.Zero))
+                if (documentInfo.Flags.GetValueOrDefault().HasAllFlags(DocumentFlags.IsTransient) && (sourceContext != UIntPtr.Zero))
                 {
                     debugDocumentMap.Remove(sourceContext);
                     debugDocument.Close();
@@ -190,7 +193,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
         private string GetStackTraceInternal()
         {
-            Debug.Assert(processDebugManager != null);
+            Debug.Assert(processDebugManager is not null);
             var stackTrace = string.Empty;
 
             activeScript.EnumStackFrames(out var enumFrames);
@@ -209,7 +212,7 @@ namespace Microsoft.ClearScript.Windows.Core
                     descriptor.Frame.GetCodeContext(out var codeContext);
 
                     codeContext.GetDocumentContext(out var documentContext);
-                    if (documentContext == null)
+                    if (documentContext is null)
                     {
                         stackTrace += MiscHelpers.FormatInvariant("    at {0}\n", description);
                     }
@@ -278,7 +281,7 @@ namespace Microsoft.ClearScript.Windows.Core
                     continue;
                 }
 
-                if ((item != null) && (item.GetType().IsCOMObject || item.GetType().IsCOMVisible(this)))
+                if ((item is not null) && (item.GetType().IsCOMObject || item.GetType().IsCOMVisible(this)))
                 {
                     directAccessItem = item;
                     return true;
@@ -293,9 +296,9 @@ namespace Microsoft.ClearScript.Windows.Core
 
         private object MarshalToScriptInternal(object obj, HostItemFlags flags, HashSet<Array> marshaledArraySet)
         {
-            if (obj == null)
+            if (obj is null)
             {
-                if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
+                if (engineFlags.HasAllFlags(WindowsScriptEngineFlags.MarshalNullAsDispatch))
                 {
                     return nullDispatch;
                 }
@@ -303,7 +306,7 @@ namespace Microsoft.ClearScript.Windows.Core
                 obj = NullExportValue;
             }
 
-            if (obj == null)
+            if (obj is null)
             {
                 return DBNull.Value;
             }
@@ -328,12 +331,12 @@ namespace Microsoft.ClearScript.Windows.Core
                 return nullDispatch;
             }
 
-            if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalDateTimeAsDate) && (obj is DateTime))
+            if (engineFlags.HasAllFlags(WindowsScriptEngineFlags.MarshalDateTimeAsDate) && (obj is DateTime))
             {
                 return obj;
             }
 
-            if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalDecimalAsCurrency) && (obj is decimal))
+            if (engineFlags.HasAllFlags(WindowsScriptEngineFlags.MarshalDecimalAsCurrency) && (obj is decimal))
             {
                 return new CurrencyWrapper(obj);
             }
@@ -349,7 +352,7 @@ namespace Microsoft.ClearScript.Windows.Core
             }
 
             var hostTarget = obj as HostTarget;
-            if ((hostTarget != null) && !(hostTarget is IHostVariable))
+            if ((hostTarget is not null) && (hostTarget is not IHostVariable))
             {
                 obj = hostTarget.Target;
             }
@@ -362,12 +365,12 @@ namespace Microsoft.ClearScript.Windows.Core
                 }
             }
 
-            if (engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalArraysByValue))
+            if (engineFlags.HasAllFlags(WindowsScriptEngineFlags.MarshalArraysByValue))
             {
-                if ((obj is Array array) && ((hostTarget == null) || hostTarget.Type.IsArray))
+                if ((obj is Array array) && ((hostTarget is null) || hostTarget.Type.IsArray))
                 {
                     bool alreadyMarshaled;
-                    if (marshaledArraySet != null)
+                    if (marshaledArraySet is not null)
                     {
                         alreadyMarshaled = marshaledArraySet.Contains(array);
                     }
@@ -396,14 +399,14 @@ namespace Microsoft.ClearScript.Windows.Core
 
         private object MarshalToHostInternal(object obj, bool preserveHostTarget, HashSet<Array> marshaledArraySet)
         {
-            if (obj == null)
+            if (obj is null)
             {
                 return UndefinedImportValue;
             }
 
             if (obj is DBNull)
             {
-                return null;
+                return NullImportValue;
             }
 
             if (MiscHelpers.TryMarshalPrimitiveToHost(obj, DisableFloatNarrowing, out var result))
@@ -416,7 +419,7 @@ namespace Microsoft.ClearScript.Windows.Core
                 // COM interop converts VBScript arrays to managed arrays
 
                 bool alreadyMarshaled;
-                if (marshaledArraySet != null)
+                if (marshaledArraySet is not null)
                 {
                     alreadyMarshaled = marshaledArraySet.Contains(array);
                 }
@@ -455,7 +458,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
         private void ThrowHostException(Exception exception)
         {
-            if (CurrentScriptFrame != null)
+            if (CurrentScriptFrame is not null)
             {
                 // Record the host exception in the script frame and throw an easily recognizable
                 // surrogate across the COM boundary. Recording the host exception enables
@@ -486,7 +489,7 @@ namespace Microsoft.ClearScript.Windows.Core
                     ThrowScriptError(CurrentScriptFrame.ScriptError ?? CurrentScriptFrame.PendingScriptError);
 
                     var hostException = CurrentScriptFrame.HostException;
-                    if (hostException != null)
+                    if (hostException is not null)
                     {
                         throw new ScriptEngineException(Name, hostException.Message, null, HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
                     }
@@ -549,7 +552,7 @@ namespace Microsoft.ClearScript.Windows.Core
         public override string GetStackTrace()
         {
             VerifyNotDisposed();
-            return (processDebugManager != null) ? ScriptInvoke(GetStackTraceInternal) : string.Empty;
+            return (processDebugManager is not null) ? ScriptInvoke(static self => self.GetStackTraceInternal(), this) : string.Empty;
         }
 
         /// <inheritdoc/>
@@ -565,7 +568,7 @@ namespace Microsoft.ClearScript.Windows.Core
         public override void CollectGarbage(bool exhaustive)
         {
             VerifyNotDisposed();
-            ScriptInvoke(() => activeScript.CollectGarbage(exhaustive ? ScriptGCType.Exhaustive : ScriptGCType.Normal));
+            ScriptInvoke(static ctx => ctx.self.activeScript.CollectGarbage(ctx.exhaustive ? ScriptGCType.Exhaustive : ScriptGCType.Normal), (self: this, exhaustive));
         }
 
         #endregion
@@ -579,52 +582,55 @@ namespace Microsoft.ClearScript.Windows.Core
             VerifyNotDisposed();
 
             MiscHelpers.VerifyNonNullArgument(itemName, nameof(itemName));
-            Debug.Assert(item != null);
+            Debug.Assert(item is not null);
 
-            ScriptInvoke(() =>
-            {
-                if (!flags.HasFlag(HostItemFlags.DirectAccess) || !GetDirectAccessItem(item, out var marshaledItem))
+            ScriptInvoke(
+                static ctx =>
                 {
-                    marshaledItem = MarshalToScript(item, flags);
-                    if (!(marshaledItem is HostItem))
+                    if (!ctx.flags.HasAllFlags(HostItemFlags.DirectAccess) || !ctx.self.GetDirectAccessItem(ctx.item, out var marshaledItem))
                     {
-                        throw new InvalidOperationException("Invalid host item");
-                    }
-                }
-
-                var oldItem = ((IDictionary)hostItemMap)[itemName];
-                hostItemMap[itemName] = marshaledItem;
-
-                var nativeFlags = ScriptItemFlags.IsVisible;
-                if (flags.HasFlag(HostItemFlags.GlobalMembers))
-                {
-                    nativeFlags |= ScriptItemFlags.GlobalMembers;
-                }
-
-                try
-                {
-                    activeScript.AddNamedItem(itemName, nativeFlags);
-                }
-                catch
-                {
-                    if (oldItem != null)
-                    {
-                        hostItemMap[itemName] = oldItem;
-                    }
-                    else
-                    {
-                        hostItemMap.Remove(itemName);
+                        marshaledItem = ctx.self.MarshalToScript(ctx.item, ctx.flags);
+                        if (marshaledItem is not HostItem)
+                        {
+                            throw new InvalidOperationException("Invalid host item");
+                        }
                     }
 
-                    throw;
-                }
-            });
+                    var oldItem = ((IDictionary)ctx.self.hostItemMap)[ctx.itemName];
+                    ctx.self.hostItemMap[ctx.itemName] = marshaledItem;
+
+                    var nativeFlags = ScriptItemFlags.IsVisible;
+                    if (ctx.flags.HasAllFlags(HostItemFlags.GlobalMembers))
+                    {
+                        nativeFlags |= ScriptItemFlags.GlobalMembers;
+                    }
+
+                    try
+                    {
+                        ctx.self.activeScript.AddNamedItem(ctx.itemName, nativeFlags);
+                    }
+                    catch
+                    {
+                        if (oldItem is not null)
+                        {
+                            ctx.self.hostItemMap[ctx.itemName] = oldItem;
+                        }
+                        else
+                        {
+                            ctx.self.hostItemMap.Remove(ctx.itemName);
+                        }
+
+                        throw;
+                    }
+                },
+                (self: this, itemName, flags, item)
+            );
         }
 
         internal override object PrepareResult(object result, Type type, ScriptMemberFlags flags, bool isListIndexResult)
         {
             var tempResult = base.PrepareResult(result, type, flags, isListIndexResult);
-            if ((tempResult != null) || !engineFlags.HasFlag(WindowsScriptEngineFlags.MarshalNullAsDispatch))
+            if ((tempResult is not null) || !engineFlags.HasAllFlags(WindowsScriptEngineFlags.MarshalNullAsDispatch))
             {
                 return tempResult;
             }
@@ -650,7 +656,7 @@ namespace Microsoft.ClearScript.Windows.Core
         internal override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
         {
             VerifyNotDisposed();
-            return ScriptInvoke(() => ExecuteRaw(documentInfo, code, evaluate));
+            return ScriptInvoke(static ctx => ctx.self.ExecuteRaw(ctx.documentInfo, ctx.code, ctx.evaluate), (self: this, documentInfo, code, evaluate));
         }
 
         internal sealed override object ExecuteRaw(UniqueDocumentInfo documentInfo, string code, bool evaluate)
@@ -670,7 +676,7 @@ namespace Microsoft.ClearScript.Windows.Core
             }
         }
 
-        internal override HostItemCollateral HostItemCollateral { get; } = new HostItemCollateral();
+        internal override HostItemCollateral HostItemCollateral { get; } = new();
 
         #endregion
 
@@ -689,11 +695,37 @@ namespace Microsoft.ClearScript.Windows.Core
             }
         }
 
-        internal override T HostInvoke<T>(Func<T> func)
+        internal override void HostInvoke<TArg>(Action<TArg> action, in TArg arg)
+        {
+            try
+            {
+                base.HostInvoke(action, arg);
+            }
+            catch (Exception exception)
+            {
+                ThrowHostException(exception);
+                throw;
+            }
+        }
+
+        internal override TResult HostInvoke<TResult>(Func<TResult> func)
         {
             try
             {
                 return base.HostInvoke(func);
+            }
+            catch (Exception exception)
+            {
+                ThrowHostException(exception);
+                throw;
+            }
+        }
+
+        internal override TResult HostInvoke<TArg, TResult>(Func<TArg, TResult> func, in TArg arg)
+        {
+            try
+            {
+                return base.HostInvoke(func, arg);
             }
             catch (Exception exception)
             {
@@ -709,35 +741,81 @@ namespace Microsoft.ClearScript.Windows.Core
         internal override void ScriptInvoke(Action action)
         {
             VerifyAccess();
-            base.ScriptInvoke(() =>
-            {
-                try
+            base.ScriptInvoke(
+                static ctx =>
                 {
-                    action();
-                }
-                catch (Exception exception)
-                {
-                    ThrowScriptError(exception);
-                    throw;
-                }
-            });
+                    try
+                    {
+                        ctx.action();
+                    }
+                    catch (Exception exception)
+                    {
+                        ctx.self.ThrowScriptError(exception);
+                        throw;
+                    }
+                },
+                (self: this, action)
+            );
         }
 
-        internal override T ScriptInvoke<T>(Func<T> func)
+        internal override void ScriptInvoke<TArg>(Action<TArg> action, in TArg arg)
         {
             VerifyAccess();
-            return base.ScriptInvoke(() =>
-            {
-                try
+            base.ScriptInvoke(
+                static ctx =>
                 {
-                    return func();
-                }
-                catch (Exception exception)
+                    try
+                    {
+                        ctx.action(ctx.arg);
+                    }
+                    catch (Exception exception)
+                    {
+                        ctx.self.ThrowScriptError(exception);
+                        throw;
+                    }
+                },
+                (self: this, action, arg)
+            );
+        }
+
+        internal override TResult ScriptInvoke<TResult>(Func<TResult> func)
+        {
+            VerifyAccess();
+            return base.ScriptInvoke(
+                static ctx =>
                 {
-                    ThrowScriptError(exception);
-                    throw;
-                }
-            });
+                    try
+                    {
+                        return ctx.func();
+                    }
+                    catch (Exception exception)
+                    {
+                        ctx.self.ThrowScriptError(exception);
+                        throw;
+                    }
+                },
+                (self: this, func)
+            );
+        }
+
+        internal override TResult ScriptInvoke<TArg, TResult>(Func<TArg, TResult> func, in TArg arg)
+        {
+            VerifyAccess();
+            return base.ScriptInvoke(
+                static ctx =>
+                {
+                    try
+                    {
+                        return ctx.func(ctx.arg);
+                    }
+                    catch (Exception exception)
+                    {
+                        ctx.self.ThrowScriptError(exception);
+                        throw;
+                    }
+                },
+                (self: this, func, arg)
+            );
         }
 
         #endregion
@@ -784,7 +862,7 @@ namespace Microsoft.ClearScript.Windows.Core
                         debugDocumentMap.Values.ForEach(debugDocument => debugDocument.Close());
                     }
 
-                    if (processDebugManager != null)
+                    if (processDebugManager is not null)
                     {
                         processDebugManager.RemoveApplication(debugApplicationCookie);
                         debugApplication.Close();

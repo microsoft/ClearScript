@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq.Expressions;
@@ -13,12 +14,12 @@ namespace Microsoft.ClearScript.Util
     {
         public static object InvokeMethod(IHostContext context, MethodInfo method, object target, object[] args, ScriptMemberFlags flags)
         {
-            return InvokeMethodInternal(context, method, target, args, (invokeMethod, invokeTarget, invokeArgs) => invokeMethod.Invoke(invokeTarget, invokeArgs), method.ReturnType, flags);
+            return InvokeMethodInternal(context, method, target, args, static (method, target, args) => method.Invoke(target, args), method.ReturnType, flags);
         }
 
         public static object InvokeConstructor(IHostContext context, ConstructorInfo constructor, object[] args)
         {
-            return InvokeMethodInternal(context, constructor, null, args, (invokeConstructor, invokeTarget, invokeArgs) => invokeConstructor.Invoke(invokeArgs), constructor.DeclaringType, ScriptMemberFlags.None);
+            return InvokeMethodInternal(context, constructor, null, args, static (constructor, _, args) => constructor.Invoke(args), constructor.DeclaringType, ScriptMemberFlags.None);
         }
 
         public static object InvokeDelegate(IHostContext context, Delegate del, object[] args)
@@ -44,7 +45,7 @@ namespace Microsoft.ClearScript.Util
                 tryDynamic = tryDynamic && typeof(IDynamicMetaObjectProvider).IsAssignableFrom(hostTarget.Type);
             }
 
-            if ((target != null) && invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+            if ((target is not null) && invokeFlags.HasAllFlags(BindingFlags.InvokeMethod))
             {
                 if (target is ScriptItem scriptItem)
                 {
@@ -92,13 +93,13 @@ namespace Microsoft.ClearScript.Util
                         for (var innerIndex = index; innerIndex < args.Length; innerIndex++)
                         {
                             var byRefArg = args[innerIndex] as IByRefArg;
-                            if (byRefArg == null)
+                            if (byRefArg is null)
                             {
-                                tailArgs.SetValue(GetCompatibleArg(param.Name, tailArgType, args[innerIndex]), innerIndex - index);
+                                tailArgs.SetValue(CompatibleArg.Get(param.Name, tailArgType, args[innerIndex]), innerIndex - index);
                             }
                             else
                             {
-                                tailArgs.SetValue(GetCompatibleArg(param.Name, tailArgType, byRefArg.Value), innerIndex - index);
+                                tailArgs.SetValue(CompatibleArg.Get(param.Name, tailArgType, byRefArg.Value), innerIndex - index);
                                 byRefArgInfo.Add(new ByRefArgItem(byRefArg, tailArgs, innerIndex - index));
                             }
                         }
@@ -109,22 +110,22 @@ namespace Microsoft.ClearScript.Util
                     }
                 }
 
-                if ((index < args.Length) && !(args[index] is Missing))
+                if ((index < args.Length) && (args[index] is not Missing))
                 {
                     var byRefArg = args[index] as IByRefArg;
-                    if (byRefArg == null)
+                    if (byRefArg is null)
                     {
-                        argList.Add(GetCompatibleArg(param, args[index]));
+                        argList.Add(CompatibleArg.Get(param, args[index]));
                     }
                     else
                     {
-                        argList.Add(GetCompatibleArg(param, byRefArg.Value));
+                        argList.Add(CompatibleArg.Get(param, byRefArg.Value));
                         byRefArgInfo.Add(new ByRefArgItem(byRefArg, null, index));
                     }
                 }
                 else if (param.IsOptional)
                 {
-                    if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
+                    if (param.Attributes.HasAllFlags(ParameterAttributes.HasDefault))
                     {
                         try
                         {
@@ -180,21 +181,6 @@ namespace Microsoft.ClearScript.Util
             return context.Engine.PrepareResult(result, returnType, flags, false);
         }
 
-        private static object GetCompatibleArg(ParameterInfo param, object value)
-        {
-            return GetCompatibleArg(param.Name, param.ParameterType, value);
-        }
-
-        private static object GetCompatibleArg(string paramName, Type type, object value)
-        {
-            if (!type.IsAssignableFromValue(ref value))
-            {
-                throw new ArgumentException(MiscHelpers.FormatInvariant("Invalid argument specified for parameter '{0}'", paramName));
-            }
-
-            return value;
-        }
-
         #region Nested type: ByRefArgItem
 
         private sealed class ByRefArgItem
@@ -211,6 +197,48 @@ namespace Microsoft.ClearScript.Util
                 Array = array;
                 Index = index;
             }
+        }
+
+        #endregion
+
+        #region Nested type: CompatibleArg
+
+        private abstract class CompatibleArg
+        {
+            private static readonly ConcurrentDictionary<Type, CompatibleArg> map = new();
+
+            public static object Get(ParameterInfo param, object value)
+            {
+                return Get(param.Name, param.ParameterType, value);
+            }
+
+            public static object Get(string paramName, Type type, object value)
+            {
+                return type.IsAssignableFromValue(ref value) ? value : GetImpl(type).Get(paramName, value);
+            }
+            public abstract object Get(string paramName, object value);
+
+            private static CompatibleArg GetImpl(Type type)
+            {
+                return map.GetOrAdd(type, static type => (CompatibleArg)Activator.CreateInstance(typeof(Impl<>).MakeGenericType(type)));
+            }
+
+            #region Nested type: Impl<T>
+
+            private sealed class Impl<T> : CompatibleArg
+            {
+                public override object Get(string paramName, object value)
+                {
+                    if (value is T result)
+                    {
+                        return result;
+                    }
+
+                    throw new ArgumentException(MiscHelpers.FormatInvariant("Invalid argument specified for parameter '{0}'", paramName));
+                }
+            }
+
+            #endregion
         }
 
         #endregion

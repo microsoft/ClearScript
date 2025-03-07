@@ -67,19 +67,19 @@ void V8Platform::EnsureInitialized()
 
     #ifdef CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
 
-        if (!HasFlag(globalFlags, V8GlobalFlags::EnableTopLevelAwait))
+        if (!::HasFlag(globalFlags, V8GlobalFlags::EnableTopLevelAwait))
         {
             flagStrings.push_back("--no_harmony_top_level_await");
         }
 
     #endif // CLEARSCRIPT_TOP_LEVEL_AWAIT_CONTROL
 
-        if (HasFlag(m_GlobalFlags, V8GlobalFlags::DisableJITCompilation))
+        if (::HasFlag(m_GlobalFlags, V8GlobalFlags::DisableJITCompilation))
         {
             flagStrings.push_back("--jitless");
         }
 
-        if (HasFlag(m_GlobalFlags, V8GlobalFlags::DisableBackgroundWork))
+        if (::HasFlag(m_GlobalFlags, V8GlobalFlags::DisableBackgroundWork))
         {
             flagStrings.push_back("--single_threaded");
         }
@@ -199,14 +199,17 @@ public:
 
     V8ForegroundTaskRunner(V8IsolateImpl& isolateImpl);
 
-    virtual void PostTask(std::unique_ptr<v8::Task> upTask) override;
-    virtual void PostNonNestableTask(std::unique_ptr<v8::Task> upTask) override;
-    virtual void PostDelayedTask(std::unique_ptr<v8::Task> upTask, double delayInSeconds) override;
-    virtual void PostNonNestableDelayedTask(std::unique_ptr<v8::Task> upTask, double delayInSeconds) override;
-    virtual void PostIdleTask(std::unique_ptr<v8::IdleTask> upTask) override;
     virtual bool IdleTasksEnabled() override;
     virtual bool NonNestableTasksEnabled() const override;
     virtual bool NonNestableDelayedTasksEnabled() const override;
+
+protected:
+
+    virtual void PostTaskImpl(std::unique_ptr<v8::Task> upTask, const v8::SourceLocation& location) override;
+    virtual void PostNonNestableTaskImpl(std::unique_ptr<v8::Task> upTask, const v8::SourceLocation& location) override;
+    virtual void PostDelayedTaskImpl(std::unique_ptr<v8::Task> upTask, double delayInSeconds, const v8::SourceLocation& location) override;
+    virtual void PostNonNestableDelayedTaskImpl(std::unique_ptr<v8::Task> upTask, double delayInSeconds, const v8::SourceLocation& location) override;
+    virtual void PostIdleTaskImpl(std::unique_ptr<v8::IdleTask> upTask, const v8::SourceLocation& location) override;
 
 private:
 
@@ -220,62 +223,6 @@ V8ForegroundTaskRunner::V8ForegroundTaskRunner(V8IsolateImpl& isolateImpl):
     m_IsolateImpl(isolateImpl),
     m_wrIsolate(isolateImpl.CreateWeakRef())
 {
-}
-
-//-----------------------------------------------------------------------------
-
-void V8ForegroundTaskRunner::PostTask(std::unique_ptr<v8::Task> upTask)
-{
-    auto spIsolate = m_wrIsolate.GetTarget();
-    if (spIsolate.IsEmpty())
-    {
-        upTask->Run();
-    }
-    else
-    {
-        m_IsolateImpl.RunTaskWithLockAsync(true /*allowNesting*/, std::move(upTask));
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void V8ForegroundTaskRunner::PostNonNestableTask(std::unique_ptr<v8::Task> upTask)
-{
-    auto spIsolate = m_wrIsolate.GetTarget();
-    if (!spIsolate.IsEmpty())
-    {
-        m_IsolateImpl.RunTaskWithLockAsync(false /*allowNesting*/, std::move(upTask));
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void V8ForegroundTaskRunner::PostDelayedTask(std::unique_ptr<v8::Task> upTask, double delayInSeconds)
-{
-    auto spIsolate = m_wrIsolate.GetTarget();
-    if (!spIsolate.IsEmpty())
-    {
-        m_IsolateImpl.RunTaskWithLockDelayed(true /*allowNesting*/, std::move(upTask), delayInSeconds);
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void V8ForegroundTaskRunner::PostNonNestableDelayedTask(std::unique_ptr<v8::Task> upTask, double delayInSeconds)
-{
-    auto spIsolate = m_wrIsolate.GetTarget();
-    if (!spIsolate.IsEmpty())
-    {
-        m_IsolateImpl.RunTaskWithLockDelayed(false /*allowNesting*/, std::move(upTask), delayInSeconds);
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void V8ForegroundTaskRunner::PostIdleTask(std::unique_ptr<v8::IdleTask> /*upTask*/)
-{
-    // unexpected call to unsupported method
-    std::terminate();
 }
 
 //-----------------------------------------------------------------------------
@@ -297,6 +244,62 @@ bool V8ForegroundTaskRunner::NonNestableTasksEnabled() const
 bool V8ForegroundTaskRunner::NonNestableDelayedTasksEnabled() const
 {
     return true;
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ForegroundTaskRunner::PostTaskImpl(std::unique_ptr<v8::Task> upTask, const v8::SourceLocation& /*location*/)
+{
+    auto spIsolate = m_wrIsolate.GetTarget();
+    if (spIsolate.IsEmpty())
+    {
+        upTask->Run();
+    }
+    else
+    {
+        m_IsolateImpl.RunTaskWithLockAsync(true, std::move(upTask));
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ForegroundTaskRunner::PostNonNestableTaskImpl(std::unique_ptr<v8::Task> upTask, const v8::SourceLocation& /*location*/)
+{
+    auto spIsolate = m_wrIsolate.GetTarget();
+    if (!spIsolate.IsEmpty())
+    {
+        m_IsolateImpl.RunTaskWithLockAsync(false, std::move(upTask));
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ForegroundTaskRunner::PostDelayedTaskImpl(std::unique_ptr<v8::Task> upTask, double delayInSeconds, const v8::SourceLocation& /*location*/)
+{
+    auto spIsolate = m_wrIsolate.GetTarget();
+    if (!spIsolate.IsEmpty())
+    {
+        m_IsolateImpl.RunTaskWithLockDelayed(true, std::move(upTask), delayInSeconds);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ForegroundTaskRunner::PostNonNestableDelayedTaskImpl(std::unique_ptr<v8::Task> upTask, double delayInSeconds, const v8::SourceLocation& /*location*/)
+{
+    auto spIsolate = m_wrIsolate.GetTarget();
+    if (!spIsolate.IsEmpty())
+    {
+        m_IsolateImpl.RunTaskWithLockDelayed(false, std::move(upTask), delayInSeconds);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void V8ForegroundTaskRunner::PostIdleTaskImpl(std::unique_ptr<v8::IdleTask> /*upTask*/, const v8::SourceLocation& /*location*/)
+{
+    // unexpected call to unsupported method
+    std::terminate();
 }
 
 //-----------------------------------------------------------------------------
@@ -512,13 +515,13 @@ V8IsolateImpl::V8IsolateImpl(const StdString& name, const v8::ResourceConstraint
 
             m_hHostObjectHolderKey = CreatePersistent(CreatePrivate());
 
-            if (HasFlag(options.Flags, Flags::EnableDebugging))
+            if (::HasFlag(options.Flags, Flags::EnableDebugging))
             {
-                EnableDebugging(options.DebugPort, HasFlag(options.Flags, Flags::EnableRemoteDebugging));
+                EnableDebugging(options.DebugPort, ::HasFlag(options.Flags, Flags::EnableRemoteDebugging));
             }
 
             m_upIsolate->SetHostInitializeImportMetaObjectCallback(ImportMetaInitializeCallback);
-            if (HasFlag(options.Flags, Flags::EnableDynamicModuleImports))
+            if (::HasFlag(options.Flags, Flags::EnableDynamicModuleImports))
             {
                 m_upIsolate->SetHostImportModuleDynamicallyCallback(ModuleImportCallback);
             }
@@ -551,17 +554,17 @@ void V8IsolateImpl::AddContext(V8ContextImpl* pContextImpl, const V8Context::Opt
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    if (!HasFlag(options.Flags, V8Context::Flags::EnableDebugging))
+    if (!::HasFlag(options.Flags, V8Context::Flags::EnableDebugging))
     {
         m_ContextEntries.emplace_back(pContextImpl);
     }
     else
     {
         m_ContextEntries.emplace_front(pContextImpl);
-        EnableDebugging(options.DebugPort, HasFlag(options.Flags, V8Context::Flags::EnableRemoteDebugging));
+        EnableDebugging(options.DebugPort, ::HasFlag(options.Flags, V8Context::Flags::EnableRemoteDebugging));
     }
 
-    if (HasFlag(options.Flags, V8Context::Flags::EnableDynamicModuleImports))
+    if (::HasFlag(options.Flags, V8Context::Flags::EnableDynamicModuleImports))
     {
         m_upIsolate->SetHostImportModuleDynamicallyCallback(ModuleImportCallback);
     }
@@ -623,20 +626,20 @@ void V8IsolateImpl::EnableDebugging(int port, bool remote)
         }
 
         auto wrIsolate = CreateWeakRef();
-        m_pvDebugAgent = HostObjectUtil::GetInstance().CreateDebugAgent(m_Name, version, port, remote, [this, wrIsolate] (IHostObjectUtil::DebugDirective directive, const StdString* pCommand)
+        m_pvDebugAgent = HostObjectUtil::CreateDebugAgent(m_Name, version, port, remote, [this, wrIsolate] (HostObjectUtil::DebugDirective directive, const StdString* pCommand)
         {
             auto spIsolate = wrIsolate.GetTarget();
             if (!spIsolate.IsEmpty())
             {
-                if (directive == IHostObjectUtil::DebugDirective::ConnectClient)
+                if (directive == HostObjectUtil::DebugDirective::ConnectClient)
                 {
                     ConnectDebugClient();
                 }
-                else if ((directive == IHostObjectUtil::DebugDirective::SendCommand) && pCommand)
+                else if ((directive == HostObjectUtil::DebugDirective::SendCommand) && pCommand)
                 {
                     SendDebugCommand(*pCommand);
                 }
-                else if (directive == IHostObjectUtil::DebugDirective::DisconnectClient)
+                else if (directive == HostObjectUtil::DebugDirective::DisconnectClient)
                 {
                     DisconnectDebugClient();
                 }
@@ -661,7 +664,7 @@ void V8IsolateImpl::DisableDebugging()
         m_upInspectorSession.reset();
         m_upInspector.reset();
 
-        HostObjectUtil::GetInstance().DestroyDebugAgent(m_pvDebugAgent);
+        HostObjectUtil::DestroyDebugAgent(m_pvDebugAgent);
         m_DebuggingEnabled = false;
     }
 }
@@ -1041,7 +1044,7 @@ void V8IsolateImpl::sendResponse(int /*callId*/, std::unique_ptr<v8_inspector::S
 
     if (m_pvDebugAgent)
     {
-        HostObjectUtil::GetInstance().SendDebugMessage(m_pvDebugAgent, StdString(upMessage->string()));
+        HostObjectUtil::SendDebugMessage(m_pvDebugAgent, StdString(upMessage->string()));
     }
 }
 
@@ -1073,7 +1076,7 @@ void* V8IsolateImpl::AddRefV8Object(void* pvObject)
 
 void V8IsolateImpl::ReleaseV8Object(void* pvObject)
 {
-    CallWithLockNoWait(true /*allowNesting*/, [pvObject] (V8IsolateImpl* pIsolateImpl)
+    CallWithLockNoWait(true, [pvObject] (V8IsolateImpl* pIsolateImpl)
     {
         pIsolateImpl->Dispose(::HandleFromPtr<v8::Object>(pvObject));
     });
@@ -1094,7 +1097,7 @@ void* V8IsolateImpl::AddRefV8Script(void* pvScript)
 
 void V8IsolateImpl::ReleaseV8Script(void* pvScript)
 {
-    CallWithLockNoWait(true /*allowNesting*/, [pvScript] (V8IsolateImpl* pIsolateImpl)
+    CallWithLockNoWait(true, [pvScript] (V8IsolateImpl* pIsolateImpl)
     {
         pIsolateImpl->Dispose(::HandleFromPtr<v8::Script>(pvScript));
     });
@@ -1121,7 +1124,7 @@ void V8IsolateImpl::RunTaskAsync(std::unique_ptr<v8::Task> upTask)
             END_MUTEX_SCOPE
 
             auto wrIsolate = CreateWeakRef();
-            HostObjectUtil::GetInstance().QueueNativeCallback([this, wrIsolate, wpTask] ()
+            HostObjectUtil::QueueNativeCallback([this, wrIsolate, wpTask] ()
             {
                 auto spIsolate = wrIsolate.GetTarget();
                 if (!spIsolate.IsEmpty())
@@ -1542,7 +1545,7 @@ void V8IsolateImpl::CacheScript(const V8DocumentInfo& documentInfo, size_t codeD
 {
     _ASSERTE(IsCurrent() && IsLocked());
 
-    auto maxScriptCacheSize = HostObjectUtil::GetInstance().GetMaxScriptCacheSize();
+    auto maxScriptCacheSize = HostObjectUtil::GetMaxScriptCacheSize();
     while (m_ScriptCache.size() >= maxScriptCacheSize)
     {
         Dispose(m_ScriptCache.back().hScript);
@@ -1716,7 +1719,7 @@ void V8IsolateImpl::CallWithLockAsync(bool allowNesting, CallWithLockCallback&& 
         // trigger asynchronous queue processing
 
         auto wrIsolate = CreateWeakRef();
-        HostObjectUtil::GetInstance().QueueNativeCallback([this, wrIsolate] ()
+        HostObjectUtil::QueueNativeCallback([this, wrIsolate] ()
         {
             auto spIsolate = wrIsolate.GetTarget();
             if (!spIsolate.IsEmpty())
@@ -1833,7 +1836,7 @@ V8IsolateImpl::CallWithLockQueue V8IsolateImpl::PopCallWithLockQueue(const std::
 
 void V8IsolateImpl::ConnectDebugClient()
 {
-    CallWithLockNoWait(true /*allowNesting*/, [] (V8IsolateImpl* pIsolateImpl)
+    CallWithLockNoWait(true, [] (V8IsolateImpl* pIsolateImpl)
     {
         if (pIsolateImpl->m_upInspector && !pIsolateImpl->m_upInspectorSession)
         {
@@ -1846,7 +1849,7 @@ void V8IsolateImpl::ConnectDebugClient()
 
 void V8IsolateImpl::SendDebugCommand(const StdString& command)
 {
-    CallWithLockNoWait(true /*allowNesting*/, [command] (V8IsolateImpl* pIsolateImpl)
+    CallWithLockNoWait(true, [command] (V8IsolateImpl* pIsolateImpl)
     {
         if (pIsolateImpl->m_upInspectorSession)
         {
@@ -1859,7 +1862,7 @@ void V8IsolateImpl::SendDebugCommand(const StdString& command)
 
 void V8IsolateImpl::DisconnectDebugClient()
 {
-    CallWithLockNoWait(true /*allowNesting*/, [] (V8IsolateImpl* pIsolateImpl)
+    CallWithLockNoWait(true, [] (V8IsolateImpl* pIsolateImpl)
     {
         pIsolateImpl->m_upInspectorSession.reset();
     });
@@ -1882,7 +1885,7 @@ V8IsolateImpl::ExecutionScope* V8IsolateImpl::EnterExecutionScope(ExecutionScope
         if (maxHeapSize > 0)
         {
             // yes; perform initial check and set up heap watch timer
-            CheckHeapSize(maxHeapSize, false /*timerTriggered*/);
+            CheckHeapSize(maxHeapSize, false);
 
             // enter outermost heap size monitoring scope
             m_HeapWatchLevel = 1;
@@ -1934,7 +1937,7 @@ V8IsolateImpl::ExecutionScope* V8IsolateImpl::EnterExecutionScope(ExecutionScope
         if ((m_pStackLimit != nullptr) && (pStackMarker < m_pStackLimit))
         {
             // stack usage limit exceeded (host-side detection)
-            throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("The V8 runtime has exceeded its stack usage limit")), false /*executionStarted*/);
+            throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("The V8 runtime has exceeded its stack usage limit")), false);
         }
 
         // enter nested stack usage monitoring scope
@@ -2059,14 +2062,14 @@ void V8IsolateImpl::SetUpHeapWatchTimer(bool forceMinInterval)
         {
             // yes; request callback on execution thread
             auto wrTimer = pTimer->CreateWeakRef();
-            CallWithLockAsync(true /*allowNesting*/, [wrTimer] (V8IsolateImpl* pIsolateImpl)
+            CallWithLockAsync(true, [wrTimer] (V8IsolateImpl* pIsolateImpl)
             {
                 // execution thread callback; is the timer still alive?
                 auto spTimer = wrTimer.GetTarget();
                 if (!spTimer.IsEmpty())
                 {
                     // yes; check heap size
-                    pIsolateImpl->CheckHeapSize(std::nullopt, true /*timerTriggered*/);
+                    pIsolateImpl->CheckHeapSize(std::nullopt, true);
                 }
             });
         }
@@ -2105,8 +2108,10 @@ void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, b
                 // yes; the isolate is out of memory; act based on policy
                 if (m_DisableHeapSizeViolationInterrupt)
                 {
+                    // exception policy; are we executing script code?
                     if (InExecutionScope())
                     {
+                        // yes; schedule script exception now
                         m_MaxHeapSize = 0;
                         m_upIsolate->ThrowError("The V8 runtime has exceeded its memory limit");
                         return;
@@ -2117,8 +2122,9 @@ void V8IsolateImpl::CheckHeapSize(const std::optional<size_t>& optMaxHeapSize, b
                 }
                 else
                 {
+                    // termination policy; mark state and request termination
                     m_IsOutOfMemory = true;
-                    TerminateExecution();
+                    TerminateExecution(!timerTriggered);
                     return;
                 }
             }
@@ -2154,7 +2160,7 @@ void V8IsolateImpl::PromiseHook(v8::PromiseHookType type, v8::Local<v8::Promise>
 {
     if ((type == v8::PromiseHookType::kResolve) && !hPromise.IsEmpty())
     {
-        auto hContext = hPromise->GetCreationContext().FromMaybe(v8::Local<v8::Context>());
+        auto hContext = hPromise->GetCreationContext(v8::Isolate::GetCurrent()).FromMaybe(v8::Local<v8::Context>());
         if (!hContext.IsEmpty())
         {
             GetInstanceFromIsolate(hContext->GetIsolate())->FlushContextAsync(hContext);
@@ -2186,7 +2192,7 @@ void V8IsolateImpl::FlushContextAsync(ContextEntry& contextEntry)
     if (contextEntry.FlushPending.compare_exchange_strong(expected, true))
     {
         auto wrContext = contextEntry.pContextImpl->CreateWeakRef();
-        CallWithLockAsync(true /*allowNesting*/, [wrContext] (V8IsolateImpl* pIsolateImpl)
+        CallWithLockAsync(true, [wrContext] (V8IsolateImpl* pIsolateImpl)
         {
             auto spContext = wrContext.GetTarget();
             if (!spContext.IsEmpty())

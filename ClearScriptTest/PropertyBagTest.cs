@@ -249,7 +249,7 @@ namespace Microsoft.ClearScript.Test
                 // ReSharper restore AccessToDisposedClosure
             };
 
-            var threads = Enumerable.Range(0, threadCount).Select(index => new Thread(body)).ToArray();
+            var threads = Enumerable.Range(0, threadCount).Select(_ => new Thread(body)).ToArray();
             threads.ForEach((thread, index) => thread.Start(index));
 
             startEvent.Set();

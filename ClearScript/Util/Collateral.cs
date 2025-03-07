@@ -9,7 +9,7 @@ namespace Microsoft.ClearScript.Util
         where THolder : class
         where TValue : class
     {
-        private readonly ConditionalWeakTable<THolder, TValue> table = new ConditionalWeakTable<THolder, TValue>();
+        private readonly ConditionalWeakTable<THolder, TValue> table = new();
 
         public TValue Get(THolder holder)
         {
@@ -24,7 +24,7 @@ namespace Microsoft.ClearScript.Util
         public virtual void Set(THolder holder, TValue value)
         {
             Clear(holder);
-            if (value != null)
+            if (value is not null)
             {
                 table.Add(holder, value);
             }
@@ -40,7 +40,7 @@ namespace Microsoft.ClearScript.Util
     {
         public override void Set(THolder holder, TElement[] value)
         {
-            if (value == null)
+            if (value is null)
             {
                 Clear(holder);
             }

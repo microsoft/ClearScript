@@ -7,8 +7,10 @@
 // HostObjectHolderImpl implementation
 //-----------------------------------------------------------------------------
 
-HostObjectHolderImpl::HostObjectHolderImpl(void* pvObject):
-    m_pvObject(pvObject)
+HostObjectHolderImpl::HostObjectHolderImpl(void* pvObject, uint8_t subtype, uint16_t flags):
+    m_pvObject(pvObject),
+    m_Subtype(subtype),
+    m_Flags(flags)
 {
 }
 
@@ -16,7 +18,21 @@ HostObjectHolderImpl::HostObjectHolderImpl(void* pvObject):
 
 HostObjectHolderImpl* HostObjectHolderImpl::Clone() const
 {
-    return new HostObjectHolderImpl(HostObjectUtil::GetInstance().AddRef(m_pvObject));
+    return new HostObjectHolderImpl(HostObjectUtil::AddRef(m_pvObject), m_Subtype, m_Flags);
+}
+
+//-----------------------------------------------------------------------------
+
+uint8_t HostObjectHolderImpl::GetSubtype() const
+{
+    return m_Subtype;
+}
+
+//-----------------------------------------------------------------------------
+
+uint16_t HostObjectHolderImpl::GetFlags() const
+{
+    return m_Flags;
 }
 
 //-----------------------------------------------------------------------------
@@ -30,5 +46,5 @@ void* HostObjectHolderImpl::GetObject() const
 
 HostObjectHolderImpl::~HostObjectHolderImpl()
 {
-    HostObjectUtil::GetInstance().Release(m_pvObject);
+    HostObjectUtil::Release(m_pvObject);
 }

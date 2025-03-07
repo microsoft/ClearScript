@@ -13,6 +13,15 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
     delete globalObject.isHostObjectKey;
     const isHostObject = value => !!value && (value[isHostObjectKey] === true);
 
+    const moduleResultKey = globalObject.moduleResultKey;
+    delete globalObject.moduleResultKey;
+
+    const getPromiseState = globalObject.getPromiseState;
+    delete globalObject.getPromiseState;
+
+    const getPromiseResult = globalObject.getPromiseResult;
+    delete globalObject.getPromiseResult;
+
     const savedPromise = Promise;
     const savedJSON = JSON;
     const checkpointSymbol = Symbol();
@@ -45,6 +54,10 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
 
         strictEquals: bind((left, right) => left === right),
 
+        isPromise: bind(value => value instanceof savedPromise),
+
+        isHostObject: bind(isHostObject),
+
         invokeConstructor: bind((constructor, args) => {
             if (typeof(constructor) !== 'function') {
                 throw new Error('Function expected');
@@ -63,9 +76,24 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
             return new savedPromise(...arguments);
         }),
 
-        isPromise: bind(value => value instanceof savedPromise),
+        createSettledPromiseWithResult: bind(getResult => {
+            try {
+                return savedPromise.resolve(getResult());
+            }
+            catch (exception) {
+                return savedPromise.reject(exception);
+            }
+        }),
 
-        isHostObject: bind(isHostObject),
+        createSettledPromise: bind(wait => {
+            try {
+                wait();
+                return savedPromise.resolve();
+            }
+            catch (exception) {
+                return savedPromise.reject(exception);
+            }
+        }),
 
         completePromiseWithResult: bind((getResult, resolve, reject) => {
             try {
@@ -87,6 +115,25 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
             }
             return undefined;
         }),
+
+        getPromiseState: bind(getPromiseState),
+
+        getPromiseResult: bind(getPromiseResult),
+
+        initializeTask: bind((promise, isPending, isRejected, onResolved, onRejected) => {
+            if (isPending) {
+                promise.then(onResolved, onRejected);
+            }
+            else if (isRejected) {
+                onRejected(getPromiseResult(promise));
+            }
+            else {
+                onResolved(getPromiseResult(promise));
+            }
+            return undefined;
+        }),
+
+        createArray: bind(() => []),
 
         throwValue: bind(value => {
             throw value;
@@ -138,7 +185,12 @@ Object.defineProperty(this, 'EngineInternal', { value: (globalObject => {
 
         parseJson: bind(json => savedJSON.parse(json)),
 
-        asyncGenerator: (async function* () {})().constructor
+        asyncGenerator: (async function* () {})().constructor,
+
+        getModuleResult: bind(async (result, metaHolder) => {
+            await result;
+            return metaHolder[0]?.[moduleResultKey];
+        })
 
     });
 })(this) });

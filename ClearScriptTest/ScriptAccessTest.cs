@@ -535,7 +535,7 @@ namespace Microsoft.ClearScript.Test
             Assert.IsNotNull(target);
 
             var eventInfo = member as EventInfo;
-            if (eventInfo != null)
+            if (eventInfo is not null)
             {
                 var eventSource = engine.Evaluate(objectName + "." + scriptMemberName) as EventSource<EventHandler>;
                 Assert.IsNotNull(eventSource);
@@ -545,21 +545,21 @@ namespace Microsoft.ClearScript.Test
             }
 
             field = member as FieldInfo;
-            if (field != null)
+            if (field is not null)
             {
                 Assert.AreEqual(field.GetValue(target), engine.Evaluate(objectName + "." + scriptMemberName));
                 return;
             }
 
             var property = member as PropertyInfo;
-            if (property != null)
+            if (property is not null)
             {
                 Assert.AreEqual(property.GetValue(target, ArrayHelpers.GetEmptyArray<object>()), engine.Evaluate(objectName + "." + scriptMemberName));
                 return;
             }
 
             var method = member as MethodInfo;
-            if (method != null)
+            if (method is not null)
             {
                 switch (method.GetParameters().Length)
                 {

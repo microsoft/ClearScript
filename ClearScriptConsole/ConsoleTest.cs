@@ -31,7 +31,7 @@ namespace Microsoft.ClearScript.Test
                     var thread = new Thread(() =>
                     {
                         var ptr = stackalloc byte[192 * 1024];
-                        if ((ulong)ptr < (984 * 1024UL))
+                        if ((ulong)ptr < (1536 * 1024UL))
                         {
                             try
                             {
@@ -51,13 +51,13 @@ namespace Microsoft.ClearScript.Test
                         done.Set();
                         exit.Wait();
 
-                    }, 256 * 1024);
+                    }, 384 * 1024);
 
                     threads.Add(thread);
                     thread.Start();
                     done.WaitOne();
 
-                    if (caughtException != null)
+                    if (caughtException is not null)
                     {
                         throw new AssertFailedException("Exception thrown in worker thread", caughtException);
                     }

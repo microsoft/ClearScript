@@ -144,7 +144,7 @@ namespace Microsoft.ClearScript.Windows
             if (documentInfo.Category == ModuleCategory.CommonJS)
             {
                 var module = CommonJSManager.GetOrCreateModule(documentInfo, code);
-                return ScriptInvoke(() => module.Process());
+                return ScriptInvoke(static module => module.Process(), module);
             }
 
             if (documentInfo.Category != DocumentCategory.Script)
@@ -171,6 +171,16 @@ namespace Microsoft.ClearScript.Windows
         }
 
         object IJavaScriptEngine.CreatePromiseForTask(Task task)
+        {
+            throw new NotImplementedException();
+        }
+
+        object IJavaScriptEngine.CreatePromiseForValueTask<T>(ValueTask<T> valueTask)
+        {
+            throw new NotImplementedException();
+        }
+
+        object IJavaScriptEngine.CreatePromiseForValueTask(ValueTask valueTask)
         {
             throw new NotImplementedException();
         }

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8.FastProxy;
 
 namespace Microsoft.ClearScript.V8.SplitProxy
 {
@@ -35,12 +36,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void ScheduleHostException(IntPtr pObject, Exception exception)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.HostException_Schedule(exception.GetBaseException().Message, V8ProxyHelpers.MarshalExceptionToScript(pObject, exception)));
+            V8SplitProxyNative.InvokeNoThrow(static (instance, ctx) => instance.HostException_Schedule(ctx.exception.GetBaseException().Message, V8ProxyHelpers.MarshalExceptionToScript(ctx.pObject, ctx.exception)), (pObject, exception));
         }
 
         private static void ScheduleHostException(Exception exception)
         {
-            V8SplitProxyNative.InvokeNoThrow(instance => instance.HostException_Schedule(exception.GetBaseException().Message, ScriptEngine.Current?.MarshalToScript(exception)));
+            V8SplitProxyNative.InvokeNoThrow(static (instance, exception) => instance.HostException_Schedule(exception.GetBaseException().Message, ScriptEngine.Current?.MarshalToScript(exception)), exception);
         }
 
         private static uint GetMaxCacheSizeForCategory(DocumentCategory category)
@@ -85,14 +86,27 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        private delegate void RawInvokeAction(
+        private delegate void RawInvokeHostAction(
             [In] IntPtr pAction
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawInvokeHostActionWithArg(
+            [In] IntPtr pAction,
+            [In] IntPtr pArg
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawProcessArrayBufferOrViewData(
             [In] IntPtr pData,
             [In] IntPtr pAction
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawProcessArrayBufferOrViewDataWithArg(
+            [In] IntPtr pData,
+            [In] IntPtr pAction,
+            [In] IntPtr pArg
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -173,13 +187,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawGetHostObjectNamedProperty(
-            [In] IntPtr pObject,
-            [In] StdString.Ptr pName,
-            [In] V8Value.Ptr pValue
-        );
-
-        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        private delegate void RawGetHostObjectNamedPropertyWithCacheability(
             [In] IntPtr pObject,
             [In] StdString.Ptr pName,
             [In] V8Value.Ptr pValue,
@@ -264,6 +271,94 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         );
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawGetFastHostObjectNamedProperty(
+            [In] IntPtr pObject,
+            [In] StdString.Ptr pName,
+            [In] V8Value.FastResult.Ptr pValue,
+            [Out] [MarshalAs(UnmanagedType.I1)] out bool isCacheable
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawSetFastHostObjectNamedProperty(
+            [In] IntPtr pObject,
+            [In] StdString.Ptr pName,
+            [In] V8Value.FastArg.Ptr pValue
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate V8FastHostPropertyFlags RawQueryFastHostObjectNamedProperty(
+            [In] IntPtr pObject,
+            [In] StdString.Ptr pName
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool RawDeleteFastHostObjectNamedProperty(
+            [In] IntPtr pObject,
+            [In] StdString.Ptr pName
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawGetFastHostObjectPropertyNames(
+            [In] IntPtr pObject,
+            [In] StdStringArray.Ptr pNames
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawGetFastHostObjectIndexedProperty(
+            [In] IntPtr pObject,
+            [In] int index,
+            [In] V8Value.FastResult.Ptr pValue
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawSetFastHostObjectIndexedProperty(
+            [In] IntPtr pObject,
+            [In] int index,
+            [In] V8Value.FastArg.Ptr pValue
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate V8FastHostPropertyFlags RawQueryFastHostObjectIndexedProperty(
+            [In] IntPtr pObject,
+            [In] int index
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private delegate bool RawDeleteFastHostObjectIndexedProperty(
+            [In] IntPtr pObject,
+            [In] int index
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawGetFastHostObjectPropertyIndices(
+            [In] IntPtr pObject,
+            [In] StdInt32Array.Ptr pIndices
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawInvokeFastHostObject(
+            [In] IntPtr pObject,
+            [In] [MarshalAs(UnmanagedType.I1)] bool asConstructor,
+            [In] int argCount,
+            [In] V8Value.FastArg.Ptr pArgs,
+            [In] V8Value.FastResult.Ptr pResult
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawGetFastHostObjectEnumerator(
+            [In] IntPtr pObject,
+            [In] V8Value.FastResult.Ptr pResult
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void RawGetFastHostObjectAsyncEnumerator(
+            [In] IntPtr pObject,
+            [In] V8Value.FastResult.Ptr pResult
+        );
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void RawQueueNativeCallback(
             [In] NativeCallback.Handle hCallback
         );
@@ -341,11 +436,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #if NET5_0_OR_GREATER
                 (IntPtr.Zero, InvokeHostActionFastMethodPtr),
+                (IntPtr.Zero, InvokeHostActionWithArgFastMethodPtr),
             #else
-                GetMethodPair<RawInvokeAction>(InvokeHostAction),
+                GetMethodPair<RawInvokeHostAction>(InvokeHostAction),
+                GetMethodPair<RawInvokeHostActionWithArg>(InvokeHostActionWithArg),
             #endif
 
                 GetMethodPair<RawProcessArrayBufferOrViewData>(ProcessArrayBufferOrViewData),
+                GetMethodPair<RawProcessArrayBufferOrViewDataWithArg>(ProcessArrayBufferOrViewDataWithArg),
                 GetMethodPair<RawProcessCpuProfile>(ProcessCpuProfile),
                 GetMethodPair<RawCreateV8ObjectCache>(CreateV8ObjectCache),
 
@@ -377,11 +475,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #if NET5_0_OR_GREATER
                 (IntPtr.Zero, GetHostObjectNamedPropertyFastMethodPtr),
-                (IntPtr.Zero, GetHostObjectNamedPropertyWithCacheabilityFastMethodPtr),
                 (IntPtr.Zero, SetHostObjectNamedPropertyFastMethodPtr),
             #else
                 GetMethodPair<RawGetHostObjectNamedProperty>(GetHostObjectNamedProperty),
-                GetMethodPair<RawGetHostObjectNamedPropertyWithCacheability>(GetHostObjectNamedPropertyWithCacheability),
                 GetMethodPair<RawSetHostObjectNamedProperty>(SetHostObjectNamedProperty),
             #endif
 
@@ -409,6 +505,40 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
                 GetMethodPair<RawGetHostObjectEnumerator>(GetHostObjectEnumerator),
                 GetMethodPair<RawGetHostObjectAsyncEnumerator>(GetHostObjectAsyncEnumerator),
+
+            #if NET5_0_OR_GREATER
+                (IntPtr.Zero, GetFastHostObjectNamedPropertyFastMethodPtr),
+                (IntPtr.Zero, SetFastHostObjectNamedPropertyFastMethodPtr),
+            #else
+                GetMethodPair<RawGetFastHostObjectNamedProperty>(GetFastHostObjectNamedProperty),
+                GetMethodPair<RawSetFastHostObjectNamedProperty>(SetFastHostObjectNamedProperty),
+            #endif
+
+                GetMethodPair<RawQueryFastHostObjectNamedProperty>(QueryFastHostObjectNamedProperty),
+                GetMethodPair<RawDeleteFastHostObjectNamedProperty>(DeleteFastHostObjectNamedProperty),
+                GetMethodPair<RawGetFastHostObjectPropertyNames>(GetFastHostObjectPropertyNames),
+
+            #if NET5_0_OR_GREATER
+                (IntPtr.Zero, GetFastHostObjectIndexedPropertyFastMethodPtr),
+                (IntPtr.Zero, SetFastHostObjectIndexedPropertyFastMethodPtr),
+            #else
+                GetMethodPair<RawGetFastHostObjectIndexedProperty>(GetFastHostObjectIndexedProperty),
+                GetMethodPair<RawSetFastHostObjectIndexedProperty>(SetFastHostObjectIndexedProperty),
+            #endif
+
+                GetMethodPair<RawQueryFastHostObjectIndexedProperty>(QueryFastHostObjectIndexedProperty),
+                GetMethodPair<RawDeleteFastHostObjectIndexedProperty>(DeleteFastHostObjectIndexedProperty),
+                GetMethodPair<RawGetFastHostObjectPropertyIndices>(GetFastHostObjectPropertyIndices),
+
+            #if NET5_0_OR_GREATER
+                (IntPtr.Zero, InvokeFastHostObjectFastMethodPtr),
+            #else
+                GetMethodPair<RawInvokeFastHostObject>(InvokeFastHostObject),
+            #endif
+
+                GetMethodPair<RawGetFastHostObjectEnumerator>(GetFastHostObjectEnumerator),
+                GetMethodPair<RawGetFastHostObjectAsyncEnumerator>(GetFastHostObjectAsyncEnumerator),
+
                 GetMethodPair<RawQueueNativeCallback>(QueueNativeCallback),
                 GetMethodPair<RawCreateNativeCallbackTimer>(CreateNativeCallbackTimer),
                 GetMethodPair<RawChangeNativeCallbackTimer>(ChangeNativeCallbackTimer),
@@ -457,13 +587,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return (V8ProxyHelpers.AddRefHostObject(del), Marshal.GetFunctionPointerForDelegate((Delegate)(object)del));
         }
 
-        #endregion
+#endregion
 
         #region method table implementation
 
         private static void ScheduleForwardingException(V8Value.Ptr pException)
         {
-            Debug.Assert(ScheduledException == null);
+            Debug.Assert(ScheduledException is null);
 
             var exception = V8ProxyHelpers.MarshalExceptionToHost(V8Value.Get(pException));
             if (exception is ScriptEngineException scriptEngineException)
@@ -482,13 +612,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void ScheduleInvalidOperationException(StdString.Ptr pMessage)
         {
-            Debug.Assert(ScheduledException == null);
+            Debug.Assert(ScheduledException is null);
             ScheduledException = new InvalidOperationException(StdString.GetValue(pMessage));
         }
 
         private static void ScheduleScriptEngineException(StdString.Ptr pEngineName, StdString.Ptr pMessage, StdString.Ptr pStackTrace, bool isFatal, bool executionStarted, V8Value.Ptr pScriptException, V8Value.Ptr pInnerException)
         {
-            Debug.Assert(ScheduledException == null);
+            Debug.Assert(ScheduledException is null);
             var scriptException = ScriptEngine.Current?.MarshalToHost(V8Value.Get(pScriptException), false);
             var innerException = V8ProxyHelpers.MarshalExceptionToHost(V8Value.Get(pInnerException));
             ScheduledException = new ScriptEngineException(StdString.GetValue(pEngineName), StdString.GetValue(pMessage), StdString.GetValue(pStackTrace), 0, isFatal, executionStarted, scriptException, innerException);
@@ -496,7 +626,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void ScheduleScriptInterruptedException(StdString.Ptr pEngineName, StdString.Ptr pMessage, StdString.Ptr pStackTrace, bool isFatal, bool executionStarted, V8Value.Ptr pScriptException, V8Value.Ptr pInnerException)
         {
-            Debug.Assert(ScheduledException == null);
+            Debug.Assert(ScheduledException is null);
             var scriptException = ScriptEngine.Current?.MarshalToHost(V8Value.Get(pScriptException), false);
             var innerException = V8ProxyHelpers.MarshalExceptionToHost(V8Value.Get(pInnerException));
             ScheduledException = new ScriptInterruptedException(StdString.GetValue(pEngineName), StdString.GetValue(pMessage), StdString.GetValue(pStackTrace), 0, isFatal, executionStarted, scriptException, innerException);
@@ -514,11 +644,35 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        private static void InvokeHostActionWithArg(IntPtr pAction, IntPtr pArg)
+        {
+            try
+            {
+                V8ProxyHelpers.GetHostObject<Action<IntPtr>>(pAction)(pArg);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(exception);
+            }
+        }
+
         private static void ProcessArrayBufferOrViewData(IntPtr pData, IntPtr pAction)
         {
             try
             {
                 V8ProxyHelpers.GetHostObject<Action<IntPtr>>(pAction)(pData);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(exception);
+            }
+        }
+
+        private static void ProcessArrayBufferOrViewDataWithArg(IntPtr pData, IntPtr pAction, IntPtr pArg)
+        {
+            try
+            {
+                V8ProxyHelpers.GetHostObject<Action<IntPtr, IntPtr>>(pAction)(pData, pArg);
             }
             catch (Exception exception)
             {
@@ -613,19 +767,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        private static void GetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue)
-        {
-            try
-            {
-                V8Value.Set(pValue, V8ProxyHelpers.GetHostObjectProperty(pObject, StdString.GetValue(pName)));
-            }
-            catch (Exception exception)
-            {
-                ScheduleHostException(pObject, exception);
-            }
-        }
-
-        private static void GetHostObjectNamedPropertyWithCacheability(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue, out bool isCacheable)
+        private static void GetHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue, out bool isCacheable)
         {
             try
             {
@@ -659,7 +801,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             catch (Exception exception)
             {
                 ScheduleHostException(pObject, exception);
-                return default;
+                return false;
             }
         }
 
@@ -712,7 +854,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             catch (Exception exception)
             {
                 ScheduleHostException(pObject, exception);
-                return default;
+                return false;
             }
         }
 
@@ -780,6 +922,175 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        private static void GetFastHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.FastResult.Ptr pValue, out bool isCacheable)
+        {
+            try
+            {
+                V8ProxyHelpers.GetFastHostObjectProperty(pObject, pName, pValue, out isCacheable);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                isCacheable = false;
+            }
+        }
+
+        private static void SetFastHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName, V8Value.FastArg.Ptr pValue)
+        {
+            try
+            {
+                V8ProxyHelpers.SetFastHostObjectProperty(pObject, pName, pValue);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static V8FastHostPropertyFlags QueryFastHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName)
+        {
+            try
+            {
+                return V8ProxyHelpers.QueryFastHostObjectProperty(pObject, pName);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return default;
+            }
+        }
+
+        private static bool DeleteFastHostObjectNamedProperty(IntPtr pObject, StdString.Ptr pName)
+        {
+            try
+            {
+                return V8ProxyHelpers.DeleteFastHostObjectProperty(pObject, pName);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return false;
+            }
+        }
+
+        private static void GetFastHostObjectPropertyNames(IntPtr pObject, StdStringArray.Ptr pNames)
+        {
+            IEnumerable<string> names;
+            try
+            {
+                names = V8ProxyHelpers.GetFastHostObjectPropertyNames(pObject);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return;
+            }
+
+            StdStringArray.CopyFromEnumerable(pNames, names);
+        }
+
+        private static void GetFastHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.FastResult.Ptr pValue)
+        {
+            try
+            {
+                V8ProxyHelpers.GetFastHostObjectProperty(pObject, index, pValue);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void SetFastHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.FastArg.Ptr pValue)
+        {
+            try
+            {
+                V8ProxyHelpers.SetFastHostObjectProperty(pObject, index, pValue);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static V8FastHostPropertyFlags QueryFastHostObjectIndexedProperty(IntPtr pObject, int index)
+        {
+            try
+            {
+                return V8ProxyHelpers.QueryFastHostObjectProperty(pObject, index);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return default;
+            }
+        }
+
+        private static bool DeleteFastHostObjectIndexedProperty(IntPtr pObject, int index)
+        {
+            try
+            {
+                return V8ProxyHelpers.DeleteFastHostObjectProperty(pObject, index);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return false;
+            }
+        }
+
+        private static void GetFastHostObjectPropertyIndices(IntPtr pObject, StdInt32Array.Ptr pIndices)
+        {
+            IEnumerable<int> indices;
+            try
+            {
+                indices = V8ProxyHelpers.GetFastHostObjectPropertyIndices(pObject);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+                return;
+            }
+
+            StdInt32Array.CopyFromEnumerable(pIndices, indices);
+        }
+
+        private static void InvokeFastHostObject(IntPtr pObject, bool asConstructor, int argCount, V8Value.FastArg.Ptr pArgs, V8Value.FastResult.Ptr pResult)
+        {
+            try
+            {
+                V8ProxyHelpers.InvokeFastHostObject(pObject, asConstructor, argCount, pArgs, pResult);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void GetFastHostObjectEnumerator(IntPtr pObject, V8Value.FastResult.Ptr pResult)
+        {
+            try
+            {
+                V8ProxyHelpers.GetFastHostObjectEnumerator(pObject, pResult);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
+        private static void GetFastHostObjectAsyncEnumerator(IntPtr pObject, V8Value.FastResult.Ptr pResult)
+        {
+            try
+            {
+                V8ProxyHelpers.GetFastHostObjectAsyncEnumerator(pObject, pResult);
+            }
+            catch (Exception exception)
+            {
+                ScheduleHostException(pObject, exception);
+            }
+        }
+
         private static void QueueNativeCallback(NativeCallback.Handle hCallback)
         {
             MiscHelpers.QueueNativeCallback(new NativeCallbackImpl(hCallback));
@@ -814,7 +1125,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             catch (Exception exception)
             {
                 ScheduleHostException(exception);
-                uniqueId = default;
+                uniqueId = 0;
                 documentKind = default;
                 pDocumentInfo = default;
                 return;
@@ -842,7 +1153,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return;
             }
 
-            if (context == null)
+            if (context is null)
             {
                 StdStringArray.SetElementCount(pNames, 0);
                 StdV8ValueArray.SetElementCount(pValues, 0);

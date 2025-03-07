@@ -1,9 +1,9 @@
 @echo off
 setlocal
 
-set v8testedrev=12.3.219.12
+set v8testedrev=13.3.415.23
 set v8testedcommit=
-set v8cherrypicks=28a7e2d45fd620fa68fb0678a7246fc8e426d1cc
+set v8cherrypicks=
 
 if not "%v8testedcommit%"=="" goto ProcessArgs
 set v8testedcommit=%v8testedrev%
@@ -226,7 +226,9 @@ setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64_x86 >nul
 if errorlevel 1 goto Build32BitError
 echo Building V8 (x86) ...
-call gn gen out\Win32\%mode% --args="fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% target_cpu=\"x86\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false" >gn-Win32-%mode%.log
+call gn gen out\Win32\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"x86\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x86\" v8_use_external_startup_data=false" >gn-Win32-%mode%.log 2>&1
+if errorlevel 1 goto Build32BitError
+call gn args out\Win32\%mode% --list >out\Win32\%mode%\allArgs.txt
 if errorlevel 1 goto Build32BitError
 call ninja -C out\Win32\%mode% obj\v8_monolith.lib >build-Win32-%mode%.log
 if errorlevel 1 goto Build32BitError
@@ -244,7 +246,9 @@ setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64 >nul
 if errorlevel 1 goto Build64BitError
 echo Building V8 (x64) ...
-call gn gen out\x64\%mode% --args="fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% target_cpu=\"x64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x64\" v8_use_external_startup_data=false" >gn-x64-%mode%.log
+call gn gen out\x64\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"x64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"x64\" v8_use_external_startup_data=false" >gn-x64-%mode%.log 2>&1
+if errorlevel 1 goto Build64BitError
+call gn args out\x64\%mode% --list >out\x64\%mode%\allArgs.txt
 if errorlevel 1 goto Build64BitError
 call ninja -C out\x64\%mode% obj\v8_monolith.lib >build-x64-%mode%.log
 if errorlevel 1 goto Build64BitError
@@ -262,7 +266,9 @@ setlocal
 call "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsall" x64_arm64 >nul
 if errorlevel 1 goto BuildArm64BitError
 echo Building V8 (arm64) ...
-call gn gen out\arm64\%mode% --args="fatal_linker_warnings=false is_component_build=false is_debug=%isdebug% target_cpu=\"arm64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"arm64\" v8_use_external_startup_data=false" >gn-arm64-%mode%.log
+call gn gen out\arm64\%mode% --args="fatal_linker_warnings=false is_cfi=false is_component_build=false is_debug=%isdebug% target_cpu=\"arm64\" use_custom_libcxx=false use_thin_lto=false v8_embedder_string=\"-ClearScript\" v8_enable_fuzztest=false v8_enable_pointer_compression=false v8_enable_31bit_smis_on_64bit_arch=false v8_monolithic=true v8_target_cpu=\"arm64\" v8_use_external_startup_data=false" >gn-arm64-%mode%.log 2>&1
+if errorlevel 1 goto BuildArm64BitError
+call gn args out\arm64\%mode% --list >out\arm64\%mode%\allArgs.txt
 if errorlevel 1 goto BuildArm64BitError
 call ninja -C out\arm64\%mode% obj\v8_monolith.lib >build-arm64-%mode%.log
 if errorlevel 1 goto BuildArm64BitError

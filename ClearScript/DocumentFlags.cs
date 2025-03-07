@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
@@ -30,5 +30,11 @@ namespace Microsoft.ClearScript
         /// waited for a debugger connection.
         /// </summary>
         AwaitDebuggerAndPause = 0x00000002
+    }
+
+    internal static class DocumentFlagsHelpers
+    {
+        public static bool HasAllFlags(this DocumentFlags value, DocumentFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this DocumentFlags value, DocumentFlags flags) => (value & flags) != 0;
     }
 }

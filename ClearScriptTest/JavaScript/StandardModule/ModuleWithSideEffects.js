@@ -5,4 +5,4 @@ import * as Geometry from 'Geometry/Geometry.js';
 
 foo.bar = new Geometry.Square(25).Area;
 
-foo.bar;
+import.meta.setResult(foo.bar);

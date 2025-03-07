@@ -86,12 +86,12 @@ V8Value V8ObjectHelpers::InvokeMethod(const SharedPtr<V8ObjectHolder>& spHolder,
 
 void V8ObjectHelpers::GetArrayBufferOrViewInfo(const SharedPtr<V8ObjectHolder>& spHolder, V8Value& arrayBuffer, size_t& offset, size_t& size, size_t& length)
 {
-    return spHolder.DerefAs<V8ObjectHolderImpl>().GetArrayBufferOrViewInfo(arrayBuffer, offset, size, length);
+    spHolder.DerefAs<V8ObjectHolderImpl>().GetArrayBufferOrViewInfo(arrayBuffer, offset, size, length);
 }
 
 //-----------------------------------------------------------------------------
 
 void V8ObjectHelpers::InvokeWithArrayBufferOrViewData(const SharedPtr<V8ObjectHolder>& spHolder, ArrayBufferOrViewDataCallback* pCallback, void* pvArg)
 {
-    return spHolder.DerefAs<V8ObjectHolderImpl>().InvokeWithArrayBufferOrViewData(pCallback, pvArg);
+    spHolder.DerefAs<V8ObjectHolderImpl>().InvokeWithArrayBufferOrViewData(pCallback, pvArg);
 }

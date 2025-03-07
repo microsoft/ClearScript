@@ -51,7 +51,7 @@ namespace Microsoft.ClearScript.Util.Web
         {
             if (Interlocked.CompareExchange(ref state, State.Closed, State.Open) == State.Open)
             {
-                CloseAsync(overrideStatusCode).ContinueWith(task => MiscHelpers.Try(task.Wait));
+                CloseAsync(overrideStatusCode).ContinueWith(task => MiscHelpers.Try(static task => task.Wait(), task));
             }
         }
 

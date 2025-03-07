@@ -37,7 +37,7 @@ namespace Microsoft.ClearScript.Util
         {
             // ReSharper disable CompareOfFloatsByEqualityOperator
 
-            if (value == null)
+            if (value is null)
             {
                 return false;
             }
@@ -49,17 +49,17 @@ namespace Microsoft.ClearScript.Util
 
             if (value is float floatValue)
             {
-                return Math.Round(floatValue) == floatValue;
+                return Math.Truncate(floatValue) == floatValue;
             }
 
             if (value is double doubleValue)
             {
-                return Math.Round(doubleValue) == doubleValue;
+                return Math.Truncate(doubleValue) == doubleValue;
             }
 
             if (value is decimal decimalValue)
             {
-                return Math.Round(decimalValue) == decimalValue;
+                return Math.Truncate(decimalValue) == decimalValue;
             }
 
             return false;
@@ -87,10 +87,10 @@ namespace Microsoft.ClearScript.Util
                 // Attempt to acquire COM type information via IDispatch or IProvideClassInfo.
 
                 dispatch = value as IDispatch;
-                if (dispatch != null)
+                if (dispatch is not null)
                 {
                     var tempTypeInfo = dispatch.GetTypeInfo();
-                    if (tempTypeInfo != null)
+                    if (tempTypeInfo is not null)
                     {
                         typeInfo = GetTypeForTypeInfo(tempTypeInfo);
                         typeInfoKind = tempTypeInfo.GetKind();
@@ -98,7 +98,7 @@ namespace Microsoft.ClearScript.Util
                     }
                 }
 
-                if (typeInfo == null)
+                if (typeInfo is null)
                 {
                     if (value is IProvideClassInfo provideClassInfo)
                     {
@@ -112,12 +112,12 @@ namespace Microsoft.ClearScript.Util
                 }
             }
 
-            if (typeInfo != null)
+            if (typeInfo is not null)
             {
                 // If the COM type is a dispatch-only interface, use it. Such interfaces typically
                 // aren't exposed via QueryInterface(), so there's no way to validate them anyway.
 
-                if ((dispatch != null) && (typeInfoKind == TYPEKIND.TKIND_DISPATCH) && typeInfoFlags.HasFlag(TYPEFLAGS.TYPEFLAG_FDISPATCHABLE) && !typeInfoFlags.HasFlag(TYPEFLAGS.TYPEFLAG_FDUAL))
+                if ((dispatch is not null) && (typeInfoKind == TYPEKIND.TKIND_DISPATCH) && typeInfoFlags.HasAllFlags(TYPEFLAGS.TYPEFLAG_FDISPATCHABLE) && !typeInfoFlags.HasAllFlags(TYPEFLAGS.TYPEFLAG_FDUAL))
                 {
                     return typeInfo;
                 }
@@ -151,13 +151,13 @@ namespace Microsoft.ClearScript.Util
                 var typeLib = typeInfo.GetContainingTypeLib(out var index);
 
                 var assembly = LoadPrimaryInteropAssembly(typeLib);
-                if (assembly != null)
+                if (assembly is not null)
                 {
                     var name = typeInfo.GetManagedName();
                     var guid = typeInfo.GetGuid();
 
                     var type = assembly.GetType(name, false, true);
-                    if ((type != null) && (type.GUID == guid))
+                    if ((type is not null) && (type.GUID == guid))
                     {
                         return type;
                     }
@@ -173,7 +173,7 @@ namespace Microsoft.ClearScript.Util
                     }
 
                     type = types.FirstOrDefault(testType => (testType.GUID == guid) && (testType.FullName.Equals(name, StringComparison.OrdinalIgnoreCase)));
-                    if (type != null)
+                    if (type is not null)
                     {
                         return type;
                     }
@@ -192,7 +192,7 @@ namespace Microsoft.ClearScript.Util
 
         private static Assembly LoadPrimaryInteropAssembly(ITypeLib typeLib)
         {
-            if (typeLib == null)
+            if (typeLib is null)
             {
                 return null;
             }
@@ -225,9 +225,9 @@ namespace Microsoft.ClearScript.Util
 
         public static string GetFriendlyName(this object value, Type type)
         {
-            if (type == null)
+            if (type is null)
             {
-                if (value == null)
+                if (value is null)
                 {
                     return "[null]";
                 }
@@ -235,7 +235,7 @@ namespace Microsoft.ClearScript.Util
                 type = value.GetType();
             }
 
-            if (type.IsArray && (value != null))
+            if (type.IsArray && (value is not null))
             {
                 var array = (Array)value;
                 var dimensions = Enumerable.Range(0, type.GetArrayRank());
@@ -248,7 +248,7 @@ namespace Microsoft.ClearScript.Util
                 if (value is IDispatch dispatch)
                 {
                     var typeInfo = dispatch.GetTypeInfo();
-                    if (typeInfo != null)
+                    if (typeInfo is not null)
                     {
                         return typeInfo.GetName();
                     }
@@ -342,7 +342,7 @@ namespace Microsoft.ClearScript.Util
 
             private static object CastToNullable(object value)
             {
-                if (value != null)
+                if (value is not null)
                 {
                     var valueCastType = typeof(DynamicCaster<>).MakeGenericType(Nullable.GetUnderlyingType(typeof(T)));
                     value = valueCastType.InvokeMember("Cast", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] { value });

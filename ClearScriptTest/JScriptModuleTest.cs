@@ -452,7 +452,7 @@ namespace Microsoft.ClearScript.Test
 
             private static IDictionary<string, object> CreateDocumentContext(DocumentInfo info)
             {
-                if (info.Uri != null)
+                if (info.Uri is not null)
                 {
                     var name = Path.GetFileName(info.Uri.AbsolutePath);
 

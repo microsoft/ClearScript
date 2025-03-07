@@ -241,6 +241,8 @@ namespace Microsoft.ClearScript
             return HostType.Wrap(MiscHelpers.GetCOMType(progID, serverName));
         }
 
+        // ReSharper disable GrammarMistakeInComment
+
         /// <summary>
         /// Creates a COM/ActiveX object of the specified type.
         /// </summary>
@@ -271,6 +273,8 @@ namespace Microsoft.ClearScript
             return MiscHelpers.CreateCOMObject(progID, serverName);
         }
 
+        // ReSharper restore GrammarMistakeInComment
+
         /// <summary>
         /// Imports enumerations defined within or referenced from a COM/ActiveX type library.
         /// </summary>
@@ -281,7 +285,7 @@ namespace Microsoft.ClearScript
         public HostTypeCollection typeLibEnums<T>(T obj, HostTypeCollection collection = null) where T : class
         {
             MiscHelpers.VerifyNonNullArgument(obj, nameof(obj));
-            if (collection == null)
+            if (collection is null)
             {
                 collection = new HostTypeCollection();
             }
@@ -292,14 +296,14 @@ namespace Microsoft.ClearScript
                 if (obj is IDispatch dispatch)
                 {
                     var typeInfo = dispatch.GetTypeInfo();
-                    if (typeInfo != null)
+                    if (typeInfo is not null)
                     {
                         typeInfo.GetContainingTypeLib().GetReferencedEnums().ForEach(collection.AddEnumTypeInfo);
                         return collection;
                     }
                 }
             }
-            else if (type.IsImport && (type.Assembly.GetOrLoadCustomAttribute<ImportedFromTypeLibAttribute>(ScriptEngine.Current, false) != null))
+            else if (type.IsImport && (type.Assembly.GetOrLoadCustomAttribute<ImportedFromTypeLibAttribute>(ScriptEngine.Current, false) is not null))
             {
                 type.Assembly.GetReferencedEnums().ForEach(collection.AddType);
                 return collection;

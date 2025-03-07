@@ -46,11 +46,12 @@
     <ContentPlacement>AboveNamespaces</ContentPlacement>
     <CopyrightText>Copyright &amp;#169%3b Microsoft Corporation. All rights reserved.</CopyrightText>
     <NamespaceSummaries>
+      <NamespaceSummaryItem name="(global)" isDocumented="False" />
       <NamespaceSummaryItem name="Microsoft.ClearScript" isDocumented="True">The Microsoft.ClearScript namespace contains types that support all script engines.</NamespaceSummaryItem>
       <NamespaceSummaryItem name="Microsoft.ClearScript.V8" isDocumented="True">The Microsoft.ClearScript.V8 namespace contains types that provide access to the V8 high-performance open-source JavaScript engine.</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Microsoft.ClearScript.V8.FastProxy" isDocumented="True">The Microsoft.ClearScript.V8.FastProxy namespace contains types that support low-overhead access to host resources from the V8 JavaScript engine.</NamespaceSummaryItem>
       <NamespaceSummaryItem name="Microsoft.ClearScript.Windows" isDocumented="True">The Microsoft.ClearScript.Windows namespace contains types that provide access to Windows Script engines such as JScript and VBScript in a desktop environment.</NamespaceSummaryItem>
       <NamespaceSummaryItem name="Microsoft.ClearScript.Windows.Core" isDocumented="True">The Microsoft.ClearScript.Windows.Core namespace contains types that provide access to Windows Script engines such as JScript and VBScript.</NamespaceSummaryItem>
-      <NamespaceSummaryItem name="(global)" isDocumented="False" />
       <NamespaceSummaryItem name="Microsoft.ClearScript.JavaScript" isDocumented="True">The Microsoft.ClearScript.JavaScript namespace contains types that provide access to JavaScript-specific features.</NamespaceSummaryItem>
     </NamespaceSummaries>
     <RootNamespaceTitle>ClearScript Library Reference</RootNamespaceTitle>

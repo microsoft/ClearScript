@@ -34,4 +34,10 @@ namespace Microsoft.ClearScript
         /// </summary>
         WrapNullResult = 0x00000002
     }
+
+    internal static class ScriptMemberFlagsHelpers
+    {
+        public static bool HasAllFlags(this ScriptMemberFlags value, ScriptMemberFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this ScriptMemberFlags value, ScriptMemberFlags flags) => (value & flags) != 0;
+    }
 }

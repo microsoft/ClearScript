@@ -1,12 +1,10 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Expando;
 using Microsoft.ClearScript.Util;
@@ -30,60 +28,14 @@ namespace Microsoft.ClearScript
 
         #endregion
 
-        #region internal members
-
-        #region member invocation
-
-        private object CreateAsyncEnumerator<T>(IEnumerable<T> enumerable)
-        {
-            return HostObject.Wrap(enumerable.GetEnumerator().ToScriptableAsyncEnumerator(Engine), typeof(IScriptableAsyncEnumerator<T>));
-        }
-
-        private object CreateAsyncEnumerator()
-        {
-            if ((Target is HostObject) || (Target is IHostVariable) || (Target is IByRefArg))
-            {
-                if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IAsyncEnumerable<>), out var typeArgs))
-                {
-                    var helpersHostItem = Wrap(Engine, typeof(ScriptableEnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
-                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)helpersHostItem).InvokeMethod("GetScriptableAsyncEnumerator", this, Engine)))
-                    {
-                        return enumerator;
-                    }
-                }
-                else if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IEnumerable<>), out typeArgs))
-                {
-                    var helpersHostItem = Wrap(Engine, typeof(ScriptableEnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
-                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)helpersHostItem).InvokeMethod("GetScriptableAsyncEnumerator", this, Engine)))
-                    {
-                        return enumerator;
-                    }
-                }
-                else if (BindSpecialTarget(out IEnumerable _))
-                {
-                    var helpersHostItem = Wrap(Engine, ScriptableEnumerableHelpers.HostType, HostItemFlags.PrivateAccess);
-                    if (MiscHelpers.Try(out var enumerator, () => ((IDynamic)helpersHostItem).InvokeMethod("GetScriptableAsyncEnumerator", this, Engine)))
-                    {
-                        return enumerator;
-                    }
-                }
-            }
-
-            throw new NotSupportedException("The object is not async-enumerable");
-        }
-
-        #endregion
-
-        #endregion
-
         #region Nested type: DispatchExHostItem
 
         private sealed class DispatchExHostItem : ExpandoHostItem
         {
             #region data
 
-            private static readonly Dictionary<IntPtr, PatchEntry> patchMap = new Dictionary<IntPtr, PatchEntry>();
-            private readonly List<Member> expandoMembers = new List<Member>();
+            private static readonly Dictionary<IntPtr, PatchEntry> patchMap = new();
+            private readonly List<Member> expandoMembers = new();
 
             #endregion
 
@@ -187,10 +139,10 @@ namespace Microsoft.ClearScript
 
             private void EnsurePatched()
             {
-                using (var unknownScope = Scope.Create(() => Marshal.GetIUnknownForObject(this), pUnknown => Marshal.Release(pUnknown)))
+                using (var unknownScope = ScopeFactory.Create(static item => Marshal.GetIUnknownForObject(item), static pUnknown => Marshal.Release(pUnknown), this))
                 {
                     var pUnknown = unknownScope.Value;
-                    using (var dispatchExScope = Scope.Create(() => UnknownHelpers.QueryInterface<IDispatchEx>(pUnknown), pDispatchEx => Marshal.Release(pDispatchEx)))
+                    using (var dispatchExScope = ScopeFactory.Create(static pUnknown => UnknownHelpers.QueryInterface<IDispatchEx>(pUnknown), static pDispatchEx => Marshal.Release(pDispatchEx), pUnknown))
                     {
                         lock (VTablePatcher.PatchLock)
                         {
@@ -247,7 +199,7 @@ namespace Microsoft.ClearScript
                                     try
                                     {
                                         var item = Marshal.GetObjectForIUnknown(pThis) as DispatchExHostItem;
-                                        if (item == null)
+                                        if (item is null)
                                         {
                                             return origGetMemberProperties(pThis, dispid, fetchFlags, out propFlags);
                                         }
@@ -352,7 +304,7 @@ namespace Microsoft.ClearScript
 
             private int GetDispID(string name, DispatchNameFlags nameFlags, out int dispid)
             {
-                var nameComparison = nameFlags.HasFlag(DispatchNameFlags.CaseInsensitive) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+                var nameComparison = nameFlags.HasAllFlags(DispatchNameFlags.CaseInsensitive) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
                 var member = ReflectMembers.Concat(expandoMembers).FirstOrDefault(testMember => string.Equals(testMember.Name, name, nameComparison));
                 if (!member.IsDefault)
@@ -361,7 +313,7 @@ namespace Microsoft.ClearScript
                     return HResult.S_OK;
                 }
 
-                if (nameFlags.HasFlag(DispatchNameFlags.Ensure))
+                if (nameFlags.HasAllFlags(DispatchNameFlags.Ensure))
                 {
                     ThisExpando.AddProperty(name);
                     return GetDispID(name, nameFlags & ~DispatchNameFlags.Ensure, out dispid);
@@ -373,7 +325,7 @@ namespace Microsoft.ClearScript
 
             private int DeleteMemberByName(string name, DispatchNameFlags nameFlags)
             {
-                var nameComparison = nameFlags.HasFlag(DispatchNameFlags.CaseInsensitive) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+                var nameComparison = nameFlags.HasAllFlags(DispatchNameFlags.CaseInsensitive) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
                 var member = ReflectMembers.Concat(expandoMembers).FirstOrDefault(testMember => string.Equals(testMember.Name, name, nameComparison));
                 if (!member.IsDefault && RemoveMember(member.Name))
@@ -451,7 +403,7 @@ namespace Microsoft.ClearScript
             private sealed class PatchEntry
             {
                 // ReSharper disable once CollectionNeverQueried.Local
-                private readonly List<Delegate> delegates = new List<Delegate>();
+                private readonly List<Delegate> delegates = new();
 
                 public void AddDelegate(Delegate del)
                 {

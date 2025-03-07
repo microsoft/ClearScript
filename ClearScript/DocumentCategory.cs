@@ -47,7 +47,7 @@ namespace Microsoft.ClearScript
 
         private sealed class ScriptDocument : DocumentCategory
         {
-            public static readonly ScriptDocument Instance = new ScriptDocument();
+            public static readonly ScriptDocument Instance = new();
 
             private ScriptDocument()
             {
@@ -77,7 +77,7 @@ namespace Microsoft.ClearScript
 
         private sealed class JsonDocument : DocumentCategory
         {
-            public static readonly JsonDocument Instance = new JsonDocument();
+            public static readonly JsonDocument Instance = new();
 
             private JsonDocument()
             {

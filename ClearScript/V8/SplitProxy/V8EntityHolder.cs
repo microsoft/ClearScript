@@ -33,7 +33,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             var tempHandle = handle;
             if (tempHandle != V8Entity.Handle.Empty)
             {
-                V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Entity_Release(tempHandle));
+                V8SplitProxyNative.InvokeNoThrow(static (instance, tempHandle) => instance.V8Entity_Release(tempHandle), tempHandle);
             }
         }
 
@@ -42,7 +42,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             var tempHandle = holder.handle;
             if (tempHandle != V8Entity.Handle.Empty)
             {
-                V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Entity_DestroyHandle(tempHandle));
+                V8SplitProxyNative.InvokeNoThrow(static (instance, tempHandle) => instance.V8Entity_DestroyHandle(tempHandle), tempHandle);
             }
 
             if (holder.registered)

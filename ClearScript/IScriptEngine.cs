@@ -171,7 +171,7 @@ namespace Microsoft.ClearScript
         /// on the specific behavior of reflection-based method binding.
         /// </para>
         /// <para>
-        /// This property has no effect when <see cref="DisableDynamicBinding"/> is set to
+        /// This property has no effect when <c><see cref="DisableDynamicBinding"/></c> is set to
         /// <c>true</c>.
         /// </para>
         /// </remarks>
@@ -200,6 +200,17 @@ namespace Microsoft.ClearScript
         object UndefinedImportValue { get; set; }
 
         /// <summary>
+        /// Gets or sets the script engine's null import value.
+        /// </summary>
+        /// <remarks>
+        /// Some script languages support one or more special <c>null</c> values that represent
+        /// empty or unassigned object references. When such a value is marshaled to the host, the
+        /// script engine maps it to the value of this property. The default value is simply
+        /// <c>null</c>.
+        /// </remarks>
+        object NullImportValue { get; set; }
+
+        /// <summary>
         /// Gets or sets the script engine's null export value.
         /// </summary>
         /// <remarks>
@@ -212,9 +223,9 @@ namespace Microsoft.ClearScript
         /// <c><see href="https://microsoft.github.io/ClearScript/Reference/html/F_Microsoft_ClearScript_Windows_Nothing_Value.htm">Nothing.Value</see></c>.
         /// </para>
         /// <para>
-        /// Note that <see cref="ScriptMemberFlags.WrapNullResult"/>,
-        /// <see cref="EnableNullResultWrapping"/>, and
-        /// <see href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm">MarshalNullAsDispatch</see>
+        /// Note that <c><see cref="ScriptMemberFlags.WrapNullResult"/></c>,
+        /// <c><see cref="EnableNullResultWrapping"/></c>, and
+        /// <c><see href="https://microsoft.github.io/ClearScript/Reference/html/T_Microsoft_ClearScript_Windows_WindowsScriptEngineFlags.htm">MarshalNullAsDispatch</see></c>
         /// all take precedence over this property.
         /// </para>
         /// </remarks>

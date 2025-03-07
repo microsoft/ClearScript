@@ -59,7 +59,7 @@ namespace Microsoft.ClearScript.Util
 
             var accessContext = context.AccessContext;
 
-            if (accessContext == null)
+            if (accessContext is null)
             {
                 return false;
             }
@@ -110,7 +110,7 @@ namespace Microsoft.ClearScript.Util
 
             var accessContext = context.AccessContext;
 
-            if (accessContext == null)
+            if (accessContext is null)
             {
                 return false;
             }
@@ -151,13 +151,13 @@ namespace Microsoft.ClearScript.Util
         public static bool IsAccessible(this PropertyInfo property, IHostContext context)
         {
             var getMethod = property.GetMethod;
-            if ((getMethod != null) && getMethod.IsAccessible(context))
+            if ((getMethod is not null) && getMethod.IsAccessible(context))
             {
                 return true;
             }
 
             var setMethod = property.SetMethod;
-            if ((setMethod != null) && setMethod.IsAccessible(context))
+            if ((setMethod is not null) && setMethod.IsAccessible(context))
             {
                 return true;
             }
@@ -176,7 +176,7 @@ namespace Microsoft.ClearScript.Util
 
             var accessContext = context.AccessContext;
 
-            if (accessContext == null)
+            if (accessContext is null)
             {
                 return (visibility == TypeAttributes.NestedPublic) && type.DeclaringType.IsAccessible(context);
             }
@@ -245,7 +245,7 @@ namespace Microsoft.ClearScript.Util
         public static ScriptAccess GetScriptAccess(this MemberInfo member, IHostContext context, ScriptAccess defaultValue, bool chain = true)
         {
             var attribute = member.GetOrLoadCustomAttribute<ScriptUsageAttribute>(context);
-            if (attribute != null)
+            if (attribute is not null)
             {
                 return attribute.Access;
             }
@@ -253,7 +253,7 @@ namespace Microsoft.ClearScript.Util
             if (chain)
             {
                 var declaringType = member.DeclaringType;
-                if (declaringType != null)
+                if (declaringType is not null)
                 {
                     var testType = declaringType;
                     do
@@ -261,24 +261,24 @@ namespace Microsoft.ClearScript.Util
                         if (testType.IsNested)
                         {
                             var nestedTypeAttribute = testType.GetOrLoadCustomAttribute<ScriptUsageAttribute>(context);
-                            if (nestedTypeAttribute != null)
+                            if (nestedTypeAttribute is not null)
                             {
                                 return nestedTypeAttribute.Access;
                             }
                         }
 
                         var typeAttribute = testType.GetOrLoadCustomAttribute<DefaultScriptUsageAttribute>(context);
-                        if (typeAttribute != null)
+                        if (typeAttribute is not null)
                         {
                             return typeAttribute.Access;
                         }
 
                         testType = testType.DeclaringType;
 
-                    } while (testType != null);
+                    } while (testType is not null);
 
                     var assemblyAttribute = declaringType.Assembly.GetOrLoadCustomAttribute<DefaultScriptUsageAttribute>(context);
-                    if (assemblyAttribute != null)
+                    if (assemblyAttribute is not null)
                     {
                         return assemblyAttribute.Access;
                     }
@@ -290,13 +290,13 @@ namespace Microsoft.ClearScript.Util
 
         public static bool IsRestrictedForScript(this MemberInfo member, IHostContext context)
         {
-            return !member.GetScriptMemberFlags(context).HasFlag(ScriptMemberFlags.ExposeRuntimeType);
+            return !member.GetScriptMemberFlags(context).HasAllFlags(ScriptMemberFlags.ExposeRuntimeType);
         }
 
         public static bool IsDispID(this MemberInfo member, IHostContext context, int dispid)
         {
             var attribute = member.GetOrLoadCustomAttribute<DispIdAttribute>(context);
-            return (attribute != null) && (attribute.Value == dispid);
+            return (attribute is not null) && (attribute.Value == dispid);
         }
 
         public static ScriptMemberFlags GetScriptMemberFlags(this MemberInfo member, IHostContext context)

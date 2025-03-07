@@ -47,7 +47,7 @@ namespace Microsoft.ClearScript.Test
             return TestUtil.CalcTestValue(new Guid("06407870-c4dc-40f8-95ec-8d743c77c8b2"), this, typeof(T), arg);
         }
 
-        private readonly Dictionary<string, object> dict = new Dictionary<string, object>();
+        private readonly Dictionary<string, object> dict = new();
 
         public object this[string key]
         {

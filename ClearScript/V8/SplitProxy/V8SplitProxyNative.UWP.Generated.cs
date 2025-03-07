@@ -75,6 +75,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #endregion
 
+            #region memory methods
+
+            IntPtr IV8SplitProxyNative.Memory_Allocate(UIntPtr size)
+            {
+                return Memory_Allocate(size);
+            }
+
+            IntPtr IV8SplitProxyNative.Memory_AllocateZeroed(UIntPtr size)
+            {
+                return Memory_AllocateZeroed(size);
+            }
+
+            void IV8SplitProxyNative.Memory_Free(IntPtr pMemory)
+            {
+                Memory_Free(pMemory);
+            }
+
+            #endregion
+
             #region StdString methods
 
             StdString.Ptr IV8SplitProxyNative.StdString_New(string value)
@@ -86,6 +105,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
+            }
+
+            TValue IV8SplitProxyNative.StdString_GetValue<TValue>(StdString.Ptr pString, Func<IntPtr, int, TValue> factory)
+            {
+                var pValue = StdString_GetValue(pString, out var length);
+                return factory(pValue, length);
+            }
+
+            TValue IV8SplitProxyNative.StdString_GetValue<TValue, TArg>(StdString.Ptr pString, Func<IntPtr, int, TArg, TValue> factory, in TArg arg)
+            {
+                var pValue = StdString_GetValue(pString, out var length);
+                return factory(pValue, length, arg);
             }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
@@ -341,16 +372,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetNumber(pV8Value, value);
             }
 
-            void IV8SplitProxyNative.V8Value_SetInt32(V8Value.Ptr pV8Value, int value)
-            {
-                V8Value_SetInt32(pV8Value, value);
-            }
-
-            void IV8SplitProxyNative.V8Value_SetUInt32(V8Value.Ptr pV8Value, uint value)
-            {
-                V8Value_SetUInt32(pV8Value, value);
-            }
-
             void IV8SplitProxyNative.V8Value_SetString(V8Value.Ptr pV8Value, string value)
             {
                 V8Value_SetString(pV8Value, value, value.Length);
@@ -371,9 +392,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
-            void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
+            void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetHostObject(pV8Value, pObject);
+                V8Value_SetHostObject(pV8Value, pObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_Decode(V8Value.Ptr pV8Value, out V8Value.Decoded decoded)
@@ -690,6 +711,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_InvokeWithLock(V8Context.Handle hContext, IntPtr pAction)
             {
                 V8Context_InvokeWithLock(hContext, pAction);
+            }
+
+            void IV8SplitProxyNative.V8Context_InvokeWithLockWithArg(V8Context.Handle hContext, IntPtr pAction, IntPtr pArg)
+            {
+                V8Context_InvokeWithLockWithArg(hContext, pAction, pArg);
             }
 
             object IV8SplitProxyNative.V8Context_GetRootItem(V8Context.Handle hContext)
@@ -1055,6 +1081,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Object_InvokeWithArrayBufferOrViewData(hObject, pAction);
             }
 
+            void IV8SplitProxyNative.V8Object_InvokeWithArrayBufferOrViewDataWithArg(V8Object.Handle hObject, IntPtr pAction, IntPtr pArg)
+            {
+                V8Object_InvokeWithArrayBufferOrViewDataWithArg(hObject, pAction, pArg);
+            }
+
             #endregion
 
             #region V8 debug callback methods
@@ -1088,11 +1119,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #endregion
 
-            #region V8 entity cleanup
+            #region V8 entity methods
 
             void IV8SplitProxyNative.V8Entity_Release(V8Entity.Handle hEntity)
             {
                 V8Entity_Release(hEntity);
+            }
+
+            V8Entity.Handle IV8SplitProxyNative.V8Entity_CloneHandle(V8Entity.Handle hEntity)
+            {
+                return V8Entity_CloneHandle(hEntity);
             }
 
             void IV8SplitProxyNative.V8Entity_DestroyHandle(V8Entity.Handle hEntity)
@@ -1152,6 +1188,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
                 [In] uint size
+            );
+
+            #endregion
+
+            #region memory methods
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern IntPtr Memory_Allocate(
+                [In] UIntPtr size
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern IntPtr Memory_AllocateZeroed(
+                [In] UIntPtr size
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void Memory_Free(
+                [In] IntPtr pMemory
             );
 
             #endregion
@@ -1437,18 +1492,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
-            private static extern void V8Value_SetInt32(
-                [In] V8Value.Ptr pV8Value,
-                [In] int value
-            );
-
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
-            private static extern void V8Value_SetUInt32(
-                [In] V8Value.Ptr pV8Value,
-                [In] uint value
-            );
-
-            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetString(
                 [In] V8Value.Ptr pV8Value,
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
@@ -1480,7 +1523,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetHostObject(
                 [In] V8Value.Ptr pV8Value,
-                [In] IntPtr pObject
+                [In] IntPtr pObject,
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
@@ -1799,6 +1844,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_InvokeWithLockWithArg(
+                [In] V8Context.Handle hContext,
+                [In] IntPtr pAction,
+                [In] IntPtr pArg
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetRootItem(
                 [In] V8Context.Handle hContext,
                 [In] V8Value.Ptr pItem
@@ -2105,6 +2157,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] IntPtr pAction
             );
 
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Object_InvokeWithArrayBufferOrViewDataWithArg(
+                [In] V8Object.Handle hObject,
+                [In] IntPtr pAction,
+                [In] IntPtr pArg
+            );
+
             #endregion
 
             #region V8 debug callback methods
@@ -2136,10 +2195,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #endregion
 
-            #region V8 entity cleanup
+            #region V8 entity methods
 
             [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Entity_Release(
+                [In] V8Entity.Handle hEntity
+            );
+
+            [DllImport("ClearScriptV8.win-x86.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Entity.Handle V8Entity_CloneHandle(
                 [In] V8Entity.Handle hEntity
             );
 
@@ -2208,6 +2272,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #endregion
 
+            #region memory methods
+
+            IntPtr IV8SplitProxyNative.Memory_Allocate(UIntPtr size)
+            {
+                return Memory_Allocate(size);
+            }
+
+            IntPtr IV8SplitProxyNative.Memory_AllocateZeroed(UIntPtr size)
+            {
+                return Memory_AllocateZeroed(size);
+            }
+
+            void IV8SplitProxyNative.Memory_Free(IntPtr pMemory)
+            {
+                Memory_Free(pMemory);
+            }
+
+            #endregion
+
             #region StdString methods
 
             StdString.Ptr IV8SplitProxyNative.StdString_New(string value)
@@ -2219,6 +2302,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
+            }
+
+            TValue IV8SplitProxyNative.StdString_GetValue<TValue>(StdString.Ptr pString, Func<IntPtr, int, TValue> factory)
+            {
+                var pValue = StdString_GetValue(pString, out var length);
+                return factory(pValue, length);
+            }
+
+            TValue IV8SplitProxyNative.StdString_GetValue<TValue, TArg>(StdString.Ptr pString, Func<IntPtr, int, TArg, TValue> factory, in TArg arg)
+            {
+                var pValue = StdString_GetValue(pString, out var length);
+                return factory(pValue, length, arg);
             }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
@@ -2474,16 +2569,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetNumber(pV8Value, value);
             }
 
-            void IV8SplitProxyNative.V8Value_SetInt32(V8Value.Ptr pV8Value, int value)
-            {
-                V8Value_SetInt32(pV8Value, value);
-            }
-
-            void IV8SplitProxyNative.V8Value_SetUInt32(V8Value.Ptr pV8Value, uint value)
-            {
-                V8Value_SetUInt32(pV8Value, value);
-            }
-
             void IV8SplitProxyNative.V8Value_SetString(V8Value.Ptr pV8Value, string value)
             {
                 V8Value_SetString(pV8Value, value, value.Length);
@@ -2504,9 +2589,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
-            void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
+            void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetHostObject(pV8Value, pObject);
+                V8Value_SetHostObject(pV8Value, pObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_Decode(V8Value.Ptr pV8Value, out V8Value.Decoded decoded)
@@ -2823,6 +2908,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_InvokeWithLock(V8Context.Handle hContext, IntPtr pAction)
             {
                 V8Context_InvokeWithLock(hContext, pAction);
+            }
+
+            void IV8SplitProxyNative.V8Context_InvokeWithLockWithArg(V8Context.Handle hContext, IntPtr pAction, IntPtr pArg)
+            {
+                V8Context_InvokeWithLockWithArg(hContext, pAction, pArg);
             }
 
             object IV8SplitProxyNative.V8Context_GetRootItem(V8Context.Handle hContext)
@@ -3188,6 +3278,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Object_InvokeWithArrayBufferOrViewData(hObject, pAction);
             }
 
+            void IV8SplitProxyNative.V8Object_InvokeWithArrayBufferOrViewDataWithArg(V8Object.Handle hObject, IntPtr pAction, IntPtr pArg)
+            {
+                V8Object_InvokeWithArrayBufferOrViewDataWithArg(hObject, pAction, pArg);
+            }
+
             #endregion
 
             #region V8 debug callback methods
@@ -3221,11 +3316,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #endregion
 
-            #region V8 entity cleanup
+            #region V8 entity methods
 
             void IV8SplitProxyNative.V8Entity_Release(V8Entity.Handle hEntity)
             {
                 V8Entity_Release(hEntity);
+            }
+
+            V8Entity.Handle IV8SplitProxyNative.V8Entity_CloneHandle(V8Entity.Handle hEntity)
+            {
+                return V8Entity_CloneHandle(hEntity);
             }
 
             void IV8SplitProxyNative.V8Entity_DestroyHandle(V8Entity.Handle hEntity)
@@ -3285,6 +3385,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
                 [In] uint size
+            );
+
+            #endregion
+
+            #region memory methods
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern IntPtr Memory_Allocate(
+                [In] UIntPtr size
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern IntPtr Memory_AllocateZeroed(
+                [In] UIntPtr size
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void Memory_Free(
+                [In] IntPtr pMemory
             );
 
             #endregion
@@ -3570,18 +3689,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
-            private static extern void V8Value_SetInt32(
-                [In] V8Value.Ptr pV8Value,
-                [In] int value
-            );
-
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
-            private static extern void V8Value_SetUInt32(
-                [In] V8Value.Ptr pV8Value,
-                [In] uint value
-            );
-
-            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetString(
                 [In] V8Value.Ptr pV8Value,
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
@@ -3613,7 +3720,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetHostObject(
                 [In] V8Value.Ptr pV8Value,
-                [In] IntPtr pObject
+                [In] IntPtr pObject,
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -3932,6 +4041,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_InvokeWithLockWithArg(
+                [In] V8Context.Handle hContext,
+                [In] IntPtr pAction,
+                [In] IntPtr pArg
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetRootItem(
                 [In] V8Context.Handle hContext,
                 [In] V8Value.Ptr pItem
@@ -4238,6 +4354,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] IntPtr pAction
             );
 
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Object_InvokeWithArrayBufferOrViewDataWithArg(
+                [In] V8Object.Handle hObject,
+                [In] IntPtr pAction,
+                [In] IntPtr pArg
+            );
+
             #endregion
 
             #region V8 debug callback methods
@@ -4269,10 +4392,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #endregion
 
-            #region V8 entity cleanup
+            #region V8 entity methods
 
             [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Entity_Release(
+                [In] V8Entity.Handle hEntity
+            );
+
+            [DllImport("ClearScriptV8.win-x64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Entity.Handle V8Entity_CloneHandle(
                 [In] V8Entity.Handle hEntity
             );
 
@@ -4341,6 +4469,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #endregion
 
+            #region memory methods
+
+            IntPtr IV8SplitProxyNative.Memory_Allocate(UIntPtr size)
+            {
+                return Memory_Allocate(size);
+            }
+
+            IntPtr IV8SplitProxyNative.Memory_AllocateZeroed(UIntPtr size)
+            {
+                return Memory_AllocateZeroed(size);
+            }
+
+            void IV8SplitProxyNative.Memory_Free(IntPtr pMemory)
+            {
+                Memory_Free(pMemory);
+            }
+
+            #endregion
+
             #region StdString methods
 
             StdString.Ptr IV8SplitProxyNative.StdString_New(string value)
@@ -4352,6 +4499,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
+            }
+
+            TValue IV8SplitProxyNative.StdString_GetValue<TValue>(StdString.Ptr pString, Func<IntPtr, int, TValue> factory)
+            {
+                var pValue = StdString_GetValue(pString, out var length);
+                return factory(pValue, length);
+            }
+
+            TValue IV8SplitProxyNative.StdString_GetValue<TValue, TArg>(StdString.Ptr pString, Func<IntPtr, int, TArg, TValue> factory, in TArg arg)
+            {
+                var pValue = StdString_GetValue(pString, out var length);
+                return factory(pValue, length, arg);
             }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
@@ -4607,16 +4766,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetNumber(pV8Value, value);
             }
 
-            void IV8SplitProxyNative.V8Value_SetInt32(V8Value.Ptr pV8Value, int value)
-            {
-                V8Value_SetInt32(pV8Value, value);
-            }
-
-            void IV8SplitProxyNative.V8Value_SetUInt32(V8Value.Ptr pV8Value, uint value)
-            {
-                V8Value_SetUInt32(pV8Value, value);
-            }
-
             void IV8SplitProxyNative.V8Value_SetString(V8Value.Ptr pV8Value, string value)
             {
                 V8Value_SetString(pV8Value, value, value.Length);
@@ -4637,9 +4786,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Value_SetV8Object(pV8Value, hObject, subtype, flags);
             }
 
-            void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject)
+            void IV8SplitProxyNative.V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject, V8Value.Subtype subtype, V8Value.Flags flags)
             {
-                V8Value_SetHostObject(pV8Value, pObject);
+                V8Value_SetHostObject(pV8Value, pObject, subtype, flags);
             }
 
             void IV8SplitProxyNative.V8Value_Decode(V8Value.Ptr pV8Value, out V8Value.Decoded decoded)
@@ -4956,6 +5105,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             void IV8SplitProxyNative.V8Context_InvokeWithLock(V8Context.Handle hContext, IntPtr pAction)
             {
                 V8Context_InvokeWithLock(hContext, pAction);
+            }
+
+            void IV8SplitProxyNative.V8Context_InvokeWithLockWithArg(V8Context.Handle hContext, IntPtr pAction, IntPtr pArg)
+            {
+                V8Context_InvokeWithLockWithArg(hContext, pAction, pArg);
             }
 
             object IV8SplitProxyNative.V8Context_GetRootItem(V8Context.Handle hContext)
@@ -5321,6 +5475,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 V8Object_InvokeWithArrayBufferOrViewData(hObject, pAction);
             }
 
+            void IV8SplitProxyNative.V8Object_InvokeWithArrayBufferOrViewDataWithArg(V8Object.Handle hObject, IntPtr pAction, IntPtr pArg)
+            {
+                V8Object_InvokeWithArrayBufferOrViewDataWithArg(hObject, pAction, pArg);
+            }
+
             #endregion
 
             #region V8 debug callback methods
@@ -5354,11 +5513,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #endregion
 
-            #region V8 entity cleanup
+            #region V8 entity methods
 
             void IV8SplitProxyNative.V8Entity_Release(V8Entity.Handle hEntity)
             {
                 V8Entity_Release(hEntity);
+            }
+
+            V8Entity.Handle IV8SplitProxyNative.V8Entity_CloneHandle(V8Entity.Handle hEntity)
+            {
+                return V8Entity_CloneHandle(hEntity);
             }
 
             void IV8SplitProxyNative.V8Entity_DestroyHandle(V8Entity.Handle hEntity)
@@ -5418,6 +5582,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             private static extern void V8Environment_InitializeICU(
                 [In] IntPtr pICUData,
                 [In] uint size
+            );
+
+            #endregion
+
+            #region memory methods
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern IntPtr Memory_Allocate(
+                [In] UIntPtr size
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern IntPtr Memory_AllocateZeroed(
+                [In] UIntPtr size
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void Memory_Free(
+                [In] IntPtr pMemory
             );
 
             #endregion
@@ -5703,18 +5886,6 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
-            private static extern void V8Value_SetInt32(
-                [In] V8Value.Ptr pV8Value,
-                [In] int value
-            );
-
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
-            private static extern void V8Value_SetUInt32(
-                [In] V8Value.Ptr pV8Value,
-                [In] uint value
-            );
-
-            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetString(
                 [In] V8Value.Ptr pV8Value,
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string value,
@@ -5746,7 +5917,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Value_SetHostObject(
                 [In] V8Value.Ptr pV8Value,
-                [In] IntPtr pObject
+                [In] IntPtr pObject,
+                [In] V8Value.Subtype subtype,
+                [In] V8Value.Flags flags
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
@@ -6065,6 +6238,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Context_InvokeWithLockWithArg(
+                [In] V8Context.Handle hContext,
+                [In] IntPtr pAction,
+                [In] IntPtr pArg
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Context_GetRootItem(
                 [In] V8Context.Handle hContext,
                 [In] V8Value.Ptr pItem
@@ -6371,6 +6551,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 [In] IntPtr pAction
             );
 
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern void V8Object_InvokeWithArrayBufferOrViewDataWithArg(
+                [In] V8Object.Handle hObject,
+                [In] IntPtr pAction,
+                [In] IntPtr pArg
+            );
+
             #endregion
 
             #region V8 debug callback methods
@@ -6402,10 +6589,15 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             #endregion
 
-            #region V8 entity cleanup
+            #region V8 entity methods
 
             [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
             private static extern void V8Entity_Release(
+                [In] V8Entity.Handle hEntity
+            );
+
+            [DllImport("ClearScriptV8.win-arm64.dll", CallingConvention = CallingConvention.StdCall)]
+            private static extern V8Entity.Handle V8Entity_CloneHandle(
                 [In] V8Entity.Handle hEntity
             );
 

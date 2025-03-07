@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.V8;
@@ -18,8 +19,21 @@ namespace Microsoft.ClearScript.Test
 
         public static void Main(string[] args)
         {
-            uint choice = 0;
-            var burn = (args.Length == 2) && (args[0] == "-b") && uint.TryParse(args[1], out choice) && (choice >= 1) && (choice <= 2);
+            var choice = 0U;
+            var burn = false;
+
+            var argQueue = new Queue<string>(args);
+            while (argQueue.TryDequeue(out var arg))
+            {
+                if ((arg == "-b") || (arg == "--burn"))
+                {
+                    burn = argQueue.TryDequeue(out var choiceString) && uint.TryParse(choiceString, out choice) && (choice >= 1) && (choice <= 2);
+                }
+                else if ((arg == "-d") || (arg == "--disable-background-work"))
+                {
+                    V8Settings.GlobalFlags |= V8GlobalFlags.DisableBackgroundWork;
+                }
+            }
 
             Console.Clear();
             if (!burn) Console.WriteLine("ClearScript Benchmarks ({0}, {1}, {2} {3})\n", RuntimeInformation.FrameworkDescription.Trim(), RuntimeInformation.OSDescription.Trim(), RuntimeInformation.ProcessArchitecture, flavor);

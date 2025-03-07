@@ -19,7 +19,9 @@
     V8_SPLIT_PROXY_MANAGED_METHOD(void, ScheduleScriptInterruptedException, const StdString& engineName, const StdString& message, const StdString& stackTrace, StdBool isFatal, StdBool executionStarted, const V8Value& scriptException, const V8Value& innerException) \
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, InvokeHostAction, void* pvAction) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, InvokeHostActionWithArg, void* pvAction, void* pvArg) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, ProcessArrayBufferOrViewData, void* pvData, void* pvAction) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, ProcessArrayBufferOrViewDataWithArg, void* pvData, void* pvAction, void* pvArg) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, ProcessCpuProfile, const v8::CpuProfile& profile, void* pvAction) \
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void*, CreateV8ObjectCache) \
@@ -37,10 +39,9 @@
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void*, AddRefHostObject, void* pvObject) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, ReleaseHostObject, void* pvObject) \
-    V8_SPLIT_PROXY_MANAGED_METHOD(IHostObjectUtil::Invocability, GetHostObjectInvocability, void* pvObject) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(HostObjectUtil::Invocability, GetHostObjectInvocability, void* pvObject) \
     \
-    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectNamedProperty, void* pvObject, const StdString& name, V8Value& value) \
-    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectNamedPropertyWithCacheability, void* pvObject, const StdString& name, V8Value& value, StdBool& isCacheable) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectNamedProperty, void* pvObject, const StdString& name, V8Value& value, StdBool& isCacheable) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, SetHostObjectNamedProperty, void* pvObject, const StdString& name, const V8Value::Decoded& value) \
     V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, DeleteHostObjectNamedProperty, void* pvObject, const StdString& name) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectPropertyNames, void* pvObject, std::vector<StdString>& names) \
@@ -55,6 +56,23 @@
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectEnumerator, void* pvObject, V8Value& result) \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, GetHostObjectAsyncEnumerator, void* pvObject, V8Value& result) \
+    \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetFastHostObjectNamedProperty, void* pvObject, const StdString& name, V8Value::FastResult& value, StdBool& isCacheable) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, SetFastHostObjectNamedProperty, void* pvObject, const StdString& name, const V8Value::FastArg& value) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(FastHostObjectUtil::PropertyFlags, QueryFastHostObjectNamedProperty, void* pvObject, const StdString& name) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, DeleteFastHostObjectNamedProperty, void* pvObject, const StdString& name) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetFastHostObjectPropertyNames, void* pvObject, std::vector<StdString>& names) \
+    \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetFastHostObjectIndexedProperty, void* pvObject, int32_t index, V8Value::FastResult& value) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, SetFastHostObjectIndexedProperty, void* pvObject, int32_t index, const V8Value::FastArg& value) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(FastHostObjectUtil::PropertyFlags, QueryFastHostObjectIndexedProperty, void* pvObject, int32_t index) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(StdBool, DeleteFastHostObjectIndexedProperty, void* pvObject, int32_t index) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetFastHostObjectPropertyIndices, void* pvObject, std::vector<int32_t>& indices) \
+    \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, InvokeFastHostObject, void* pvObject, StdBool asConstructor, int32_t argCount, const V8Value::FastArg* pArgs, V8Value::FastResult& result) \
+    \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetFastHostObjectEnumerator, void* pvObject, V8Value::FastResult& result) \
+    V8_SPLIT_PROXY_MANAGED_METHOD(void, GetFastHostObjectAsyncEnumerator, void* pvObject, V8Value::FastResult& result) \
     \
     V8_SPLIT_PROXY_MANAGED_METHOD(void, QueueNativeCallback, NativeCallbackHandle* pCallbackHandle) \
     \
@@ -143,7 +161,7 @@ private:
 //-----------------------------------------------------------------------------
 
 #define V8_SPLIT_PROXY_MANAGED_CALL(TABLE, NAME, ...) \
-    reinterpret_cast<V8SplitProxyManaged::Method::NAME*>((TABLE)[static_cast<std::underlying_type_t<V8SplitProxyManaged::MethodSlot>>(V8SplitProxyManaged::MethodSlot::NAME)])(__VA_ARGS__)
+    reinterpret_cast<V8SplitProxyManaged::Method::NAME*>((TABLE)[::ToUnderlyingType(V8SplitProxyManaged::MethodSlot::NAME)])(__VA_ARGS__)
 
 #define V8_SPLIT_PROXY_MANAGED_INVOKE(TYPE, NAME, ...) \
     V8SplitProxyManaged::Invoke<TYPE>([&] (void** pMethodTable) noexcept { return V8_SPLIT_PROXY_MANAGED_CALL(pMethodTable, NAME, __VA_ARGS__); })

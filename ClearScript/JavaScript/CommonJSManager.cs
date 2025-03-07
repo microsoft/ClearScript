@@ -13,8 +13,8 @@ namespace Microsoft.ClearScript.JavaScript
     {
         private readonly ScriptEngine engine;
         private readonly ScriptObject createModule;
-        private readonly List<Module> moduleCache = new List<Module>();
-        private static readonly DocumentInfo createModuleInfo = new DocumentInfo("CommonJS-createModule [internal]");
+        private readonly List<Module> moduleCache = new();
+        private static readonly DocumentInfo createModuleInfo = new("CommonJS-createModule [internal]");
 
         public CommonJSManager(ScriptEngine engine)
         {
@@ -62,7 +62,7 @@ namespace Microsoft.ClearScript.JavaScript
             var codeDigest = code.GetDigest();
 
             var cachedModule = GetCachedModule(documentInfo, codeDigest);
-            if (cachedModule != null)
+            if (cachedModule is not null)
             {
                 return cachedModule;
             }
@@ -73,7 +73,7 @@ namespace Microsoft.ClearScript.JavaScript
         public Module GetOrCreateModule(UniqueDocumentInfo documentInfo, UIntPtr codeDigest, Func<object> evaluator)
         {
             var cachedModule = GetCachedModule(documentInfo, codeDigest);
-            if (cachedModule != null)
+            if (cachedModule is not null)
             {
                 return cachedModule;
             }
@@ -100,7 +100,7 @@ namespace Microsoft.ClearScript.JavaScript
         private Module CacheModule(Module module)
         {
             var cachedModule = moduleCache.FirstOrDefault(testModule => (testModule.DocumentInfo.UniqueId == module.DocumentInfo.UniqueId) && (testModule.CodeDigest == module.CodeDigest));
-            if (cachedModule != null)
+            if (cachedModule is not null)
             {
                 return cachedModule;
             }
@@ -162,19 +162,19 @@ namespace Microsoft.ClearScript.JavaScript
 
             public object Process(out object marshaledExports)
             {
-                if (module == null)
+                if (module is null)
                 {
-                    var id = (DocumentInfo.Uri != null) ? DocumentInfo.Uri.AbsoluteUri : DocumentInfo.UniqueName;
-                    var uri = (DocumentInfo.Uri != null) ? id : null;
+                    var id = (DocumentInfo.Uri is not null) ? DocumentInfo.Uri.AbsoluteUri : DocumentInfo.UniqueName;
+                    var uri = (DocumentInfo.Uri is not null) ? id : null;
                     Action<object, object> hostInitialize = Initialize;
                     Func<string, object> hostRequire = Require;
                     Func<ScriptObject, ScriptObject> initializeContext = InitializeContext;
                     module = manager.createModule.Invoke(false, id, uri, hostInitialize, hostRequire, initializeContext, typeof(CommonJSLegacyModule).ToHostType(engine));
                 }
 
-                if (function == null)
+                if (function is null)
                 {
-                    function = (ScriptObject)engine.MarshalToHost(engine.ScriptInvoke(() => Evaluator()), false);
+                    function = (ScriptObject)engine.MarshalToHost(engine.ScriptInvoke(static self => self.Evaluator(), this), false);
                 }
 
                 object result;
@@ -223,7 +223,7 @@ namespace Microsoft.ClearScript.JavaScript
                 }
 
                 var uri = document.Info.Uri;
-                var name = (uri != null) ? (uri.IsFile ? uri.LocalPath : uri.AbsoluteUri) : document.Info.Name;
+                var name = (uri is not null) ? (uri.IsFile ? uri.LocalPath : uri.AbsoluteUri) : document.Info.Name;
                 throw new FileLoadException($"Unsupported document category '{document.Info.Category}'", name);
             }
 
@@ -231,7 +231,7 @@ namespace Microsoft.ClearScript.JavaScript
             {
                 var callback = DocumentInfo.ContextCallback ?? engine.DocumentSettings.ContextCallback;
                 var properties = callback?.Invoke(DocumentInfo.Info);
-                if (properties != null)
+                if (properties is not null)
                 {
                     foreach (var pair in properties)
                     {

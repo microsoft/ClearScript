@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
+
 namespace Microsoft.ClearScript.JavaScript
 {
     /// <summary>
@@ -14,6 +16,8 @@ namespace Microsoft.ClearScript.JavaScript
         /// </summary>
         ulong Length { get; }
     }
+
+    // ReSharper disable GrammarMistakeInComment
 
     /// <summary>
     /// Represents a JavaScript <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays">typed array</see>.
@@ -76,7 +80,7 @@ namespace Microsoft.ClearScript.JavaScript
     /// </list>
     /// </para>
     /// </remarks>
-    public interface ITypedArray<T> : ITypedArray
+    public interface ITypedArray<T> : ITypedArray where T : unmanaged
     {
         /// <summary>
         /// Creates an array containing a copy of the typed array's contents.
@@ -95,6 +99,16 @@ namespace Microsoft.ClearScript.JavaScript
         ulong Read(ulong index, ulong length, T[] destination, ulong destinationIndex);
 
         /// <summary>
+        /// Copies elements from the typed array into the specified span.
+        /// </summary>
+        /// <param name="index">The index within the typed array of the first element to copy.</param>
+        /// <param name="length">The maximum number of elements to copy.</param>
+        /// <param name="destination">The span into which to copy the elements.</param>
+        /// <param name="destinationIndex">The index within <paramref name="destination"/> at which to store the first copied element.</param>
+        /// <returns>The number of elements copied.</returns>
+        ulong Read(ulong index, ulong length, Span<T> destination, ulong destinationIndex);
+
+        /// <summary>
         /// Copies elements from the specified array into the typed array.
         /// </summary>
         /// <param name="source">The array from which to copy the elements.</param>
@@ -103,5 +117,17 @@ namespace Microsoft.ClearScript.JavaScript
         /// <param name="index">The index within the typed array at which to store the first copied element.</param>
         /// <returns>The number of elements copied.</returns>
         ulong Write(T[] source, ulong sourceIndex, ulong length, ulong index);
+
+        /// <summary>
+        /// Copies elements from the specified span into the typed array.
+        /// </summary>
+        /// <param name="source">The span from which to copy the elements.</param>
+        /// <param name="sourceIndex">The index within <paramref name="source"/> of the first element to copy.</param>
+        /// <param name="length">The maximum number of elements to copy.</param>
+        /// <param name="index">The index within the typed array at which to store the first copied element.</param>
+        /// <returns>The number of elements copied.</returns>
+        ulong Write(ReadOnlySpan<T> source, ulong sourceIndex, ulong length, ulong index);
     }
+
+    // ReSharper restore GrammarMistakeInComment
 }

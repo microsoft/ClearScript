@@ -21,7 +21,7 @@ namespace Microsoft.ClearScript.Windows.Core
         private readonly WindowsScriptEngine engine;
         private readonly IDispatchEx target;
         private WindowsScriptItem holder;
-        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new();
 
         private WindowsScriptItem(WindowsScriptEngine engine, IDispatchEx target)
         {
@@ -31,9 +31,9 @@ namespace Microsoft.ClearScript.Windows.Core
 
         public static object Wrap(WindowsScriptEngine engine, object obj)
         {
-            Debug.Assert(!(obj is IScriptMarshalWrapper));
+            Debug.Assert(obj is not IScriptMarshalWrapper);
 
-            if (obj == null)
+            if (obj is null)
             {
                 return null;
             }
@@ -67,7 +67,7 @@ namespace Microsoft.ClearScript.Windows.Core
             }
 
             scriptError = exception as IScriptEngineException;
-            if (scriptError != null)
+            if (scriptError is not null)
             {
                 return true;
             }
@@ -75,16 +75,16 @@ namespace Microsoft.ClearScript.Windows.Core
             if (exception is COMException comException)
             {
                 var result = comException.ErrorCode;
-                if (((result == HResult.SCRIPT_E_REPORTED) || (result == HResult.CLEARSCRIPT_E_HOSTEXCEPTION)) && (engine.CurrentScriptFrame != null))
+                if (((result == HResult.SCRIPT_E_REPORTED) || (result == HResult.CLEARSCRIPT_E_HOSTEXCEPTION)) && (engine.CurrentScriptFrame is not null))
                 {
                     scriptError = engine.CurrentScriptFrame.ScriptError ?? engine.CurrentScriptFrame.PendingScriptError;
-                    if (scriptError != null)
+                    if (scriptError is not null)
                     {
                         return true;
                     }
 
                     var hostException = engine.CurrentScriptFrame.HostException;
-                    if (hostException != null)
+                    if (hostException is not null)
                     {
                         scriptError = new ScriptEngineException(engine.Name, hostException.Message, null, HResult.CLEARSCRIPT_E_HOSTEXCEPTION, false, true, null, hostException);
                         return true;
@@ -116,7 +116,7 @@ namespace Microsoft.ClearScript.Windows.Core
             }
             else
             {
-                if ((exception is ArgumentException argumentException) && (argumentException.ParamName == null))
+                if ((exception is ArgumentException argumentException) && (argumentException.ParamName is null))
                 {
                     // this usually indicates invalid object or property access in VBScript
                     scriptError = new ScriptEngineException(engine.Name, "Invalid object or property access", null, HResult.CLEARSCRIPT_E_SCRIPTITEMEXCEPTION, false, false, null, exception.InnerException);
@@ -139,32 +139,37 @@ namespace Microsoft.ClearScript.Windows.Core
         {
             VerifyNotDisposed();
 
-            object tempResult = null;
-            var found = engine.ScriptInvoke(() =>
-            {
-                try
+            var ctx = (self: this, name, value: (object)null);
+
+            var found = engine.ScriptInvoke(
+                static pCtx =>
                 {
-                    tempResult = target.GetProperty(name, false);
-                    return !(tempResult is Nonexistent);
-                }
-                catch (Exception exception)
-                {
-                    if (!name.IsDispIDName(out _) && (exception.HResult != HResult.DISP_E_UNKNOWNNAME))
+                    ref var ctx = ref pCtx.AsRef();
+                    try
                     {
-                        // Property retrieval failed, but a method with the given name exists;
-                        // create a tear-off method. This currently applies only to VBScript.
-
-                        tempResult = new ScriptMethod(this, name);
-                        return true;
+                        ctx.value = ctx.self.target.GetProperty(ctx.name, false);
+                        return ctx.value is not Nonexistent;
                     }
+                    catch (Exception exception)
+                    {
+                        if (!ctx.name.IsDispIDName(out _) && (exception.HResult != HResult.DISP_E_UNKNOWNNAME))
+                        {
+                            // Property retrieval failed, but a method with the given name exists;
+                            // create a tear-off method. This currently applies only to VBScript.
 
-                    return false;
-                }
-            });
+                            ctx.value = new ScriptMethod(ctx.self, ctx.name);
+                            return true;
+                        }
+
+                        return false;
+                    }
+                },
+                StructPtr.FromRef(ref ctx)
+            );
 
             if (found)
             {
-                var result = engine.MarshalToHost(tempResult, false);
+                var result = engine.MarshalToHost(ctx.value, false);
                 if ((result is WindowsScriptItem resultScriptItem) && (resultScriptItem.engine == engine))
                 {
                     resultScriptItem.holder = this;
@@ -187,7 +192,7 @@ namespace Microsoft.ClearScript.Windows.Core
             var succeeded = DynamicHelpers.TryBindAndInvoke(binder, target, args, out result);
             if (!succeeded)
             {
-                if ((result is Exception exception) && (engine.CurrentScriptFrame != null))
+                if ((result is Exception exception) && (engine.CurrentScriptFrame is not null))
                 {
                     var scriptError = exception as IScriptEngineException ?? GetScriptError(exception);
 
@@ -215,13 +220,13 @@ namespace Microsoft.ClearScript.Windows.Core
         public override string[] GetPropertyNames()
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetPropertyNames().ExcludeIndices().ToArray());
+            return engine.ScriptInvoke(static target => target.GetPropertyNames().ExcludeIndices().ToArray(), target);
         }
 
         public override int[] GetPropertyIndices()
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetPropertyNames().GetIndices().ToArray());
+            return engine.ScriptInvoke(static target => target.GetPropertyNames().GetIndices().ToArray(), target);
         }
 
         #endregion
@@ -232,26 +237,32 @@ namespace Microsoft.ClearScript.Windows.Core
         {
             VerifyNotDisposed();
 
-            var result = engine.MarshalToHost(engine.ScriptInvoke(() =>
-            {
-                try
-                {
-                    var value = target.GetProperty(name, false, engine.MarshalToScript(args));
-                    return (value is Nonexistent) ? Undefined.Value : value;
-                }
-                catch (Exception exception)
-                {
-                    if (!name.IsDispIDName(out _) && (exception.HResult != HResult.DISP_E_UNKNOWNNAME))
+            var result = engine.MarshalToHost(
+                engine.ScriptInvoke(
+                    static ctx =>
                     {
-                        // Property retrieval failed, but a method with the given name exists;
-                        // create a tear-off method. This currently applies only to VBScript.
+                        try
+                        {
+                            var value = ctx.self.target.GetProperty(ctx.name, false, ctx.self.engine.MarshalToScript(ctx.args));
+                            return (value is Nonexistent) ? Undefined.Value : value;
+                        }
+                        catch (Exception exception)
+                        {
+                            if (!ctx.name.IsDispIDName(out _) && (exception.HResult != HResult.DISP_E_UNKNOWNNAME))
+                            {
+                                // Property retrieval failed, but a method with the given name exists;
+                                // create a tear-off method. This currently applies only to VBScript.
 
-                        return new ScriptMethod(this, name);
-                    }
+                                return new ScriptMethod(ctx.self, ctx.name);
+                            }
 
-                    return Undefined.Value;
-                }
-            }), false);
+                            return Undefined.Value;
+                        }
+                    },
+                    (self: this, name, args)
+                ),
+                false
+            );
 
             if ((result is WindowsScriptItem resultScriptItem) && (resultScriptItem.engine == engine))
             {
@@ -264,13 +275,13 @@ namespace Microsoft.ClearScript.Windows.Core
         public override void SetProperty(string name, params object[] args)
         {
             VerifyNotDisposed();
-            engine.ScriptInvoke(() => target.SetProperty(name, false, engine.MarshalToScript(args)));
+            engine.ScriptInvoke(static ctx => ctx.self.target.SetProperty(ctx.name, false, ctx.self.engine.MarshalToScript(ctx.args)), (self: this, name, args));
         }
 
         public override bool DeleteProperty(string name)
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.DeleteProperty(name, false));
+            return engine.ScriptInvoke(static ctx => ctx.target.DeleteProperty(ctx.name, false), (target, name));
         }
 
         public override object GetProperty(int index)
@@ -311,7 +322,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
             try
             {
-                return engine.MarshalToHost(engine.ScriptInvoke(() => target.InvokeMethod(name, false, engine.MarshalToScript(args))), false);
+                return engine.MarshalToHost(engine.ScriptInvoke(static ctx => ctx.self.target.InvokeMethod(ctx.name, false, ctx.self.engine.MarshalToScript(ctx.args)), (self: this, name, args)), false);
             }
             catch (Exception exception)
             {
@@ -368,16 +379,18 @@ namespace Microsoft.ClearScript.Windows.Core
         private string[] GetPropertyKeys()
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetPropertyNames().ToArray());
+            return engine.ScriptInvoke(static target => target.GetPropertyNames().ToArray(), target);
         }
 
         IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator()
         {
+            // ReSharper disable once NotDisposedResourceIsReturned
             return KeyValuePairs.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
+            // ReSharper disable once NotDisposedResourceIsReturned
             return ThisDictionary.GetEnumerator();
         }
 

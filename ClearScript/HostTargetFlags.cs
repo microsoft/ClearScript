@@ -13,4 +13,10 @@ namespace Microsoft.ClearScript
         AllowInstanceMembers = 0x00000002,
         AllowExtensionMethods = 0x00000004
     }
+
+    internal static class HostTargetFlagsHelpers
+    {
+        public static bool HasAllFlags(this HostTargetFlags value, HostTargetFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this HostTargetFlags value, HostTargetFlags flags) => (value & flags) != 0;
+    }
 }

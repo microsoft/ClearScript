@@ -20,10 +20,10 @@ namespace Microsoft.ClearScript.V8
         private readonly V8DebugAgent agent;
         private readonly WebSocket webSocket;
 
-        private readonly ConcurrentQueue<string> queue = new ConcurrentQueue<string>();
-        private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1);
+        private readonly ConcurrentQueue<string> queue = new();
+        private readonly SemaphoreSlim sendSemaphore = new(1);
 
-        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new();
 
         #endregion
 

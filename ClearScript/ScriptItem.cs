@@ -23,7 +23,7 @@ namespace Microsoft.ClearScript
         public static void ThrowLastScriptError()
         {
             var scriptError = lastScriptError;
-            if (scriptError != null)
+            if (scriptError is not null)
             {
                 if (scriptError is ScriptInterruptedException)
                 {
@@ -48,40 +48,43 @@ namespace Microsoft.ClearScript
 
         private bool TryWrappedBindAndInvoke(DynamicMetaObjectBinder binder, object[] wrappedArgs, out object result)
         {
-            object[] args = null;
-            object[] savedArgs = null;
+            var ctx = (self: this, binder, wrappedArgs, args: (object[])null, savedArgs: (object[])null, result: (object)null);
 
-            object tempResult = null;
-            var succeeded = Engine.ScriptInvoke(() =>
-            {
-                args = Engine.MarshalToScript(wrappedArgs);
-                savedArgs = (object[])args.Clone();
-
-                if (!TryBindAndInvoke(binder, args, out tempResult))
+            var succeeded = Engine.ScriptInvoke(
+                static pCtx =>
                 {
-                    if ((Engine.CurrentScriptFrame != null) && (lastScriptError == null))
+                    ref var ctx = ref pCtx.AsRef();
+
+                    ctx.args = ctx.self.Engine.MarshalToScript(ctx.wrappedArgs);
+                    ctx.savedArgs = (object[])ctx.args.Clone();
+
+                    if (!ctx.self.TryBindAndInvoke(ctx.binder, ctx.args, out ctx.result))
                     {
-                        lastScriptError = Engine.CurrentScriptFrame.ScriptError;
+                        if ((ctx.self.Engine.CurrentScriptFrame is not null) && (lastScriptError is null))
+                        {
+                            lastScriptError = ctx.self.Engine.CurrentScriptFrame.ScriptError;
+                        }
+
+                        return false;
                     }
 
-                    return false;
-                }
-
-                return true;
-            });
+                    return true;
+                },
+                StructPtr.FromRef(ref ctx)
+            );
 
             if (succeeded)
             {
-                for (var index = 0; index < args.Length; index++)
+                for (var index = 0; index < ctx.args.Length; index++)
                 {
-                    var arg = args[index];
-                    if (!ReferenceEquals(arg, savedArgs[index]))
+                    var arg = ctx.args[index];
+                    if (!ReferenceEquals(arg, ctx.savedArgs[index]))
                     {
-                        wrappedArgs[index] = Engine.MarshalToHost(args[index], false);
+                        wrappedArgs[index] = Engine.MarshalToHost(ctx.args[index], false);
                     }
                 }
 
-                result = Engine.MarshalToHost(tempResult, false).ToDynamicResult(Engine);
+                result = Engine.MarshalToHost(ctx.result, false).ToDynamicResult(Engine);
                 return true;
             }
 
@@ -92,12 +95,12 @@ namespace Microsoft.ClearScript
         private bool TryWrappedInvokeOrInvokeMember(DynamicMetaObjectBinder binder, ParameterInfo[] parameters, object[] args, out object result)
         {
             Type[] paramTypes = null;
-            if ((parameters != null) && (parameters.Length >= args.Length))
+            if ((parameters is not null) && (parameters.Length >= args.Length))
             {
                 paramTypes = parameters.Skip(parameters.Length - args.Length).Select(param => param.ParameterType).ToArray();
             }
 
-            if (paramTypes != null)
+            if (paramTypes is not null)
             {
                 for (var index = 0; index < paramTypes.Length; index++)
                 {
@@ -111,7 +114,7 @@ namespace Microsoft.ClearScript
 
             if (TryWrappedBindAndInvoke(binder, AdjustInvokeArgs(args), out result))
             {
-                if (paramTypes != null)
+                if (paramTypes is not null)
                 {
                     for (var index = 0; index < paramTypes.Length; index++)
                     {
@@ -274,7 +277,7 @@ namespace Microsoft.ClearScript
 
         public object InvokeMember(string name, BindingFlags invokeFlags, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
         {
-            if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+            if (invokeFlags.HasAllFlags(BindingFlags.InvokeMethod))
             {
                 if (name == SpecialMemberNames.Default)
                 {
@@ -284,7 +287,7 @@ namespace Microsoft.ClearScript
                 return InvokeMethod(name, args);
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.GetField))
+            if (invokeFlags.HasAllFlags(BindingFlags.GetField))
             {
                 if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out var index))
                 {
@@ -294,7 +297,7 @@ namespace Microsoft.ClearScript
                 return GetProperty(name, args);
             }
 
-            if (invokeFlags.HasFlag(BindingFlags.SetField))
+            if (invokeFlags.HasAllFlags(BindingFlags.SetField))
             {
                 if (args.Length != 1)
                 {
@@ -352,11 +355,8 @@ namespace Microsoft.ClearScript
             return GetProperty(name, args);
         }
 
-        #endregion
-
-        #region IDynamic implementation
-
         public abstract string[] GetPropertyNames();
+
         public abstract int[] GetPropertyIndices();
 
         #endregion

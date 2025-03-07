@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -14,6 +15,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.Properties;
+using INVOKEKIND = System.Runtime.InteropServices.ComTypes.INVOKEKIND;
+using TYPEFLAGS = System.Runtime.InteropServices.ComTypes.TYPEFLAGS;
 
 namespace Microsoft.ClearScript.Util
 {
@@ -21,7 +24,7 @@ namespace Microsoft.ClearScript.Util
     {
         #region COM helpers
 
-        private static readonly Regex dispIDNameRegex = new Regex(@"^\[DISPID=(-?[0-9]+)\]$");
+        private static readonly Regex dispIDNameRegex = new(@"^\[DISPID=(-?[0-9]+)\]$");
 
         public static object CreateCOMObject(string progID, string serverName)
         {
@@ -41,7 +44,7 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
 
-            return Try(out obj, () => Activator.CreateInstance(type) as T) && (obj != null);
+            return Try(out obj, () => Activator.CreateInstance(type) as T) && (obj is not null);
         }
 
         public static bool TryCreateCOMObject<T>(Guid clsid, string serverName, out T obj) where T : class
@@ -52,7 +55,7 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
 
-            return Try(out obj, () => Activator.CreateInstance(type) as T) && (obj != null);
+            return Try(out obj, () => Activator.CreateInstance(type) as T) && (obj is not null);
         }
 
         public static Type GetCOMType(string progID, string serverName)
@@ -80,13 +83,13 @@ namespace Microsoft.ClearScript.Util
         public static bool TryGetCOMType(string progID, string serverName, out Type type)
         {
             type = Guid.TryParseExact(progID, "B", out var clsid) ? Type.GetTypeFromCLSID(clsid, serverName) : Type.GetTypeFromProgID(progID, serverName);
-            return type != null;
+            return type is not null;
         }
 
         public static bool TryGetCOMType(Guid clsid, string serverName, out Type type)
         {
             type = Type.GetTypeFromCLSID(clsid, serverName);
-            return type != null;
+            return type is not null;
         }
 
         public static string GetDispIDName(int dispid)
@@ -112,7 +115,7 @@ namespace Microsoft.ClearScript.Util
 
         public static void VerifyNonNullArgument(object value, string name)
         {
-            if (value == null)
+            if (value is null)
             {
                 throw new ArgumentNullException(name);
             }
@@ -132,7 +135,19 @@ namespace Microsoft.ClearScript.Util
 
         private static readonly char[] searchPathSeparators = { ';' };
 
-        public static string EnsureNonBlank(string input, string alternate)
+        public static string ToNonNull(this string input, string alternate = "[null]")
+        {
+            Debug.Assert(alternate is not null);
+            return input ?? alternate;
+        }
+
+        public static string ToNonEmpty(this string input, string alternate)
+        {
+            Debug.Assert(!string.IsNullOrEmpty(alternate));
+            return string.IsNullOrEmpty(input) ? alternate : input;
+        }
+
+        public static string ToNonBlank(this string input, string alternate)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(alternate));
             return string.IsNullOrWhiteSpace(input) ? alternate : input;
@@ -172,9 +187,9 @@ namespace Microsoft.ClearScript.Util
 
         public static string GetUrlOrPath(Uri uri, string alternate)
         {
-            Debug.Assert(alternate != null);
+            Debug.Assert(alternate is not null);
 
-            if (uri == null)
+            if (uri is null)
             {
                 return alternate;
             }
@@ -264,13 +279,29 @@ namespace Microsoft.ClearScript.Util
 
         public static StringComparison GetMemberNameComparison(this BindingFlags bindFlags)
         {
-            return bindFlags.HasFlag(BindingFlags.IgnoreCase) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+            return bindFlags.HasAllFlags(BindingFlags.IgnoreCase) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         }
 
         public static StringComparer GetMemberNameComparer(this BindingFlags bindFlags)
         {
-            return bindFlags.HasFlag(BindingFlags.IgnoreCase) ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+            return bindFlags.HasAllFlags(BindingFlags.IgnoreCase) ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         }
+
+        #endregion
+
+        #region enum helpers
+
+        public static bool HasAllFlags(this BindingFlags value, BindingFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this BindingFlags value, BindingFlags flags) => (value & flags) != 0;
+
+        public static bool HasAllFlags(this ParameterAttributes value, ParameterAttributes flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this ParameterAttributes value, ParameterAttributes flags) => (value & flags) != 0;
+
+        public static bool HasAllFlags(this TYPEFLAGS value, TYPEFLAGS flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this TYPEFLAGS value, TYPEFLAGS flags) => (value & flags) != 0;
+
+        public static bool HasAllFlags(this INVOKEKIND value, INVOKEKIND flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this INVOKEKIND value, INVOKEKIND flags) => (value & flags) != 0;
 
         #endregion
 
@@ -278,7 +309,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool TryGetNumericIndex(object arg, out int index)
         {
-            if (arg != null)
+            if (arg is not null)
             {
                 switch (Type.GetTypeCode(arg.GetType()))
                 {
@@ -298,7 +329,7 @@ namespace Microsoft.ClearScript.Util
 
         public static bool TryGetNumericIndex(object arg, out long index)
         {
-            if (arg != null)
+            if (arg is not null)
             {
                 switch (Type.GetTypeCode(arg.GetType()))
                 {
@@ -335,11 +366,38 @@ namespace Microsoft.ClearScript.Util
             }
         }
 
-        public static bool Try<T>(out T result, Func<T> func)
+        public static bool Try<TArg>(Action<TArg> action, in TArg arg)
+        {
+            try
+            {
+                action(arg);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool Try<TResult>(out TResult result, Func<TResult> func)
         {
             try
             {
                 result = func();
+                return true;
+            }
+            catch
+            {
+                result = default;
+                return false;
+            }
+        }
+
+        public static bool Try<TArg, TResult>(out TResult result, Func<TArg, TResult> func, in TArg arg)
+        {
+            try
+            {
+                result = func(arg);
                 return true;
             }
             catch
@@ -379,6 +437,18 @@ namespace Microsoft.ClearScript.Util
 
         #region primitive marshaling
 
+        public const float MaxInt32InSingleAsSingle = 16777215.0F;
+        public const double MaxInt32InSingleAsDouble = 16777215.0D;
+        public const decimal MaxInt32InSingleAsDecimal = 16777215.0M;
+        public const int MaxInt32InSingle = (1 << 24) - 1;
+
+        public const double MaxInt64InDoubleAsDouble = 9007199254740991.0D;
+        public const decimal MaxInt64InDoubleAsDecimal = 9007199254740991.0M;
+        public const long MaxInt64InDouble = (1L << 53) - 1;
+
+        public static readonly decimal MaxBigIntegerInDecimalAsDecimal = 79228162514264337593543950335.0M;
+        public static readonly BigInteger MaxBigIntegerInDecimal = (new BigInteger(1) << 96) - 1;
+
         public static bool TryMarshalPrimitiveToHost(object obj, bool disableFloatNarrowing, out object result)
         {
             if (obj is IConvertible convertible)
@@ -391,7 +461,6 @@ namespace Microsoft.ClearScript.Util
                         return true;
 
                     case TypeCode.Double:
-                    case TypeCode.Single:
                         result = MarshalDoubleToHost(convertible.ToDouble(CultureInfo.InvariantCulture), disableFloatNarrowing);
                         return true;
 
@@ -404,6 +473,7 @@ namespace Microsoft.ClearScript.Util
                     case TypeCode.UInt32:
                     case TypeCode.Int64:
                     case TypeCode.UInt64:
+                    case TypeCode.Single:
                     case TypeCode.Decimal:
                         result = obj;
                         return true;
@@ -418,12 +488,12 @@ namespace Microsoft.ClearScript.Util
         {
             // ReSharper disable CompareOfFloatsByEqualityOperator
 
-            if (Math.Round(value) == value)
+            var truncatedValue = Math.Truncate(value);
+            if (truncatedValue == value)
             {
-                const double maxIntInDouble = (1L << 53) - 1;
-                if (Math.Abs(value) <= maxIntInDouble)
+                if (Math.Abs(value) <= MaxInt64InDoubleAsDouble)
                 {
-                    var longValue = Convert.ToInt64(value);
+                    var longValue = (long)truncatedValue;
                     if ((longValue >= int.MinValue) && (longValue <= int.MaxValue))
                     {
                         return (int)longValue;
@@ -434,7 +504,7 @@ namespace Microsoft.ClearScript.Util
             }
             else if (!disableFloatNarrowing)
             {
-                var floatValue = Convert.ToSingle(value);
+                var floatValue = (float)value;
                 if (value == floatValue)
                 {
                     return floatValue;
@@ -595,7 +665,7 @@ namespace Microsoft.ClearScript.Util
         {
             var result = Marshal.GetObjectForNativeVariant(pVariant);
 
-            if ((result == null) && (Marshal.ReadInt16(pVariant) == (short)VarEnum.VT_BSTR))
+            if ((result is null) && (Marshal.ReadInt16(pVariant) == (short)VarEnum.VT_BSTR))
             {
                 return string.Empty;
             }

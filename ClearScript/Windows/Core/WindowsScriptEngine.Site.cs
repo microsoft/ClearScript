@@ -27,7 +27,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
             private string GetDetails(object error, string message)
             {
-                if (engine.processDebugManager != null)
+                if (engine.processDebugManager is not null)
                 {
                     try
                     {
@@ -134,12 +134,12 @@ namespace Microsoft.ClearScript.Windows.Core
             {
                 var item = engine.hostItemMap[name];
 
-                if (mask.HasFlag(ScriptInfoFlags.IUnknown))
+                if (mask.HasAllFlags(ScriptInfoFlags.IUnknown))
                 {
                     pUnkItem = Marshal.GetIUnknownForObject(item);
                 }
 
-                if (mask.HasFlag(ScriptInfoFlags.ITypeInfo))
+                if (mask.HasAllFlags(ScriptInfoFlags.ITypeInfo))
                 {
                     pTypeInfo = item.GetType().GetTypeInfo();
                 }
@@ -160,7 +160,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
             public void OnScriptError(IActiveScriptError error)
             {
-                if ((engine.CurrentScriptFrame != null) && (error != null))
+                if ((engine.CurrentScriptFrame is not null) && (error is not null))
                 {
                     error.GetExceptionInfo(out var excepInfo);
                     if (excepInfo.scode == HResult.E_ABORT)
@@ -186,7 +186,7 @@ namespace Microsoft.ClearScript.Windows.Core
                         else
                         {
                             innerException = engine.CurrentScriptFrame.HostException;
-                            if ((innerException != null) && string.IsNullOrWhiteSpace(description))
+                            if ((innerException is not null) && string.IsNullOrWhiteSpace(description))
                             {
                                 description = innerException.GetBaseException().Message;
                             }
@@ -213,8 +213,8 @@ namespace Microsoft.ClearScript.Windows.Core
             public uint QueryContinue()
             {
                 var callback = engine.ContinuationCallback;
-                var keepGoing = ((callback == null) || callback());
-                if (engine.CurrentScriptFrame != null)
+                var keepGoing = ((callback is null) || callback());
+                if (engine.CurrentScriptFrame is not null)
                 {
                     keepGoing = keepGoing && !engine.CurrentScriptFrame.InterruptRequested;
                 }
@@ -263,7 +263,7 @@ namespace Microsoft.ClearScript.Windows.Core
 
             public void OnScriptErrorDebug(IActiveScriptErrorDebug errorDebug, out bool enterDebugger, out bool callOnScriptErrorWhenContinuing)
             {
-                if ((engine.CurrentScriptFrame != null) && (errorDebug != null))
+                if ((engine.CurrentScriptFrame is not null) && (errorDebug is not null))
                 {
                     errorDebug.GetExceptionInfo(out var excepInfo);
                     if (excepInfo.scode == HResult.E_ABORT)
@@ -283,7 +283,7 @@ namespace Microsoft.ClearScript.Windows.Core
                         else
                         {
                             innerException = engine.CurrentScriptFrame.HostException;
-                            if ((innerException != null) && string.IsNullOrWhiteSpace(description))
+                            if ((innerException is not null) && string.IsNullOrWhiteSpace(description))
                             {
                                 description = innerException.GetBaseException().Message;
                             }
@@ -293,7 +293,7 @@ namespace Microsoft.ClearScript.Windows.Core
                     }
                 }
 
-                enterDebugger = engine.engineFlags.HasFlag(WindowsScriptEngineFlags.EnableJITDebugging);
+                enterDebugger = engine.engineFlags.HasAllFlags(WindowsScriptEngineFlags.EnableJITDebugging);
                 callOnScriptErrorWhenContinuing = true;
             }
 
@@ -334,12 +334,12 @@ namespace Microsoft.ClearScript.Windows.Core
 
                 if ((iid == typeof(IActiveScriptSiteDebug32).GUID) || (iid == typeof(IActiveScriptSiteDebug64).GUID) || (iid == typeof(IActiveScriptSiteDebugEx).GUID))
                 {
-                    return (engine.processDebugManager != null) ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;
+                    return (engine.processDebugManager is not null) ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;
                 }
 
                 if (iid == typeof(IActiveScriptSiteWindow).GUID)
                 {
-                    return (engine.HostWindow != null) ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;
+                    return (engine.HostWindow is not null) ? CustomQueryInterfaceResult.NotHandled : CustomQueryInterfaceResult.Failed;
                 }
 
                 return CustomQueryInterfaceResult.NotHandled;

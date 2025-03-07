@@ -95,36 +95,18 @@
 // global helper functions
 //-----------------------------------------------------------------------------
 
-template <typename TFlag>
-inline bool HasFlag(TFlag mask, TFlag flag)
+template <typename T>
+inline std::underlying_type_t<T> ToUnderlyingType(T value)
 {
-    using TUnderlying = std::underlying_type_t<TFlag>;
-    return (static_cast<TUnderlying>(mask) & static_cast<TUnderlying>(flag)) != 0;
+    return static_cast<std::underlying_type_t<T>>(value);
 }
 
 //-----------------------------------------------------------------------------
 
-template <typename TFlag, typename... TOthers>
-inline bool HasFlag(TFlag mask, TOthers... others)
+template <typename T>
+inline T ToEnum(std::underlying_type_t<T> value)
 {
-    return HasFlag(mask, CombineFlags(others...));
-}
-
-//-----------------------------------------------------------------------------
-
-template <typename TFlag>
-inline bool HasFlags(TFlag mask, TFlag flags)
-{
-    using TUnderlying = std::underlying_type_t<TFlag>;
-    return (static_cast<TUnderlying>(mask) & static_cast<TUnderlying>(flags)) == static_cast<TUnderlying>(flags);
-}
-
-//-----------------------------------------------------------------------------
-
-template <typename TFlag, typename... TOthers>
-inline bool HasFlags(TFlag mask, TOthers... others)
-{
-    return HasFlags(mask, CombineFlags(others...));
+    return static_cast<T>(value);
 }
 
 //-----------------------------------------------------------------------------
@@ -132,8 +114,7 @@ inline bool HasFlags(TFlag mask, TOthers... others)
 template <typename TFlag>
 inline TFlag CombineFlags(TFlag flag1, TFlag flag2)
 {
-    using TUnderlying = std::underlying_type_t<TFlag>;
-    return static_cast<TFlag>(static_cast<TUnderlying>(flag1) | static_cast<TUnderlying>(flag2));
+    return ::ToEnum<TFlag>(::ToUnderlyingType(flag1) | ::ToUnderlyingType(flag2));
 }
 
 //-----------------------------------------------------------------------------
@@ -141,7 +122,47 @@ inline TFlag CombineFlags(TFlag flag1, TFlag flag2)
 template <typename TFlag, typename... TOthers>
 inline TFlag CombineFlags(TFlag flag1, TFlag flag2, TOthers... others)
 {
-    return CombineFlags(flag1, CombineFlags(flag2, others...));
+    return ::CombineFlags(flag1, ::CombineFlags(flag2, others...));
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag>
+inline bool HasFlag(TFlag mask, TFlag flag)
+{
+    return (::ToUnderlyingType(mask) & ::ToUnderlyingType(flag)) != 0;
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag>
+inline bool HasAnyFlag(TFlag mask, TFlag flag)
+{
+    return ::HasFlag(mask, flag);
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag, typename... TOthers>
+inline bool HasAnyFlag(TFlag mask, TFlag flag1, TOthers... others)
+{
+    return ::HasAnyFlag(mask, ::CombineFlags(flag1, others...));
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag>
+inline bool HasAllFlags(TFlag mask, TFlag flags)
+{
+    return (::ToUnderlyingType(mask) & ::ToUnderlyingType(flags)) == ::ToUnderlyingType(flags);
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename TFlag, typename... TOthers>
+inline bool HasAllFlags(TFlag mask, TFlag flag1, TOthers... others)
+{
+    return ::HasAllFlags(mask, ::CombineFlags(flag1, others...));
 }
 
 //-----------------------------------------------------------------------------
@@ -249,3 +270,12 @@ private:
 //-----------------------------------------------------------------------------
 
 using StdBool = int8_t;
+
+//-----------------------------------------------------------------------------
+// Constants
+//-----------------------------------------------------------------------------
+
+struct Constants final: StaticBase
+{
+    static const size_t MaxInlineArgCount = 16;
+};

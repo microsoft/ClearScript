@@ -17,7 +17,7 @@ namespace Microsoft.ClearScript.Util.COM
     internal static class TypeLibHelpers
     {
         // GUID_ManagedName (um\cor.h)
-        private static readonly Guid managedNameGuid = new Guid("{0f21f359-ab84-41e8-9a78-36d110e6d2f9}");
+        private static readonly Guid managedNameGuid = new("{0f21f359-ab84-41e8-9a78-36d110e6d2f9}");
 
         public static string GetName(this ITypeLib typeLib)
         {
@@ -92,13 +92,14 @@ namespace Microsoft.ClearScript.Util.COM
 
         private static IEnumerable<ITypeInfo> GetReferencedEnums(ITypeLib typeLib, ITypeInfo typeInfo, Dictionary<Guid, ITypeInfo> processedTypeInfo)
         {
-            if (typeInfo == null)
+            if (typeInfo is null)
             {
                 yield break;
             }
 
             var guid = typeInfo.GetOrCreateGuid();
 
+            // ReSharper disable once CanSimplifyDictionaryLookupWithTryAdd
             if (processedTypeInfo.ContainsKey(guid))
             {
                 yield break;

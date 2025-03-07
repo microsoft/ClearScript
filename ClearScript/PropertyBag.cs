@@ -36,7 +36,7 @@ namespace Microsoft.ClearScript
 
         private readonly IDictionary<string, object> dictionary;
         private readonly bool isReadOnly;
-        private readonly ConcurrentWeakSet<ScriptEngine> engineSet = new ConcurrentWeakSet<ScriptEngine>();
+        private readonly ConcurrentWeakSet<ScriptEngine> engineSet = new();
 
         #endregion
 
@@ -188,6 +188,7 @@ namespace Microsoft.ClearScript
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation to resolve ambiguity.")]
         IEnumerator IEnumerable.GetEnumerator()
         {
+            // ReSharper disable once NotDisposedResourceIsReturned
             return dictionary.GetEnumerator();
         }
 
@@ -198,6 +199,7 @@ namespace Microsoft.ClearScript
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member requires explicit implementation to resolve ambiguity.")]
         IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator()
         {
+            // ReSharper disable once NotDisposedResourceIsReturned
             return dictionary.GetEnumerator();
         }
 
@@ -279,7 +281,7 @@ namespace Microsoft.ClearScript
         /// Removes a property from the <c><see cref="PropertyBag"/></c>.
         /// </summary>
         /// <param name="key">The name of the property to remove.</param>
-        /// <returns><c>True</c> if the property was successfully found and removed, <c>false</c> otherwise.</returns>
+        /// <returns><c>True</c> if the property was found and removed, <c>false</c> otherwise.</returns>
         public bool Remove(string key)
         {
             CheckReadOnly();
@@ -339,7 +341,7 @@ namespace Microsoft.ClearScript
         [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "This member is not expected to be re-implemented in derived classes.")]
         void IScriptableObject.OnExposedToScriptCode(ScriptEngine engine)
         {
-            if ((engine != null) && engineSet.TryAdd(engine))
+            if ((engine is not null) && engineSet.TryAdd(engine))
             {
                 foreach (var scriptableObject in Values.OfType<IScriptableObject>())
                 {

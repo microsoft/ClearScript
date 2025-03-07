@@ -34,3 +34,4 @@
 #include "V8ScriptHolderImpl.h"
 #include "V8SplitProxyNative.h"
 #include "V8SplitProxyManaged.h"
+#include "V8ValueWireData.h"

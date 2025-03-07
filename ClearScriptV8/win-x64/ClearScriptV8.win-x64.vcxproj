@@ -86,7 +86,7 @@
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalOptions>-Wno-unused-parameter -Wno-unused-private-field</AdditionalOptions>
+      <AdditionalOptions>-Wno-unused-parameter -Wno-unused-private-field -Wno-vla-cxx-extension -Wno-cast-function-type-mismatch</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='17.0'">DebugFull</GenerateDebugInformation>
@@ -124,7 +124,7 @@
       <StringPooling>true</StringPooling>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalOptions>-Wno-unused-parameter -Wno-unused-private-field</AdditionalOptions>
+      <AdditionalOptions>-Wno-unused-parameter -Wno-unused-private-field -Wno-vla-cxx-extension -Wno-cast-function-type-mismatch</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation Condition="'$(VisualStudioVersion)'=='17.0'">DebugFull</GenerateDebugInformation>
@@ -194,12 +194,9 @@
     <ClInclude Include="..\V8ScriptHolderImpl.h" />
     <ClInclude Include="..\V8SplitProxyNative.h" />
     <ClInclude Include="..\V8Value.h" />
+    <ClInclude Include="..\V8ValueWireData.h" />
     <ClInclude Include="..\V8WeakContextBinding.h" />
     <ClInclude Include="..\WeakRef.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Numerics" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

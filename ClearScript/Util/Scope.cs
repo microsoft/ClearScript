@@ -5,21 +5,35 @@ using System;
 
 namespace Microsoft.ClearScript.Util
 {
-    internal interface IScope<out T>: IDisposable
+    internal interface IScope<out TValue>: IDisposable
     {
-        T Value { get; }
+        TValue Value { get; }
     }
 
     internal static class Scope
     {
         public static IDisposable Create(Action enterAction, Action exitAction)
         {
-            return new ScopeImpl(enterAction, exitAction);
+            enterAction?.Invoke();
+            return new ScopeImpl(exitAction);
         }
 
-        public static IScope<T> Create<T>(Func<T> enterFunc, Action<T> exitAction)
+        public static IDisposable Create<TArg>(Action<TArg> enterAction, Action exitAction, in TArg arg)
         {
-            return new ScopeImpl<T>(enterFunc, exitAction);
+            enterAction?.Invoke(arg);
+            return new ScopeImpl(exitAction);
+        }
+
+        public static IScope<TValue> Create<TValue>(Func<TValue> enterFunc, Action<TValue> exitAction)
+        {
+            var value = (enterFunc is not null) ? enterFunc() : default;
+            return new ScopeImpl<TValue>(value, exitAction);
+        }
+
+        public static IScope<TValue> Create<TArg, TValue>(Func<TArg, TValue> enterFunc, Action<TValue> exitAction, in TArg arg)
+        {
+            var value = (enterFunc is not null) ? enterFunc(arg) : default;
+            return new ScopeImpl<TValue>(value, exitAction);
         }
 
         #region Nested type: ScopeImpl
@@ -27,12 +41,11 @@ namespace Microsoft.ClearScript.Util
         private sealed class ScopeImpl : IDisposable
         {
             private readonly Action exitAction;
-            private readonly OneWayFlag disposedFlag = new OneWayFlag();
+            private readonly OneWayFlag disposedFlag = new();
 
-            public ScopeImpl(Action enterAction, Action exitAction)
+            public ScopeImpl(Action exitAction)
             {
                 this.exitAction = exitAction;
-                enterAction?.Invoke();
             }
 
             #region IDisposable implementation
@@ -50,25 +63,22 @@ namespace Microsoft.ClearScript.Util
 
         #endregion
 
-        #region Nested type: ScopeImpl<T>
+        #region Nested type: ScopeImpl<TValue>
 
-        private sealed class ScopeImpl<T> : IScope<T>
+        private sealed class ScopeImpl<TValue> : IScope<TValue>
         {
-            private readonly Action<T> exitAction;
-            private readonly OneWayFlag disposedFlag = new OneWayFlag();
+            private readonly Action<TValue> exitAction;
+            private readonly OneWayFlag disposedFlag = new();
 
-            public ScopeImpl(Func<T> enterFunc, Action<T> exitAction)
+            public ScopeImpl(TValue value, Action<TValue> exitAction)
             {
                 this.exitAction = exitAction;
-                if (enterFunc != null)
-                {
-                    Value = enterFunc();
-                }
+                Value = value;
             }
 
-            #region IScope<T> implementation
+            #region IScope<TValue> implementation
 
-            public T Value { get; }
+            public TValue Value { get; }
 
             public void Dispose()
             {

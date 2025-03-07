@@ -21,8 +21,8 @@ public:
         AwaitDebuggerAndPauseOnStart = 0x00000008,
         EnableDateTimeConversion = 0x00000010,
         EnableDynamicModuleImports = 0x00000020,
-        MarshalUnsafeLongAsBigInt = 0x00000040,
-        MarshalAllLongAsBigInt = 0x00000080,
+        MarshalUnsafeInt64AsBigInt = 0x00000040,
+        MarshalAllInt64AsBigInt = 0x00000080,
         EnableTaskPromiseConversion = 0x00000100,
         EnableValueTaskPromiseConversion = 0x00000200,
         UseCaseInsensitiveMemberBinding = 0x00000400,
@@ -30,7 +30,8 @@ public:
         HideHostExceptions = 0x00001000,
         UseSynchronizationContexts = 0x00002000,
         AddPerformanceObject = 0x00004000,
-        SetTimerResolution = 0x00008000
+        SetTimerResolution = 0x00008000,
+        EnableArrayConversion = 0x00010000
     };
 
     struct Options final
@@ -57,8 +58,11 @@ public:
     virtual size_t GetMaxIsolateStackUsage() = 0;
     virtual void SetMaxIsolateStackUsage(size_t value) = 0;
 
-    typedef void CallWithLockCallback(void* pvArg);
-    virtual void CallWithLock(CallWithLockCallback* pCallback, void* pvArg) = 0;
+    typedef void CallWithLockCallback(void* pvAction);
+    virtual void CallWithLock(CallWithLockCallback* pCallback, void* pvAction) = 0;
+
+    typedef void CallWithLockWithArgCallback(void* pvAction, void* pvArg);
+    virtual void CallWithLockWithArg(CallWithLockWithArgCallback* pCallback, void* pvAction, void* pvArg) = 0;
 
     virtual V8Value GetRootObject() = 0;
     virtual void SetGlobalProperty(const StdString& name, const V8Value& value, bool globalMembers) = 0;

@@ -3044,6 +3044,24 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("VBScriptEngine")]
+        public void VBScriptEngine_NullImportValue()
+        {
+            Assert.IsNull(engine.Evaluate("null"));
+            Assert.IsInstanceOfType(engine.Evaluate("empty"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("nothing"), typeof(Undefined));
+
+            engine.NullImportValue = Undefined.Value;
+            Assert.IsInstanceOfType(engine.Evaluate("null"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("empty"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("nothing"), typeof(Undefined));
+
+            engine.NullImportValue = 123;
+            Assert.AreEqual(123, engine.Evaluate("null"));
+            Assert.IsInstanceOfType(engine.Evaluate("empty"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("nothing"), typeof(Undefined));
+        }
+
+        [TestMethod, TestCategory("VBScriptEngine")]
         public void VBScriptEngine_NullExportValue()
         {
             engine.Script.foo = new Func<object>(() => null);

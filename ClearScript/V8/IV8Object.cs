@@ -35,5 +35,6 @@ namespace Microsoft.ClearScript.V8
         V8ArrayBufferOrViewKind ArrayBufferOrViewKind { get; }
         V8ArrayBufferOrViewInfo GetArrayBufferOrViewInfo();
         void InvokeWithArrayBufferOrViewData(Action<IntPtr> action);
+        void InvokeWithArrayBufferOrViewData<TArg>(Action<IntPtr, TArg> action, in TArg arg);
     }
 }

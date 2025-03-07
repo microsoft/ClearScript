@@ -44,7 +44,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Arithmetic from 'JavaScript/StandardModule/Arithmetic/Arithmetic.js';
-                Arithmetic.Add(123, 456);
+                import.meta.setResult(Arithmetic.Add(123, 456));
             "));
         }
 
@@ -54,7 +54,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Arithmetic from 'JavaScript/StandardModule/Arithmetic/Arithmetic.bogus';
-                Arithmetic.BogusAdd(123, 456);
+                import.meta.setResult(Arithmetic.BogusAdd(123, 456));
             "));
         }
 
@@ -64,7 +64,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -74,7 +74,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -98,7 +98,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Arithmetic from 'Arithmetic.js';
-                Arithmetic.Add(123, 456);
+                import.meta.setResult(Arithmetic.Add(123, 456));
             "));
         }
 
@@ -113,7 +113,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'GeometryWithDynamicImport.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -128,7 +128,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'GeometryWithPathlessImport.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -231,7 +231,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -241,7 +241,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Arithmetic from 'https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Arithmetic/Arithmetic.js';
-                Arithmetic.Add(123, 456);
+                import.meta.setResult(Arithmetic.Add(123, 456));
             "));
         }
 
@@ -251,7 +251,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -261,7 +261,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -285,7 +285,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(123 + 456, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Arithmetic from 'Arithmetic.js';
-                Arithmetic.Add(123, 456);
+                import.meta.setResult(Arithmetic.Add(123, 456));
             "));
         }
 
@@ -300,7 +300,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'GeometryWithDynamicImport.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -315,7 +315,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'GeometryWithPathlessImport.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -418,7 +418,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableWebLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'https://raw.githubusercontent.com/microsoft/ClearScript/master/ClearScriptTest/JavaScript/StandardModule/Geometry/Geometry';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -427,7 +427,7 @@ namespace Microsoft.ClearScript.Test
         {
             var module = engine.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             ");
 
             using (module)
@@ -445,7 +445,7 @@ namespace Microsoft.ClearScript.Test
         {
             var code = @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             ";
 
             byte[] cacheBytes;
@@ -481,7 +481,7 @@ namespace Microsoft.ClearScript.Test
             {
                 var module = runtime.Compile(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                     import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                    new Geometry.Square(25).Area;
+                    import.meta.setResult(new Geometry.Square(25).Area);
                 ");
 
                 using (module)
@@ -502,7 +502,7 @@ namespace Microsoft.ClearScript.Test
         {
             var code = @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             ";
 
             byte[] cacheBytes;
@@ -572,18 +572,18 @@ namespace Microsoft.ClearScript.Test
 
             var info = new DocumentInfo { Category = ModuleCategory.Standard };
 
-            Assert.AreEqual(Math.PI, engine.Evaluate(info, "Math.PI"));
-            Assert.AreEqual(Math.PI, engine.Evaluate(info, "Math.PI"));
+            Assert.AreEqual(Math.PI, engine.Evaluate(info, "import.meta.setResult(Math.PI)"));
+            Assert.AreEqual(Math.PI, engine.Evaluate(info, "import.meta.setResult(Math.PI)"));
             Assert.AreEqual(2UL, engine.GetRuntimeStatistics().ModuleCount);
 
             info = new DocumentInfo("Test") { Category = ModuleCategory.Standard };
 
-            Assert.AreEqual(Math.E, engine.Evaluate(info, "Math.E"));
-            Assert.IsInstanceOfType(engine.Evaluate(info, "Math.E"), typeof(Undefined));
+            Assert.AreEqual(Math.E, engine.Evaluate(info, "import.meta.setResult(Math.E)"));
+            Assert.IsInstanceOfType(engine.Evaluate(info, "import.meta.setResult(Math.E)"), typeof(Undefined));
             Assert.AreEqual(3UL, engine.GetRuntimeStatistics().ModuleCount);
 
-            Assert.AreEqual(Math.PI, engine.Evaluate(info, "Math.PI"));
-            Assert.IsInstanceOfType(engine.Evaluate(info, "Math.PI"), typeof(Undefined));
+            Assert.AreEqual(Math.PI, engine.Evaluate(info, "import.meta.setResult(Math.PI)"));
+            Assert.IsInstanceOfType(engine.Evaluate(info, "import.meta.setResult(Math.PI)"), typeof(Undefined));
             Assert.AreEqual(4UL, engine.GetRuntimeStatistics().ModuleCount);
 
             using (var runtime = new V8Runtime())
@@ -592,8 +592,8 @@ namespace Microsoft.ClearScript.Test
                 {
                     using (var testEngine = runtime.CreateScriptEngine())
                     {
-                        Assert.AreEqual(Math.PI, testEngine.Evaluate(info, "Math.PI"));
-                        Assert.AreEqual(Math.E, testEngine.Evaluate(info, "Math.E"));
+                        Assert.AreEqual(Math.PI, testEngine.Evaluate(info, "import.meta.setResult(Math.PI)"));
+                        Assert.AreEqual(Math.E, testEngine.Evaluate(info, "import.meta.setResult(Math.E)"));
                         Assert.AreEqual(2UL, testEngine.GetStatistics().ModuleCount);
                     }
                 }
@@ -607,8 +607,8 @@ namespace Microsoft.ClearScript.Test
                 {
                     using (var testEngine = runtime.CreateScriptEngine())
                     {
-                        Assert.AreEqual(Math.PI, testEngine.Evaluate(info, "Math.PI"));
-                        Assert.IsInstanceOfType(testEngine.Evaluate(info, "Math.PI"), typeof(Undefined));
+                        Assert.AreEqual(Math.PI, testEngine.Evaluate(info, "import.meta.setResult(Math.PI)"));
+                        Assert.IsInstanceOfType(testEngine.Evaluate(info, "import.meta.setResult(Math.PI)"), typeof(Undefined));
                     }
                 }
 
@@ -621,7 +621,7 @@ namespace Microsoft.ClearScript.Test
                 {
                     for (var i = 0; i < 300; i++)
                     {
-                        Assert.AreEqual(Math.PI + i, testEngine.Evaluate(info, "Math.PI" + "+" + i));
+                        Assert.AreEqual(Math.PI + i, testEngine.Evaluate(info, "import.meta.setResult(Math.PI" + "+" + i + ")"));
                     }
 
                     Assert.AreEqual(300UL, testEngine.GetStatistics().ModuleCount);
@@ -640,42 +640,42 @@ namespace Microsoft.ClearScript.Test
 
             Assert.AreEqual(123, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                Geometry.Meta.foo
+                import.meta.setResult(Geometry.Meta.foo)
             "));
 
             Assert.AreEqual(456.789, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                Geometry.Meta.bar
+                import.meta.setResult(Geometry.Meta.bar)
             "));
 
             Assert.AreEqual("bogus", engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                Geometry.Meta.baz
+                import.meta.setResult(Geometry.Meta.baz)
             "));
 
             Assert.IsInstanceOfType(engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                new Geometry.Meta.qux()
+                import.meta.setResult(new Geometry.Meta.qux())
             "), typeof(Random));
 
             Assert.IsInstanceOfType(engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/Geometry.js';
-                Geometry.Meta.quux
+                import.meta.setResult(Geometry.Meta.quux)
             "), typeof(Undefined));
 
             Assert.AreEqual(Math.PI, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Arithmetic from 'JavaScript/StandardModule/Arithmetic/Arithmetic.js';
-                Arithmetic.Meta.foo
+                import.meta.setResult(Arithmetic.Meta.foo)
             "));
 
             Assert.IsInstanceOfType(engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Arithmetic from 'JavaScript/StandardModule/Arithmetic/Arithmetic.js';
-                Arithmetic.Meta.bar
+                import.meta.setResult(Arithmetic.Meta.bar)
             "), typeof(Undefined));
 
             Assert.AreEqual(0, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModule/Geometry/GeometryWithDynamicImport.js';
-                Object.keys(Geometry.Meta).length;
+                import.meta.setResult(Object.keys(Geometry.Meta).length);
             "));
         }
 
@@ -690,7 +690,7 @@ namespace Microsoft.ClearScript.Test
 
             dynamic add = engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Test from 'test';
-                Test.Add
+                import.meta.setResult(Test.Add)
             ");
 
             Assert.AreEqual(579, add(123, 456));
@@ -702,7 +702,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModuleWithCycles/Geometry/Geometry.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -712,7 +712,7 @@ namespace Microsoft.ClearScript.Test
             engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;
             Assert.AreEqual(25 * 25, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import * as Geometry from 'JavaScript/StandardModuleWithCycles/Geometry/GeometryWithDynamicImport.js';
-                new Geometry.Square(25).Area;
+                import.meta.setResult(new Geometry.Square(25).Area);
             "));
         }
 
@@ -738,13 +738,13 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(12, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import { Rectangle } from 'JavaScript/CommonJS/Geometry/Geometry';
                 globalThis.Rectangle1 = Rectangle;
-                new Rectangle(3, 4).Area;
+                import.meta.setResult(new Rectangle(3, 4).Area);
             "));
 
             Assert.AreEqual(30, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import { Rectangle } from 'JavaScript/CommonJS/Geometry/Geometry';
                 globalThis.Rectangle2 = Rectangle;
-                new Rectangle(5, 6).Area;
+                import.meta.setResult(new Rectangle(5, 6).Area);
             "));
 
             Assert.AreEqual(56, engine.Evaluate(@"
@@ -783,13 +783,13 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(12, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import { Rectangle } from 'JavaScript/CommonJS/Geometry/Geometry';
                 globalThis.Rectangle1 = Rectangle;
-                new Rectangle(3, 4).Area;
+                import.meta.setResult(new Rectangle(3, 4).Area);
             "));
 
             Assert.AreEqual(30, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import { Rectangle } from 'JavaScript/CommonJS/Geometry/Geometry';
                 globalThis.Rectangle2 = Rectangle;
-                new Rectangle(5, 6).Area;
+                import.meta.setResult(new Rectangle(5, 6).Area);
             "));
 
             Assert.AreEqual(56, engine.Evaluate(@"
@@ -823,13 +823,13 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(12, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import { Rectangle } from 'Geometry';
                 globalThis.Rectangle1 = Rectangle;
-                new Rectangle(3, 4).Area;
+                import.meta.setResult(new Rectangle(3, 4).Area);
             "));
 
             Assert.AreEqual(30, engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
                 import { Rectangle } from 'Geometry';
                 globalThis.Rectangle2 = Rectangle;
-                new Rectangle(5, 6).Area;
+                import.meta.setResult(new Rectangle(5, 6).Area);
             "));
 
             Assert.AreEqual(56, engine.Evaluate(@"
@@ -904,6 +904,45 @@ namespace Microsoft.ClearScript.Test
 
             // ReSharper disable once AccessToDisposedClosure
             TestUtil.AssertException<ScriptEngineException>(() => engine.Execute(new DocumentInfo { Category = ModuleCategory.Standard }, "import result from 'JavaScript/Malformed.json'; globalThis.result = result;"));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public async Task V8Module_Standard_TopLevelAwait_Result()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion);
+
+            engine.AddHostType(typeof(Task));
+            Assert.AreEqual(123, await (Task<object>)engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                await Task.Delay(500);
+                import.meta.setResult(123);
+            "));
+        }
+
+        [TestMethod, TestCategory("V8Module")]
+        public async Task V8Module_Standard_TopLevelAwait_Exception()
+        {
+            engine.Dispose();
+            engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.EnableTaskPromiseConversion);
+
+            engine.AddHostType(typeof(Task));
+            ScriptEngineException scriptEngineException = null;
+
+            try
+            {
+                await (Task<object>)engine.Evaluate(new DocumentInfo { Category = ModuleCategory.Standard }, @"
+                    await Task.Delay(500);
+                    await Task.BogusMethod();
+                ");
+            }
+            catch (ScriptEngineException exception)
+            {
+                scriptEngineException = exception;
+                Console.WriteLine(exception);
+            }
+
+            Assert.IsNotNull(scriptEngineException);
+            Assert.AreEqual("TypeError: Task.BogusMethod is not a function", scriptEngineException.Message);
         }
 
         [TestMethod, TestCategory("V8Module")]
@@ -1397,7 +1436,6 @@ namespace Microsoft.ClearScript.Test
             TestUtil.AssertException<ScriptEngineException>(() => engine.Evaluate(new DocumentInfo { Category = ModuleCategory.CommonJS }, "return require('ArrayWithFunction.json')"));
         }
 
-
         [TestMethod, TestCategory("V8Module")]
         public void V8Module_CommonJS_Json_Malformed()
         {
@@ -1427,7 +1465,7 @@ namespace Microsoft.ClearScript.Test
 
             public static IDictionary<string, object> CreateDocumentContext(DocumentInfo info)
             {
-                if (info.Uri != null)
+                if (info.Uri is not null)
                 {
                     var name = Path.GetFileName(info.Uri.AbsolutePath);
 

@@ -10,14 +10,14 @@ namespace Microsoft.ClearScript
 {
     internal static class CanonicalRefTable
     {
-        private static readonly Dictionary<Type, ICanonicalRefMap> table = new Dictionary<Type, ICanonicalRefMap>();
+        private static readonly Dictionary<Type, ICanonicalRefMap> table = new();
 
         public static object GetCanonicalRef(object obj)
         {
             if (obj is ValueType)
             {
                 var map = GetMap(obj);
-                if (map != null)
+                if (map is not null)
                 {
                     obj = map.GetRef(obj);
                 }
@@ -44,7 +44,7 @@ namespace Microsoft.ClearScript
                     #endif
                         type.GetOrLoadCustomAttributes<ImmutableValueAttribute>(null, false).Any())
                     {
-                        map = (ICanonicalRefMap)typeof(CanonicalRefMap<>).MakeGenericType(type).CreateInstance();
+                        map = (ICanonicalRefMap)Activator.CreateInstance(typeof(CanonicalRefMap<>).MakeGenericType(type));
                     }
 
                     table.Add(type, map);
@@ -81,9 +81,9 @@ namespace Microsoft.ClearScript
 
         #region Nested type: CanonicalRefMap<T>
 
-        private sealed class CanonicalRefMap<T> : CanonicalRefMapBase
+        private sealed class CanonicalRefMap<T> : CanonicalRefMapBase where T : struct
         {
-            private readonly Dictionary<T, WeakReference> map = new Dictionary<T, WeakReference>();
+            private readonly Dictionary<T, WeakReference<object>> map = new();
             private DateTime lastCompactionTime = DateTime.MinValue;
 
             private object GetRefInternal(object obj)
@@ -93,17 +93,16 @@ namespace Microsoft.ClearScript
 
                 if (map.TryGetValue(value, out var weakRef))
                 {
-                    result = weakRef.Target;
-                    if (result == null)
+                    if (!weakRef.TryGetTarget(out result))
                     {
                         result = obj;
-                        weakRef.Target = result;
+                        weakRef.SetTarget(result);
                     }
                 }
                 else
                 {
                     result = obj;
-                    map.Add(value, new WeakReference(result));
+                    map.Add(value, new WeakReference<object>(result));
                 }
 
                 return result;
@@ -116,7 +115,7 @@ namespace Microsoft.ClearScript
                     var now = DateTime.UtcNow;
                     if ((lastCompactionTime + CompactionInterval) <= now)
                     {
-                        map.Where(pair => !pair.Value.IsAlive).ToList().ForEach(pair => map.Remove(pair.Key));
+                        map.Where(pair => !pair.Value.TryGetTarget(out _)).ToList().ForEach(pair => map.Remove(pair.Key));
                         lastCompactionTime = now;
                     }
                 }

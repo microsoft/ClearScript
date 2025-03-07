@@ -12,8 +12,8 @@ namespace Microsoft.ClearScript.Test
     [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "Typos in test code are acceptable.")]
     public sealed class DynamicTestObject : DynamicObject
     {
-        private readonly Dictionary<string, object> memberMap = new Dictionary<string, object>();
-        private readonly Dictionary<string, object> indexMap = new Dictionary<string, object>();
+        private readonly Dictionary<string, object> memberMap = new();
+        private readonly Dictionary<string, object> indexMap = new();
 
         public int SomeField = 12345;
 

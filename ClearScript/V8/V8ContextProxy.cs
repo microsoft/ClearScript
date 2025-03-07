@@ -22,6 +22,8 @@ namespace Microsoft.ClearScript.V8
 
         public abstract void InvokeWithLock(Action action);
 
+        public abstract void InvokeWithLock<TArg>(Action<TArg> action, in TArg arg);
+
         public abstract object GetRootItem();
 
         public abstract void AddGlobalItem(string name, object item, bool globalMembers);

@@ -4,6 +4,7 @@
         <TargetFrameworks>netstandard2.1</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.Windows</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <LangVersion>9.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -47,7 +48,6 @@
         <Compile Include="..\..\ClearScript\Windows\IWindowsScriptObject.cs" Link="Windows\IWindowsScriptObject.cs" />
         <Compile Include="..\..\ClearScript\Windows\Core\JScriptEngine.cs" Link="Windows\Core\JScriptEngine.cs" />
         <Compile Include="..\..\ClearScript\Windows\Core\JScriptEngine.InitScript.cs" Link="Windows\Core\JScriptEngine.InitScript.cs" />
-        <Compile Include="..\..\ClearScript\Windows\Core\JScriptEngine.NetStandard.cs" Link="Windows\Core\JScriptEngine.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\Windows\Nothing.cs" Link="Windows\Nothing.cs" />
         <Compile Include="..\..\ClearScript\Windows\Core\VBScriptEngine.cs" Link="Windows\Core\VBScriptEngine.cs" />
         <Compile Include="..\..\ClearScript\Windows\Core\WindowsScriptEngine.cs" Link="Windows\Core\WindowsScriptEngine.cs" />

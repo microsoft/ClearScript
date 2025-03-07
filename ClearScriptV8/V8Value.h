@@ -71,7 +71,7 @@ private:
 // V8Value
 //-----------------------------------------------------------------------------
 
-class V8Value final
+class V8Value
 {
 public:
 
@@ -103,8 +103,6 @@ public:
         Null,
         Boolean,
         Number,
-        Int32,
-        UInt32,
         String,
         DateTime,
         BigInt,
@@ -140,45 +138,17 @@ public:
         // IMPORTANT: maintain bitwise equivalence with managed enum V8.SplitProxy.V8Value.Flags
         None = 0,
         Shared = 0x0001,
+        Fast = 0x0001,
         Async = 0x0002,
-        Generator = 0x0004
+        Generator = 0x0004,
+        Pending = 0x0008,
+        Rejected = 0x0010
     };
 
-    struct Decoded
-    {
-        // IMPORTANT: maintain bitwise equivalence with managed struct V8.SplitProxy.V8Value.Decoded
-        Type Type;
-        Subtype Subtype;
-        union
-        {
-            Flags Flags;
-            int16_t SignBit;
-        };
-        union
-        {
-            int32_t Length;
-            int32_t IdentityHash;
-        };
-        union
-        {
-            int32_t Int32Value;
-            uint32_t UInt32Value;
-            double DoubleValue;
-            const void* pvData;
-        };
-    };
-
-    static_assert(sizeof(Decoded) == 16, "The managed SplitProxy code assumes that sizeof(Decoded) is 16 on all platforms.");
-    static_assert(offsetof(Decoded, Type) == 0, "The managed SplitProxy code assumes that offsetof(Decoded, Type) is 0 on all platforms.");
-    static_assert(offsetof(Decoded, Subtype) == 1, "The managed SplitProxy code assumes that offsetof(Decoded, Subtype) is 1 on all platforms.");
-    static_assert(offsetof(Decoded, Flags) == 2, "The managed SplitProxy code assumes that offsetof(Decoded, Flags) is 2 on all platforms.");
-    static_assert(offsetof(Decoded, SignBit) == 2, "The managed SplitProxy code assumes that offsetof(Decoded, SignBit) is 2 on all platforms.");
-    static_assert(offsetof(Decoded, Length) == 4, "The managed SplitProxy code assumes that offsetof(Decoded, Length) is 4 on all platforms.");
-    static_assert(offsetof(Decoded, IdentityHash) == 4, "The managed SplitProxy code assumes that offsetof(Decoded, IdentityHash) is 4 on all platforms.");
-    static_assert(offsetof(Decoded, Int32Value) == 8, "The managed SplitProxy code assumes that offsetof(Decoded, Int32Value) is 8 on all platforms.");
-    static_assert(offsetof(Decoded, UInt32Value) == 8, "The managed SplitProxy code assumes that offsetof(Decoded, UInt32Value) is 8 on all platforms.");
-    static_assert(offsetof(Decoded, DoubleValue) == 8, "The managed SplitProxy code assumes that offsetof(Decoded, DoubleValue) is 8 on all platforms.");
-    static_assert(offsetof(Decoded, pvData) == 8, "The managed SplitProxy code assumes that offsetof(Decoded, pvData) is 8 on all platforms.");
+    struct WireData;
+    struct Decoded;
+    struct FastArg;
+    struct FastResult;
 
     explicit V8Value(NonexistentInitializer):
         m_Type(Type::Nonexistent)
@@ -207,18 +177,6 @@ public:
         m_Data.DoubleValue = value;
     }
 
-    explicit V8Value(int32_t value):
-        m_Type(Type::Int32)
-    {
-        m_Data.Int32Value = value;
-    }
-
-    explicit V8Value(uint32_t value):
-        m_Type(Type::UInt32)
-    {
-        m_Data.UInt32Value = value;
-    }
-
     explicit V8Value(const StdString* pString):
         m_Type(Type::String)
     {
@@ -231,7 +189,7 @@ public:
         m_Data.DoubleValue = value;
     }
 
-    V8Value(const V8BigInt* pBigInt):
+    explicit V8Value(const V8BigInt* pBigInt):
         m_Type(Type::BigInt)
     {
         m_Data.pBigInt = pBigInt;
@@ -246,7 +204,9 @@ public:
     }
 
     explicit V8Value(HostObjectHolder* pHostObjectHolder):
-        m_Type(Type::HostObject)
+        m_Type(Type::HostObject),
+        m_Subtype(::ToEnum<Subtype>(pHostObjectHolder->GetSubtype())),
+        m_Flags(::ToEnum<Flags>(pHostObjectHolder->GetFlags()))
     {
         m_Data.pHostObjectHolder = pHostObjectHolder;
     }
@@ -260,6 +220,13 @@ public:
     {
         Move(that);
     }
+
+    explicit V8Value(const FastResult& result)
+    {
+        InitializeFromFastResult(result);
+    }
+
+    explicit V8Value(void*) = delete;
 
     const V8Value& operator=(const V8Value& that)
     {
@@ -312,28 +279,6 @@ public:
         return false;
     }
 
-    bool AsInt32(int32_t& result) const
-    {
-        if (m_Type == Type::Int32)
-        {
-            result = m_Data.Int32Value;
-            return true;
-        }
-
-        return false;
-    }
-
-    bool AsUInt32(uint32_t& result) const
-    {
-        if (m_Type == Type::UInt32)
-        {
-            result = m_Data.UInt32Value;
-            return true;
-        }
-
-        return false;
-    }
-
     bool AsString(const StdString*& pString) const
     {
         if (m_Type == Type::String)
@@ -380,11 +325,13 @@ public:
         return false;
     }
 
-    bool AsHostObject(HostObjectHolder*& pHostObjectHolder) const
+    bool AsHostObject(HostObjectHolder*& pHostObjectHolder, Subtype& subtype, Flags& flags) const
     {
         if (m_Type == Type::HostObject)
         {
             pHostObjectHolder = m_Data.pHostObjectHolder;
+            subtype = m_Subtype;
+            flags = m_Flags;
             return true;
         }
 
@@ -409,8 +356,6 @@ private:
     {
         bool BooleanValue;
         double DoubleValue;
-        int32_t Int32Value;
-        uint32_t UInt32Value;
         const StdString* pString;
         V8ObjectHolder* pV8ObjectHolder;
         HostObjectHolder* pHostObjectHolder;
@@ -430,14 +375,6 @@ private:
         else if (m_Type == Type::Number)
         {
             m_Data.DoubleValue = that.m_Data.DoubleValue;
-        }
-        else if (m_Type == Type::Int32)
-        {
-            m_Data.Int32Value = that.m_Data.Int32Value;
-        }
-        else if (m_Type == Type::UInt32)
-        {
-            m_Data.UInt32Value = that.m_Data.UInt32Value;
         }
         else if (m_Type == Type::String)
         {
@@ -467,8 +404,10 @@ private:
         m_Subtype = that.m_Subtype;
         m_Flags = that.m_Flags;
         m_Data = that.m_Data;
-        that.m_Type = Type::Undefined;
+        that.m_Type = Type::Nonexistent;
     }
+
+    void InitializeFromFastResult(const FastResult& result);
 
     void Dispose()
     {
@@ -498,3 +437,31 @@ private:
 };
 
 static_assert(sizeof(V8Value) == 16, "The managed SplitProxy code assumes that sizeof(V8Value) is 16 on all platforms.");
+
+//-----------------------------------------------------------------------------
+// DefaultInitializedV8Value
+//-----------------------------------------------------------------------------
+
+template <typename TInitializer>
+class DefaultInitializedV8Value final: public V8Value
+{
+public:
+
+    using V8Value::V8Value;
+
+    DefaultInitializedV8Value():
+        V8Value(ms_Initializer)
+    {
+        static_assert(sizeof(DefaultInitializedV8Value) == sizeof(V8Value));
+    }
+
+    using V8Value::operator=;
+
+private:
+
+    static const TInitializer ms_Initializer {};
+};
+
+using NonexistentV8Value = DefaultInitializedV8Value<V8Value::NonexistentInitializer>;
+using UndefinedV8Value = DefaultInitializedV8Value<V8Value::UndefinedInitializer>;
+using NullV8Value = DefaultInitializedV8Value<V8Value::NullInitializer>;

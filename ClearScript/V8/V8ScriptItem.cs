@@ -18,7 +18,7 @@ namespace Microsoft.ClearScript.V8
         private readonly V8ScriptEngine engine;
         private readonly IV8Object target;
         private V8ScriptItem holder;
-        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new();
 
         private V8ScriptItem(V8ScriptEngine engine, IV8Object target)
         {
@@ -28,9 +28,9 @@ namespace Microsoft.ClearScript.V8
 
         public static object Wrap(V8ScriptEngine engine, object obj)
         {
-            Debug.Assert(!(obj is IScriptMarshalWrapper));
+            Debug.Assert(obj is not IScriptMarshalWrapper);
 
-            if (obj == null)
+            if (obj is null)
             {
                 return null;
             }
@@ -98,11 +98,24 @@ namespace Microsoft.ClearScript.V8
 
         public bool IsShared => target.IsShared;
 
+        public object GetProperty(bool marshalValue, int index)
+        {
+            VerifyNotDisposed();
+            var value = engine.ScriptInvoke(static ctx => ctx.target.GetProperty(ctx.index), (target, index));
+            return marshalValue ? engine.MarshalToHost(value, false) : value;
+        }
+
+        public void SetProperty(bool marshalValue, int index, object value)
+        {
+            VerifyNotDisposed();
+            engine.ScriptInvoke(static ctx => ctx.self.target.SetProperty(ctx.index, ctx.marshalValue ? ctx.self.engine.MarshalToScript(ctx.value) : ctx.value), (self: this, marshalValue, index, value));
+        }
+
         public object InvokeMethod(bool marshalResult, string name, params object[] args)
         {
             VerifyNotDisposed();
 
-            var result = engine.ScriptInvoke(() => target.InvokeMethod(name, engine.MarshalToScript(args)));
+            var result = engine.ScriptInvoke(static ctx => ctx.self.target.InvokeMethod(ctx.name, ctx.self.engine.MarshalToScript(ctx.args)), (self: this, name, args));
             if (marshalResult)
             {
                 return engine.MarshalToHost(result, false);
@@ -133,7 +146,7 @@ namespace Microsoft.ClearScript.V8
                     return true;
                 }
 
-                if ((binder is SetMemberBinder setMemberBinder) && (args != null) && (args.Length > 0))
+                if ((binder is SetMemberBinder setMemberBinder) && (args is not null) && (args.Length > 0))
                 {
                     target.SetProperty(setMemberBinder.Name, args[0]);
                     result = args[0];
@@ -142,7 +155,7 @@ namespace Microsoft.ClearScript.V8
 
                 if (binder is GetIndexBinder)
                 {
-                    if ((args != null) && (args.Length == 1))
+                    if ((args is not null) && (args.Length == 1))
                     {
                         result = MiscHelpers.TryGetNumericIndex(args[0], out int index) ? target.GetProperty(index) : target.GetProperty(args[0].ToString());
                         return true;
@@ -153,7 +166,7 @@ namespace Microsoft.ClearScript.V8
 
                 if (binder is SetIndexBinder)
                 {
-                    if ((args != null) && (args.Length == 2))
+                    if ((args is not null) && (args.Length == 2))
                     {
                         if (MiscHelpers.TryGetNumericIndex(args[0], out int index))
                         {
@@ -185,7 +198,7 @@ namespace Microsoft.ClearScript.V8
             }
             catch (Exception exception)
             {
-                if (engine.CurrentScriptFrame != null)
+                if (engine.CurrentScriptFrame is not null)
                 {
                     if (exception is IScriptEngineException scriptError)
                     {
@@ -210,13 +223,13 @@ namespace Microsoft.ClearScript.V8
         public override string[] GetPropertyNames()
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetPropertyNames(false /*includeIndices*/));
+            return engine.ScriptInvoke(static target => target.GetPropertyNames(false), target);
         }
 
         public override int[] GetPropertyIndices()
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.GetPropertyIndices());
+            return engine.ScriptInvoke(static target => target.GetPropertyIndices(), target);
         }
 
         #endregion
@@ -226,12 +239,12 @@ namespace Microsoft.ClearScript.V8
         public override object GetProperty(string name, params object[] args)
         {
             VerifyNotDisposed();
-            if ((args != null) && (args.Length != 0))
+            if ((args is not null) && (args.Length != 0))
             {
                 throw new InvalidOperationException("Invalid argument or index count");
             }
 
-            var result = engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(name)), false);
+            var result = engine.MarshalToHost(engine.ScriptInvoke(static ctx => ctx.target.GetProperty(ctx.name), (target, name)), false);
 
             if ((result is V8ScriptItem resultScriptItem) && (resultScriptItem.engine == engine))
             {
@@ -244,45 +257,43 @@ namespace Microsoft.ClearScript.V8
         public override void SetProperty(string name, params object[] args)
         {
             VerifyNotDisposed();
-            if ((args == null) || (args.Length != 1))
+            if ((args is null) || (args.Length != 1))
             {
                 throw new InvalidOperationException("Invalid argument or index count");
             }
 
-            engine.ScriptInvoke(() => target.SetProperty(name, engine.MarshalToScript(args[0])));
+            engine.ScriptInvoke(static ctx => ctx.self.target.SetProperty(ctx.name, ctx.self.engine.MarshalToScript(ctx.value)), (self: this, name, value: args[0]));
         }
 
         public override bool DeleteProperty(string name)
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.DeleteProperty(name));
+            return engine.ScriptInvoke(static ctx => ctx.target.DeleteProperty(ctx.name), (target, name));
         }
 
         public override object GetProperty(int index)
         {
-            VerifyNotDisposed();
-            return engine.MarshalToHost(engine.ScriptInvoke(() => target.GetProperty(index)), false);
+            return GetProperty(true, index);
         }
 
         public override void SetProperty(int index, object value)
         {
-            VerifyNotDisposed();
-            engine.ScriptInvoke(() => target.SetProperty(index, engine.MarshalToScript(value)));
+            SetProperty(true, index, value);
         }
 
         public override bool DeleteProperty(int index)
         {
             VerifyNotDisposed();
-            return engine.ScriptInvoke(() => target.DeleteProperty(index));
+            return engine.ScriptInvoke(static ctx => ctx.target.DeleteProperty(ctx.index), (target, index));
         }
 
         public override object Invoke(bool asConstructor, params object[] args)
         {
             VerifyNotDisposed();
 
-            if (asConstructor || (holder == null))
+            if (asConstructor || (holder is null))
             {
-                return engine.MarshalToHost(engine.ScriptInvoke(() => target.Invoke(asConstructor, engine.MarshalToScript(args))), false);
+                return engine.MarshalToHost(engine.ScriptInvoke(static ctx => ctx.self.target.Invoke(ctx.asConstructor, ctx.self.engine.MarshalToScript(ctx.args)), (self: this, asConstructor, args)), false);
             }
 
             var engineInternal = (ScriptObject)engine.Global.GetProperty("EngineInternal");
@@ -348,10 +359,20 @@ namespace Microsoft.ClearScript.V8
             {
                 VerifyNotDisposed();
 
-                object tempResult = null;
-                if (engine.ScriptInvoke(() => target.TryGetProperty(name, out tempResult)))
+                var ctx = (target, name, value: (object)null);
+
+                var found = engine.ScriptInvoke(
+                    static pCtx =>
+                    {
+                        ref var ctx = ref pCtx.AsRef();
+                        return ctx.target.TryGetProperty(ctx.name, out ctx.value);
+                    },
+                    StructPtr.FromRef(ref ctx)
+                );
+
+                if (found)
                 {
-                    var result = engine.MarshalToHost(tempResult, false);
+                    var result = engine.MarshalToHost(ctx.value, false);
                     if ((result is V8ScriptItem resultScriptItem) && (resultScriptItem.engine == engine))
                     {
                         resultScriptItem.holder = this;
@@ -376,16 +397,18 @@ namespace Microsoft.ClearScript.V8
             private string[] GetPropertyKeys()
             {
                 VerifyNotDisposed();
-                return engine.ScriptInvoke(() => target.GetPropertyNames(true /*includeIndices*/));
+                return engine.ScriptInvoke(static target => target.GetPropertyNames(true), target);
             }
 
             IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator()
             {
+                // ReSharper disable once NotDisposedResourceIsReturned
                 return KeyValuePairs.GetEnumerator();
             }
 
             IEnumerator IEnumerable.GetEnumerator()
             {
+                // ReSharper disable once NotDisposedResourceIsReturned
                 return ThisDictionary.GetEnumerator();
             }
 
@@ -531,6 +554,7 @@ namespace Microsoft.ClearScript.V8
 
             IEnumerator IEnumerable.GetEnumerator()
             {
+                // ReSharper disable once NotDisposedResourceIsReturned
                 return ThisGenericList.GetEnumerator();
             }
 
@@ -672,61 +696,201 @@ namespace Microsoft.ClearScript.V8
             protected byte[] GetBytes()
             {
                 var size = Size;
-                var result = new byte[size];
-                InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(pData, size, result, 0));
-                return result;
+                return InvokeWithDirectAccess(
+                    static (pData, size) =>
+                    {
+                        var result = new byte[size];
+                        UnmanagedMemoryHelpers.Copy(pData, size, result, 0);
+                        return result;
+                    },
+                    size
+                );
             }
 
             protected ulong ReadBytes(ulong offset, ulong count, byte[] destination, ulong destinationIndex)
             {
                 var size = Size;
-                if (offset >= size)
+                if (size < 1)
+                {
+                    if (offset > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(offset));
+                    }
+
+                    if (count > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(count));
+                    }
+                }
+                else if (offset >= size)
                 {
                     throw new ArgumentOutOfRangeException(nameof(offset));
                 }
 
-                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(GetPtrWithOffset(pData, offset), Math.Min(count, size - offset), destination, destinationIndex));
+                return InvokeWithDirectAccess(
+                    static (pData, ctx) => UnmanagedMemoryHelpers.Copy(GetPtrWithOffset(pData, ctx.offset), Math.Min(ctx.count, ctx.size - ctx.offset), ctx.destination, ctx.destinationIndex),
+                    (offset, count, destination, destinationIndex, size)
+                );
+            }
+
+            protected unsafe ulong ReadBytes(ulong offset, ulong count, Span<byte> destination, ulong destinationIndex)
+            {
+                var size = Size;
+                if (size < 1)
+                {
+                    if (offset > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(offset));
+                    }
+
+                    if (count > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(count));
+                    }
+                }
+                else if (offset >= size)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(offset));
+                }
+
+                fixed (void* pDestination = destination)
+                {
+                    return InvokeWithDirectAccess(
+                        static (pData, ctx) => UnmanagedMemoryHelpers.Copy(GetPtrWithOffset(pData, ctx.offset), Math.Min(ctx.count, ctx.size - ctx.offset), new Span<byte>(ctx.pDestination.ToPointer(), ctx.destinationLength), ctx.destinationIndex),
+                        (offset, count, pDestination: (IntPtr)pDestination, destinationLength: destination.Length, destinationIndex, size)
+                    );
+                }
             }
 
             protected ulong WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
             {
                 var size = Size;
-                if (offset >= size)
+                if (size < 1)
+                {
+                    if (offset > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(offset));
+                    }
+
+                    if (count > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(count));
+                    }
+                }
+                else if (offset >= size)
                 {
                     throw new ArgumentOutOfRangeException(nameof(offset));
                 }
 
-                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(source, sourceIndex, Math.Min(count, size - offset), GetPtrWithOffset(pData, offset)));
+                return InvokeWithDirectAccess(
+                    static (pData, ctx) => UnmanagedMemoryHelpers.Copy(ctx.source, ctx.sourceIndex, Math.Min(ctx.count, ctx.size - ctx.offset), GetPtrWithOffset(pData, ctx.offset)),
+                    (source, sourceIndex, count, offset, size)
+                );
+            }
+
+            protected unsafe ulong WriteBytes(in ReadOnlySpan<byte> source, ulong sourceIndex, ulong count, ulong offset)
+            {
+                var size = Size;
+                if (size < 1)
+                {
+                    if (offset > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(offset));
+                    }
+
+                    if (count > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(count));
+                    }
+                }
+                else if (offset >= size)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(offset));
+                }
+
+                fixed (void* pSource = source)
+                {
+                    return InvokeWithDirectAccess(
+                        static (pData, ctx) => UnmanagedMemoryHelpers.Copy(new ReadOnlySpan<byte>(ctx.pSource.ToPointer(), ctx.sourceLength), ctx.sourceIndex, Math.Min(ctx.count, ctx.size - ctx.offset), GetPtrWithOffset(pData, ctx.offset)),
+                        (pSource: (IntPtr)pSource, sourceLength: source.Length, sourceIndex, count, offset, size)
+                    );
+                }
             }
 
             protected void InvokeWithDirectAccess(Action<IntPtr> action)
             {
-                engine.ScriptInvoke(() => target.InvokeWithArrayBufferOrViewData(action));
+                engine.ScriptInvoke(static ctx => ctx.target.InvokeWithArrayBufferOrViewData(ctx.action), (target, action));
             }
 
-            protected T InvokeWithDirectAccess<T>(Func<IntPtr, T> func)
+            protected TResult InvokeWithDirectAccess<TResult>(Func<IntPtr, TResult> func)
             {
-                return engine.ScriptInvoke(() =>
-                {
-                    var result = default(T);
-                    target.InvokeWithArrayBufferOrViewData(pData => result = func(pData));
-                    return result;
-                });
+                var ctx = (self: this, func, result: default(TResult));
+
+                return engine.ScriptInvoke(
+                    static pCtx =>
+                    {
+                        ref var ctx = ref pCtx.AsRef();
+
+                        ctx.self.target.InvokeWithArrayBufferOrViewData(
+                            static (pData, pCtx) =>
+                            {
+                                ref var ctx = ref pCtx.AsRef();
+                                ctx.result = ctx.func(pData);
+                            },
+                            pCtx
+                        );
+
+                        return ctx.result;
+                    },
+                    StructPtr.FromRef(ref ctx)
+                );
+            }
+
+            protected void InvokeWithDirectAccess<TArg>(Action<IntPtr, TArg> action, in TArg arg)
+            {
+                engine.ScriptInvoke(static ctx => ctx.target.InvokeWithArrayBufferOrViewData(ctx.action, ctx.arg), (target, action, arg));
+            }
+
+            protected TResult InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult> func, in TArg arg)
+            {
+                var ctx = (self: this, func, arg, result: default(TResult));
+
+                return engine.ScriptInvoke(
+                    static pCtx =>
+                    {
+                        ref var ctx = ref pCtx.AsRef();
+
+                        ctx.self.target.InvokeWithArrayBufferOrViewData(
+                            static (pData, pCtx) =>
+                            {
+                                ref var ctx = ref pCtx.AsRef();
+                                ctx.result = ctx.func(pData, ctx.arg);
+                            },
+                            pCtx
+                        );
+
+                        return ctx.result;
+                    },
+                    StructPtr.FromRef(ref ctx)
+                );
             }
 
             private V8ArrayBufferOrViewInfo GetInfo()
             {
                 VerifyNotDisposed();
 
-                if (info == null)
+                if (info is null)
                 {
-                    engine.ScriptInvoke(() =>
-                    {
-                        if (info == null)
+                    engine.ScriptInvoke(
+                        static ctx =>
                         {
-                            info = target.GetArrayBufferOrViewInfo();
-                        }
-                    });
+                            if (ctx.self.info is null)
+                            {
+                                ctx.self.info = ctx.target.GetArrayBufferOrViewInfo();
+                            }
+                        },
+                        (self: this, target)
+                    );
                 }
 
                 return info;
@@ -739,8 +903,13 @@ namespace Microsoft.ClearScript.V8
 
             private static IntPtr GetPtrWithOffset(IntPtr pData, ulong offset)
             {
+                if (offset < 1)
+                {
+                    return pData;
+                }
+
                 var baseAddr = unchecked((ulong)pData.ToInt64());
-                return new IntPtr(unchecked((long)checked(baseAddr + offset)));
+                return (IntPtr)unchecked((long)checked(baseAddr + offset));
             }
         }
 
@@ -769,7 +938,17 @@ namespace Microsoft.ClearScript.V8
                 return ReadBytes(offset, count, destination, destinationIndex);
             }
 
+            ulong IArrayBuffer.ReadBytes(ulong offset, ulong count, Span<byte> destination, ulong destinationIndex)
+            {
+                return ReadBytes(offset, count, destination, destinationIndex);
+            }
+
             ulong IArrayBuffer.WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
+            {
+                return WriteBytes(source, sourceIndex, count, offset);
+            }
+
+            ulong IArrayBuffer.WriteBytes(ReadOnlySpan<byte> source, ulong sourceIndex, ulong count, ulong offset)
             {
                 return WriteBytes(source, sourceIndex, count, offset);
             }
@@ -780,10 +959,22 @@ namespace Microsoft.ClearScript.V8
                 InvokeWithDirectAccess(action);
             }
 
-            T IArrayBuffer.InvokeWithDirectAccess<T>(Func<IntPtr, T> func)
+            TResult IArrayBuffer.InvokeWithDirectAccess<TResult>(Func<IntPtr, TResult> func)
             {
                 MiscHelpers.VerifyNonNullArgument(func, nameof(func));
                 return InvokeWithDirectAccess(func);
+            }
+
+            void IArrayBuffer.InvokeWithDirectAccess<TArg>(Action<IntPtr, TArg> action, in TArg arg)
+            {
+                MiscHelpers.VerifyNonNullArgument(action, nameof(action));
+                InvokeWithDirectAccess(action, arg);
+            }
+
+            TResult IArrayBuffer.InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult> func, in TArg arg)
+            {
+                MiscHelpers.VerifyNonNullArgument(func, nameof(func));
+                return InvokeWithDirectAccess(func, arg);
             }
 
             #endregion
@@ -818,7 +1009,17 @@ namespace Microsoft.ClearScript.V8
                 return ReadBytes(offset, count, destination, destinationIndex);
             }
 
+            ulong IArrayBufferView.ReadBytes(ulong offset, ulong count, Span<byte> destination, ulong destinationIndex)
+            {
+                return ReadBytes(offset, count, destination, destinationIndex);
+            }
+
             ulong IArrayBufferView.WriteBytes(byte[] source, ulong sourceIndex, ulong count, ulong offset)
+            {
+                return WriteBytes(source, sourceIndex, count, offset);
+            }
+
+            ulong IArrayBufferView.WriteBytes(ReadOnlySpan<byte> source, ulong sourceIndex, ulong count, ulong offset)
             {
                 return WriteBytes(source, sourceIndex, count, offset);
             }
@@ -829,10 +1030,22 @@ namespace Microsoft.ClearScript.V8
                 InvokeWithDirectAccess(action);
             }
 
-            T IArrayBufferView.InvokeWithDirectAccess<T>(Func<IntPtr, T> func)
+            TResult IArrayBufferView.InvokeWithDirectAccess<TResult>(Func<IntPtr, TResult> func)
             {
                 MiscHelpers.VerifyNonNullArgument(func, nameof(func));
                 return InvokeWithDirectAccess(func);
+            }
+
+            void IArrayBufferView.InvokeWithDirectAccess<TArg>(Action<IntPtr, TArg> action, in TArg arg)
+            {
+                MiscHelpers.VerifyNonNullArgument(action, nameof(action));
+                InvokeWithDirectAccess(action, arg);
+            }
+
+            TResult IArrayBufferView.InvokeWithDirectAccess<TArg, TResult>(Func<IntPtr, TArg, TResult> func, in TArg arg)
+            {
+                MiscHelpers.VerifyNonNullArgument(func, nameof(func));
+                return InvokeWithDirectAccess(func, arg);
             }
 
             #endregion
@@ -863,8 +1076,13 @@ namespace Microsoft.ClearScript.V8
 
             protected IntPtr GetPtrWithIndex(IntPtr pData, ulong index)
             {
+                if (index < 1)
+                {
+                    return pData;
+                }
+
                 var baseAddr = unchecked((ulong)pData.ToInt64());
-                return new IntPtr(unchecked((long)checked(baseAddr + (index * (Size / Length)))));
+                return (IntPtr)unchecked((long)checked(baseAddr + (index * (Size / Length))));
             }
 
             #region ITypedArray implementation
@@ -878,7 +1096,7 @@ namespace Microsoft.ClearScript.V8
 
         #region Nested type: V8TypedArray<T>
 
-        private class V8TypedArray<T> : V8TypedArray, ITypedArray<T>
+        private class V8TypedArray<T> : V8TypedArray, ITypedArray<T> where T : unmanaged
         {
             public V8TypedArray(V8ScriptEngine engine, IV8Object target)
                 : base(engine, target)
@@ -890,31 +1108,125 @@ namespace Microsoft.ClearScript.V8
             T[] ITypedArray<T>.ToArray()
             {
                 var length = Length;
-                var result = new T[length];
-                InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(pData, length, result, 0));
-                return result;
+                return InvokeWithDirectAccess(
+                    static (pData, length) =>
+                    {
+                        var result = new T[length];
+                        UnmanagedMemoryHelpers.Copy(pData, length, result, 0);
+                        return result;
+                    },
+                    length
+                );
             }
 
             ulong ITypedArray<T>.Read(ulong index, ulong length, T[] destination, ulong destinationIndex)
             {
                 var totalLength = Length;
-                if (index >= totalLength)
+                if (totalLength < 1)
+                {
+                    if (index > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+
+                    if (length > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(length));
+                    }
+                }
+                else if (index >= totalLength)
                 {
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(GetPtrWithIndex(pData, index), Math.Min(length, totalLength - index), destination, destinationIndex));
+                return InvokeWithDirectAccess(
+                    static (pData, ctx) => UnmanagedMemoryHelpers.Copy(ctx.self.GetPtrWithIndex(pData, ctx.index), Math.Min(ctx.length, ctx.totalLength - ctx.index), ctx.destination, ctx.destinationIndex),
+                    (self: this, index, length, destination, destinationIndex, totalLength)
+                );
+            }
+
+            unsafe ulong ITypedArray<T>.Read(ulong index, ulong length, Span<T> destination, ulong destinationIndex)
+            {
+                var totalLength = Length;
+                if (totalLength < 1)
+                {
+                    if (index > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+
+                    if (length > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(length));
+                    }
+                }
+                else if (index >= totalLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+
+                fixed (void* pDestination = destination)
+                {
+                    return InvokeWithDirectAccess(
+                        static (pData, ctx) => UnmanagedMemoryHelpers.Copy(ctx.self.GetPtrWithIndex(pData, ctx.index), Math.Min(ctx.length, ctx.totalLength - ctx.index), new Span<T>(ctx.pDestination.ToPointer(), ctx.destinationLength), ctx.destinationIndex),
+                        (self: this, index, length, pDestination: (IntPtr)pDestination, destinationLength: destination.Length, destinationIndex, totalLength)
+                    );
+                }
             }
 
             ulong ITypedArray<T>.Write(T[] source, ulong sourceIndex, ulong length, ulong index)
             {
                 var totalLength = Length;
-                if (index >= totalLength)
+                if (totalLength < 1)
+                {
+                    if (index > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+
+                    if (length > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(length));
+                    }
+                }
+                else if (index >= totalLength)
                 {
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(source, sourceIndex, Math.Min(length, totalLength - index), GetPtrWithIndex(pData, index)));
+                return InvokeWithDirectAccess(
+                    static (pData, ctx) => UnmanagedMemoryHelpers.Copy(ctx.source, ctx.sourceIndex, Math.Min(ctx.length, ctx.totalLength - ctx.index), ctx.self.GetPtrWithIndex(pData, ctx.index)),
+                    (self: this, source, sourceIndex, length, index, totalLength)
+                );
+            }
+
+            unsafe ulong ITypedArray<T>.Write(ReadOnlySpan<T> source, ulong sourceIndex, ulong length, ulong index)
+            {
+                var totalLength = Length;
+                if (totalLength < 1)
+                {
+                    if (index > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+
+                    if (length > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(length));
+                    }
+                }
+                else if (index >= totalLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+
+                fixed (void* pSource = source)
+                {
+                    return InvokeWithDirectAccess(
+                        static (pData, ctx) => UnmanagedMemoryHelpers.Copy(new ReadOnlySpan<T>(ctx.pSource.ToPointer(), ctx.sourceLength), ctx.sourceIndex, Math.Min(ctx.length, ctx.totalLength - ctx.index), ctx.self.GetPtrWithIndex(pData, ctx.index)),
+                        (self: this, pSource: (IntPtr)pSource, sourceLength: source.Length, sourceIndex, length, index, totalLength)
+                    );
+                }
             }
 
             #endregion
@@ -938,31 +1250,125 @@ namespace Microsoft.ClearScript.V8
             char[] ITypedArray<char>.ToArray()
             {
                 var length = Length;
-                var result = new char[length];
-                InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(pData, length, result, 0));
-                return result;
+                return InvokeWithDirectAccess(
+                    static (pData, length) =>
+                    {
+                        var result = new char[length];
+                        UnmanagedMemoryHelpers.Copy(pData, length, result, 0);
+                        return result;
+                    },
+                    length
+                );
             }
 
             ulong ITypedArray<char>.Read(ulong index, ulong length, char[] destination, ulong destinationIndex)
             {
                 var totalLength = Length;
-                if (index >= totalLength)
+                if (totalLength < 1)
+                {
+                    if (index > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+
+                    if (length > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(length));
+                    }
+                }
+                else if (index >= totalLength)
                 {
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(GetPtrWithIndex(pData, index), Math.Min(length, totalLength - index), destination, destinationIndex));
+                return InvokeWithDirectAccess(
+                    static (pData, ctx) => UnmanagedMemoryHelpers.Copy(ctx.self.GetPtrWithIndex(pData, ctx.index), Math.Min(ctx.length, ctx.totalLength - ctx.index), ctx.destination, ctx.destinationIndex),
+                    (self: this, index, length, destination, destinationIndex, totalLength)
+                );
+            }
+
+            unsafe ulong ITypedArray<char>.Read(ulong index, ulong length, Span<char> destination, ulong destinationIndex)
+            {
+                var totalLength = Length;
+                if (totalLength < 1)
+                {
+                    if (index > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+
+                    if (length > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(length));
+                    }
+                }
+                else if (index >= totalLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+
+                fixed (void* pDestination = destination)
+                {
+                    return InvokeWithDirectAccess(
+                        static (pData, ctx) => UnmanagedMemoryHelpers.Copy(ctx.self.GetPtrWithIndex(pData, ctx.index), Math.Min(ctx.length, ctx.totalLength - ctx.index), new Span<char>(ctx.pDestination.ToPointer(), ctx.destinationLength), ctx.destinationIndex),
+                        (self: this, index, length, pDestination: (IntPtr)pDestination, destinationLength: destination.Length, destinationIndex, totalLength)
+                    );
+                }
             }
 
             ulong ITypedArray<char>.Write(char[] source, ulong sourceIndex, ulong length, ulong index)
             {
                 var totalLength = Length;
-                if (index >= totalLength)
+                if (totalLength < 1)
+                {
+                    if (index > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+
+                    if (length > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(length));
+                    }
+                }
+                else if (index >= totalLength)
                 {
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                return InvokeWithDirectAccess(pData => UnmanagedMemoryHelpers.Copy(source, sourceIndex, Math.Min(length, totalLength - index), GetPtrWithIndex(pData, index)));
+                return InvokeWithDirectAccess(
+                    static (pData, ctx) => UnmanagedMemoryHelpers.Copy(ctx.source, ctx.sourceIndex, Math.Min(ctx.length, ctx.totalLength - ctx.index), ctx.self.GetPtrWithIndex(pData, ctx.index)),
+                    (self: this, source, sourceIndex, length, index, totalLength)
+                );
+            }
+
+            unsafe ulong ITypedArray<char>.Write(ReadOnlySpan<char> source, ulong sourceIndex, ulong length, ulong index)
+            {
+                var totalLength = Length;
+                if (totalLength < 1)
+                {
+                    if (index > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+
+                    if (length > 0)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(length));
+                    }
+                }
+                else if (index >= totalLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+
+                fixed (void* pSource = source)
+                {
+                    return InvokeWithDirectAccess(
+                        static (pData, ctx) => UnmanagedMemoryHelpers.Copy(new ReadOnlySpan<char>(ctx.pSource.ToPointer(), ctx.sourceLength), ctx.sourceIndex, Math.Min(ctx.length, ctx.totalLength - ctx.index), ctx.self.GetPtrWithIndex(pData, ctx.index)),
+                        (self: this, pSource: (IntPtr)pSource, sourceLength: source.Length, sourceIndex, length, index, totalLength)
+                    );
+                }
             }
 
             #endregion

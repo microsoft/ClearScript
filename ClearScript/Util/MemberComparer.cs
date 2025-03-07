@@ -8,7 +8,7 @@ namespace Microsoft.ClearScript.Util
 {
     internal sealed class MemberComparer<T> : EqualityComparer<T> where T : MemberInfo
     {
-        public static readonly MemberComparer<T> Instance = new MemberComparer<T>();
+        public static readonly MemberComparer<T> Instance = new();
 
         private MemberComparer()
         {
@@ -26,7 +26,7 @@ namespace Microsoft.ClearScript.Util
                 return false;
             }
 
-            return MiscHelpers.Try(out var result, () => UnsafeEquals(x, y)) && result;
+            return MiscHelpers.Try(out var result, static ctx => UnsafeEquals(ctx.x, ctx.y), (x, y)) && result;
         }
 
         public override int GetHashCode(T obj)

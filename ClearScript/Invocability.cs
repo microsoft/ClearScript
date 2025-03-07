@@ -5,7 +5,7 @@ namespace Microsoft.ClearScript
 {
     internal enum Invocability
     {
-        // IMPORTANT: maintain bitwise equivalence with native enum IHostObjectUtil::Invocability
+        // IMPORTANT: maintain bitwise equivalence with native enum HostObjectUtil::Invocability
         None,
         Delegate,
         Dynamic,

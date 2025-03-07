@@ -100,7 +100,7 @@ namespace Microsoft.ClearScript
         private readonly object source;
         private readonly MethodInfo removeMethod;
         private readonly object[] parameters;
-        private readonly InterlockedOneWayFlag brokenFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag brokenFlag = new();
 
         internal EventConnection(ScriptEngine engine, object source, EventInfo eventInfo, Delegate handler)
         {
@@ -108,12 +108,12 @@ namespace Microsoft.ClearScript
             MiscHelpers.VerifyNonNullArgument(handler, nameof(handler));
             MiscHelpers.VerifyNonNullArgument(eventInfo, nameof(eventInfo));
 
-            if (!MiscHelpers.Try(out var addMethod, () => eventInfo.GetAddMethod(true)) || (addMethod == null))
+            if (!MiscHelpers.Try(out var addMethod, static eventInfo => eventInfo.GetAddMethod(true), eventInfo) || (addMethod is null))
             {
                 throw new ArgumentException("Invalid event type (no accessible add method)", nameof(eventInfo));
             }
 
-            if (!MiscHelpers.Try(out removeMethod, () => eventInfo.GetRemoveMethod(true)) || (removeMethod == null))
+            if (!MiscHelpers.Try(out removeMethod, static eventInfo => eventInfo.GetRemoveMethod(true), eventInfo) || (removeMethod is null))
             {
                 throw new ArgumentException("Invalid event type (no accessible remove method)", nameof(eventInfo));
             }

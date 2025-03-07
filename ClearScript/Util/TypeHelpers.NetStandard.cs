@@ -19,10 +19,10 @@ namespace Microsoft.ClearScript.Util
 
             if (useAssemblyName)
             {
-                if (MiscHelpers.Try(out var assembly, () => Assembly.Load(AssemblyTable.GetFullAssemblyName(assemblyName))))
+                if (MiscHelpers.Try(out var assembly, static assemblyName => Assembly.Load(AssemblyTable.GetFullAssemblyName(assemblyName)), assemblyName))
                 {
                     // ReSharper disable once AccessToModifiedClosure
-                    if (MiscHelpers.Try(out var result, () => assembly.GetType(fullTypeName).AssemblyQualifiedName))
+                    if (MiscHelpers.Try(out var result, static ctx => ctx.assembly.GetType(ctx.fullTypeName).AssemblyQualifiedName, (assembly, fullTypeName)))
                     {
                         return result;
                     }

@@ -690,8 +690,8 @@ namespace Microsoft.ClearScript.Test
         public void JScriptEngine_new_Scalar()
         {
             engine.AddHostObject("clr", HostItemFlags.GlobalMembers, new HostTypeCollection("mscorlib"));
-            Assert.AreEqual(default(int), engine.Evaluate("new System.Int32"));
-            Assert.AreEqual(default(int), engine.Evaluate("new System.Int32()"));
+            Assert.AreEqual(0, engine.Evaluate("new System.Int32"));
+            Assert.AreEqual(0, engine.Evaluate("new System.Int32()"));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -2633,14 +2633,16 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("JScriptEngine")]
         public void JScriptEngine_ScriptObject_IDictionary()
         {
+            // ReSharper disable UsageOfDefaultStructEquality
+
             var pairs = new List<KeyValuePair<string, object>>
             {
-                new KeyValuePair<string, object>("123", 987),
-                new KeyValuePair<string, object>("456", 654.321),
-                new KeyValuePair<string, object>("abc", 123),
-                new KeyValuePair<string, object>("def", 456.789),
-                new KeyValuePair<string, object>("ghi", "foo"),
-                new KeyValuePair<string, object>("jkl", engine.Evaluate("({ bar: 'baz' })"))
+                new("123", 987),
+                new("456", 654.321),
+                new("abc", 123),
+                new("def", 456.789),
+                new("ghi", "foo"),
+                new("jkl", engine.Evaluate("({ bar: 'baz' })"))
             };
 
             var dict = (IDictionary<string, object>)engine.Evaluate("dict = {}");
@@ -2700,6 +2702,8 @@ namespace Microsoft.ClearScript.Test
 
             Assert.IsTrue(Convert.ToBoolean(engine.Evaluate("delete dict[789]")));
             Assert.IsTrue(pairs.SequenceEqual(dict));
+
+            // ReSharper restore UsageOfDefaultStructEquality
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
@@ -2878,6 +2882,21 @@ namespace Microsoft.ClearScript.Test
             engine.UndefinedImportValue = 123;
             Assert.IsNull(engine.Evaluate("null"));
             Assert.AreEqual(123, engine.Evaluate("undefined"));
+        }
+
+        [TestMethod, TestCategory("JScriptEngine")]
+        public void JScriptEngine_NullImportValue()
+        {
+            Assert.IsNull(engine.Evaluate("null"));
+            Assert.IsInstanceOfType(engine.Evaluate("undefined"), typeof(Undefined));
+
+            engine.NullImportValue = Undefined.Value;
+            Assert.IsInstanceOfType(engine.Evaluate("null"), typeof(Undefined));
+            Assert.IsInstanceOfType(engine.Evaluate("undefined"), typeof(Undefined));
+
+            engine.NullImportValue = 123;
+            Assert.AreEqual(123, engine.Evaluate("null"));
+            Assert.IsInstanceOfType(engine.Evaluate("undefined"), typeof(Undefined));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]

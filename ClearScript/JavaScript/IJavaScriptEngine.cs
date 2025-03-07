@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System.Threading.Tasks;
@@ -15,6 +15,9 @@ namespace Microsoft.ClearScript.JavaScript
 
         object CreatePromiseForTask<T>(Task<T> task);
         object CreatePromiseForTask(Task task);
+
+        object CreatePromiseForValueTask<T>(ValueTask<T> valueTask);
+        object CreatePromiseForValueTask(ValueTask valueTask);
 
         Task<object> CreateTaskForPromise(ScriptObject promise);
     }

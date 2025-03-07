@@ -33,12 +33,12 @@ namespace Microsoft.ClearScript
                 throw new NotSupportedException("Unsupported variable type");
             }
 
-            if (typeof(HostItem).IsAssignableFrom(typeof(T)) || typeof(HostTarget).IsAssignableFrom(typeof(T)))
+            if (typeof(IHostItem).IsAssignableFrom(typeof(T)) || typeof(HostTarget).IsAssignableFrom(typeof(T)))
             {
                 throw new NotSupportedException("Unsupported variable type");
             }
 
-            if ((initValue is HostItem) || (initValue is HostTarget))
+            if ((initValue is IHostItem) || (initValue is HostTarget))
             {
                 throw new NotSupportedException("Unsupported value type");
             }
@@ -110,14 +110,14 @@ namespace Microsoft.ClearScript
             }
             else if (string.Equals(name, "value", invokeFlags.GetMemberNameComparison()))
             {
-                if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+                if (invokeFlags.HasAllFlags(BindingFlags.InvokeMethod))
                 {
                     if (InvokeHelpers.TryInvokeObject(context, Value, invokeFlags, args, bindArgs, typeof(IDynamicMetaObjectProvider).IsAssignableFrom(typeof(T)), out result))
                     {
                         return true;
                     }
 
-                    if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
+                    if (invokeFlags.HasAllFlags(BindingFlags.GetField) && (args.Length < 1))
                     {
                         result = context.Engine.PrepareResult(Value, ScriptMemberFlags.None, false);
                         return true;
@@ -167,7 +167,7 @@ namespace Microsoft.ClearScript
                     throw new InvalidOperationException("Assignment invalid due to type mismatch");
                 }
 
-                if ((value is HostItem) || (value is HostTarget))
+                if ((value is IHostItem) || (value is HostTarget))
                 {
                     throw new NotSupportedException("Unsupported value type");
                 }

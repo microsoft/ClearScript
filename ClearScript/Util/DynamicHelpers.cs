@@ -26,13 +26,13 @@ namespace Microsoft.ClearScript.Util
 
         public static object Invoke(Expression expr)
         {
-            Debug.Assert(expr != null);
+            Debug.Assert(expr is not null);
             return Expression.Lambda(expr).Compile().DynamicInvoke();
         }
 
         public static object Invoke(Expression expr, IEnumerable<ParameterExpression> parameters, object[] args)
         {
-            Debug.Assert(expr != null);
+            Debug.Assert(expr is not null);
             return Expression.Lambda(expr, parameters).Compile().DynamicInvoke(args);
         }
 
@@ -88,7 +88,7 @@ namespace Microsoft.ClearScript.Util
                                             return true;
                                         }
                                     }
-                                    else if ((args != null) && (args.Length > 0))
+                                    else if ((args is not null) && (args.Length > 0))
                                     {
                                         if (binder is GetIndexBinder)
                                         {
@@ -204,7 +204,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var property = target.GetProperty(name, flags);
-            if (property != null)
+            if (property is not null)
             {
                 result = property.GetValue(target, args);
                 return true;
@@ -216,7 +216,7 @@ namespace Microsoft.ClearScript.Util
 
         private static bool TrySetProperty(IReflect target, string name, bool ignoreCase, object[] args, out object result)
         {
-            if ((args != null) && (args.Length > 0))
+            if ((args is not null) && (args.Length > 0))
             {
                 // ReSharper disable once SuspiciousTypeConversion.Global
                 if (target is IDispatchEx dispatchEx)
@@ -237,7 +237,7 @@ namespace Microsoft.ClearScript.Util
                 }
 
                 var property = target.GetProperty(name, flags);
-                if (property == null)
+                if (property is null)
                 {
                     if (target is IExpando expando)
                     {
@@ -245,7 +245,7 @@ namespace Microsoft.ClearScript.Util
                     }
                 }
 
-                if (property != null)
+                if (property is not null)
                 {
                     property.SetValue(target, args[args.Length - 1], args.Take(args.Length - 1).ToArray());
                     result = args[args.Length - 1];
@@ -335,7 +335,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var method = target.GetMethod(name, flags);
-            if (method != null)
+            if (method is not null)
             {
                 result = method.Invoke(target, BindingFlags.InvokeMethod | flags, null, args, CultureInfo.InvariantCulture);
                 return true;
@@ -488,7 +488,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var hostTarget = target as HostTarget;
-            if (hostTarget == null)
+            if (hostTarget is null)
             {
                 return CreateDynamicMetaObject(target, Expression.Constant(target));
             }
@@ -523,7 +523,7 @@ namespace Microsoft.ClearScript.Util
             }
 
             var hostTarget = arg as HostTarget;
-            if (hostTarget == null)
+            if (hostTarget is null)
             {
                 return CreateDynamicMetaObject(arg, Expression.Constant(arg));
             }
@@ -563,7 +563,7 @@ namespace Microsoft.ClearScript.Util
             var constructor = typeof(T).GetConstructor(new[] { typeof(string) });
 
             Expression exceptionExpr;
-            if (constructor != null)
+            if (constructor is not null)
             {
                 exceptionExpr = Expression.New(constructor, Expression.Constant(message));
             }
@@ -577,7 +577,7 @@ namespace Microsoft.ClearScript.Util
 
         private static Type GetParamTypeForArg(object arg)
         {
-            return (arg != null) ? arg.GetType() : typeof(object);
+            return (arg is not null) ? arg.GetType() : typeof(object);
         }
 
         #endregion
@@ -593,7 +593,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackCreateInstance(DynamicMetaObject target, DynamicMetaObject[] args, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // errorSuggestion is the dynamic instantiation algorithm
                     return errorSuggestion;
@@ -618,7 +618,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackInvoke(DynamicMetaObject target, DynamicMetaObject[] args, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // errorSuggestion is the dynamic invocation algorithm
                     return errorSuggestion;
@@ -643,7 +643,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackGetMember(DynamicMetaObject target, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // errorSuggestion is the dynamic member retrieval algorithm
                     return errorSuggestion;
@@ -668,7 +668,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackSetMember(DynamicMetaObject target, DynamicMetaObject value, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // errorSuggestion is the dynamic member assignment algorithm
                     return errorSuggestion;
@@ -699,7 +699,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackInvokeMember(DynamicMetaObject target, DynamicMetaObject[] args, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // errorSuggestion is the dynamic member invocation algorithm
                     return errorSuggestion;
@@ -712,7 +712,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackInvoke(DynamicMetaObject target, DynamicMetaObject[] args, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // behave as in other scenarios, but the observed value is always null
                     return errorSuggestion;
@@ -738,7 +738,7 @@ namespace Microsoft.ClearScript.Util
                     return result;
                 }
 
-                if (invokeFlags.HasFlag(BindingFlags.GetField) && (args.Length < 1))
+                if (invokeFlags.HasAllFlags(BindingFlags.GetField) && (args.Length < 1))
                 {
                     return target;
                 }
@@ -762,7 +762,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackDeleteMember(DynamicMetaObject target, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // errorSuggestion is the dynamic member deletion algorithm
                     return errorSuggestion;
@@ -786,7 +786,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackGetIndex(DynamicMetaObject target, DynamicMetaObject[] indexes, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // errorSuggestion is the dynamic index retrieval algorithm
                     return errorSuggestion;
@@ -811,7 +811,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackSetIndex(DynamicMetaObject target, DynamicMetaObject[] indexes, DynamicMetaObject value, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // errorSuggestion is the dynamic index assignment algorithm
                     return errorSuggestion;
@@ -836,7 +836,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackDeleteIndex(DynamicMetaObject target, DynamicMetaObject[] indices, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     // errorSuggestion is the dynamic index deletion algorithm
                     return errorSuggestion;
@@ -860,7 +860,7 @@ namespace Microsoft.ClearScript.Util
 
             public override DynamicMetaObject FallbackConvert(DynamicMetaObject target, DynamicMetaObject errorSuggestion)
             {
-                if (errorSuggestion != null)
+                if (errorSuggestion is not null)
                 {
                     return errorSuggestion;
                 }

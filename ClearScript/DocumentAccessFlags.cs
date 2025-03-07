@@ -31,12 +31,16 @@ namespace Microsoft.ClearScript
         /// </summary>
         EnableAllLoading = EnableFileLoading | EnableWebLoading,
 
+        // ReSharper disable GrammarMistakeInComment
+
         /// <summary>
         /// Specifies that a document path must begin with a segment of "." or ".." to be
         /// considered a relative path. By default, any path that is not explicitly a top-level
         /// or root path is eligible.
         /// </summary>
         EnforceRelativePrefix = 0x00000004,
+
+        // ReSharper restore GrammarMistakeInComment
 
         /// <summary>
         /// Relaxes the requirement that a loaded document must be of the requested category. 
@@ -47,5 +51,11 @@ namespace Microsoft.ClearScript
         /// Enables the use of <c><see cref="DocumentSettings.AsyncLoadCallback"/></c> instead of <c><see cref="DocumentSettings.LoadCallback"/></c>.
         /// </summary>
         UseAsyncLoadCallback = 0x00000010
+    }
+
+    internal static class DocumentAccessFlagsHelpers
+    {
+        public static bool HasAllFlags(this DocumentAccessFlags value, DocumentAccessFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this DocumentAccessFlags value, DocumentAccessFlags flags) => (value & flags) != 0;
     }
 }

@@ -82,4 +82,10 @@ namespace Microsoft.ClearScript.Windows
         /// </summary>
         MarshalDateTimeAsDate = 0x00000100
     }
+
+    internal static class WindowsScriptEngineFlagsHelpers
+    {
+        public static bool HasAllFlags(this WindowsScriptEngineFlags value, WindowsScriptEngineFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this WindowsScriptEngineFlags value, WindowsScriptEngineFlags flags) => (value & flags) != 0;
+    }
 }

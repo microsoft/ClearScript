@@ -123,6 +123,9 @@
     <ClInclude Include="..\V8Value.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\V8ValueWireData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\WeakRef.h">
       <Filter>Header Files</Filter>
     </ClInclude>

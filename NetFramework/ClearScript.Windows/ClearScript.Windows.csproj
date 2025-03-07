@@ -1,10 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
     <PropertyGroup>
-        <TargetFramework>net45</TargetFramework>
+        <TargetFramework>net462</TargetFramework>
         <UseWPF>true</UseWPF>
         <RootNamespace>Microsoft.ClearScript.Windows</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <LangVersion>9.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -55,12 +56,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
         <ProjectReference Include="..\ClearScript.Windows.Core\ClearScript.Windows.Core.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Microsoft.CSharp" />
     </ItemGroup>
 
     <ItemGroup>

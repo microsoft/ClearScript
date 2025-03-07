@@ -18,10 +18,10 @@ namespace Microsoft.ClearScript.V8
         private static readonly IUniqueNameManager nameManager = new UniqueNameManager();
 
         private DocumentSettings documentSettings;
-        private readonly DocumentSettings defaultDocumentSettings = new DocumentSettings();
+        private readonly DocumentSettings defaultDocumentSettings = new();
 
         private readonly V8IsolateProxy proxy;
-        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new();
 
         #endregion
 
@@ -977,7 +977,7 @@ namespace Microsoft.ClearScript.V8
 
             using (var engine = CreateScriptEngine(Name))
             {
-                engine.ScriptInvoke(() => proxy.WriteHeapSnapshot(stream));
+                engine.ScriptInvoke(static ctx => ctx.proxy.WriteHeapSnapshot(ctx.stream), (proxy, stream));
             }
         }
 
@@ -985,9 +985,9 @@ namespace Microsoft.ClearScript.V8
 
         #region internal members
 
-        internal readonly UniqueFileNameManager DocumentNameManager = new UniqueFileNameManager();
+        internal readonly UniqueFileNameManager DocumentNameManager = new();
 
-        internal readonly HostItemCollateral HostItemCollateral = new HostItemCollateral();
+        internal readonly HostItemCollateral HostItemCollateral = new();
 
         internal static void OnDebuggerConnected(V8RuntimeDebuggerEventArgs args)
         {

@@ -13,9 +13,9 @@ namespace Microsoft.ClearScript
 {
     internal sealed class ExtensionMethodTable
     {
-        private readonly Dictionary<Type, MethodInfo[]> table = new Dictionary<Type, MethodInfo[]>();
+        private readonly Dictionary<Type, MethodInfo[]> table = new();
 
-        public ExtensionMethodSummary Summary { get; private set; } = new ExtensionMethodSummary();
+        public ExtensionMethodSummary Summary { get; private set; } = new();
 
         public bool ProcessType(IHostContext context, Type type)
         {

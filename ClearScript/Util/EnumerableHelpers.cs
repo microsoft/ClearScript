@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
+using System.Threading.Tasks;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util.COM;
 
 namespace Microsoft.ClearScript.Util
@@ -35,7 +37,22 @@ namespace Microsoft.ClearScript.Util
         new T ScriptableCurrent { get; }
     }
 
-    internal static partial class EnumerableHelpers
+    /// <exclude/>
+    [BypassCustomAttributeLoader]
+    [DefaultScriptUsage(ScriptAccess.Full)]
+    public interface IScriptableAsyncEnumerator<out T> : IAsyncEnumerator<T>
+    {
+        /// <exclude/>
+        T ScriptableCurrent { get; }
+
+        /// <exclude/>
+        object ScriptableMoveNextAsync();
+
+        /// <exclude/>
+        object ScriptableDisposeAsync();
+    }
+
+    internal static class EnumerableHelpers
     {
         public static IList<T> ToIList<T>(this IEnumerable<T> source)
         {
@@ -102,25 +119,43 @@ namespace Microsoft.ClearScript.Util
 
     [BypassCustomAttributeLoader]
     [DefaultScriptUsage(ScriptAccess.Full)]
-    internal static partial class ScriptableEnumerableHelpers
+    internal static class ScriptableEnumerableHelpers
     {
         public static readonly HostType HostType = HostType.Wrap(typeof(ScriptableEnumerableHelpers));
 
         public static object GetScriptableEnumerator(IEnumerable source)
         {
+            // ReSharper disable once NotDisposedResource
             return HostObject.Wrap(new ScriptableEnumeratorOnEnumerator(source.GetEnumerator()), typeof(IScriptableEnumerator));
+        }
+        public static object GetScriptableAsyncEnumerator(IEnumerable source, ScriptEngine engine)
+        {
+            // ReSharper disable once NotDisposedResource
+            return HostItem.Wrap(engine, new ScriptableAsyncEnumeratorOnEnumerator(engine, source.GetEnumerator()), typeof(IScriptableAsyncEnumerator<object>));
         }
     }
 
     [BypassCustomAttributeLoader]
     [DefaultScriptUsage(ScriptAccess.Full)]
-    internal static partial class ScriptableEnumerableHelpers<T>
+    internal static class ScriptableEnumerableHelpers<T>
     {
         public static readonly HostType HostType = HostType.Wrap(typeof(ScriptableEnumerableHelpers<T>));
 
         public static object GetScriptableEnumerator(IEnumerable<T> source)
         {
             return HostObject.Wrap(new ScriptableEnumeratorOnEnumerator<T>(source.GetEnumerator()), typeof(IScriptableEnumerator<T>));
+        }
+
+        public static object GetScriptableAsyncEnumerator(IEnumerable<T> source, ScriptEngine engine)
+        {
+            // ReSharper disable once NotDisposedResource
+            return HostItem.Wrap(engine, new ScriptableAsyncEnumeratorOnEnumerator<T>(engine, source.GetEnumerator()), typeof(IScriptableAsyncEnumerator<T>));
+        }
+
+        public static object GetScriptableAsyncEnumerator(IAsyncEnumerable<T> source, ScriptEngine engine)
+        {
+            // ReSharper disable once NotDisposedResource
+            return HostItem.Wrap(engine, new ScriptableAsyncEnumeratorOnAsyncEnumerator<T>(engine, source.GetAsyncEnumerator()), typeof(IScriptableAsyncEnumerator<T>));
         }
     }
 
@@ -290,6 +325,129 @@ namespace Microsoft.ClearScript.Util
 
         public void Dispose()
         {
+        }
+
+        #endregion
+    }
+
+    internal abstract class ScriptableAsyncEnumerator<T> : IScriptableAsyncEnumerator<T>
+    {
+        private readonly ScriptEngine engine;
+
+        protected ScriptableAsyncEnumerator(ScriptEngine engine)
+        {
+            this.engine = engine;
+        }
+
+        #region IScriptableAsyncEnumerator<T> implementation
+
+        public T ScriptableCurrent => Current;
+
+        public object ScriptableMoveNextAsync()
+        {
+            return MoveNextAsync().ToPromise(engine);
+        }
+
+        public object ScriptableDisposeAsync()
+        {
+            return DisposeAsync().ToPromise(engine);
+        }
+
+        #endregion
+
+        #region IAsyncEnumerable<T> implementation
+
+        public abstract T Current { get; }
+
+        public abstract ValueTask<bool> MoveNextAsync();
+
+        #endregion
+
+        #region IAsyncDisposable implementation
+
+        public abstract ValueTask DisposeAsync();
+
+        #endregion
+    }
+
+    internal sealed class ScriptableAsyncEnumeratorOnEnumerator : ScriptableAsyncEnumerator<object>
+    {
+        private readonly IEnumerator enumerator;
+
+        public ScriptableAsyncEnumeratorOnEnumerator(ScriptEngine engine, IEnumerator enumerator)
+            : base(engine)
+        {
+            this.enumerator = enumerator;
+        }
+
+        #region ScriptableAsyncEnumerator<object> overrides
+
+        public override object Current => enumerator.Current;
+
+        public override ValueTask<bool> MoveNextAsync()
+        {
+            return new ValueTask<bool>(enumerator.MoveNext());
+        }
+
+        public override ValueTask DisposeAsync()
+        {
+            (enumerator as IDisposable)?.Dispose();
+            return default;
+        }
+
+        #endregion
+    }
+
+    internal sealed class ScriptableAsyncEnumeratorOnEnumerator<T> : ScriptableAsyncEnumerator<T>
+    {
+        private readonly IEnumerator<T> enumerator;
+
+        public ScriptableAsyncEnumeratorOnEnumerator(ScriptEngine engine, IEnumerator<T> enumerator)
+            : base(engine)
+        {
+            this.enumerator = enumerator;
+        }
+
+        #region ScriptableAsyncEnumerator<T> overrides
+
+        public override T Current => enumerator.Current;
+
+        public override ValueTask<bool> MoveNextAsync()
+        {
+            return new ValueTask<bool>(enumerator.MoveNext());
+        }
+
+        public override ValueTask DisposeAsync()
+        {
+            enumerator.Dispose();
+            return default;
+        }
+
+        #endregion
+    }
+
+    internal sealed class ScriptableAsyncEnumeratorOnAsyncEnumerator<T> : ScriptableAsyncEnumerator<T>
+    {
+        private readonly IAsyncEnumerator<T> enumerator;
+
+        public ScriptableAsyncEnumeratorOnAsyncEnumerator(ScriptEngine engine, IAsyncEnumerator<T> enumerator)
+            : base(engine)
+        {
+            this.enumerator = enumerator;
+        }
+
+        #region ScriptableAsyncEnumerator<T> overrides
+
+        public override T Current => enumerator.Current;
+
+        public override ValueTask<bool> MoveNextAsync()
+        {
+            return enumerator.MoveNextAsync();
+        }
+
+        public override ValueTask DisposeAsync()
+        {
+            return enumerator.DisposeAsync();
         }
 
         #endregion

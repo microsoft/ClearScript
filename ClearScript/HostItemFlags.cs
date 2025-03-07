@@ -43,4 +43,10 @@ namespace Microsoft.ClearScript
         /// </summary>
         DirectAccess = 0x00000008
     }
+
+    internal static class HostItemFlagsHelpers
+    {
+        public static bool HasAllFlags(this HostItemFlags value, HostItemFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this HostItemFlags value, HostItemFlags flags) => (value & flags) != 0;
+    }
 }

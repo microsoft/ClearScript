@@ -11,7 +11,7 @@ namespace Microsoft.ClearScript
 {
     internal sealed class CustomAttributeCache
     {
-        private readonly ConditionalWeakTable<ICustomAttributeProvider, Entry> table = new ConditionalWeakTable<ICustomAttributeProvider, Entry>();
+        private readonly ConditionalWeakTable<ICustomAttributeProvider, Entry> table = new();
 
         public T[] GetOrLoad<T>(CustomAttributeLoader loader, ICustomAttributeProvider resource, bool inherit) where T : Attribute
         {
@@ -63,7 +63,7 @@ namespace Microsoft.ClearScript
             }
 
             var parent = GetParent(resource);
-            if (parent != null)
+            if (parent is not null)
             {
                 return GetIsBypass(parent);
             }
@@ -102,7 +102,7 @@ namespace Microsoft.ClearScript
 
         private sealed class Entry
         {
-            private readonly Dictionary<Type, object> map = new Dictionary<Type, object>();
+            private readonly Dictionary<Type, object> map = new();
 
             public bool? IsBypass { get; set; }
 

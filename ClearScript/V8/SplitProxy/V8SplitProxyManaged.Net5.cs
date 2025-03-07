@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+#if NET5_0_OR_GREATER
+
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -117,29 +119,29 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        private static unsafe IntPtr GetHostObjectNamedPropertyFastMethodPtr
+        private static unsafe IntPtr InvokeHostActionWithArgFastMethodPtr
         {
             get
             {
                 [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
-                static void Thunk(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue)
+                static void Thunk(IntPtr pAction, IntPtr pArg)
                 {
-                    GetHostObjectNamedProperty(pObject, pName, pValue);
+                    InvokeHostActionWithArg(pAction, pArg);
                 }
 
-                delegate* unmanaged[Stdcall]<IntPtr, StdString.Ptr, V8Value.Ptr, void> pThunk = &Thunk;
+                delegate* unmanaged[Stdcall]<IntPtr, IntPtr, void> pThunk = &Thunk;
                 return (IntPtr)pThunk;
             }
         }
 
-        private static unsafe IntPtr GetHostObjectNamedPropertyWithCacheabilityFastMethodPtr
+        private static unsafe IntPtr GetHostObjectNamedPropertyFastMethodPtr
         {
             get
             {
                 [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
                 static void Thunk(IntPtr pObject, StdString.Ptr pName, V8Value.Ptr pValue, IntPtr pIsCacheable)
                 {
-                    GetHostObjectNamedPropertyWithCacheability(pObject, pName, pValue, out var isCacheable);
+                    GetHostObjectNamedProperty(pObject, pName, pValue, out var isCacheable);
                     StdBool.Write(pIsCacheable, isCacheable);
                 }
 
@@ -223,6 +225,84 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        private static unsafe IntPtr GetFastHostObjectNamedPropertyFastMethodPtr
+        {
+            get
+            {
+                [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+                static void Thunk(IntPtr pObject, StdString.Ptr pName, V8Value.FastResult.Ptr pValue, IntPtr pIsCacheable)
+                {
+                    GetFastHostObjectNamedProperty(pObject, pName, pValue, out var isCacheable);
+                    StdBool.Write(pIsCacheable, isCacheable);
+                }
+
+                delegate* unmanaged[Stdcall]<IntPtr, StdString.Ptr, V8Value.FastResult.Ptr, IntPtr, void> pThunk = &Thunk;
+                return (IntPtr)pThunk;
+            }
+        }
+
+        private static unsafe IntPtr SetFastHostObjectNamedPropertyFastMethodPtr
+        {
+            get
+            {
+                [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+                static void Thunk(IntPtr pObject, StdString.Ptr pName, V8Value.FastArg.Ptr pValue)
+                {
+                    SetFastHostObjectNamedProperty(pObject, pName, pValue);
+                }
+
+                delegate* unmanaged[Stdcall]<IntPtr, StdString.Ptr, V8Value.FastArg.Ptr, void> pThunk = &Thunk;
+                return (IntPtr)pThunk;
+            }
+        }
+
+        private static unsafe IntPtr GetFastHostObjectIndexedPropertyFastMethodPtr
+        {
+            get
+            {
+                [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+                static void Thunk(IntPtr pObject, int index, V8Value.FastResult.Ptr pValue)
+                {
+                    GetFastHostObjectIndexedProperty(pObject, index, pValue);
+                }
+
+                delegate* unmanaged[Stdcall]<IntPtr, int, V8Value.FastResult.Ptr, void> pThunk = &Thunk;
+                return (IntPtr)pThunk;
+            }
+        }
+
+        private static unsafe IntPtr SetFastHostObjectIndexedPropertyFastMethodPtr
+        {
+            get
+            {
+                [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+                static void Thunk(IntPtr pObject, int index, V8Value.FastArg.Ptr pValue)
+                {
+                    SetFastHostObjectIndexedProperty(pObject, index, pValue);
+                }
+
+                delegate* unmanaged[Stdcall]<IntPtr, int, V8Value.FastArg.Ptr, void> pThunk = &Thunk;
+                return (IntPtr)pThunk;
+            }
+        }
+
+        private static unsafe IntPtr InvokeFastHostObjectFastMethodPtr
+        {
+            get
+            {
+                [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+                static void Thunk(IntPtr pObject, StdBool asConstructor, int argCount, V8Value.FastArg.Ptr pArgs, V8Value.FastResult.Ptr pResult)
+                {
+                    InvokeFastHostObject(pObject, asConstructor, argCount, pArgs, pResult);
+                }
+
+                delegate* unmanaged[Stdcall]<IntPtr, StdBool, int, V8Value.FastArg.Ptr, V8Value.FastResult.Ptr, void> pThunk = &Thunk;
+                return (IntPtr)pThunk;
+            }
+        }
+
         #endregion
     }
 }
+
+#endif // NET5_0_OR_GREATER

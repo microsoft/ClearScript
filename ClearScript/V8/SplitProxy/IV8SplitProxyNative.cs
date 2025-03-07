@@ -15,10 +15,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #endregion
 
+        #region memory methods
+
+        IntPtr Memory_Allocate(UIntPtr size);
+        IntPtr Memory_AllocateZeroed(UIntPtr size);
+        void Memory_Free(IntPtr pMemory);
+
+        #endregion
+
         #region StdString methods
 
         StdString.Ptr StdString_New(string value);
         string StdString_GetValue(StdString.Ptr pString);
+        TValue StdString_GetValue<TValue>(StdString.Ptr pString, Func<IntPtr, int, TValue> factory);
+        TValue StdString_GetValue<TValue, TArg>(StdString.Ptr pString, Func<IntPtr, int, TArg, TValue> factory, in TArg arg);
         void StdString_SetValue(StdString.Ptr pString, string value);
         void StdString_Delete(StdString.Ptr pString);
 
@@ -103,13 +113,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         void V8Value_SetNull(V8Value.Ptr pV8Value);
         void V8Value_SetBoolean(V8Value.Ptr pV8Value, bool value);
         void V8Value_SetNumber(V8Value.Ptr pV8Value, double value);
-        void V8Value_SetInt32(V8Value.Ptr pV8Value, int value);
-        void V8Value_SetUInt32(V8Value.Ptr pV8Value, uint value);
         void V8Value_SetString(V8Value.Ptr pV8Value, string value);
         void V8Value_SetDateTime(V8Value.Ptr pV8Value, double value);
         void V8Value_SetBigInt(V8Value.Ptr pV8Value, int signBit, byte[] bytes);
         void V8Value_SetV8Object(V8Value.Ptr pV8Value, V8Object.Handle hObject, V8Value.Subtype subtype, V8Value.Flags flags);
-        void V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject);
+        void V8Value_SetHostObject(V8Value.Ptr pV8Value, IntPtr pObject, V8Value.Subtype subtype, V8Value.Flags flags);
         void V8Value_Decode(V8Value.Ptr pV8Value, out V8Value.Decoded decoded);
         void V8Value_Delete(V8Value.Ptr pV8Value);
 
@@ -166,6 +174,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         UIntPtr V8Context_GetMaxIsolateStackUsage(V8Context.Handle hContext);
         void V8Context_SetMaxIsolateStackUsage(V8Context.Handle hContext, UIntPtr size);
         void V8Context_InvokeWithLock(V8Context.Handle hContext, IntPtr pAction);
+        void V8Context_InvokeWithLockWithArg(V8Context.Handle hContext, IntPtr pAction, IntPtr pArg);
         object V8Context_GetRootItem(V8Context.Handle hContext);
         void V8Context_AddGlobalItem(V8Context.Handle hContext, string name, object value, bool globalMembers);
         void V8Context_AwaitDebuggerAndPause(V8Context.Handle hContext);
@@ -211,6 +220,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         object V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args);
         void V8Object_GetArrayBufferOrViewInfo(V8Object.Handle hObject, out IV8Object arrayBuffer, out ulong offset, out ulong size, out ulong length);
         void V8Object_InvokeWithArrayBufferOrViewData(V8Object.Handle hObject, IntPtr pAction);
+        void V8Object_InvokeWithArrayBufferOrViewDataWithArg(V8Object.Handle hObject, IntPtr pAction, IntPtr pArg);
 
         #endregion
 
@@ -228,9 +238,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #endregion
 
-        #region V8 entity cleanup
+        #region V8 entity methods
 
         void V8Entity_Release(V8Entity.Handle hEntity);
+        V8Entity.Handle V8Entity_CloneHandle(V8Entity.Handle hEntity);
         void V8Entity_DestroyHandle(V8Entity.Handle hEntity);
 
         #endregion

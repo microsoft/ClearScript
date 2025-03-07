@@ -11,25 +11,25 @@ namespace Microsoft.ClearScript
     {
         #region special targets
 
-        public readonly CollateralObject<IDynamic> TargetDynamic = new CollateralObject<IDynamic>();
-        public readonly CollateralObject<IPropertyBag> TargetPropertyBag = new CollateralObject<IPropertyBag>();
-        public readonly CollateralObject<IHostList> TargetList = new CollateralObject<IHostList>();
-        public readonly CollateralObject<DynamicHostMetaObject> TargetDynamicMetaObject = new CollateralObject<DynamicHostMetaObject>();
-        public readonly CollateralObject<IEnumerator> TargetEnumerator = new CollateralObject<IEnumerator>();
+        public readonly CollateralObject<IDynamic> TargetDynamic = new();
+        public readonly CollateralObject<IPropertyBag> TargetPropertyBag = new();
+        public readonly CollateralObject<IHostList> TargetList = new();
+        public readonly CollateralObject<DynamicHostMetaObject> TargetDynamicMetaObject = new();
+        public readonly CollateralObject<IEnumerator> TargetEnumerator = new();
 
         #endregion
 
         #region dynamic collateral
 
-        public readonly CollateralObject<HashSet<string>> ExpandoMemberNames = new CollateralObject<HashSet<string>>();
-        public readonly CollateralObject<ListDataFields> ListData = new CollateralObject<ListDataFields>();
+        public readonly CollateralObject<HashSet<string>> ExpandoMemberNames = new();
+        public readonly CollateralObject<ListDataFields> ListData = new();
 
         #endregion
 
         #region  tear-off member cache
 
-        public readonly CollateralObject<Dictionary<string, HostMethod>> HostMethodMap = new CollateralObject<Dictionary<string, HostMethod>>();
-        public readonly CollateralObject<Dictionary<string, HostIndexedProperty>> HostIndexedPropertyMap = new CollateralObject<Dictionary<string, HostIndexedProperty>>();
+        public readonly CollateralObject<Dictionary<string, HostMethod>> HostMethodMap = new();
+        public readonly CollateralObject<Dictionary<string, HostIndexedProperty>> HostIndexedPropertyMap = new();
 
         #endregion
 

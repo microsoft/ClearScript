@@ -30,7 +30,7 @@ namespace Microsoft.ClearScript.V8
         private TcpListener tcpListener;
         private V8DebugClient activeClient;
 
-        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new();
 
         #endregion
 
@@ -47,20 +47,26 @@ namespace Microsoft.ClearScript.V8
 
             if (remote)
             {
-                started = MiscHelpers.Try(() =>
-                {
-                    tcpListener = new TcpListener(IPAddress.Any, port);
-                    tcpListener.Start();
-                });
+                started = MiscHelpers.Try(
+                    static ctx =>
+                    {
+                        ctx.self.tcpListener = new TcpListener(IPAddress.Any, ctx.port);
+                        ctx.self.tcpListener.Start();
+                    },
+                    (self: this, port)
+                );
             }
 
             if (!started)
             {
-                started = MiscHelpers.Try(() =>
-                {
-                    tcpListener = new TcpListener(IPAddress.Loopback, port);
-                    tcpListener.Start();
-                });
+                started = MiscHelpers.Try(
+                    static ctx =>
+                    {
+                        ctx.self.tcpListener = new TcpListener(IPAddress.Loopback, ctx.port);
+                        ctx.self.tcpListener.Start();
+                    },
+                    (self: this, port)
+                );
             }
 
             if (started)
@@ -110,7 +116,7 @@ namespace Microsoft.ClearScript.V8
 
         private void OnWebClientAccepted(Task<Socket> task)
         {
-            var succeeded = MiscHelpers.Try(out var socket, () => task.Result);
+            var succeeded = MiscHelpers.Try(out var socket, static task => task.Result, task);
 
             if (!disposedFlag.IsSet)
             {
@@ -125,7 +131,7 @@ namespace Microsoft.ClearScript.V8
 
         private void OnWebContextCreated(Task<WebContext> task)
         {
-            if (MiscHelpers.Try(out var webContext, () => task.Result) && !disposedFlag.IsSet)
+            if (MiscHelpers.Try(out var webContext, static task => task.Result, task) && !disposedFlag.IsSet)
             {
                 if (!webContext.Request.IsWebSocketRequest)
                 {
@@ -150,7 +156,7 @@ namespace Microsoft.ClearScript.V8
             if (webContext.Request.RawUrl.Equals("/json", StringComparison.OrdinalIgnoreCase) ||
                 webContext.Request.RawUrl.Equals("/json/list", StringComparison.OrdinalIgnoreCase))
             {
-                if (activeClient != null)
+                if (activeClient is not null)
                 {
                     SendWebResponse(webContext, MiscHelpers.FormatInvariant(
                         "[ {{\r\n" +
@@ -249,7 +255,7 @@ namespace Microsoft.ClearScript.V8
 
         private void OnWebSocketAccepted(WebContext webContext, Task<WebSocket> task)
         {
-            if (MiscHelpers.Try(out var webSocket, () => task.Result))
+            if (MiscHelpers.Try(out var webSocket, static task => task.Result, task))
             {
                 if (!ConnectClient(webSocket))
                 {
@@ -265,7 +271,7 @@ namespace Microsoft.ClearScript.V8
         private bool ConnectClient(WebSocket webSocket)
         {
             var client = new V8DebugClient(this, webSocket);
-            if (Interlocked.CompareExchange(ref activeClient, client, null) == null)
+            if (Interlocked.CompareExchange(ref activeClient, client, null) is null)
             {
                 listener.ConnectClient();
                 client.Start();
@@ -279,7 +285,7 @@ namespace Microsoft.ClearScript.V8
         private void DisconnectClient(WebSocket.ErrorCode errorCode, string message)
         {
             var client = Interlocked.Exchange(ref activeClient, null);
-            if (client != null)
+            if (client is not null)
             {
                 client.Dispose(errorCode, message);
                 listener.DisconnectClient();
@@ -295,9 +301,9 @@ namespace Microsoft.ClearScript.V8
         {
             if (disposedFlag.Set())
             {
-                if (tcpListener != null)
+                if (tcpListener is not null)
                 {
-                    MiscHelpers.Try(tcpListener.Stop);
+                    MiscHelpers.Try(static tcpListener => tcpListener.Stop(), tcpListener);
                 }
 
                 DisconnectClient(WebSocket.ErrorCode.EndpointUnavailable, "The V8 runtime has been destroyed");

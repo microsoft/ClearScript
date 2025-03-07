@@ -51,7 +51,7 @@ namespace Microsoft.ClearScript
         /// This property always returns a non-blank string. If a null or blank document name was
         /// specified at instantiation time, this property returns a default document name.
         /// </remarks>
-        public string Name => MiscHelpers.EnsureNonBlank(name, Category.DefaultName);
+        public string Name => name.ToNonBlank(Category.DefaultName);
 
         /// <summary>
         /// Gets the document's URI.
@@ -129,7 +129,7 @@ namespace Microsoft.ClearScript
             }
 
             var uniqueName = manager.GetUniqueName(Name, Category.DefaultName);
-            if (info.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient))
+            if (info.Flags.GetValueOrDefault().HasAllFlags(DocumentFlags.IsTransient))
             {
                 uniqueName += " [temp]";
             }

@@ -2,16 +2,19 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8.FastProxy;
 using Newtonsoft.Json;
 
 namespace Microsoft.ClearScript.V8
@@ -32,15 +35,14 @@ namespace Microsoft.ClearScript.V8
     {
         #region data
 
-        private static readonly DocumentInfo initScriptInfo = new DocumentInfo(MiscHelpers.FormatInvariant("{0} [internal]", nameof(V8ScriptEngine)));
+        private static readonly DocumentInfo initScriptInfo = new(MiscHelpers.FormatInvariant("{0} [internal]", nameof(V8ScriptEngine)));
 
         private readonly V8Runtime runtime;
         private readonly bool usingPrivateRuntime;
 
-        private readonly V8ScriptEngineFlags engineFlags;
         private readonly V8ContextProxy proxy;
         private readonly V8ScriptItem script;
-        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new();
 
         private const int continuationInterval = 2000;
         private bool inContinuationTimerScope;
@@ -214,9 +216,9 @@ namespace Microsoft.ClearScript.V8
         }
 
         internal V8ScriptEngine(V8Runtime runtime, string name, V8RuntimeConstraints constraints, V8ScriptEngineFlags flags, int debugPort)
-            : base((runtime != null) ? runtime.Name + ":" + name : name, "js")
+            : base((runtime is not null) ? runtime.Name + ":" + name : name, "js")
         {
-            if (runtime != null)
+            if (runtime is not null)
             {
                 this.runtime = runtime;
             }
@@ -229,18 +231,18 @@ namespace Microsoft.ClearScript.V8
             DocumentNameManager = runtime.DocumentNameManager;
             HostItemCollateral = runtime.HostItemCollateral;
 
-            engineFlags = flags;
+            Flags = flags;
             proxy = V8ContextProxy.Create(runtime.IsolateProxy, Name, flags, debugPort);
             script = (V8ScriptItem)GetRootItem();
 
-            if (flags.HasFlag(V8ScriptEngineFlags.EnableStringifyEnhancements))
+            if (flags.HasAllFlags(V8ScriptEngineFlags.EnableStringifyEnhancements))
             {
                 script.SetProperty("toJson", new Func<object, object, string>(new JsonHelper(this).ToJson));
             }
 
             Execute(initScriptInfo, initScript);
 
-            if (flags.HasFlag(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart))
+            if (flags.HasAllFlags(V8ScriptEngineFlags.EnableDebugging | V8ScriptEngineFlags.AwaitDebuggerAndPauseOnStart))
             {
                 awaitDebuggerAndPause = true;
             }
@@ -490,7 +492,7 @@ namespace Microsoft.ClearScript.V8
         public V8Script Compile(DocumentInfo documentInfo, string code)
         {
             VerifyNotDisposed();
-            return ScriptInvoke(() => CompileInternal(documentInfo.MakeUnique(this), code));
+            return ScriptInvoke(static ctx => ctx.self.CompileInternal(ctx.documentInfo.MakeUnique(ctx.self), ctx.code), (self: this, documentInfo, code));
         }
 
         /// <summary>
@@ -545,13 +547,18 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
 
-            V8Script tempScript = null;
-            cacheBytes = ScriptInvoke(() =>
-            {
-                tempScript = CompileInternal(documentInfo.MakeUnique(this), code, cacheKind, out var tempCacheBytes);
-                return tempCacheBytes;
-            });
+            var ctx = (self: this, documentInfo, code, cacheKind, cacheBytes: (byte[])null);
 
+            var tempScript = ScriptInvoke(
+                static pCtx =>
+                {
+                    ref var ctx = ref pCtx.AsRef();
+                    return ctx.self.CompileInternal(ctx.documentInfo.MakeUnique(ctx.self), ctx.code, ctx.cacheKind, out ctx.cacheBytes);
+                },
+                StructPtr.FromRef(ref ctx)
+            );
+
+            cacheBytes = ctx.cacheBytes;
             return tempScript;
         }
 
@@ -616,13 +623,18 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
 
-            V8Script tempScript = null;
-            cacheAccepted = ScriptInvoke(() =>
-            {
-                tempScript = CompileInternal(documentInfo.MakeUnique(this), code, cacheKind, cacheBytes, out var tempCacheAccepted);
-                return tempCacheAccepted;
-            });
+            var ctx = (self: this, documentInfo, code, cacheKind, cacheBytes, cacheAccepted: false);
 
+            var tempScript = ScriptInvoke(
+                static pCtx =>
+                {
+                    ref var ctx = ref pCtx.AsRef();
+                    return ctx.self.CompileInternal(ctx.documentInfo.MakeUnique(ctx.self), ctx.code, ctx.cacheKind, ctx.cacheBytes, out ctx.cacheAccepted);
+                },
+                StructPtr.FromRef(ref ctx)
+            );
+
+            cacheAccepted = ctx.cacheAccepted;
             return tempScript;
         }
 
@@ -681,19 +693,23 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
 
-            V8Script tempScript = null;
-            var tempCacheBytes = cacheBytes;
-            cacheResult = ScriptInvoke(() =>
-            {
-                tempScript = CompileInternal(documentInfo.MakeUnique(this), code, cacheKind, ref tempCacheBytes, out var tempCacheUpdated);
-                return tempCacheUpdated;
-            });
+            var ctx = (self: this, documentInfo, code, cacheKind, cacheBytes, cacheResult: V8CacheResult.Disabled);
 
-            if (cacheResult == V8CacheResult.Updated)
+            var tempScript = ScriptInvoke(
+                static pCtx =>
+                {
+                    ref var ctx = ref pCtx.AsRef();
+                    return ctx.self.CompileInternal(ctx.documentInfo.MakeUnique(ctx.self), ctx.code, ctx.cacheKind, ref ctx.cacheBytes, out ctx.cacheResult);
+                },
+                StructPtr.FromRef(ref ctx)
+            );
+
+            if (ctx.cacheResult == V8CacheResult.Updated)
             {
-                cacheBytes = tempCacheBytes;
+                cacheBytes = ctx.cacheBytes;
             }
 
+            cacheResult = ctx.cacheResult;
             return tempScript;
         }
 
@@ -1046,12 +1062,14 @@ namespace Microsoft.ClearScript.V8
             MiscHelpers.VerifyNonNullArgument(stream, nameof(stream));
             VerifyNotDisposed();
 
-            ScriptInvoke(() => proxy.WriteIsolateHeapSnapshot(stream));
+            ScriptInvoke(static ctx => ctx.proxy.WriteIsolateHeapSnapshot(ctx.stream), (proxy, stream));
         }
 
         #endregion
 
         #region internal members
+
+        internal V8ScriptEngineFlags Flags { get; }
 
         internal V8Runtime.Statistics GetRuntimeStatistics()
         {
@@ -1062,17 +1080,20 @@ namespace Microsoft.ClearScript.V8
         internal Statistics GetStatistics()
         {
             VerifyNotDisposed();
-            return ScriptInvoke(() =>
-            {
-                var statistics = proxy.GetStatistics();
-
-                if (commonJSManager != null)
+            return ScriptInvoke(
+                static self =>
                 {
-                    statistics.CommonJSModuleCacheSize = CommonJSManager.ModuleCacheSize;
-                }
+                    var statistics = self.proxy.GetStatistics();
 
-                return statistics;
-            });
+                    if (self.commonJSManager is not null)
+                    {
+                        statistics.CommonJSModuleCacheSize = self.commonJSManager.ModuleCacheSize;
+                    }
+
+                    return statistics;
+                },
+                this
+            );
         }
 
         internal bool Equals(V8ScriptItem left, V8ScriptItem right)
@@ -1092,7 +1113,7 @@ namespace Microsoft.ClearScript.V8
 
         private object GetRootItem()
         {
-            return MarshalToHost(ScriptInvoke(() => proxy.GetRootItem()), false);
+            return MarshalToHost(ScriptInvoke(static proxy => proxy.GetRootItem(), proxy), false);
         }
 
         private void VerifyNotDisposed()
@@ -1103,6 +1124,8 @@ namespace Microsoft.ClearScript.V8
             }
         }
 
+        private string BaseExecuteCommand(string command) => base.ExecuteCommand(command);
+
         // ReSharper disable ParameterHidesMember
 
         private object Execute(V8Script script, bool evaluate)
@@ -1110,39 +1133,45 @@ namespace Microsoft.ClearScript.V8
             MiscHelpers.VerifyNonNullArgument(script, nameof(script));
             VerifyNotDisposed();
 
-            return MarshalToHost(ScriptInvoke(() =>
-            {
-                if (inContinuationTimerScope || (ContinuationCallback == null))
-                {
-                    if (ShouldAwaitDebuggerAndPause(script.DocumentInfo))
+            return MarshalToHost(
+                ScriptInvoke(
+                    static ctx =>
                     {
-                        proxy.AwaitDebuggerAndPause();
-                    }
-
-                    return ExecuteInternal(script, evaluate);
-                }
-
-                var state = new Timer[] { null };
-                using (state[0] = new Timer(_ => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
-                {
-                    inContinuationTimerScope = true;
-                    try
-                    {
-                        state[0].Change(continuationInterval, Timeout.Infinite);
-
-                        if (ShouldAwaitDebuggerAndPause(script.DocumentInfo))
+                        if (ctx.self.inContinuationTimerScope || (ctx.self.ContinuationCallback is null))
                         {
-                            proxy.AwaitDebuggerAndPause();
+                            if (ctx.self.ShouldAwaitDebuggerAndPause(ctx.script.DocumentInfo))
+                            {
+                                ctx.self.proxy.AwaitDebuggerAndPause();
+                            }
+
+                            return ctx.self.ExecuteInternal(ctx.script, ctx.evaluate);
                         }
 
-                        return ExecuteInternal(script, evaluate);
-                    }
-                    finally
-                    {
-                        inContinuationTimerScope = false;
-                    }
-                }
-            }), false);
+                        var state = new Timer[] { null };
+                        using (state[0] = new Timer(_ => ctx.self.OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
+                        {
+                            ctx.self.inContinuationTimerScope = true;
+                            try
+                            {
+                                state[0].Change(continuationInterval, Timeout.Infinite);
+
+                                if (ctx.self.ShouldAwaitDebuggerAndPause(ctx.script.DocumentInfo))
+                                {
+                                    ctx.self.proxy.AwaitDebuggerAndPause();
+                                }
+
+                                return ctx.self.ExecuteInternal(ctx.script, ctx.evaluate);
+                            }
+                            finally
+                            {
+                                ctx.self.inContinuationTimerScope = false;
+                            }
+                        }
+                    },
+                    (self: this, script, evaluate)
+                ),
+                false
+            );
         }
 
         // ReSharper restore ParameterHidesMember
@@ -1168,7 +1197,7 @@ namespace Microsoft.ClearScript.V8
             // ReSharper disable once LocalVariableHidesMember
             var script = proxy.Compile(documentInfo, code);
 
-            if (module != null)
+            if (module is not null)
             {
                 module.Evaluator = () => proxy.Execute(script, true);
             }
@@ -1197,7 +1226,7 @@ namespace Microsoft.ClearScript.V8
             // ReSharper disable once LocalVariableHidesMember
             var script = proxy.Compile(documentInfo, code, cacheKind, out cacheBytes);
 
-            if (module != null)
+            if (module is not null)
             {
                 module.Evaluator = () => proxy.Execute(script, true);
             }
@@ -1226,7 +1255,7 @@ namespace Microsoft.ClearScript.V8
             // ReSharper disable once LocalVariableHidesMember
             var script = proxy.Compile(documentInfo, code, cacheKind, cacheBytes, out cacheAccepted);
 
-            if (module != null)
+            if (module is not null)
             {
                 module.Evaluator = () => proxy.Execute(script, true);
             }
@@ -1255,7 +1284,7 @@ namespace Microsoft.ClearScript.V8
             // ReSharper disable once LocalVariableHidesMember
             var script = proxy.Compile(documentInfo, code, cacheKind, ref cacheBytes, out cacheResult);
 
-            if (module != null)
+            if (module is not null)
             {
                 module.Evaluator = () => proxy.Execute(script, true);
             }
@@ -1303,7 +1332,7 @@ namespace Microsoft.ClearScript.V8
         {
             if (!awaitDebuggerAndPause.HasValue)
             {
-                if (documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.AwaitDebuggerAndPause))
+                if (documentInfo.Flags.GetValueOrDefault().HasAllFlags(DocumentFlags.AwaitDebuggerAndPause))
                 {
                     awaitDebuggerAndPause = false;
                     return true;
@@ -1326,7 +1355,7 @@ namespace Microsoft.ClearScript.V8
             try
             {
                 var callback = ContinuationCallback;
-                if ((callback != null) && !callback())
+                if ((callback is not null) && !callback())
                 {
                     Interrupt();
                 }
@@ -1347,6 +1376,38 @@ namespace Microsoft.ClearScript.V8
             return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createPromise", executor));
         }
 
+        private object CreateSettledPromise<T>(Task<T> task)
+        {
+            VerifyNotDisposed();
+            Func<T> getResult = () => task.Result;
+            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createSettledPromiseWithResult", getResult));
+        }
+
+        private object CreateSettledPromise(Task task)
+        {
+            VerifyNotDisposed();
+            Action wait = task.Wait;
+            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createSettledPromise", wait));
+        }
+
+        private object CreateSettledPromise<T>(ValueTask<T> valueTask)
+        {
+            VerifyNotDisposed();
+            Func<T> getResult = () => valueTask.Result;
+            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createSettledPromiseWithResult", getResult));
+        }
+
+        private object CreateSettledPromise(ValueTask valueTask)
+        {
+            VerifyNotDisposed();
+            Action wait = () => WaitForValueTask(valueTask);
+            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+            return V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createSettledPromise", wait));
+        }
+
         private void CompletePromise<T>(Task<T> task, object resolve, object reject)
         {
             Func<T> getResult = () => task.Result;
@@ -1361,7 +1422,20 @@ namespace Microsoft.ClearScript.V8
             engineInternal.InvokeMethod("completePromise", wait, resolve, reject);
         }
 
-        partial void TryConvertValueTaskToPromise(object obj, Action<object> setResult);
+        private static void WaitForValueTask(ValueTask valueTask)
+        {
+            if (valueTask.IsCompletedSuccessfully)
+            {
+                return;
+            }
+
+            if (valueTask.IsCanceled)
+            {
+                throw new TaskCanceledException();
+            }
+
+            valueTask.AsTask().Wait();
+        }
 
         #endregion
 
@@ -1415,13 +1489,16 @@ namespace Microsoft.ClearScript.V8
         /// </remarks>
         public override string ExecuteCommand(string command)
         {
-            return ScriptInvoke(() =>
-            {
-                var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
-                var commandHolder = (ScriptObject)engineInternal.GetProperty("commandHolder");
-                commandHolder.SetProperty("command", command);
-                return base.ExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.commandHolder.command))");
-            });
+            return ScriptInvoke(
+                static ctx =>
+                {
+                    var engineInternal = (ScriptObject)ctx.self.script.GetProperty("EngineInternal");
+                    var commandHolder = (ScriptObject)engineInternal.GetProperty("commandHolder");
+                    commandHolder.SetProperty("command", ctx.command);
+                    return ctx.self.BaseExecuteCommand("EngineInternal.getCommandResult(eval(EngineInternal.commandHolder.command))");
+                },
+                (self: this, command)
+            );
         }
 
         /// <inheritdoc/>
@@ -1463,43 +1540,49 @@ namespace Microsoft.ClearScript.V8
 
         internal override bool EnumerateExtensionMethods => base.EnumerateExtensionMethods && !SuppressExtensionMethodEnumeration;
 
-        internal override bool UseCaseInsensitiveMemberBinding => engineFlags.HasFlag(V8ScriptEngineFlags.UseCaseInsensitiveMemberBinding);
+        internal override bool UseCaseInsensitiveMemberBinding => Flags.HasAllFlags(V8ScriptEngineFlags.UseCaseInsensitiveMemberBinding);
 
         internal override void AddHostItem(string itemName, HostItemFlags flags, object item)
         {
             VerifyNotDisposed();
 
-            var globalMembers = flags.HasFlag(HostItemFlags.GlobalMembers);
-            if (globalMembers && engineFlags.HasFlag(V8ScriptEngineFlags.DisableGlobalMembers))
+            var globalMembers = flags.HasAllFlags(HostItemFlags.GlobalMembers);
+            if (globalMembers && Flags.HasAllFlags(V8ScriptEngineFlags.DisableGlobalMembers))
             {
                 throw new InvalidOperationException("GlobalMembers support is disabled in this script engine");
             }
 
             MiscHelpers.VerifyNonNullArgument(itemName, nameof(itemName));
-            Debug.Assert(item != null);
+            Debug.Assert(item is not null);
 
-            ScriptInvoke(() =>
-            {
-                var marshaledItem = MarshalToScript(item, flags);
-                if (!(marshaledItem is HostItem))
+            ScriptInvoke(
+                static ctx =>
                 {
-                    throw new InvalidOperationException("Invalid host item");
-                }
+                    var marshaledItem = ctx.self.MarshalToScript(ctx.item, ctx.flags);
+                    if ((marshaledItem is not HostItem) && (marshaledItem is not V8FastHostItem))
+                    {
+                        throw new InvalidOperationException("Invalid host item");
+                    }
 
-                proxy.AddGlobalItem(itemName, marshaledItem, globalMembers);
-            });
+                    ctx.self.proxy.AddGlobalItem(ctx.itemName, marshaledItem, ctx.globalMembers);
+                },
+                (self: this, itemName, flags, item, globalMembers)
+            );
         }
 
         internal override object MarshalToScript(object obj, HostItemFlags flags)
         {
-            const long maxIntInDouble = (1L << 53) - 1;
+            return MarshalToScriptInternal(obj, flags, null);
+        }
 
-            if (obj == null)
+        private object MarshalToScriptInternal(object obj, HostItemFlags flags, Dictionary<Array, V8ScriptItem> marshaledArrayMap)
+        {
+            if (obj is null)
             {
                 obj = NullExportValue;
             }
 
-            if (obj == null)
+            if (obj is null)
             {
                 return DBNull.Value;
             }
@@ -1531,12 +1614,12 @@ namespace Microsoft.ClearScript.V8
 
             if (obj is long longValue)
             {
-                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalAllLongAsBigInt))
+                if (Flags.HasAllFlags(V8ScriptEngineFlags.MarshalAllInt64AsBigInt))
                 {
                     return new BigInteger(longValue);
                 }
 
-                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt) && (Math.Abs(longValue) > maxIntInDouble))
+                if (Flags.HasAllFlags(V8ScriptEngineFlags.MarshalUnsafeInt64AsBigInt) && ((longValue < -MiscHelpers.MaxInt64InDouble) || (longValue > MiscHelpers.MaxInt64InDouble)))
                 {
                     return new BigInteger(longValue);
                 }
@@ -1544,23 +1627,23 @@ namespace Microsoft.ClearScript.V8
 
             if (obj is ulong ulongValue)
             {
-                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalAllLongAsBigInt))
+                if (Flags.HasAllFlags(V8ScriptEngineFlags.MarshalAllInt64AsBigInt))
                 {
                     return new BigInteger(ulongValue);
                 }
 
-                if (engineFlags.HasFlag(V8ScriptEngineFlags.MarshalUnsafeLongAsBigInt) && (ulongValue > maxIntInDouble))
+                if (Flags.HasAllFlags(V8ScriptEngineFlags.MarshalUnsafeInt64AsBigInt) && (ulongValue > MiscHelpers.MaxInt64InDouble))
                 {
                     return new BigInteger(ulongValue);
                 }
             }
 
-            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableDateTimeConversion) && (obj is DateTime))
+            if (Flags.HasAllFlags(V8ScriptEngineFlags.EnableDateTimeConversion) && (obj is DateTime))
             {
                 return obj;
             }
 
-            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion))
+            if (Flags.HasAllFlags(V8ScriptEngineFlags.EnableTaskPromiseConversion))
             {
                 // .NET Core async functions return Task subclass instances that trigger result wrapping
 
@@ -1570,19 +1653,26 @@ namespace Microsoft.ClearScript.V8
                     testObject = testHostObject.Target;
                 }
 
-                if (testObject != null)
+                if (testObject is not null)
                 {
-                    if (testObject.GetType().IsAssignableToGenericType(typeof(Task<>), out var typeArgs))
+                    if (testObject.GetType().IsAssignableToGenericType(typeof(Task<>), out var taskTypeArgs) && (taskTypeArgs.Length > 0) && taskTypeArgs[0].IsAccessible(this))
                     {
-                        obj = typeof(TaskConverter<>).MakeSpecificType(typeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] { testObject, this });
+                        obj = typeof(TaskConverter<>).MakeSpecificType(taskTypeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] { testObject, this });
                     }
                     else if (testObject is Task task)
                     {
                         obj = task.ToPromise(this);
                     }
-                    else if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableValueTaskPromiseConversion))
+                    else if (Flags.HasAllFlags(V8ScriptEngineFlags.EnableValueTaskPromiseConversion))
                     {
-                        TryConvertValueTaskToPromise(testObject, result => obj = result);
+                        if (obj.GetType().IsAssignableToGenericType(typeof(ValueTask<>), out var valueTaskTypeArgs))
+                        {
+                            obj = typeof(ValueTaskConverter<>).MakeSpecificType(valueTaskTypeArgs).InvokeMember("ToPromise", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, null, new[] { obj, this });
+                        }
+                        else if (obj is ValueTask valueTask)
+                        {
+                            obj = valueTask.ToPromise(this);
+                        }
                     }
                 }
             }
@@ -1598,9 +1688,32 @@ namespace Microsoft.ClearScript.V8
             }
 
             var hostTarget = obj as HostTarget;
-            if ((hostTarget != null) && !(hostTarget is IHostVariable))
+            if ((hostTarget is not null) && (hostTarget is not IHostVariable))
             {
                 obj = hostTarget.Target;
+            }
+
+            if (Flags.HasAllFlags(V8ScriptEngineFlags.EnableArrayConversion))
+            {
+                if ((obj is Array array) && ((hostTarget is null) || hostTarget.Type.IsArray) && (array.Rank == 1))
+                {
+                    if (marshaledArrayMap?.TryGetValue(array, out var scriptArray) != true)
+                    {
+                        var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
+                        scriptArray = (V8ScriptItem)V8ScriptItem.Wrap(this, v8Internal.InvokeMethod(false, "createArray"));
+                        (marshaledArrayMap ?? (marshaledArrayMap = new Dictionary<Array, V8ScriptItem>())).Add(array, scriptArray);
+
+                        var elementType = array.GetType().GetElementType();
+                        var upperBound = array.GetUpperBound(0);
+                        for (var index = array.GetLowerBound(0); index <= upperBound; index++)
+                        {
+                            var result = PrepareResult(array.GetValue(index), elementType, ScriptMemberFlags.None, false);
+                            scriptArray.SetProperty(false, index, MarshalToScriptInternal(result, flags, marshaledArrayMap));
+                        }
+                    }
+
+                    obj = scriptArray;
+                }
             }
 
             if (obj is ScriptItem scriptItem)
@@ -1616,24 +1729,39 @@ namespace Microsoft.ClearScript.V8
                 }
             }
 
+            if (obj is IV8FastHostObject fastObject)
+            {
+                return V8FastHostItem.Wrap(this, fastObject, flags);
+            }
+
             return HostItem.Wrap(this, hostTarget ?? obj, flags);
         }
 
         internal override object MarshalToHost(object obj, bool preserveHostTarget)
         {
-            if (obj == null)
+            return MarshalToHostInternal(obj, preserveHostTarget, null);
+        }
+
+        private object MarshalToHostInternal(object obj, bool preserveHostTarget, Dictionary<V8ScriptItem, object[]> marshaledArrayMap)
+        {
+            if (obj is null)
             {
                 return UndefinedImportValue;
             }
 
             if (obj is DBNull)
             {
-                return null;
+                return NullImportValue;
             }
 
             if (MiscHelpers.TryMarshalPrimitiveToHost(obj, DisableFloatNarrowing, out var result))
             {
                 return result;
+            }
+
+            if (obj is V8FastHostItem fastHostItem)
+            {
+                return fastHostItem.Target;
             }
 
             if (obj is HostTarget hostTarget)
@@ -1651,57 +1779,83 @@ namespace Microsoft.ClearScript.V8
                 return obj;
             }
 
-            var scriptItem = V8ScriptItem.Wrap(this, obj);
-            if (engineFlags.HasFlag(V8ScriptEngineFlags.EnableTaskPromiseConversion) && (obj is IV8Object v8Object) && v8Object.IsPromise)
+            var wrappedObject = V8ScriptItem.Wrap(this, obj);
+
+            if (obj is IV8Object v8Object)
             {
-                return scriptItem.ToTask();
+                var scriptItem = (V8ScriptItem)wrappedObject;
+
+                if (Flags.HasAllFlags(V8ScriptEngineFlags.EnableTaskPromiseConversion) && v8Object.IsPromise)
+                {
+                    return wrappedObject.ToTask();
+                }
+
+                if (Flags.HasAllFlags(V8ScriptEngineFlags.EnableArrayConversion) && v8Object.IsArray)
+                {
+                    if (marshaledArrayMap?.TryGetValue(scriptItem, out var array) != true)
+                    {
+                        array = new object[((IList)scriptItem).Count];
+                        (marshaledArrayMap ?? (marshaledArrayMap = new Dictionary<V8ScriptItem, object[]>())).Add(scriptItem, array);
+
+                        var length = array.Length;
+                        for (var index = 0; index < length; index++)
+                        {
+                            array[index] = MarshalToHostInternal(scriptItem.GetProperty(false, index), false, marshaledArrayMap);
+                        }
+                    }
+
+                    return array;
+                }
             }
 
-            return scriptItem;
+            return wrappedObject;
         }
 
         internal override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
         {
             VerifyNotDisposed();
 
-            return ScriptInvoke(() =>
-            {
-                if ((documentNames != null) && !documentInfo.Flags.GetValueOrDefault().HasFlag(DocumentFlags.IsTransient))
+            return ScriptInvoke(
+                static ctx =>
                 {
-                    documentNames.Add(documentInfo.UniqueName);
-                }
-
-                if (inContinuationTimerScope || (ContinuationCallback == null))
-                {
-                    if (ShouldAwaitDebuggerAndPause(documentInfo.Info))
+                    if ((ctx.self.documentNames is not null) && !ctx.documentInfo.Flags.GetValueOrDefault().HasAllFlags(DocumentFlags.IsTransient))
                     {
-                        proxy.AwaitDebuggerAndPause();
+                        ctx.self.documentNames.Add(ctx.documentInfo.UniqueName);
                     }
 
-                    return ExecuteInternal(documentInfo, code, evaluate);
-                }
-
-                var state = new Timer[] { null };
-                using (state[0] = new Timer(_ => OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
-                {
-                    inContinuationTimerScope = true;
-                    try
+                    if (ctx.self.inContinuationTimerScope || (ctx.self.ContinuationCallback is null))
                     {
-                        state[0].Change(continuationInterval, Timeout.Infinite);
-
-                        if (ShouldAwaitDebuggerAndPause(documentInfo.Info))
+                        if (ctx.self.ShouldAwaitDebuggerAndPause(ctx.documentInfo.Info))
                         {
-                            proxy.AwaitDebuggerAndPause();
+                            ctx.self.proxy.AwaitDebuggerAndPause();
                         }
 
-                        return ExecuteInternal(documentInfo, code, evaluate);
+                        return ctx.self.ExecuteInternal(ctx.documentInfo, ctx.code, ctx.evaluate);
                     }
-                    finally
+
+                    var state = new Timer[] { null };
+                    using (state[0] = new Timer(_ => ctx.self.OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
                     {
-                        inContinuationTimerScope = false;
+                        ctx.self.inContinuationTimerScope = true;
+                        try
+                        {
+                            state[0].Change(continuationInterval, Timeout.Infinite);
+
+                            if (ctx.self.ShouldAwaitDebuggerAndPause(ctx.documentInfo.Info))
+                            {
+                                ctx.self.proxy.AwaitDebuggerAndPause();
+                            }
+
+                            return ctx.self.ExecuteInternal(ctx.documentInfo, ctx.code, ctx.evaluate);
+                        }
+                        finally
+                        {
+                            ctx.self.inContinuationTimerScope = false;
+                        }
                     }
-                }
-            });
+                },
+                (self: this, documentInfo, code, evaluate)
+            );
         }
 
         internal override object ExecuteRaw(UniqueDocumentInfo documentInfo, string code, bool evaluate)
@@ -1714,7 +1868,7 @@ namespace Microsoft.ClearScript.V8
         internal override void OnAccessSettingsChanged()
         {
             base.OnAccessSettingsChanged();
-            ScriptInvoke(() => proxy.OnAccessSettingsChanged());
+            ScriptInvoke(static proxy => proxy.OnAccessSettingsChanged(), proxy);
         }
 
         #endregion
@@ -1726,18 +1880,56 @@ namespace Microsoft.ClearScript.V8
             VerifyNotDisposed();
             using (CreateEngineScope())
             {
-                proxy.InvokeWithLock(() => ScriptInvokeInternal(action));
+                proxy.InvokeWithLock(static ctx => ctx.self.ScriptInvokeInternal(ctx.action), (self: this, action));
             }
         }
 
-        internal override T ScriptInvoke<T>(Func<T> func)
+        internal override void ScriptInvoke<TArg>(Action<TArg> action, in TArg arg)
         {
             VerifyNotDisposed();
             using (CreateEngineScope())
             {
-                var result = default(T);
-                proxy.InvokeWithLock(() => result = ScriptInvokeInternal(func));
-                return result;
+                proxy.InvokeWithLock(static ctx => ctx.self.ScriptInvokeInternal(ctx.action, ctx.arg), (self: this, action, arg));
+            }
+        }
+
+        internal override TResult ScriptInvoke<TResult>(Func<TResult> func)
+        {
+            VerifyNotDisposed();
+            using (CreateEngineScope())
+            {
+                var ctx = (self: this, func, result: default(TResult));
+
+                proxy.InvokeWithLock(
+                    static pCtx =>
+                    {
+                        ref var ctx = ref pCtx.AsRef();
+                        ctx.result = ctx.self.ScriptInvokeInternal(ctx.func);
+                    },
+                    StructPtr.FromRef(ref ctx)
+                );
+
+                return ctx.result;
+            }
+        }
+
+        internal override TResult ScriptInvoke<TArg, TResult>(Func<TArg, TResult> func, in TArg arg)
+        {
+            VerifyNotDisposed();
+            using (CreateEngineScope())
+            {
+                var ctx = (self: this, func, arg, result: default(TResult));
+
+                proxy.InvokeWithLock(
+                    static pCtx =>
+                    {
+                        ref var ctx = ref pCtx.AsRef();
+                        ctx.result = ctx.self.ScriptInvokeInternal(ctx.func, ctx.arg);
+                    },
+                    StructPtr.FromRef(ref ctx)
+                );
+
+                return ctx.result;
             }
         }
 
@@ -1782,6 +1974,72 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region fast host item cache
+
+        private readonly ConditionalWeakTable<IV8FastHostObject, List<WeakReference<V8FastHostItem>>> fastHostItemCache = new();
+
+        internal V8FastHostItem GetOrCreateFastHostItem(IV8FastHostObject target, HostItemFlags flags)
+        {
+            var cacheEntry = fastHostItemCache.GetOrCreateValue(target);
+
+            List<WeakReference<V8FastHostItem>> activeWeakRefs = null;
+            var staleWeakRefCount = 0;
+
+            foreach (var weakRef in cacheEntry)
+            {
+                if (!weakRef.TryGetTarget(out var hostItem))
+                {
+                    staleWeakRefCount++;
+                }
+                else
+                {
+                    if (hostItem.Flags == flags)
+                    {
+                        return hostItem;
+                    }
+
+                    if (activeWeakRefs is null)
+                    {
+                        activeWeakRefs = new List<WeakReference<V8FastHostItem>>(cacheEntry.Count);
+                    }
+
+                    activeWeakRefs.Add(weakRef);
+                }
+            }
+
+            if (staleWeakRefCount > 4)
+            {
+                cacheEntry.Clear();
+                if (activeWeakRefs is not null)
+                {
+                    cacheEntry.Capacity = activeWeakRefs.Count + 1;
+                    cacheEntry.AddRange(activeWeakRefs);
+                }
+            }
+
+            return CreateFastHostItem(target, flags, cacheEntry);
+        }
+
+        private V8FastHostItem CreateFastHostItem(IV8FastHostObject target, HostItemFlags flags, List<WeakReference<V8FastHostItem>> cacheEntry)
+        {
+            var newHostItem = new V8FastHostItem(this, target, flags);
+
+            if (cacheEntry is not null)
+            {
+                cacheEntry.Add(new WeakReference<V8FastHostItem>(newHostItem));
+            }
+
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if (target is IScriptableObject scriptableObject)
+            {
+                scriptableObject.OnExposedToScriptCode(this);
+            }
+
+            return newHostItem;
+        }
+
+        #endregion
+
         #region IJavaScriptEngine implementation
 
         uint IJavaScriptEngine.BaseLanguageVersion => 8;
@@ -1792,7 +2050,12 @@ namespace Microsoft.ClearScript.V8
 
         object IJavaScriptEngine.CreatePromiseForTask<T>(Task<T> task)
         {
-            var scheduler = (engineFlags.HasFlag(V8ScriptEngineFlags.UseSynchronizationContexts) && MiscHelpers.Try(out var contextScheduler, TaskScheduler.FromCurrentSynchronizationContext)) ? contextScheduler : TaskScheduler.Current;
+            if (task.IsCompleted)
+            {
+                return CreateSettledPromise(task);
+            }
+
+            var scheduler = (Flags.HasAllFlags(V8ScriptEngineFlags.UseSynchronizationContexts) && MiscHelpers.Try(out var contextScheduler, static () => TaskScheduler.FromCurrentSynchronizationContext())) ? contextScheduler : TaskScheduler.Current;
             return CreatePromise((resolve, reject) =>
             {
                 task.ContinueWith(_ => CompletePromise(task, resolve, reject), CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, scheduler);
@@ -1801,28 +2064,55 @@ namespace Microsoft.ClearScript.V8
 
         object IJavaScriptEngine.CreatePromiseForTask(Task task)
         {
-            var scheduler = (engineFlags.HasFlag(V8ScriptEngineFlags.UseSynchronizationContexts) && MiscHelpers.Try(out var contextScheduler, TaskScheduler.FromCurrentSynchronizationContext)) ? contextScheduler : TaskScheduler.Current;
+            if (task.IsCompleted)
+            {
+                return CreateSettledPromise(task);
+            }
+
+            var scheduler = (Flags.HasAllFlags(V8ScriptEngineFlags.UseSynchronizationContexts) && MiscHelpers.Try(out var contextScheduler, static () => TaskScheduler.FromCurrentSynchronizationContext())) ? contextScheduler : TaskScheduler.Current;
             return CreatePromise((resolve, reject) =>
             {
                 task.ContinueWith(_ => CompletePromise(task, resolve, reject), CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, scheduler);
             });
         }
 
+        object IJavaScriptEngine.CreatePromiseForValueTask<T>(ValueTask<T> valueTask)
+        {
+            if (valueTask.IsCompleted)
+            {
+                return CreateSettledPromise(valueTask);
+            }
+
+            return ((IJavaScriptEngine)this).CreatePromiseForTask(valueTask.AsTask());
+        }
+
+        object IJavaScriptEngine.CreatePromiseForValueTask(ValueTask valueTask)
+        {
+            if (valueTask.IsCompleted)
+            {
+                return CreateSettledPromise(valueTask);
+            }
+
+            return ((IJavaScriptEngine)this).CreatePromiseForTask(valueTask.AsTask());
+        }
+
         Task<object> IJavaScriptEngine.CreateTaskForPromise(ScriptObject promise)
         {
-            if (!(promise is V8ScriptItem v8ScriptItem) || !v8ScriptItem.IsPromise)
+            if ((promise is not V8ScriptItem v8ScriptItem) || !v8ScriptItem.IsPromise)
             {
                 throw new ArgumentException("The object is not a V8 promise", nameof(promise));
             }
 
             var source = new TaskCompletionSource<object>();
-            var context = engineFlags.HasFlag(V8ScriptEngineFlags.UseSynchronizationContexts) ? SynchronizationContext.Current : null;
+            var context = Flags.HasAllFlags(V8ScriptEngineFlags.UseSynchronizationContexts) ? SynchronizationContext.Current : null;
 
             Action<object> setResultWorker = result => source.SetResult(result);
-            var setResult = (context == null) ? setResultWorker : result => context.Post(_ => setResultWorker(result), null);
+            var setResult = (context is null) ? setResultWorker : result => context.Post(_ => setResultWorker(result), null);
 
             Action<Exception> setExceptionWorker = exception => source.SetException(exception);
-            var setException = (context == null) ? setExceptionWorker : exception => context.Post(_ => setExceptionWorker(exception), null);
+            var setException = (context is null) ? setExceptionWorker : exception => context.Post(_ => setExceptionWorker(exception), null);
+
+            var v8Internal = (V8ScriptItem)script.GetProperty("EngineInternal");
 
             Action<object> onResolved = result =>
             {
@@ -1833,8 +2123,7 @@ namespace Microsoft.ClearScript.V8
             {
                 try
                 {
-                    var engineInternal = (ScriptObject)script.GetProperty("EngineInternal");
-                    engineInternal.InvokeMethod("throwValue", error);
+                    v8Internal.InvokeMethod("throwValue", error);
                 }
                 catch (Exception exception)
                 {
@@ -1842,7 +2131,8 @@ namespace Microsoft.ClearScript.V8
                 }
             };
 
-            v8ScriptItem.InvokeMethod(false, "then", onResolved, onRejected);
+            var flags = v8ScriptItem.Flags;
+            v8Internal.InvokeMethod(false, "initializeTask", v8ScriptItem, flags.HasAllFlags(JavaScriptObjectFlags.Pending), flags.HasAllFlags(JavaScriptObjectFlags.Rejected), onResolved, onRejected);
 
             return source.Task;
         }
@@ -1891,13 +2181,29 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region Nested type: ValueTaskConverter
+
+        private static class ValueTaskConverter<T>
+        {
+            // ReSharper disable UnusedMember.Local
+
+            public static object ToPromise(ValueTask<T> valueTask, V8ScriptEngine engine)
+            {
+                return valueTask.ToPromise(engine);
+            }
+
+            // ReSharper restore UnusedMember.Local
+        }
+
+        #endregion
+
         #region Nested type: JsonHelper
 
         /// <exclude/>
         public sealed class JsonHelper : JsonConverter
         {
             private readonly ScriptObject stringify;
-            private readonly HashSet<object> cycleDetectionSet = new HashSet<object>();
+            private readonly HashSet<object> cycleDetectionSet = new();
 
             /// <exclude/>
             public JsonHelper(V8ScriptEngine engine)
@@ -1909,14 +2215,13 @@ namespace Microsoft.ClearScript.V8
             /// <exclude/>
             public string ToJson(object key, object value)
             {
-                key = MiscHelpers.EnsureNonBlank(key.ToString(), "[root]");
+                key = key.ToString().ToNonBlank("[root]");
 
-                if (cycleDetectionSet.Contains(value))
+                if (!cycleDetectionSet.Add(value))
                 {
                     throw new InvalidOperationException($"Cycle detected at key '{key}' during JSON serialization");
                 }
 
-                cycleDetectionSet.Add(value);
                 try
                 {
                     return JsonConvert.SerializeObject(value, this);

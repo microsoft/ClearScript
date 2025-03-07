@@ -10,7 +10,7 @@ namespace Microsoft.ClearScript.Util.COM
 {
     internal static partial class TypeInfoHelpers
     {
-        private static readonly ConcurrentDictionary<Guid, Type> managedTypeMap = new ConcurrentDictionary<Guid, Type>();
+        private static readonly ConcurrentDictionary<Guid, Type> managedTypeMap = new();
 
         public static Type GetManagedType(this ITypeInfo typeInfo)
         {

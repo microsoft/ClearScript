@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using Microsoft.ClearScript.Util;
 
 namespace Microsoft.ClearScript.V8.SplitProxy
@@ -22,20 +23,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public override UIntPtr MaxIsolateHeapSize
         {
-            get => V8SplitProxyNative.Invoke(instance => instance.V8Context_GetMaxIsolateHeapSize(Handle));
-            set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetMaxIsolateHeapSize(Handle, value));
+            get => V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_GetMaxIsolateHeapSize(handle), Handle);
+            set => V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_SetMaxIsolateHeapSize(ctx.Handle, ctx.value), (Handle, value));
         }
 
         public override TimeSpan IsolateHeapSizeSampleInterval
         {
-            get => V8SplitProxyNative.Invoke(instance => TimeSpan.FromMilliseconds(instance.V8Context_GetIsolateHeapSizeSampleInterval(Handle)));
-            set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetIsolateHeapSizeSampleInterval(Handle, value.TotalMilliseconds));
+            get => V8SplitProxyNative.Invoke(static (instance, handle) => TimeSpan.FromMilliseconds(instance.V8Context_GetIsolateHeapSizeSampleInterval(handle)), Handle);
+            set => V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_SetIsolateHeapSizeSampleInterval(ctx.Handle, ctx.value.TotalMilliseconds), (Handle, value));
         }
 
         public override UIntPtr MaxIsolateStackUsage
         {
-            get => V8SplitProxyNative.Invoke(instance => instance.V8Context_GetMaxIsolateStackUsage(Handle));
-            set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetMaxIsolateStackUsage(Handle, value));
+            get => V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_GetMaxIsolateStackUsage(handle), Handle);
+            set => V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_SetMaxIsolateStackUsage(ctx.Handle, ctx.value), (Handle, value));
         }
 
         public override void InvokeWithLock(Action action)
@@ -43,55 +44,79 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             using (var actionScope = V8ProxyHelpers.CreateAddRefHostObjectScope(action))
             {
                 var pAction = actionScope.Value;
-                V8SplitProxyNative.Invoke(instance => instance.V8Context_InvokeWithLock(Handle, pAction));
+                V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_InvokeWithLock(ctx.Handle, ctx.pAction), (Handle, pAction));
+            }
+        }
+
+        public override unsafe void InvokeWithLock<TArg>(Action<TArg> action, in TArg arg)
+        {
+            var ctx = (action, arg);
+            var pCtx = (IntPtr)Unsafe.AsPointer(ref ctx);
+
+            Action<IntPtr> actionWithArg = static pCtx =>
+            {
+                ref var ctx = ref Unsafe.AsRef<(Action<TArg> action, TArg arg)>(pCtx.ToPointer());
+                ctx.action(ctx.arg);
+            };
+
+            using (var actionScope = V8ProxyHelpers.CreateAddRefHostObjectScope(actionWithArg))
+            {
+                var pAction = actionScope.Value;
+                V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_InvokeWithLockWithArg(ctx.Handle, ctx.pAction, ctx.pCtx), (Handle, pAction, pCtx));
             }
         }
 
         public override object GetRootItem()
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Context_GetRootItem(Handle));
+            return V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_GetRootItem(handle), Handle);
         }
 
         public override void AddGlobalItem(string name, object item, bool globalMembers)
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_AddGlobalItem(Handle, name, item, globalMembers));
+            V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_AddGlobalItem(ctx.Handle, ctx.name, ctx.item, ctx.globalMembers), (Handle, name, item, globalMembers));
         }
 
         public override void AwaitDebuggerAndPause()
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_AwaitDebuggerAndPause(Handle));
+            V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_AwaitDebuggerAndPause(handle), Handle);
         }
 
         public override void CancelAwaitDebugger()
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_CancelAwaitDebugger(Handle));
+            V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_CancelAwaitDebugger(handle), Handle);
         }
 
         public override object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Context_ExecuteCode(
-                Handle,
-                MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
-                MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
-                documentInfo.UniqueId,
-                documentInfo.Category.Kind,
-                V8ProxyHelpers.AddRefHostObject(documentInfo),
-                code,
-                evaluate
-            ));
+            return V8SplitProxyNative.Invoke(
+                static (instance, ctx) => instance.V8Context_ExecuteCode(
+                    ctx.Handle,
+                    MiscHelpers.GetUrlOrPath(ctx.documentInfo.Uri, ctx.documentInfo.UniqueName),
+                    MiscHelpers.GetUrlOrPath(ctx.documentInfo.SourceMapUri, string.Empty),
+                    ctx.documentInfo.UniqueId,
+                    ctx.documentInfo.Category.Kind,
+                    V8ProxyHelpers.AddRefHostObject(ctx.documentInfo),
+                    ctx.code,
+                    ctx.evaluate
+                ),
+                (Handle, documentInfo, code, evaluate)
+            );
         }
 
         public override V8.V8Script Compile(UniqueDocumentInfo documentInfo, string code)
         {
-            return new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(instance => instance.V8Context_Compile(
-                Handle,
-                MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
-                MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
-                documentInfo.UniqueId,
-                documentInfo.Category.Kind,
-                V8ProxyHelpers.AddRefHostObject(documentInfo),
-                code
-            )));
+            return new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(
+                static (instance, ctx) => instance.V8Context_Compile(
+                    ctx.Handle,
+                    MiscHelpers.GetUrlOrPath(ctx.documentInfo.Uri, ctx.documentInfo.UniqueName),
+                    MiscHelpers.GetUrlOrPath(ctx.documentInfo.SourceMapUri, string.Empty),
+                    ctx.documentInfo.UniqueId,
+                    ctx.documentInfo.Category.Kind,
+                    V8ProxyHelpers.AddRefHostObject(ctx.documentInfo),
+                    ctx.code
+                ),
+                (Handle, documentInfo, code)
+            ));
         }
 
         public override V8.V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes)
@@ -102,46 +127,62 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return Compile(documentInfo, code);
             }
 
-            byte[] tempCacheBytes = null;
-            var script = new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(instance => instance.V8Context_CompileProducingCache(
-                Handle,
-                MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
-                MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
-                documentInfo.UniqueId,
-                documentInfo.Category.Kind,
-                V8ProxyHelpers.AddRefHostObject(documentInfo),
-                code,
-                cacheKind,
-                out tempCacheBytes
-            )));
+            var ctx = (Handle, documentInfo, code, cacheKind, cacheBytes: (byte[])null);
 
-            cacheBytes = tempCacheBytes;
+            var script = new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(
+                static (instance, pCtx) =>
+                {
+                    ref var ctx = ref pCtx.AsRef();
+                    return instance.V8Context_CompileProducingCache(
+                        ctx.Handle,
+                        MiscHelpers.GetUrlOrPath(ctx.documentInfo.Uri, ctx.documentInfo.UniqueName),
+                        MiscHelpers.GetUrlOrPath(ctx.documentInfo.SourceMapUri, string.Empty),
+                        ctx.documentInfo.UniqueId,
+                        ctx.documentInfo.Category.Kind,
+                        V8ProxyHelpers.AddRefHostObject(ctx.documentInfo),
+                        ctx.code,
+                        ctx.cacheKind,
+                        out ctx.cacheBytes
+                    );
+                },
+                StructPtr.FromRef(ref ctx)
+            ));
+
+            cacheBytes = ctx.cacheBytes;
             return script;
         }
 
         public override V8.V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, byte[] cacheBytes, out bool cacheAccepted)
         {
-            if ((cacheKind == V8CacheKind.None) || (cacheBytes == null) || (cacheBytes.Length < 1))
+            if ((cacheKind == V8CacheKind.None) || (cacheBytes is null) || (cacheBytes.Length < 1))
             {
                 cacheAccepted = false;
                 return Compile(documentInfo, code);
             }
 
-            var tempCacheAccepted = false;
-            var script = new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(instance => instance.V8Context_CompileConsumingCache(
-                Handle,
-                MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
-                MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
-                documentInfo.UniqueId,
-                documentInfo.Category.Kind,
-                V8ProxyHelpers.AddRefHostObject(documentInfo),
-                code,
-                cacheKind,
-                cacheBytes,
-                out tempCacheAccepted
-            )));
+            var ctx = (Handle, documentInfo, code, cacheKind, cacheBytes, cacheAccepted: false);
 
-            cacheAccepted = tempCacheAccepted;
+            var script = new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(
+                static (instance, pCtx) =>
+                {
+                    ref var ctx = ref pCtx.AsRef();
+                    return instance.V8Context_CompileConsumingCache(
+                        ctx.Handle,
+                        MiscHelpers.GetUrlOrPath(ctx.documentInfo.Uri, ctx.documentInfo.UniqueName),
+                        MiscHelpers.GetUrlOrPath(ctx.documentInfo.SourceMapUri, string.Empty),
+                        ctx.documentInfo.UniqueId,
+                        ctx.documentInfo.Category.Kind,
+                        V8ProxyHelpers.AddRefHostObject(ctx.documentInfo),
+                        ctx.code,
+                        ctx.cacheKind,
+                        ctx.cacheBytes,
+                        out ctx.cacheAccepted
+                    );
+                },
+                StructPtr.FromRef(ref ctx)
+            ));
+
+            cacheAccepted = ctx.cacheAccepted;
             return script;
         }
 
@@ -154,12 +195,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
 
             V8.V8Script script;
-            var tempCacheBytes = cacheBytes;
 
-            if ((cacheBytes == null) || (cacheBytes.Length < 1))
+            if ((cacheBytes is null) || (cacheBytes.Length < 1))
             {
-                script = Compile(documentInfo, code, cacheKind, out tempCacheBytes);
-                cacheResult = (tempCacheBytes != null) && (tempCacheBytes.Length > 0) ? V8CacheResult.Updated : V8CacheResult.UpdateFailed;
+                script = Compile(documentInfo, code, cacheKind, out var tempCacheBytes);
+                cacheResult = (tempCacheBytes is not null) && (tempCacheBytes.Length > 0) ? V8CacheResult.Updated : V8CacheResult.UpdateFailed;
                 if (cacheResult == V8CacheResult.Updated)
                 {
                     cacheBytes = tempCacheBytes;
@@ -168,24 +208,32 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return script;
             }
 
-            var tempCacheResult = V8CacheResult.Disabled;
-            script = new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(instance => instance.V8Context_CompileUpdatingCache(
-                Handle,
-                MiscHelpers.GetUrlOrPath(documentInfo.Uri, documentInfo.UniqueName),
-                MiscHelpers.GetUrlOrPath(documentInfo.SourceMapUri, string.Empty),
-                documentInfo.UniqueId,
-                documentInfo.Category.Kind,
-                V8ProxyHelpers.AddRefHostObject(documentInfo),
-                code,
-                cacheKind,
-                ref tempCacheBytes,
-                out tempCacheResult
-            )));
+            var ctx = (Handle, documentInfo, code, cacheKind, cacheBytes, cacheResult: V8CacheResult.Disabled);
 
-            cacheResult = tempCacheResult;
+            script = new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(
+                static (instance, pCtx) =>
+                {
+                    ref var ctx = ref pCtx.AsRef();
+                    return instance.V8Context_CompileUpdatingCache(
+                        ctx.Handle,
+                        MiscHelpers.GetUrlOrPath(ctx.documentInfo.Uri, ctx.documentInfo.UniqueName),
+                        MiscHelpers.GetUrlOrPath(ctx.documentInfo.SourceMapUri, string.Empty),
+                        ctx.documentInfo.UniqueId,
+                        ctx.documentInfo.Category.Kind,
+                        V8ProxyHelpers.AddRefHostObject(ctx.documentInfo),
+                        ctx.code,
+                        ctx.cacheKind,
+                        ref ctx.cacheBytes,
+                        out ctx.cacheResult
+                    );
+                },
+                StructPtr.FromRef(ref ctx)
+            ));
+
+            cacheResult = ctx.cacheResult;
             if (cacheResult == V8CacheResult.Updated)
             {
-                cacheBytes = tempCacheBytes;
+                cacheBytes = ctx.cacheBytes;
             }
 
             return script;
@@ -193,90 +241,107 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public override object Execute(V8.V8Script script, bool evaluate)
         {
-            if (!(script is V8ScriptImpl scriptImpl))
+            if (script is V8ScriptImpl scriptImpl)
             {
-                throw new ArgumentException("Invalid compiled script", nameof(script));
+                return V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_ExecuteScript(ctx.Handle, ctx.scriptImpl.Handle, ctx.evaluate), (Handle, scriptImpl, evaluate));
             }
 
-            return V8SplitProxyNative.Invoke(instance => instance.V8Context_ExecuteScript(
-                Handle,
-                scriptImpl.Handle,
-                evaluate
-            ));
+            throw new ArgumentException("Invalid compiled script", nameof(script));
         }
 
         public override void Interrupt()
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_Interrupt(Handle));
+            V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_Interrupt(handle), Handle);
         }
 
         public override void CancelInterrupt()
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_CancelInterrupt(Handle));
+            V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_CancelInterrupt(handle), Handle);
         }
 
         public override bool EnableIsolateInterruptPropagation
         {
-            get => V8SplitProxyNative.Invoke(instance => instance.V8Context_GetEnableIsolateInterruptPropagation(Handle));
-            set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetEnableIsolateInterruptPropagation(Handle, value));
+            get => V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_GetEnableIsolateInterruptPropagation(handle), Handle);
+            set => V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_SetEnableIsolateInterruptPropagation(ctx.Handle, ctx.value), (Handle, value));
         }
 
         public override bool DisableIsolateHeapSizeViolationInterrupt
         {
-            get => V8SplitProxyNative.Invoke(instance => instance.V8Context_GetDisableIsolateHeapSizeViolationInterrupt(Handle));
-            set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetDisableIsolateHeapSizeViolationInterrupt(Handle, value));
+            get => V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_GetDisableIsolateHeapSizeViolationInterrupt(handle), Handle);
+            set => V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_SetDisableIsolateHeapSizeViolationInterrupt(ctx.Handle, ctx.value), (Handle, value));
         }
 
         public override V8RuntimeHeapInfo GetIsolateHeapInfo()
         {
-            var totalHeapSize = 0UL;
-            var totalHeapSizeExecutable = 0UL;
-            var totalPhysicalSize = 0UL;
-            var totalAvailableSize = 0UL;
-            var usedHeapSize = 0UL;
-            var heapSizeLimit = 0UL;
-            var totalExternalSize = 0UL;
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_GetIsolateHeapStatistics(Handle, out totalHeapSize, out totalHeapSizeExecutable, out totalPhysicalSize, out totalAvailableSize, out usedHeapSize, out heapSizeLimit, out totalExternalSize));
+
+            var ctx = (
+                Handle,
+                totalHeapSize: 0UL,
+                totalHeapSizeExecutable: 0UL,
+                totalPhysicalSize: 0UL,
+                totalAvailableSize: 0UL,
+                usedHeapSize: 0UL,
+                heapSizeLimit: 0UL,
+                totalExternalSize: 0UL
+            );
+
+            V8SplitProxyNative.Invoke(
+                static (instance, pCtx) =>
+                {
+                    ref var ctx = ref pCtx.AsRef();
+                    instance.V8Context_GetIsolateHeapStatistics(
+                        ctx.Handle,
+                        out ctx.totalHeapSize,
+                        out ctx.totalHeapSizeExecutable,
+                        out ctx.totalPhysicalSize,
+                        out ctx.totalAvailableSize,
+                        out ctx.usedHeapSize,
+                        out ctx.heapSizeLimit,
+                        out ctx.totalExternalSize
+                    );
+                },
+                StructPtr.FromRef(ref ctx)
+            );
 
             return new V8RuntimeHeapInfo
             {
-                TotalHeapSize = totalHeapSize,
-                TotalHeapSizeExecutable = totalHeapSizeExecutable,
-                TotalPhysicalSize = totalPhysicalSize,
-                TotalAvailableSize = totalAvailableSize,
-                UsedHeapSize = usedHeapSize,
-                HeapSizeLimit = heapSizeLimit,
-                TotalExternalSize = totalExternalSize
+                TotalHeapSize = ctx.totalHeapSize,
+                TotalHeapSizeExecutable = ctx.totalHeapSizeExecutable,
+                TotalPhysicalSize = ctx.totalPhysicalSize,
+                TotalAvailableSize = ctx.totalAvailableSize,
+                UsedHeapSize = ctx.usedHeapSize,
+                HeapSizeLimit = ctx.heapSizeLimit,
+                TotalExternalSize = ctx.totalExternalSize
             };
         }
 
         public override V8Runtime.Statistics GetIsolateStatistics()
         {
             var statistics = new V8Runtime.Statistics();
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_GetIsolateStatistics(Handle, out statistics.ScriptCount, out statistics.ScriptCacheSize, out statistics.ModuleCount, out statistics.PostedTaskCounts, out statistics.InvokedTaskCounts));
+            V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_GetIsolateStatistics(ctx.Handle, out ctx.statistics.ScriptCount, out ctx.statistics.ScriptCacheSize, out ctx.statistics.ModuleCount, out ctx.statistics.PostedTaskCounts, out ctx.statistics.InvokedTaskCounts), (Handle, statistics));
             return statistics;
         }
 
         public override V8ScriptEngine.Statistics GetStatistics()
         {
             var statistics = new V8ScriptEngine.Statistics();
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_GetStatistics(Handle, out statistics.ScriptCount, out statistics.ModuleCount, out statistics.ModuleCacheSize));
+            V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_GetStatistics(ctx.Handle, out ctx.statistics.ScriptCount, out ctx.statistics.ModuleCount, out ctx.statistics.ModuleCacheSize), (Handle, statistics));
             return statistics;
         }
 
         public override void CollectGarbage(bool exhaustive)
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_CollectGarbage(Handle, exhaustive));
+            V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_CollectGarbage(ctx.Handle, ctx.exhaustive), (Handle, exhaustive));
         }
 
         public override void OnAccessSettingsChanged()
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_OnAccessSettingsChanged(Handle));
+            V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_OnAccessSettingsChanged(handle), Handle);
         }
 
         public override bool BeginCpuProfile(string name, V8CpuProfileFlags flags)
         {
-            return V8SplitProxyNative.Invoke(instance => instance.V8Context_BeginCpuProfile(Handle, name, flags.HasFlag(V8CpuProfileFlags.EnableSampleCollection)));
+            return V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_BeginCpuProfile(ctx.Handle, ctx.name, ctx.flags.HasAllFlags(V8CpuProfileFlags.EnableSampleCollection)), (Handle, name, flags));
         }
 
         public override V8.V8CpuProfile EndCpuProfile(string name)
@@ -287,7 +352,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             using (var actionScope = V8ProxyHelpers.CreateAddRefHostObjectScope(action))
             {
                 var pAction = actionScope.Value;
-                V8SplitProxyNative.Invoke(instance => instance.V8Context_EndCpuProfile(Handle, name, pAction));
+                V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_EndCpuProfile(ctx.Handle, ctx.name, ctx.pAction), (Handle, name, pAction));
             }
 
             return profile;
@@ -295,13 +360,13 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         public override void CollectCpuProfileSample()
         {
-            V8SplitProxyNative.Invoke(instance => instance.V8Context_CollectCpuProfileSample(Handle));
+            V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_CollectCpuProfileSample(handle), Handle);
         }
 
         public override uint CpuProfileSampleInterval
         {
-            get => V8SplitProxyNative.Invoke(instance => instance.V8Context_GetCpuProfileSampleInterval(Handle));
-            set => V8SplitProxyNative.Invoke(instance => instance.V8Context_SetCpuProfileSampleInterval(Handle, value));
+            get => V8SplitProxyNative.Invoke(static (instance, handle) => instance.V8Context_GetCpuProfileSampleInterval(handle), Handle);
+            set => V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_SetCpuProfileSampleInterval(ctx.Handle, ctx.value), (Handle, value));
         }
 
         public override void WriteIsolateHeapSnapshot(Stream stream)
@@ -309,7 +374,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             using (var streamScope = V8ProxyHelpers.CreateAddRefHostObjectScope(stream))
             {
                 var pStream = streamScope.Value;
-                V8SplitProxyNative.Invoke(instance => instance.V8Context_WriteIsolateHeapSnapshot(Handle, pStream));
+                V8SplitProxyNative.Invoke(static (instance, ctx) => instance.V8Context_WriteIsolateHeapSnapshot(ctx.Handle, ctx.pStream), (Handle, pStream));
             }
         }
 

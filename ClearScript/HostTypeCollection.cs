@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Runtime.InteropServices.ComTypes;
 using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.Util.COM;
-using TYPEKIND = System.Runtime.InteropServices.ComTypes.TYPEKIND;
 
 namespace Microsoft.ClearScript
 {
@@ -27,8 +26,8 @@ namespace Microsoft.ClearScript
     /// </remarks>
     public class HostTypeCollection : PropertyBag
     {
-        private static readonly Predicate<Type> defaultFilter = type => true;
-        private static readonly TypeComparer typeComparer = new TypeComparer();
+        private static readonly Predicate<Type> defaultFilter = _ => true;
+        private static readonly TypeComparer typeComparer = new();
 
         /// <summary>
         /// Initializes a new host type collection.
@@ -179,7 +178,7 @@ namespace Microsoft.ClearScript
                 }
 
                 namespaceNode = node as PropertyBag;
-                if (namespaceNode == null)
+                if (namespaceNode is null)
                 {
                     return null;
                 }
@@ -202,7 +201,7 @@ namespace Microsoft.ClearScript
                     typeInfo.GetRefTypeInfo(unchecked((int)attrScope.Value.tdescAlias.lpValue.ToInt64()), out var refTypeInfo);
 
                     var node = AddEnumTypeInfoInternal(refTypeInfo);
-                    if (node != null)
+                    if (node is not null)
                     {
                         var locator = typeInfo.GetManagedName();
 
@@ -210,7 +209,7 @@ namespace Microsoft.ClearScript
                         if (segments.Length > 0)
                         {
                             var namespaceNode = GetOrCreateNamespaceNode(locator);
-                            if (namespaceNode != null)
+                            if (namespaceNode is not null)
                             {
                                 namespaceNode.SetPropertyNoCheck(segments.Last(), node);
                                 return node;
@@ -221,7 +220,7 @@ namespace Microsoft.ClearScript
                 else if (attrScope.Value.typekind == TYPEKIND.TKIND_ENUM)
                 {
                     var node = GetOrCreateEnumTypeInfoNode(typeInfo);
-                    if (node != null)
+                    if (node is not null)
                     {
                         var count = attrScope.Value.cVars;
                         for (var index = 0; index < count; index++)
@@ -267,7 +266,7 @@ namespace Microsoft.ClearScript
                 else
                 {
                     innerNode = node as PropertyBag;
-                    if (innerNode == null)
+                    if (innerNode is null)
                     {
                         throw new OperationCanceledException(MiscHelpers.FormatInvariant("Enumeration conflicts with '{0}' at '{1}'", node.GetFriendlyName(), locator));
                     }
@@ -285,7 +284,7 @@ namespace Microsoft.ClearScript
             foreach (var type in hostType.Types)
             {
                 var namespaceNode = GetOrCreateNamespaceNode(type);
-                if (namespaceNode != null)
+                if (namespaceNode is not null)
                 {
                     AddTypeToNamespaceNode(namespaceNode, type);
                 }
@@ -318,7 +317,7 @@ namespace Microsoft.ClearScript
                 else
                 {
                     innerNode = node as PropertyBag;
-                    if (innerNode == null)
+                    if (innerNode is null)
                     {
                         throw new OperationCanceledException(MiscHelpers.FormatInvariant("Namespace conflicts with '{0}' at '{1}'", node.GetFriendlyName(), locator));
                     }

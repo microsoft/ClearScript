@@ -139,6 +139,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_ArrayBuffer_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Uint8Array(new ArrayBuffer(1024));
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((byte)index)).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((IArrayBuffer)engine.Script.typedArray.buffer).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((IArrayBuffer)engine.Script.typedArray.buffer).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((IArrayBuffer)engine.Script.typedArray.buffer).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_ArrayBuffer_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => unchecked((byte)index)).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Uint8Array(new ArrayBuffer(1024))");
+            Assert.AreEqual(256UL, ((IArrayBuffer)engine.Script.typedArray.buffer).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((IArrayBuffer)engine.Script.typedArray.buffer).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((IArrayBuffer)engine.Script.typedArray.buffer).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((IArrayBuffer)engine.Script.typedArray.buffer).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_DataView()
         {
             var dataView = (IDataView)engine.Evaluate("new DataView(new ArrayBuffer(123456), 128, 1024)");
@@ -230,6 +272,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((IDataView)engine.Script.dataView).WriteBytes(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((IDataView)engine.Script.dataView).WriteBytes(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_DataView_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                dataView = new DataView(new ArrayBuffer(1024));
+                for (var i = 0; i < 1024; i++) {
+                    dataView.setUint8(i, i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((byte)index)).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((IDataView)engine.Script.dataView).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((IDataView)engine.Script.dataView).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((IDataView)engine.Script.dataView).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_DataView_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => unchecked((byte)index)).ToArray().AsSpan();
+
+            engine.Execute("dataView = new DataView(new ArrayBuffer(1024))");
+            Assert.AreEqual(256UL, ((IDataView)engine.Script.dataView).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((IDataView)engine.Script.dataView).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((IDataView)engine.Script.dataView).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((IDataView)engine.Script.dataView).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -328,6 +412,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint8Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Uint8Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((byte)index)).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint8Array_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => unchecked((byte)index)).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Uint8Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Uint8Array_ToArray()
         {
             engine.Execute(@"
@@ -396,6 +522,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<byte>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<byte>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint8Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Uint8Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((byte)index)).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).Read(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).Read(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint8Array_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => unchecked((byte)index)).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Uint8Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).Write(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).Write(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -494,6 +662,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint8ClampedArray_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Uint8ClampedArray(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (byte)(Math.Min(index, 255))).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint8ClampedArray_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => (byte)(Math.Min(index, 255))).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Uint8ClampedArray(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Uint8ClampedArray_ToArray()
         {
             engine.Execute(@"
@@ -562,6 +772,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<byte>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<byte>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint8ClampedArray_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Uint8ClampedArray(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (byte)(Math.Min(index, 255))).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).Read(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).Read(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint8ClampedArray_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => (byte)(Math.Min(index, 255))).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Uint8ClampedArray(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<byte>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).Write(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<byte>)engine.Script.typedArray).Write(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -660,6 +912,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int8Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Int8Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((byte)(index - 512))).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<sbyte>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<sbyte>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<sbyte>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int8Array_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => (byte)(Math.Min(index, 255))).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Int8Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<sbyte>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<sbyte>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<sbyte>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<sbyte>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Int8Array_ToArray()
         {
             engine.Execute(@"
@@ -728,6 +1022,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<sbyte>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<sbyte>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int8Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Int8Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => unchecked((sbyte)(index - 512))).ToArray().AsSpan();
+
+            var readValues = new sbyte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<sbyte>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<sbyte>)engine.Script.typedArray).Read(16384, 1024, new Span<sbyte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<sbyte>)engine.Script.typedArray).Read(0, 1024, new Span<sbyte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int8Array_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => unchecked((sbyte)(index - 512))).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Int8Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<sbyte>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new sbyte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<sbyte>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<sbyte>)engine.Script.typedArray).Write(new ReadOnlySpan<sbyte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<sbyte>)engine.Script.typedArray).Write(new ReadOnlySpan<sbyte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -895,6 +1231,81 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint16Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Uint16Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            {
+                var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((ushort)index)).ToArray().AsSpan();
+
+                var readValues = new byte[512].AsSpan();
+                Assert.AreEqual(256UL, ((ITypedArray<ushort>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+                fixed (void* pReadValues = readValues)
+                {
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ushort>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ushort>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                }
+            }
+            {
+                var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((char)index)).ToArray().AsSpan();
+
+                var readValues = new byte[512].AsSpan();
+                Assert.AreEqual(256UL, ((ITypedArray<char>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256).Take(256)));
+
+                fixed (void* pReadValues = readValues)
+                {
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<char>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<char>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint16Array_WriteBytes_Span()
+        {
+            {
+                var testValues = Enumerable.Range(0, 256).SelectMany(index => BitConverter.GetBytes((ushort)index)).ToArray().AsSpan();
+
+                engine.Execute("typedArray = new Uint16Array(new ArrayBuffer(123456), 128, 1024)");
+                Assert.AreEqual(256UL, ((ITypedArray<ushort>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+                var readValues = new byte[512].AsSpan();
+                Assert.AreEqual(256UL, ((ITypedArray<ushort>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+                fixed (void* pTestValues = testValues)
+                {
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ushort>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ushort>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                }
+            }
+            {
+                var testValues = Enumerable.Range(0, 256).SelectMany(index => BitConverter.GetBytes((char)index)).ToArray().AsSpan();
+
+                engine.Execute("typedArray = new Uint16Array(new ArrayBuffer(123456), 128, 1024)");
+                Assert.AreEqual(256UL, ((ITypedArray<char>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+                var readValues = new byte[512].AsSpan();
+                Assert.AreEqual(256UL, ((ITypedArray<char>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+                fixed (void* pTestValues = testValues)
+                {
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<char>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<char>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Uint16Array_ToArray()
         {
             engine.Execute(@"
@@ -1020,6 +1431,81 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint16Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Uint16Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            {
+                var testValues = Enumerable.Range(0, 1024).Select(index => (ushort)index).ToArray().AsSpan();
+
+                var readValues = new ushort[512].AsSpan();
+                Assert.AreEqual(256UL, ((ITypedArray<ushort>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+                fixed (void* pReadValues = readValues)
+                {
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ushort>)engine.Script.typedArray).Read(16384, 1024, new Span<ushort>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ushort>)engine.Script.typedArray).Read(0, 1024, new Span<ushort>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                }
+            }
+            {
+                var testValues = Enumerable.Range(0, 1024).Select(index => (char)index).ToArray().AsSpan();
+
+                var readValues = new char[512].AsSpan();
+                Assert.AreEqual(256UL, ((ITypedArray<char>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+                fixed (void* pReadValues = readValues)
+                {
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<char>)engine.Script.typedArray).Read(16384, 1024, new Span<char>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<char>)engine.Script.typedArray).Read(0, 1024, new Span<char>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint16Array_Write_Span()
+        {
+            {
+                var testValues = Enumerable.Range(0, 512).Select(index => (ushort)index).ToArray().AsSpan();
+
+                engine.Execute("typedArray = new Uint16Array(new ArrayBuffer(123456), 128, 1024)");
+                Assert.AreEqual(256UL, ((ITypedArray<ushort>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+                var readValues = new ushort[512].AsSpan();
+                Assert.AreEqual(256UL, ((ITypedArray<ushort>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+                fixed (void* pTestValues = testValues)
+                {
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ushort>)engine.Script.typedArray).Write(new ReadOnlySpan<ushort>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ushort>)engine.Script.typedArray).Write(new ReadOnlySpan<ushort>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                }
+            }
+            {
+                var testValues = Enumerable.Range(0, 512).Select(index => (char)index).ToArray().AsSpan();
+
+                engine.Execute("typedArray = new Uint16Array(new ArrayBuffer(123456), 128, 1024)");
+                Assert.AreEqual(256UL, ((ITypedArray<char>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+                var readValues = new char[512].AsSpan();
+                Assert.AreEqual(256UL, ((ITypedArray<char>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+                Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+                fixed (void* pTestValues = testValues)
+                {
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<char>)engine.Script.typedArray).Write(new ReadOnlySpan<char>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                    TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<char>)engine.Script.typedArray).Write(new ReadOnlySpan<char>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                }
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Int16Array()
         {
             var typedArray = (ITypedArray<short>)engine.Evaluate("new Int16Array(new ArrayBuffer(123456), 128, 1024)");
@@ -1115,6 +1601,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int16Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Int16Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i - 512;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((short)(index - 512))).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<short>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<short>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<short>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int16Array_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 256).SelectMany(index => BitConverter.GetBytes((short)(index - 512))).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Int16Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<short>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<short>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<short>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<short>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Int16Array_ToArray()
         {
             engine.Execute(@"
@@ -1183,6 +1711,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<short>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<short>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int16Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Int16Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i - 512;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (short)(index - 512)).ToArray().AsSpan();
+
+            var readValues = new short[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<short>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<short>)engine.Script.typedArray).Read(16384, 1024, new Span<short>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<short>)engine.Script.typedArray).Read(0, 1024, new Span<short>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int16Array_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => (short)(index - 512)).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Int16Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<short>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new short[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<short>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<short>)engine.Script.typedArray).Write(new ReadOnlySpan<short>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<short>)engine.Script.typedArray).Write(new ReadOnlySpan<short>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -1281,6 +1851,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint32Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Uint32Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((uint)index)).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<uint>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<uint>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<uint>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint32Array_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 128).SelectMany(index => BitConverter.GetBytes((uint)index)).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Uint32Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<uint>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<uint>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<uint>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<uint>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Uint32Array_ToArray()
         {
             engine.Execute(@"
@@ -1349,6 +1961,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<uint>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<uint>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint32Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Uint32Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (uint)index).ToArray().AsSpan();
+
+            var readValues = new uint[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<uint>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<uint>)engine.Script.typedArray).Read(16384, 1024, new Span<uint>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<uint>)engine.Script.typedArray).Read(0, 1024, new Span<uint>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Uint32Array_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => (uint)index).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Uint32Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<uint>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new uint[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<uint>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<uint>)engine.Script.typedArray).Write(new ReadOnlySpan<uint>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<uint>)engine.Script.typedArray).Write(new ReadOnlySpan<uint>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -1447,6 +2101,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int32Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Int32Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(BitConverter.GetBytes).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<int>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<int>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<int>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int32Array_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 128).SelectMany(BitConverter.GetBytes).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Int32Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<int>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<int>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<int>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<int>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Int32Array_ToArray()
         {
             engine.Execute(@"
@@ -1515,6 +2211,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<int>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<int>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int32Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Int32Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).ToArray().AsSpan();
+
+            var readValues = new int[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<int>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<int>)engine.Script.typedArray).Read(16384, 1024, new Span<int>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<int>)engine.Script.typedArray).Read(0, 1024, new Span<int>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Int32Array_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Int32Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<int>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new int[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<int>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<int>)engine.Script.typedArray).Write(new ReadOnlySpan<int>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<int>)engine.Script.typedArray).Write(new ReadOnlySpan<int>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -1613,6 +2351,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_BigUint64Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((ulong)index)).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_BigUint64Array_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 64).SelectMany(index => BitConverter.GetBytes((ulong)index)).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ulong>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ulong>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_BigUint64Array_ToArray()
         {
             engine.Execute(@"
@@ -1681,6 +2461,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<ulong>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_BigUint64Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (ulong)index).ToArray().AsSpan();
+
+            var readValues = new ulong[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ulong>)engine.Script.typedArray).Read(16384, 1024, new Span<ulong>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ulong>)engine.Script.typedArray).Read(0, 1024, new Span<ulong>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_BigUint64Array_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => (ulong)index).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new BigUint64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new ulong[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<ulong>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ulong>)engine.Script.typedArray).Write(new ReadOnlySpan<ulong>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<ulong>)engine.Script.typedArray).Write(new ReadOnlySpan<ulong>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -1779,6 +2601,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_BigInt64Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes((long)index)).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_BigInt64Array_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 64).SelectMany(index => BitConverter.GetBytes((long)index)).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<long>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<long>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_BigInt64Array_ToArray()
         {
             engine.Execute(@"
@@ -1847,6 +2711,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<long>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_BigInt64Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = BigInt(i);
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => (long)index).ToArray().AsSpan();
+
+            var readValues = new long[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<long>)engine.Script.typedArray).Read(16384, 1024, new Span<long>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<long>)engine.Script.typedArray).Read(0, 1024, new Span<long>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_BigInt64Array_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => (long)index).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new BigInt64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new long[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<long>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<long>)engine.Script.typedArray).Write(new ReadOnlySpan<long>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<long>)engine.Script.typedArray).Write(new ReadOnlySpan<long>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -1945,6 +2851,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Float32Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Float32Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i * Math.PI;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes(Convert.ToSingle(index * Math.PI))).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<float>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<float>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<float>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Float32Array_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 128).SelectMany(index => BitConverter.GetBytes(Convert.ToSingle(index * Math.PI))).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Float32Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<float>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<float>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<float>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<float>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Float32Array_ToArray()
         {
             engine.Execute(@"
@@ -2013,6 +2961,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<float>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<float>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Float32Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Float32Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i * Math.PI;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => Convert.ToSingle(index * Math.PI)).ToArray().AsSpan();
+
+            var readValues = new float[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<float>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<float>)engine.Script.typedArray).Read(16384, 1024, new Span<float>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<float>)engine.Script.typedArray).Read(0, 1024, new Span<float>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Float32Array_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => Convert.ToSingle(index * Math.PI)).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Float32Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<float>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new float[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<float>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<float>)engine.Script.typedArray).Write(new ReadOnlySpan<float>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<float>)engine.Script.typedArray).Write(new ReadOnlySpan<float>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
@@ -2111,6 +3101,48 @@ namespace Microsoft.ClearScript.Test
         }
 
         [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Float64Array_ReadBytes_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Float64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i * Math.PI;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).SelectMany(index => BitConverter.GetBytes(index * Math.PI)).ToArray().AsSpan();
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<double>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<double>)engine.Script.typedArray).ReadBytes(16384, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<double>)engine.Script.typedArray).ReadBytes(0, 1024, new Span<byte>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Float64Array_WriteBytes_Span()
+        {
+            var testValues = Enumerable.Range(0, 64).SelectMany(index => BitConverter.GetBytes(index * Math.PI)).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Float64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<double>)engine.Script.typedArray).WriteBytes(testValues, 256, 16384, 128));
+
+            var readValues = new byte[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<double>)engine.Script.typedArray).ReadBytes(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<double>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<double>)engine.Script.typedArray).WriteBytes(new ReadOnlySpan<byte>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
         public void V8ArrayBufferOrView_Float64Array_ToArray()
         {
             engine.Execute(@"
@@ -2179,6 +3211,48 @@ namespace Microsoft.ClearScript.Test
 
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<double>)engine.Script.typedArray).Write(testValues, 0, 512, 16384));
             TestUtil.AssertException<ArgumentOutOfRangeException>(() => ((ITypedArray<double>)engine.Script.typedArray).Write(testValues, 16384, 512, 0));
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Float64Array_Read_Span()
+        {
+            engine.Execute(@"
+                typedArray = new Float64Array(new ArrayBuffer(123456), 128, 1024);
+                for (var i = 0; i < 1024; i++) {
+                    typedArray[i] = i * Math.PI;
+                }
+            ");
+
+            var testValues = Enumerable.Range(0, 1024).Select(index => index * Math.PI).ToArray().AsSpan();
+
+            var readValues = new double[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<double>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(128).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pReadValues = readValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<double>)engine.Script.typedArray).Read(16384, 1024, new Span<double>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 0), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<double>)engine.Script.typedArray).Read(0, 1024, new Span<double>(ctx.pReadValues.ToPointer(), ctx.readValuesLength), 16384), (pReadValues: (IntPtr)pReadValues, readValuesLength: readValues.Length));
+            }
+        }
+
+        [TestMethod, TestCategory("V8ArrayBufferOrView")]
+        public unsafe void V8ArrayBufferOrView_Float64Array_Write_Span()
+        {
+            var testValues = Enumerable.Range(0, 512).Select(index => index * Math.PI).ToArray().AsSpan();
+
+            engine.Execute("typedArray = new Float64Array(new ArrayBuffer(123456), 128, 1024)");
+            Assert.AreEqual(256UL, ((ITypedArray<double>)engine.Script.typedArray).Write(testValues, 256, 16384, 128));
+
+            var readValues = new double[512].AsSpan();
+            Assert.AreEqual(256UL, ((ITypedArray<double>)engine.Script.typedArray).Read(128, 16384, readValues, 256));
+            Assert.IsTrue(testValues.ToArray().Skip(256).Take(256).SequenceEqual(readValues.ToArray().Skip(256)));
+
+            fixed (void* pTestValues = testValues)
+            {
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<double>)engine.Script.typedArray).Write(new ReadOnlySpan<double>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 0, 512, 16384), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+                TestUtil<ArgumentOutOfRangeException>.AssertException(ctx => ((ITypedArray<double>)engine.Script.typedArray).Write(new ReadOnlySpan<double>(ctx.pTestValues.ToPointer(), ctx.testValuesLength), 16384, 512, 0), (pTestValues: (IntPtr)pTestValues, testValuesLength: testValues.Length));
+            }
         }
 
         // ReSharper restore InconsistentNaming

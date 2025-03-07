@@ -76,7 +76,7 @@ namespace Microsoft.ClearScript.Test
             }
 
             Assert.IsTrue(allNodes.SequenceEqual(visitedNodes.Values));
-            if (filter != null)
+            if (filter is not null)
             {
                 Assert.IsTrue(allNodes.All(hostType => hostType.Types.All(type => filter(type))));
             }
@@ -94,7 +94,7 @@ namespace Microsoft.ClearScript.Test
             foreach (var childNode in container.Values)
             {
                 var childContainer = childNode as PropertyBag;
-                if (childContainer == null)
+                if (childContainer is null)
                 {
                     yield return (HostType)childNode;
                 }

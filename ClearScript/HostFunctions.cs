@@ -39,6 +39,8 @@ namespace Microsoft.ClearScript
 
         // ReSharper disable InconsistentNaming
 
+        // ReSharper disable GrammarMistakeInComment
+
         /// <summary>
         /// Creates an empty host object.
         /// </summary>
@@ -63,6 +65,8 @@ namespace Microsoft.ClearScript
         {
             return new PropertyBag();
         }
+
+        // ReSharper restore GrammarMistakeInComment
 
         /// <summary>
         /// Creates a host object of the specified type. This version is invoked if the specified
@@ -194,6 +198,8 @@ namespace Microsoft.ClearScript
             return newArr<object>(lengths);
         }
 
+        // ReSharper disable GrammarMistakeInComment
+
         /// <summary>
         /// Creates a host variable of the specified type.
         /// </summary>
@@ -256,6 +262,8 @@ namespace Microsoft.ClearScript
         {
             return new HostVariable<T>(initValue);
         }
+
+        // ReSharper restore GrammarMistakeInComment
 
         /// <summary>
         /// Creates a delegate that invokes a script function.
@@ -610,7 +618,7 @@ namespace Microsoft.ClearScript
         /// <c><seealso cref="ScriptEngine.EnableNullResultWrapping"/></c>
         public bool isNull(object value)
         {
-            return value == null;
+            return value is null;
         }
 
         /// <summary>
@@ -1317,7 +1325,7 @@ namespace Microsoft.ClearScript
             }
             finally
             {
-                if (finallyFunc != null)
+                if (finallyFunc is not null)
                 {
                     ((ScriptObject)finallyFunc).InvokeAsFunction();
                 }
@@ -1331,7 +1339,7 @@ namespace Microsoft.ClearScript
         internal ScriptEngine GetEngine()
         {
             var activeEngine = ScriptEngine.Current ?? engine;
-            if (activeEngine == null)
+            if (activeEngine is null)
             {
                 throw new InvalidOperationException("Operation requires a script engine");
             }
@@ -1342,7 +1350,7 @@ namespace Microsoft.ClearScript
         internal static Type GetUniqueHostType(object type, string paramName)
         {
             var hostType = type as HostType;
-            if (hostType == null)
+            if (hostType is null)
             {
                 throw new ArgumentException("Invalid host type", paramName);
             }

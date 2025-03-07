@@ -1,0 +1,13 @@
+diff --git a/config/compiler/BUILD.gn b/config/compiler/BUILD.gn
+index 48aa424f8..11ead4408 100644
+--- a/config/compiler/BUILD.gn
++++ b/config/compiler/BUILD.gn
+@@ -600,7 +600,7 @@ config("compiler") {
+         cflags_cc += [ "-fno-trigraphs" ]
+       }
+     } else {
+-      cflags_cc += [ "-std=${standard_prefix}++17" ]
++      cflags_cc += [ "-std=${standard_prefix}++20" ]
+     }
+   } else if (is_win) {
+     cflags_c += [ "/std:c11" ]

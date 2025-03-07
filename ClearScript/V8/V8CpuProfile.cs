@@ -105,7 +105,7 @@ namespace Microsoft.ClearScript.V8
 
             writer.Write("\"nodes\":[");
             {
-                if (RootNode != null)
+                if (RootNode is not null)
                 {
                     var queue = new Queue<Node>();
                     RootNode.WriteJson(writer, queue);
@@ -123,7 +123,7 @@ namespace Microsoft.ClearScript.V8
         {
             // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
-            if ((Samples != null) && (Samples.Count > 0))
+            if ((Samples is not null) && (Samples.Count > 0))
             {
                 writer.Write(",\"samples\":[{0}]", string.Join(",", Samples.Select(sample => sample.Node.NodeId)));
             }
@@ -133,7 +133,7 @@ namespace Microsoft.ClearScript.V8
         {
             // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
-            if ((Samples != null) && (Samples.Count > 0))
+            if ((Samples is not null) && (Samples.Count > 0))
             {
                 const ulong maxSafeInteger = 9007199254740991UL; // 2^53 - 1
 
@@ -246,12 +246,12 @@ namespace Microsoft.ClearScript.V8
                     return this;
                 }
 
-                if (ChildNodes != null)
+                if (ChildNodes is not null)
                 {
                     foreach (var childNode in ChildNodes)
                     {
                         var node = childNode.FindNode(nodeId);
-                        if (node != null)
+                        if (node is not null)
                         {
                             return node;
                         }
@@ -302,7 +302,7 @@ namespace Microsoft.ClearScript.V8
             {
                 // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
-                if ((ChildNodes != null) && (ChildNodes.Count > 0))
+                if ((ChildNodes is not null) && (ChildNodes.Count > 0))
                 {
                     writer.Write(",\"children\":[{0}]", string.Join(",", ChildNodes.Select(node => node.NodeId)));
                     ChildNodes.ForEach(queue.Enqueue);
@@ -313,7 +313,7 @@ namespace Microsoft.ClearScript.V8
             {
                 // V8 Inspector JSON Protocol 1.3: https://github.com/v8/v8/blob/4b9b23521e6fd42373ebbcb20ebe03bf445494f9/src/inspector/js_protocol-1.3.json
 
-                if ((HitLines != null) && (HitLines.Count > 0))
+                if ((HitLines is not null) && (HitLines.Count > 0))
                 {
                     writer.Write(",\"positionTicks\":[");
                     {

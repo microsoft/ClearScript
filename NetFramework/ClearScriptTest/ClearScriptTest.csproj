@@ -1,20 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
     <PropertyGroup>
         <TargetFramework>net471</TargetFramework>
         <UseWPF>true</UseWPF>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <LangVersion>9.0</LangVersion>
+        <ResolveComReferenceSilent>true</ResolveComReferenceSilent>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <DefineConstants>TRACE;DEBUG;NETFRAMEWORK</DefineConstants>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Debug</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
         <DefineConstants>TRACE;NETFRAMEWORK</DefineConstants>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <OutputPath>..\..\bin\Release</OutputPath>
     </PropertyGroup>
@@ -23,6 +27,7 @@
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.snk</AssemblyOriginatorKeyFile>
     </PropertyGroup>
+
     <PropertyGroup Condition="!Exists('$(SolutionDir)ClearScript.snk') And Exists('$(SolutionDir)ClearScript.DelaySign.snk')">
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>$(SolutionDir)ClearScript.DelaySign.snk</AssemblyOriginatorKeyFile>
@@ -79,6 +84,7 @@
         <Compile Include="..\..\ClearScriptTest\TestObject.cs" Link="TestObject.cs" />
         <Compile Include="..\..\ClearScriptTest\TypeRestrictionTest.cs" Link="TypeRestrictionTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ArrayBufferOrViewTest.cs" Link="V8ArrayBufferOrViewTest.cs" />
+        <Compile Include="..\..\ClearScriptTest\V8FastProxyTest.cs" Link="V8FastProxyTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ModuleTest.cs" Link="V8ModuleTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.cs" Link="V8ScriptEngineTest.cs" />
         <Compile Include="..\..\ClearScriptTest\V8ScriptEngineTest.Windows.cs" Link="V8ScriptEngineTest.Windows.cs" />
@@ -116,18 +122,26 @@
             <Isolated>false</Isolated>
             <EmbedInteropTypes>false</EmbedInteropTypes>
         </COMReference>
+        <COMReference Include="MSXML2">
+          <WrapperTool>tlbimp</WrapperTool>
+          <VersionMinor>0</VersionMinor>
+          <VersionMajor>6</VersionMajor>
+          <Guid>f5078f18-c551-11d3-89b9-0000f81fe221</Guid>
+          <Lcid>0</Lcid>
+          <Isolated>false</Isolated>
+          <EmbedInteropTypes>false</EmbedInteropTypes>
+        </COMReference>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
-        <PackageReference Include="MSTest.TestAdapter" Version="3.0.2" />
-        <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
         <PackageReference Include="coverlet.collector" Version="3.2.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+        <PackageReference Include="MSTest.TestAdapter" Version="3.0.2" />
+        <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -277,10 +291,6 @@
         <ProjectReference Include="..\ClearScript.V8\ClearScript.V8.csproj" />
         <ProjectReference Include="..\ClearScript.Windows.Core\ClearScript.Windows.Core.csproj" />
         <ProjectReference Include="..\ClearScript.Windows\ClearScript.Windows.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Microsoft.CSharp" />
     </ItemGroup>
 
     <ItemGroup>

@@ -40,7 +40,7 @@ namespace Microsoft.ClearScript.Util.COM
                 // some objects crash on attempt to retrieve a method as a property
 
                 member = GetMembers().FirstOrDefault(testMember => testMember.Name == name);
-                if ((member != null) && member.DispatchFlags == DispatchFlags.Method)
+                if ((member is not null) && member.DispatchFlags == DispatchFlags.Method)
                 {
                     return new HostMethod(hostItem, name);
                 }
@@ -55,12 +55,12 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 if (args.Length < 1)
                 {
-                    if (member == null)
+                    if (member is null)
                     {
                         member = GetMembers().FirstOrDefault(testMember => testMember.Name == name);
                     }
 
-                    if ((member != null) && !member.DispatchFlags.HasFlag(DispatchFlags.Method))
+                    if ((member is not null) && !member.DispatchFlags.HasAllFlags(DispatchFlags.Method))
                     {
                         return new HostIndexedProperty(hostItem, name);
                     }
@@ -149,7 +149,7 @@ namespace Microsoft.ClearScript.Util.COM
                 // some objects crash on attempt to retrieve a method as a property
 
                 member = dispatchEx.GetMembers().FirstOrDefault(testMember => testMember.Name == name);
-                if ((member != null) && member.DispatchFlags == DispatchFlags.Method)
+                if ((member is not null) && member.DispatchFlags == DispatchFlags.Method)
                 {
                     return new HostMethod(hostItem, name);
                 }
@@ -164,12 +164,12 @@ namespace Microsoft.ClearScript.Util.COM
             {
                 if (args.Length < 1)
                 {
-                    if (member == null)
+                    if (member is null)
                     {
                         member = dispatchEx.GetMembers().FirstOrDefault(testMember => testMember.Name == name);
                     }
 
-                    if ((member != null) && !member.DispatchFlags.HasFlag(DispatchFlags.Method))
+                    if ((member is not null) && !member.DispatchFlags.HasAllFlags(DispatchFlags.Method))
                     {
                         return new HostIndexedProperty(hostItem, name);
                     }

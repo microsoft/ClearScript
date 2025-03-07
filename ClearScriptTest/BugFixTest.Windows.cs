@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
 using System;
@@ -119,7 +119,7 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_TooManyDebugApplications()
         {
-            var engines = Enumerable.Range(0, 2048).Select(index => new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging)).ToArray();
+            var engines = Enumerable.Range(0, 2048).Select(_ => new JScriptEngine(WindowsScriptEngineFlags.EnableDebugging)).ToArray();
             Array.ForEach(engines, tempEngine => tempEngine.Dispose());
         }
 
@@ -460,7 +460,8 @@ namespace Microsoft.ClearScript.Test
             }
             catch (ScriptEngineException exception)
             {
-                Assert.IsTrue(exception.ErrorDetails.Contains("bar\n    at test (Script:0:18) -> foo"));
+                Assert.IsTrue(exception.ErrorDetails.Contains("bar\n"));
+                Assert.IsTrue(exception.ErrorDetails.Contains("(Script:0:18) -> foo"));
             }
         }
 
@@ -1441,11 +1442,113 @@ namespace Microsoft.ClearScript.Test
             Assert.AreEqual(456, engine.Evaluate("y(2, 3)"));
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_XMLDOM_Enumeration_JScript()
+        {
+            var document = new MSXML2.DOMDocument60Class();
+            document.loadXML(@"
+                <document>
+                    <page id=""123""/>
+                    <separator/>
+                    <page id=""456""/>
+                    <page id=""789""/>
+                    <page id=""987""/>
+                    <separator/>
+                    <page id=""654""/>
+                    <page id=""321""/>
+                    <page id=""135""/>
+                    <separator/>
+                    <page id=""246""/>
+                    <page id=""357""/>
+                    <page id=""468""/>
+                    <separator/>
+                    <page id=""579""/>
+                </document>
+            ");
+
+            engine.Dispose();
+            engine = new JScriptEngine();
+
+            engine.AddHostObject("document", document);
+            engine.Execute(@"
+                allPages = document.getElementsByTagName('page');
+                count = 0;
+                for (var e = new Enumerator(allPages); !e.atEnd(); e.moveNext()) {
+                    ++count;
+                }
+            ");
+
+            Assert.AreEqual(11, engine.Script.count);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_XMLDOM_Enumeration_VBScript()
+        {
+            var document = new MSXML2.DOMDocument60Class();
+            document.loadXML(@"
+                <document>
+                    <page id=""123""/>
+                    <separator/>
+                    <page id=""456""/>
+                    <page id=""789""/>
+                    <page id=""987""/>
+                    <separator/>
+                    <page id=""654""/>
+                    <page id=""321""/>
+                    <page id=""135""/>
+                    <separator/>
+                    <page id=""246""/>
+                    <page id=""357""/>
+                    <page id=""468""/>
+                    <separator/>
+                    <page id=""579""/>
+                </document>
+            ");
+
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            engine.AddHostObject("document", document);
+            engine.Execute(@"
+                set allPages = document.getElementsByTagName(""page"")
+                count = 0
+                for each page in allPages
+                    count = count + 1
+                next
+            ");
+
+            Assert.AreEqual(11, engine.Script.count);
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_SparseArgumentBinding()
+        {
+            engine.Dispose();
+            engine = new VBScriptEngine();
+
+            engine.Script.test = new SparseArgumentTest();
+            engine.UseReflectionBindFallback = true;
+
+            Assert.AreEqual("'foo' 'bar' 789 456", engine.Evaluate("test.go(\"foo\", \"bar\", 789)"));
+            Assert.AreEqual("'foo' 'bar' 123 456", engine.Evaluate("test.go(\"foo\", \"bar\")"));
+            Assert.AreEqual("'foo' 'xyz' 789 456", engine.Evaluate("test.go(\"foo\", , 789)"));
+            Assert.AreEqual("'foo' 'xyz' 123 789", engine.Evaluate("test.go(\"foo\", , , 789)"));
+            Assert.AreEqual("'foo' 'xyz' 123 456", engine.Evaluate("test.go(\"foo\")"));
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
 
         #region miscellaneous
+
+        public sealed class SparseArgumentTest
+        {
+            public string Go(string first, string second = "xyz", int third = 123, int fourth = 456)
+            {
+                return $"'{first}' '{second}' {third} {fourth}";
+            }
+        }
 
         private static void VariantClearTestHelper(object x)
         {

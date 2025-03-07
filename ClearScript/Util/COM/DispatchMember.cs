@@ -25,22 +25,22 @@ namespace Microsoft.ClearScript.Util.COM
         public DispatchMember(string name, int dispid, INVOKEKIND invokeKind)
             : this(name, dispid)
         {
-            if (invokeKind.HasFlag(INVOKEKIND.INVOKE_FUNC))
+            if (invokeKind.HasAllFlags(INVOKEKIND.INVOKE_FUNC))
             {
                 DispatchFlags |= DispatchFlags.Method;
             }
 
-            if (invokeKind.HasFlag(INVOKEKIND.INVOKE_PROPERTYGET))
+            if (invokeKind.HasAllFlags(INVOKEKIND.INVOKE_PROPERTYGET))
             {
                 DispatchFlags |= DispatchFlags.PropertyGet;
             }
 
-            if (invokeKind.HasFlag(INVOKEKIND.INVOKE_PROPERTYPUT))
+            if (invokeKind.HasAllFlags(INVOKEKIND.INVOKE_PROPERTYPUT))
             {
                 DispatchFlags |= DispatchFlags.PropertyPut;
             }
 
-            if (invokeKind.HasFlag(INVOKEKIND.INVOKE_PROPERTYPUTREF))
+            if (invokeKind.HasAllFlags(INVOKEKIND.INVOKE_PROPERTYPUTREF))
             {
                 DispatchFlags |= DispatchFlags.PropertyPutRef;
             }
@@ -49,22 +49,22 @@ namespace Microsoft.ClearScript.Util.COM
         public DispatchMember(string name, int dispid, DispatchPropFlags flags)
             : this(name, dispid)
         {
-            if (flags.HasFlag(DispatchPropFlags.CanCall))
+            if (flags.HasAllFlags(DispatchPropFlags.CanCall))
             {
                 DispatchFlags |= DispatchFlags.Method;
             }
 
-            if (flags.HasFlag(DispatchPropFlags.CanGet))
+            if (flags.HasAllFlags(DispatchPropFlags.CanGet))
             {
                 DispatchFlags |= DispatchFlags.PropertyGet;
             }
 
-            if (flags.HasFlag(DispatchPropFlags.CanPut))
+            if (flags.HasAllFlags(DispatchPropFlags.CanPut))
             {
                 DispatchFlags |= DispatchFlags.PropertyPut;
             }
 
-            if (flags.HasFlag(DispatchPropFlags.CanPutRef))
+            if (flags.HasAllFlags(DispatchPropFlags.CanPutRef))
             {
                 DispatchFlags |= DispatchFlags.PropertyPutRef;
             }

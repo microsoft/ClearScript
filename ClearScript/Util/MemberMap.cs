@@ -11,9 +11,9 @@ namespace Microsoft.ClearScript.Util
 {
     internal static class MemberMap
     {
-        private static readonly MemberMapImpl<Field> fieldMap = new MemberMapImpl<Field>();
-        private static readonly MemberMapImpl<Method> methodMap = new MemberMapImpl<Method>();
-        private static readonly MemberMapImpl<Property> propertyMap = new MemberMapImpl<Property>();
+        private static readonly MemberMapImpl<Field> fieldMap = new();
+        private static readonly MemberMapImpl<Method> methodMap = new();
+        private static readonly MemberMapImpl<Property> propertyMap = new();
 
         public static FieldInfo GetField(string name)
         {
@@ -293,7 +293,7 @@ namespace Microsoft.ClearScript.Util
 
         private sealed class MemberMapImpl<T> : MemberMapBase where T : MemberInfo
         {
-            private readonly Dictionary<string, WeakReference> map = new Dictionary<string, WeakReference>();
+            private readonly Dictionary<string, WeakReference<T>> map = new();
             private DateTime lastCompactionTime = DateTime.MinValue;
 
             public T GetMember(string name)
@@ -322,17 +322,16 @@ namespace Microsoft.ClearScript.Util
 
                 if (map.TryGetValue(name, out var weakRef))
                 {
-                    member = weakRef.Target as T;
-                    if (member == null)
+                    if (!weakRef.TryGetTarget(out member))
                     {
                         member = (T)typeof(T).CreateInstance(name);
-                        weakRef.Target = member;
+                        weakRef.SetTarget(member);
                     }
                 }
                 else
                 {
                     member = (T)typeof(T).CreateInstance(name);
-                    map.Add(name, new WeakReference(member));
+                    map.Add(name, new WeakReference<T>(member));
                 }
 
                 return member;
@@ -345,7 +344,7 @@ namespace Microsoft.ClearScript.Util
                     var now = DateTime.UtcNow;
                     if ((lastCompactionTime + CompactionInterval) <= now)
                     {
-                        map.Where(pair => !pair.Value.IsAlive).ToList().ForEach(pair => map.Remove(pair.Key));
+                        map.Where(pair => !pair.Value.TryGetTarget(out _)).ToList().ForEach(pair => map.Remove(pair.Key));
                         lastCompactionTime = now;
                     }
                 }

@@ -7,6 +7,8 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8.FastProxy;
+using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace Microsoft.ClearScript.V8
 {
@@ -29,9 +31,9 @@ namespace Microsoft.ClearScript.V8
             GCHandle.FromIntPtr(pObject).Free();
         }
 
-        public static IScope<IntPtr> CreateAddRefHostObjectScope(object obj)
+        public static ValueScope<IntPtr> CreateAddRefHostObjectScope(object obj)
         {
-            return Scope.Create(() => AddRefHostObject(obj), ReleaseHostObject);
+            return ScopeFactory.Create(static obj => AddRefHostObject(obj), static pObject => ReleaseHostObject(pObject), obj);
         }
 
         #endregion
@@ -46,16 +48,6 @@ namespace Microsoft.ClearScript.V8
         public static T GetHostObject<T>(IntPtr pObject) where T : class
         {
             return (T)GetHostObject(pObject);
-        }
-
-        public static object GetHostObjectProperty(IntPtr pObject, string name)
-        {
-            return GetHostObjectProperty(GetHostObject(pObject), name);
-        }
-
-        public static object GetHostObjectProperty(object obj, string name)
-        {
-            return ((IDynamic)obj).GetProperty(name);
         }
 
         public static object GetHostObjectProperty(IntPtr pObject, string name, out bool isCacheable)
@@ -166,7 +158,7 @@ namespace Microsoft.ClearScript.V8
         public static Invocability GetHostObjectInvocability(object obj)
         {
             var hostItem = obj as HostItem;
-            if (hostItem == null)
+            if (hostItem is null)
             {
                 return Invocability.None;
             }
@@ -196,6 +188,140 @@ namespace Microsoft.ClearScript.V8
 
         #endregion
 
+        #region fast host object access
+
+        public static void GetFastHostObjectProperty(IntPtr pObject, StdString.Ptr pName, V8Value.FastResult.Ptr pValue, out bool isCacheable)
+        {
+            GetFastHostObjectProperty(GetHostObject(pObject), pName, pValue, out isCacheable);
+        }
+
+        public static void GetFastHostObjectProperty(object obj, StdString.Ptr pName, V8Value.FastResult.Ptr pValue, out bool isCacheable)
+        {
+            ((V8FastHostItem)obj).GetProperty(pName, pValue, out isCacheable);
+        }
+
+        public static void SetFastHostObjectProperty(IntPtr pObject, StdString.Ptr pName, V8Value.FastArg.Ptr pValue)
+        {
+            SetFastHostObjectProperty(GetHostObject(pObject), pName, pValue);
+        }
+
+        public static void SetFastHostObjectProperty(object obj, StdString.Ptr pName, V8Value.FastArg.Ptr pValue)
+        {
+            ((V8FastHostItem)obj).SetProperty(pName, pValue);
+        }
+
+        public static V8FastHostPropertyFlags QueryFastHostObjectProperty(IntPtr pObject, StdString.Ptr pName)
+        {
+            return QueryFastHostObjectProperty(GetHostObject(pObject), pName);
+        }
+
+        public static V8FastHostPropertyFlags QueryFastHostObjectProperty(object obj, StdString.Ptr pName)
+        {
+            return ((V8FastHostItem)obj).QueryProperty(pName);
+        }
+
+        public static bool DeleteFastHostObjectProperty(IntPtr pObject, StdString.Ptr pName)
+        {
+            return DeleteFastHostObjectProperty(GetHostObject(pObject), pName);
+        }
+
+        public static bool DeleteFastHostObjectProperty(object obj, StdString.Ptr pName)
+        {
+            return ((V8FastHostItem)obj).DeleteProperty(pName);
+        }
+
+        public static IEnumerable<string> GetFastHostObjectPropertyNames(IntPtr pObject)
+        {
+            return GetFastHostObjectPropertyNames(GetHostObject(pObject));
+        }
+
+        public static IEnumerable<string> GetFastHostObjectPropertyNames(object obj)
+        {
+            return ((V8FastHostItem)obj).GetPropertyNames();
+        }
+
+        public static void GetFastHostObjectProperty(IntPtr pObject, int index, V8Value.FastResult.Ptr pValue)
+        {
+            GetFastHostObjectProperty(GetHostObject(pObject), index, pValue);
+        }
+
+        public static void GetFastHostObjectProperty(object obj, int index, V8Value.FastResult.Ptr pValue)
+        {
+            ((V8FastHostItem)obj).GetProperty(index, pValue);
+        }
+
+        public static void SetFastHostObjectProperty(IntPtr pObject, int index, V8Value.FastArg.Ptr pValue)
+        {
+            SetFastHostObjectProperty(GetHostObject(pObject), index, pValue);
+        }
+
+        public static void SetFastHostObjectProperty(object obj, int index, V8Value.FastArg.Ptr pValue)
+        {
+            ((V8FastHostItem)obj).SetProperty(index, pValue);
+        }
+
+        public static V8FastHostPropertyFlags QueryFastHostObjectProperty(IntPtr pObject, int index)
+        {
+            return QueryFastHostObjectProperty(GetHostObject(pObject), index);
+        }
+
+        public static V8FastHostPropertyFlags QueryFastHostObjectProperty(object obj, int index)
+        {
+            return ((V8FastHostItem)obj).QueryProperty(index);
+        }
+
+        public static bool DeleteFastHostObjectProperty(IntPtr pObject, int index)
+        {
+            return DeleteFastHostObjectProperty(GetHostObject(pObject), index);
+        }
+
+        public static bool DeleteFastHostObjectProperty(object obj, int index)
+        {
+            return ((V8FastHostItem)obj).DeleteProperty(index);
+        }
+
+        public static IEnumerable<int> GetFastHostObjectPropertyIndices(IntPtr pObject)
+        {
+            return GetFastHostObjectPropertyIndices(GetHostObject(pObject));
+        }
+
+        public static IEnumerable<int> GetFastHostObjectPropertyIndices(object obj)
+        {
+            return ((V8FastHostItem)obj).GetPropertyIndices();
+        }
+
+        public static void InvokeFastHostObject(IntPtr pObject, bool asConstructor, int argCount, V8Value.FastArg.Ptr pArgs, V8Value.FastResult.Ptr pResult)
+        {
+            InvokeFastHostObject(GetHostObject(pObject), asConstructor, argCount, pArgs, pResult);
+        }
+
+        public static void InvokeFastHostObject(object obj, bool asConstructor, int argCount, V8Value.FastArg.Ptr pArgs, V8Value.FastResult.Ptr pResult)
+        {
+            ((V8FastHostItem)obj).Invoke(asConstructor, argCount, pArgs, pResult);
+        }
+
+        public static void GetFastHostObjectEnumerator(IntPtr pObject, V8Value.FastResult.Ptr pResult)
+        {
+            GetFastHostObjectEnumerator(GetHostObject(pObject), pResult);
+        }
+
+        public static void GetFastHostObjectEnumerator(object obj, V8Value.FastResult.Ptr pResult)
+        {
+            ((V8FastHostItem)obj).CreateEnumerator(pResult);
+        }
+
+        public static void GetFastHostObjectAsyncEnumerator(IntPtr pObject, V8Value.FastResult.Ptr pResult)
+        {
+            GetFastHostObjectAsyncEnumerator(GetHostObject(pObject), pResult);
+        }
+
+        public static void GetFastHostObjectAsyncEnumerator(object obj, V8Value.FastResult.Ptr pResult)
+        {
+            ((V8FastHostItem)obj).CreateAsyncEnumerator(pResult);
+        }
+
+        #endregion
+
         #region exception marshaling
 
         public static object MarshalExceptionToScript(IntPtr pSource, Exception exception)
@@ -205,7 +331,7 @@ namespace Microsoft.ClearScript.V8
 
         public static object MarshalExceptionToScript(object source, Exception exception)
         {
-            return ((IScriptMarshalWrapper)source).Engine.MarshalToScript(exception);
+            return ((source as IScriptMarshalWrapper)?.Engine ?? ScriptEngine.Current)?.MarshalToScript(exception);
         }
 
         public static Exception MarshalExceptionToHost(object exception)
@@ -220,7 +346,7 @@ namespace Microsoft.ClearScript.V8
         public static string LoadModule(IntPtr pSourceDocumentInfo, string specifier, out UniqueDocumentInfo documentInfo, out object exports)
         {
             var engine = ScriptEngine.Current;
-            if (!(engine is IJavaScriptEngine javaScriptEngine))
+            if (engine is not IJavaScriptEngine javaScriptEngine)
             {
                 throw new InvalidOperationException("Module loading requires a JavaScript engine");
             }
@@ -246,7 +372,7 @@ namespace Microsoft.ClearScript.V8
             else
             {
                 var uri = document.Info.Uri;
-                var name = (uri != null) ? (uri.IsFile ? uri.LocalPath : uri.AbsoluteUri) : document.Info.Name;
+                var name = (uri is not null) ? (uri.IsFile ? uri.LocalPath : uri.AbsoluteUri) : document.Info.Name;
                 throw new FileLoadException($"Unsupported document category '{category}'", name);
             }
 
@@ -256,7 +382,7 @@ namespace Microsoft.ClearScript.V8
         public static IDictionary<string, object> CreateModuleContext(IntPtr pDocumentInfo)
         {
             var engine = ScriptEngine.Current;
-            if (!(engine is IJavaScriptEngine))
+            if (engine is not IJavaScriptEngine)
             {
                 throw new InvalidOperationException("Module context construction requires a JavaScript engine");
             }
@@ -264,7 +390,7 @@ namespace Microsoft.ClearScript.V8
             var documentInfo = (UniqueDocumentInfo)GetHostObject(pDocumentInfo);
 
             var callback = documentInfo.ContextCallback ?? engine.DocumentSettings.ContextCallback;
-            if ((callback != null) && MiscHelpers.Try(out var sharedContext, () => callback(documentInfo.Info)) && (sharedContext != null))
+            if ((callback is not null) && MiscHelpers.Try(out var sharedContext, static ctx => ctx.callback(ctx.documentInfo.Info), (callback, documentInfo)) && (sharedContext is not null))
             {
                 var context = new Dictionary<string, object>(sharedContext.Count);
                 foreach (var pair in sharedContext)

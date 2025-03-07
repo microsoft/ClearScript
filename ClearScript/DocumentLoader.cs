@@ -147,7 +147,7 @@ namespace Microsoft.ClearScript
 
         private sealed class DefaultImpl : DefaultDocumentLoader
         {
-            public static readonly DefaultImpl Instance = new DefaultImpl();
+            public static readonly DefaultImpl Instance = new();
 
             private DefaultImpl()
             {

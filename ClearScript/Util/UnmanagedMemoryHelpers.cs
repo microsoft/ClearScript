@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Microsoft.ClearScript.Util
@@ -12,7 +13,7 @@ namespace Microsoft.ClearScript.Util
         private delegate ulong ReadArrayFromUnmanagedMemoryHandler(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex);
         private delegate ulong WriteArrayToUnmanagedMemoryHandler(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination);
 
-        private static readonly Dictionary<Type, ReadArrayFromUnmanagedMemoryHandler> readArrayFromUnmanagedMemoryHandlerMap = new Dictionary<Type, ReadArrayFromUnmanagedMemoryHandler>
+        private static readonly Dictionary<Type, ReadArrayFromUnmanagedMemoryHandler> readArrayFromUnmanagedMemoryHandlerMap = new()
         {
             { typeof(byte), ReadByteArrayFromUnmanagedMemory },
             { typeof(sbyte), ReadSByteArrayFromUnmanagedMemory },
@@ -29,7 +30,7 @@ namespace Microsoft.ClearScript.Util
             { typeof(double), ReadDoubleArrayFromUnmanagedMemory }
         };
 
-        private static readonly Dictionary<Type, WriteArrayToUnmanagedMemoryHandler> writeArrayToUnmanagedMemoryHandlerMap = new Dictionary<Type, WriteArrayToUnmanagedMemoryHandler>
+        private static readonly Dictionary<Type, WriteArrayToUnmanagedMemoryHandler> writeArrayToUnmanagedMemoryHandlerMap = new()
         {
             { typeof(byte), WriteByteArrayToUnmanagedMemory },
             { typeof(sbyte), WriteSByteArrayToUnmanagedMemory },
@@ -51,9 +52,85 @@ namespace Microsoft.ClearScript.Util
             return Copy(typeof(T), pSource, length, destination, destinationIndex);
         }
 
+        public static unsafe ulong Copy<T>(IntPtr pSource, ulong length, in Span<T> destination, ulong destinationIndex) where T : unmanaged
+        {
+            var destinationLength = (ulong)destination.Length;
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
+            {
+                throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
+            }
+
+            length = Math.Min(length, destinationLength - destinationIndex);
+            var elementSize = (ulong)Unsafe.SizeOf<T>();
+
+            fixed (void* pDestinationSpan = destination)
+            {
+                var pDestination = ((IntPtr)pDestinationSpan + Convert.ToInt32(destinationIndex * elementSize)).ToPointer();
+                var bytesToCopy = Convert.ToInt64(length * elementSize);
+                Buffer.MemoryCopy(pSource.ToPointer(), pDestination, bytesToCopy, bytesToCopy);
+            }
+
+            return length;
+        }
+
         public static ulong Copy<T>(T[] source, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             return Copy(typeof(T), source, sourceIndex, length, pDestination);
+        }
+
+        public static unsafe ulong Copy<T>(in ReadOnlySpan<T> source, ulong sourceIndex, ulong length, IntPtr pDestination) where T : unmanaged
+        {
+            var sourceLength = (ulong)source.Length;
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
+            }
+
+            length = Math.Min(length, sourceLength - sourceIndex);
+            var elementSize = (ulong)Unsafe.SizeOf<T>();
+
+            fixed (void* pSourceSpan = source)
+            {
+                var pSource = ((IntPtr)pSourceSpan + Convert.ToInt32(sourceIndex * elementSize)).ToPointer();
+                var bytesToCopy = Convert.ToInt64(length * elementSize);
+                Buffer.MemoryCopy(pSource, pDestination.ToPointer(), bytesToCopy, bytesToCopy);
+            }
+
+            return length;
         }
 
         private static ulong Copy(Type type, IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
@@ -79,9 +156,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadByteArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (byte[])destinationArray;
@@ -110,9 +204,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadSByteArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (sbyte[])destinationArray;
@@ -133,9 +244,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadUInt16ArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (ushort[])destinationArray;
@@ -156,9 +284,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadCharArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (char[])destinationArray;
@@ -187,9 +332,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadInt16ArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (short[])destinationArray;
@@ -218,9 +380,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadUInt32ArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (uint[])destinationArray;
@@ -241,9 +420,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadInt32ArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (int[])destinationArray;
@@ -272,9 +468,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadUInt64ArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (ulong[])destinationArray;
@@ -295,9 +508,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadInt64ArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (long[])destinationArray;
@@ -326,9 +556,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadUIntPtrArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (UIntPtr[])destinationArray;
@@ -349,9 +596,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadIntPtrArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (IntPtr[])destinationArray;
@@ -380,9 +644,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadSingleArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (float[])destinationArray;
@@ -411,9 +692,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong ReadDoubleArrayFromUnmanagedMemory(IntPtr pSource, ulong length, Array destinationArray, ulong destinationIndex)
         {
             var destinationLength = (ulong)destinationArray.LongLength;
-            if (destinationIndex >= destinationLength)
+            if (destinationLength < 1)
+            {
+                if (destinationIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (destinationIndex >= destinationLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(destinationIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var destination = (double[])destinationArray;
@@ -442,9 +740,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteByteArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (byte[])sourceArray;
@@ -473,9 +788,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteSByteArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (sbyte[])sourceArray;
@@ -496,9 +828,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteUInt16ArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (ushort[])sourceArray;
@@ -519,9 +868,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteCharArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (char[])sourceArray;
@@ -550,9 +916,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteInt16ArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (short[])sourceArray;
@@ -581,9 +964,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteUInt32ArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (uint[])sourceArray;
@@ -604,9 +1004,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteInt32ArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (int[])sourceArray;
@@ -635,9 +1052,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteUInt64ArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (ulong[])sourceArray;
@@ -658,9 +1092,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteInt64ArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (long[])sourceArray;
@@ -689,9 +1140,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteUIntPtrArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (UIntPtr[])sourceArray;
@@ -712,9 +1180,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteIntPtrArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (IntPtr[])sourceArray;
@@ -743,9 +1228,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteSingleArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (float[])sourceArray;
@@ -774,9 +1276,26 @@ namespace Microsoft.ClearScript.Util
         private static unsafe ulong WriteDoubleArrayToUnmanagedMemory(Array sourceArray, ulong sourceIndex, ulong length, IntPtr pDestination)
         {
             var sourceLength = (ulong)sourceArray.LongLength;
-            if (sourceIndex >= sourceLength)
+            if (sourceLength < 1)
+            {
+                if (sourceIndex > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+                }
+
+                if (length > 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(length));
+                }
+            }
+            else if (sourceIndex >= sourceLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            }
+
+            if (length < 1)
+            {
+                return 0UL;
             }
 
             var source = (double[])sourceArray;

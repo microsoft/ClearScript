@@ -6,6 +6,7 @@
         <RootNamespace>Microsoft.ClearScript.Windows</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
+        <LangVersion Condition="'$(TargetFramework)' == 'netcoreapp3.1'">9.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -43,12 +44,10 @@
         <Compile Include="..\..\ClearScript\Windows\DispatcherSyncInvoker.cs" Link="Windows\DispatcherSyncInvoker.cs" />
         <Compile Include="..\..\ClearScript\Windows\WindowsScriptEngine.cs" Link="Windows\WindowsScriptEngine.cs" />
         <Compile Include="..\..\ClearScript\Windows\JScriptEngine.cs" Link="Windows\JScriptEngine.cs" />
-        <Compile Include="..\..\ClearScript\Windows\JScriptEngine.NetStandard.cs" Link="Windows\JScriptEngine.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\Windows\VBScriptEngine.cs" Link="Windows\VBScriptEngine.cs" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ClearScript.Core\ClearScript.Core.csproj" />
         <ProjectReference Include="..\ClearScript.Windows.Core\ClearScript.Windows.Core.csproj" />
     </ItemGroup>
 

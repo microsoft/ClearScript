@@ -3,4 +3,4 @@
 
 import * as Geometry from 'Geometry/Geometry.js';
 
-new Geometry.Square(25).Area;
+import.meta.setResult(new Geometry.Square(25).Area);

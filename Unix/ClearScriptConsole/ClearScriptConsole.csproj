@@ -1,9 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <LangVersion Condition="'$(TargetFramework)' == 'netcoreapp3.1'">9.0</LangVersion>
+    </PropertyGroup>
 
     <!-- ReSharper disable once UnknownProperty -->
     <PropertyGroup Condition="'$(VisualStudioVersion)'&gt;='17.0'">
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>netcoreapp3.1;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
+        <TargetFrameworks>netcoreapp3.1;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
         <RootNamespace>Microsoft.ClearScript.Test</RootNamespace>
         <AssemblyName>ClearScriptConsole</AssemblyName>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -45,9 +49,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="MSTest.TestFramework" Version="3.0.2" />
+        <PackageReference Include="MSTest.TestFramework" Version="3.2.2" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     </ItemGroup>
 
     <ItemGroup>

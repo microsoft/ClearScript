@@ -19,7 +19,7 @@ namespace Microsoft.ClearScript
     public class DocumentSettings
     {
         private DocumentLoader loader;
-        private readonly ConcurrentDictionary<Tuple<string, DocumentCategory>, Document> systemDocumentMap = new ConcurrentDictionary<Tuple<string, DocumentCategory>, Document>();
+        private readonly ConcurrentDictionary<Tuple<string, DocumentCategory>, Document> systemDocumentMap = new();
 
         // ReSharper disable EmptyConstructor
 
@@ -175,7 +175,7 @@ namespace Microsoft.ClearScript
                 return document;
             }
 
-            if (AccessFlags.HasFlag(DocumentAccessFlags.AllowCategoryMismatch))
+            if (AccessFlags.HasAllFlags(DocumentAccessFlags.AllowCategoryMismatch))
             {
                 foreach (var pair in systemDocumentMap)
                 {

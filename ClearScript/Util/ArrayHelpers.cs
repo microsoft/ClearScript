@@ -2,7 +2,9 @@
 // Licensed under the MIT license.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Microsoft.ClearScript.Util
 {
@@ -41,6 +43,15 @@ namespace Microsoft.ClearScript.Util
         public static T[] GetEmptyArray<T>()
         {
             return EmptyArray<T>.Value;
+        }
+
+        public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this T[] array)
+        {
+            foreach (var item in array)
+            {
+                await Task.CompletedTask;
+                yield return item;
+            }
         }
 
         #region Nested type: EmptyArray<T>

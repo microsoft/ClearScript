@@ -22,10 +22,10 @@ namespace Microsoft.ClearScript.Util.Web
         private readonly bool isServerSocket;
 
         private readonly Random random = MiscHelpers.CreateSeededRandom();
-        private readonly SemaphoreSlim receiveSemaphore = new SemaphoreSlim(1);
-        private readonly SemaphoreSlim sendSemaphore = new SemaphoreSlim(1);
+        private readonly SemaphoreSlim receiveSemaphore = new(1);
+        private readonly SemaphoreSlim sendSemaphore = new(1);
 
-        private readonly InterlockedOneWayFlag closedFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag closedFlag = new();
 
         #endregion
 
@@ -284,7 +284,7 @@ namespace Microsoft.ClearScript.Util.Web
                 }
 
                 await socket.SendBytesAsync(header).ConfigureAwait(false);
-                if (lengthBytes != null)
+                if (lengthBytes is not null)
                 {
                     await socket.SendBytesAsync(lengthBytes).ConfigureAwait(false);
                 }
@@ -342,7 +342,7 @@ namespace Microsoft.ClearScript.Util.Web
 
         private void SendFrameAsync(Frame frame, Action<bool> callback)
         {
-            SendFrameAsync(frame).ContinueWith(task => callback(MiscHelpers.Try(task.Wait)));
+            SendFrameAsync(frame).ContinueWith(task => callback(MiscHelpers.Try(static task => task.Wait(), task)));
         }
 
         #endregion
@@ -360,7 +360,7 @@ namespace Microsoft.ClearScript.Util.Web
                 }
 
                 var frame = new Frame { Final = true, OpCode = OpCodes.Close, Payload = payload };
-                SendFrameAsync(frame, succeeded =>
+                SendFrameAsync(frame, _ =>
                 {
                     socket.Close();
                     receiveSemaphore.Dispose();

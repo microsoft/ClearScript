@@ -10,7 +10,7 @@ namespace Microsoft.ClearScript.Util
     {
         private readonly Timer timer;
         private readonly INativeCallback callback;
-        private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+        private readonly InterlockedOneWayFlag disposedFlag = new();
 
         public NativeCallbackTimer(int dueTime, int period, INativeCallback callback)
         {
@@ -27,7 +27,7 @@ namespace Microsoft.ClearScript.Util
         {
             if (!disposedFlag.IsSet)
             {
-                if (MiscHelpers.Try(out var result, () => timer.Change(dueTime, period)))
+                if (MiscHelpers.Try(out var result, static ctx => ctx.timer.Change(ctx.dueTime, ctx.period), (timer, dueTime, period)))
                 {
                     return result;
                 }
@@ -40,7 +40,7 @@ namespace Microsoft.ClearScript.Util
         {
             if (!disposedFlag.IsSet)
             {
-                MiscHelpers.Try(callback.Invoke);
+                MiscHelpers.Try(static callback => callback.Invoke(), callback);
             }
         }
 

@@ -31,7 +31,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static object GetProperty(this IDispatch dispatch, string name, params object[] args)
         {
-            if (!MiscHelpers.Try(out int dispid, () => dispatch.GetDispIDForName(name)))
+            if (!MiscHelpers.Try(out int dispid, static ctx => ctx.dispatch.GetDispIDForName(ctx.name), (dispatch, name)))
             {
                 return Nonexistent.Value;
             }
@@ -137,7 +137,7 @@ namespace Microsoft.ClearScript.Util.COM
             }
 
             var member = dispatch.GetMembers().FirstOrDefault(testMember => testMember.Name == name);
-            if (member == null)
+            if (member is null)
             {
                 throw new MissingMemberException(MiscHelpers.FormatInvariant("The object has no property named '{0}'", name));
             }
@@ -148,7 +148,7 @@ namespace Microsoft.ClearScript.Util.COM
         private static IEnumerable<DispatchMember> GetMembersRaw(this IDispatch dispatch)
         {
             var typeInfo = dispatch.GetTypeInfo();
-            if (typeInfo == null)
+            if (typeInfo is null)
             {
                 throw new NotSupportedException("The object does not support late binding");
             }
@@ -174,7 +174,7 @@ namespace Microsoft.ClearScript.Util.COM
 
         public static object GetProperty(this IDispatchEx dispatchEx, string name, bool ignoreCase, params object[] args)
         {
-            if (!MiscHelpers.Try(out int dispid, () => dispatchEx.GetDispIDForName(name, false, ignoreCase)))
+            if (!MiscHelpers.Try(out int dispid, static ctx => ctx.dispatchEx.GetDispIDForName(ctx.name, false, ctx.ignoreCase), (dispatchEx, name, ignoreCase)))
             {
                 return Nonexistent.Value;
             }
@@ -295,7 +295,7 @@ namespace Microsoft.ClearScript.Util.COM
             }
 
             var member = dispatchEx.GetMembers().FirstOrDefault(testMember => testMember.Name.Equals(name, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal));
-            if (member != null)
+            if (member is not null)
             {
                 return member.DispID;
             }

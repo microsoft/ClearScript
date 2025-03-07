@@ -20,7 +20,7 @@ namespace Microsoft.ClearScript
         /// <summary>
         /// The sole instance of the <c><see cref="VoidResult"/></c> class.
         /// </summary>
-        public static readonly VoidResult Value = new VoidResult();
+        public static readonly VoidResult Value = new();
 
         private VoidResult()
         {

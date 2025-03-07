@@ -24,10 +24,10 @@ namespace Microsoft.ClearScript
         private CustomAttributeLoader customAttributeLoader;
 
         private DocumentSettings documentSettings;
-        private readonly DocumentSettings defaultDocumentSettings = new DocumentSettings();
+        private readonly DocumentSettings defaultDocumentSettings = new();
 
         private static readonly IUniqueNameManager nameManager = new UniqueNameManager();
-        private static readonly object nullHostObjectProxy = new object();
+        private static readonly object nullHostObjectProxy = new();
         [ThreadStatic] private static ScriptEngine currentEngine;
 
         #endregion
@@ -139,15 +139,18 @@ namespace Microsoft.ClearScript
                 var newExtensionMethodTable = value ? emptyExtensionMethodTable : realExtensionMethodTable;
                 if (newExtensionMethodTable != extensionMethodTable)
                 {
-                    ScriptInvoke(() =>
-                    {
-                        if (newExtensionMethodTable != extensionMethodTable)
+                    ScriptInvoke(
+                        static ctx =>
                         {
-                            extensionMethodTable = newExtensionMethodTable;
-                            ClearMethodBindCache();
-                            OnAccessSettingsChanged();
-                        }
-                    });
+                            if (ctx.newExtensionMethodTable != ctx.self.extensionMethodTable)
+                            {
+                                ctx.self.extensionMethodTable = ctx.newExtensionMethodTable;
+                                ctx.self.ClearMethodBindCache();
+                                ctx.self.OnAccessSettingsChanged();
+                            }
+                        },
+                        (self: this, newExtensionMethodTable)
+                    );
                 }
             }
         }
@@ -181,6 +184,9 @@ namespace Microsoft.ClearScript
 
         /// <inheritdoc/>
         public object UndefinedImportValue { get; set; } = Undefined.Value;
+
+        /// <inheritdoc/>
+        public object NullImportValue { get; set; }
 
         /// <inheritdoc/>
         public object NullExportValue { get; set; }
@@ -344,11 +350,11 @@ namespace Microsoft.ClearScript
         /// <inheritdoc/>
         public void AddHostTypes(params Type[] types)
         {
-            if (types != null)
+            if (types is not null)
             {
                 foreach (var type in types)
                 {
-                    if (type != null)
+                    if (type is not null)
                     {
                         AddHostType(type);
                     }
@@ -536,13 +542,13 @@ namespace Microsoft.ClearScript
 
         internal virtual object PrepareResult(object result, Type type, ScriptMemberFlags flags, bool isListIndexResult)
         {
-            var wrapNull = flags.HasFlag(ScriptMemberFlags.WrapNullResult) || EnableNullResultWrapping;
-            if (wrapNull && (result == null))
+            var wrapNull = flags.HasAllFlags(ScriptMemberFlags.WrapNullResult) || EnableNullResultWrapping;
+            if (wrapNull && (result is null))
             {
                 return HostObject.WrapResult(null, type, true);
             }
 
-            if (!flags.HasFlag(ScriptMemberFlags.ExposeRuntimeType) && !DisableTypeRestriction && (!isListIndexResult || !DisableListIndexTypeRestriction))
+            if (!flags.HasAllFlags(ScriptMemberFlags.ExposeRuntimeType) && !DisableTypeRestriction && (!isListIndexResult || !DisableListIndexTypeRestriction))
             {
                 return HostObject.WrapResult(result, type, wrapNull);
             }
@@ -602,7 +608,7 @@ namespace Microsoft.ClearScript
                 return null;
             }
 
-            if (marshaledResult == null)
+            if (marshaledResult is null)
             {
                 return "[null]";
             }
@@ -626,7 +632,7 @@ namespace Microsoft.ClearScript
             // method provides an alternate mechanism based on IActiveScriptSiteInterruptPoll.
 
             var tempScriptFrame = CurrentScriptFrame;
-            if (tempScriptFrame != null)
+            if (tempScriptFrame is not null)
             {
                 tempScriptFrame.InterruptRequested = true;
             }
@@ -655,9 +661,19 @@ namespace Microsoft.ClearScript
             action();
         }
 
-        internal virtual T HostInvoke<T>(Func<T> func)
+        internal virtual void HostInvoke<TArg>(Action<TArg> action, in TArg arg)
+        {
+            action(arg);
+        }
+
+        internal virtual TResult HostInvoke<TResult>(Func<TResult> func)
         {
             return func();
+        }
+
+        internal virtual TResult HostInvoke<TArg, TResult>(Func<TArg, TResult> func, in TArg arg)
+        {
+            return func(arg);
         }
 
         #endregion
@@ -666,9 +682,9 @@ namespace Microsoft.ClearScript
 
         internal ScriptFrame CurrentScriptFrame { get; private set; }
 
-        internal IDisposable CreateEngineScope()
+        internal ValueScope<ScriptEngine> CreateEngineScope()
         {
-            return Scope.Create(() => MiscHelpers.Exchange(ref currentEngine, this), previousEngine => currentEngine = previousEngine);
+            return ScopeFactory.Create(static engine => MiscHelpers.Exchange(ref currentEngine, engine), static previousEngine => currentEngine = previousEngine, this);
         }
 
         internal virtual void ScriptInvoke(Action action)
@@ -679,11 +695,27 @@ namespace Microsoft.ClearScript
             }
         }
 
-        internal virtual T ScriptInvoke<T>(Func<T> func)
+        internal virtual void ScriptInvoke<TArg>(Action<TArg> action, in TArg arg)
+        {
+            using (CreateEngineScope())
+            {
+                ScriptInvokeInternal(action, arg);
+            }
+        }
+
+        internal virtual TResult ScriptInvoke<TResult>(Func<TResult> func)
         {
             using (CreateEngineScope())
             {
                 return ScriptInvokeInternal(func);
+            }
+        }
+
+        internal virtual TResult ScriptInvoke<TArg, TResult>(Func<TArg, TResult> func, in TArg arg)
+        {
+            using (CreateEngineScope())
+            {
+                return ScriptInvokeInternal(func, arg);
             }
         }
 
@@ -702,7 +734,22 @@ namespace Microsoft.ClearScript
             }
         }
 
-        internal T ScriptInvokeInternal<T>(Func<T> func)
+        internal void ScriptInvokeInternal<TArg>(Action<TArg> action, in TArg arg)
+        {
+            var previousScriptFrame = CurrentScriptFrame;
+            CurrentScriptFrame = new ScriptFrame();
+
+            try
+            {
+                action(arg);
+            }
+            finally
+            {
+                CurrentScriptFrame = previousScriptFrame;
+            }
+        }
+
+        internal TResult ScriptInvokeInternal<TResult>(Func<TResult> func)
         {
             var previousScriptFrame = CurrentScriptFrame;
             CurrentScriptFrame = new ScriptFrame();
@@ -717,9 +764,24 @@ namespace Microsoft.ClearScript
             }
         }
 
+        internal TResult ScriptInvokeInternal<TArg, TResult>(Func<TArg, TResult> func, in TArg arg)
+        {
+            var previousScriptFrame = CurrentScriptFrame;
+            CurrentScriptFrame = new ScriptFrame();
+
+            try
+            {
+                return func(arg);
+            }
+            finally
+            {
+                CurrentScriptFrame = previousScriptFrame;
+            }
+        }
+
         internal void ThrowScriptError()
         {
-            if (CurrentScriptFrame != null)
+            if (CurrentScriptFrame is not null)
             {
                 ThrowScriptError(CurrentScriptFrame.ScriptError);
             }
@@ -727,7 +789,7 @@ namespace Microsoft.ClearScript
 
         internal static void ThrowScriptError(IScriptEngineException scriptError)
         {
-            if (scriptError != null)
+            if (scriptError is not null)
             {
                 if (scriptError is ScriptInterruptedException)
                 {
@@ -756,7 +818,7 @@ namespace Microsoft.ClearScript
 
         #region enumeration settings
 
-        internal object EnumerationSettingsToken { get; private set; } = new object();
+        internal object EnumerationSettingsToken { get; private set; } = new();
 
         internal void OnEnumerationSettingsChanged()
         {
@@ -767,7 +829,7 @@ namespace Microsoft.ClearScript
 
         #region extension method table
 
-        private static readonly ExtensionMethodTable emptyExtensionMethodTable = new ExtensionMethodTable();
+        private static readonly ExtensionMethodTable emptyExtensionMethodTable = new();
 
         private readonly ExtensionMethodTable realExtensionMethodTable;
         private ExtensionMethodTable extensionMethodTable;
@@ -797,7 +859,7 @@ namespace Microsoft.ClearScript
 
         #region constructor bind cache
 
-        private readonly Dictionary<BindSignature, ConstructorInfo> constructorBindCache = new Dictionary<BindSignature, ConstructorInfo>();
+        private readonly Dictionary<BindSignature, ConstructorInfo> constructorBindCache = new();
 
         internal void CacheConstructorBindResult(BindSignature signature, ConstructorInfo result)
         {
@@ -818,7 +880,7 @@ namespace Microsoft.ClearScript
 
         #region method bind cache
 
-        private readonly Dictionary<BindSignature, object> methodBindCache = new Dictionary<BindSignature, object>();
+        private readonly Dictionary<BindSignature, object> methodBindCache = new();
 
         internal void CacheMethodBindResult(BindSignature signature, object result)
         {
@@ -839,8 +901,8 @@ namespace Microsoft.ClearScript
 
         #region property bind cache
 
-        private readonly Dictionary<BindSignature, MemberInfo> propertyGetBindCache = new Dictionary<BindSignature, MemberInfo>();
-        private readonly Dictionary<BindSignature, MemberInfo> propertySetBindCache = new Dictionary<BindSignature, MemberInfo>();
+        private readonly Dictionary<BindSignature, MemberInfo> propertyGetBindCache = new();
+        private readonly Dictionary<BindSignature, MemberInfo> propertySetBindCache = new();
 
         internal void CachePropertyGetBindResult(BindSignature signature, MemberInfo property)
         {
@@ -872,14 +934,19 @@ namespace Microsoft.ClearScript
 
         #region host item cache
 
-        private readonly ConditionalWeakTable<object, List<WeakReference>> hostObjectHostItemCache = new ConditionalWeakTable<object, List<WeakReference>>();
-        private readonly ConditionalWeakTable<Type, List<WeakReference>> hostTypeHostItemCache = new ConditionalWeakTable<Type, List<WeakReference>>();
+        private readonly ConditionalWeakTable<object, List<WeakReference<HostItem>>> hostObjectHostItemCache = new();
+        private readonly ConditionalWeakTable<Type, List<WeakReference<HostItem>>> hostTypeHostItemCache = new();
+
+        internal HostItem GetOrCreateHostItem(object target, Type type, bool isCanonicalRef, HostItemFlags flags, HostItem.CreateFunc createHostItem)
+        {
+            return GetOrCreateHostItemForHostObject(null, target, type, isCanonicalRef, flags, createHostItem);
+        }
 
         internal HostItem GetOrCreateHostItem(HostTarget target, HostItemFlags flags, HostItem.CreateFunc createHostItem)
         {
             if (target is HostObject hostObject)
             {
-                return GetOrCreateHostItemForHostObject(hostObject, hostObject.Target, flags, createHostItem);
+                return GetOrCreateHostItemForHostObject(hostObject, hostObject.Target, hostObject.Type, true, flags, createHostItem);
             }
 
             if (target is HostType hostType)
@@ -889,46 +956,45 @@ namespace Microsoft.ClearScript
 
             if (target is HostMethod hostMethod)
             {
-                return GetOrCreateHostItemForHostObject(hostMethod, hostMethod, flags, createHostItem);
+                return GetOrCreateHostItemForHostObject(hostMethod, hostMethod, hostMethod.Type, true, flags, createHostItem);
             }
 
             if (target is HostVariable hostVariable)
             {
-                return GetOrCreateHostItemForHostObject(hostVariable, hostVariable, flags, createHostItem);
+                return GetOrCreateHostItemForHostObject(hostVariable, hostVariable, hostVariable.Type, true, flags, createHostItem);
             }
 
             if (target is HostIndexedProperty hostIndexedProperty)
             {
-                return GetOrCreateHostItemForHostObject(hostIndexedProperty, hostIndexedProperty, flags, createHostItem);
+                return GetOrCreateHostItemForHostObject(hostIndexedProperty, hostIndexedProperty, hostIndexedProperty.Type, true, flags, createHostItem);
             }
 
             return CreateHostItem(target, flags, createHostItem, null);
         }
 
-        private HostItem GetOrCreateHostItemForHostObject(HostTarget hostTarget, object target, HostItemFlags flags, HostItem.CreateFunc createHostItem)
+        private HostItem GetOrCreateHostItemForHostObject(HostTarget hostTarget, object target, Type type, bool isCanonicalRef, HostItemFlags flags, HostItem.CreateFunc createHostItem)
         {
             var cacheEntry = hostObjectHostItemCache.GetOrCreateValue(target ?? nullHostObjectProxy);
 
-            List<WeakReference> activeWeakRefs = null;
+            List<WeakReference<HostItem>> activeWeakRefs = null;
             var staleWeakRefCount = 0;
 
             foreach (var weakRef in cacheEntry)
             {
-                var hostItem = weakRef.Target as HostItem;
-                if (hostItem == null)
+                if (!weakRef.TryGetTarget(out var hostItem))
                 {
                     staleWeakRefCount++;
                 }
                 else
                 {
-                    if ((hostItem.Target.Type == hostTarget.Type) && (hostItem.Flags == flags))
+                    if ((hostItem.Target.Type == type) && (hostItem.Flags == flags))
                     {
                         return hostItem;
                     }
 
-                    if (activeWeakRefs == null)
+                    if (activeWeakRefs is null)
                     {
-                        activeWeakRefs = new List<WeakReference>(cacheEntry.Count);
+                        activeWeakRefs = new List<WeakReference<HostItem>>(cacheEntry.Count);
                     }
 
                     activeWeakRefs.Add(weakRef);
@@ -938,14 +1004,14 @@ namespace Microsoft.ClearScript
             if (staleWeakRefCount > 4)
             {
                 cacheEntry.Clear();
-                if (activeWeakRefs != null)
+                if (activeWeakRefs is not null)
                 {
                     cacheEntry.Capacity = activeWeakRefs.Count + 1;
                     cacheEntry.AddRange(activeWeakRefs);
                 }
             }
 
-            return CreateHostItem(hostTarget, flags, createHostItem, cacheEntry);
+            return CreateHostItem(hostTarget ?? HostObject.Wrap(target, type, isCanonicalRef), flags, createHostItem, cacheEntry);
         }
 
         private HostItem GetOrCreateHostItemForHostType(HostType hostType, HostItemFlags flags, HostItem.CreateFunc createHostItem)
@@ -957,13 +1023,12 @@ namespace Microsoft.ClearScript
 
             var cacheEntry = hostTypeHostItemCache.GetOrCreateValue(hostType.Types[0]);
 
-            List<WeakReference> activeWeakRefs = null;
+            List<WeakReference<HostItem>> activeWeakRefs = null;
             var staleWeakRefCount = 0;
 
             foreach (var weakRef in cacheEntry)
             {
-                var hostItem = weakRef.Target as HostItem;
-                if (hostItem == null)
+                if (!weakRef.TryGetTarget(out var hostItem))
                 {
                     staleWeakRefCount++;
                 }
@@ -974,9 +1039,9 @@ namespace Microsoft.ClearScript
                         return hostItem;
                     }
 
-                    if (activeWeakRefs == null)
+                    if (activeWeakRefs is null)
                     {
-                        activeWeakRefs = new List<WeakReference>(cacheEntry.Count);
+                        activeWeakRefs = new List<WeakReference<HostItem>>(cacheEntry.Count);
                     }
 
                     activeWeakRefs.Add(weakRef);
@@ -986,7 +1051,7 @@ namespace Microsoft.ClearScript
             if (staleWeakRefCount > 4)
             {
                 cacheEntry.Clear();
-                if (activeWeakRefs != null)
+                if (activeWeakRefs is not null)
                 {
                     cacheEntry.Capacity = activeWeakRefs.Count + 1;
                     cacheEntry.AddRange(activeWeakRefs);
@@ -996,13 +1061,13 @@ namespace Microsoft.ClearScript
             return CreateHostItem(hostType, flags, createHostItem, cacheEntry);
         }
 
-        private HostItem CreateHostItem(HostTarget hostTarget, HostItemFlags flags, HostItem.CreateFunc createHostItem, List<WeakReference> cacheEntry)
+        private HostItem CreateHostItem(HostTarget hostTarget, HostItemFlags flags, HostItem.CreateFunc createHostItem, List<WeakReference<HostItem>> cacheEntry)
         {
             var newHostItem = createHostItem(this, hostTarget, flags);
 
-            if (cacheEntry != null)
+            if (cacheEntry is not null)
             {
-                cacheEntry.Add(new WeakReference(newHostItem));
+                cacheEntry.Add(new WeakReference<HostItem>(newHostItem));
             }
 
             if (hostTarget.Target is IScriptableObject scriptableObject)
@@ -1023,23 +1088,22 @@ namespace Microsoft.ClearScript
 
         #region shared host target member data
 
-        internal readonly HostTargetMemberData SharedHostMethodMemberData = new HostTargetMemberData();
-        internal readonly HostTargetMemberData SharedHostIndexedPropertyMemberData = new HostTargetMemberData();
-        internal readonly HostTargetMemberData SharedScriptMethodMemberData = new HostTargetMemberData();
+        internal readonly HostTargetMemberData SharedHostMethodMemberData = new();
+        internal readonly HostTargetMemberData SharedHostIndexedPropertyMemberData = new();
+        internal readonly HostTargetMemberData SharedScriptMethodMemberData = new();
 
-        private readonly ConditionalWeakTable<Type, List<WeakReference>> sharedHostObjectMemberDataCache = new ConditionalWeakTable<Type, List<WeakReference>>();
+        private readonly ConditionalWeakTable<Type, List<WeakReference<HostTargetMemberDataWithContext>>> sharedHostObjectMemberDataCache = new();
 
         internal HostTargetMemberData GetSharedHostObjectMemberData(HostObject target, CustomAttributeLoader targetCustomAttributeLoader, Type targetAccessContext, ScriptAccess targetDefaultAccess, HostTargetFlags targetFlags)
         {
             var cacheEntry = sharedHostObjectMemberDataCache.GetOrCreateValue(target.Type);
 
-            List<WeakReference> activeWeakRefs = null;
+            List<WeakReference<HostTargetMemberDataWithContext>> activeWeakRefs = null;
             var staleWeakRefCount = 0;
 
             foreach (var weakRef in cacheEntry)
             {
-                var memberData = weakRef.Target as HostTargetMemberDataWithContext;
-                if (memberData == null)
+                if (!weakRef.TryGetTarget(out var memberData))
                 {
                     staleWeakRefCount++;
                 }
@@ -1050,9 +1114,9 @@ namespace Microsoft.ClearScript
                         return memberData;
                     }
 
-                    if (activeWeakRefs == null)
+                    if (activeWeakRefs is null)
                     {
-                        activeWeakRefs = new List<WeakReference>(cacheEntry.Count);
+                        activeWeakRefs = new List<WeakReference<HostTargetMemberDataWithContext>>(cacheEntry.Count);
                     }
 
                     activeWeakRefs.Add(weakRef);
@@ -1062,7 +1126,7 @@ namespace Microsoft.ClearScript
             if (staleWeakRefCount > 4)
             {
                 cacheEntry.Clear();
-                if (activeWeakRefs != null)
+                if (activeWeakRefs is not null)
                 {
                     cacheEntry.Capacity = activeWeakRefs.Count + 1;
                     cacheEntry.AddRange(activeWeakRefs);
@@ -1070,7 +1134,7 @@ namespace Microsoft.ClearScript
             }
 
             var newMemberData = new HostTargetMemberDataWithContext(targetCustomAttributeLoader, targetAccessContext, targetDefaultAccess, targetFlags);
-            cacheEntry.Add(new WeakReference(newMemberData));
+            cacheEntry.Add(new WeakReference<HostTargetMemberDataWithContext>(newMemberData));
             return newMemberData;
         }
 
@@ -1078,7 +1142,7 @@ namespace Microsoft.ClearScript
 
         #region event connections
 
-        private readonly EventConnectionMap eventConnectionMap = new EventConnectionMap();
+        private readonly EventConnectionMap eventConnectionMap = new();
 
         internal EventConnection CreateEventConnection(Type handlerType, object source, EventInfo eventInfo, Delegate handler)
         {
@@ -1171,8 +1235,8 @@ namespace Microsoft.ClearScript
 
         private sealed class EventConnectionMap : IDisposable
         {
-            private readonly HashSet<EventConnection> map = new HashSet<EventConnection>();
-            private readonly InterlockedOneWayFlag disposedFlag = new InterlockedOneWayFlag();
+            private readonly HashSet<EventConnection> map = new();
+            private readonly InterlockedOneWayFlag disposedFlag = new();
 
             internal EventConnection Create(ScriptEngine engine, Type handlerType, object source, EventInfo eventInfo, Delegate handler)
             {

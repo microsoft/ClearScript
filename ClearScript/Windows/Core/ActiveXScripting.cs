@@ -21,6 +21,12 @@ namespace Microsoft.ClearScript.Windows.Core
         // ReSharper restore InconsistentNaming
     }
 
+    internal static class ScriptInfoFlagsHelpers
+    {
+        public static bool HasAllFlags(this ScriptInfoFlags value, ScriptInfoFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this ScriptInfoFlags value, ScriptInfoFlags flags) => (value & flags) != 0;
+    }
+
     [Flags]
     internal enum ScriptInterruptFlags : uint
     {

@@ -62,21 +62,33 @@ namespace Microsoft.ClearScript.V8
         EnableDynamicModuleImports = 0x00000020,
 
         /// <summary>
-        /// Specifies that long integers with values greater than
+        /// Specifies that 64-bit integers with values greater than
         /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER">Number.MAX_SAFE_INTEGER</see></c>
         /// or less than
         /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MIN_SAFE_INTEGER">Number.MIN_SAFE_INTEGER</see></c>
         /// are to be marshaled as
         /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt">BigInt</see></c>.
-        /// This option is ignored if <c><see cref="MarshalAllLongAsBigInt"/></c> is specified.
+        /// This option is ignored if <c><see cref="MarshalAllInt64AsBigInt"/></c> is specified.
         /// </summary>
-        MarshalUnsafeLongAsBigInt = 0x00000040,
+        MarshalUnsafeInt64AsBigInt = 0x00000040,
 
         /// <summary>
-        /// Specifies that all long integers are to be marshaled as
+        /// Equivalent to <c><see cref="MarshalUnsafeInt64AsBigInt"/></c>.
+        /// </summary>
+        [Obsolete("This option has been renamed to MarshalUnsafeInt64AsBigInt.")]
+        MarshalUnsafeLongAsBigInt = MarshalUnsafeInt64AsBigInt,
+
+        /// <summary>
+        /// Specifies that all 64-bit integers are to be marshaled as
         /// <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt">BigInt</see></c>.
         /// </summary>
-        MarshalAllLongAsBigInt = 0x00000080,
+        MarshalAllInt64AsBigInt = 0x00000080,
+
+        /// <summary>
+        /// Equivalent to <c><see cref="MarshalAllInt64AsBigInt"/></c>.
+        /// </summary>
+        [Obsolete("This option has been renamed to MarshalAllInt64AsBigInt.")]
+        MarshalAllLongAsBigInt = MarshalAllInt64AsBigInt,
 
         /// <summary>
         /// Specifies that the script engine is to perform automatic conversion between
@@ -146,6 +158,22 @@ namespace Microsoft.ClearScript.V8
         /// hint and may be ignored on some systems. On platforms that support it, this option can
         /// degrade overall system performance or power efficiency, so caution is recommended.
         /// </summary>
-        SetTimerResolution = 0x00008000
+        SetTimerResolution = 0x00008000,
+
+        /// <summary>
+        /// Specifies that the script engine is to perform automatic conversion between .NET and
+        /// JavaScript arrays. This conversion is bidirectional and lossy. A .NET array constructed
+        /// from a JavaScript array always has an element type of <c><see cref="object"/></c>,
+        /// making it impossible for script code to specify a strongly typed array as a .NET method
+        /// argument or property value. Excessive copying of array contents can also impact
+        /// application performance and/or memory consumption. Caution is recommended.
+        /// </summary>
+        EnableArrayConversion = 0x00010000
+    }
+
+    internal static class V8ScriptEngineFlagsHelpers
+    {
+        public static bool HasAllFlags(this V8ScriptEngineFlags value, V8ScriptEngineFlags flags) => (value & flags) == flags;
+        public static bool HasAnyFlag(this V8ScriptEngineFlags value, V8ScriptEngineFlags flags) => (value & flags) != 0;
     }
 }

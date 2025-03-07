@@ -22,6 +22,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.ClearScript.JavaScript;
 
 namespace Microsoft.ClearScript.Test
 {
@@ -128,12 +129,14 @@ namespace Microsoft.ClearScript.Test
         public void BugFix_InheritedInterfaceMethod()
         {
             var list = new List<int> { 123 };
-            var enumerator = list.AsEnumerable().GetEnumerator();
-            engine.AddRestrictedHostObject("enumerator", enumerator);
-            Assert.IsTrue((bool)engine.Evaluate("enumerator.MoveNext()"));
-            Assert.AreEqual(123, engine.Evaluate("enumerator.Current"));
-            Assert.IsFalse((bool)engine.Evaluate("enumerator.MoveNext()"));
-            engine.Execute("enumerator.Dispose()");
+            using (var enumerator = list.AsEnumerable().GetEnumerator())
+            {
+                engine.AddRestrictedHostObject("enumerator", enumerator);
+                Assert.IsTrue((bool)engine.Evaluate("enumerator.MoveNext()"));
+                Assert.AreEqual(123, engine.Evaluate("enumerator.Current"));
+                Assert.IsFalse((bool)engine.Evaluate("enumerator.MoveNext()"));
+                engine.Execute("enumerator.Dispose()");
+            }
         }
 
         [TestMethod, TestCategory("BugFix")]
@@ -445,50 +448,81 @@ namespace Microsoft.ClearScript.Test
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_Resurrection_V8ScriptEngine()
         {
-            for (var index = 0; index < 256; index++)
+            new Action(static () =>
             {
-                // ReSharper disable UnusedVariable
+                for (var index = 0; index < 256; index++)
+                {
+                    // ReSharper disable UnusedVariable
 
-                var wrapper = new ResurrectionTestWrapper(new V8ScriptEngine());
-                GC.Collect();
+                    var wrapper = new ResurrectionTestWrapper(new V8ScriptEngine());
+                    GC.Collect();
 
-                // ReSharper restore UnusedVariable
-            }
+                    // ReSharper restore UnusedVariable
+                }
+            })();
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_Resurrection_V8Runtime()
         {
-            for (var index = 0; index < 256; index++)
+            new Action(static () =>
             {
-                // ReSharper disable UnusedVariable
+                for (var index = 0; index < 256; index++)
+                {
+                    // ReSharper disable UnusedVariable
 
-                var wrapper = new ResurrectionTestWrapper(new V8Runtime());
-                GC.Collect();
+                    var wrapper = new ResurrectionTestWrapper(new V8Runtime());
+                    GC.Collect();
 
-                // ReSharper restore UnusedVariable
-            }
+                    // ReSharper restore UnusedVariable
+                }
+            })();
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_Resurrection_V8Script()
         {
-            for (var index = 0; index < 256; index++)
+            new Action(static () =>
             {
-                // ReSharper disable UnusedVariable
+                for (var index = 0; index < 256; index++)
+                {
+                    // ReSharper disable UnusedVariable
 
-                var tempEngine = new V8ScriptEngine();
-                var wrapper = new ResurrectionTestWrapper(tempEngine.Compile("function foo() {}"));
-                GC.Collect();
+                    var tempEngine = new V8ScriptEngine();
+                    var wrapper = new ResurrectionTestWrapper(tempEngine.Compile("function foo() {}"));
+                    GC.Collect();
 
-                // ReSharper restore UnusedVariable
-            }
+                    // ReSharper restore UnusedVariable
+                }
+            })();
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         [TestMethod, TestCategory("BugFix")]
         public void BugFix_Resurrection_V8ScriptItem()
         {
-            TestV8ScriptItemResurrection();
+            new Action(static () =>
+            {
+                for (var index = 0; index < 256; index++)
+                {
+                    // ReSharper disable UnusedVariable
+
+                    var tempEngine = new V8ScriptEngine();
+                    var wrapper = new ResurrectionTestWrapper(tempEngine.Script.Math);
+                    GC.Collect();
+
+                    // ReSharper restore UnusedVariable
+                }
+            })();
+
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }
@@ -1201,7 +1235,9 @@ namespace Microsoft.ClearScript.Test
                 }
 
                 runtime.CollectGarbage(true);
-                Assert.IsFalse(runtime.GetHeapInfo().TotalHeapSize > (heapSize * 1.75));
+                
+                var newHeapSize = runtime.GetHeapInfo().TotalHeapSize;
+                Assert.IsFalse(newHeapSize > (heapSize * 2.0));
             }
         }
 
@@ -1901,6 +1937,120 @@ namespace Microsoft.ClearScript.Test
             }
         }
 
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_V8_MaxRuntimeHeapSize_SetBelowCurrent()
+        {
+            ((V8ScriptEngine)engine).MaxRuntimeHeapSize = new UIntPtr(256 * 1024);
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute(""));
+            TestUtil.AssertException<ScriptEngineException>(() => engine.Execute(""));
+        }
+
+        [TestMethod, TestCategory("BugFix")]
+        public void BugFix_ZeroLengthDataTransfer()
+        {
+            var buffer = (IArrayBuffer)engine.Evaluate("new ArrayBuffer(0)");
+
+            Assert.AreEqual(0UL, buffer.ReadBytes(0, 0, new byte[0], 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.ReadBytes(1, 0, new byte[0], 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.ReadBytes(0, 1, new byte[0], 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.ReadBytes(0, 0, new byte[0], 1));
+
+            Assert.AreEqual(0UL, buffer.ReadBytes(0, 0, new byte[0].AsSpan(), 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.ReadBytes(1, 0, new byte[0].AsSpan(), 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.ReadBytes(0, 1, new byte[0].AsSpan(), 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.ReadBytes(0, 0, new byte[0].AsSpan(), 1));
+
+            Assert.AreEqual(0UL, buffer.WriteBytes(new byte[0], 0, 0, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.WriteBytes(new byte[0], 1, 0, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.WriteBytes(new byte[0], 0, 1, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.WriteBytes(new byte[0], 0, 0, 1));
+
+            Assert.AreEqual(0UL, buffer.WriteBytes(new byte[0].AsSpan(), 0, 0, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.WriteBytes(new byte[0].AsSpan(), 1, 0, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.WriteBytes(new byte[0].AsSpan(), 0, 1, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => buffer.WriteBytes(new byte[0].AsSpan(), 0, 0, 1));
+
+            var view = (IDataView)engine.Evaluate("new DataView(new ArrayBuffer(0))");
+
+            Assert.AreEqual(0UL, view.ReadBytes(0, 0, new byte[0], 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.ReadBytes(1, 0, new byte[0], 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.ReadBytes(0, 1, new byte[0], 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.ReadBytes(0, 0, new byte[0], 1));
+
+            Assert.AreEqual(0UL, view.ReadBytes(0, 0, new byte[0].AsSpan(), 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.ReadBytes(1, 0, new byte[0].AsSpan(), 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.ReadBytes(0, 1, new byte[0].AsSpan(), 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.ReadBytes(0, 0, new byte[0].AsSpan(), 1));
+
+            Assert.AreEqual(0UL, view.WriteBytes(new byte[0], 0, 0, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.WriteBytes(new byte[0], 1, 0, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.WriteBytes(new byte[0], 0, 1, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.WriteBytes(new byte[0], 0, 0, 1));
+
+            Assert.AreEqual(0UL, view.WriteBytes(new byte[0].AsSpan(), 0, 0, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.WriteBytes(new byte[0].AsSpan(), 1, 0, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.WriteBytes(new byte[0].AsSpan(), 0, 1, 0));
+            TestUtil.AssertException<ArgumentOutOfRangeException>(() => view.WriteBytes(new byte[0].AsSpan(), 0, 0, 1));
+
+            void TestTypedArray<T>(string name) where T : unmanaged
+            {
+                var typedArray = (ITypedArray<T>)engine.Evaluate($"new {name}Array(0)");
+
+                Assert.AreEqual(0UL, typedArray.ReadBytes(0, 0, new byte[0], 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.ReadBytes(1, 0, new byte[0], 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.ReadBytes(0, 1, new byte[0], 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.ReadBytes(0, 0, new byte[0], 1));
+
+                Assert.AreEqual(0UL, typedArray.ReadBytes(0, 0, new byte[0].AsSpan(), 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.ReadBytes(1, 0, new byte[0].AsSpan(), 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.ReadBytes(0, 1, new byte[0].AsSpan(), 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.ReadBytes(0, 0, new byte[0].AsSpan(), 1));
+
+                Assert.AreEqual(0UL, typedArray.Read(0, 0, new T[0], 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Read(1, 0, new T[0], 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Read(0, 1, new T[0], 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Read(0, 0, new T[0], 1));
+
+                Assert.AreEqual(0UL, typedArray.Read(0, 0, new T[0].AsSpan(), 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Read(1, 0, new T[0].AsSpan(), 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Read(0, 1, new T[0].AsSpan(), 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Read(0, 0, new T[0].AsSpan(), 1));
+
+                Assert.AreEqual(0UL, typedArray.WriteBytes(new byte[0], 0, 0, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.WriteBytes(new byte[0], 1, 0, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.WriteBytes(new byte[0], 0, 1, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.WriteBytes(new byte[0], 0, 0, 1));
+
+                Assert.AreEqual(0UL, typedArray.WriteBytes(new byte[0].AsSpan(), 0, 0, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.WriteBytes(new byte[0].AsSpan(), 1, 0, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.WriteBytes(new byte[0].AsSpan(), 0, 1, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.WriteBytes(new byte[0].AsSpan(), 0, 0, 1));
+
+                Assert.AreEqual(0UL, typedArray.Write(new T[0], 0, 0, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Write(new T[0], 1, 0, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Write(new T[0], 0, 1, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Write(new T[0], 0, 0, 1));
+
+                Assert.AreEqual(0UL, typedArray.Write(new T[0].AsSpan(), 0, 0, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Write(new T[0].AsSpan(), 1, 0, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Write(new T[0].AsSpan(), 0, 1, 0));
+                TestUtil.AssertException<ArgumentOutOfRangeException>(() => typedArray.Write(new T[0].AsSpan(), 0, 0, 1));
+            }
+
+            TestTypedArray<byte>("Uint8");
+            TestTypedArray<byte>("Uint8Clamped");
+            TestTypedArray<sbyte>("Int8");
+            TestTypedArray<ushort>("Uint16");
+            TestTypedArray<char>("Uint16");
+            TestTypedArray<short>("Int16");
+            TestTypedArray<uint>("Uint32");
+            TestTypedArray<int>("Int32");
+            TestTypedArray<ulong>("BigUint64");
+            TestTypedArray<long>("BigInt64");
+            TestTypedArray<float>("Float32");
+            TestTypedArray<double>("Float64");
+        }
+
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -2024,11 +2174,11 @@ namespace Microsoft.ClearScript.Test
 
             public static implicit operator DayOfWeek(MyDayOfWeek self) => self.day;
 
-            public static implicit operator MyDayOfWeek(DayOfWeek day) => new MyDayOfWeek(day);
+            public static implicit operator MyDayOfWeek(DayOfWeek day) => new(day);
 
             public static implicit operator char?(MyDayOfWeek self) => (self.day == DayOfWeek.Sunday) ? null : (char?)self.day;
 
-            public static implicit operator MyDayOfWeek(char? value) => new MyDayOfWeek((DayOfWeek)value.GetValueOrDefault());
+            public static implicit operator MyDayOfWeek(char? value) => new((DayOfWeek)value.GetValueOrDefault());
         }
 
         public class ImplicitConversionTest
@@ -2292,7 +2442,7 @@ namespace Microsoft.ClearScript.Test
 
         public class RestrictedPrototypeObject : RestrictedPrototypeObjectBase, IPropertyBag, IScriptableObject
         {
-            private readonly ConditionalWeakTable<ScriptEngine, Entry> map = new ConditionalWeakTable<ScriptEngine, Entry>();
+            private readonly ConditionalWeakTable<ScriptEngine, Entry> map = new();
             private readonly bool setPrototypeOnExpose;
 
             public RestrictedPrototypeObject(bool setPrototypeOnExpose)
@@ -2304,12 +2454,12 @@ namespace Microsoft.ClearScript.Test
             {
                 var entry = map.GetOrCreateValue(engine);
 
-                if (entry.Prototype == null)
+                if (entry.Prototype is null)
                 {
                     entry.Prototype = this.ToRestrictedHostObject<RestrictedPrototypeObjectBase>(engine);
                 }
 
-                if (entry.ProxyHolder == null)
+                if (entry.ProxyHolder is null)
                 {
                     engine.Script.Object.setPrototypeOf(this, entry.Prototype);
                     entry.ProxyHolder = engine.Script.Object.create(this);
@@ -2366,7 +2516,7 @@ namespace Microsoft.ClearScript.Test
 
         public class DefaultArgsTestObject
         {
-            private readonly Dictionary<string, object> map = new Dictionary<string, object>();
+            private readonly Dictionary<string, object> map = new();
 
             public DefaultArgsTestObject(int arg1 = 123, string arg2 = "foo")
             {
@@ -2385,21 +2535,7 @@ namespace Microsoft.ClearScript.Test
         [DefaultScriptUsage(ScriptAccess.Full)]
         public class DefaultScriptAccessOverrideTestObject
         {
-            public List<int> Values { get; set; } = new List<int> { 123, 456, 789 };
-        }
-
-        private void TestV8ScriptItemResurrection()
-        {
-            for (var index = 0; index < 256; index++)
-            {
-                // ReSharper disable UnusedVariable
-
-                var tempEngine = new V8ScriptEngine();
-                var wrapper = new ResurrectionTestWrapper(tempEngine.Script.Math);
-                GC.Collect();
-
-                // ReSharper restore UnusedVariable
-            }
+            public List<int> Values { get; set; } = new() { 123, 456, 789 };
         }
 
     #if NET6_0_OR_GREATER

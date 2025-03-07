@@ -19,7 +19,7 @@ namespace Microsoft.ClearScript.Util
                 return name;
             }
 
-            if (MiscHelpers.Try(out var assembly, () => Assembly.Load(name)))
+            if (MiscHelpers.Try(out var assembly, static name => Assembly.Load(name), name))
             {
                 return assembly.FullName;
             }
@@ -30,7 +30,7 @@ namespace Microsoft.ClearScript.Util
                 fileName = Path.ChangeExtension(fileName + '.', "dll");
             }
 
-            if (MiscHelpers.Try(out var assemblyName, () => AssemblyName.GetAssemblyName(fileName)))
+            if (MiscHelpers.Try(out var assemblyName, static fileName => AssemblyName.GetAssemblyName(fileName), fileName))
             {
                 return assemblyName.FullName;
             }
@@ -41,17 +41,17 @@ namespace Microsoft.ClearScript.Util
                 // ReSharper disable AccessToModifiedClosure
 
                 var path = Path.Combine(dirPath, fileName);
-                if (File.Exists(path) && MiscHelpers.Try(out assemblyName, () => AssemblyName.GetAssemblyName(path)))
+                if (File.Exists(path) && MiscHelpers.Try(out assemblyName, static path => AssemblyName.GetAssemblyName(path), path))
                 {
                     return assemblyName.FullName;
                 }
 
-                if (MiscHelpers.Try(out var subDirPaths, () => Directory.EnumerateDirectories(dirPath, "*", SearchOption.AllDirectories)))
+                if (MiscHelpers.Try(out var subDirPaths, static dirPath => Directory.EnumerateDirectories(dirPath, "*", SearchOption.AllDirectories), dirPath))
                 {
                     foreach (var subDirPath in subDirPaths)
                     {
                         path = Path.Combine(subDirPath, fileName);
-                        if (File.Exists(path) && MiscHelpers.Try(out assemblyName, () => AssemblyName.GetAssemblyName(path)))
+                        if (File.Exists(path) && MiscHelpers.Try(out assemblyName, static path => AssemblyName.GetAssemblyName(path), path))
                         {
                             return assemblyName.FullName;
                         }
@@ -66,7 +66,7 @@ namespace Microsoft.ClearScript.Util
 
         public static Assembly TryLoad(AssemblyName name)
         {
-            if (MiscHelpers.Try(out var assembly, () => Assembly.Load(name)))
+            if (MiscHelpers.Try(out var assembly, static name => Assembly.Load(name), name))
             {
                 return assembly;
             }
@@ -117,12 +117,10 @@ namespace Microsoft.ClearScript.Util
 
         private static IEnumerable<Type> GetReferencedEnums(Assembly assembly, Type type, HashSet<Type> processedTypes)
         {
-            if ((type == null) || !type.IsVisible || type.ContainsGenericParameters || processedTypes.Contains(type))
+            if ((type is null) || !type.IsVisible || type.ContainsGenericParameters || !processedTypes.Add(type))
             {
                 yield break;
             }
-
-            processedTypes.Add(type);
 
             if (type.IsEnum)
             {
@@ -161,7 +159,7 @@ namespace Microsoft.ClearScript.Util
 
         private static IEnumerable<Type> GetReferencedEnums(Assembly assembly, MemberInfo member, HashSet<Type> processedTypes)
         {
-            if (member == null)
+            if (member is null)
             {
                 return Enumerable.Empty<Type>();
             }
@@ -191,7 +189,7 @@ namespace Microsoft.ClearScript.Util
 
         private static IEnumerable<Type> GetReferencedEnums(Assembly assembly, FieldInfo field, HashSet<Type> processedTypes)
         {
-            if (field == null)
+            if (field is null)
             {
                 return Enumerable.Empty<Type>();
             }
@@ -201,7 +199,7 @@ namespace Microsoft.ClearScript.Util
 
         private static IEnumerable<Type> GetReferencedEnums(Assembly assembly, PropertyInfo property, HashSet<Type> processedTypes)
         {
-            if (property == null)
+            if (property is null)
             {
                 yield break;
             }
@@ -224,7 +222,7 @@ namespace Microsoft.ClearScript.Util
 
         private static IEnumerable<Type> GetReferencedEnums(Assembly assembly, MethodInfo method, HashSet<Type> processedTypes)
         {
-            if (method == null)
+            if (method is null)
             {
                 yield break;
             }
@@ -242,7 +240,7 @@ namespace Microsoft.ClearScript.Util
 
         private static IEnumerable<Type> GetReferencedEnums(Assembly assembly, ParameterInfo param, HashSet<Type> processedTypes)
         {
-            if (param == null)
+            if (param is null)
             {
                 return Enumerable.Empty<Type>();
             }

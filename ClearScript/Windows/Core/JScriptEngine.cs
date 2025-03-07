@@ -26,7 +26,7 @@ namespace Microsoft.ClearScript.Windows.Core
     {
         #region data
 
-        internal static readonly Dictionary<int, string> StaticRuntimeErrorMap = new Dictionary<int, string>
+        internal static readonly Dictionary<int, string> StaticRuntimeErrorMap = new()
         {
             // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/1dk3k160(v=vs.84)
             { 5029, "Array length must be a finite positive integer" },
@@ -62,7 +62,7 @@ namespace Microsoft.ClearScript.Windows.Core
             { 5013, "VBArray expected" }
         };
 
-        internal static readonly Dictionary<int, string> StaticSyntaxErrorMap = new Dictionary<int, string>
+        internal static readonly Dictionary<int, string> StaticSyntaxErrorMap = new()
         {
             // https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/6bby3x2e(v=vs.84)
             { 1019, "Can't have 'break' outside of loop" },
@@ -224,7 +224,7 @@ namespace Microsoft.ClearScript.Windows.Core
             if (documentInfo.Category == ModuleCategory.CommonJS)
             {
                 var module = CommonJSManager.GetOrCreateModule(documentInfo, code);
-                return ScriptInvoke(() => module.Process());
+                return ScriptInvoke(static module => module.Process(), module);
             }
 
             if (documentInfo.Category != DocumentCategory.Script)
@@ -251,6 +251,16 @@ namespace Microsoft.ClearScript.Windows.Core
         }
 
         object IJavaScriptEngine.CreatePromiseForTask(Task task)
+        {
+            throw new NotImplementedException();
+        }
+
+        object IJavaScriptEngine.CreatePromiseForValueTask<T>(ValueTask<T> valueTask)
+        {
+            throw new NotImplementedException();
+        }
+
+        object IJavaScriptEngine.CreatePromiseForValueTask(ValueTask valueTask)
         {
             throw new NotImplementedException();
         }

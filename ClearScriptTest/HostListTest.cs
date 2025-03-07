@@ -185,6 +185,7 @@ namespace Microsoft.ClearScript.Test
 
             public IEnumerator GetEnumerator()
             {
+                // ReSharper disable once NotDisposedResourceIsReturned
                 return list.GetEnumerator();
             }
 
@@ -251,6 +252,7 @@ namespace Microsoft.ClearScript.Test
 
             public IEnumerator<T> GetEnumerator()
             {
+                // ReSharper disable once NotDisposedResourceIsReturned
                 return list.GetEnumerator();
             }
 
@@ -321,6 +323,7 @@ namespace Microsoft.ClearScript.Test
 
             public IEnumerator<T> GetEnumerator()
             {
+                // ReSharper disable once NotDisposedResourceIsReturned
                 return list.GetEnumerator();
             }
 

@@ -18,7 +18,7 @@ namespace Microsoft.ClearScript
 
         private HostType(Type[] types)
         {
-            Debug.Assert((types != null) && (types.Length > 0));
+            Debug.Assert((types is not null) && (types.Length > 0));
 
             var nestingGroups = types.GroupBy(type => type.IsNested).ToIList();
             if (nestingGroups.Count != 1)
@@ -53,12 +53,12 @@ namespace Microsoft.ClearScript
 
         public static HostType Wrap(Type type)
         {
-            return (type != null) ? new HostType(type) : null;
+            return (type is not null) ? new HostType(type) : null;
         }
 
         public static HostType Wrap(Type[] types)
         {
-            return ((types != null) && (types.Length > 0)) ? new HostType(types) : null;
+            return ((types is not null) && (types.Length > 0)) ? new HostType(types) : null;
         }
 
         public Type[] Types { get; }
@@ -66,7 +66,7 @@ namespace Microsoft.ClearScript
         public Type GetSpecificType()
         {
             var type = GetSpecificTypeNoThrow();
-            if (type == null)
+            if (type is null)
             {
                 throw new InvalidOperationException(MiscHelpers.FormatInvariant("'{0}' requires type arguments", Types[0].GetRootName()));
             }
@@ -94,7 +94,7 @@ namespace Microsoft.ClearScript
         public Type GetTypeArgNoThrow()
         {
             var type = GetSpecificTypeNoThrow();
-            return ((type == null) || type.IsStatic() || type.IsUnknownCOMObject()) ? null : type;
+            return ((type is null) || type.IsStatic() || type.IsUnknownCOMObject()) ? null : type;
         }
 
         private Type GetSpecificTypeNoThrow()
@@ -107,7 +107,7 @@ namespace Microsoft.ClearScript
         public override string ToString()
         {
             var type = GetSpecificTypeNoThrow();
-            if (type != null)
+            if (type is not null)
             {
                 return MiscHelpers.FormatInvariant("HostType:{0}", type.GetFriendlyName());
             }
@@ -145,13 +145,13 @@ namespace Microsoft.ClearScript
         public override HostTargetFlags GetFlags(IHostContext context)
         {
             var type = GetSpecificTypeNoThrow();
-            return (type != null) ? HostTargetFlags.AllowStaticMembers : HostTargetFlags.None;
+            return (type is not null) ? HostTargetFlags.AllowStaticMembers : HostTargetFlags.None;
         }
 
         public override string[] GetAuxPropertyNames(IHostContext context, BindingFlags bindFlags)
         {
             var type = GetSpecificTypeNoThrow();
-            if (type != null)
+            if (type is not null)
             {
                 return type.GetScriptableNestedTypes(context, bindFlags).Select(testType => testType.GetRootName()).Distinct().ToArray();
             }
@@ -162,20 +162,20 @@ namespace Microsoft.ClearScript
         public override bool TryInvokeAuxMember(IHostContext context, string name, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
             var type = GetSpecificTypeNoThrow();
-            if (type != null)
+            if (type is not null)
             {
                 var nestedTypes = type.GetScriptableNestedTypes(context, invokeFlags).Where(testType => string.Equals(testType.GetRootName(), name, invokeFlags.GetMemberNameComparison())).ToIList();
                 if (nestedTypes.Count > 0)
                 {
                     var tempResult = Wrap(nestedTypes.Select(testType => testType.ApplyTypeArguments(type.GetGenericArguments())).ToArray());
-                    if (invokeFlags.HasFlag(BindingFlags.InvokeMethod))
+                    if (invokeFlags.HasAllFlags(BindingFlags.InvokeMethod))
                     {
                         if (tempResult.TryInvoke(context, invokeFlags, args, bindArgs, out result))
                         {
                             return true;
                         }
 
-                        if (!invokeFlags.HasFlag(BindingFlags.GetField) && !invokeFlags.HasFlag(BindingFlags.GetProperty))
+                        if (!invokeFlags.HasAllFlags(BindingFlags.GetField) && !invokeFlags.HasAllFlags(BindingFlags.GetProperty))
                         {
                             return false;
                         }
@@ -192,7 +192,7 @@ namespace Microsoft.ClearScript
 
         public override bool TryInvoke(IHostContext context, BindingFlags invokeFlags, object[] args, object[] bindArgs, out object result)
         {
-            if (!invokeFlags.HasFlag(BindingFlags.InvokeMethod) || (args.Length < 1))
+            if (!invokeFlags.HasAllFlags(BindingFlags.InvokeMethod) || (args.Length < 1))
             {
                 result = null;
                 return false;
@@ -200,14 +200,14 @@ namespace Microsoft.ClearScript
 
             if (!args.All(arg => arg is HostType))
             {
-                throw new ArgumentException("Invalid generic type argument");
+                throw new ArgumentException("Invalid generic type argument", nameof(args));
             }
 
             var templates = Types.Where(type => !type.IsSpecific()).ToArray();
             var typeArgs = args.Cast<HostType>().Select(hostType => hostType.GetTypeArg()).ToArray();
 
             var template = templates.FirstOrDefault(testTemplate => testTemplate.GetGenericParamCount() == typeArgs.Length);
-            if (template == null)
+            if (template is null)
             {
                 throw new TypeLoadException(MiscHelpers.FormatInvariant("Could not find a matching generic type definition for '{0}'", templates[0].GetRootName()));
             }
@@ -227,10 +227,10 @@ namespace Microsoft.ClearScript
 
         void IScriptableObject.OnExposedToScriptCode(ScriptEngine engine)
         {
-            if (engine != null)
+            if (engine is not null)
             {
                 var specificType = GetSpecificTypeNoThrow();
-                if (specificType != null)
+                if (specificType is not null)
                 {
                     engine.ProcessExtensionMethodType(specificType);
                 }

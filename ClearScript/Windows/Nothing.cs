@@ -21,7 +21,7 @@ namespace Microsoft.ClearScript.Windows
         /// <summary>
         /// The sole instance of the <c><see cref="Nothing"/></c> class.
         /// </summary>
-        public static readonly Nothing Value = new Nothing();
+        public static readonly Nothing Value = new();
 
         private Nothing()
         {

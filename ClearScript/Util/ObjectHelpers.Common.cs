@@ -16,17 +16,17 @@ namespace Microsoft.ClearScript.Util
 
             using (var containerKey = Registry.ClassesRoot.OpenSubKey("TypeLib", false))
             {
-                if (containerKey != null)
+                if (containerKey is not null)
                 {
                     var typeLibName = "{" + libid.ToString().ToUpper(CultureInfo.InvariantCulture) + "}";
                     using (var typeLibKey = containerKey.OpenSubKey(typeLibName))
                     {
-                        if (typeLibKey != null)
+                        if (typeLibKey is not null)
                         {
                             var versionName = major.ToString("x", CultureInfo.InvariantCulture) + "." + minor.ToString("x", CultureInfo.InvariantCulture);
                             using (var versionKey = typeLibKey.OpenSubKey(versionName, false))
                             {
-                                if (versionKey != null)
+                                if (versionKey is not null)
                                 {
                                     name = (string)versionKey.GetValue("PrimaryInteropAssemblyName");
                                     codeBase = (string)versionKey.GetValue("PrimaryInteropAssemblyCodeBase");
@@ -37,7 +37,7 @@ namespace Microsoft.ClearScript.Util
                 }
             }
 
-            return name != null;
+            return name is not null;
         }
     }
 }

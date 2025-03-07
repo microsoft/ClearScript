@@ -5,6 +5,7 @@
         <RootNamespace>Microsoft.ClearScript.V8</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
+        <LangVersion Condition="'$(TargetFramework)' == 'netcoreapp3.1'">9.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -37,6 +38,32 @@
 
     <ItemGroup>
         <Compile Include="..\..\ClearScript\Properties\AssemblyInfo.V8.cs" Link="Properties\AssemblyInfo.V8.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastAsyncEnumerator.cs" Link="V8\FastProxy\IV8FastAsyncEnumerator.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastEnumerator.cs" Link="V8\FastProxy\IV8FastEnumerator.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostDynamicProperties.cs" Link="V8\FastProxy\IV8FastHostDynamicProperties.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostFunction.cs" Link="V8\FastProxy\IV8FastHostFunction.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostFunctionOperations.cs" Link="V8\FastProxy\IV8FastHostFunctionOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostMethod.cs" Link="V8\FastProxy\IV8FastHostMethod.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostMethodOperations.cs" Link="V8\FastProxy\IV8FastHostMethodOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostObject.cs" Link="V8\FastProxy\IV8FastHostObject.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\IV8FastHostObjectOperations.cs" Link="V8\FastProxy\IV8FastHostObjectOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArg.cs" Link="V8\FastProxy\V8FastArg.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArgImpl.cs" Link="V8\FastProxy\V8FastArgImpl.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArgKind.cs" Link="V8\FastProxy\V8FastArgKind.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastArgs.cs" Link="V8\FastProxy\V8FastArgs.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostDelegates.cs" Link="V8\FastProxy\V8FastHostDelegates.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostDynamicObject.cs" Link="V8\FastProxy\V8FastHostDynamicObject.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostFunction.cs" Link="V8\FastProxy\V8FastHostFunction.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostFunctionOperations.cs" Link="V8\FastProxy\V8FastHostFunctionOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostItem.cs" Link="V8\FastProxy\V8FastHostItem.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostMethod.cs" Link="V8\FastProxy\V8FastHostMethod.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostMethodOperations.cs" Link="V8\FastProxy\V8FastHostMethodOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostObject.cs" Link="V8\FastProxy\V8FastHostObject.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostObjectConfiguration.cs" Link="V8\FastProxy\V8FastHostObjectConfiguration.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostObjectOperations.cs" Link="V8\FastProxy\V8FastHostObjectOperations.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastHostPropertyFlags.cs" Link="V8\FastProxy\V8FastHostPropertyFlags.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastProxyHelpers.cs" Link="V8\FastProxy\V8FastProxyHelpers.cs" />
+        <Compile Include="..\..\ClearScript\V8\FastProxy\V8FastResult.cs" Link="V8\FastProxy\V8FastResult.cs" />
         <Compile Include="..\..\ClearScript\V8\IV8DebugListener.cs" Link="V8\IV8DebugListener.cs" />
         <Compile Include="..\..\ClearScript\V8\IV8Object.cs" Link="V8\IV8Object.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\IV8SplitProxyNative.cs" Link="V8\SplitProxy\IV8SplitProxyNative.cs" />
@@ -49,8 +76,7 @@
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8ScriptImpl.cs" Link="V8\SplitProxy\V8ScriptImpl.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyHelpers.cs" Link="V8\SplitProxy\V8SplitProxyHelpers.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyManaged.cs" Link="V8\SplitProxy\V8SplitProxyManaged.cs" />
-        <!-- ReSharper disable once UnknownProperty -->
-        <Compile Condition="'$(TargetFramework)'=='net5.0'" Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyManaged.Net5.cs" Link="V8\SplitProxy\V8SplitProxyManaged.Net5.cs" />
+        <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyManaged.Net5.cs" Link="V8\SplitProxy\V8SplitProxyManaged.Net5.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.cs" Link="V8\SplitProxy\V8SplitProxyNative.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8SplitProxyNative.Generated.cs" Link="V8\SplitProxy\V8SplitProxyNative.Generated.cs" />
         <Compile Include="..\..\ClearScript\V8\SplitProxy\V8TestProxyImpl.cs" Link="V8\SplitProxy\V8TestProxyImpl.cs" />
@@ -77,7 +103,6 @@
         <Compile Include="..\..\ClearScript\V8\V8Script.cs" Link="V8\V8Script.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.cs" Link="V8\V8ScriptEngine.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.InitScript.cs" Link="V8\V8ScriptEngine.InitScript.cs" />
-        <Compile Include="..\..\ClearScript\V8\V8ScriptEngine.NetStandard.cs" Link="V8\V8ScriptEngine.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptEngineFlags.cs" Link="V8\V8ScriptEngineFlags.cs" />
         <Compile Include="..\..\ClearScript\V8\V8ScriptItem.cs" Link="V8\V8ScriptItem.cs" />
         <Compile Include="..\..\ClearScript\V8\V8Settings.cs" Link="V8\V8Settings.cs" />
@@ -145,8 +170,6 @@
 
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="System.Net.Http" Version="4.3.4" />
-        <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     </ItemGroup>
 
     <ItemGroup>

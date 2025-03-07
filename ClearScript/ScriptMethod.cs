@@ -110,7 +110,7 @@ namespace Microsoft.ClearScript
             // script item properties as fields. Apparently VB's dynamic invocation support not
             // only recognizes IReflect/IExpando but actually favors it over DynamicObject.
 
-            return typeof(ScriptMethod).GetMember(MiscHelpers.EnsureNonBlank(memberName, "Invoke"), bindFlags);
+            return typeof(ScriptMethod).GetMember(memberName.ToNonBlank("Invoke"), bindFlags);
         }
 
         MemberInfo[] IReflect.GetMembers(BindingFlags bindFlags)

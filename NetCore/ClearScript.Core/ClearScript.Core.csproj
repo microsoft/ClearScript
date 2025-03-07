@@ -5,6 +5,7 @@
         <RootNamespace>Microsoft.ClearScript</RootNamespace>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>
+        <LangVersion Condition="'$(TargetFramework)' == 'netcoreapp3.1'">9.0</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -95,11 +96,9 @@
         <Compile Include="..\..\ClearScript\JavaScript\IArrayBufferView.cs" Link="JavaScript\IArrayBufferView.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\IDataView.cs" Link="JavaScript\IDataView.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\IJavaScriptEngine.cs" Link="JavaScript\IJavaScriptEngine.cs" />
-        <Compile Include="..\..\ClearScript\JavaScript\IJavaScriptEngine.NetStandard.cs" Link="JavaScript\IJavaScriptEngine.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\IJavaScriptObject.cs" Link="JavaScript\IJavaScriptObject.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\ITypedArray.cs" Link="JavaScript\ITypedArray.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptExtensions.cs" Link="JavaScript\JavaScriptExtensions.cs" />
-        <Compile Include="..\..\ClearScript\JavaScript\JavaScriptExtensions.NetStandard.cs" Link="JavaScript\JavaScriptExtensions.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptObjectFlags.cs" Link="JavaScript\JavaScriptObjectFlags.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\JavaScriptObjectKind.cs" Link="JavaScript\JavaScriptObjectKind.cs" />
         <Compile Include="..\..\ClearScript\JavaScript\JsonModuleManager.cs" Link="JavaScript\JsonModuleManager.cs" />
@@ -141,13 +140,14 @@
         <Compile Include="..\..\ClearScript\Util\COM\UnknownHelpers.cs" Link="Util\COM\UnknownHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\ConcurrentWeakSet.cs" Link="Util\ConcurrentWeakSet.cs" />
         <Compile Include="..\..\ClearScript\Util\CoTaskMemBlock.cs" Link="Util\CoTaskMemBlock.cs" />
+        <Compile Include="..\..\ClearScript\Util\DateTimeHelpers.cs" Link="Util\DateTimeHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\DynamicHelpers.cs" Link="Util\DynamicHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.cs" Link="Util\EnumerableHelpers.cs" />
-        <Compile Include="..\..\ClearScript\Util\EnumerableHelpers.NetStandard.cs" Link="Util\EnumerableHelpers.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\Util\Holder.cs" Link="Util\Holder.cs" />
         <Compile Include="..\..\ClearScript\Util\IDynamic.cs" Link="Util\IDynamic.cs" />
         <Compile Include="..\..\ClearScript\Util\IExpando.cs" Link="Util\IExpando.cs" />
         <Compile Include="..\..\ClearScript\Util\IHostContext.cs" Link="Util\IHostContext.cs" />
+        <Compile Include="..\..\ClearScript\Util\IHostItem.cs" Link="Util\IHostItem.cs" />
         <Compile Include="..\..\ClearScript\Util\IHostTargetContext.cs" Link="Util\IHostTargetContext.cs" />
         <Compile Include="..\..\ClearScript\Util\INativeCallback.cs" Link="Util\INativeCallback.cs" />
         <Compile Include="..\..\ClearScript\Util\InvokeHelpers.cs" Link="Util\InvokeHelpers.cs" />
@@ -167,12 +167,14 @@
         <Compile Include="..\..\ClearScript\Util\SpecialDispIDs.cs" Link="Util\SpecialDispIDs.cs" />
         <Compile Include="..\..\ClearScript\Util\SpecialMemberNames.cs" Link="Util\SpecialMemberNames.cs" />
         <Compile Include="..\..\ClearScript\Util\SpecialParamNames.cs" Link="Util\SpecialParamNames.cs" />
+        <Compile Include="..\..\ClearScript\Util\StructPtr.cs" Link="Util\StructPtr.cs" />
         <Compile Include="..\..\ClearScript\Util\Test\AccessContextTestObject.cs" Link="Util\Test\AccessContextTestObject.cs" />
         <Compile Include="..\..\ClearScript\Util\TypeHelpers.cs" Link="Util\TypeHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\TypeHelpers.NetStandard.cs" Link="Util\TypeHelpers.NetStandard.cs" />
         <Compile Include="..\..\ClearScript\Util\TypeTags.cs" Link="Util\TypeTags.cs" />
         <Compile Include="..\..\ClearScript\Util\UniqueNameManager.cs" Link="Util\UniqueNameManager.cs" />
         <Compile Include="..\..\ClearScript\Util\UnmanagedMemoryHelpers.cs" Link="Util\UnmanagedMemoryHelpers.cs" />
+        <Compile Include="..\..\ClearScript\Util\ValueScope.cs" Link="Util\ValueScope.cs" />
         <Compile Include="..\..\ClearScript\Util\VTableHelpers.cs" Link="Util\VTableHelpers.cs" />
         <Compile Include="..\..\ClearScript\Util\VTablePatcher.cs" Link="Util\VTablePatcher.cs" />
         <Compile Include="..\..\ClearScript\Util\Web\WebContext.cs" Link="Util\Web\WebContext.cs" />

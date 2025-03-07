@@ -13,7 +13,7 @@ namespace Microsoft.ClearScript.Util
 
     internal sealed class UniqueNameManager : IUniqueNameManager
     {
-        private readonly Dictionary<string, uint> map = new Dictionary<string, uint>();
+        private readonly Dictionary<string, uint> map = new();
 
         #region IUniqueNameManager implementation
 
@@ -21,7 +21,7 @@ namespace Microsoft.ClearScript.Util
         {
             lock (map)
             {
-                var nonBlankName = MiscHelpers.EnsureNonBlank(inputName, alternate);
+                var nonBlankName = inputName.ToNonBlank(alternate);
 
                 map.TryGetValue(nonBlankName, out var count);
 
@@ -35,7 +35,7 @@ namespace Microsoft.ClearScript.Util
 
     internal sealed class UniqueFileNameManager : IUniqueNameManager
     {
-        private readonly Dictionary<string, uint> map = new Dictionary<string, uint>();
+        private readonly Dictionary<string, uint> map = new();
 
         #region IUniqueNameManager implementation
 
@@ -43,7 +43,7 @@ namespace Microsoft.ClearScript.Util
         {
             lock (map)
             {
-                var nonBlankName = MiscHelpers.EnsureNonBlank(Path.GetFileNameWithoutExtension(inputName), alternate);
+                var nonBlankName = Path.GetFileNameWithoutExtension(inputName).ToNonBlank(alternate);
                 var extension = Path.GetExtension(inputName);
 
                 map.TryGetValue(nonBlankName, out var count);

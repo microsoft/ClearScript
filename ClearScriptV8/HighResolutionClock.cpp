@@ -7,18 +7,23 @@
 // HighResolutionClock implementation
 //-----------------------------------------------------------------------------
 
-void HighResolutionClock::SleepMilliseconds(double delay, bool precise)
+double HighResolutionClock::SleepMilliseconds(double delay, bool precise)
 {
+    auto start = std::chrono::high_resolution_clock::now();
+    auto end = start + std::chrono::duration<double, std::milli>(delay);
+    std::chrono::high_resolution_clock::time_point final;
+
     if (!precise)
     {
         std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(delay));
+        final = std::chrono::high_resolution_clock::now();
     }
     else
     {
-        auto start = std::chrono::high_resolution_clock::now();
-        auto end = start + std::chrono::duration<double, std::milli>(delay);
-        while (std::chrono::high_resolution_clock::now() < end) std::this_thread::yield();
+        while ((final = std::chrono::high_resolution_clock::now()) < end) std::this_thread::yield();
     }
+
+    return std::chrono::duration<double, std::milli>(final - end).count();
 }
 
 //-----------------------------------------------------------------------------

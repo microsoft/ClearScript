@@ -65,7 +65,7 @@ namespace Microsoft.ClearScript.Test
             if (!quiet) Console.WriteLine("Done");
 
             // run main test
-            var results = repeatIndices.Select(index => new Dictionary<string, int>()).ToArray();
+            var results = repeatIndices.Select(_ => new Dictionary<string, int>()).ToArray();
             var timeSpans = new long[repeatCount];
             repeatIndices.ForEach(repeatIndex =>
             {
