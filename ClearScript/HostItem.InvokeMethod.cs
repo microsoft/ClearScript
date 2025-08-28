@@ -504,7 +504,17 @@ namespace Microsoft.ClearScript
                     throw exceptionFactory();
                 }
 
-                if (reflectionMethods.Contains(method, MemberComparer<MethodInfo>.Instance))
+                bool isReflectionMethod = false;
+                for (int i = 0; i < reflectionMethods.Length; i++)
+                {
+                    if (MemberComparer<MethodInfo>.Instance.Equals(reflectionMethods[i], method))
+                    {
+                        isReflectionMethod = true;
+                        break;
+                    }
+                }
+
+                if (isReflectionMethod)
                 {
                     hostItem.Engine.CheckReflection();
                 }
