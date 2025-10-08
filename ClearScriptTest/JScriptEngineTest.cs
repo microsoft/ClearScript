@@ -3018,9 +3018,9 @@ namespace Microsoft.ClearScript.Test
         public void JScriptEngine_DisableFloatNarrowing()
         {
             engine.AddHostType("StringT", typeof(string));
-            Assert.AreEqual("123,456.80", engine.Evaluate("StringT.Format('{0:###,###.00}', 123456.75)"));
+            Assert.AreEqual(123456.80.ToString("###,###.00"), engine.Evaluate("StringT.Format('{0:###,###.00}', 123456.75)"));
             engine.DisableFloatNarrowing = true;
-            Assert.AreEqual("123,456.75", engine.Evaluate("StringT.Format('{0:###,###.00}', 123456.75)"));
+            Assert.AreEqual(123456.75.ToString("###,###.00"), engine.Evaluate("StringT.Format('{0:###,###.00}', 123456.75)"));
         }
 
         [TestMethod, TestCategory("JScriptEngine")]
