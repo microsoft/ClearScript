@@ -409,6 +409,17 @@ namespace Microsoft.ClearScript.V8.FastProxy
         public BigInteger GetBigInteger(int index, string name = null) => V8FastArgImpl.GetBigInteger(args[index], GetObject(index), argKind, name);
 
         /// <summary>
+        /// Gets the <c><see cref="Uint8Array"/></c> value of the argument at the specified index.
+        /// </summary>
+        /// <param name="index">The argument index.</param>
+        /// <param name="name">An optional argument or property name.</param>
+        /// <returns>The <c><see cref="Uint8Array"/></c> value of the argument at the specified index.</returns>
+        /// <remarks>
+        /// This method throws an exception if the operation fails.
+        /// </remarks>
+        public Uint8Array GetUint8Array(int index, string name = null) => V8FastArgImpl.GetUint8Array(args[index], GetObject(index), argKind, name);
+
+        /// <summary>
         /// Gets a nullable value of the given underlying type from the argument at the specified index.
         /// </summary>
         /// <typeparam name="T">The underlying type of the nullable value to get.</typeparam>
