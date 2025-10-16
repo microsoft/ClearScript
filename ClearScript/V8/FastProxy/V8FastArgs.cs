@@ -3,7 +3,6 @@
 
 using System;
 using System.Numerics;
-using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace Microsoft.ClearScript.V8.FastProxy
@@ -15,23 +14,13 @@ namespace Microsoft.ClearScript.V8.FastProxy
     {
         private readonly ReadOnlySpan<V8Value.FastArg> args;
         private readonly V8FastArgKind argKind;
-        private readonly object[] objects;
+        private readonly V8ScriptEngine engine;
 
         internal V8FastArgs(V8ScriptEngine engine, in ReadOnlySpan<V8Value.FastArg> args, V8FastArgKind argKind)
         {
             this.args = args;
             this.argKind = argKind;
-            objects = null;
-
-            for (var index = 0; index < args.Length; index++)
-            {
-                var tempObject = V8FastArgImpl.InitializeObject(engine, args[index]);
-                if (tempObject is not Nonexistent)
-                {
-                    EnsureObjects(ref objects, args.Length);
-                    objects[index] = tempObject;
-                }
-            }
+            this.engine = engine;
         }
 
         /// <summary>
@@ -432,18 +421,6 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// </remarks>
         public T Get<T>(int index, string name = null) => V8FastArgImpl.Get<T>(args[index], GetObject(index), argKind, name);
 
-        private static void EnsureObjects(ref object[] objects, int count)
-        {
-            if (objects is null)
-            {
-                objects = new object[count];
-                for (var index = 0; index < count; index++)
-                {
-                    objects[index] = Nonexistent.Value;
-                }
-            }
-        }
-
-        private object GetObject(int index) => (objects is not null) ? objects[index] : Nonexistent.Value;
+        private object GetObject(int index) => V8FastArgImpl.InitializeObject(engine, args[index]);
     }
 }
