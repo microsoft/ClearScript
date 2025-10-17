@@ -4,6 +4,11 @@
 
 
 
+
+
+
+
+
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
@@ -1004,6 +1009,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         V8Object_GetNamedProperty(hObject, nameScope.Value, valueScope.Value);
                         return V8Value.Get(valueScope.Value);
                     }
+                }
+            }
+
+            void IV8SplitProxyNative.V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    V8Object_GetNamedProperty(hObject, nameScope.Value, pValue);
                 }
             }
 
@@ -3204,6 +3217,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            void IV8SplitProxyNative.V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    V8Object_GetNamedProperty(hObject, nameScope.Value, pValue);
+                }
+            }
+
             bool IV8SplitProxyNative.V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value)
             {
                 using (var nameScope = StdString.CreateScope(name))
@@ -5398,6 +5419,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         V8Object_GetNamedProperty(hObject, nameScope.Value, valueScope.Value);
                         return V8Value.Get(valueScope.Value);
                     }
+                }
+            }
+
+            void IV8SplitProxyNative.V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    V8Object_GetNamedProperty(hObject, nameScope.Value, pValue);
                 }
             }
 
@@ -7598,6 +7627,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            void IV8SplitProxyNative.V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    V8Object_GetNamedProperty(hObject, nameScope.Value, pValue);
+                }
+            }
+
             bool IV8SplitProxyNative.V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value)
             {
                 using (var nameScope = StdString.CreateScope(name))
@@ -9792,6 +9829,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         V8Object_GetNamedProperty(hObject, nameScope.Value, valueScope.Value);
                         return V8Value.Get(valueScope.Value);
                     }
+                }
+            }
+
+            void IV8SplitProxyNative.V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    V8Object_GetNamedProperty(hObject, nameScope.Value, pValue);
                 }
             }
 
@@ -11992,6 +12037,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            void IV8SplitProxyNative.V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    V8Object_GetNamedProperty(hObject, nameScope.Value, pValue);
+                }
+            }
+
             bool IV8SplitProxyNative.V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value)
             {
                 using (var nameScope = StdString.CreateScope(name))
@@ -14189,6 +14242,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            void IV8SplitProxyNative.V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    V8Object_GetNamedProperty(hObject, nameScope.Value, pValue);
+                }
+            }
+
             bool IV8SplitProxyNative.V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value)
             {
                 using (var nameScope = StdString.CreateScope(name))
@@ -16383,6 +16444,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         V8Object_GetNamedProperty(hObject, nameScope.Value, valueScope.Value);
                         return V8Value.Get(valueScope.Value);
                     }
+                }
+            }
+
+            void IV8SplitProxyNative.V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    V8Object_GetNamedProperty(hObject, nameScope.Value, pValue);
                 }
             }
 

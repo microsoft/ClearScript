@@ -432,6 +432,17 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// </remarks>
         public T Get<T>(int index, string name = null) => V8FastArgImpl.Get<T>(args[index], GetObject(index), argKind, name);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public V8Object GetV8Object(int index, string name = null)
+        {
+            return new V8Object((V8Object.Handle)args[index].data.PtrOrHandle, args[index].data.IdentityHash);
+        }
+
         private static void EnsureObjects(ref object[] objects, int count)
         {
             if (objects is null)
