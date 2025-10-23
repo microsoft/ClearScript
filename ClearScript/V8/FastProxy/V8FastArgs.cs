@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-using System;
-using System.Numerics;
-using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8.SplitProxy;
+using System;
+using System.Buffers;
+using System.Numerics;
 
 namespace Microsoft.ClearScript.V8.FastProxy
 {
@@ -13,25 +13,30 @@ namespace Microsoft.ClearScript.V8.FastProxy
     /// </summary>
     public readonly ref struct V8FastArgs
     {
+        private readonly V8ScriptEngine engine;
         private readonly ReadOnlySpan<V8Value.FastArg> args;
         private readonly V8FastArgKind argKind;
         private readonly object[] objects;
 
         internal V8FastArgs(V8ScriptEngine engine, in ReadOnlySpan<V8Value.FastArg> args, V8FastArgKind argKind)
         {
+            this.engine = engine;
             this.args = args;
             this.argKind = argKind;
-            objects = null;
+            objects = ArrayPool<object>.Shared.Rent(args.Length);
 
             for (var index = 0; index < args.Length; index++)
             {
-                var tempObject = V8FastArgImpl.InitializeObject(engine, args[index]);
-                if (tempObject is not Nonexistent)
-                {
-                    EnsureObjects(ref objects, args.Length);
-                    objects[index] = tempObject;
-                }
+                objects[index] = V8FastArg.NotInitialized;
             }
+        }
+
+        /// <summary>
+        /// Returns the objects array to the pool.
+        /// </summary>
+        public void Dispose()
+        {
+            ArrayPool<object>.Shared.Return(objects);
         }
 
         /// <summary>
@@ -432,18 +437,16 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// </remarks>
         public T Get<T>(int index, string name = null) => V8FastArgImpl.Get<T>(args[index], GetObject(index), argKind, name);
 
-        private static void EnsureObjects(ref object[] objects, int count)
+        private object GetObject(int index)
         {
-            if (objects is null)
-            {
-                objects = new object[count];
-                for (var index = 0; index < count; index++)
-                {
-                    objects[index] = Nonexistent.Value;
-                }
-            }
-        }
+            ref object obj = ref objects[index];
 
-        private object GetObject(int index) => (objects is not null) ? objects[index] : Nonexistent.Value;
+            if (obj == V8FastArg.NotInitialized)
+            {
+                obj = V8FastArgImpl.InitializeObject(engine, args[index]);
+            }
+
+            return obj;
+        }
     }
 }
