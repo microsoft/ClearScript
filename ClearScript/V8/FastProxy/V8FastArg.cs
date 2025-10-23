@@ -34,10 +34,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
             }
         }
 
-        /// <summary>
-        /// Returns the object holder to the pool.
-        /// </summary>
-        public void Dispose()
+        internal void Dispose()
         {
             holderPool.Add(holder);
         }

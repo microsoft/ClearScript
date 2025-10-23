@@ -31,10 +31,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
             }
         }
 
-        /// <summary>
-        /// Returns the objects array to the pool.
-        /// </summary>
-        public void Dispose()
+        internal void Dispose()
         {
             ArrayPool<object>.Shared.Return(objects);
         }
