@@ -33,7 +33,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
 
         internal void Dispose()
         {
-            ArrayPool<object>.Shared.Return(objects);
+            ArrayPool<object>.Shared.Return(objects, true);
         }
 
         /// <summary>

@@ -36,6 +36,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
 
         internal void Dispose()
         {
+            holder.Value = NotInitialized;
             holderPool.Add(holder);
         }
 
