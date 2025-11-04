@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-using System;
-using System.Numerics;
+using Microsoft.ClearScript.Util;
 using Microsoft.ClearScript.V8.SplitProxy;
+using System;
+using System.Collections.Concurrent;
+using System.Numerics;
 
 namespace Microsoft.ClearScript.V8.FastProxy
 {
@@ -12,155 +14,170 @@ namespace Microsoft.ClearScript.V8.FastProxy
     /// </summary>
     public readonly ref struct V8FastArg
     {
+        private readonly V8ScriptEngine engine;
         private readonly V8Value.FastArg.Ptr pArg;
         private readonly V8FastArgKind kind;
-        private readonly object obj;
+        private readonly Holder<object> holder;
+        private static readonly ConcurrentBag<Holder<object>> holderPool = new();
+        internal static readonly object NotInitialized = new();
 
         internal V8FastArg(V8ScriptEngine engine, V8Value.FastArg.Ptr pArg, V8FastArgKind kind)
         {
+            this.engine = engine;
             this.pArg = pArg;
             this.kind = kind;
-            obj = V8FastArgImpl.InitializeObject(engine, pArg.AsRef());
+            
+            if (!holderPool.TryTake(out holder))
+            {
+                holder = new Holder<object>();
+                holder.Value = NotInitialized;
+            }
+        }
+
+        internal void Dispose()
+        {
+            holder.Value = NotInitialized;
+            holderPool.Add(holder);
         }
 
         /// <summary>
         /// Determines whether the argument is <see href="https://developer.mozilla.org/en-US/docs/Glossary/Falsy">falsy</see>.
         /// </summary>
-        public bool IsFalsy => V8FastArgImpl.IsFalsy(pArg.AsRef(), obj);
+        public bool IsFalsy => V8FastArgImpl.IsFalsy(pArg.AsRef(), GetObject());
 
         /// <summary>
         /// Determines whether the argument is <see href="https://developer.mozilla.org/en-US/docs/Glossary/Truthy">truthy</see>.
         /// </summary>
-        public bool IsTruthy => V8FastArgImpl.IsTruthy(pArg.AsRef(), obj);
+        public bool IsTruthy => V8FastArgImpl.IsTruthy(pArg.AsRef(), GetObject());
 
         /// <summary>
         /// Determines whether the argument is <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined">undefined</see></c>.
         /// </summary>
-        public bool IsUndefined => V8FastArgImpl.IsUndefined(pArg.AsRef(), obj);
+        public bool IsUndefined => V8FastArgImpl.IsUndefined(pArg.AsRef(), GetObject());
 
         /// <summary>
         /// Determines whether the argument is <c><see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/null">null</see></c>.
         /// </summary>
-        public bool IsNull => V8FastArgImpl.IsNull(pArg.AsRef(), obj);
+        public bool IsNull => V8FastArgImpl.IsNull(pArg.AsRef(), GetObject());
 
         /// <summary>
         /// Gets the <c><see cref="bool"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="bool"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out bool value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out bool value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="char"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="char"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out char value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out char value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="sbyte"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="sbyte"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out sbyte value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out sbyte value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="byte"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="byte"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out byte value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out byte value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="short"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="short"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out short value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out short value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="ushort"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="ushort"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out ushort value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out ushort value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="int"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="int"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out int value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out int value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="uint"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="uint"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out uint value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out uint value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="long"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="long"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out long value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out long value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="ulong"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="ulong"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out ulong value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out ulong value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="float"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="float"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out float value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out float value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="double"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="double"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out double value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out double value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="decimal"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="decimal"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out decimal value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out decimal value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the string value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the string value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out string value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out string value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the string value of the argument as a <c><see href="https://learn.microsoft.com/en-us/dotnet/api/system.readonlyspan-1">ReadOnlySpan&#x3C;char&#x3E;</see></c> if possible.
         /// </summary>
         /// <param name="value">On return, the string value of the argument as a <c><see href="https://learn.microsoft.com/en-us/dotnet/api/system.readonlyspan-1">ReadOnlySpan&#x3C;char&#x3E;</see></c> if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out ReadOnlySpan<char> value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out ReadOnlySpan<char> value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="DateTime"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="DateTime"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out DateTime value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out DateTime value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="BigInteger"/></c> value of the argument if possible.
         /// </summary>
         /// <param name="value">On return, the <c><see cref="BigInteger"/></c> value of the argument if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet(out BigInteger value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet(out BigInteger value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets a nullable value of the given underlying type from the argument if possible.
@@ -168,7 +185,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <typeparam name="T">The underlying type of the nullable value to get.</typeparam>
         /// <param name="value">On return, a nullable value of underlying type <typeparamref name="T"/> if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet<T>(out T? value) where T : struct => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet<T>(out T? value) where T : struct => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets a value of the given type from the argument if possible.
@@ -176,7 +193,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <typeparam name="T">The type of value to get.</typeparam>
         /// <param name="value">On return, a value of type <typeparamref name="T"/> if the operation succeeded.</param>
         /// <returns><c>True</c> if the operation succeeded, <c>false</c> otherwise.</returns>
-        public bool TryGet<T>(out T value) => V8FastArgImpl.TryGet(pArg.AsRef(), obj, out value);
+        public bool TryGet<T>(out T value) => V8FastArgImpl.TryGet(pArg.AsRef(), GetObject(), out value);
 
         /// <summary>
         /// Gets the <c><see cref="bool"/></c> value of the argument.
@@ -186,7 +203,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public bool GetBoolean(string name = null) => V8FastArgImpl.GetBoolean(pArg.AsRef(), obj, kind, name);
+        public bool GetBoolean(string name = null) => V8FastArgImpl.GetBoolean(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="char"/></c> value of the argument.
@@ -196,7 +213,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public char GetChar(string name = null) => V8FastArgImpl.GetChar(pArg.AsRef(), obj, kind, name);
+        public char GetChar(string name = null) => V8FastArgImpl.GetChar(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="sbyte"/></c> value of the argument.
@@ -206,7 +223,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public sbyte GetSByte(string name = null) => V8FastArgImpl.GetSByte(pArg.AsRef(), obj, kind, name);
+        public sbyte GetSByte(string name = null) => V8FastArgImpl.GetSByte(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="byte"/></c> value of the argument.
@@ -216,7 +233,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public byte GetByte(string name = null) => V8FastArgImpl.GetByte(pArg.AsRef(), obj, kind, name);
+        public byte GetByte(string name = null) => V8FastArgImpl.GetByte(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="short"/></c> value of the argument.
@@ -226,7 +243,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public short GetInt16(string name = null) => V8FastArgImpl.GetInt16(pArg.AsRef(), obj, kind, name);
+        public short GetInt16(string name = null) => V8FastArgImpl.GetInt16(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="ushort"/></c> value of the argument.
@@ -236,7 +253,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public ushort GetUInt16(string name = null) => V8FastArgImpl.GetUInt16(pArg.AsRef(), obj, kind, name);
+        public ushort GetUInt16(string name = null) => V8FastArgImpl.GetUInt16(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="int"/></c> value of the argument.
@@ -246,7 +263,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public int GetInt32(string name = null) => V8FastArgImpl.GetInt32(pArg.AsRef(), obj, kind, name);
+        public int GetInt32(string name = null) => V8FastArgImpl.GetInt32(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="uint"/></c> value of the argument.
@@ -256,7 +273,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public uint GetUInt32(string name = null) => V8FastArgImpl.GetUInt32(pArg.AsRef(), obj, kind, name);
+        public uint GetUInt32(string name = null) => V8FastArgImpl.GetUInt32(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="long"/></c> value of the argument.
@@ -266,7 +283,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public long GetInt64(string name = null) => V8FastArgImpl.GetInt64(pArg.AsRef(), obj, kind, name);
+        public long GetInt64(string name = null) => V8FastArgImpl.GetInt64(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="ulong"/></c> value of the argument.
@@ -276,7 +293,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public ulong GetUInt64(string name = null) => V8FastArgImpl.GetUInt64(pArg.AsRef(), obj, kind, name);
+        public ulong GetUInt64(string name = null) => V8FastArgImpl.GetUInt64(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="float"/></c> value of the argument.
@@ -286,7 +303,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public float GetSingle(string name = null) => V8FastArgImpl.GetSingle(pArg.AsRef(), obj, kind, name);
+        public float GetSingle(string name = null) => V8FastArgImpl.GetSingle(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="double"/></c> value of the argument.
@@ -296,7 +313,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public double GetDouble(string name = null) => V8FastArgImpl.GetDouble(pArg.AsRef(), obj, kind, name);
+        public double GetDouble(string name = null) => V8FastArgImpl.GetDouble(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="decimal"/></c> value of the argument.
@@ -306,7 +323,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public decimal GetDecimal(string name = null) => V8FastArgImpl.GetDecimal(pArg.AsRef(), obj, kind, name);
+        public decimal GetDecimal(string name = null) => V8FastArgImpl.GetDecimal(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the string value of the argument.
@@ -316,7 +333,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public string GetString(string name = null) => V8FastArgImpl.GetString(pArg.AsRef(), obj, kind, name);
+        public string GetString(string name = null) => V8FastArgImpl.GetString(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the string value of the argument as a <c><see href="https://learn.microsoft.com/en-us/dotnet/api/system.readonlyspan-1">ReadOnlySpan&#x3C;char&#x3E;</see></c>.
@@ -326,7 +343,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public ReadOnlySpan<char> GetCharSpan(string name = null) => V8FastArgImpl.GetCharSpan(pArg.AsRef(), obj, kind, name);
+        public ReadOnlySpan<char> GetCharSpan(string name = null) => V8FastArgImpl.GetCharSpan(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="DateTime"/></c> value of the argument.
@@ -336,7 +353,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public DateTime GetDateTime(string name = null) => V8FastArgImpl.GetDateTime(pArg.AsRef(), obj, kind, name);
+        public DateTime GetDateTime(string name = null) => V8FastArgImpl.GetDateTime(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets the <c><see cref="BigInteger"/></c> value of the argument.
@@ -346,7 +363,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public BigInteger GetBigInteger(string name = null) => V8FastArgImpl.GetBigInteger(pArg.AsRef(), obj, kind, name);
+        public BigInteger GetBigInteger(string name = null) => V8FastArgImpl.GetBigInteger(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets a nullable value of the given underlying type from the argument.
@@ -357,7 +374,7 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public T? GetNullable<T>(string name = null) where T : struct => V8FastArgImpl.GetNullable<T>(pArg.AsRef(), obj, kind, name);
+        public T? GetNullable<T>(string name = null) where T : struct => V8FastArgImpl.GetNullable<T>(pArg.AsRef(), GetObject(), kind, name);
 
         /// <summary>
         /// Gets a value of the given type from the argument.
@@ -368,6 +385,16 @@ namespace Microsoft.ClearScript.V8.FastProxy
         /// <remarks>
         /// This method throws an exception if the operation fails.
         /// </remarks>
-        public T Get<T>(string name = null) => V8FastArgImpl.Get<T>(pArg.AsRef(), obj, kind, name);
+        public T Get<T>(string name = null) => V8FastArgImpl.Get<T>(pArg.AsRef(), GetObject(), kind, name);
+
+        private object GetObject()
+        {
+            if (holder.Value == NotInitialized)
+            {
+                holder.Value = V8FastArgImpl.InitializeObject(engine, pArg.AsRef());
+            }
+
+            return holder.Value;
+        }
     }
 }

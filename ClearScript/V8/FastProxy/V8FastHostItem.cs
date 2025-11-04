@@ -66,12 +66,13 @@ namespace Microsoft.ClearScript.V8.FastProxy
             Engine.HostInvoke(
                 static ctx =>
                 {
-                    var value = new V8FastArg(ctx.self.Engine, ctx.pValue, V8FastArgKind.PropertyValue);
-
                     var target = ctx.self.Target;
                     if (target.Operations is {} operations)
                     {
-                        operations.SetProperty(target, ctx.name, value);
+                        using (var value = new V8FastArg(ctx.self.Engine, ctx.pValue, V8FastArgKind.PropertyValue))
+                        {
+                            operations.SetProperty(target, ctx.name, value);
+                        }
                     }
                     else
                     {
@@ -158,12 +159,13 @@ namespace Microsoft.ClearScript.V8.FastProxy
             Engine.HostInvoke(
                 static ctx =>
                 {
-                    var value = new V8FastArg(ctx.self.Engine, ctx.pValue, V8FastArgKind.PropertyValue);
-
                     var target = ctx.self.Target;
                     if (target.Operations is {} operations)
                     {
-                        operations.SetProperty(target, ctx.index, value);
+                        using (var value = new V8FastArg(ctx.self.Engine, ctx.pValue, V8FastArgKind.PropertyValue))
+                        {
+                            operations.SetProperty(target, ctx.index, value);
+                        }
                     }
                     else
                     {
@@ -239,9 +241,11 @@ namespace Microsoft.ClearScript.V8.FastProxy
                             throw new NotSupportedException("The object does not support constructor invocation");
                         }
 
-                        var args = new V8FastArgs(ctx.self.Engine, ctx.pArgs.ToSpan(ctx.argCount), V8FastArgKind.MethodArg);
+                        using (var args = new V8FastArgs(ctx.self.Engine, ctx.pArgs.ToSpan(ctx.argCount), V8FastArgKind.MethodArg))
+                        {
+                            methodOperations.Invoke(args, result);
+                        }
 
-                        methodOperations.Invoke(args, result);
                         if (!result.IsSet)
                         {
                             result.SetUndefined();
@@ -249,9 +253,11 @@ namespace Microsoft.ClearScript.V8.FastProxy
                     }
                     else if (target.Operations is IV8FastHostFunctionOperations functionOperations)
                     {
-                        var args = new V8FastArgs(ctx.self.Engine, ctx.pArgs.ToSpan(ctx.argCount), V8FastArgKind.FunctionArg);
+                        using (var args = new V8FastArgs(ctx.self.Engine, ctx.pArgs.ToSpan(ctx.argCount), V8FastArgKind.FunctionArg))
+                        {
+                            functionOperations.Invoke(ctx.asConstructor, args, result);
+                        }
 
-                        functionOperations.Invoke(ctx.asConstructor, args, result);
                         if (!result.IsSet)
                         {
                             result.SetUndefined();
