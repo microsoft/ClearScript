@@ -246,7 +246,7 @@ namespace Microsoft.ClearScript.Util
 
             unchecked
             {
-                var bytes = Encoding.Unicode.GetBytes(code);
+                var bytes = MemoryMarshal.AsBytes(code.AsSpan());
                 for (var index = 0; index < bytes.Length; index++)
                 {
                     digest ^= bytes[index];
@@ -262,7 +262,7 @@ namespace Microsoft.ClearScript.Util
             var digest = 14695981039346656037UL;
             const ulong prime = 1099511628211UL;
 
-            var bytes = Encoding.Unicode.GetBytes(code);
+            var bytes = MemoryMarshal.AsBytes(code.AsSpan());
             for (var index = 0; index < bytes.Length; index++)
             {
                 digest ^= bytes[index];
