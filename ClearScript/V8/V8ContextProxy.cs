@@ -34,7 +34,11 @@ namespace Microsoft.ClearScript.V8
 
         public abstract object Execute(UniqueDocumentInfo documentInfo, string code, bool evaluate);
 
+        public abstract object ExecuteScriptFromUtf8(UniqueDocumentInfo documentInfo, IntPtr pCode, int codeLength, bool evaluate);
+
         public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code);
+
+        public abstract V8Script CompileScriptFromUtf8(UniqueDocumentInfo documentInfo, IntPtr pCode, int codeLength);
 
         public abstract V8Script Compile(UniqueDocumentInfo documentInfo, string code, V8CacheKind cacheKind, out byte[] cacheBytes);
 

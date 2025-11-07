@@ -44,8 +44,10 @@ public:
     virtual void CancelAwaitDebugger() override;
 
     virtual V8Value Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate) override;
+    virtual V8Value ExecuteScriptFromUtf8(const V8DocumentInfo& documentInfo, const char* code, int codeLength, size_t codeDigest, bool evaluate) override;
 
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) override;
+    virtual V8ScriptHolder* CompileScriptFromUtf8(const V8DocumentInfo& documentInfo, const char* code, int codeLength, size_t codeDigest) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) override;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult) override;
@@ -216,6 +218,11 @@ private:
     v8::MaybeLocal<v8::String> CreateString(const StdString& value, v8::NewStringType type = v8::NewStringType::kNormal)
     {
         return m_spIsolateImpl->CreateString(value, type);
+    }
+
+    v8::MaybeLocal<v8::String> CreateStringFromUtf8(const char* data, int length, v8::NewStringType type = v8::NewStringType::kNormal)
+    {
+        return m_spIsolateImpl->CreateStringFromUtf8(data, length, type);
     }
 
     template <int N>

@@ -1343,6 +1343,26 @@ NATIVE_ENTRY_POINT(void) V8Context_ExecuteCode(const V8ContextHandle& handle, St
 
 //-----------------------------------------------------------------------------
 
+NATIVE_ENTRY_POINT(void) V8Context_ExecuteScriptFromUtf8(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, const char* code, int codeLength, size_t codeDigest, StdBool evaluate, V8Value& result) noexcept
+{
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
+
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        try
+        {
+            result = spContext->ExecuteScriptFromUtf8(documentInfo, code, codeLength, codeDigest, evaluate);
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ScheduleScriptEngineException();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_Compile(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, StdString&& code) noexcept
 {
     V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
@@ -1353,6 +1373,28 @@ NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_Compile(const V8ContextHandle& han
         try
         {
             return new V8ScriptHandle(spContext->Compile(documentInfo, std::move(code)));
+        }
+        catch (const V8Exception& exception)
+        {
+            exception.ScheduleScriptEngineException();
+        }
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+NATIVE_ENTRY_POINT(V8ScriptHandle*) V8Context_CompileScriptFromUtf8(const V8ContextHandle& handle, StdString&& resourceName, StdString&& sourceMapUrl, uint64_t uniqueId, DocumentKind documentKind, void* pvDocumentInfo, const char* code, int codeLength, size_t codeDigest) noexcept
+{
+    V8DocumentInfo documentInfo(std::move(resourceName), std::move(sourceMapUrl), uniqueId, documentKind, pvDocumentInfo);
+
+    auto spContext = handle.GetEntity();
+    if (!spContext.IsEmpty())
+    {
+        try
+        {
+            return new V8ScriptHandle(spContext->CompileScriptFromUtf8(documentInfo, code, codeLength, codeDigest));
         }
         catch (const V8Exception& exception)
         {

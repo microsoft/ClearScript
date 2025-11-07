@@ -239,6 +239,11 @@ namespace Microsoft.ClearScript.Util
             return (UIntPtr.Size == 4) ? (UIntPtr)code.GetDigestAsUInt32() : (UIntPtr)code.GetDigestAsUInt64();
         }
 
+        public static UIntPtr GetDigestFromUtf8(IntPtr pCode, int codeLength)
+        {
+            return (UIntPtr.Size == 4) ? (UIntPtr)GetDigestFromUtf8AsUInt32(pCode, codeLength) : (UIntPtr)GetDigestFromUtf8AsUInt64(pCode, codeLength);
+        }
+
         public static uint GetDigestAsUInt32(this string code)
         {
             var digest = 2166136261U;
@@ -267,6 +272,72 @@ namespace Microsoft.ClearScript.Util
             {
                 digest ^= bytes[index];
                 digest *= prime;
+            }
+
+            return digest;
+        }
+
+        public static uint GetDigestFromUtf8AsUInt32(IntPtr pCode, int codeLength)
+        {
+            uint digest = 2166136261U;
+            const uint prime = 16777619U;
+            const int bufferSize = 128;
+
+            Decoder decoder = Encoding.Unicode.GetDecoder();
+
+            unsafe
+            {
+                byte* utf8bytes = (byte*)pCode;
+                char* chars = stackalloc char[bufferSize];
+
+                while (codeLength > 0)
+                {
+                    decoder.Convert(utf8bytes, codeLength, chars, bufferSize, false, out int bytesUsed, out int charsUsed, out bool completed);
+                    utf8bytes += bytesUsed;
+                    codeLength -= bytesUsed;
+
+                    byte* utf16bytes = (byte*)chars;
+                    int utf16byteCount = charsUsed * sizeof(char);
+
+                    for (var index = 0; index < utf16byteCount; index++)
+                    {
+                        digest ^= utf16bytes[index];
+                        digest *= prime;
+                    }
+                }
+            }
+
+            return digest;
+        }
+
+        public static ulong GetDigestFromUtf8AsUInt64(IntPtr pCode, int codeLength)
+        {
+            ulong digest = 14695981039346656037UL;
+            const ulong prime = 1099511628211UL;
+            const int bufferSize = 128;
+
+            Decoder decoder = Encoding.Unicode.GetDecoder();
+
+            unsafe
+            {
+                byte* utf8bytes = (byte*)pCode;
+                char* chars = stackalloc char[bufferSize];
+
+                while (codeLength > 0)
+                {
+                    decoder.Convert(utf8bytes, codeLength, chars, bufferSize, false, out int bytesUsed, out int charsUsed, out bool completed);
+                    utf8bytes += bytesUsed;
+                    codeLength -= bytesUsed;
+
+                    byte* utf16bytes = (byte*)chars;
+                    int utf16byteCount = charsUsed * sizeof(char);
+
+                    for (var index = 0; index < utf16byteCount; index++)
+                    {
+                        digest ^= utf16bytes[index];
+                        digest *= prime;
+                    }
+                }
             }
 
             return digest;

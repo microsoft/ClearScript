@@ -815,6 +815,53 @@ V8Value V8ContextImpl::Execute(const V8DocumentInfo& documentInfo, const StdStri
 
 //-----------------------------------------------------------------------------
 
+V8Value V8ContextImpl::ExecuteScriptFromUtf8(const V8DocumentInfo& documentInfo, const char* code, int codeLength, size_t codeDigest, bool evaluate)
+{
+    if (documentInfo.IsModule())
+    {
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("ExecuteScriptFromUtf8 cannot execute modules")), false);
+    }
+
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_DOCUMENT_SCOPE(documentInfo)
+    BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
+
+        auto hScript = GetCachedScript(documentInfo.GetUniqueId(), codeDigest);
+        if (hScript.IsEmpty())
+        {
+            v8::ScriptCompiler::Source source(FROM_MAYBE(CreateStringFromUtf8(code, codeLength)), CreateScriptOrigin(documentInfo));
+
+            hScript = VERIFY_MAYBE(CompileUnboundScript(&source));
+            if (hScript.IsEmpty())
+            {
+                throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Script compilation failed; no additional information was provided by the V8 runtime")), false);
+            }
+
+            CacheScript(documentInfo, codeDigest, hScript);
+        }
+
+        v8::Local<v8::Value> hResult = VERIFY_MAYBE(hScript->BindToCurrentContext()->Run(m_hContext));
+
+        if (!evaluate)
+        {
+            hResult = GetUndefined();
+        }
+
+        return ExportValue(hResult);
+
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("The V8 runtime cannot perform the requested operation because a script exception is pending")), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
+    END_EXECUTION_SCOPE
+    END_DOCUMENT_SCOPE
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
 V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdString&& code)
 {
     BEGIN_CONTEXT_SCOPE
@@ -859,6 +906,48 @@ V8ScriptHolder* V8ContextImpl::Compile(const V8DocumentInfo& documentInfo, StdSt
             upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
         }
 
+        return upScriptHolder.release();
+
+    FROM_MAYBE_CATCH
+
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("The V8 runtime cannot perform the requested operation because a script exception is pending")), EXECUTION_STARTED);
+
+    FROM_MAYBE_END
+    END_EXECUTION_SCOPE
+    END_DOCUMENT_SCOPE
+    END_CONTEXT_SCOPE
+}
+
+//-----------------------------------------------------------------------------
+
+V8ScriptHolder* V8ContextImpl::CompileScriptFromUtf8(const V8DocumentInfo& documentInfo, const char* code, int codeLength, size_t codeDigest)
+{
+    if (documentInfo.IsModule())
+    {
+        throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("CompileScriptFromUtf8 cannot compile modules")), false);
+    }
+
+    BEGIN_CONTEXT_SCOPE
+    BEGIN_DOCUMENT_SCOPE(documentInfo)
+    BEGIN_EXECUTION_SCOPE
+    FROM_MAYBE_TRY
+
+        auto hScript = GetCachedScript(documentInfo.GetUniqueId(), codeDigest);
+        if (hScript.IsEmpty())
+        {
+            v8::ScriptCompiler::Source source(FROM_MAYBE(CreateStringFromUtf8(code, codeLength)), CreateScriptOrigin(documentInfo));
+
+            hScript = VERIFY_MAYBE(CompileUnboundScript(&source));
+            if (hScript.IsEmpty())
+            {
+                throw V8Exception(V8Exception::Type::General, m_Name, StdString(SL("Script compilation failed; no additional information was provided by the V8 runtime")), false);
+            }
+
+            CacheScript(documentInfo, codeDigest, hScript);
+        }
+
+        std::unique_ptr<V8ScriptHolder> upScriptHolder;
+        upScriptHolder.reset(new V8ScriptHolderImpl(GetWeakBinding(), ::PtrFromHandle(CreatePersistent(hScript)), documentInfo, codeDigest));
         return upScriptHolder.release();
 
     FROM_MAYBE_CATCH
