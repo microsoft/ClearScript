@@ -473,6 +473,16 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
+        /// Creates a compiled script.
+        /// </summary>
+        /// <param name="code">The script code to compile.</param>
+        /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
+        public V8Script CompileScriptFromUtf8(ReadOnlySpan<byte> code)
+        {
+            return CompileScriptFromUtf8(null, code);
+        }
+
+        /// <summary>
         /// Creates a compiled script with an associated document name.
         /// </summary>
         /// <param name="documentName">A document name for the compiled script. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
@@ -481,6 +491,17 @@ namespace Microsoft.ClearScript.V8
         public V8Script Compile(string documentName, string code)
         {
             return Compile(new DocumentInfo(documentName), code);
+        }
+
+        /// <summary>
+        /// Creates a compiled script with an associated document name.
+        /// </summary>
+        /// <param name="documentName">A document name for the compiled script. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
+        public V8Script CompileScriptFromUtf8(string documentName, ReadOnlySpan<byte> code)
+        {
+            return CompileScriptFromUtf8(new DocumentInfo(documentName), code);
         }
 
         /// <summary>
@@ -493,6 +514,37 @@ namespace Microsoft.ClearScript.V8
         {
             VerifyNotDisposed();
             return ScriptInvoke(static ctx => ctx.self.CompileInternal(ctx.documentInfo.MakeUnique(ctx.self), ctx.code), (self: this, documentInfo, code));
+        }
+
+        /// <summary>
+        /// Creates a compiled script with the specified document meta-information.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing meta-information for the script document. This method only supports <see cref="DocumentKind.Script"/>.</param>
+        /// <param name="code">The script code to compile.</param>
+        /// <returns>A compiled script that can be executed multiple times without recompilation.</returns>
+        /// <exception cref="NotSupportedException">When <see cref="ScriptEngine.FormatCode"/> is <c>True</c> or documentInfo.Category.Kind is not <see cref="DocumentKind.Script"/>.</exception>
+        public V8Script CompileScriptFromUtf8(DocumentInfo documentInfo, ReadOnlySpan<byte> code)
+        {
+            if (FormatCode)
+            {
+                throw new NotSupportedException("Cannot reformat code without allocating");
+            }
+
+            if (documentInfo.Category != DocumentCategory.Script)
+            {
+                throw new NotSupportedException("Cannot compile a module without allocating");
+            }
+
+            VerifyNotDisposed();
+
+            unsafe
+            {
+                fixed (byte* pCode = code)
+                {
+                    return ScriptInvoke(static ctx => ctx.proxy.CompileScriptFromUtf8(ctx.documentInfo, ctx.pCode, ctx.codeLength),
+                        (proxy, documentInfo: documentInfo.MakeUnique(this), pCode: (IntPtr)pCode, codeLength: code.Length));
+                }
+            }
         }
 
         /// <summary>
@@ -939,6 +991,51 @@ namespace Microsoft.ClearScript.V8
         }
 
         /// <summary>
+        /// Evaluates script code.
+        /// </summary>
+        /// <param name="code">The script code to evaluate.</param>
+        /// <returns>The result value.</returns>
+        public object EvaluateScriptFromUtf8(ReadOnlySpan<byte> code)
+        {
+            return EvaluateScriptFromUtf8(null, code);
+        }
+
+        /// <summary>
+        /// Evaluates script code with an associated document name.
+        /// </summary>
+        /// <param name="documentName">A document name for the script code. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="code">The script code to evaluate.</param>
+        /// <returns>The result value.</returns>
+        public object EvaluateScriptFromUtf8(string documentName, ReadOnlySpan<byte> code)
+        {
+            return EvaluateScriptFromUtf8(null, true, code);
+        }
+
+        /// <summary>
+        /// Evaluates script code with an associated document name, optionally discarding the document after execution.
+        /// </summary>
+        /// <param name="documentName">A document name for the script code. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="discard"><c>True</c> to discard the script document after execution, <c>false</c> otherwise.</param>
+        /// <param name="code">The script code to evaluate.</param>
+        /// <returns>The result value.</returns>
+        public object EvaluateScriptFromUtf8(string documentName, bool discard, ReadOnlySpan<byte> code)
+        {
+            return EvaluateScriptFromUtf8(new DocumentInfo(documentName) { Flags = discard ? DocumentFlags.IsTransient : DocumentFlags.None }, code);
+        }
+
+        /// <summary>
+        /// Evaluates script code with the specified document meta-information.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing meta-information for the script document. This method only supports <see cref="DocumentKind.Script"/>.</param>
+        /// <param name="code">The script code to evaluate.</param>
+        /// <returns>The result value.</returns>
+        /// <exception cref="NotSupportedException">When <see cref="ScriptEngine.FormatCode"/> is <c>True</c> or documentInfo.Category.Kind is not <see cref="DocumentKind.Script"/>.</exception>
+        public object EvaluateScriptFromUtf8(DocumentInfo documentInfo, ReadOnlySpan<byte> code)
+        {
+            return ExecuteScriptFromUtf8(documentInfo, code, true);
+        }
+
+        /// <summary>
         /// Executes a compiled script.
         /// </summary>
         /// <param name="script">The compiled script to execute.</param>
@@ -950,6 +1047,47 @@ namespace Microsoft.ClearScript.V8
         public void Execute(V8Script script)
         {
             Execute(script, false);
+        }
+
+        /// <summary>
+        /// Executes script code.
+        /// </summary>
+        /// <param name="code">The script code to execute.</param>
+        public void ExecuteScriptFromUtf8(ReadOnlySpan<byte> code)
+        {
+            ExecuteScriptFromUtf8(null, code);
+        }
+
+        /// <summary>
+        /// Executes script code with an associated document name.
+        /// </summary>
+        /// <param name="documentName">A document name for the script code. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="code">The script code to execute.</param>
+        public void ExecuteScriptFromUtf8(string documentName, ReadOnlySpan<byte> code)
+        {
+            ExecuteScriptFromUtf8(documentName, false, code);
+        }
+
+        /// <summary>
+        /// Executes script code with an associated document name, optionally discarding the document after execution.
+        /// </summary>
+        /// <param name="documentName">A document name for the script code. Currently, this name is used only as a label in presentation contexts such as debugger user interfaces.</param>
+        /// <param name="discard"><c>True</c> to discard the script document after execution, <c>false</c> otherwise.</param>
+        /// <param name="code">The script code to execute.</param>
+        public void ExecuteScriptFromUtf8(string documentName, bool discard, ReadOnlySpan<byte> code)
+        {
+            ExecuteScriptFromUtf8(new DocumentInfo(documentName) { Flags = discard ? DocumentFlags.IsTransient : DocumentFlags.None }, code);
+        }
+
+        /// <summary>
+        /// Executes script code with the specified document meta-information.
+        /// </summary>
+        /// <param name="documentInfo">A structure containing meta-information for the script document. This method only supports <see cref="DocumentKind.Script"/>.</param>
+        /// <param name="code">The script code to execute.</param>
+        /// <exception cref="NotSupportedException">When <see cref="ScriptEngine.FormatCode"/> is <c>True</c> or documentInfo.Category.Kind is not <see cref="DocumentKind.Script"/>.</exception>
+        public void ExecuteScriptFromUtf8(DocumentInfo documentInfo, ReadOnlySpan<byte> code)
+        {
+            ExecuteScriptFromUtf8(documentInfo, code, false);
         }
 
         // ReSharper restore ParameterHidesMember
@@ -1172,6 +1310,69 @@ namespace Microsoft.ClearScript.V8
                 ),
                 false
             );
+        }
+
+        private object ExecuteScriptFromUtf8(DocumentInfo documentInfo, ReadOnlySpan<byte> code, bool evaluate)
+        {
+            if (FormatCode)
+            {
+                throw new NotSupportedException("Cannot reformat code without allocating");
+            }
+
+            if (documentInfo.Category != DocumentCategory.Script)
+            {
+                throw new NotSupportedException("Cannot compile a module without allocating");
+            }
+
+            VerifyNotDisposed();
+
+            unsafe
+            {
+                fixed (byte* pCode = code)
+                {
+                    return ScriptInvoke(
+                        static ctx =>
+                        {
+                            if ((ctx.self.documentNames is not null) && !ctx.documentInfo.Flags.GetValueOrDefault().HasAllFlags(DocumentFlags.IsTransient))
+                            {
+                                ctx.self.documentNames.Add(ctx.documentInfo.UniqueName);
+                            }
+
+                            if (ctx.self.inContinuationTimerScope || (ctx.self.ContinuationCallback is null))
+                            {
+                                if (ctx.self.ShouldAwaitDebuggerAndPause(ctx.documentInfo.Info))
+                                {
+                                    ctx.self.proxy.AwaitDebuggerAndPause();
+                                }
+
+                                return ctx.self.proxy.ExecuteScriptFromUtf8(ctx.documentInfo, ctx.pCode, ctx.codeLength, ctx.evaluate);
+                            }
+
+                            var state = new Timer[] { null };
+                            using (state[0] = new Timer(_ => ctx.self.OnContinuationTimer(state[0]), null, Timeout.Infinite, Timeout.Infinite))
+                            {
+                                ctx.self.inContinuationTimerScope = true;
+                                try
+                                {
+                                    state[0].Change(continuationInterval, Timeout.Infinite);
+
+                                    if (ctx.self.ShouldAwaitDebuggerAndPause(ctx.documentInfo.Info))
+                                    {
+                                        ctx.self.proxy.AwaitDebuggerAndPause();
+                                    }
+
+                                    return ctx.self.proxy.ExecuteScriptFromUtf8(ctx.documentInfo, ctx.pCode, ctx.codeLength, ctx.evaluate);
+                                }
+                                finally
+                                {
+                                    ctx.self.inContinuationTimerScope = false;
+                                }
+                            }
+                        },
+                        (self: this, documentInfo: documentInfo.MakeUnique(this), pCode: (IntPtr)pCode, codeLength: code.Length, evaluate)
+                    );
+                }
+            }
         }
 
         // ReSharper restore ParameterHidesMember

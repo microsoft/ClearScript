@@ -103,6 +103,27 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
         }
 
+        public override object ExecuteScriptFromUtf8(UniqueDocumentInfo documentInfo, IntPtr pCode, int codeLength, bool evaluate)
+        {
+            UIntPtr codeDigest = MiscHelpers.GetDigestFromUtf8(pCode, codeLength);
+
+            return V8SplitProxyNative.Invoke(
+                static (instance, ctx) => instance.V8Context_ExecuteScriptFromUtf8(
+                    ctx.Handle,
+                    MiscHelpers.GetUrlOrPath(ctx.documentInfo.Uri, ctx.documentInfo.UniqueName),
+                    MiscHelpers.GetUrlOrPath(ctx.documentInfo.SourceMapUri, string.Empty),
+                    ctx.documentInfo.UniqueId,
+                    ctx.documentInfo.Category.Kind,
+                    V8ProxyHelpers.AddRefHostObject(ctx.documentInfo),
+                    ctx.pCode,
+                    ctx.codeLength,
+                    ctx.codeDigest,
+                    ctx.evaluate
+                ),
+                (Handle, documentInfo, pCode, codeLength, codeDigest, evaluate)
+            );
+        }
+
         public override V8.V8Script Compile(UniqueDocumentInfo documentInfo, string code)
         {
             return new V8ScriptImpl(documentInfo, code.GetDigest(), V8SplitProxyNative.Invoke(
@@ -116,6 +137,26 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     ctx.code
                 ),
                 (Handle, documentInfo, code)
+            ));
+        }
+
+        public override V8.V8Script CompileScriptFromUtf8(UniqueDocumentInfo documentInfo, IntPtr pCode, int codeLength)
+        {
+            UIntPtr codeDigest = MiscHelpers.GetDigestFromUtf8(pCode, codeLength);
+
+            return new V8ScriptImpl(documentInfo, codeDigest, V8SplitProxyNative.Invoke(
+                static (instance, ctx) => instance.V8Context_CompileScriptFromUtf8(
+                    ctx.Handle,
+                    MiscHelpers.GetUrlOrPath(ctx.documentInfo.Uri, ctx.documentInfo.UniqueName),
+                    MiscHelpers.GetUrlOrPath(ctx.documentInfo.SourceMapUri, string.Empty),
+                    ctx.documentInfo.UniqueId,
+                    ctx.documentInfo.Category.Kind,
+                    V8ProxyHelpers.AddRefHostObject(ctx.documentInfo),
+                    ctx.pCode,
+                    ctx.codeLength,
+                    ctx.codeDigest
+                ),
+                (Handle, documentInfo, pCode, codeLength, codeDigest)
             ));
         }
 
