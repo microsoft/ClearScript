@@ -208,6 +208,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #region V8 object methods
 
         object V8Object_GetNamedProperty(V8Object.Handle hObject, string name);
+        void V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue);
         bool V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value);
         void V8Object_SetNamedProperty(V8Object.Handle hObject, string name, object value);
         bool V8Object_DeleteNamedProperty(V8Object.Handle hObject, string name);
