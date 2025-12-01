@@ -1,7 +1,7 @@
 remote_theme: mmistakes/so-simple-theme@3.2.0
 locale: en-US
 title: ClearScript
-title_image: /ClearScript/ClearScript7-ReadMe.png
+title_image: /ClearScript7-ReadMe.png
 title_image_scale: 0.75
 copyright: © 2022 Microsoft Corporation. Powered by [Jekyll](https://jekyllrb.com) & [So Simple](https://github.com/mmistakes/so-simple-theme).
 description: Add scripting to your .NET applications quickly and easily.
