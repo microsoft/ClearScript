@@ -232,6 +232,11 @@ public:
         return value.ToV8String(m_upIsolate.get(), type);
     }
 
+    v8::MaybeLocal<v8::String> CreateStringFromUtf8(const char* data, int length, v8::NewStringType type = v8::NewStringType::kNormal)
+    {
+        return v8::String::NewFromUtf8(m_upIsolate.get(), data, type, length);
+    }
+
     template <int N>
     v8::Local<v8::String> CreateString(const char (&value)[N], v8::NewStringType type = v8::NewStringType::kNormal)
     {

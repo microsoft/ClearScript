@@ -71,8 +71,10 @@ public:
     virtual void CancelAwaitDebugger() = 0;
 
     virtual V8Value Execute(const V8DocumentInfo& documentInfo, const StdString& code, bool evaluate) = 0;
+    virtual V8Value ExecuteScriptFromUtf8(const V8DocumentInfo& documentInfo, const char* code, int codeLength, size_t codeDigest, bool evaluate) = 0;
 
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code) = 0;
+    virtual V8ScriptHolder* CompileScriptFromUtf8(const V8DocumentInfo& documentInfo, const char* code, int codeLength, size_t codeDigest) = 0;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes) = 0;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, const std::vector<uint8_t>& cacheBytes, bool& cacheAccepted) = 0;
     virtual V8ScriptHolder* Compile(const V8DocumentInfo& documentInfo, StdString&& code, V8CacheKind cacheKind, std::vector<uint8_t>& cacheBytes, V8CacheResult& cacheResult) = 0;
