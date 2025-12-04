@@ -965,6 +965,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 }
             }
 
+            void IV8SplitProxyNative.V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue)
+            {
+                using (var nameScope = StdString.CreateScope(name))
+                {
+                    V8Object_GetNamedProperty(hObject, nameScope.Value, pValue);
+                }
+            }
+
             bool IV8SplitProxyNative.V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value)
             {
                 using (var nameScope = StdString.CreateScope(name))

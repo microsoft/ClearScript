@@ -1,6 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8.FastProxy;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,8 +12,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Microsoft.ClearScript.Util;
-using Microsoft.ClearScript.V8.FastProxy;
+using System.Xml.Linq;
 
 namespace Microsoft.ClearScript.V8.SplitProxy
 {
@@ -876,14 +878,17 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #endregion
     }
 
-    internal static class V8Value
+    /// <summary>
+    /// 
+    /// </summary>
+    public static class V8Value
     {
-        public const int Size = 16;
+        internal const int Size = 16;
 
         private const short positiveOrZero = 0;
         private const short negative = 1;
 
-        public static ValueScope<Ptr> CreateScope()
+        internal static ValueScope<Ptr> CreateScope()
         {
             return ScopeFactory.Create(
                 static () => V8SplitProxyNative.InvokeRaw(static instance => instance.V8Value_New()),
@@ -891,14 +896,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             );
         }
 
-        public static ValueScope<Ptr> CreateScope(object obj)
+        internal static ValueScope<Ptr> CreateScope(object obj)
         {
             var scope = CreateScope();
             Set(scope.Value, obj);
             return scope;
         }
 
-        public static void Set(Ptr pV8Value, object obj)
+        internal static void Set(Ptr pV8Value, object obj)
         {
             if (obj is Nonexistent)
             {
@@ -990,7 +995,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
-        public static object Get(Ptr pV8Value)
+        internal static object Get(Ptr pV8Value)
         {
             return V8SplitProxyNative.InvokeRaw(
                 static (instance, pV8Value) =>
@@ -1074,7 +1079,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Type
 
-        public enum Type : byte
+        internal enum Type : byte
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Type
             Nonexistent,
@@ -1093,7 +1098,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: Subtype
 
-        public enum Subtype : byte
+        internal enum Subtype : byte
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Subtype
             None,
@@ -1121,7 +1126,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #region Nested type: Flags
 
         [Flags]
-        public enum Flags : ushort
+        internal enum Flags : ushort
         {
             // IMPORTANT: maintain bitwise equivalence with native enum V8Value::Flags
             None = 0,
@@ -1133,14 +1138,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             Rejected = 0x0010
         }
 
-        public static bool HasAllFlags(this Flags value, Flags flags) => (value & flags) == flags;
-        public static bool HasAnyFlag(this Flags value, Flags flags) => (value & flags) != 0;
+        internal static bool HasAllFlags(this Flags value, Flags flags) => (value & flags) == flags;
+        internal static bool HasAnyFlag(this Flags value, Flags flags) => (value & flags) != 0;
 
         #endregion
 
         #region Nested type: Ptr
 
-        public readonly struct Ptr
+        internal readonly struct Ptr
         {
             private readonly IntPtr bits;
 
@@ -1167,7 +1172,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #region Nested type: WireData
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct WireData
+        internal struct WireData
         {
             // IMPORTANT: maintain bitwise equivalence with native struct V8Value::WireData
             [FieldOffset(0)] public Type Type;
@@ -1213,10 +1218,10 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #region Nested type: Decoded
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct Decoded
+        internal struct Decoded
         {
             // IMPORTANT: maintain bitwise equivalence with native struct V8Value::Decoded
-            [FieldOffset(0)] private WireData data;
+            [FieldOffset(0)] internal WireData data;
 
             public object Get()
             {
@@ -1303,17 +1308,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         #region Nested type: FastArg
 
+        /// <summary>
+        /// 
+        /// </summary>
         [StructLayout(LayoutKind.Explicit)]
         public readonly struct FastArg
         {
+            internal FastArg(WireData data)
+            {
+                this.data = data;
+            }
+
             // IMPORTANT: maintain bitwise equivalence with native struct V8Value::FastArg
-            [FieldOffset(0)] private readonly WireData data;
+            [FieldOffset(0)] internal readonly WireData data;
 
-            public bool IsUndefined() => (data.Type == Type.Undefined) || (data.Type == Type.Nonexistent);
+            internal bool IsUndefined() => (data.Type == Type.Undefined) || (data.Type == Type.Nonexistent);
 
-            public bool IsNull() => data.Type == Type.Null;
+            internal bool IsNull() => data.Type == Type.Null;
 
-            public bool TryGetBoolean(out bool value)
+            internal bool TryGetBoolean(out bool value)
             {
                 if (data.Type == Type.Boolean)
                 {
@@ -1325,7 +1338,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return false;
             }
 
-            public bool TryGetNumber(out double value)
+            internal bool TryGetNumber(out double value)
             {
                 if (data.Type == Type.Number)
                 {
@@ -1337,7 +1350,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return false;
             }
 
-            public bool TryGetString(out string value)
+            internal bool TryGetString(out string value)
             {
                 if (data.Type == Type.String)
                 {
@@ -1349,7 +1362,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return false;
             }
 
-            public unsafe bool TryGetCharSpan(out ReadOnlySpan<char> value)
+            internal unsafe bool TryGetCharSpan(out ReadOnlySpan<char> value)
             {
                 if (data.Type == Type.String)
                 {
@@ -1361,7 +1374,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return false;
             }
 
-            public bool TryGetDateTime(out DateTime value)
+            internal bool TryGetDateTime(out DateTime value)
             {
                 if (data.Type == Type.DateTime)
                 {
@@ -1373,7 +1386,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return false;
             }
 
-            public bool TryGetBigInteger(out BigInteger value)
+            internal bool TryGetBigInteger(out BigInteger value)
             {
                 if (data.Type == Type.BigInt)
                 {
@@ -1384,7 +1397,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return false;
             }
 
-            public bool TryGetV8Object(out V8ObjectImpl v8Object)
+            internal bool TryGetV8Object(out V8ObjectImpl v8Object)
             {
                 if (data.Type == Type.V8Object)
                 {
@@ -1396,7 +1409,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return false;
             }
 
-            public bool TryGetHostObject(out object hostObject)
+            internal bool TryGetHostObject(out object hostObject)
             {
                 if (data.Type == Type.HostObject)
                 {
@@ -1411,7 +1424,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             #region Nested type: Ptr
 
             // ReSharper disable once MemberHidesStaticFromOuterClass
-            public readonly struct Ptr
+            internal readonly struct Ptr
             {
                 private readonly IntPtr bits;
 
@@ -1444,7 +1457,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #region Nested type: FastResult
 
         [StructLayout(LayoutKind.Explicit)]
-        public struct FastResult
+        internal struct FastResult
         {
             // IMPORTANT: maintain bitwise equivalence with native struct V8Value::FastResult
             [FieldOffset(0)] private WireData data;
@@ -2000,11 +2013,65 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #endregion
     }
 
-    internal static class V8Object
+    /// <summary>
+    /// 
+    /// </summary>
+    public readonly ref struct V8Object
     {
+        internal readonly Handle handle;
+        private readonly int identityHash;
+
+        internal V8Object(Handle hObject, int identityHash)
+        {
+            if (hObject == Handle.Empty)
+                throw new ArgumentNullException(nameof(hObject));
+
+            handle = hObject;
+            this.identityHash = identityHash;
+        }
+
+        /// <summary>
+        /// Return the identity hash of the JavaScript object.
+        /// </summary>
+        /// <returns>The identity hash of the JavaScript object.</returns>
+        public override int GetHashCode()
+        {
+            return identityHash;
+        }
+
+        /// <summary>
+        /// Obtain the value of a named property of the wrapped JavaScript object.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="storage"></param>
+        /// <returns></returns>
+        public unsafe V8FastArg GetProperty(string name, ref V8Value.FastArg storage)
+        {
+            if (handle == Handle.Empty)
+                throw new NullReferenceException("V8 object is uninitialized");
+
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
+
+            V8Value.Decoded decoded = V8SplitProxyNative.InvokeRaw((instance, arg) =>
+            {
+                V8Value.Ptr pValue = instance.V8Value_New();
+                instance.V8Object_GetNamedProperty(arg.handle, arg.name, pValue);
+                instance.V8Value_Decode(pValue, out var decoded);
+                instance.V8Value_Delete(pValue);
+                return decoded;
+            }, (handle, name));
+
+            storage = new V8Value.FastArg(decoded.data);
+
+            return new V8FastArg((V8ScriptEngine)ScriptEngine.Current,
+                (V8Value.FastArg.Ptr)(IntPtr)Unsafe.AsPointer(ref storage),
+                V8FastArgKind.PropertyValue);
+        }
+
         #region Nested type: Handle
 
-        public readonly struct Handle
+        internal readonly struct Handle
         {
             private readonly IntPtr guts;
 
